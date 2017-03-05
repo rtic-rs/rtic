@@ -164,7 +164,7 @@ unsafe impl<T> Sync for Resource<T> {}
 /// With NVIC priorities, `32` has LOWER priority than `16`. (Also, NVIC
 /// priorities encode the actual priority in the highest bits of a byte so
 /// priorities like `1` and `2` aren't actually different)
-// TODO review the handling extreme value
-pub fn priority(logical: u8) -> u8 {
+// TODO review the handling of extreme values
+pub const fn priority(logical: u8) -> u8 {
     ((1 << PRIORITY_BITS) - logical) << (8 - PRIORITY_BITS)
 }
