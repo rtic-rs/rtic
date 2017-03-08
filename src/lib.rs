@@ -48,7 +48,9 @@ impl<T> ResourceP<T> {
     ///
     /// # Unsafety
     ///
-    /// - Do not create two resources that point to the same peripheral
+    /// - Must not create two resources that point to the same peripheral
+    /// - The `ceiling` must be picked to prevent two or more concurrent tasks
+    ///   from claiming this resource (preemptively)
     pub const unsafe fn new(p: Peripheral<T>, ceiling: u8) -> Self {
         ResourceP {
             peripheral: p,
@@ -84,7 +86,12 @@ impl<T> Resource<T> {
     /// Initializes a resource
     ///
     /// NOTE `ceiling` must be in the range `[1, 15]`
-    pub const fn new(data: T, ceiling: u8) -> Self {
+    ///
+    /// # Unsafety
+    ///
+    /// - The `ceiling` must be picked to prevent two or more concurrent tasks
+    ///   from claiming this resource (preemptively)
+    pub const unsafe fn new(data: T, ceiling: u8) -> Self {
         Resource {
             // NOTE elements 1 and 2 of the tuple are a poor man's const context
             // range checker
