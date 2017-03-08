@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Jorge Aparicio <japaricious@gmail.com>"]
 
 [dependencies.cortex-m]
-branch = "svd2rust"
+branch = "ng"
 git = "https://github.com/japaric/cortex-m"
