@@ -8,17 +8,18 @@
 #![feature(const_fn)]
 #![no_std]
 
-// NOTE Only the 4 highest bits of the priority byte (BASEPRI / NVIC.IPR) are
-// considered when determining priorities.
-const PRIORITY_BITS: u8 = 4;
-
 extern crate cortex_m;
 
-use cortex_m::interrupt::CsCtxt;
+use cortex_m::ctxt::Token;
 use cortex_m::peripheral::Peripheral;
 use cortex_m::register::{basepri, basepri_max};
 
 use core::cell::UnsafeCell;
+use core::marker::PhantomData;
+
+// NOTE Only the 4 highest bits of the priority byte (BASEPRI / NVIC.IPR) are
+// considered when determining priorities.
+const PRIORITY_BITS: u8 = 4;
 
 // XXX Do we need memory / instruction / compiler barriers here?
 #[inline(always)]
@@ -33,87 +34,117 @@ unsafe fn claim<T, R, F>(f: F, res: *const T, ceiling: u8) -> R
 }
 
 /// A peripheral as a resource
-pub struct ResourceP<T>
-    where T: 'static
+pub struct ResourceP<P, Ceiling>
+    where P: 'static
 {
-    peripheral: Peripheral<T>,
-    // NOTE NVIC-style priority ceiling
-    ceiling: u8,
+    _marker: PhantomData<Ceiling>,
+    peripheral: Peripheral<P>,
 }
 
-impl<T> ResourceP<T> {
+impl<P, C> ResourceP<P, C>
+    where C: CeilingLike
+{
     /// Wraps a `peripheral` into a `Resource`
-    ///
-    /// NOTE `ceiling` must be in the range `[1, 15]` (inclusive)
     ///
     /// # Unsafety
     ///
     /// - Must not create two resources that point to the same peripheral
-    /// - The `ceiling` must be picked to prevent two or more concurrent tasks
-    ///   from claiming this resource (preemptively)
-    pub const unsafe fn new(p: Peripheral<T>, ceiling: u8) -> Self {
+    /// - The ceiling, `C`, must be picked to prevent two or more tasks from
+    ///   concurrently accessing the resource through preemption
+    pub const unsafe fn new(p: Peripheral<P>) -> Self {
         ResourceP {
+            _marker: PhantomData,
             peripheral: p,
-            // NOTE elements 1 and 2 of the tuple are a poor man's const context
-            // range checker
-            ceiling: (priority(ceiling), ceiling - 1, ceiling + 240).0,
         }
     }
+}
 
-    /// Claims the resource, blocking tasks with priority lower than `ceiling`
-    pub fn claim<R, F>(&'static self, f: F) -> R
-        where F: FnOnce(&T) -> R
+impl<P, C> ResourceP<P, C>
+    where C: Ceiling
+{
+    /// Borrows the resource without locking
+    // TODO document unsafety
+    pub unsafe fn borrow<'ctxt, Ctxt>(&'static self,
+                                      _ctxt: &'ctxt Ctxt)
+                                      -> &'ctxt P
+        where Ctxt: Token
     {
-        unsafe { claim(f, self.peripheral.get(), self.ceiling) }
+        &*self.peripheral.get()
     }
 
-    /// Borrows the resource for the duration of a critical section
-    pub fn borrow<'a>(&'static self, _ctxt: &'a CsCtxt) -> &'a T {
+    /// Locks the resource, blocking tasks with priority lower than `Ceiling`
+    pub fn lock<R, F>(&'static self, f: F) -> R
+        where F: FnOnce(&P) -> R,
+              C: Ceiling
+    {
+        unsafe { claim(f, self.peripheral.get(), C::ceiling()) }
+    }
+}
+
+impl<P> ResourceP<P, C0> {
+    /// Borrows the resource without locking
+    pub fn borrow<'ctxt, Ctxt>(&'static self, _ctxt: &'ctxt Ctxt) -> &'ctxt P
+        where Ctxt: Token
+    {
         unsafe { &*self.peripheral.get() }
     }
 }
 
-unsafe impl<T> Sync for ResourceP<T> {}
+unsafe impl<P, C> Sync for ResourceP<P, C> {}
 
 /// A resource
-pub struct Resource<T> {
-    // NOTE NVIC-style priority ceiling
-    ceiling: u8,
+pub struct Resource<T, Ceiling> {
+    _marker: PhantomData<Ceiling>,
     data: UnsafeCell<T>,
 }
 
-impl<T> Resource<T> {
+impl<T, C> Resource<T, C> {
     /// Initializes a resource
-    ///
-    /// NOTE `ceiling` must be in the range `[1, 15]`
     ///
     /// # Unsafety
     ///
-    /// - The `ceiling` must be picked to prevent two or more concurrent tasks
-    ///   from claiming this resource (preemptively)
-    pub const unsafe fn new(data: T, ceiling: u8) -> Self {
+    /// - The ceiling, `C`, must be picked to prevent two or more tasks from
+    ///   concurrently accessing the resource through preemption
+    pub const unsafe fn new(data: T) -> Self
+        where C: CeilingLike
+    {
         Resource {
-            // NOTE elements 1 and 2 of the tuple are a poor man's const context
-            // range checker
-            ceiling: (priority(ceiling), ceiling - 1, ceiling + 240).0,
+            _marker: PhantomData,
             data: UnsafeCell::new(data),
         }
     }
+}
 
-    /// Claims the resource, blocking tasks with priority lower than `ceiling`
-    pub fn claim<F, R>(&'static self, f: F) -> R
+impl<T, C> Resource<T, C>
+    where C: Ceiling
+{
+    /// Locks the resource, blocking tasks with priority lower than `ceiling`
+    pub fn lock<F, R>(&'static self, f: F) -> R
         where F: FnOnce(&T) -> R
     {
-        unsafe { claim(f, self.data.get(), self.ceiling) }
+        unsafe { claim(f, self.data.get(), C::ceiling()) }
     }
 
-    /// Borrows the resource for the duration of a critical section
-    pub fn borrow<'cs>(&self, _ctxt: &'cs CsCtxt) -> &'cs T {
+    /// Borrows the resource, without locking
+    pub unsafe fn borrow<'ctxt, Ctxt>(&'static self,
+                                      _ctxt: &'ctxt Ctxt)
+                                      -> &'ctxt T
+        where Ctxt: Token
+    {
+        &*self.data.get()
+    }
+}
+
+impl<T> Resource<T, C0> {
+    /// Borrows the resource without locking
+    pub fn borrow<'ctxt, Ctxt>(&'static self, _ctxt: &'ctxt Ctxt) -> &'ctxt T
+        where Ctxt: Token
+    {
         unsafe { &*self.data.get() }
     }
 }
 
-unsafe impl<T> Sync for Resource<T> {}
+unsafe impl<T, Ceiling> Sync for Resource<T, Ceiling> {}
 
 /// Turns a `logical` priority into a NVIC-style priority
 ///
@@ -133,3 +164,200 @@ pub const fn priority(logical: u8) -> u8 {
             .0
 
 }
+
+/// Fake ceiling, indicates that the resource is shared by cooperative tasks
+pub struct C0 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C1 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C2 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C3 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C4 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C5 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C6 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C7 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C8 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C9 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C10 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C11 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C12 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C13 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C14 {
+    _0: (),
+}
+
+/// Ceiling
+pub struct C15 {
+    _0: (),
+}
+
+/// A real ceiling
+// XXX this should be a "closed" trait
+pub unsafe trait Ceiling {
+    /// Returns the ceiling as a number
+    fn ceiling() -> u8;
+}
+
+/// Usable as a ceiling
+pub unsafe trait CeilingLike {}
+
+unsafe impl Ceiling for C1 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 1) << 4
+    }
+}
+
+unsafe impl Ceiling for C2 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 2) << 4
+    }
+}
+
+unsafe impl Ceiling for C3 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 3) << 4
+    }
+}
+
+unsafe impl Ceiling for C4 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 4) << 4
+    }
+}
+
+unsafe impl Ceiling for C5 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 5) << 4
+    }
+}
+
+unsafe impl Ceiling for C6 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 6) << 4
+    }
+}
+
+unsafe impl Ceiling for C7 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 7) << 4
+    }
+}
+
+unsafe impl Ceiling for C8 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 8) << 4
+    }
+}
+
+unsafe impl Ceiling for C9 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 9) << 4
+    }
+}
+
+unsafe impl Ceiling for C10 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 10) << 4
+    }
+}
+
+unsafe impl Ceiling for C11 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 11) << 4
+    }
+}
+
+unsafe impl Ceiling for C12 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 12) << 4
+    }
+}
+
+unsafe impl Ceiling for C13 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 13) << 4
+    }
+}
+
+unsafe impl Ceiling for C14 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 14) << 4
+    }
+}
+
+unsafe impl Ceiling for C15 {
+    fn ceiling() -> u8 {
+        ((1 << 4) - 15) << 4
+    }
+}
+
+unsafe impl CeilingLike for C0 {}
+unsafe impl CeilingLike for C1 {}
+unsafe impl CeilingLike for C2 {}
+unsafe impl CeilingLike for C3 {}
+unsafe impl CeilingLike for C4 {}
+unsafe impl CeilingLike for C5 {}
+unsafe impl CeilingLike for C6 {}
+unsafe impl CeilingLike for C7 {}
+unsafe impl CeilingLike for C8 {}
+unsafe impl CeilingLike for C9 {}
+unsafe impl CeilingLike for C10 {}
+unsafe impl CeilingLike for C11 {}
+unsafe impl CeilingLike for C12 {}
+unsafe impl CeilingLike for C13 {}
+unsafe impl CeilingLike for C14 {}
+unsafe impl CeilingLike for C15 {}
