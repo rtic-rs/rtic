@@ -155,12 +155,12 @@ unsafe impl<T, Ceiling> Sync for Resource<T, Ceiling> {}
 /// priorities like `1` and `2` aren't actually different)
 ///
 /// NOTE `logical` must be in the range `[1, 15]` (inclusive)
-pub const fn priority(logical: u8) -> u8 {
+pub const fn logical(priority: u8) -> u8 {
     // NOTE elements 1 and 2 of the tuple are a poor man's const context range
     // checker
-    (((1 << PRIORITY_BITS) - logical) << (8 - PRIORITY_BITS),
-     logical - 1,
-     logical + 240)
+    (((1 << PRIORITY_BITS) - priority) << (8 - PRIORITY_BITS),
+     priority - 1,
+     priority + 240)
             .0
 
 }
