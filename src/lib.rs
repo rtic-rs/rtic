@@ -249,15 +249,11 @@ unsafe impl<T, Ceiling> Sync for Resource<T, Ceiling> {}
 /// priorities encode the actual priority in the highest bits of a byte so
 /// priorities like `1` and `2` aren't actually different)
 ///
-/// NOTE `logical` must be in the range `[1, 15]` (inclusive)
-pub const fn logical(priority: u8) -> u8 {
-    // NOTE elements 1 and 2 of the tuple are a poor man's const context range
-    // checker
-    (((1 << PRIORITY_BITS) - priority) << (8 - PRIORITY_BITS),
-     priority - 1,
-     priority + 240)
-            .0
+/// NOTE Input `priority` must be in the range `[1, 16]` (inclusive)
+pub fn logical(priority: u8) -> u8 {
+    assert!(priority >= 1 && priority <= 16);
 
+    ((1 << PRIORITY_BITS) - priority) << (8 - PRIORITY_BITS)
 }
 
 /// Fake ceiling, indicates that the resource is shared by cooperative tasks
