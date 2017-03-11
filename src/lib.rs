@@ -24,7 +24,8 @@ const PRIORITY_BITS: u8 = 4;
 // XXX Do we need memory / instruction / compiler barriers here?
 #[inline(always)]
 unsafe fn claim<T, R, F>(f: F, res: *const T, ceiling: u8) -> R
-    where F: FnOnce(&T) -> R
+where
+    F: FnOnce(&T) -> R,
 {
     let old_basepri = basepri::read();
     basepri_max::write(ceiling);
@@ -33,16 +34,31 @@ unsafe fn claim<T, R, F>(f: F, res: *const T, ceiling: u8) -> R
     ret
 }
 
+// XXX Do we need memory / instruction / compiler barriers here?
+#[inline(always)]
+unsafe fn claim_mut<T, R, F>(f: F, res: *mut T, ceiling: u8) -> R
+where
+    F: FnOnce(&mut T) -> R,
+{
+    let old_basepri = basepri::read();
+    basepri_max::write(ceiling);
+    let ret = f(&mut *res);
+    basepri::write(old_basepri);
+    ret
+}
+
 /// A peripheral as a resource
 pub struct ResourceP<P, Ceiling>
-    where P: 'static
+where
+    P: 'static,
 {
     _marker: PhantomData<Ceiling>,
     peripheral: Peripheral<P>,
 }
 
 impl<P, C> ResourceP<P, C>
-    where C: CeilingLike
+where
+    C: CeilingLike,
 {
     /// Wraps a `peripheral` into a `Resource`
     ///
@@ -60,33 +76,72 @@ impl<P, C> ResourceP<P, C>
 }
 
 impl<P, C> ResourceP<P, C>
-    where C: Ceiling
+where
+    C: Ceiling,
 {
     /// Borrows the resource without locking
     // TODO document unsafety
-    pub unsafe fn borrow<'ctxt, Ctxt>(&'static self,
-                                      _ctxt: &'ctxt Ctxt)
-                                      -> &'ctxt P
-        where Ctxt: Context
+    pub unsafe fn borrow<'ctxt, Ctxt>(
+        &'static self,
+        _ctxt: &'ctxt Ctxt,
+    ) -> &'ctxt P
+    where
+        Ctxt: Context,
     {
         &*self.peripheral.get()
     }
 
-    /// Locks the resource, blocking tasks with priority lower than `Ceiling`
-    pub fn lock<R, F>(&'static self, f: F) -> R
-        where F: FnOnce(&P) -> R,
-              C: Ceiling
+    /// Mutably borrows the resource without locking
+    // TODO document unsafety
+    pub unsafe fn borrow_mut<'ctxt, Ctxt>(
+        &'static self,
+        _ctxt: &'ctxt mut Ctxt,
+    ) -> &'ctxt mut P
+    where
+        Ctxt: Context,
+    {
+        &mut *self.peripheral.get()
+    }
+
+    /// Locks the resource, preventing tasks with priority lower than `Ceiling`
+    /// from preempting the current task
+    pub fn lock<R, F, Ctxt>(&'static self, _ctxt: &Ctxt, f: F) -> R
+    where
+        F: FnOnce(&P) -> R,
+        Ctxt: Context,
     {
         unsafe { claim(f, self.peripheral.get(), C::ceiling()) }
+    }
+
+    /// Mutably locks the resource, preventing tasks with priority lower than
+    /// `Ceiling` from preempting the current task
+    pub fn lock_mut<R, F, Ctxt>(&'static self, _ctxt: &mut Ctxt, f: F) -> R
+    where
+        F: FnOnce(&mut P) -> R,
+        Ctxt: Context,
+    {
+        unsafe { claim_mut(f, self.peripheral.get(), C::ceiling()) }
     }
 }
 
 impl<P> ResourceP<P, C0> {
     /// Borrows the resource without locking
     pub fn borrow<'ctxt, Ctxt>(&'static self, _ctxt: &'ctxt Ctxt) -> &'ctxt P
-        where Ctxt: Context
+    where
+        Ctxt: Context,
     {
         unsafe { &*self.peripheral.get() }
+    }
+
+    /// Mutably borrows the resource without locking
+    pub fn borrow_mut<'ctxt, Ctxt>(
+        &'static self,
+        _ctxt: &'ctxt mut Ctxt,
+    ) -> &'ctxt mut P
+    where
+        Ctxt: Context,
+    {
+        unsafe { &mut *self.peripheral.get() }
     }
 }
 
@@ -106,7 +161,8 @@ impl<T, C> Resource<T, C> {
     /// - The ceiling, `C`, must be picked to prevent two or more tasks from
     ///   concurrently accessing the resource through preemption
     pub const unsafe fn new(data: T) -> Self
-        where C: CeilingLike
+    where
+        C: CeilingLike,
     {
         Resource {
             _marker: PhantomData,
@@ -116,31 +172,70 @@ impl<T, C> Resource<T, C> {
 }
 
 impl<T, C> Resource<T, C>
-    where C: Ceiling
+where
+    C: Ceiling,
 {
-    /// Locks the resource, blocking tasks with priority lower than `ceiling`
-    pub fn lock<F, R>(&'static self, f: F) -> R
-        where F: FnOnce(&T) -> R
+    /// Locks the resource, preventing tasks with priority lower than `Ceiling`
+    /// from preempting the current task
+    pub fn lock<F, R, Ctxt>(&'static self, _ctxt: &Ctxt, f: F) -> R
+    where
+        F: FnOnce(&T) -> R,
+        Ctxt: Context,
     {
         unsafe { claim(f, self.data.get(), C::ceiling()) }
     }
 
+    /// Mutably locks the resource, preventing tasks with priority lower than
+    /// `Ceiling` from preempting the current task
+    pub fn lock_mut<F, R, Ctxt>(&'static self, _ctxt: &mut Ctxt, f: F) -> R
+    where
+        F: FnOnce(&mut T) -> R,
+        Ctxt: Context,
+    {
+        unsafe { claim_mut(f, self.data.get(), C::ceiling()) }
+    }
+
     /// Borrows the resource, without locking
-    pub unsafe fn borrow<'ctxt, Ctxt>(&'static self,
-                                      _ctxt: &'ctxt Ctxt)
-                                      -> &'ctxt T
-        where Ctxt: Context
+    pub unsafe fn borrow<'ctxt, Ctxt>(
+        &'static self,
+        _ctxt: &'ctxt Ctxt,
+    ) -> &'ctxt T
+    where
+        Ctxt: Context,
     {
         &*self.data.get()
+    }
+
+    /// Mutably borrows the resource, without locking
+    pub unsafe fn borrow_mut<'ctxt, Ctxt>(
+        &'static self,
+        _ctxt: &'ctxt mut Ctxt,
+    ) -> &'ctxt mut T
+    where
+        Ctxt: Context,
+    {
+        &mut *self.data.get()
     }
 }
 
 impl<T> Resource<T, C0> {
     /// Borrows the resource without locking
     pub fn borrow<'ctxt, Ctxt>(&'static self, _ctxt: &'ctxt Ctxt) -> &'ctxt T
-        where Ctxt: Context
+    where
+        Ctxt: Context,
     {
         unsafe { &*self.data.get() }
+    }
+
+    /// Mutably borrows the resource without locking
+    pub fn borrow_mut<'ctxt, Ctxt>(
+        &'static self,
+        _ctxt: &'ctxt mut Ctxt,
+    ) -> &'ctxt mut T
+    where
+        Ctxt: Context,
+    {
+        unsafe { &mut *self.data.get() }
     }
 }
 
