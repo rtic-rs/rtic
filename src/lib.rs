@@ -16,6 +16,7 @@ use cortex_m::register::{basepri, basepri_max};
 
 use core::cell::UnsafeCell;
 use core::marker::PhantomData;
+use core::ptr;
 
 // NOTE Only the 4 highest bits of the priority byte (BASEPRI / NVIC.IPR) are
 // considered when determining priorities.
@@ -23,26 +24,28 @@ const PRIORITY_BITS: u8 = 4;
 
 // XXX Do we need memory / instruction / compiler barriers here?
 #[inline(always)]
-unsafe fn claim<T, R, F>(f: F, res: *const T, ceiling: u8) -> R
+unsafe fn lock<T, R, C, F>(f: F, res: *const T, ceiling: u8) -> R
 where
-    F: FnOnce(&T) -> R,
+    C: Ceiling,
+    F: FnOnce(&T, C) -> R,
 {
     let old_basepri = basepri::read();
     basepri_max::write(ceiling);
-    let ret = f(&*res);
+    let ret = f(&*res, ptr::read(0 as *const _));
     basepri::write(old_basepri);
     ret
 }
 
 // XXX Do we need memory / instruction / compiler barriers here?
 #[inline(always)]
-unsafe fn claim_mut<T, R, F>(f: F, res: *mut T, ceiling: u8) -> R
+unsafe fn lock_mut<T, R, C, F>(f: F, res: *mut T, ceiling: u8) -> R
 where
-    F: FnOnce(&mut T) -> R,
+    C: Ceiling,
+    F: FnOnce(&mut T, C) -> R,
 {
     let old_basepri = basepri::read();
     basepri_max::write(ceiling);
-    let ret = f(&mut *res);
+    let ret = f(&mut *res, ptr::read(0 as *const _));
     basepri::write(old_basepri);
     ret
 }
@@ -80,47 +83,46 @@ where
     C: Ceiling,
 {
     /// Borrows the resource without locking
-    // TODO document unsafety
-    pub unsafe fn borrow<'ctxt, Ctxt>(
-        &'static self,
-        _ctxt: &'ctxt Ctxt,
-    ) -> &'ctxt P
+    ///
+    /// NOTE The system ceiling must be higher than this resource ceiling
+    pub fn borrow<'l, SC>(&'static self, _system_ceiling: &'l SC) -> &'l P
     where
-        Ctxt: Context,
+        SC: HigherThan<C>,
     {
-        &*self.peripheral.get()
+        unsafe { &*self.peripheral.get() }
     }
 
     /// Mutably borrows the resource without locking
-    // TODO document unsafety
-    pub unsafe fn borrow_mut<'ctxt, Ctxt>(
+    ///
+    /// NOTE The system ceiling must be higher than this resource ceiling
+    pub fn borrow_mut<'l, SC>(
         &'static self,
-        _ctxt: &'ctxt mut Ctxt,
-    ) -> &'ctxt mut P
+        _system_ceiling: &'l mut SC,
+    ) -> &'l mut P
     where
-        Ctxt: Context,
+        SC: HigherThan<C>,
     {
-        &mut *self.peripheral.get()
+        unsafe { &mut *self.peripheral.get() }
     }
 
     /// Locks the resource, preventing tasks with priority lower than `Ceiling`
     /// from preempting the current task
     pub fn lock<R, F, Ctxt>(&'static self, _ctxt: &Ctxt, f: F) -> R
     where
-        F: FnOnce(&P) -> R,
+        F: FnOnce(&P, C) -> R,
         Ctxt: Context,
     {
-        unsafe { claim(f, self.peripheral.get(), C::ceiling()) }
+        unsafe { lock(f, self.peripheral.get(), C::ceiling()) }
     }
 
     /// Mutably locks the resource, preventing tasks with priority lower than
     /// `Ceiling` from preempting the current task
     pub fn lock_mut<R, F, Ctxt>(&'static self, _ctxt: &mut Ctxt, f: F) -> R
     where
-        F: FnOnce(&mut P) -> R,
+        F: FnOnce(&mut P, C) -> R,
         Ctxt: Context,
     {
-        unsafe { claim_mut(f, self.peripheral.get(), C::ceiling()) }
+        unsafe { lock_mut(f, self.peripheral.get(), C::ceiling()) }
     }
 }
 
@@ -179,42 +181,40 @@ where
     /// from preempting the current task
     pub fn lock<F, R, Ctxt>(&'static self, _ctxt: &Ctxt, f: F) -> R
     where
-        F: FnOnce(&T) -> R,
+        F: FnOnce(&T, C) -> R,
         Ctxt: Context,
     {
-        unsafe { claim(f, self.data.get(), C::ceiling()) }
+        unsafe { lock(f, self.data.get(), C::ceiling()) }
     }
 
     /// Mutably locks the resource, preventing tasks with priority lower than
     /// `Ceiling` from preempting the current task
     pub fn lock_mut<F, R, Ctxt>(&'static self, _ctxt: &mut Ctxt, f: F) -> R
     where
-        F: FnOnce(&mut T) -> R,
+        F: FnOnce(&mut T, C) -> R,
         Ctxt: Context,
     {
-        unsafe { claim_mut(f, self.data.get(), C::ceiling()) }
+        unsafe { lock_mut(f, self.data.get(), C::ceiling()) }
     }
 
-    /// Borrows the resource, without locking
-    pub unsafe fn borrow<'ctxt, Ctxt>(
-        &'static self,
-        _ctxt: &'ctxt Ctxt,
-    ) -> &'ctxt T
+    /// Borrows the resource without locking
+    ///
+    /// NOTE The system ceiling must be higher than this resource ceiling
+    pub fn borrow<'l, SC>(&'static self, _system_ceiling: &'l SC) -> &'l T
     where
-        Ctxt: Context,
+        SC: HigherThan<C>,
     {
-        &*self.data.get()
+        unsafe { &*self.data.get() }
     }
 
-    /// Mutably borrows the resource, without locking
-    pub unsafe fn borrow_mut<'ctxt, Ctxt>(
-        &'static self,
-        _ctxt: &'ctxt mut Ctxt,
-    ) -> &'ctxt mut T
+    /// Mutably borrows the resource without locking
+    ///
+    /// NOTE The system ceiling must be higher than this resource ceiling
+    pub fn borrow_mut<'l, SC>(&'static self, _ctxt: &'l mut SC) -> &'l mut T
     where
-        Ctxt: Context,
+        SC: HigherThan<C>,
     {
-        &mut *self.data.get()
+        unsafe { &mut *self.data.get() }
     }
 }
 
@@ -348,93 +348,232 @@ pub unsafe trait Ceiling {
 }
 
 /// Usable as a ceiling
+// XXX this should be a "closed" trait
 pub unsafe trait CeilingLike {}
 
+/// This ceiling is lower than `C`
+// XXX this should be a "closed" trait
+pub unsafe trait HigherThan<C> {}
+
+unsafe impl HigherThan<C1> for C2 {}
+unsafe impl HigherThan<C1> for C3 {}
+unsafe impl HigherThan<C1> for C4 {}
+unsafe impl HigherThan<C1> for C5 {}
+unsafe impl HigherThan<C1> for C6 {}
+unsafe impl HigherThan<C1> for C7 {}
+unsafe impl HigherThan<C1> for C8 {}
+unsafe impl HigherThan<C1> for C9 {}
+unsafe impl HigherThan<C1> for C10 {}
+unsafe impl HigherThan<C1> for C11 {}
+unsafe impl HigherThan<C1> for C12 {}
+unsafe impl HigherThan<C1> for C13 {}
+unsafe impl HigherThan<C1> for C14 {}
+unsafe impl HigherThan<C1> for C15 {}
+
+unsafe impl HigherThan<C2> for C3 {}
+unsafe impl HigherThan<C2> for C4 {}
+unsafe impl HigherThan<C2> for C5 {}
+unsafe impl HigherThan<C2> for C6 {}
+unsafe impl HigherThan<C2> for C7 {}
+unsafe impl HigherThan<C2> for C8 {}
+unsafe impl HigherThan<C2> for C9 {}
+unsafe impl HigherThan<C2> for C10 {}
+unsafe impl HigherThan<C2> for C11 {}
+unsafe impl HigherThan<C2> for C12 {}
+unsafe impl HigherThan<C2> for C13 {}
+unsafe impl HigherThan<C2> for C14 {}
+unsafe impl HigherThan<C2> for C15 {}
+
+unsafe impl HigherThan<C3> for C4 {}
+unsafe impl HigherThan<C3> for C5 {}
+unsafe impl HigherThan<C3> for C6 {}
+unsafe impl HigherThan<C3> for C7 {}
+unsafe impl HigherThan<C3> for C8 {}
+unsafe impl HigherThan<C3> for C9 {}
+unsafe impl HigherThan<C3> for C10 {}
+unsafe impl HigherThan<C3> for C11 {}
+unsafe impl HigherThan<C3> for C12 {}
+unsafe impl HigherThan<C3> for C13 {}
+unsafe impl HigherThan<C3> for C14 {}
+unsafe impl HigherThan<C3> for C15 {}
+
+unsafe impl HigherThan<C4> for C5 {}
+unsafe impl HigherThan<C4> for C6 {}
+unsafe impl HigherThan<C4> for C7 {}
+unsafe impl HigherThan<C4> for C8 {}
+unsafe impl HigherThan<C4> for C9 {}
+unsafe impl HigherThan<C4> for C10 {}
+unsafe impl HigherThan<C4> for C11 {}
+unsafe impl HigherThan<C4> for C12 {}
+unsafe impl HigherThan<C4> for C13 {}
+unsafe impl HigherThan<C4> for C14 {}
+unsafe impl HigherThan<C4> for C15 {}
+
+unsafe impl HigherThan<C5> for C6 {}
+unsafe impl HigherThan<C5> for C7 {}
+unsafe impl HigherThan<C5> for C8 {}
+unsafe impl HigherThan<C5> for C9 {}
+unsafe impl HigherThan<C5> for C10 {}
+unsafe impl HigherThan<C5> for C11 {}
+unsafe impl HigherThan<C5> for C12 {}
+unsafe impl HigherThan<C5> for C13 {}
+unsafe impl HigherThan<C5> for C14 {}
+unsafe impl HigherThan<C5> for C15 {}
+
+unsafe impl HigherThan<C6> for C7 {}
+unsafe impl HigherThan<C6> for C8 {}
+unsafe impl HigherThan<C6> for C9 {}
+unsafe impl HigherThan<C6> for C10 {}
+unsafe impl HigherThan<C6> for C11 {}
+unsafe impl HigherThan<C6> for C12 {}
+unsafe impl HigherThan<C6> for C13 {}
+unsafe impl HigherThan<C6> for C14 {}
+unsafe impl HigherThan<C6> for C15 {}
+
+unsafe impl HigherThan<C7> for C8 {}
+unsafe impl HigherThan<C7> for C9 {}
+unsafe impl HigherThan<C7> for C10 {}
+unsafe impl HigherThan<C7> for C11 {}
+unsafe impl HigherThan<C7> for C12 {}
+unsafe impl HigherThan<C7> for C13 {}
+unsafe impl HigherThan<C7> for C14 {}
+unsafe impl HigherThan<C7> for C15 {}
+
+unsafe impl HigherThan<C8> for C9 {}
+unsafe impl HigherThan<C8> for C10 {}
+unsafe impl HigherThan<C8> for C11 {}
+unsafe impl HigherThan<C8> for C12 {}
+unsafe impl HigherThan<C8> for C13 {}
+unsafe impl HigherThan<C8> for C14 {}
+unsafe impl HigherThan<C8> for C15 {}
+
+unsafe impl HigherThan<C9> for C10 {}
+unsafe impl HigherThan<C9> for C11 {}
+unsafe impl HigherThan<C9> for C12 {}
+unsafe impl HigherThan<C9> for C13 {}
+unsafe impl HigherThan<C9> for C14 {}
+unsafe impl HigherThan<C9> for C15 {}
+
+unsafe impl HigherThan<C10> for C11 {}
+unsafe impl HigherThan<C10> for C12 {}
+unsafe impl HigherThan<C10> for C13 {}
+unsafe impl HigherThan<C10> for C14 {}
+unsafe impl HigherThan<C10> for C15 {}
+
+unsafe impl HigherThan<C11> for C12 {}
+unsafe impl HigherThan<C11> for C13 {}
+unsafe impl HigherThan<C11> for C14 {}
+unsafe impl HigherThan<C11> for C15 {}
+
+unsafe impl HigherThan<C12> for C13 {}
+unsafe impl HigherThan<C12> for C14 {}
+unsafe impl HigherThan<C12> for C15 {}
+
+unsafe impl HigherThan<C13> for C14 {}
+unsafe impl HigherThan<C13> for C15 {}
+
+unsafe impl HigherThan<C14> for C15 {}
+
 unsafe impl Ceiling for C1 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 1) << 4
     }
 }
 
 unsafe impl Ceiling for C2 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 2) << 4
     }
 }
 
 unsafe impl Ceiling for C3 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 3) << 4
     }
 }
 
 unsafe impl Ceiling for C4 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 4) << 4
     }
 }
 
 unsafe impl Ceiling for C5 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 5) << 4
     }
 }
 
 unsafe impl Ceiling for C6 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 6) << 4
     }
 }
 
 unsafe impl Ceiling for C7 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 7) << 4
     }
 }
 
 unsafe impl Ceiling for C8 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 8) << 4
     }
 }
 
 unsafe impl Ceiling for C9 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 9) << 4
     }
 }
 
 unsafe impl Ceiling for C10 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 10) << 4
     }
 }
 
 unsafe impl Ceiling for C11 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 11) << 4
     }
 }
 
 unsafe impl Ceiling for C12 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 12) << 4
     }
 }
 
 unsafe impl Ceiling for C13 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 13) << 4
     }
 }
 
 unsafe impl Ceiling for C14 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 14) << 4
     }
 }
 
 unsafe impl Ceiling for C15 {
+    #[inline(always)]
     fn ceiling() -> u8 {
         ((1 << 4) - 15) << 4
     }
