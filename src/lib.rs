@@ -10,7 +10,7 @@
 
 extern crate cortex_m;
 
-use cortex_m::ctxt::Token;
+use cortex_m::ctxt::Context;
 use cortex_m::peripheral::Peripheral;
 use cortex_m::register::{basepri, basepri_max};
 
@@ -67,7 +67,7 @@ impl<P, C> ResourceP<P, C>
     pub unsafe fn borrow<'ctxt, Ctxt>(&'static self,
                                       _ctxt: &'ctxt Ctxt)
                                       -> &'ctxt P
-        where Ctxt: Token
+        where Ctxt: Context
     {
         &*self.peripheral.get()
     }
@@ -84,7 +84,7 @@ impl<P, C> ResourceP<P, C>
 impl<P> ResourceP<P, C0> {
     /// Borrows the resource without locking
     pub fn borrow<'ctxt, Ctxt>(&'static self, _ctxt: &'ctxt Ctxt) -> &'ctxt P
-        where Ctxt: Token
+        where Ctxt: Context
     {
         unsafe { &*self.peripheral.get() }
     }
@@ -129,7 +129,7 @@ impl<T, C> Resource<T, C>
     pub unsafe fn borrow<'ctxt, Ctxt>(&'static self,
                                       _ctxt: &'ctxt Ctxt)
                                       -> &'ctxt T
-        where Ctxt: Token
+        where Ctxt: Context
     {
         &*self.data.get()
     }
@@ -138,7 +138,7 @@ impl<T, C> Resource<T, C>
 impl<T> Resource<T, C0> {
     /// Borrows the resource without locking
     pub fn borrow<'ctxt, Ctxt>(&'static self, _ctxt: &'ctxt Ctxt) -> &'ctxt T
-        where Ctxt: Token
+        where Ctxt: Context
     {
         unsafe { &*self.data.get() }
     }
