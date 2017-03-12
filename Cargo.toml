@@ -3,6 +3,5 @@ name = "cortex-m-srp"
 version = "0.1.0"
 authors = ["Jorge Aparicio <japaricious@gmail.com>"]
 
-[dependencies.cortex-m]
-branch = "ng"
-git = "https://github.com/japaric/cortex-m"
+[dependencies]
+cortex-m = "0.2.0"
