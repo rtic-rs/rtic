@@ -11,6 +11,7 @@
 extern crate cortex_m;
 
 use cortex_m::ctxt::Context;
+use cortex_m::interrupt::CriticalSection;
 use cortex_m::peripheral::Peripheral;
 use cortex_m::register::{basepri, basepri_max};
 
@@ -75,6 +76,16 @@ where
             _marker: PhantomData,
             peripheral: p,
         }
+    }
+
+    /// Borrows the resource for the duration of `interrupt::free`
+    pub fn cs_borrow<'cs>(&self, _ctxt: &'cs CriticalSection) -> &'cs P {
+        unsafe { &*self.peripheral.get() }
+    }
+
+    /// Mutably borrows the resource for the duration of `interrupt::free`
+    pub fn cs_borrow_mut<'cs>(&self, _ctxt: &'cs mut CriticalSection) -> &'cs mut P {
+        unsafe { &mut *self.peripheral.get() }
     }
 }
 
@@ -170,6 +181,16 @@ impl<T, C> Resource<T, C> {
             _marker: PhantomData,
             data: UnsafeCell::new(data),
         }
+    }
+
+    /// Borrows the resource for the duration of `interrupt::free`
+    pub fn cs_borrow<'cs>(&self, _ctxt: &'cs CriticalSection) -> &'cs T {
+        unsafe { &*self.data.get() }
+    }
+
+    /// Mutably borrows the resource for the duration of `interrupt::free`
+    pub fn cs_borrow_mut<'cs>(&self, _ctxt: &'cs mut CriticalSection) -> &'cs mut T {
+        unsafe { &mut *self.data.get() }
     }
 }
 
