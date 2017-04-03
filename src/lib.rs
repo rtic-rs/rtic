@@ -119,6 +119,11 @@ where
         unsafe { &mut *self.peripheral.get() }
     }
 
+    /// Returns a mutable pointer to the wrapped value
+    pub fn get(&self) -> *mut P {
+        self.peripheral.get()
+    }
+
     /// Locks the resource, preventing tasks with priority lower than `Ceiling`
     /// from preempting the current task
     pub fn lock<R, F, Ctxt>(&'static self, _ctxt: &Ctxt, f: F) -> R
@@ -204,26 +209,6 @@ impl<T, C> Resource<T, C>
 where
     C: Ceiling,
 {
-    /// Locks the resource, preventing tasks with priority lower than `Ceiling`
-    /// from preempting the current task
-    pub fn lock<F, R, Ctxt>(&'static self, _ctxt: &Ctxt, f: F) -> R
-    where
-        F: FnOnce(&T, C) -> R,
-        Ctxt: Context,
-    {
-        unsafe { lock(f, self.data.get(), C::ceiling()) }
-    }
-
-    /// Mutably locks the resource, preventing tasks with priority lower than
-    /// `Ceiling` from preempting the current task
-    pub fn lock_mut<F, R, Ctxt>(&'static self, _ctxt: &mut Ctxt, f: F) -> R
-    where
-        F: FnOnce(&mut T, C) -> R,
-        Ctxt: Context,
-    {
-        unsafe { lock_mut(f, self.data.get(), C::ceiling()) }
-    }
-
     /// Borrows the resource without locking
     ///
     /// NOTE The system ceiling must be higher than this resource ceiling
@@ -242,6 +227,31 @@ where
         SC: HigherThan<C>,
     {
         unsafe { &mut *self.data.get() }
+    }
+
+    /// Returns a mutable pointer to the wrapped value
+    pub fn get(&self) -> *mut T {
+        self.data.get()
+    }
+
+    /// Locks the resource, preventing tasks with priority lower than `Ceiling`
+    /// from preempting the current task
+    pub fn lock<F, R, Ctxt>(&'static self, _ctxt: &Ctxt, f: F) -> R
+    where
+        F: FnOnce(&T, C) -> R,
+        Ctxt: Context,
+    {
+        unsafe { lock(f, self.data.get(), C::ceiling()) }
+    }
+
+    /// Mutably locks the resource, preventing tasks with priority lower than
+    /// `Ceiling` from preempting the current task
+    pub fn lock_mut<F, R, Ctxt>(&'static self, _ctxt: &mut Ctxt, f: F) -> R
+    where
+        F: FnOnce(&mut T, C) -> R,
+        Ctxt: Context,
+    {
+        unsafe { lock_mut(f, self.data.get(), C::ceiling()) }
     }
 }
 
