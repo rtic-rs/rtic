@@ -84,7 +84,10 @@ where
     }
 
     /// Mutably borrows the resource for the duration of `interrupt::free`
-    pub fn cs_borrow_mut<'cs>(&self, _ctxt: &'cs mut CriticalSection) -> &'cs mut P {
+    pub fn cs_borrow_mut<'cs>(
+        &self,
+        _ctxt: &'cs mut CriticalSection,
+    ) -> &'cs mut P {
         unsafe { &mut *self.peripheral.get() }
     }
 }
@@ -189,7 +192,10 @@ impl<T, C> Resource<T, C> {
     }
 
     /// Mutably borrows the resource for the duration of `interrupt::free`
-    pub fn cs_borrow_mut<'cs>(&self, _ctxt: &'cs mut CriticalSection) -> &'cs mut T {
+    pub fn cs_borrow_mut<'cs>(
+        &self,
+        _ctxt: &'cs mut CriticalSection,
+    ) -> &'cs mut T {
         unsafe { &mut *self.data.get() }
     }
 }
