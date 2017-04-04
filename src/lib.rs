@@ -11,7 +11,7 @@
 extern crate cortex_m;
 
 use cortex_m::ctxt::Context;
-use cortex_m::interrupt::CriticalSection;
+use cortex_m::interrupt::{CriticalSection, Nr};
 use cortex_m::peripheral::{Peripheral, NVIC, SCB};
 use cortex_m::register::{basepri, basepri_max};
 
@@ -360,6 +360,16 @@ pub fn logical(priority: u8) -> u8 {
     assert!(priority >= 1 && priority <= 16);
 
     ((1 << PRIORITY_BITS) - priority) << (8 - PRIORITY_BITS)
+}
+
+/// Puts `interrupt` in the "to execute" queue
+///
+/// This function has no effect if the interrupt was already queued
+pub fn queue<I>(interrupt: I) where I: Nr {
+    unsafe {
+        // NOTE(safe) atomic write
+        (*NVIC.get()).set_pending(interrupt)
+    }
 }
 
 /// Fake ceiling, indicates that the resource is shared by cooperative tasks
