@@ -35,6 +35,41 @@ unsafe fn task_priority() -> u8 {
 }
 
 #[cfg(debug_assertions)]
+unsafe fn get_check(logical_ceiling: u8) {
+    let task_priority = task_priority();
+    let system_ceiling = hardware(cortex_m::register::basepri::read());
+    let resource_ceiling = logical_ceiling;
+
+    if resource_ceiling < task_priority {
+        panic!(
+            "bad ceiling value. task priority = {}, \
+                            resource ceiling = {}",
+            task_priority,
+            resource_ceiling,
+        );
+    } else if resource_ceiling == task_priority {
+        // OK: safe to access the resource without locking in the
+        // task with highest priority
+    } else if resource_ceiling <= system_ceiling {
+        // OK: use within another resource critical section, where
+        // the locked resource has higher or equal ceiling
+    } else {
+        panic!(
+            "racy access to resource. \
+                            task priority = {}, \
+                            resource ceiling = {}, \
+                            system ceiling = {}",
+            task_priority,
+            resource_ceiling,
+            system_ceiling,
+        );
+    }
+}
+
+#[cfg(not(debug_assertions))]
+unsafe fn get_check(_: u8) {}
+
+#[cfg(debug_assertions)]
 unsafe fn lock_check(ceiling: u8) {
     let ceiling = hardware(ceiling);
     let task_priority = task_priority();
@@ -49,7 +84,7 @@ unsafe fn lock_check(ceiling: u8) {
 }
 
 #[cfg(not(debug_assertions))]
-unsafe fn lock_check(_ceiling: u8) {}
+unsafe fn lock_check(_: u8) {}
 
 // XXX Do we need memory / instruction / compiler barriers here?
 #[inline(always)]
@@ -149,9 +184,42 @@ where
         unsafe { &mut *self.peripheral.get() }
     }
 
-    /// Returns a mutable pointer to the wrapped value
-    pub fn get(&self) -> *mut P {
-        self.peripheral.get()
+    /// Returns an immutable reference to the inner data without locking
+    ///
+    /// # Safety
+    ///
+    /// You must
+    ///
+    /// - Preserve the "reference" rules. Don't create an immutable reference if
+    ///   the current task already owns a mutable reference to the data.
+    ///
+    /// - adhere to the Stack Resource Policy. You can
+    ///   - Access the resource from the highest priority task.
+    ///   - Access the resource from within a critical section that sets the
+    ///     system ceiling to `C`.
+    pub unsafe fn get(&self) -> &'static P {
+        get_check(C::ceiling());
+
+        &*self.peripheral.get()
+    }
+
+    /// Returns a mutable reference to the inner data without locking
+    ///
+    /// # Safety
+    ///
+    /// You must
+    ///
+    /// - Preserve the "reference" rules. Don't create a mutable reference if
+    ///   the current task already owns a reference to the data.
+    ///
+    /// - adhere to the Stack Resource Policy. You can
+    ///   - Access the resource from the highest priority task.
+    ///   - Access the resource from within a critical section that sets the
+    ///     system ceiling to `C`.
+    pub unsafe fn get_mut(&self) -> &'static mut P {
+        get_check(C::ceiling());
+
+        &mut *self.peripheral.get()
     }
 
     /// Locks the resource, preventing tasks with priority lower than `Ceiling`
@@ -259,41 +327,40 @@ where
         unsafe { &mut *self.data.get() }
     }
 
-    /// Returns a mutable reference to the wrapped value
-    pub unsafe fn get(&self) -> &'static mut T {
-        match () {
-            #[cfg(debug_assertions)]
-            () => {
-                let task_priority = task_priority();
-                let system_ceiling =
-                    hardware(cortex_m::register::basepri::read());
-                let resource_ceiling = C::ceiling();
+    /// Returns an immutable reference to the inner data without locking
+    ///
+    /// # Safety
+    ///
+    /// You must
+    ///
+    /// - Preserve the "reference" rules. Don't create an immutable reference if
+    ///   the current task already owns a mutable reference to the data.
+    ///
+    /// - adhere to the Stack Resource Policy. You can
+    ///   - Access the resource from the highest priority task.
+    ///   - Access the resource from within a critical section that sets the
+    ///     system ceiling to `C`.
+    pub unsafe fn get(&'static self) -> &'static T {
+        get_check(C::ceiling());
 
-                if resource_ceiling < task_priority {
-                    panic!("bad ceiling value. task priority = {}, \
-                            resource ceiling = {}",
-                           task_priority,
-                           resource_ceiling);
-                } else if resource_ceiling == task_priority {
-                    // OK: safe to access the resource without locking in the
-                    // task with highest priority
-                } else if resource_ceiling <= system_ceiling {
-                    // OK: use within another resource critical section, where
-                    // the locked resource has higher or equal ceiling
-                } else {
-                    panic!("racy access to resource. \
-                            task priority = {}, \
-                            resource ceiling = {}, \
-                            system ceiling = {}",
-                           task_priority,
-                           resource_ceiling,
-                           system_ceiling);
-                }
+        &*self.data.get()
+    }
 
-            }
-            #[cfg(not(debug_assertions))]
-            () => {}
-        }
+    /// Returns a mutable reference to the inner data without locking
+    ///
+    /// # Safety
+    ///
+    /// You must
+    ///
+    /// - Preserve the "reference" rules. Don't create a mutable reference if
+    ///   the current task already owns a reference to the data.
+    ///
+    /// - adhere to the Stack Resource Policy. You can
+    ///   - Access the resource from the highest priority task.
+    ///   - Access the resource from within a critical section that sets the
+    ///     system ceiling to `C`.
+    pub unsafe fn get_mut(&'static self) -> &'static mut T {
+        get_check(C::ceiling());
 
         &mut *self.data.get()
     }
@@ -365,7 +432,10 @@ pub fn logical(priority: u8) -> u8 {
 /// Puts `interrupt` in the "to execute" queue
 ///
 /// This function has no effect if the interrupt was already queued
-pub fn queue<I>(interrupt: I) where I: Nr {
+pub fn queue<I>(interrupt: I)
+where
+    I: Nr,
+{
     unsafe {
         // NOTE(safe) atomic write
         (*NVIC.get()).set_pending(interrupt)
