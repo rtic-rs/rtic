@@ -1,6 +1,6 @@
 //! Stack Resource Policy for Cortex-M processors
 //!
-//! NOTE ARMv6-M is not supported at the moment.
+//! NOTE ARMv6-M is not fully supported at the moment.
 
 #![deny(missing_docs)]
 #![deny(warnings)]
@@ -12,18 +12,24 @@ extern crate cortex_m;
 
 use cortex_m::ctxt::Context;
 use cortex_m::interrupt::{CriticalSection, Nr};
-use cortex_m::peripheral::{Peripheral, NVIC, SCB};
+use cortex_m::peripheral::{Peripheral, NVIC};
+#[cfg(not(thumbv6m))]
+use cortex_m::peripheral::SCB;
+#[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
 
 use core::cell::UnsafeCell;
 use core::marker::PhantomData;
+#[cfg(not(thumbv6m))]
 use core::ptr;
 
+#[cfg(not(thumbv6m))]
 // NOTE Only the 4 highest bits of the priority byte (BASEPRI / NVIC.IPR) are
 // considered when determining priorities.
 const PRIORITY_BITS: u8 = 4;
 
 /// Logical task priority
+#[cfg(not(thumbv6m))]
 unsafe fn task_priority() -> u8 {
     // NOTE(safe) atomic read
     let nr = match (*SCB.get()).icsr.read() as u8 {
@@ -34,7 +40,7 @@ unsafe fn task_priority() -> u8 {
     hardware((*NVIC.get()).ipr[nr as usize].read())
 }
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, not(thumbv6m)))]
 unsafe fn get_check(logical_ceiling: u8) {
     let task_priority = task_priority();
     let system_ceiling = hardware(cortex_m::register::basepri::read());
@@ -69,7 +75,7 @@ unsafe fn get_check(logical_ceiling: u8) {
 #[cfg(not(debug_assertions))]
 unsafe fn get_check(_: u8) {}
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, not(thumbv6m)))]
 unsafe fn lock_check(ceiling: u8) {
     let ceiling = hardware(ceiling);
     let task_priority = task_priority();
@@ -87,6 +93,7 @@ unsafe fn lock_check(ceiling: u8) {
 unsafe fn lock_check(_: u8) {}
 
 // XXX Do we need memory / instruction / compiler barriers here?
+#[cfg(not(thumbv6m))]
 #[inline(always)]
 unsafe fn lock<T, R, C, F>(f: F, res: *const T, ceiling: u8) -> R
 where
@@ -102,6 +109,7 @@ where
 }
 
 // XXX Do we need memory / instruction / compiler barriers here?
+#[cfg(not(thumbv6m))]
 #[inline(always)]
 unsafe fn lock_mut<T, R, C, F>(f: F, res: *mut T, ceiling: u8) -> R
 where
@@ -157,6 +165,7 @@ where
     }
 }
 
+#[cfg(not(thumbv6m))]
 impl<P, C> ResourceP<P, C>
 where
     C: Ceiling,
@@ -303,6 +312,7 @@ impl<T, C> Resource<T, C> {
     }
 }
 
+#[cfg(not(thumbv6m))]
 impl<T, C> Resource<T, C>
 where
     C: Ceiling,
@@ -410,6 +420,7 @@ impl<T> Resource<T, C0> {
 unsafe impl<T, Ceiling> Sync for Resource<T, Ceiling> {}
 
 /// Maps a hardware priority to a logical priority
+#[cfg(not(thumbv6m))]
 fn hardware(priority: u8) -> u8 {
     16 - (priority >> (8 - PRIORITY_BITS))
 }
@@ -423,6 +434,7 @@ fn hardware(priority: u8) -> u8 {
 /// priorities like `1` and `2` aren't actually different)
 ///
 /// NOTE Input `priority` must be in the range `[1, 16]` (inclusive)
+#[cfg(not(thumbv6m))]
 pub fn logical(priority: u8) -> u8 {
     assert!(priority >= 1 && priority <= 16);
 
@@ -449,6 +461,7 @@ pub struct C0 {
 
 /// A real ceiling
 // XXX this should be a "closed" trait
+#[cfg(not(thumbv6m))]
 pub unsafe trait Ceiling {
     /// Returns the logical ceiling as a number
     fn ceiling() -> u8;
@@ -463,8 +476,10 @@ pub unsafe trait CeilingLike {}
 
 /// This ceiling is lower than `C`
 // XXX this should be a "closed" trait
+#[cfg(not(thumbv6m))]
 pub unsafe trait HigherThan<C> {}
 
+#[cfg(not(thumbv6m))]
 macro_rules! ceiling {
     ($ceiling:ident, $logical:expr) => {
         /// Ceiling
@@ -488,6 +503,11 @@ macro_rules! ceiling {
     }
 }
 
+#[cfg(thumbv6m)]
+macro_rules! ceiling {
+    ($($tt:tt)*) => {};
+}
+
 ceiling!(C1, 1);
 ceiling!(C2, 2);
 ceiling!(C3, 3);
@@ -504,123 +524,25 @@ ceiling!(C13, 13);
 ceiling!(C14, 14);
 ceiling!(C15, 15);
 
-unsafe impl HigherThan<C1> for C2 {}
-unsafe impl HigherThan<C1> for C3 {}
-unsafe impl HigherThan<C1> for C4 {}
-unsafe impl HigherThan<C1> for C5 {}
-unsafe impl HigherThan<C1> for C6 {}
-unsafe impl HigherThan<C1> for C7 {}
-unsafe impl HigherThan<C1> for C8 {}
-unsafe impl HigherThan<C1> for C9 {}
-unsafe impl HigherThan<C1> for C10 {}
-unsafe impl HigherThan<C1> for C11 {}
-unsafe impl HigherThan<C1> for C12 {}
-unsafe impl HigherThan<C1> for C13 {}
-unsafe impl HigherThan<C1> for C14 {}
-unsafe impl HigherThan<C1> for C15 {}
+#[cfg(not(thumbv6m))]
+macro_rules! higher_than {
+    () => {};
+    ($lowest:ident, $($higher:ident,)*) => {
+        $(
+            unsafe impl HigherThan<$lowest> for $higher {}
+        )*
 
-unsafe impl HigherThan<C2> for C3 {}
-unsafe impl HigherThan<C2> for C4 {}
-unsafe impl HigherThan<C2> for C5 {}
-unsafe impl HigherThan<C2> for C6 {}
-unsafe impl HigherThan<C2> for C7 {}
-unsafe impl HigherThan<C2> for C8 {}
-unsafe impl HigherThan<C2> for C9 {}
-unsafe impl HigherThan<C2> for C10 {}
-unsafe impl HigherThan<C2> for C11 {}
-unsafe impl HigherThan<C2> for C12 {}
-unsafe impl HigherThan<C2> for C13 {}
-unsafe impl HigherThan<C2> for C14 {}
-unsafe impl HigherThan<C2> for C15 {}
+        higher_than!($($higher,)*);
+    };
+}
 
-unsafe impl HigherThan<C3> for C4 {}
-unsafe impl HigherThan<C3> for C5 {}
-unsafe impl HigherThan<C3> for C6 {}
-unsafe impl HigherThan<C3> for C7 {}
-unsafe impl HigherThan<C3> for C8 {}
-unsafe impl HigherThan<C3> for C9 {}
-unsafe impl HigherThan<C3> for C10 {}
-unsafe impl HigherThan<C3> for C11 {}
-unsafe impl HigherThan<C3> for C12 {}
-unsafe impl HigherThan<C3> for C13 {}
-unsafe impl HigherThan<C3> for C14 {}
-unsafe impl HigherThan<C3> for C15 {}
+#[cfg(thumbv6m)]
+macro_rules! higher_than {
+    ($($tt:tt)*) => {};
+}
 
-unsafe impl HigherThan<C4> for C5 {}
-unsafe impl HigherThan<C4> for C6 {}
-unsafe impl HigherThan<C4> for C7 {}
-unsafe impl HigherThan<C4> for C8 {}
-unsafe impl HigherThan<C4> for C9 {}
-unsafe impl HigherThan<C4> for C10 {}
-unsafe impl HigherThan<C4> for C11 {}
-unsafe impl HigherThan<C4> for C12 {}
-unsafe impl HigherThan<C4> for C13 {}
-unsafe impl HigherThan<C4> for C14 {}
-unsafe impl HigherThan<C4> for C15 {}
-
-unsafe impl HigherThan<C5> for C6 {}
-unsafe impl HigherThan<C5> for C7 {}
-unsafe impl HigherThan<C5> for C8 {}
-unsafe impl HigherThan<C5> for C9 {}
-unsafe impl HigherThan<C5> for C10 {}
-unsafe impl HigherThan<C5> for C11 {}
-unsafe impl HigherThan<C5> for C12 {}
-unsafe impl HigherThan<C5> for C13 {}
-unsafe impl HigherThan<C5> for C14 {}
-unsafe impl HigherThan<C5> for C15 {}
-
-unsafe impl HigherThan<C6> for C7 {}
-unsafe impl HigherThan<C6> for C8 {}
-unsafe impl HigherThan<C6> for C9 {}
-unsafe impl HigherThan<C6> for C10 {}
-unsafe impl HigherThan<C6> for C11 {}
-unsafe impl HigherThan<C6> for C12 {}
-unsafe impl HigherThan<C6> for C13 {}
-unsafe impl HigherThan<C6> for C14 {}
-unsafe impl HigherThan<C6> for C15 {}
-
-unsafe impl HigherThan<C7> for C8 {}
-unsafe impl HigherThan<C7> for C9 {}
-unsafe impl HigherThan<C7> for C10 {}
-unsafe impl HigherThan<C7> for C11 {}
-unsafe impl HigherThan<C7> for C12 {}
-unsafe impl HigherThan<C7> for C13 {}
-unsafe impl HigherThan<C7> for C14 {}
-unsafe impl HigherThan<C7> for C15 {}
-
-unsafe impl HigherThan<C8> for C9 {}
-unsafe impl HigherThan<C8> for C10 {}
-unsafe impl HigherThan<C8> for C11 {}
-unsafe impl HigherThan<C8> for C12 {}
-unsafe impl HigherThan<C8> for C13 {}
-unsafe impl HigherThan<C8> for C14 {}
-unsafe impl HigherThan<C8> for C15 {}
-
-unsafe impl HigherThan<C9> for C10 {}
-unsafe impl HigherThan<C9> for C11 {}
-unsafe impl HigherThan<C9> for C12 {}
-unsafe impl HigherThan<C9> for C13 {}
-unsafe impl HigherThan<C9> for C14 {}
-unsafe impl HigherThan<C9> for C15 {}
-
-unsafe impl HigherThan<C10> for C11 {}
-unsafe impl HigherThan<C10> for C12 {}
-unsafe impl HigherThan<C10> for C13 {}
-unsafe impl HigherThan<C10> for C14 {}
-unsafe impl HigherThan<C10> for C15 {}
-
-unsafe impl HigherThan<C11> for C12 {}
-unsafe impl HigherThan<C11> for C13 {}
-unsafe impl HigherThan<C11> for C14 {}
-unsafe impl HigherThan<C11> for C15 {}
-
-unsafe impl HigherThan<C12> for C13 {}
-unsafe impl HigherThan<C12> for C14 {}
-unsafe impl HigherThan<C12> for C15 {}
-
-unsafe impl HigherThan<C13> for C14 {}
-unsafe impl HigherThan<C13> for C15 {}
-
-unsafe impl HigherThan<C14> for C15 {}
+higher_than! {
+    C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12, C13, C14, C15,
+}
 
 unsafe impl CeilingLike for C0 {}
