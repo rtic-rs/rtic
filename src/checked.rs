@@ -75,3 +75,5 @@ where
         }
     }
 }
+
+unsafe impl<T, C> Sync for Resource<T, C> {}
