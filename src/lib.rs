@@ -105,7 +105,9 @@ where
     lock_check(ceiling);
     let old_basepri = basepri::read();
     basepri_max::write(ceiling);
+    compiler_barrier();
     let ret = f(&*res, ptr::read(0 as *const _));
+    compiler_barrier();
     basepri::write(old_basepri);
     ret
 }
@@ -121,9 +123,21 @@ where
     lock_check(ceiling);
     let old_basepri = basepri::read();
     basepri_max::write(ceiling);
+    compiler_barrier();
     let ret = f(&mut *res, ptr::read(0 as *const _));
+    compiler_barrier();
     basepri::write(old_basepri);
     ret
+}
+
+fn compiler_barrier() {
+    unsafe {
+        asm!(""
+             :
+             :
+             : "memory"
+             : "volatile");
+    }
 }
 
 /// A peripheral as a resource

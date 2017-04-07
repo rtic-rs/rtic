@@ -51,27 +51,33 @@ where
 
     /// Locks the resource, blocking tasks with priority equal or smaller than
     /// the ceiling `C`
-    pub fn lock<F>(&'static self, f: F)
+    pub fn lock<R, F>(&'static self, f: F) -> R
     where
-        F: FnOnce(&T),
+        F: FnOnce(&T) -> R,
     {
         unsafe {
             let old_basepri = acquire(&self.locked, C::ceiling());
-            f(&*self.data.get());
+            ::compiler_barrier();
+            let ret = f(&*self.data.get());
+            ::compiler_barrier();
             release(&self.locked, old_basepri);
+            ret
         }
     }
 
     /// Mutably locks the resource, blocking tasks with priority equal or
     /// smaller than the ceiling `C`
-    pub fn lock_mut<F>(&'static self, f: F)
+    pub fn lock_mut<R, F>(&'static self, f: F) -> R
         where
-        F: FnOnce(&mut T),
+        F: FnOnce(&mut T) -> R,
     {
         unsafe {
             let old_basepri = acquire(&self.locked, C::ceiling());
-            f(&mut *self.data.get());
+            ::compiler_barrier();
+            let ret = f(&mut *self.data.get());
+            ::compiler_barrier();
             release(&self.locked, old_basepri);
+            ret
         }
     }
 }

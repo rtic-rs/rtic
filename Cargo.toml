@@ -1,7 +1,8 @@
 [package]
+authors = ["Jorge Aparicio <japaricious@gmail.com>"]
+build = "build.rs"
 name = "cortex-m-srp"
 version = "0.1.0"
-authors = ["Jorge Aparicio <japaricious@gmail.com>"]
 
 [dependencies]
 cortex-m = "0.2.0"
