@@ -9,6 +9,7 @@
 #![no_std]
 
 extern crate cortex_m;
+extern crate vcell;
 
 pub mod checked;
 

@@ -5,26 +5,27 @@ use core::cell::UnsafeCell;
 
 use cortex_m::interrupt;
 use cortex_m::register::{basepri, basepri_max};
+use vcell::VolatileCell;
 
 use Ceiling;
 
-unsafe fn acquire(locked: &UnsafeCell<bool>, ceiling: u8) -> u8 {
+unsafe fn acquire(locked: &VolatileCell<bool>, ceiling: u8) -> u8 {
     interrupt::free(
         |_| {
-            assert!(!*locked.get(), "resource already locked");
+            assert!(!locked.get(), "resource already locked");
             let old_basepri = basepri::read();
             basepri_max::write(ceiling);
-            *locked.get() = true;
+            locked.set(true);
             old_basepri
         },
     )
 }
 
-unsafe fn release(locked: &UnsafeCell<bool>, old_basepri: u8) {
+unsafe fn release(locked: &VolatileCell<bool>, old_basepri: u8) {
     // XXX Is it really memory safe to *not* use a global critical section here
     // interrupt::free(
         // |_| {
-            *locked.get() = false;
+            locked.set(false);
             basepri::write(old_basepri);
         // },
     // );
@@ -34,7 +35,7 @@ unsafe fn release(locked: &UnsafeCell<bool>, old_basepri: u8) {
 pub struct Resource<T, C> {
     _marker: PhantomData<C>,
     data: UnsafeCell<T>,
-    locked: UnsafeCell<bool>,
+    locked: VolatileCell<bool>,
 }
 
 impl<T, C> Resource<T, C>
@@ -46,7 +47,7 @@ where
         Resource {
             _marker: PhantomData,
             data: UnsafeCell::new(data),
-            locked: UnsafeCell::new(false),
+            locked: VolatileCell::new(false),
         }
     }
 
