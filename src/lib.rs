@@ -180,19 +180,6 @@ where
         unsafe { &*self.peripheral.get() }
     }
 
-    /// Mutably borrows the resource without locking
-    ///
-    /// NOTE The system ceiling must be higher than this resource ceiling
-    pub fn borrow_mut<'l, SC>(
-        &'static self,
-        _system_ceiling: &'l mut SC,
-    ) -> &'l mut P
-    where
-        SC: HigherThan<C>,
-    {
-        unsafe { &mut *self.peripheral.get() }
-    }
-
     /// Returns an immutable reference to the inner data without locking
     ///
     /// # Safety
@@ -325,16 +312,6 @@ where
         SC: HigherThan<C>,
     {
         unsafe { &*self.data.get() }
-    }
-
-    /// Mutably borrows the resource without locking
-    ///
-    /// NOTE The system ceiling must be higher than this resource ceiling
-    pub fn borrow_mut<'l, SC>(&'static self, _ctxt: &'l mut SC) -> &'l mut T
-    where
-        SC: HigherThan<C>,
-    {
-        unsafe { &mut *self.data.get() }
     }
 
     /// Returns an immutable reference to the inner data without locking
