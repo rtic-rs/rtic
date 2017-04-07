@@ -56,7 +56,7 @@ where
         F: FnOnce(&T) -> R,
     {
         unsafe {
-            let old_basepri = acquire(&self.locked, C::ceiling());
+            let old_basepri = acquire(&self.locked, C::hw_ceiling());
             ::compiler_barrier();
             let ret = f(&*self.data.get());
             ::compiler_barrier();
@@ -72,7 +72,7 @@ where
         F: FnOnce(&mut T) -> R,
     {
         unsafe {
-            let old_basepri = acquire(&self.locked, C::ceiling());
+            let old_basepri = acquire(&self.locked, C::hw_ceiling());
             ::compiler_barrier();
             let ret = f(&mut *self.data.get());
             ::compiler_barrier();
