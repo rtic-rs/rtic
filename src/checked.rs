@@ -21,12 +21,13 @@ unsafe fn acquire(locked: &UnsafeCell<bool>, ceiling: u8) -> u8 {
 }
 
 unsafe fn release(locked: &UnsafeCell<bool>, old_basepri: u8) {
-    interrupt::free(
-        |_| {
-            basepri::write(old_basepri);
+    // XXX Is it really memory safe to *not* use a global critical section here
+    // interrupt::free(
+        // |_| {
             *locked.get() = false;
-        },
-    );
+            basepri::write(old_basepri);
+        // },
+    // );
 }
 
 /// A totally safe `Resource` that panics on misuse
