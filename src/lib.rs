@@ -10,6 +10,8 @@
 
 extern crate cortex_m;
 
+pub mod checked;
+
 use cortex_m::ctxt::Context;
 use cortex_m::interrupt::{CriticalSection, Nr};
 use cortex_m::peripheral::{Peripheral, NVIC};
