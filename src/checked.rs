@@ -10,25 +10,16 @@ use vcell::VolatileCell;
 use Ceiling;
 
 unsafe fn acquire(locked: &VolatileCell<bool>, ceiling: u8) -> u8 {
-    interrupt::free(
-        |_| {
-            assert!(!locked.get(), "resource already locked");
-            let old_basepri = basepri::read();
-            basepri_max::write(ceiling);
-            locked.set(true);
-            old_basepri
-        },
-    )
+    assert!(!locked.get(), "resource already locked");
+    let old_basepri = basepri::read();
+    basepri_max::write(ceiling);
+    locked.set(true);
+    old_basepri
 }
 
 unsafe fn release(locked: &VolatileCell<bool>, old_basepri: u8) {
-    // XXX Is it really memory safe to *not* use a global critical section here
-    // interrupt::free(
-        // |_| {
-            locked.set(false);
-            basepri::write(old_basepri);
-        // },
-    // );
+    locked.set(false);
+    basepri::write(old_basepri);
 }
 
 /// A totally safe `Resource` that panics on misuse
@@ -70,7 +61,7 @@ where
     /// Mutably locks the resource, blocking tasks with priority equal or
     /// smaller than the ceiling `C`
     pub fn lock_mut<R, F>(&'static self, f: F) -> R
-        where
+    where
         F: FnOnce(&mut T) -> R,
     {
         unsafe {
