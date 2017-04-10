@@ -13,7 +13,7 @@ use cortex_m::interrupt::Nr;
 use cortex_m::register::{basepri, basepri_max};
 use typenum::{Cmp, Equal, Greater, Less, Unsigned};
 
-pub use cortex_m::ctxt::Local;
+pub use cortex_m::ctxt::{Context, Local};
 #[doc(hidden)]
 pub use cortex_m::peripheral::NVIC;
 #[doc(hidden)]
@@ -213,16 +213,18 @@ where
 }
 
 /// Requests the execution of the task `task`
-pub fn request<T>(task: T)
+pub fn request<T, P>(_task: fn(T, P))
 where
-    T: Nr,
+    T: Context + Nr,
+    P: Priority,
 {
     let nvic = unsafe { &*NVIC.get() };
 
     match () {
         #[cfg(debug_assertions)]
         () => {
-            let task = unsafe { core::ptr::read(&task) };
+            // NOTE(safe) zero sized type
+            let task = unsafe { core::ptr::read(0x0 as *const T) };
             // NOTE(safe) atomic read
             assert!(!nvic.is_pending(task),
                     "Task is already in the pending state");
@@ -231,6 +233,8 @@ where
         () => {}
     }
 
+    // NOTE(safe) zero sized type
+    let task = unsafe { core::ptr::read(0x0 as *const T) };
     // NOTE(safe) atomic write
     nvic.set_pending(task);
 }
@@ -291,7 +295,7 @@ unsafe impl Priority for P0 {}
 #[macro_export]
 macro_rules! tasks {
     ($krate:ident, {
-        $($task:ident: ($interrupt:ident, $Interrupt:ident, $P:ident),)*
+        $($task:ident: ($Interrupt:ident, $P:ident),)*
     }) => {
         fn main() {
             $crate::free(|_| {
@@ -343,7 +347,7 @@ macro_rules! tasks {
             static INTERRUPTS: ::$krate::interrupt::Handlers =
                 ::$krate::interrupt::Handlers {
                 $(
-                    $interrupt: {
+                    $Interrupt: {
                         extern "C" fn $task(
                             task: ::$krate::interrupt::$Interrupt
                         ) {
