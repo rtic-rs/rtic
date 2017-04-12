@@ -10,6 +10,12 @@ use std::path::PathBuf;
 use syn::{Ident, IntTy, Lit};
 
 fn main() {
+    let target = env::var("TARGET").unwrap();
+
+    if target.starts_with("thumbv6m") {
+        println!("cargo:rustc-cfg=thumbv6m");
+    }
+
     let bits = if env::var_os("CARGO_FEATURE_P2").is_some() {
         2
     } else if env::var_os("CARGO_FEATURE_P3").is_some() {

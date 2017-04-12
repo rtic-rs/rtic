@@ -10,8 +10,11 @@ use core::marker::PhantomData;
 use core::cell::UnsafeCell;
 
 use cortex_m::interrupt::Nr;
+#[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
-use typenum::{Cmp, Equal, Greater, Less, Unsigned};
+use typenum::{Cmp, Equal, Unsigned};
+#[cfg(not(thumbv6m))]
+use typenum::{Greater, Less};
 
 pub use cortex_m::ctxt::{Context, Local};
 #[doc(hidden)]
@@ -85,6 +88,7 @@ where
     /// For the duration of the critical section, tasks whose priority level is
     /// smaller than or equal to the resource `CEILING` will be prevented from
     /// preempting the current task.
+    #[cfg(not(thumbv6m))]
     pub fn lock<R, PRIORITY, F>(
         &'static self,
         _priority: &P<PRIORITY>,
@@ -176,6 +180,7 @@ where
     }
 
     /// See [Resource.lock](./struct.Resource.html#method.lock)
+    #[cfg(not(thumbv6m))]
     pub fn lock<R, PRIORITY, F>(
         &'static self,
         _priority: &P<PRIORITY>,
