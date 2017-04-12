@@ -6,15 +6,16 @@
 extern crate cortex_m;
 extern crate typenum;
 
-use core::marker::PhantomData;
 use core::cell::UnsafeCell;
+use core::marker::PhantomData;
+use core::ops::Sub;
 
 use cortex_m::interrupt::Nr;
 #[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
 use typenum::{Cmp, Equal, Unsigned};
 #[cfg(not(thumbv6m))]
-use typenum::{Greater, Less};
+use typenum::{B1, Greater, Less, Sub1};
 
 pub use cortex_m::ctxt::{Context, Local};
 #[doc(hidden)]
@@ -101,6 +102,10 @@ where
     /// For the duration of the critical section, tasks whose priority level is
     /// smaller than or equal to the resource `CEILING` will be prevented from
     /// preempting the current task.
+    ///
+    /// Within this critical section, resources with ceiling equal to or smaller
+    /// than `CEILING` can be borrowed at zero cost. See
+    /// [Resource.borrow](struct.Resource.html#method.borrow).
     #[cfg(not(thumbv6m))]
     pub fn lock<R, PRIORITY, F>(
         &'static self,
@@ -120,6 +125,42 @@ where
             barrier!();
             let ret = f(
                 &*self.data.get(),
+                C {
+                    _0: (),
+                    _marker: PhantomData,
+                },
+            );
+            barrier!();
+            basepri::write(old_basepri);
+            ret
+        }
+    }
+
+    /// Like [Resource.lock](struct.Resource.html#method.lock) but returns a
+    /// `&mut-` reference
+    ///
+    /// This method has additional an additional constraint: you can't borrow a
+    /// resource that has ceiling equal `CEILING`. This constraint is required
+    /// to preserve Rust aliasing rules.
+    pub fn lock_mut<R, PRIORITY, F>(
+        &'static self,
+        _priority: &mut P<PRIORITY>,
+        f: F,
+    ) -> R
+    where
+        F: FnOnce(&mut T, C<Sub1<CEILING>>) -> R,
+        C<CEILING>: Ceiling,
+        CEILING: Sub<B1>,
+        CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>
+            + Level,
+        P<PRIORITY>: Priority,
+    {
+        unsafe {
+            let old_basepri = basepri::read();
+            basepri_max::write(<CEILING>::hw());
+            barrier!();
+            let ret = f(
+                &mut *self.data.get(),
                 C {
                     _0: (),
                     _marker: PhantomData,
