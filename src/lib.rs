@@ -142,6 +142,7 @@ where
     /// This method has additional an additional constraint: you can't borrow a
     /// resource that has ceiling equal `CEILING`. This constraint is required
     /// to preserve Rust aliasing rules.
+    #[cfg(not(thumbv6m))]
     pub fn lock_mut<R, PRIORITY, F>(
         &'static self,
         _priority: &mut P<PRIORITY>,
