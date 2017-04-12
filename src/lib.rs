@@ -8,6 +8,7 @@ extern crate typenum;
 
 use core::cell::UnsafeCell;
 use core::marker::PhantomData;
+#[cfg(not(thumbv6m))]
 use core::ops::Sub;
 
 use cortex_m::interrupt::Nr;
