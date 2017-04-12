@@ -91,13 +91,15 @@ fn main() {
     }
 
     let u = Ident::new(format!("U{}", (1 << bits)));
-    tokens.push(quote! {
-        #[doc(hidden)]
-        pub type CMAX = C<::typenum::#u>;
+    tokens.push(
+        quote! {
+            #[doc(hidden)]
+            pub type CMAX = C<::typenum::#u>;
 
-        /// Maximum priority level
-        pub type UMAX = ::typenum::#u;
-    });
+            /// Maximum priority level
+            pub type UMAX = ::typenum::#u;
+        },
+    );
 
     let tokens = quote! {
         #(#tokens)*
