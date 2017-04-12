@@ -319,10 +319,12 @@ macro_rules! tasks {
                     {
                         let hw = $crate::$P::hw();
                         if hw != 0 {
-                            _nvic.set_priority
-                                (::$krate::interrupt::Interrupt::$Interrupt,
-                                 hw,
-                            );
+                            unsafe {
+                                _nvic.set_priority
+                                    (::$krate::interrupt::Interrupt::$Interrupt,
+                                     hw,
+                                    );
+                            }
                         }
                     }
                 )*
