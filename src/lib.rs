@@ -83,6 +83,19 @@ where
         unsafe { &*self.data.get() }
     }
 
+    /// Like [Resource.claim](struct.Resource.html#method.claim) but returns a
+    /// `&mut-` reference
+    pub fn claim_mut<'task, PRIORITY>(
+        &'static self,
+        _priority: &'task mut P<PRIORITY>,
+    ) -> &'task mut T
+    where
+        CEILING: Cmp<PRIORITY, Output = Equal>,
+        P<PRIORITY>: Priority,
+    {
+        unsafe { &mut *self.data.get() }
+    }
+
     /// Locks the resource for the duration of the critical section `f`
     ///
     /// For the duration of the critical section, tasks whose priority level is
