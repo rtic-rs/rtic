@@ -11,6 +11,7 @@ use core::marker::PhantomData;
 #[cfg(not(thumbv6m))]
 use core::ops::Sub;
 
+use cortex_m::ctxt::Context;
 use cortex_m::interrupt::Nr;
 #[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
@@ -18,7 +19,9 @@ use typenum::{Cmp, Equal, Unsigned};
 #[cfg(not(thumbv6m))]
 use typenum::{B1, Greater, Less, Sub1};
 
-pub use cortex_m::ctxt::{Context, Local};
+pub use cortex_m::ctxt::Local;
+pub use cortex_m::asm::wfi;
+
 #[doc(hidden)]
 pub use cortex_m::peripheral::NVIC;
 #[doc(hidden)]
