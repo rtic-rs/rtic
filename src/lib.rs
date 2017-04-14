@@ -8,8 +8,6 @@ extern crate typenum;
 
 use core::cell::UnsafeCell;
 use core::marker::PhantomData;
-#[cfg(not(thumbv6m))]
-use core::ops::Sub;
 
 use cortex_m::ctxt::Context;
 use cortex_m::interrupt::Nr;
@@ -17,7 +15,7 @@ use cortex_m::interrupt::Nr;
 use cortex_m::register::{basepri, basepri_max};
 use typenum::{Cmp, Equal, Unsigned};
 #[cfg(not(thumbv6m))]
-use typenum::{B1, Greater, Less, Sub1};
+use typenum::{Greater, Less};
 
 pub use cortex_m::ctxt::Local;
 pub use cortex_m::asm::wfi;
@@ -156,9 +154,8 @@ where
         f: F,
     ) -> R
     where
-        F: FnOnce(&mut T, C<Sub1<CEILING>>) -> R,
+        F: FnOnce(&mut T) -> R,
         C<CEILING>: Ceiling,
-        CEILING: Sub<B1>,
         CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>
             + Level,
         P<PRIORITY>: Priority,
@@ -167,13 +164,7 @@ where
             let old_basepri = basepri::read();
             basepri_max::write(<CEILING>::hw());
             barrier!();
-            let ret = f(
-                &mut *self.data.get(),
-                C {
-                    _0: (),
-                    _marker: PhantomData,
-                },
-            );
+            let ret = f(&mut *self.data.get());
             barrier!();
             basepri::write(old_basepri);
             ret
