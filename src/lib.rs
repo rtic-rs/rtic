@@ -64,12 +64,15 @@ where
     /// section
     ///
     /// This operation is zero cost and doesn't impose any additional blocking
-    pub fn borrow<'cs, SCEILING>(
+    pub fn borrow<'cs, PRIORITY, SCEILING>(
         &'static self,
+        _priority: &P<PRIORITY>,
         _system_ceiling: &'cs C<SCEILING>,
     ) -> &'cs T
     where
         SCEILING: GreaterThanOrEqual<CEILING>,
+        CEILING: GreaterThanOrEqual<PRIORITY>,
+        P<PRIORITY>: Priority,
     {
         unsafe { &*self.data.get() }
     }
@@ -216,12 +219,14 @@ where
     C<CEILING>: Ceiling,
 {
     /// See [Resource.borrow](./struct.Resource.html#method.borrow)
-    pub fn borrow<'cs, SCEILING>(
+    pub fn borrow<'cs, PRIORITY, SCEILING>(
         &'static self,
+        _priority: &P<PRIORITY>,
         _system_ceiling: &'cs C<SCEILING>,
     ) -> &'cs Periph
     where
         SCEILING: GreaterThanOrEqual<CEILING>,
+        CEILING: GreaterThanOrEqual<PRIORITY>,
     {
         unsafe { &*self.peripheral.get() }
     }
