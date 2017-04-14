@@ -7,6 +7,7 @@
 #![no_std]
 
 extern crate cortex_m;
+extern crate static_ref;
 extern crate typenum;
 
 use core::cell::UnsafeCell;
@@ -16,6 +17,7 @@ use cortex_m::ctxt::Context;
 use cortex_m::interrupt::Nr;
 #[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
+use static_ref::{Ref, RefMut};
 use typenum::{Cmp, Equal, Unsigned};
 #[cfg(not(thumbv6m))]
 use typenum::{Greater, Less};
@@ -64,12 +66,12 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
         &'static self,
         _priority: &P<PRIORITY>,
         _system_ceiling: &'cs C<SCEILING>,
-    ) -> &'cs T
+    ) -> Ref<'cs, T>
     where
         SCEILING: GreaterThanOrEqual<CEILING>,
         CEILING: GreaterThanOrEqual<PRIORITY>,
     {
-        unsafe { &*self.data.get() }
+        unsafe { Ref::new(&*self.data.get()) }
     }
 
     /// Claims the resource at the task with highest priority
@@ -78,11 +80,11 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     pub fn claim<'task, PRIORITY>(
         &'static self,
         _priority: &'task P<PRIORITY>,
-    ) -> &'task T
+    ) -> Ref<'task, T>
     where
         CEILING: Cmp<PRIORITY, Output = Equal>,
     {
-        unsafe { &*self.data.get() }
+        unsafe { Ref::new(&*self.data.get()) }
     }
 
     /// Like [Resource.claim](struct.Resource.html#method.claim) but returns a
@@ -90,11 +92,11 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     pub fn claim_mut<'task, PRIORITY>(
         &'static self,
         _priority: &'task mut P<PRIORITY>,
-    ) -> &'task mut T
+    ) -> RefMut<'task, T>
     where
         CEILING: Cmp<PRIORITY, Output = Equal>,
     {
-        unsafe { &mut *self.data.get() }
+        unsafe { RefMut::new(&mut *self.data.get()) }
     }
 
     /// Locks the resource for the duration of the critical section `f`
@@ -113,7 +115,7 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
         f: F,
     ) -> R
     where
-        F: FnOnce(&T, C<CEILING>) -> R,
+        F: FnOnce(Ref<T>, C<CEILING>) -> R,
         CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>
             + Level,
     {
@@ -121,7 +123,8 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
             let old_basepri = basepri::read();
             basepri_max::write(<CEILING>::hw());
             barrier!();
-            let ret = f(&*self.data.get(), C { _marker: PhantomData });
+            let ret =
+                f(Ref::new(&*self.data.get()), C { _marker: PhantomData });
             barrier!();
             basepri::write(old_basepri);
             ret
@@ -141,7 +144,7 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
         f: F,
     ) -> R
     where
-        F: FnOnce(&mut T) -> R,
+        F: FnOnce(RefMut<T>) -> R,
         CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>
             + Level,
     {
@@ -149,7 +152,7 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
             let old_basepri = basepri::read();
             basepri_max::write(<CEILING>::hw());
             barrier!();
-            let ret = f(&mut *self.data.get());
+            let ret = f(RefMut::new(&mut *self.data.get()));
             barrier!();
             basepri::write(old_basepri);
             ret
@@ -196,23 +199,23 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
         &'static self,
         _priority: &P<PRIORITY>,
         _system_ceiling: &'cs C<SCEILING>,
-    ) -> &'cs Periph
+    ) -> Ref<'cs, Periph>
     where
         SCEILING: GreaterThanOrEqual<CEILING>,
         CEILING: GreaterThanOrEqual<PRIORITY>,
     {
-        unsafe { &*self.peripheral.get() }
+        unsafe { Ref::new(&*self.peripheral.get()) }
     }
 
     /// See [Resource.claim](./struct.Resource.html#method.claim)
     pub fn claim<'task, PRIORITY>(
         &'static self,
         _priority: &'task P<PRIORITY>,
-    ) -> &'task Periph
+    ) -> Ref<'task, Periph>
     where
         CEILING: Cmp<PRIORITY, Output = Equal>,
     {
-        unsafe { &*self.peripheral.get() }
+        unsafe { Ref::new(&*self.peripheral.get()) }
     }
 
     /// See [Resource.lock](./struct.Resource.html#method.lock)
@@ -223,7 +226,7 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
         f: F,
     ) -> R
     where
-        F: FnOnce(&Periph, C<CEILING>) -> R,
+        F: FnOnce(Ref<Periph>, C<CEILING>) -> R,
         CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>
             + Level,
     {
@@ -231,7 +234,10 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
             let old_basepri = basepri::read();
             basepri_max::write(<CEILING>::hw());
             barrier!();
-            let ret = f(&*self.peripheral.get(), C { _marker: PhantomData });
+            let ret = f(
+                Ref::new(&*self.peripheral.get()),
+                C { _marker: PhantomData },
+            );
             barrier!();
             basepri::write(old_basepri);
             ret

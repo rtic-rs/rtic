@@ -11,6 +11,7 @@ syn = "0.11.10"
 [dependencies]
 cortex-m = "0.2.2"
 typenum = "1.7.0"
+static-ref = { git = "https://github.com/japaric/static-ref" }
 
 [dev-dependencies]
 compiletest_rs = "0.2.5"
