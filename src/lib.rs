@@ -351,13 +351,19 @@ macro_rules! tasks {
     }) => {
         fn main() {
             $crate::critical(|cmax| {
-                let p0 = unsafe { ::core::ptr::read(0x0 as *const P0) };
+                fn signature(_: fn($crate::P0, $crate::CMAX)) {}
+
+                signature(init);
+                let p0 = unsafe { ::core::ptr::read(0x0 as *const _) };
                 init(p0, cmax);
                 set_priorities();
                 enable_tasks();
             });
 
-            let p0 = unsafe { ::core::ptr::read(0x0 as *const P0) };
+            fn signature(_: fn($crate::P0) -> !) {}
+
+            signature(idle);
+            let p0 = unsafe { ::core::ptr::read(0x0 as *const _) };
             idle(p0);
 
             fn set_priorities() {
