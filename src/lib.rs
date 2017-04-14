@@ -1,3 +1,6 @@
+//! Stack Resource Policy
+
+#![deny(missing_docs)]
 #![deny(warnings)]
 #![feature(asm)]
 #![feature(const_fn)]
@@ -52,10 +55,7 @@ impl<T, C> Resource<T, C> {
     }
 }
 
-impl<T, CEILING> Resource<T, C<CEILING>>
-where
-    C<CEILING>: Ceiling,
-{
+impl<T, CEILING> Resource<T, C<CEILING>> {
     /// Borrows the resource for the duration of another resource's critical
     /// section
     ///
@@ -68,7 +68,6 @@ where
     where
         SCEILING: GreaterThanOrEqual<CEILING>,
         CEILING: GreaterThanOrEqual<PRIORITY>,
-        P<PRIORITY>: Priority,
     {
         unsafe { &*self.data.get() }
     }
@@ -82,7 +81,6 @@ where
     ) -> &'task T
     where
         CEILING: Cmp<PRIORITY, Output = Equal>,
-        P<PRIORITY>: Priority,
     {
         unsafe { &*self.data.get() }
     }
@@ -95,7 +93,6 @@ where
     ) -> &'task mut T
     where
         CEILING: Cmp<PRIORITY, Output = Equal>,
-        P<PRIORITY>: Priority,
     {
         unsafe { &mut *self.data.get() }
     }
@@ -117,10 +114,8 @@ where
     ) -> R
     where
         F: FnOnce(&T, C<CEILING>) -> R,
-        C<CEILING>: Ceiling,
         CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>
             + Level,
-        P<PRIORITY>: Priority,
     {
         unsafe {
             let old_basepri = basepri::read();
@@ -147,10 +142,8 @@ where
     ) -> R
     where
         F: FnOnce(&mut T) -> R,
-        C<CEILING>: Ceiling,
         CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>
             + Level,
-        P<PRIORITY>: Priority,
     {
         unsafe {
             let old_basepri = basepri::read();
@@ -164,9 +157,9 @@ where
     }
 }
 
-unsafe impl<T, CEILING> Sync for Resource<T, CEILING>
+unsafe impl<T, C> Sync for Resource<T, C>
 where
-    CEILING: Ceiling,
+    C: Ceiling,
 {
 }
 
@@ -197,10 +190,7 @@ where
     }
 }
 
-impl<Periph, CEILING> Peripheral<Periph, C<CEILING>>
-where
-    C<CEILING>: Ceiling,
-{
+impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
     /// See [Resource.borrow](./struct.Resource.html#method.borrow)
     pub fn borrow<'cs, PRIORITY, SCEILING>(
         &'static self,
@@ -221,7 +211,6 @@ where
     ) -> &'task Periph
     where
         CEILING: Cmp<PRIORITY, Output = Equal>,
-        P<PRIORITY>: Priority,
     {
         unsafe { &*self.peripheral.get() }
     }
@@ -235,10 +224,8 @@ where
     ) -> R
     where
         F: FnOnce(&Periph, C<CEILING>) -> R,
-        C<CEILING>: Ceiling,
         CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>
             + Level,
-        P<PRIORITY>: Priority,
     {
         unsafe {
             let old_basepri = basepri::read();
@@ -279,7 +266,7 @@ where
     r
 }
 
-/// Requests the execution of the task `task`
+/// Requests the execution of a `task`
 pub fn request<T, P>(_task: fn(T, P))
 where
     T: Context + Nr,
@@ -320,12 +307,13 @@ impl<T> P<T>
 where
     T: Level,
 {
+    #[doc(hidden)]
     pub fn hw() -> u8 {
         T::hw()
     }
 }
 
-/// A valid ceiling
+/// A valid resource ceiling
 ///
 /// DO NOT IMPLEMENT THIS TRAIT YOURSELF
 pub unsafe trait Ceiling {}
@@ -339,10 +327,11 @@ pub unsafe trait GreaterThanOrEqual<RHS> {}
 ///
 /// DO NOT IMPLEMENT THIS TRAIT YOURSELF
 pub unsafe trait Level {
+    /// Interrupt hardware level
     fn hw() -> u8;
 }
 
-/// A valid priority level
+/// A valid task priority
 ///
 /// DO NOT IMPLEMENT THIS TRAIT YOURSELF
 pub unsafe trait Priority {}
@@ -353,8 +342,6 @@ fn logical2hw(logical: u8) -> u8 {
 
 /// Priority 0, the lowest priority
 pub type P0 = P<::typenum::U0>;
-
-unsafe impl Priority for P0 {}
 
 /// Declares tasks
 #[macro_export]

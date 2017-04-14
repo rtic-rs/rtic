@@ -40,7 +40,7 @@ fn main() {
     );
 
     // Ceilings
-    for i in 1..(1 << bits) + 1 {
+    for i in 0..(1 << bits) + 1 {
         let c = Ident::new(format!("C{}", i));
         let u = Ident::new(format!("U{}", i));
 

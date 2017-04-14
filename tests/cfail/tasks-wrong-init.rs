@@ -14,8 +14,8 @@ tasks!(device, {
     j1: (Exti0, P1),
 });
 
-// WRONG. `init` must have signature `fn(C16)`
-fn init(_: C1) {}
+// WRONG. `init` must have signature `fn(P0, C16)`
+fn init(_: P0, _: C1) {}
 
 fn idle(_: P0) {}
 
