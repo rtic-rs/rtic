@@ -364,12 +364,14 @@ macro_rules! tasks {
     }) => {
         fn main() {
             $crate::critical(|cmax| {
-                init(cmax);
+                let p0 = unsafe { ::core::ptr::read(0x0 as *const P0) };
+                init(p0, cmax);
                 set_priorities();
                 enable_tasks();
             });
 
-            idle(unsafe { ::core::ptr::read(0x0 as *const P0) });
+            let p0 = unsafe { ::core::ptr::read(0x0 as *const P0) };
+            idle(p0);
 
             fn set_priorities() {
                 // NOTE(safe) this function runs in an interrupt free context

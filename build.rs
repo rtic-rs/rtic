@@ -76,8 +76,8 @@ fn main() {
     }
 
     // GreaterThanOrEqual
-    for i in 1..(1 << bits) + 1 {
-        for j in 1..(i + 1) {
+    for i in 0..(1 << bits) + 1 {
+        for j in 0..(i + 1) {
             let i = Ident::new(format!("U{}", i));
             let j = Ident::new(format!("U{}", j));
 
