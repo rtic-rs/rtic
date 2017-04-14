@@ -22,8 +22,6 @@ pub use cortex_m::asm::wfi;
 
 #[doc(hidden)]
 pub use cortex_m::peripheral::NVIC;
-#[doc(hidden)]
-pub use cortex_m::interrupt::free;
 
 macro_rules! barrier {
     () => {
@@ -128,13 +126,7 @@ where
             let old_basepri = basepri::read();
             basepri_max::write(<CEILING>::hw());
             barrier!();
-            let ret = f(
-                &*self.data.get(),
-                C {
-                    _0: (),
-                    _marker: PhantomData,
-                },
-            );
+            let ret = f(&*self.data.get(), C { _marker: PhantomData });
             barrier!();
             basepri::write(old_basepri);
             ret
@@ -252,13 +244,7 @@ where
             let old_basepri = basepri::read();
             basepri_max::write(<CEILING>::hw());
             barrier!();
-            let ret = f(
-                &*self.peripheral.get(),
-                C {
-                    _0: (),
-                    _marker: PhantomData,
-                },
-            );
+            let ret = f(&*self.peripheral.get(), C { _marker: PhantomData });
             barrier!();
             basepri::write(old_basepri);
             ret
@@ -270,6 +256,27 @@ unsafe impl<T, C> Sync for Peripheral<T, C>
 where
     C: Ceiling,
 {
+}
+
+/// A global critical section
+///
+/// No task can preempt this critical section
+pub fn critical<R, F>(f: F) -> R
+where
+    F: FnOnce(CMAX) -> R,
+{
+    let primask = ::cortex_m::register::primask::read();
+    ::cortex_m::interrupt::disable();
+
+    let r = f(C { _marker: PhantomData });
+
+    // If the interrupts were active before our `disable` call, then re-enable
+    // them. Otherwise, keep them disabled
+    if primask.is_active() {
+        ::cortex_m::interrupt::enable();
+    }
+
+    r
 }
 
 /// Requests the execution of the task `task`
@@ -301,13 +308,11 @@ where
 
 /// A type-level ceiling
 pub struct C<T> {
-    _0: (),
     _marker: PhantomData<T>,
 }
 
 /// A type-level priority
 pub struct P<T> {
-    _0: (),
     _marker: PhantomData<T>,
 }
 
@@ -358,8 +363,8 @@ macro_rules! tasks {
         $($task:ident: ($Interrupt:ident, $P:ident),)*
     }) => {
         fn main() {
-            $crate::free(|_| {
-                init(unsafe { ::core::ptr::read(0x0 as *const $crate::CMAX )});
+            $crate::critical(|cmax| {
+                init(cmax);
                 set_priorities();
                 enable_tasks();
             });

@@ -93,7 +93,7 @@ fn main() {
     let u = Ident::new(format!("U{}", (1 << bits)));
     tokens.push(
         quote! {
-            #[doc(hidden)]
+            /// Maximum ceiling
             pub type CMAX = C<::typenum::#u>;
 
             /// Maximum priority level
