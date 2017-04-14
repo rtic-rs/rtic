@@ -21,7 +21,7 @@ use typenum::{Cmp, Equal, Unsigned};
 use typenum::{Greater, Less};
 
 pub use cortex_m::ctxt::Local;
-pub use cortex_m::asm::wfi;
+pub use cortex_m::asm::{bkpt, wfi};
 
 #[doc(hidden)]
 pub use cortex_m::peripheral::NVIC;
