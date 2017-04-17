@@ -47,7 +47,8 @@ pub struct Resource<T, CEILING> {
 impl<T, C> Resource<T, C> {
     /// Creates a new resource with ceiling `C`
     pub const fn new(data: T) -> Self
-        where C: Ceiling
+    where
+        C: Ceiling,
     {
         Resource {
             _ceiling: PhantomData,
@@ -61,12 +62,14 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     /// section
     ///
     /// This operation is zero cost and doesn't impose any additional blocking
-    pub fn borrow<'cs, PRIORITY, SCEILING>(&'static self,
-                                           _priority: &P<PRIORITY>,
-                                           _system_ceiling: &'cs C<SCEILING>)
-                                           -> Ref<'cs, T>
-        where SCEILING: GreaterThanOrEqual<CEILING>,
-              CEILING: GreaterThanOrEqual<PRIORITY>
+    pub fn borrow<'cs, PRIORITY, SCEILING>(
+        &'static self,
+        _priority: &P<PRIORITY>,
+        _system_ceiling: &'cs C<SCEILING>,
+    ) -> Ref<'cs, T>
+    where
+        SCEILING: GreaterThanOrEqual<CEILING>,
+        CEILING: GreaterThanOrEqual<PRIORITY>,
     {
         unsafe { Ref::new(&*self.data.get()) }
     }
@@ -74,18 +77,24 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     /// Claims the resource at the task with highest priority
     ///
     /// This operation is zero cost and doesn't impose any additional blocking
-    pub fn claim<'task, PRIORITY>(&'static self, _priority: &'task P<PRIORITY>) -> Ref<'task, T>
-        where CEILING: Cmp<PRIORITY, Output = Equal>
+    pub fn claim<'task, PRIORITY>(
+        &'static self,
+        _priority: &'task P<PRIORITY>,
+    ) -> Ref<'task, T>
+    where
+        CEILING: Cmp<PRIORITY, Output = Equal>,
     {
         unsafe { Ref::new(&*self.data.get()) }
     }
 
     /// Like [Resource.claim](struct.Resource.html#method.claim) but returns a
     /// `&mut-` reference
-    pub fn claim_mut<'task, PRIORITY>(&'static self,
-                                      _priority: &'task mut P<PRIORITY>)
-                                      -> RefMut<'task, T>
-        where CEILING: Cmp<PRIORITY, Output = Equal>
+    pub fn claim_mut<'task, PRIORITY>(
+        &'static self,
+        _priority: &'task mut P<PRIORITY>,
+    ) -> RefMut<'task, T>
+    where
+        CEILING: Cmp<PRIORITY, Output = Equal>,
     {
         unsafe { RefMut::new(&mut *self.data.get()) }
     }
@@ -108,7 +117,8 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
             let old_basepri = basepri::read();
             basepri_max::write(<CEILING>::hw());
             barrier!();
-            let ret = f(Ref::new(&*self.data.get()), C { _marker: PhantomData });
+            let ret =
+                f(Ref::new(&*self.data.get()), C { _marker: PhantomData });
             barrier!();
             basepri::write(old_basepri);
             ret
@@ -138,25 +148,32 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     }
 }
 
-unsafe impl<T, C> Sync for Resource<T, C> where C: Ceiling {}
+unsafe impl<T, C> Sync for Resource<T, C>
+where
+    C: Ceiling,
+{
+}
 
 /// A hardware peripheral as a resource
 pub struct Peripheral<P, CEILING>
-    where P: 'static
+where
+    P: 'static,
 {
     peripheral: cortex_m::peripheral::Peripheral<P>,
     _ceiling: PhantomData<CEILING>,
 }
 
 impl<P, C> Peripheral<P, C>
-    where C: Ceiling
+where
+    C: Ceiling,
 {
     /// Assigns a ceiling `C` to the `peripheral`
     ///
     /// # Safety
     ///
     /// You MUST not create two resources that point to the same peripheral
-    pub const unsafe fn new(peripheral: cortex_m::peripheral::Peripheral<P>) -> Self {
+    pub const unsafe fn new(peripheral: cortex_m::peripheral::Peripheral<P>,)
+        -> Self {
         Peripheral {
             _ceiling: PhantomData,
             peripheral: peripheral,
@@ -166,21 +183,25 @@ impl<P, C> Peripheral<P, C>
 
 impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
     /// See [Resource.borrow](./struct.Resource.html#method.borrow)
-    pub fn borrow<'cs, PRIORITY, SCEILING>(&'static self,
-                                           _priority: &P<PRIORITY>,
-                                           _system_ceiling: &'cs C<SCEILING>)
-                                           -> Ref<'cs, Periph>
-        where SCEILING: GreaterThanOrEqual<CEILING>,
-              CEILING: GreaterThanOrEqual<PRIORITY>
+    pub fn borrow<'cs, PRIORITY, SCEILING>(
+        &'static self,
+        _priority: &P<PRIORITY>,
+        _system_ceiling: &'cs C<SCEILING>,
+    ) -> Ref<'cs, Periph>
+    where
+        SCEILING: GreaterThanOrEqual<CEILING>,
+        CEILING: GreaterThanOrEqual<PRIORITY>,
     {
         unsafe { Ref::new(&*self.peripheral.get()) }
     }
 
     /// See [Resource.claim](./struct.Resource.html#method.claim)
-    pub fn claim<'task, PRIORITY>(&'static self,
-                                  _priority: &'task P<PRIORITY>)
-                                  -> Ref<'task, Periph>
-        where CEILING: Cmp<PRIORITY, Output = Equal>
+    pub fn claim<'task, PRIORITY>(
+        &'static self,
+        _priority: &'task P<PRIORITY>,
+    ) -> Ref<'task, Periph>
+    where
+        CEILING: Cmp<PRIORITY, Output = Equal>,
     {
         unsafe { Ref::new(&*self.peripheral.get()) }
     }
@@ -195,8 +216,10 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
             let old_basepri = basepri::read();
             basepri_max::write(<CEILING>::hw());
             barrier!();
-            let ret = f(Ref::new(&*self.peripheral.get()),
-                        C { _marker: PhantomData });
+            let ret = f(
+                Ref::new(&*self.peripheral.get()),
+                C { _marker: PhantomData },
+            );
             barrier!();
             basepri::write(old_basepri);
             ret
@@ -204,13 +227,18 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
     }
 }
 
-unsafe impl<T, C> Sync for Peripheral<T, C> where C: Ceiling {}
+unsafe impl<T, C> Sync for Peripheral<T, C>
+where
+    C: Ceiling,
+{
+}
 
 /// A global critical section
 ///
 /// No task can preempt this critical section
 pub fn critical<R, F>(f: F) -> R
-    where F: FnOnce(CMAX) -> R
+where
+    F: FnOnce(CMAX) -> R,
 {
     let primask = ::cortex_m::register::primask::read();
     ::cortex_m::interrupt::disable();
@@ -228,8 +256,9 @@ pub fn critical<R, F>(f: F) -> R
 
 /// Requests the execution of a `task`
 pub fn request<T, P>(_task: fn(T, P))
-    where T: Context + Nr,
-          P: Priority
+where
+    T: Context + Nr,
+    P: Priority,
 {
     let nvic = unsafe { &*NVIC.get() };
 
@@ -263,7 +292,8 @@ pub struct P<T> {
 }
 
 impl<T> P<T>
-    where T: Level
+where
+    T: Level,
 {
     #[doc(hidden)]
     pub fn hw() -> u8 {
