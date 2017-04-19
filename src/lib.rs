@@ -110,7 +110,7 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     /// [Resource.borrow](struct.Resource.html#method.borrow).
     #[cfg(not(thumbv6m))]
     pub fn lock<R, PRIORITY, F>(&'static self, _priority: &P<PRIORITY>, f: F) -> R
-        where F: FnOnce(Ref<T>, C<CEILING>) -> R,
+        where F: FnOnce(Ref<T>, &C<CEILING>) -> R,
               CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less> + Level
     {
         unsafe {
@@ -118,7 +118,7 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
             basepri_max::write(<CEILING>::hw());
             barrier!();
             let ret =
-                f(Ref::new(&*self.data.get()), C { _marker: PhantomData });
+                f(Ref::new(&*self.data.get()), &C { _marker: PhantomData });
             barrier!();
             basepri::write(old_basepri);
             ret
@@ -209,7 +209,7 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
     /// See [Resource.lock](./struct.Resource.html#method.lock)
     #[cfg(not(thumbv6m))]
     pub fn lock<R, PRIORITY, F>(&'static self, _priority: &P<PRIORITY>, f: F) -> R
-        where F: FnOnce(Ref<Periph>, C<CEILING>) -> R,
+        where F: FnOnce(Ref<Periph>, &C<CEILING>) -> R,
               CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less> + Level
     {
         unsafe {
@@ -218,7 +218,7 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
             barrier!();
             let ret = f(
                 Ref::new(&*self.peripheral.get()),
-                C { _marker: PhantomData },
+                &C { _marker: PhantomData },
             );
             barrier!();
             basepri::write(old_basepri);
