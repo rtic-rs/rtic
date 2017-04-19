@@ -18,7 +18,7 @@ use cortex_m::interrupt::Nr;
 #[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
 use static_ref::Ref;
-use typenum::{Cmp, Equal, Unsigned};
+use typenum::{Cmp, Unsigned};
 #[cfg(not(thumbv6m))]
 use typenum::{Greater, Less};
 
@@ -70,19 +70,6 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     where
         SCEILING: GreaterThanOrEqual<CEILING>,
         CEILING: GreaterThanOrEqual<PRIORITY>,
-    {
-        unsafe { Ref::new(&*self.data.get()) }
-    }
-
-    /// Claims the resource at the task with highest priority
-    ///
-    /// This operation is zero cost and doesn't impose any additional blocking
-    pub fn claim<'task, PRIORITY>(
-        &'static self,
-        _priority: &'task P<PRIORITY>,
-    ) -> Ref<'task, T>
-    where
-        CEILING: Cmp<PRIORITY, Output = Equal>,
     {
         unsafe { Ref::new(&*self.data.get()) }
     }
@@ -157,17 +144,6 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
     where
         SCEILING: GreaterThanOrEqual<CEILING>,
         CEILING: GreaterThanOrEqual<PRIORITY>,
-    {
-        unsafe { Ref::new(&*self.peripheral.get()) }
-    }
-
-    /// See [Resource.claim](./struct.Resource.html#method.claim)
-    pub fn claim<'task, PRIORITY>(
-        &'static self,
-        _priority: &'task P<PRIORITY>,
-    ) -> Ref<'task, Periph>
-    where
-        CEILING: Cmp<PRIORITY, Output = Equal>,
     {
         unsafe { Ref::new(&*self.peripheral.get()) }
     }

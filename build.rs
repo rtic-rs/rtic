@@ -56,6 +56,7 @@ fn main() {
 
     // Priorities
     for i in 1..(1 << bits) + 1 {
+        let c = Ident::new(format!("C{}", i));
         let p = Ident::new(format!("P{}", i));
         let u = Ident::new(format!("U{}", i));
 
@@ -63,6 +64,15 @@ fn main() {
             quote! {
                 /// Priority
                 pub type #p = P<::typenum::#u>;
+
+                impl #p {
+                    /// Turns this priority into a ceiling
+                    pub fn as_ceiling(&self) -> &#c {
+                        unsafe {
+                            ::core::mem::transmute(self)
+                        }
+                    }
+                }
 
                 unsafe impl Priority for #p {}
 

@@ -11,13 +11,13 @@ fn j1(prio: P3) {
 }
 
 // DON'T lock a resource with ceiling equal to the task priority.
-// Instead use `claim`
+// Instead use `borrow`
 fn j2(prio: P2) {
     R1.lock(&prio, |_, _| {});
     //~^ error
 
     // OK
-    let r1 = R1.claim(&prio);
+    let r1 = R1.borrow(&prio, prio.as_ceiling());
 }
 
 // You CAN lock a resource with ceiling C from a task with priority P if C > P
@@ -37,5 +37,5 @@ fn j4(prio: P1) {
 // Only tasks with priority P16 can claim a resource with ceiling C16
 fn j5(prio: P16) {
     // OK
-    let r2 = R2.claim(&prio);
+    let r2 = R2.borrow(&prio, prio.as_ceiling());
 }
