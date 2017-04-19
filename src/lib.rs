@@ -148,6 +148,33 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     #[cfg(not(thumbv6m))]
     pub fn mock<R, PRIOTASK, CURRCEIL, F>(&'static self, _prio: &C<PRIOTASK>, _curr_ceil: &C<CURRCEIL>, f: F) -> R
     where
+        F: FnOnce(Ref<T>, &C<CEILING>) -> R,
+        PRIOTASK: Unsigned, 
+        CURRCEIL: Unsigned,
+        CEILING: GreaterThanOrEqual<PRIOTASK> + Max<CURRCEIL> + Level + Unsigned,
+    {
+        unsafe {
+            let c1 = <CURRCEIL>::to_u8();
+            let c2 = <CEILING>::to_u8();
+            if c2 > c1 {
+                let old_basepri = basepri::read();
+                basepri_max::write(<CEILING>::hw());
+                barrier!();
+                let ret =
+                    f(Ref::new(&*self.data.get()), &C { _marker: PhantomData });
+                barrier!();
+                basepri::write(old_basepri);
+                ret
+            } else {
+                f(Ref::new(&*self.data.get()), &C { _marker: PhantomData })
+
+            }
+        }
+    }
+/// Dummy documentation
+  #[cfg(not(thumbv6m))]
+    pub fn mock_mut<R, PRIOTASK, CURRCEIL, F>(&'static self, _prio: &mut C<PRIOTASK>, _curr_ceil: &mut C<CURRCEIL>, f: F) -> R
+    where
         F: FnOnce(Ref<T>, C<CEILING>) -> R,
         PRIOTASK: Unsigned, 
         CURRCEIL: Unsigned,
@@ -161,7 +188,7 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
                 basepri_max::write(<CEILING>::hw());
                 barrier!();
                 let ret =
-                    f(Ref::new(&*self.data.get()), C { _marker: PhantomData });
+                    f(Ref::new(&mut *self.data.get()), C { _marker: PhantomData });
                 barrier!();
                 basepri::write(old_basepri);
                 ret
@@ -171,7 +198,6 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
             }
         }
     }
-
 
     /// Like [Resource.lock](struct.Resource.html#method.lock) but returns a
     /// `&mut-` reference
