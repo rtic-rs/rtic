@@ -351,7 +351,7 @@ macro_rules! tasks {
     }) => {
         fn main() {
             $crate::critical(|cmax| {
-                fn signature(_: fn($crate::P0, $crate::CMAX)) {}
+                fn signature(_: fn($crate::P0, &$crate::CMAX)) {}
 
                 signature(init);
                 let p0 = unsafe { ::core::ptr::read(0x0 as *const _) };
