@@ -17,7 +17,7 @@ use cortex_m::ctxt::Context;
 use cortex_m::interrupt::Nr;
 #[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
-use static_ref::{Ref, RefMut};
+use static_ref::Ref;
 use typenum::{Cmp, Equal, Unsigned};
 #[cfg(not(thumbv6m))]
 use typenum::{Greater, Less};
@@ -87,18 +87,6 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
         unsafe { Ref::new(&*self.data.get()) }
     }
 
-    /// Like [Resource.claim](struct.Resource.html#method.claim) but returns a
-    /// `&mut-` reference
-    pub fn claim_mut<'task, PRIORITY>(
-        &'static self,
-        _priority: &'task mut P<PRIORITY>,
-    ) -> RefMut<'task, T>
-    where
-        CEILING: Cmp<PRIORITY, Output = Equal>,
-    {
-        unsafe { RefMut::new(&mut *self.data.get()) }
-    }
-
     /// Locks the resource for the duration of the critical section `f`
     ///
     /// For the duration of the critical section, tasks whose priority level is
@@ -119,28 +107,6 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
             barrier!();
             let ret =
                 f(Ref::new(&*self.data.get()), &C { _marker: PhantomData });
-            barrier!();
-            basepri::write(old_basepri);
-            ret
-        }
-    }
-
-    /// Like [Resource.lock](struct.Resource.html#method.lock) but returns a
-    /// `&mut-` reference
-    ///
-    /// This method has additional an additional constraint: you can't borrow a
-    /// resource that has ceiling equal `CEILING`. This constraint is required
-    /// to preserve Rust aliasing rules.
-    #[cfg(not(thumbv6m))]
-    pub fn lock_mut<R, PRIORITY, F>(&'static self, _priority: &mut P<PRIORITY>, f: F) -> R
-        where F: FnOnce(RefMut<T>) -> R,
-              CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less> + Level
-    {
-        unsafe {
-            let old_basepri = basepri::read();
-            basepri_max::write(<CEILING>::hw());
-            barrier!();
-            let ret = f(RefMut::new(&mut *self.data.get()));
             barrier!();
             basepri::write(old_basepri);
             ret
