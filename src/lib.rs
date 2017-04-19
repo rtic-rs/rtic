@@ -238,12 +238,12 @@ where
 /// No task can preempt this critical section
 pub fn critical<R, F>(f: F) -> R
 where
-    F: FnOnce(CMAX) -> R,
+    F: FnOnce(&CMAX) -> R,
 {
     let primask = ::cortex_m::register::primask::read();
     ::cortex_m::interrupt::disable();
 
-    let r = f(C { _marker: PhantomData });
+    let r = f(&C { _marker: PhantomData });
 
     // If the interrupts were active before our `disable` call, then re-enable
     // them. Otherwise, keep them disabled
