@@ -8,6 +8,7 @@
 
 extern crate cortex_m;
 extern crate static_ref;
+//#[macro_use]
 extern crate typenum;
 
 use core::cell::UnsafeCell;
@@ -18,6 +19,7 @@ use cortex_m::interrupt::Nr;
 #[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
 use static_ref::{Ref, RefMut};
+
 use typenum::{Cmp, Equal, Unsigned};
 #[cfg(not(thumbv6m))]
 use typenum::{Greater, Less};
@@ -27,6 +29,7 @@ pub use cortex_m::asm::{bkpt, wfi};
 
 #[doc(hidden)]
 pub use cortex_m::peripheral::NVIC;
+
 
 macro_rules! barrier {
     () => {
@@ -56,6 +59,9 @@ impl<T, C> Resource<T, C> {
         }
     }
 }
+
+//unsafe impl Max<::typenum::U0> for ::typenum::U0 {}
+use typenum::type_operators::*;
 
 impl<T, CEILING> Resource<T, C<CEILING>> {
     /// Borrows the resource for the duration of another resource's critical
@@ -109,9 +115,14 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     /// than `CEILING` can be borrowed at zero cost. See
     /// [Resource.borrow](struct.Resource.html#method.borrow).
     #[cfg(not(thumbv6m))]
-    pub fn lock<R, PRIORITY, F>(&'static self, _priority: &P<PRIORITY>, f: F) -> R
-        where F: FnOnce(Ref<T>, C<CEILING>) -> R,
-              CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less> + Level
+    pub fn lock<R, PRIORITY, F>(
+        &'static self,
+        _priority: &P<PRIORITY>,
+        f: F,
+    ) -> R
+    where
+        F: FnOnce(Ref<T>, C<CEILING>) -> R,
+        CEILING: GreaterThanOrEqual<PRIORITY> + Level,
     {
         unsafe {
             let old_basepri = basepri::read();
@@ -124,6 +135,43 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
             ret
         }
     }
+
+    /// Locks the resource for the duration of the critical section `f`
+    ///
+    /// For the duration of the critical section, tasks whose priority level is
+    /// smaller than or equal to the resource `CEILING` will be prevented from
+    /// preempting the current task.
+    ///
+    /// Within this critical section, resources with ceiling equal to or smaller
+    /// than `CEILING` can be borrowed at zero cost. See
+    /// [Resource.borrow](struct.Resource.html#method.borrow).
+    #[cfg(not(thumbv6m))]
+    pub fn mock<R, PRIOTASK, CURRCEIL, F>(&'static self, _prio: &C<PRIOTASK>, _curr_ceil: &C<CURRCEIL>, f: F) -> R
+    where
+        F: FnOnce(Ref<T>, C<CEILING>) -> R,
+        PRIOTASK: Unsigned, 
+        CURRCEIL: Unsigned,
+        CEILING: GreaterThanOrEqual<PRIOTASK> + Max<CURRCEIL> + Level + Unsigned,
+    {
+        unsafe {
+            let c1 = <CURRCEIL>::to_u8();
+            let c2 = <CEILING>::to_u8();
+            if c2 > c1 {
+                let old_basepri = basepri::read();
+                basepri_max::write(<CEILING>::hw());
+                barrier!();
+                let ret =
+                    f(Ref::new(&*self.data.get()), C { _marker: PhantomData });
+                barrier!();
+                basepri::write(old_basepri);
+                ret
+            } else {
+                f(Ref::new(&*self.data.get()), C { _marker: PhantomData })
+
+            }
+        }
+    }
+
 
     /// Like [Resource.lock](struct.Resource.html#method.lock) but returns a
     /// `&mut-` reference
@@ -281,6 +329,35 @@ where
     nvic.set_pending(task);
 }
 
+/// Requests the execution of a `task`
+pub fn pend<T, C>(_task: fn(T, C))
+where
+    T: Context + Nr,
+    C: ,
+    //C: Level,
+{
+    let nvic = unsafe { &*NVIC.get() };
+
+    match () {
+        #[cfg(debug_assertions)]
+        () => {
+            // NOTE(safe) zero sized type
+            let task = unsafe { core::ptr::read(0x0 as *const T) };
+            // NOTE(safe) atomic read
+            assert!(!nvic.is_pending(task),
+                    "Task is already in the pending state");
+        }
+        #[cfg(not(debug_assertions))]
+        () => {}
+    }
+
+    // NOTE(safe) zero sized type
+    let task = unsafe { core::ptr::read(0x0 as *const T) };
+    // NOTE(safe) atomic write
+    nvic.set_pending(task);
+}
+
+
 /// A type-level ceiling
 pub struct C<T> {
     _marker: PhantomData<T>,
@@ -342,7 +419,6 @@ pub fn hw2logical(hw: u8) -> u8 {
 
 /// Priority 0, the lowest priority
 pub type P0 = P<::typenum::U0>;
-
 /// Declares tasks
 #[macro_export]
 macro_rules! tasks {
