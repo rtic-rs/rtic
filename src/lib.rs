@@ -148,7 +148,7 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
     #[cfg(not(thumbv6m))]
     pub fn mock<R, PRIOTASK, CURRCEIL, F>(&'static self, _prio: &C<PRIOTASK>, _curr_ceil: &C<CURRCEIL>, f: F) -> R
     where
-        F: FnOnce(Ref<T>, &C<CEILING>) -> R,
+        F: FnOnce(Ref<T>, &C<<CEILING as Max<CURRCEIL>>::Output>) -> R,
         PRIOTASK: Unsigned, 
         CURRCEIL: Unsigned,
         CEILING: GreaterThanOrEqual<PRIOTASK> + Max<CURRCEIL> + Level + Unsigned,
