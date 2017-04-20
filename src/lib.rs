@@ -18,9 +18,9 @@ use cortex_m::interrupt::Nr;
 #[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
 use static_ref::Ref;
-use typenum::{Cmp, Unsigned};
+use typenum::Unsigned;
 #[cfg(not(thumbv6m))]
-use typenum::{Greater, Less};
+use typenum::{Cmp, Greater, Less};
 
 pub use cortex_m::ctxt::Local;
 pub use cortex_m::asm::{bkpt, wfi};
