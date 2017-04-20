@@ -10,7 +10,7 @@ extern crate cortex_m;
 extern crate static_ref;
 extern crate typenum;
 
-use core::cell::UnsafeCell;
+use core::cell::{Cell, UnsafeCell};
 use core::marker::PhantomData;
 
 use cortex_m::ctxt::Context;
@@ -27,6 +27,8 @@ pub use cortex_m::asm::{bkpt, wfi};
 
 #[doc(hidden)]
 pub use cortex_m::peripheral::NVIC;
+
+use typenum::type_operators::*;
 
 macro_rules! barrier {
     () => {
@@ -52,6 +54,36 @@ impl<T, C> Resource<T, C> {
     {
         Resource {
             _ceiling: PhantomData,
+            data: UnsafeCell::new(data),
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+enum State {
+    Free,
+    //  Locked,
+    LockedMut,
+}
+
+/// A resource
+pub struct Res<T, CEILING> {
+    _ceiling: PhantomData<CEILING>,
+    _state: Cell<State>,
+    //_state: State,
+    data: UnsafeCell<T>,
+}
+
+impl<T, C> Res<T, C> {
+    /// Creates a new resource with ceiling `C`
+    pub const fn new(data: T) -> Self
+    where
+        C: Ceiling,
+    {
+        Res {
+            _ceiling: PhantomData,
+            _state: Cell::new(State::Free),
+            //    _state: State::Free,
             data: UnsafeCell::new(data),
         }
     }
@@ -99,9 +131,227 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
             ret
         }
     }
+
+    /// Locks the resource for the duration of the critical section `f`
+    ///
+    /// For the duration of the critical section, tasks whose priority level is
+    /// smaller than or equal to the resource `CEILING` will be prevented from
+    /// preempting the current task.
+    ///
+    /// Within this critical section, resources with ceiling equal to or smaller
+    /// than `CEILING` can be borrowed at zero cost. See
+    /// [Resource.borrow](struct.Resource.html#method.borrow).
+    #[cfg(not(thumbv6m))]
+    pub fn mock<R, PRIOTASK, CURRCEIL, F>(
+        &'static self,
+        _prio: &P<PRIOTASK>,
+        _curr_ceil: &C<CURRCEIL>,
+        f: F,
+    ) -> R
+    where
+        F: FnOnce(Ref<T>, &C<<CEILING as Max<CURRCEIL>>::Output>) -> R,
+        PRIOTASK: Unsigned,
+        CURRCEIL: Unsigned,
+        CEILING: GreaterThanOrEqual<PRIOTASK> + Max<CURRCEIL> + Level + Unsigned,
+    {
+        unsafe {
+            let c1 = <CURRCEIL>::to_u8();
+            let c2 = <CEILING>::to_u8();
+            if c2 > c1 {
+                let old_basepri = basepri::read();
+                basepri_max::write(<CEILING>::hw());
+                barrier!();
+                let ret =
+                    f(Ref::new(&*self.data.get()), &C { _marker: PhantomData });
+                barrier!();
+                basepri::write(old_basepri);
+                ret
+            } else {
+                f(Ref::new(&*self.data.get()), &C { _marker: PhantomData })
+
+            }
+        }
+    }
+
+    /// Locks the resource for the duration of the critical section `f`
+    ///
+    /// For the duration of the critical section, tasks whose priority level is
+    /// smaller than or equal to the resource `CEILING` will be prevented from
+    /// preempting the current task.
+    ///
+    /// Within this critical section, resources with ceiling equal to or smaller
+    /// than `CEILING` can be borrowed at zero cost. See
+    /// [Resource.borrow](struct.Resource.html#method.borrow).
+    #[cfg(not(thumbv6m))]
+    pub fn claim<R, PRIOTASK, CURRCEIL, F>(
+        &'static self,
+        _prio: &P<PRIOTASK>,
+        _curr_ceil: &C<CURRCEIL>,
+        f: F,
+    ) -> R
+    where
+        F: FnOnce(Ref<T>, &C<<CEILING as Max<CURRCEIL>>::Output>) -> R,
+        PRIOTASK: Unsigned,
+        CURRCEIL: Unsigned,
+        CEILING: GreaterThanOrEqual<PRIOTASK> + Max<CURRCEIL> + Level + Unsigned,
+    {
+        unsafe {
+            let c1 = <CURRCEIL>::to_u8();
+            let c2 = <CEILING>::to_u8();
+            if c2 > c1 {
+                let old_basepri = basepri::read();
+                basepri_max::write(<CEILING>::hw());
+                barrier!();
+                let ret =
+                    f(Ref::new(&*self.data.get()), &C { _marker: PhantomData });
+                barrier!();
+                basepri::write(old_basepri);
+                ret
+            } else {
+                f(Ref::new(&*self.data.get()), &C { _marker: PhantomData })
+
+            }
+        }
+    }
 }
 
 unsafe impl<T, C> Sync for Resource<T, C>
+where
+    C: Ceiling,
+{
+}
+
+// re-implementation of the original claim API
+impl<T, CEILING> Res<T, C<CEILING>> {
+    /// Locks the resource for the duration of the critical section `f`
+    ///
+    /// For the duration of the critical section, tasks whose priority level is
+    /// smaller than or equal to the resource `CEILING` will be prevented from
+    /// preempting the current task.
+    ///
+    /// Within this critical section, resources with ceiling equal to or smaller
+    /// than `CEILING` can be borrowed at zero cost. See
+    /// [Resource.borrow](struct.Resource.html#method.borrow).
+    #[cfg(not(thumbv6m))]
+    pub fn claim<R, PRIOTASK, CURRCEIL, F>(
+        &'static self,
+        _prio: &P<PRIOTASK>,
+        _curr_ceil: &C<CURRCEIL>,
+        f: F,
+    ) -> R
+    where
+        F: FnOnce(Ref<T>, &C<<CEILING as Max<CURRCEIL>>::Output>) -> R,
+        PRIOTASK: Unsigned,
+        CURRCEIL: Unsigned,
+        CEILING: GreaterThanOrEqual<PRIOTASK> + Max<CURRCEIL> + Level + Unsigned,
+    {
+
+        match self._state.get() {
+            State::LockedMut => panic!("Resource already locked)"),
+            _ => unsafe {
+                let c1 = <CURRCEIL>::to_u8();
+                let c2 = <CEILING>::to_u8();
+                if c2 > c1 {
+                    let old_basepri = basepri::read();
+                    basepri_max::write(<CEILING>::hw());
+                    barrier!();
+                    let s = self._state.get();
+                    self._state.set(State::LockedMut);
+                    barrier!();
+
+                    let ret = f(
+                        Ref::new(&*self.data.get()),
+                        &C { _marker: PhantomData },
+                    );
+
+                    barrier!();
+                    self._state.set(s);
+                    barrier!();
+                    basepri::write(old_basepri);
+                    ret
+                } else {
+                    let s = self._state.get();
+                    self._state.set(State::LockedMut);
+                    barrier!();
+
+                    let ret = f(
+                        Ref::new(&*self.data.get()),
+                        &C { _marker: PhantomData },
+                    );
+
+                    barrier!();
+                    self._state.set(s);
+                    ret
+                }
+            },
+        }
+    }
+    /// Locks the resource for the duration of the critical section `f`
+    ///
+    /// For the duration of the critical section, tasks whose priority level is
+    /// smaller than or equal to the resource `CEILING` will be prevented from
+    /// preempting the current task.
+    ///
+    /// Within this critical section, resources with ceiling equal to or smaller
+    /// than `CEILING` can be borrowed at zero cost. See
+    /// [Resource.borrow](struct.Resource.html#method.borrow).
+    #[cfg(not(thumbv6m))]
+    pub fn claim_mut<R, PRIOTASK, CURRCEIL, F>(
+        &'static self,
+        _prio: &P<PRIOTASK>,
+        _curr_ceil: &C<CURRCEIL>,
+        f: F,
+    ) -> R
+    where
+        F: FnOnce(&mut T, &C<<CEILING as Max<CURRCEIL>>::Output>) -> R,
+        PRIOTASK: Unsigned,
+        CURRCEIL: Unsigned,
+        CEILING: GreaterThanOrEqual<PRIOTASK> + Max<CURRCEIL> + Level + Unsigned,
+    {
+        unsafe {
+            match self._state.get() {
+                State::Free => {
+                    let c1 = <CURRCEIL>::to_u8();
+                    let c2 = <CEILING>::to_u8();
+                    if c2 > c1 {
+                        let old_basepri = basepri::read();
+                        basepri_max::write(<CEILING>::hw());
+                        barrier!();
+                        self._state.set(State::LockedMut);
+                        barrier!();
+
+                        let ret = f(
+                            &mut *self.data.get(),
+                            &C { _marker: PhantomData },
+                        );
+
+                        barrier!();
+                        self._state.set(State::Free);
+                        barrier!();
+                        basepri::write(old_basepri);
+                        ret
+                    } else {
+                        self._state.set(State::LockedMut);
+                        barrier!();
+
+                        let ret = f(
+                            &mut *self.data.get(),
+                            &C { _marker: PhantomData },
+                        );
+
+                        barrier!();
+                        self._state.set(State::Free);
+                        ret
+
+                    }
+                }
+                _ => panic!("Resource already locked)"),
+            }
+        }
+    }
+}
+
+unsafe impl<T, C> Sync for Res<T, C>
 where
     C: Ceiling,
 {
@@ -222,6 +472,7 @@ where
     // NOTE(safe) atomic write
     nvic.set_pending(task);
 }
+
 
 /// A type-level ceiling
 pub struct C<T> {
