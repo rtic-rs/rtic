@@ -5,9 +5,11 @@ use rtfm::{C3, P0, P2, Resource};
 static R1: Resource<(), C3> = Resource::new(());
 
 fn j1(prio: P2) {
-    let c3 = R1.lock(&prio, |r1, c3| {
+    let ceil = prio.as_ceiling();
+
+    let c3 = rtfm::raise_to(ceil, &R1, |ceil| {
         // forbidden: ceiling token can't outlive critical section
-        c3  //~ error
+        ceil  //~ error
     });
 
     // Would be bad: lockless access to a resource with ceiling = 3

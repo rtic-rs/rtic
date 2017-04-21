@@ -6,32 +6,44 @@ static R1: Resource<i32, C2> = Resource::new(0);
 
 // You CAN'T lock a resource with ceiling C from a task with priority P if P > C
 fn j1(prio: P3) {
-    R1.lock(&prio, |_, _| {});
-    //~^ error
+    let ceil = prio.as_ceiling();
+
+    rtfm::raise_to(ceil, &R1, |ceil| {
+        //~^ error
+    });
 }
 
 // DON'T lock a resource with ceiling equal to the task priority.
 // Instead use `borrow`
 fn j2(prio: P2) {
-    R1.lock(&prio, |_, _| {});
+    let ceil = prio.as_ceiling();
+
+    rtfm::raise_to(ceil, &R1, |_| {});
     //~^ error
 
     // OK
-    let r1 = R1.borrow(&prio, prio.as_ceiling());
+    let r1 = R1.borrow(&prio, ceil);
 }
 
 // You CAN lock a resource with ceiling C from a task with priority P if C > P
 fn j3(prio: P1) {
+    let ceil = prio.as_ceiling();
+
     // OK
-    R1.lock(&prio, |r1, _| {});
+    rtfm::raise_to(ceil, &R1, |ceil| {
+        let r1 = R1.borrow(&prio, ceil);
+    })
 }
 
 static R2: Resource<i32, C16> = Resource::new(0);
 
 // Tasks with priority less than P16 can't lock a resource with ceiling C16
 fn j4(prio: P1) {
-    R2.lock(&prio, |_, _| {});
-    //~^ error
+    let ceil = prio.as_ceiling();
+
+    rtfm::raise_to(ceil, &R2, |ceil| {
+        //~^ error
+    });
 }
 
 // Only tasks with priority P16 can claim a resource with ceiling C16

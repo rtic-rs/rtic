@@ -29,7 +29,7 @@
 //!
 //! # Limitations
 //!
-//! - Task priorities must be fixed at runtime.
+//! - Task priority must remain constant at runtime.
 //!
 //! # Dependencies
 //!
@@ -328,14 +328,14 @@
 //!
 //! `Peripheral` and `Resource` has pretty much the same API except that
 //! `Peripheral.new` is `unsafe`. Care must be taken to NOT alias peripherals;
-//! i.e. create two `Peripheral`s that point to the same register block address.
+//! i.e. don't create two `Peripheral`s that point to the same register block.
 //!
 //! # References
 //!
 //! - Baker, T. P. (1991). Stack-based scheduling of realtime processes.
 //!   *Real-Time Systems*, 3(1), 67-99.
 //!
-//! > The seminal Stack Resource Policy paper. [PDF].
+//! > The original Stack Resource Policy paper. [PDF].
 //!
 //! [PDF]: http://www.cs.fsu.edu/~baker/papers/mstacks3.pdf
 //!
@@ -366,9 +366,9 @@ use cortex_m::interrupt::Nr;
 #[cfg(not(thumbv6m))]
 use cortex_m::register::{basepri, basepri_max};
 use static_ref::Ref;
-use typenum::{U0, Unsigned};
+use typenum::{Cmp, Greater, U0, Unsigned};
 #[cfg(not(thumbv6m))]
-use typenum::{Cmp, Greater, Less};
+use typenum::Less;
 
 pub use cortex_m::asm::{bkpt, wfi};
 
@@ -413,7 +413,8 @@ unsafe impl<T, TASK> Sync for Local<T, TASK> {}
 
 /// A resource with ceiling `C`
 ///
-/// Only tasks with priority equal to or smaller than `C` can access this resource
+/// Only tasks with priority equal to or smaller than `C` can access this
+/// resource
 pub struct Resource<T, C> {
     _ceiling: PhantomData<C>,
     data: UnsafeCell<T>,
@@ -450,42 +451,6 @@ impl<T, CEILING> Resource<T, C<CEILING>> {
         CEILING: GreaterThanOrEqual<PRIORITY>,
     {
         unsafe { Ref::new(&*self.data.get()) }
-    }
-
-    /// Locks the resource for the duration of the critical section `f`
-    ///
-    /// For the duration of the critical section, tasks whose priority level is
-    /// smaller than or equal to the resource `CEILING` will be prevented from
-    /// preempting the current task.
-    ///
-    /// Within this critical section, resources with ceiling equal to or smaller
-    /// than `CEILING` can be borrowed at zero cost using the
-    /// [Resource.borrow](struct.Resource.html#method.borrow) method.
-    ///
-    /// **NOTE** Only tasks with a priority equal to or smaller than the
-    /// resource ceiling can access the resource.
-    #[cfg(not(thumbv6m))]
-    pub fn lock<R, PRIORITY, F>(
-        &'static self,
-        _priority: &P<PRIORITY>,
-        f: F,
-    ) -> R
-    where
-        F: FnOnce(Ref<T>, &C<CEILING>) -> R,
-        CEILING: Cmp<PRIORITY, Output = Greater>,
-        CEILING: Cmp<UMAX, Output = Less>,
-        CEILING: Unsigned,
-    {
-        unsafe {
-            let old_basepri = basepri::read();
-            basepri_max::write(logical2hw(CEILING::to_u8()));
-            barrier!();
-            let ret =
-                f(Ref::new(&*self.data.get()), &C { _marker: PhantomData });
-            barrier!();
-            basepri::write(old_basepri);
-            ret
-        }
     }
 }
 
@@ -532,32 +497,6 @@ impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
     {
         unsafe { Ref::new(&*self.peripheral.get()) }
     }
-
-    /// See [Resource.lock](./struct.Resource.html#method.lock)
-    #[cfg(not(thumbv6m))]
-    pub fn lock<R, PRIORITY, F>(
-        &'static self,
-        _priority: &P<PRIORITY>,
-        f: F,
-    ) -> R
-    where
-        F: FnOnce(Ref<Periph>, &C<CEILING>) -> R,
-        CEILING: Cmp<PRIORITY, Output = Greater> + Cmp<UMAX, Output = Less>,
-        CEILING: Unsigned,
-    {
-        unsafe {
-            let old_basepri = basepri::read();
-            basepri_max::write(logical2hw(CEILING::to_u8()));
-            barrier!();
-            let ret = f(
-                Ref::new(&*self.peripheral.get()),
-                &C { _marker: PhantomData },
-            );
-            barrier!();
-            basepri::write(old_basepri);
-            ret
-        }
-    }
 }
 
 unsafe impl<T, C> Sync for Peripheral<T, C> {}
@@ -581,6 +520,31 @@ where
     }
 
     r
+}
+
+/// Raises the system ceiling to match `resource`'s ceiling
+#[cfg(not(thumbv6m))]
+pub fn raise_to<R, CURRENT, HIGHER, RES, F>(
+    _current_ceiling: &C<CURRENT>,
+    _resource: &RES,
+    f: F,
+) -> R
+where
+    F: FnOnce(&C<HIGHER>) -> R,
+    RES: ResourceLike<Ceiling = HIGHER>,
+    HIGHER: Cmp<CURRENT, Output = Greater>,
+    HIGHER: Cmp<UMAX, Output = Less>,
+    HIGHER: Unsigned,
+{
+    unsafe {
+        let old_basepri = basepri::read();
+        basepri_max::write(logical2hw(HIGHER::to_u8()));
+        barrier!();
+        let ret = f(&C { _marker: PhantomData });
+        barrier!();
+        basepri::write(old_basepri);
+        ret
+    }
 }
 
 /// Requests the execution of a `task`
@@ -635,6 +599,22 @@ where
     pub fn _hw() -> u8 {
         logical2hw(T::to_u8())
     }
+}
+
+/// Maps a `Resource` / `Peripheral` to its ceiling
+///
+/// Do not implement this trait yourself. This is an implementation detail.
+pub unsafe trait ResourceLike {
+    /// The ceiling of the resource
+    type Ceiling;
+}
+
+unsafe impl<P, CEILING> ResourceLike for Peripheral<P, C<CEILING>> {
+    type Ceiling = CEILING;
+}
+
+unsafe impl<T, CEILING> ResourceLike for Resource<T, C<CEILING>> {
+    type Ceiling = CEILING;
 }
 
 /// Type-level `>=` operator

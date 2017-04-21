@@ -6,17 +6,23 @@ static R1: Resource<i32, C2> = Resource::new(0);
 static R2: Resource<i32, C4> = Resource::new(0);
 
 fn j1(prio: P1) {
-    R1.lock(&prio, |r1, _| {
+    let ceil = prio.as_ceiling();
+
+    rtfm::raise_to(ceil, &R1, |ceil| {
+        let r1 = R1.borrow(&prio, ceil);
+
         // Would preempt this critical section
         // rtfm::request(j2);
     });
 }
 
 fn j2(prio: P3) {
-    R2.lock(&prio, |r2, c4| {
+    let ceil = prio.as_ceiling();
+
+    rtfm::raise_to(ceil, &R2, |ceil| {
         // OK  C2 (R1's ceiling) <= C4 (system ceiling)
         // BAD C2 (R1's ceiling) <  P3 (j2's priority)
-        let r1 = R1.borrow(&prio, &c4);
+        let r1 = R1.borrow(&prio, ceil);
         //~^ error
     });
 }
