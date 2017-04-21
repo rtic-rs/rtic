@@ -1,4 +1,8 @@
-# `cortex-m-srp`
+# `cortex-m-rtfm`
+
+> Real Time For the Masses (Cortex-M edition)
+
+# [Manual](https://docs.rs/cortex-m-rtfm)
 
 # License
 

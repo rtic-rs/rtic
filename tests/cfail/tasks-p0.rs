@@ -1,13 +1,13 @@
-// error-pattern: no associated item named `hw`
+// error-pattern: type mismatch
 
 #![feature(used)]
 
 extern crate core;
 extern crate cortex_m;
 #[macro_use]
-extern crate cortex_m_srp;
+extern crate cortex_m_rtfm as rtfm;
 
-use cortex_m_srp::{C16, P0, P1};
+use rtfm::{C16, P0, P1};
 use device::interrupt::Exti0;
 
 /// Tasks can't have priority 0. Only idle has priority 0
@@ -15,9 +15,11 @@ tasks!(device, {
     j1: (Exti0, P0),
 });
 
-fn init(_: C16) {}
+fn init(_: P0, _: &C16) {}
 
-fn idle(_: P0) {}
+fn idle(_: P0) -> ! {
+    loop {}
+}
 
 fn j1(_task: Exti0, _prio: P1) {}
 

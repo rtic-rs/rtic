@@ -1,6 +1,6 @@
-extern crate cortex_m_srp;
+extern crate cortex_m_rtfm as rtfm;
 
-use cortex_m_srp::{C1, C2, C3, C4, C5, P2, Resource};
+use rtfm::{C1, C2, C3, C4, C5, P2, Resource};
 
 static R1: Resource<i32, C4> = Resource::new(0);
 static R2: Resource<i32, C3> = Resource::new(0);

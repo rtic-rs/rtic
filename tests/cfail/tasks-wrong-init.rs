@@ -5,19 +5,21 @@
 extern crate core;
 extern crate cortex_m;
 #[macro_use]
-extern crate cortex_m_srp;
+extern crate cortex_m_rtfm as rtfm;
 
-use cortex_m_srp::{C1, P0, P1};
+use rtfm::{C1, P0, P1};
 use device::interrupt::Exti0;
 
 tasks!(device, {
     j1: (Exti0, P1),
 });
 
-// WRONG. `init` must have signature `fn(P0, C16)`
-fn init(_: P0, _: C1) {}
+// WRONG. `init` must have signature `fn(P0, &C16)`
+fn init(_: P0, _: &C1) {}
 
-fn idle(_: P0) {}
+fn idle(_: P0) -> ! {
+    loop {}
+}
 
 fn j1(_task: Exti0, _prio: P1) {}
 

@@ -5,18 +5,20 @@
 extern crate core;
 extern crate cortex_m;
 #[macro_use]
-extern crate cortex_m_srp;
+extern crate cortex_m_rtfm as rtfm;
 
-use cortex_m_srp::{C16, P0, P1};
+use cortex_mrtfm::{C16, P0, P1};
 use device::interrupt::Exti1;
 
 tasks!(device, {
     j1: (Exti0, P1),
 });
 
-fn init(_: C16) {}
+fn init(_: P0, _: &C16) {}
 
-fn idle(_: P0) {}
+fn idle(_: P0) -> ! {
+    loop {}
+}
 
 // Wrong task token. Declared Exti0, got Exti1
 fn j1(_task: Exti1, _prio: P1) {}

@@ -1,4 +1,4 @@
-extern crate cortex_m_srp as rtfm;
+extern crate cortex_m_rtfm as rtfm;
 
 use rtfm::{C3, P0, P2, Resource};
 

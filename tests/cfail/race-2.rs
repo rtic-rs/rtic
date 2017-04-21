@@ -1,6 +1,6 @@
-extern crate cortex_m_srp as srp;
+extern crate cortex_m_rtfm as rtfm;
 
-use srp::{C2, C4, P1, P3, Resource};
+use rtfm::{C2, C4, P1, P3, Resource};
 
 static R1: Resource<i32, C2> = Resource::new(0);
 static R2: Resource<i32, C4> = Resource::new(0);
@@ -8,7 +8,7 @@ static R2: Resource<i32, C4> = Resource::new(0);
 fn j1(prio: P1) {
     R1.lock(&prio, |r1, _| {
         // Would preempt this critical section
-        // srp::request(j2);
+        // rtfm::request(j2);
     });
 }
 

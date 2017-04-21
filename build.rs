@@ -44,25 +44,37 @@ fn main() {
         let c = Ident::new(format!("C{}", i));
         let u = Ident::new(format!("U{}", i));
 
+        let doc = format!("A ceiling of {}", i);
         tokens.push(
             quote! {
-                /// Ceiling
+                #[doc = #doc]
                 pub type #c = C<::typenum::#u>;
-
-                unsafe impl Ceiling for #c {}
             },
         );
     }
 
     // Priorities
-    for i in 1..(1 << bits) + 1 {
+    for i in 0..(1 << bits) + 1 {
         let c = Ident::new(format!("C{}", i));
         let p = Ident::new(format!("P{}", i));
         let u = Ident::new(format!("U{}", i));
 
+        let doc = if i == 0 {
+            format!("A priority of 0, the lowest priority")
+        } else {
+            format!(
+                "A priority of {}{}",
+                i,
+                if i == (1 << bits) {
+                    ", the highest priority"
+                } else {
+                    ""
+                }
+            )
+        };
         tokens.push(
             quote! {
-                /// Priority
+                #[doc = #doc]
                 pub type #p = P<::typenum::#u>;
 
                 impl #p {
@@ -73,19 +85,11 @@ fn main() {
                         }
                     }
                 }
-
-                unsafe impl Priority for #p {}
-
-                unsafe impl Level for ::typenum::#u {
-                    fn hw() -> u8 {
-                        logical2hw(::typenum::#u::to_u8())
-                    }
-                }
             },
         );
     }
 
-    // GreaterThanOrEqual
+    // GreaterThanOrEqual & LessThanOrEqual
     for i in 0..(1 << bits) + 1 {
         for j in 0..(i + 1) {
             let i = Ident::new(format!("U{}", i));
@@ -95,16 +99,20 @@ fn main() {
                 quote! {
                     unsafe impl GreaterThanOrEqual<::typenum::#j> for
                         ::typenum::#i {}
+
+                    unsafe impl LessThanOrEqual<::typenum::#i> for
+                        ::typenum::#j {}
                 },
             );
         }
     }
 
     let u = Ident::new(format!("U{}", (1 << bits)));
+    let c = Ident::new(format!("C{}", (1 << bits)));
     tokens.push(
         quote! {
             /// Maximum ceiling
-            pub type CMAX = C<::typenum::#u>;
+            pub type CMAX = #c;
 
             /// Maximum priority level
             pub type UMAX = ::typenum::#u;
