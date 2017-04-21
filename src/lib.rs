@@ -521,13 +521,13 @@ where
 
 impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
     /// See [Resource.borrow](./struct.Resource.html#method.borrow)
-    pub fn borrow<'cs, PRIORITY, SCEILING>(
+    pub fn borrow<'cs, PRIORITY, CCEILING>(
         &'static self,
         _priority: &P<PRIORITY>,
-        _current_ceiling: &'cs C<SCEILING>,
+        _current_ceiling: &'cs C<CCEILING>,
     ) -> Ref<'cs, Periph>
     where
-        SCEILING: GreaterThanOrEqual<CEILING>,
+        CCEILING: GreaterThanOrEqual<CEILING>,
         CEILING: GreaterThanOrEqual<PRIORITY>,
     {
         unsafe { Ref::new(&*self.peripheral.get()) }
