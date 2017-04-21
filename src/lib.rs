@@ -434,7 +434,6 @@ where
 
 /// Nem attempt
 use core::cell::RefCell;
-use core::cell::RefMut;
 
 //use core::borrow::BorrowMut;
 /// A resource
@@ -556,17 +555,17 @@ impl<T, CEILING> ResRef<T, C<CEILING>> {
                 basepri_max::write(<CEILING>::hw());
                 barrier!();
 
-                let r: &RefCell<T> = &*self.data.get();
-                let rr: RefCell<T> = *r;
-                let mut rm: RefMut<T> = rr.borrow_mut();
-                let mut t: T = *rm;
-                let ret = f(&mut t, &C { _marker: PhantomData });
+                let a = &*self.data.get();
+                let mut am = a.borrow_mut();
+                let ret = f(&mut am, &C { _marker: PhantomData });
 
                 barrier!();
                 basepri::write(old_basepri);
                 ret
             } else {
-                panic!("");
+                let a = &*self.data.get();
+                let mut am = a.borrow_mut();
+                f(&mut am, &C { _marker: PhantomData })
             }
         }
     }
