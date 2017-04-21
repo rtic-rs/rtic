@@ -7,7 +7,7 @@ static R1: Resource<(), C3> = Resource::new(());
 fn j1(prio: P2) {
     let ceil = prio.as_ceiling();
 
-    let c3 = rtfm::raise_to(ceil, &R1, |ceil| {
+    let c3 = ceil.raise(&R1, |ceil| {
         // forbidden: ceiling token can't outlive critical section
         ceil  //~ error
     });

@@ -8,7 +8,7 @@ static R1: Resource<i32, C2> = Resource::new(0);
 fn j1(prio: P3) {
     let ceil = prio.as_ceiling();
 
-    rtfm::raise_to(ceil, &R1, |ceil| {
+    ceil.raise(&R1, |ceil| {
         //~^ error
     });
 }
@@ -18,7 +18,7 @@ fn j1(prio: P3) {
 fn j2(prio: P2) {
     let ceil = prio.as_ceiling();
 
-    rtfm::raise_to(ceil, &R1, |_| {});
+    ceil.raise(&R1, |_| {});
     //~^ error
 
     // OK
@@ -30,7 +30,7 @@ fn j3(prio: P1) {
     let ceil = prio.as_ceiling();
 
     // OK
-    rtfm::raise_to(ceil, &R1, |ceil| {
+    ceil.raise(&R1, |ceil| {
         let r1 = R1.borrow(&prio, ceil);
     })
 }
@@ -41,7 +41,7 @@ static R2: Resource<i32, C16> = Resource::new(0);
 fn j4(prio: P1) {
     let ceil = prio.as_ceiling();
 
-    rtfm::raise_to(ceil, &R2, |ceil| {
+    ceil.raise(&R2, |ceil| {
         //~^ error
     });
 }

@@ -12,7 +12,7 @@ static R6: Resource<i32, C2> = Resource::new(0);
 fn j1(prio: P2) {
     let ceil = prio.as_ceiling();
 
-    rtfm::raise_to(ceil, &R1, |ceil| {
+    ceil.raise(&R1, |ceil| {
         // CAN borrow a resource with ceiling C when the current ceiling SC > C
         let r2 = R2.borrow(&prio, ceil);
 

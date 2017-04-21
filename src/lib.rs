@@ -522,31 +522,6 @@ where
     r
 }
 
-/// Raises the system ceiling to match `resource`'s ceiling
-#[cfg(not(thumbv6m))]
-pub fn raise_to<R, CURRENT, HIGHER, RES, F>(
-    _current_ceiling: &C<CURRENT>,
-    _resource: &RES,
-    f: F,
-) -> R
-where
-    F: FnOnce(&C<HIGHER>) -> R,
-    RES: ResourceLike<Ceiling = HIGHER>,
-    HIGHER: Cmp<CURRENT, Output = Greater>,
-    HIGHER: Cmp<UMAX, Output = Less>,
-    HIGHER: Unsigned,
-{
-    unsafe {
-        let old_basepri = basepri::read();
-        basepri_max::write(logical2hw(HIGHER::to_u8()));
-        barrier!();
-        let ret = f(&C { _marker: PhantomData });
-        barrier!();
-        basepri::write(old_basepri);
-        ret
-    }
-}
-
 /// Requests the execution of a `task`
 pub fn request<T, PRIORITY>(_task: fn(T, P<PRIORITY>))
 where
@@ -584,6 +559,28 @@ where
 /// A type-level ceiling
 pub struct C<T> {
     _marker: PhantomData<T>,
+}
+
+impl<CURRENT> C<CURRENT> {
+    /// Raises the ceiling to match `resource`'s ceiling
+    pub fn raise<HIGHER, RES, R, F>(&self, _resource: &'static RES, f: F) -> R
+    where
+        RES: ResourceLike<Ceiling = HIGHER>,
+        HIGHER: Cmp<CURRENT, Output = Greater>,
+        HIGHER: Cmp<UMAX, Output = Less>,
+        HIGHER: Unsigned,
+        F: FnOnce(&C<HIGHER>) -> R,
+    {
+        unsafe {
+            let old_basepri = basepri::read();
+            basepri_max::write(logical2hw(HIGHER::to_u8()));
+            barrier!();
+            let ret = f(&C { _marker: PhantomData });
+            barrier!();
+            basepri::write(old_basepri);
+            ret
+        }
+    }
 }
 
 /// A type-level priority
