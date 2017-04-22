@@ -1,6 +1,7 @@
 //! RTFM: Real Time For the Masses (ARM Cortex-M edition)
 //!
-//! RTFM is a framework for building event driven / real time applications.
+//! RTFM is a framework for building embedded event-driven / real-time
+//! applications.
 //!
 //! This crate is based on the RTFM framework created by [prof. Per
 //! Lindgren][per] and uses a simplified version of the Stack Resource Policy as
@@ -17,15 +18,15 @@
 //! - Deadlock free execution guaranteed at compile time.
 //! - Minimal overhead as the scheduler has no software component / runtime; the
 //!   hardware does all the scheduling.
-//! - Full support for all Cortex M3, M4 and M7 devices. M0(+) is partially
-//!   supported at this time.
-//! - The number of priority levels is configurable at compile time through the
-//!   `P2` (4 levels), `P3` (8 levels), etc. Cargo features. The number of
+//! - Full support for all Cortex M3, M4 and M7 devices. M0(+) is also supported
+//!   but the whole API is not available (due to missing hardware features).
+//! - The number of task priority levels is configurable at compile time through
+//!   the `P2` (4 levels), `P3` (8 levels), etc. Cargo features. The number of
 //!   priority levels supported by the hardware is device specific but this
 //!   crate defaults to 16 as that's the most common scenario.
 //! - This task model is amenable to known WCET (Worst Case Execution Time)
-//!   analysis and scheduling analysis techniques. (Though we don't have any
-//!   tooling for that ATM.)
+//!   analysis and scheduling analysis techniques. (Though we haven't yet
+//!   developed tooling for that.)
 //!
 //! # Limitations
 //!
@@ -360,6 +361,7 @@ extern crate typenum;
 
 use core::cell::UnsafeCell;
 use core::marker::PhantomData;
+use core::ptr;
 
 use cortex_m::ctxt::Context;
 use cortex_m::interrupt::Nr;
@@ -512,7 +514,7 @@ impl<Periph, RC> Peripheral<Periph, C<RC>> {
 
 unsafe impl<T, C> Sync for Peripheral<T, C> {}
 
-/// Runs closure `f` in a *global* critical section
+/// Runs the closure `f` in a *global* critical section
 ///
 /// No task can preempt this critical section
 pub fn critical<R, F>(f: F) -> R
@@ -533,8 +535,53 @@ where
     r
 }
 
+/// Disables the `task`
+///
+/// The task won't run even if the underlying interrupt is raised
+pub fn disable<T, TP>(_task: fn(T, P<TP>))
+    where
+    T: Context + Nr,
+{
+    // NOTE(safe) zero sized type
+    let _task = unsafe { ptr::read(0x0 as *const T) };
+
+    // NOTE(safe) atomic write
+    unsafe { (*_NVIC.get()).disable(_task) }
+}
+
+/// Enables the `task`
+pub fn enable<T, TP>(_task: fn(T, P<TP>))
+where
+    T: Context + Nr,
+{
+    // NOTE(safe) zero sized type
+    let _task = unsafe { ptr::read(0x0 as *const T) };
+
+    // NOTE(safe) atomic write
+    unsafe { (*_NVIC.get()).enable(_task) }
+}
+
+/// Converts a shifted hardware priority into a logical priority
+pub fn hw2logical(hw: u8) -> u8 {
+    (1 << PRIORITY_BITS) - (hw >> (8 - PRIORITY_BITS))
+}
+
+/// Converts a logical priority into a shifted hardware priority, as used by the
+/// NVIC and the BASEPRI register
+///
+/// # Panics
+///
+/// This function panics if `logical` is outside the closed range
+/// `[1, 1 << PRIORITY_BITS]`. Where `PRIORITY_BITS` is the number of priority
+/// bits used by the device specific NVIC implementation.
+pub fn logical2hw(logical: u8) -> u8 {
+    assert!(logical >= 1 && logical <= (1 << PRIORITY_BITS));
+
+    ((1 << PRIORITY_BITS) - logical) << (8 - PRIORITY_BITS)
+}
+
 /// Requests the execution of a `task`
-pub fn request<T, PRIORITY>(_task: fn(T, P<PRIORITY>))
+pub fn request<T, TP>(_task: fn(T, P<TP>))
 where
     T: Context + Nr,
 {
@@ -561,9 +608,9 @@ where
 }
 
 #[doc(hidden)]
-pub fn _validate_priority<PRIORITY>(_: &P<PRIORITY>)
+pub fn _validate_priority<TP>(_: &P<TP>)
 where
-    PRIORITY: Cmp<U0, Output = Greater> + LessThanOrEqual<UMAX>,
+    TP: Cmp<U0, Output = Greater> + LessThanOrEqual<UMAX>,
 {
 }
 
@@ -633,32 +680,14 @@ pub unsafe trait GreaterThanOrEqual<RHS> {}
 /// Do not implement this trait yourself. This is an implementation detail.
 pub unsafe trait LessThanOrEqual<RHS> {}
 
-/// Converts a logical priority into a shifted hardware priority, as used by the
-/// NVIC and the BASEPRI register
-///
-/// # Panics
-///
-/// This function panics if `logical` is outside the closed range
-/// `[1, 1 << PRIORITY_BITS]`. Where `PRIORITY_BITS` is the number of priority
-/// bits used by the device specific NVIC implementation.
-pub fn logical2hw(logical: u8) -> u8 {
-    assert!(logical >= 1 && logical <= (1 << PRIORITY_BITS));
-
-    ((1 << PRIORITY_BITS) - logical) << (8 - PRIORITY_BITS)
-}
-
-/// Converts a shifted hardware priority into a logical priority
-pub fn hw2logical(hw: u8) -> u8 {
-    (1 << PRIORITY_BITS) - (hw >> (8 - PRIORITY_BITS))
-}
-
 /// A macro to declare tasks
 ///
+/// **NOTE** This macro will expand to a `main` function.
+///
 /// Each `$task` is bound to an `$Interrupt` handler and has a priority `$P`.
+/// `$enabled` indicates whether the task will be enabled before `idle` runs.
 ///
 /// The `$Interrupt` handlers are defined in the `$device` crate.
-///
-/// **NOTE** This macro will expand to a `main` function.
 ///
 /// Apart from defining the listed `$tasks`, the `init` and `idle` functions
 /// must be defined as well. `init` has type signature `fn(P0, &C16)`, and
@@ -666,7 +695,7 @@ pub fn hw2logical(hw: u8) -> u8 {
 #[macro_export]
 macro_rules! tasks {
     ($device:ident, {
-        $($task:ident: ($Interrupt:ident, $P:ident),)*
+        $($task:ident: ($Interrupt:ident, $P:ident, $enabled:expr),)*
     }) => {
         fn main() {
             $crate::critical(|cmax| {
@@ -709,7 +738,9 @@ macro_rules! tasks {
                 let _nvic = unsafe { &*$crate::_NVIC.get() };
 
                 $(
-                    _nvic.enable(::$device::interrupt::Interrupt::$Interrupt);
+                    if $enabled {
+                        $crate::enable(::$task);
+                    }
                 )*
             }
 
