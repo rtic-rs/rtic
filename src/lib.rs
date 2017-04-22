@@ -407,6 +407,14 @@ impl<T, TASK> Local<T, TASK> {
     pub fn borrow<'task>(&'static self, _task: &'task TASK) -> &'task T {
         unsafe { &*self.data.get() }
     }
+
+    /// Mutably borrows the task local data for the duration of the task
+    pub fn borrow_mut<'task>(
+        &'static self,
+        _task: &'task mut TASK,
+    ) -> &'task mut T {
+        unsafe { &mut *self.data.get() }
+    }
 }
 
 unsafe impl<T, TASK> Sync for Local<T, TASK> {}
