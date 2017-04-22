@@ -21,7 +21,7 @@ fn j2(prio: P2) {
     //~^ error
 
     // OK
-    let r1 = R1.borrow(&prio, ceil);
+    let r1 = R1.access(&prio, ceil);
 }
 
 // You CAN access a resource with ceiling C from a task with priority P if C > P
@@ -30,7 +30,7 @@ fn j3(prio: P1) {
     let ceil = prio.as_ceiling();
 
     // OK
-    ceil.raise(&R1, |ceil| { let r1 = R1.borrow(&prio, ceil); })
+    ceil.raise(&R1, |ceil| { let r1 = R1.access(&prio, ceil); })
 }
 
 static R2: Resource<i32, C16> = Resource::new(0);
@@ -46,5 +46,5 @@ fn j4(prio: P1) {
 // Only tasks with priority P16 can access a resource with ceiling C16
 fn j5(prio: P16) {
     // OK
-    let r2 = R2.borrow(&prio, prio.as_ceiling());
+    let r2 = R2.access(&prio, prio.as_ceiling());
 }

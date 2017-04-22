@@ -420,20 +420,17 @@ impl<T, TASK> Local<T, TASK> {
 unsafe impl<T, TASK> Sync for Local<T, TASK> {}
 
 /// A resource with ceiling `C`
-///
-/// Only tasks with priority equal to or smaller than `C` can access this
-/// resource
 pub struct Resource<T, C> {
     _ceiling: PhantomData<C>,
     data: UnsafeCell<T>,
 }
 
-impl<T, CEILING> Resource<T, C<CEILING>>
+impl<T, RC> Resource<T, C<RC>>
 where
-    CEILING: GreaterThanOrEqual<U0>,
-    CEILING: LessThanOrEqual<UMAX>,
+    RC: GreaterThanOrEqual<U0>,
+    RC: LessThanOrEqual<UMAX>,
 {
-    /// Creates a new resource with the specified `CEILING`
+    /// Creates a new resource
     pub const fn new(data: T) -> Self {
         Resource {
             _ceiling: PhantomData,
@@ -442,21 +439,27 @@ where
     }
 }
 
-impl<T, CEILING> Resource<T, C<CEILING>> {
-    /// Borrows the resource for the duration of a critical section
+impl<T, RC> Resource<T, C<RC>> {
+    /// Grants data race free and deadlock free access to the resource data
     ///
     /// This operation is zero cost and doesn't impose any additional blocking.
     ///
-    /// **NOTE** Only tasks with a priority equal to or smaller than the
-    /// resource ceiling can access the resource.
-    pub fn borrow<'cs, PRIORITY, CCEILING>(
+    /// # Requirements
+    ///
+    /// To access the resource data these conditions must be met:
+    ///
+    /// - The resource ceiling must be greater than or equal to the task
+    ///   priority
+    /// - The system ceiling must be greater than or equal to the resource
+    ///   ceiling
+    pub fn access<'cs, TP, SC>(
         &'static self,
-        _priority: &P<PRIORITY>,
-        _current_ceiling: &'cs C<CCEILING>,
+        _priority: &P<TP>,
+        _current_ceiling: &'cs C<SC>,
     ) -> Ref<'cs, T>
     where
-        CCEILING: GreaterThanOrEqual<CEILING>,
-        CEILING: GreaterThanOrEqual<PRIORITY>,
+        RC: GreaterThanOrEqual<TP>,
+        SC: GreaterThanOrEqual<RC>,
     {
         unsafe { Ref::new(&*self.data.get()) }
     }
@@ -492,16 +495,16 @@ where
     }
 }
 
-impl<Periph, CEILING> Peripheral<Periph, C<CEILING>> {
-    /// See [Resource.borrow](./struct.Resource.html#method.borrow)
-    pub fn borrow<'cs, PRIORITY, CCEILING>(
+impl<Periph, RC> Peripheral<Periph, C<RC>> {
+    /// See [Resource.access](./struct.Resource.html#method.access)
+    pub fn access<'cs, TP, SC>(
         &'static self,
-        _priority: &P<PRIORITY>,
-        _current_ceiling: &'cs C<CCEILING>,
+        _priority: &P<TP>,
+        _system_ceiling: &'cs C<SC>,
     ) -> Ref<'cs, Periph>
     where
-        CCEILING: GreaterThanOrEqual<CEILING>,
-        CEILING: GreaterThanOrEqual<PRIORITY>,
+        RC: GreaterThanOrEqual<TP>,
+        SC: GreaterThanOrEqual<RC>,
     {
         unsafe { Ref::new(&*self.peripheral.get()) }
     }
@@ -569,19 +572,17 @@ pub struct C<T> {
     _marker: PhantomData<T>,
 }
 
-impl<CURRENT> C<CURRENT> {
-    /// Raises the ceiling to match `resource`'s ceiling
-    pub fn raise<HIGHER, RES, R, F>(&self, _resource: &'static RES, f: F) -> R
+impl<SC> C<SC> {
+    /// Raises the system ceiling to match the `resource` ceiling
+    pub fn raise<RC, RES, R, F>(&self, _resource: &'static RES, f: F) -> R
     where
-        RES: ResourceLike<Ceiling = HIGHER>,
-        HIGHER: Cmp<CURRENT, Output = Greater>,
-        HIGHER: Cmp<UMAX, Output = Less>,
-        HIGHER: Unsigned,
-        F: FnOnce(&C<HIGHER>) -> R,
+        RES: ResourceLike<Ceiling = RC>,
+        RC: Cmp<SC, Output = Greater> + Cmp<UMAX, Output = Less> + Unsigned,
+        F: FnOnce(&C<RC>) -> R,
     {
         unsafe {
             let old_basepri = basepri::read();
-            basepri_max::write(logical2hw(HIGHER::to_u8()));
+            basepri_max::write(logical2hw(RC::to_u8()));
             barrier!();
             let ret = f(&C { _marker: PhantomData });
             barrier!();
@@ -614,12 +615,12 @@ pub unsafe trait ResourceLike {
     type Ceiling;
 }
 
-unsafe impl<P, CEILING> ResourceLike for Peripheral<P, C<CEILING>> {
-    type Ceiling = CEILING;
+unsafe impl<P, RC> ResourceLike for Peripheral<P, C<RC>> {
+    type Ceiling = RC;
 }
 
-unsafe impl<T, CEILING> ResourceLike for Resource<T, C<CEILING>> {
-    type Ceiling = CEILING;
+unsafe impl<T, RC> ResourceLike for Resource<T, C<RC>> {
+    type Ceiling = RC;
 }
 
 /// Type-level `>=` operator

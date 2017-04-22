@@ -10,7 +10,7 @@ fn j1(prio: P1) {
 
     ceil.raise(
         &R1, |ceil| {
-            let r1 = R1.borrow(&prio, ceil);
+            let r1 = R1.access(&prio, ceil);
 
             // `j2` preempts this critical section
             rtfm::request(j2);
@@ -25,7 +25,7 @@ fn j2(_task: Task, prio: P3) {
         &R2, |ceil| {
             // OK  C2 (R1's ceiling) <= C4 (system ceiling)
             // BAD C2 (R1's ceiling) <  P3 (j2's priority)
-            let r1 = R1.borrow(&prio, ceil);
+            let r1 = R1.access(&prio, ceil);
             //~^ error
         }
     );

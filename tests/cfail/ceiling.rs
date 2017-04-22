@@ -15,7 +15,7 @@ fn j1(prio: P2) {
     );
 
     // Would be bad: lockless access to a resource with ceiling = 3
-    let r2 = R1.borrow(&prio, c3);
+    let r2 = R1.access(&prio, c3);
 }
 
 fn j2(prio: P0) {
@@ -27,5 +27,5 @@ fn j2(prio: P0) {
     );
 
     // Would be bad: lockless access to a resource with ceiling = 16
-    let r1 = R1.borrow(&prio, c16);
+    let r1 = R1.access(&prio, c16);
 }
