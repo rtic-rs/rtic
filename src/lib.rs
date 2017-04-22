@@ -56,13 +56,13 @@
 //! ``` ignore
 //! #![no_std]
 //!
-//! #[macro_use]  // for the `hprintln!` macro
+//! #[macro_use] // for the `hprintln!` macro
 //! extern crate cortex_m;
 //!
 //! // before main initialization + `start` lang item
 //! extern crate cortex_m_rt;
 //!
-//! #[macro_use]  // for the `tasks!` macro
+//! #[macro_use] // for the `tasks!` macro
 //! extern crate cortex_m_rtfm as rtfm;
 //!
 //! // device crate generated using svd2rust
@@ -96,10 +96,11 @@
 //! IDLE
 //! ```
 //!
-//! The `tasks!` macro forces the following structure into your program:
+//! The `tasks!` macro overrides the `main` function and imposes the following
+//! structure into your program:
 //!
 //! - `init`, the initialization phase, is run first. This function is executed
-//!   in a *global* critical section and can't be preempted.
+//!   inside a *global* critical section and can't be preempted.
 //!
 //! - `idle`, a never ending function that runs after `init`.
 //!
@@ -114,8 +115,6 @@
 //! #[macro_use]
 //! extern crate cortex_m_rtfm as rtfm;
 //! extern crate stm32f100xx;
-//!
-//! use core::cell::Cell;
 //!
 //! use stm32f100xx::interrupt::Tim7Irq;
 //! use rtfm::{C16, Local, P0, P1};
@@ -134,20 +133,20 @@
 //!
 //! // TASKS
 //! tasks!(stm32f100xx, {
-//!     periodic: (Tim7Irq, P1),
+//!     periodic: (Tim7Irq, P1, true),
 //! });
 //!
-//! fn periodic(task: Tim7Irq, _priority: P1) {
+//! fn periodic(mut task: Tim7Irq, _priority: P1) {
 //!     // Task local data
-//!     static STATE: Local<Cell<bool>, Tim7Irq> = Local::new(Cell::new(false));
+//!     static STATE: Local<bool, Tim7Irq> = Local::new(false);
 //!
-//!     let state = STATE.borrow(&task);
+//!     let state = STATE.borrow_mut(&mut task);
 //!
 //!     // Toggle state
-//!     state.set(!state.get());
+//!     *state = !*state;
 //!
 //!     // Blink an LED
-//!     if state.get() {
+//!     if *state {
 //!         LED.on();
 //!     } else {
 //!         LED.off();
@@ -156,8 +155,8 @@
 //! ```
 //!
 //! Here we define a task named `periodic` and bind it to the `Tim7Irq`
-//! interrupt handler. Every time the `Tim7Irq` interrupt is triggered, the
-//! `periodic` runs. We assign to this task a priority of 1, `P1`; this is the
+//! interrupt. The `periodic` task will run every time the `Tim7Irq` interrupt
+//! is triggered. We assign to this task a priority of 1 (`P1`); this is the
 //! lowest priority that a task can have.
 //!
 //! We use the [`Local`](./struct.Local.html) abstraction to add state to the
@@ -184,8 +183,8 @@
 //! // omitted: `idle`, `init`
 //!
 //! tasks!(stm32f100xx, {
-//!     t1: (Tim6DacIrq, P1),
-//!     t2: (Tim7Irq, P1),
+//!     t1: (Tim6DacIrq, P1, true),
+//!     t2: (Tim7Irq, P1, true),
 //! });
 //!
 //! // Data shared between tasks `t1` and `t2`
@@ -194,7 +193,7 @@
 //! fn t1(_task: Tim6DacIrq, priority: P1) {
 //!     let ceiling = priority.as_ceiling();
 //!
-//!     let counter = COUNTER.borrow(&priority, &ceiling);
+//!     let counter = COUNTER.access(&priority, &ceiling);
 //!
 //!     counter.set(counter.get() + 1);
 //! }
@@ -202,7 +201,7 @@
 //! fn t2(_task: Tim7Irq, priority: P1) {
 //!     let ceiling = priority.as_ceiling();
 //!
-//!     let counter = COUNTER.borrow(&priority, &ceiling);
+//!     let counter = COUNTER.access(&priority, &ceiling);
 //!
 //!     counter.set(counter.get() + 2);
 //! }
@@ -216,7 +215,7 @@
 //! To share data between these two tasks, we use the
 //! [`Resource`](./struct.Resource.html) abstraction. As the tasks can't preempt
 //! each other, they can access the `COUNTER` resource using the zero cost
-//! [`borrow`](./struct.Resource.html#method.borrow) method -- no
+//! [`access`](./struct.Resource.html#method.access) method -- no
 //! synchronization needed.
 //!
 //! `COUNTER` has an extra type parameter: `C1`. This is the *ceiling* of the
@@ -243,8 +242,8 @@
 //! // omitted: `idle`, `init`
 //!
 //! tasks!(stm32f100xx, {
-//!     t1: (Tim6DacIrq, P1),
-//!     t2: (Tim7Irq, P2),
+//!     t1: (Tim6DacIrq, P1, true),
+//!     t2: (Tim7Irq, P2, true),
 //! });
 //!
 //! static COUNTER: Resource<Cell<u32>, C2> = Resource::new(Cell::new(0));
@@ -252,9 +251,13 @@
 //! fn t1(_task: Tim6DacIrq, priority: P1) {
 //!     // ..
 //!
-//!     COUNTER.lock(&priority, |r1, _| {
-//!         r1.set(r1.get() + 1);
-//!     });
+//!    let ceiling: &C1 = priority.as_ceiling();
+//!
+//!    ceiling.raise(&COUNTER, |ceiling: &C2| {
+//!        let counter = COUNTER.access(&priority, &ceiling);
+//!
+//!        counter.set(counter.get() + 1);
+//!    });
 //!
 //!     // ..
 //! }
@@ -262,7 +265,7 @@
 //! fn t2(_task: Tim7Irq, priority: P2) {
 //!     let ceiling = priority.as_ceiling();
 //!
-//!     let counter = COUNTER.borrow(&priority, &ceiling);
+//!     let counter = COUNTER.access(&priority, &ceiling);
 //!
 //!     counter.set(counter.get() + 2);
 //! }
@@ -275,20 +278,20 @@
 //!
 //! To avoid data races, `t1` must modify `COUNTER` in an atomic way; i.e. `t2`
 //! most not preempt `t1` while `COUNTER` is being modified. This is
-//! accomplished using the [`lock`](./struct.Resource.html#method.lock) method.
-//! This method creates a critical section, denoted by a closure, for whose span
+//! accomplished by [`raise`](./struct.C.html#method.raise)-ing the `ceiling`.
+//! This creates a critical section, denoted by a closure, for whose span
 //! `COUNTER` is accessible but `t2` is blocked from preempting `t1`.
 //!
 //! How `t2` accesses `COUNTER` remains unchanged. Since `t1` can't preempt `t2`
-//! due to the differences in priority, no critical section is needed in `t2`.
+//! due to the differences in priority; no critical section is needed in `t2`.
 //!
-//! Note that the ceiling of `COUNTER` also changed to `C2`. This is required
+//! Note that the ceiling of `COUNTER` had to change to `C2`. This is required
 //! because the ceiling must be the maximum between `P1` and `P2`.
 //!
-//! Finally, it should be noted that `COUNTER.lock` will only block tasks with a
-//! priority of 2 or lower. This is exactly what the ceiling represents: it's
-//! the "bar" that a task priority must pass in order to be able to preempt the
-//! current task / critical section.
+//! Finally, it should be noted that the critical section in `t1` will only
+//! block tasks with a priority of 2 or lower. This is exactly what the ceiling
+//! represents: it's the "bar" that a task priority must pass in order to be
+//! able to preempt the current task / critical section.
 //!
 //! # Peripherals as resources
 //!
@@ -311,8 +314,8 @@
 //! tasks!(stm32f100xx, {});
 //!
 //! fn init(priority: P0, ceiling: &C16) {
-//!     let gpioa = GPIOA.borrow(&priority, &ceiling);
-//!     let rcc = RCC.borrow(&priority, &ceiling);
+//!     let gpioa = GPIOA.access(&priority, &ceiling);
+//!     let rcc = RCC.access(&priority, &ceiling);
 //!
 //!     // ..
 //! }
