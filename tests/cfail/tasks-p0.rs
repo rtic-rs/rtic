@@ -2,15 +2,14 @@
 
 #![feature(used)]
 
-extern crate core;
-extern crate cortex_m;
 #[macro_use]
 extern crate cortex_m_rtfm as rtfm;
 
 use rtfm::{C16, P0, P1};
 use device::interrupt::Exti0;
 
-/// Tasks can't have priority 0. Only idle has priority 0
+// WRONG: Tasks can't have a priority of 0.
+// Only idle and init can have a priority of 0.
 tasks!(device, {
     j1: (Exti0, P0),
 });
@@ -22,6 +21,10 @@ fn idle(_: P0) -> ! {
 }
 
 fn j1(_task: Exti0, _prio: P1) {}
+
+// fake device crate
+extern crate core;
+extern crate cortex_m;
 
 mod device {
     pub mod interrupt {

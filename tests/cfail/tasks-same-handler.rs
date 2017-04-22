@@ -2,8 +2,6 @@
 
 #![feature(used)]
 
-extern crate core;
-extern crate cortex_m;
 #[macro_use]
 extern crate cortex_m_rtfm as rtfm;
 
@@ -26,6 +24,9 @@ fn j1(_task: Exti0, _prio: P1) {}
 
 fn j2(_task: Exti0, _prio: P1) {}
 
+// fake device crate
+extern crate core;
+extern crate cortex_m;
 
 mod device {
     pub mod interrupt {

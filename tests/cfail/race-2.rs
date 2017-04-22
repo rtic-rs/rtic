@@ -8,21 +8,40 @@ static R2: Resource<i32, C4> = Resource::new(0);
 fn j1(prio: P1) {
     let ceil = prio.as_ceiling();
 
-    ceil.raise(&R1, |ceil| {
-        let r1 = R1.borrow(&prio, ceil);
+    ceil.raise(
+        &R1, |ceil| {
+            let r1 = R1.borrow(&prio, ceil);
 
-        // Would preempt this critical section
-        // rtfm::request(j2);
-    });
+            // `j2` preempts this critical section
+            rtfm::request(j2);
+        }
+    );
 }
 
-fn j2(prio: P3) {
+fn j2(_task: Task, prio: P3) {
     let ceil = prio.as_ceiling();
 
-    ceil.raise(&R2, |ceil| {
-        // OK  C2 (R1's ceiling) <= C4 (system ceiling)
-        // BAD C2 (R1's ceiling) <  P3 (j2's priority)
-        let r1 = R1.borrow(&prio, ceil);
-        //~^ error
-    });
+    ceil.raise(
+        &R2, |ceil| {
+            // OK  C2 (R1's ceiling) <= C4 (system ceiling)
+            // BAD C2 (R1's ceiling) <  P3 (j2's priority)
+            let r1 = R1.borrow(&prio, ceil);
+            //~^ error
+        }
+    );
+}
+
+// glue
+extern crate cortex_m;
+
+use cortex_m::ctxt::Context;
+use cortex_m::interrupt::Nr;
+
+struct Task;
+
+unsafe impl Context for Task {}
+unsafe impl Nr for Task {
+    fn nr(&self) -> u8 {
+        0
+    }
 }
