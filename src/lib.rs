@@ -715,6 +715,7 @@ macro_rules! peripherals {
         },)+
     }) => {
         $(
+            #[allow(private_no_mangle_statics)]
             #[no_mangle]
             static $PERIPHERAL:
                 $crate::Peripheral<::$device::$RegisterBlock, $crate::$C> =
