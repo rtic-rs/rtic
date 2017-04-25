@@ -14,8 +14,8 @@
 //!
 //! - **Event triggered tasks** as the unit of concurrency.
 //! - Supports prioritization of tasks and, thus, **preemptive multitasking**.
-//! - **Data race free memory sharing** through fine grained *partial* critical
-//!   sections.
+//! - **Data race free memory sharing** through fine grained *non global*
+//!   critical sections.
 //! - **Deadlock free execution** guaranteed at compile time.
 //! - **Minimal overhead** as the scheduler has no software component / runtime; the
 //!   hardware does all the scheduling.
@@ -134,7 +134,11 @@
 //!
 //! // TASKS
 //! tasks!(stm32f30x, {
-//!     periodic: (Tim7, P1, true),
+//!     periodic: Task {
+//!         interrupt: Tim7,
+//!         priority: P1,
+//!         enabled: true,
+//!     },
 //! });
 //!
 //! fn periodic(mut task: Tim7, _priority: P1) {
@@ -184,8 +188,16 @@
 //! // omitted: `idle`, `init`
 //!
 //! tasks!(stm32f30x, {
-//!     t1: (Tim6Dacunder, P1, true),
-//!     t2: (Tim7, P1, true),
+//!     t1: Task {
+//!         interrupt: Tim6Dacunder,
+//!         priority: P1,
+//!         enabled: true,
+//!     },
+//!     t2: Task {
+//!         interrupt: Tim7,
+//!         priority: P1,
+//!         enabled: true,
+//!     },
 //! });
 //!
 //! // Data shared between tasks `t1` and `t2`
@@ -243,8 +255,16 @@
 //! // omitted: `idle`, `init`
 //!
 //! tasks!(stm32f30x, {
-//!     t1: (Tim6Dacunder, P1, true),
-//!     t2: (Tim7, P2, true),
+//!     t1: Task {
+//!         interrupt: Tim6Dacunder,
+//!         priority: P1,
+//!         enabled: true,
+//!     },
+//!     t2: Task {
+//!         interrupt: Tim7,
+//!         priority: P2,
+//!         enabled: true,
+//!     },
 //! });
 //!
 //! static COUNTER: Resource<Cell<u32>, C2> = Resource::new(Cell::new(0));
