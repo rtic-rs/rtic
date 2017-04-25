@@ -10,8 +10,16 @@ use device::interrupt::Exti0;
 
 // WRONG: Two tasks mapped to the same interrupt handler
 tasks!(device, {
-    j1: (Exti0, P1),
-    j2: (Exti0, P2),
+    j1: Task {
+        interrupt: Exti0,
+        priority: P1,
+        enabled: true,
+    },
+    j2: Task {
+        interrupt: Exti0,
+        priority: P2,
+        enabled: true,
+    },
 });
 
 fn init(_: P0, _: &C16) {}

@@ -699,7 +699,11 @@ pub unsafe trait LessThanOrEqual<RHS> {}
 #[macro_export]
 macro_rules! tasks {
     ($device:ident, {
-        $($task:ident: ($Interrupt:ident, $P:ident, $enabled:expr),)*
+        $($task:ident: Task {
+            interrupt:$Interrupt:ident,
+            priority: $P:ident,
+            enabled: $enabled:expr,
+        },)*
     }) => {
         fn main() {
             $crate::critical(|cmax| {

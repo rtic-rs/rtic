@@ -11,7 +11,11 @@ use device::interrupt::Exti0;
 // WRONG: Tasks can't have a priority of 0.
 // Only idle and init can have a priority of 0.
 tasks!(device, {
-    j1: (Exti0, P0),
+    j1: Task {
+        interrupt: Exti0,
+        priority: P0,
+        enabled: true,
+    },
 });
 
 fn init(_: P0, _: &C16) {}

@@ -9,7 +9,11 @@ use cortex_m_srp::{C16, P0, P1, P2};
 use device::interrupt::Exti1;
 
 tasks!(device, {
-    j1: (Exti0, P1),
+    j1: Task {
+        interrupt: Exti0,
+        priority: P1,
+        enabled: true,
+    },
 });
 
 fn init(_: P0, _: &C16) {}

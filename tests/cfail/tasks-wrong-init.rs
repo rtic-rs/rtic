@@ -9,7 +9,11 @@ use rtfm::{C1, P0, P1};
 use device::interrupt::Exti0;
 
 tasks!(device, {
-    j1: (Exti0, P1),
+    j1: Task {
+        interrupt: Exti0,
+        priority: P1,
+        enabled: true,
+    },
 });
 
 // WRONG. `init` must have signature `fn(P0, &C16)`
