@@ -705,6 +705,24 @@ pub unsafe trait GreaterThanOrEqual<RHS> {}
 /// Do not implement this trait yourself. This is an implementation detail.
 pub unsafe trait LessThanOrEqual<RHS> {}
 
+/// Assigns ceilings to peripherals
+#[macro_export]
+macro_rules! peripherals {
+    ($device:ident, {
+        $($PERIPHERAL:ident: Peripheral {
+            register_block: $RegisterBlock:ident,
+            ceiling: $C:ident,
+        },)+
+    }) => {
+        $(
+            #[no_mangle]
+            static $PERIPHERAL:
+                $crate::Peripheral<::$device::$RegisterBlock, $crate::$C> =
+                    unsafe { $crate::Peripheral::new(::$device::$PERIPHERAL) };
+        )+
+    }
+}
+
 /// A macro to declare tasks
 ///
 /// **NOTE** This macro will expand to a `main` function.
