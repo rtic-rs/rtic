@@ -1,22 +1,23 @@
 //! RTFM: Real Time For the Masses (ARM Cortex-M edition)
 //!
-//! RTFM is a framework for building embedded event-driven / real-time
-//! applications.
+//! RTFM is a framework for building event-driven applications for ARM Cortex-M
+//! microcontrollers.
 //!
 //! This crate is based on the RTFM framework created by [prof. Per
 //! Lindgren][per] and uses a simplified version of the Stack Resource Policy as
-//! scheduling policy. (Check the [references] for details)
+//! scheduling policy. Check the [references] for details.
 //!
 //! [per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 //! [references]: ./index.html#references
 //!
 //! # Features
 //!
-//! - Event triggered tasks as the unit of concurrency.
-//! - Supports prioritizing tasks and, thus, preemptive multitasking.
-//! - Data sharing through fine grained, *partial* critical sections.
-//! - Deadlock free execution guaranteed at compile time.
-//! - Minimal overhead as the scheduler has no software component / runtime; the
+//! - **Event triggered tasks** as the unit of concurrency.
+//! - Supports prioritization of tasks and, thus, **preemptive multitasking**.
+//! - **Data race free memory sharing** through fine grained *partial* critical
+//!   sections.
+//! - **Deadlock free execution** guaranteed at compile time.
+//! - **Minimal overhead** as the scheduler has no software component / runtime; the
 //!   hardware does all the scheduling.
 //! - Full support for all Cortex M3, M4 and M7 devices. M0(+) is also supported
 //!   but the whole API is not available (due to missing hardware features).
@@ -26,11 +27,11 @@
 //!   crate defaults to 16 as that's the most common scenario.
 //! - This task model is amenable to known WCET (Worst Case Execution Time)
 //!   analysis and scheduling analysis techniques. (Though we haven't yet
-//!   developed tooling for that.)
+//!   developed Rust friendly tooling for that.)
 //!
 //! # Limitations
 //!
-//! - Task priority must remain constant at runtime.
+//! - Task priorities must remain constant at runtime.
 //!
 //! # Dependencies
 //!
@@ -66,12 +67,12 @@
 //! extern crate cortex_m_rtfm as rtfm;
 //!
 //! // device crate generated using svd2rust
-//! extern crate stm32f100xx;
+//! extern crate stm32f30x;
 //!
 //! use rtfm::{C16, P0};
 //!
-//! // Declare tasks. None in this example
-//! tasks!(stm32f100xx, {});
+//! // TASKS (None in this example)
+//! tasks!(stm32f30x, {});
 //!
 //! // INITIALIZATION PHASE
 //! fn init(_priority: P0, _ceiling: &C16) {
@@ -99,7 +100,7 @@
 //! The `tasks!` macro overrides the `main` function and imposes the following
 //! structure into your program:
 //!
-//! - `init`, the initialization phase, is run first. This function is executed
+//! - `init`, the initialization phase, runs first. This function is executed
 //!   inside a *global* critical section and can't be preempted.
 //!
 //! - `idle`, a never ending function that runs after `init`.
@@ -114,9 +115,9 @@
 //! extern crate cortex_m_rt;
 //! #[macro_use]
 //! extern crate cortex_m_rtfm as rtfm;
-//! extern crate stm32f100xx;
+//! extern crate stm32f30x;
 //!
-//! use stm32f100xx::interrupt::Tim7Irq;
+//! use stm32f30x::interrupt::Tim7;
 //! use rtfm::{C16, Local, P0, P1};
 //!
 //! // INITIALIZATION PHASE
@@ -132,13 +133,13 @@
 //! }
 //!
 //! // TASKS
-//! tasks!(stm32f100xx, {
-//!     periodic: (Tim7Irq, P1, true),
+//! tasks!(stm32f30x, {
+//!     periodic: (Tim7, P1, true),
 //! });
 //!
-//! fn periodic(mut task: Tim7Irq, _priority: P1) {
+//! fn periodic(mut task: Tim7, _priority: P1) {
 //!     // Task local data
-//!     static STATE: Local<bool, Tim7Irq> = Local::new(false);
+//!     static STATE: Local<bool, Tim7> = Local::new(false);
 //!
 //!     let state = STATE.borrow_mut(&mut task);
 //!
@@ -154,8 +155,8 @@
 //! }
 //! ```
 //!
-//! Here we define a task named `periodic` and bind it to the `Tim7Irq`
-//! interrupt. The `periodic` task will run every time the `Tim7Irq` interrupt
+//! Here we define a task named `periodic` and bind it to the `Tim7`
+//! interrupt. The `periodic` task will run every time the `Tim7` interrupt
 //! is triggered. We assign to this task a priority of 1 (`P1`); this is the
 //! lowest priority that a task can have.
 //!
@@ -163,7 +164,7 @@
 //! task; this task local data will be preserved across runs of the `periodic`
 //! task. Note that `STATE` is owned by the `periodic` task, in the sense that
 //! no other task can access it; this is reflected in its type signature (the
-//! `Tim7Irq` type parameter).
+//! `Tim7` type parameter).
 //!
 //! # Two "serial" tasks
 //!
@@ -173,35 +174,35 @@
 //! extern crate cortex_m_rt;
 //! #[macro_use]
 //! extern crate cortex_m_rtfm as rtfm;
-//! extern crate stm32f100xx;
+//! extern crate stm32f30x;
 //!
 //! use core::cell::Cell;
 //!
-//! use stm32f100xx::interrupt::{Tim6DacIrq, Tim7Irq};
+//! use stm32f30x::interrupt::{Tim6Dacunder, Tim7};
 //! use rtfm::{C1, C16, P0, P1, Resource};
 //!
 //! // omitted: `idle`, `init`
 //!
-//! tasks!(stm32f100xx, {
-//!     t1: (Tim6DacIrq, P1, true),
-//!     t2: (Tim7Irq, P1, true),
+//! tasks!(stm32f30x, {
+//!     t1: (Tim6Dacunder, P1, true),
+//!     t2: (Tim7, P1, true),
 //! });
 //!
 //! // Data shared between tasks `t1` and `t2`
 //! static COUNTER: Resource<Cell<u32>, C1> = Resource::new(Cell::new(0));
 //!
-//! fn t1(_task: Tim6DacIrq, priority: P1) {
+//! fn t1(_task: Tim6Dacunder, priority: P1) {
 //!     let ceiling = priority.as_ceiling();
 //!
-//!     let counter = COUNTER.access(&priority, &ceiling);
+//!     let counter = COUNTER.access(&priority, ceiling);
 //!
 //!     counter.set(counter.get() + 1);
 //! }
 //!
-//! fn t2(_task: Tim7Irq, priority: P1) {
+//! fn t2(_task: Tim7, priority: P1) {
 //!     let ceiling = priority.as_ceiling();
 //!
-//!     let counter = COUNTER.access(&priority, &ceiling);
+//!     let counter = COUNTER.access(&priority, ceiling);
 //!
 //!     counter.set(counter.get() + 2);
 //! }
@@ -232,29 +233,29 @@
 //! extern crate cortex_m_rt;
 //! #[macro_use]
 //! extern crate cortex_m_rtfm as rtfm;
-//! extern crate stm32f100xx;
+//! extern crate stm32f30x;
 //!
 //! use core::cell::Cell;
 //!
-//! use stm32f100xx::interrupt::{Tim6DacIrq, Tim7Irq};
+//! use stm32f30x::interrupt::{Tim6Dacunder, Tim7};
 //! use rtfm::{C2, C16, P0, P1, P2, Resource};
 //!
 //! // omitted: `idle`, `init`
 //!
-//! tasks!(stm32f100xx, {
-//!     t1: (Tim6DacIrq, P1, true),
-//!     t2: (Tim7Irq, P2, true),
+//! tasks!(stm32f30x, {
+//!     t1: (Tim6Dacunder, P1, true),
+//!     t2: (Tim7, P2, true),
 //! });
 //!
 //! static COUNTER: Resource<Cell<u32>, C2> = Resource::new(Cell::new(0));
 //!
-//! fn t1(_task: Tim6DacIrq, priority: P1) {
+//! fn t1(_task: Tim6Dacunder, priority: P1) {
 //!     // ..
 //!
 //!    let ceiling: &C1 = priority.as_ceiling();
 //!
 //!    ceiling.raise(&COUNTER, |ceiling: &C2| {
-//!        let counter = COUNTER.access(&priority, &ceiling);
+//!        let counter = COUNTER.access(&priority, ceiling);
 //!
 //!        counter.set(counter.get() + 1);
 //!    });
@@ -262,10 +263,10 @@
 //!     // ..
 //! }
 //!
-//! fn t2(_task: Tim7Irq, priority: P2) {
+//! fn t2(_task: Tim7, priority: P2) {
 //!     let ceiling = priority.as_ceiling();
 //!
-//!     let counter = COUNTER.access(&priority, &ceiling);
+//!     let counter = COUNTER.access(&priority, ceiling);
 //!
 //!     counter.set(counter.get() + 2);
 //! }
@@ -273,7 +274,7 @@
 //!
 //! Now we have a variation of the previous example. Like before, `t1` has a
 //! priority of 1 (`P1`) but `t2` now has a priority of 2 (`P2`). This means
-//! that `t2` can preempt `t1` if a `Tim7Irq` interrupt occurs while `t1` is
+//! that `t2` can preempt `t1` if a `Tim7` interrupt occurs while `t1` is
 //! being executed.
 //!
 //! To avoid data races, `t1` must modify `COUNTER` in an atomic way; i.e. `t2`
