@@ -645,6 +645,7 @@ pub struct C<T> {
 
 impl<SC> C<SC> {
     /// Raises the system ceiling to match the `resource` ceiling
+    #[cfg(not(thumbv6m))]
     pub fn raise<RC, RES, R, F>(&self, _resource: &'static RES, f: F) -> R
     where
         RES: ResourceLike<Ceiling = RC>,
