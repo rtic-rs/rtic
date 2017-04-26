@@ -19,7 +19,7 @@ fn j1(prio: P2) {
 }
 
 fn j2(prio: P0) {
-    let c16 = rtfm::critical(
+    let c16 = rtfm::atomic(
         |c16| {
             // forbidden: ceiling token can't outlive the critical section
             c16 //~ error

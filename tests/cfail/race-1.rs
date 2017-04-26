@@ -18,7 +18,7 @@ fn j1(prio: P1) {
 }
 
 fn j2(_task: Task, prio: P3) {
-    rtfm::critical(
+    rtfm::atomic(
         |ceil| {
             // OK  C2 (R1's ceiling) <= C16 (system ceiling)
             // BAD C2 (R1's ceiling) <  P3 (j2's priority)
