@@ -1,12 +1,13 @@
 //! RTFM: Real Time For the Masses (ARM Cortex-M edition)
 //!
-//! RTFM is a framework for building event-driven applications for ARM Cortex-M
-//! microcontrollers.
+//! `cortex-m-rtfm` is a framework for building concurrent applications for ARM
+//! Cortex-M microcontrollers.
 //!
-//! This crate is based on the RTFM framework created by [prof. Per
+//! This crate is based on [the RTFM framework] created by [prof. Per
 //! Lindgren][per] and uses a simplified version of the Stack Resource Policy as
-//! scheduling policy. Check the [references] for details.
+//! scheduling policy (check the [references] for details).
 //!
+//! [the RTFM framework]: http://www.rtfm-lang.org/
 //! [per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 //! [references]: ./index.html#references
 //!
@@ -14,13 +15,16 @@
 //!
 //! - **Event triggered tasks** as the unit of concurrency.
 //! - Supports prioritization of tasks and, thus, **preemptive multitasking**.
-//! - **Data race free memory sharing** through fine grained *non global*
-//!   critical sections.
+//! - **Efficient data race free memory sharing** through fine grained *non
+//!   global* critical sections.
 //! - **Deadlock free execution** guaranteed at compile time.
-//! - **Minimal overhead** as the scheduler has no software component / runtime;
-//!   the hardware does all the scheduling.
-//! - Full support for all Cortex M3, M4 and M7 devices. M0(+) is also supported
-//!   but the whole API is not available (due to missing hardware features).
+//! - **Minimal scheduling overhead** as the scheduler has no "software
+//!   component"; the hardware does all the scheduling.
+//! - **Highly efficient memory usage**. All the tasks share the call stack and
+//!   there's no hard dependency on a dynamic allocator.
+//! - **All Cortex M3, M4 and M7 devices are fully supported**. M0(+) is
+//!   partially supported as the whole API is not available (due to missing
+//!   hardware features).
 //! - The number of task priority levels is configurable at compile time through
 //!   the `P2` (4 levels), `P3` (8 levels), etc. Cargo features. The number of
 //!   priority levels supported by the hardware is device specific but this
@@ -55,6 +59,7 @@
 //! ## Zero tasks
 //!
 //! ``` ignore
+//! #![feature(used)]
 //! #![no_std]
 //!
 //! #[macro_use] // for the `hprintln!` macro
@@ -101,7 +106,7 @@
 //! structure into your program:
 //!
 //! - `init`, the initialization phase, runs first. This function is executed
-//!   inside a *global* critical section and can't be preempted.
+//!   "atomically", in the sense that no task / interrupt can preempt it.
 //!
 //! - `idle`, a never ending function that runs after `init`.
 //!
@@ -110,6 +115,8 @@
 //! # One task
 //!
 //! ``` ignore
+//! #![feature(const_fn)]
+//! #![feature(used)]
 //! #![no_std]
 //!
 //! extern crate cortex_m_rt;
@@ -129,7 +136,9 @@
 //! // IDLE LOOP
 //! fn idle(_priority: P0) -> ! {
 //!     // Sleep
-//!     loop { rtfm::wfi() }
+//!     loop {
+//!         rtfm::wfi();
+//!     }
 //! }
 //!
 //! // TASKS
@@ -173,6 +182,8 @@
 //! # Two "serial" tasks
 //!
 //! ``` ignore
+//! #![feature(const_fn)]
+//! #![feature(used)]
 //! #![no_std]
 //!
 //! extern crate cortex_m_rt;
@@ -203,6 +214,17 @@
 //! // Data shared between tasks `t1` and `t2`
 //! static COUNTER: Resource<Cell<u32>, C1> = Resource::new(Cell::new(0));
 //!
+//! fn init(priority: P0, ceiling: &C16) {
+//!     // ..
+//! }
+//!
+//! fn idle(priority: P0) -> ! {
+//!     // Sleep
+//!     loop {
+//!         rtfm::wfi();
+//!     }
+//! }
+//!
 //! fn t1(_task: Tim6Dacunder, priority: P1) {
 //!     let ceiling = priority.as_ceiling();
 //!
@@ -223,13 +245,13 @@
 //! Here we declare two tasks, `t1` and `t2`; both with a priority of 1 (`P1`).
 //! As both tasks have the same priority, we say that they are *serial* tasks in
 //! the sense that `t1` can only run *after* `t2` is done and vice versa; i.e.
-//! there's no preemption.
+//! no preemption between them is possible.
 //!
 //! To share data between these two tasks, we use the
 //! [`Resource`](./struct.Resource.html) abstraction. As the tasks can't preempt
 //! each other, they can access the `COUNTER` resource using the zero cost
 //! [`access`](./struct.Resource.html#method.access) method -- no
-//! synchronization needed.
+//! synchronization is required.
 //!
 //! `COUNTER` has an extra type parameter: `C1`. This is the *ceiling* of the
 //! resource. For now suffices to say that the ceiling must be the maximum of
@@ -240,6 +262,8 @@
 //! # Preemptive multitasking
 //!
 //! ``` ignore
+//! #![feature(const_fn)]
+//! #![feature(used)]
 //! #![no_std]
 //!
 //! extern crate cortex_m_rt;
@@ -250,9 +274,7 @@
 //! use core::cell::Cell;
 //!
 //! use stm32f30x::interrupt::{Tim6Dacunder, Tim7};
-//! use rtfm::{C2, C16, P0, P1, P2, Resource};
-//!
-//! // omitted: `idle`, `init`
+//! use rtfm::{C1, C16, C2, P0, P1, P2, Resource};
 //!
 //! tasks!(stm32f30x, {
 //!     t1: Task {
@@ -269,16 +291,29 @@
 //!
 //! static COUNTER: Resource<Cell<u32>, C2> = Resource::new(Cell::new(0));
 //!
+//! fn init(priority: P0, ceiling: &C16) {
+//!     // ..
+//! }
+//!
+//! fn idle(priority: P0) -> ! {
+//!     // Sleep
+//!     loop {
+//!         rtfm::wfi();
+//!     }
+//! }
+//!
 //! fn t1(_task: Tim6Dacunder, priority: P1) {
 //!     // ..
 //!
-//!    let ceiling: &C1 = priority.as_ceiling();
+//!     let ceiling: &C1 = priority.as_ceiling();
 //!
-//!    ceiling.raise(&COUNTER, |ceiling: &C2| {
-//!        let counter = COUNTER.access(&priority, ceiling);
+//!     ceiling.raise(
+//!         &COUNTER, |ceiling: &C2| {
+//!             let counter = COUNTER.access(&priority, ceiling);
 //!
-//!        counter.set(counter.get() + 1);
-//!    });
+//!             counter.set(counter.get() + 1);
+//!         }
+//!     );
 //!
 //!     // ..
 //! }
@@ -300,39 +335,48 @@
 //! To avoid data races, `t1` must modify `COUNTER` in an atomic way; i.e. `t2`
 //! most not preempt `t1` while `COUNTER` is being modified. This is
 //! accomplished by [`raise`](./struct.C.html#method.raise)-ing the `ceiling`.
-//! This creates a critical section, denoted by a closure, for whose span
+//! This creates a critical section, denoted by a closure; for whose execution,
 //! `COUNTER` is accessible but `t2` is blocked from preempting `t1`.
 //!
 //! How `t2` accesses `COUNTER` remains unchanged. Since `t1` can't preempt `t2`
 //! due to the differences in priority; no critical section is needed in `t2`.
 //!
-//! Note that the ceiling of `COUNTER` had to change to `C2`. This is required
-//! because the ceiling must be the maximum between `P1` and `P2`.
+//! Note that the ceiling of `COUNTER` had to  be changed to `C2`. This is
+//! required because the ceiling must be the maximum between `P1` and `P2`.
 //!
 //! Finally, it should be noted that the critical section in `t1` will only
 //! block tasks with a priority of 2 or lower. This is exactly what the ceiling
 //! represents: it's the "bar" that a task priority must pass in order to be
-//! able to preempt the current task / critical section.
+//! able to preempt the current task / critical section. Note that a task with
+//! e.g. a priority of 3 (`P3`) effectively imposes a ceiling of 3 (`C3`)
+//! because only other task with a priority of 4 or greater can preempt it.
 //!
 //! # Peripherals as resources
 //!
 //! ``` ignore
+//! #![feature(const_fn)]
+//! #![feature(used)]
 //! #![no_std]
 //!
 //! extern crate cortex_m_rt;
 //! #[macro_use]
 //! extern crate cortex_m_rtfm as rtfm;
-//! extern crate stm32f100xx;
+//! extern crate stm32f30x;
 //!
 //! use rtfm::{C0, C16, P0, Peripheral};
 //!
-//! static GPIOA: Peripheral<stm32f100xx::Gpioa, C0> =
-//!     unsafe { Peripheral::new(stm32f100xx::GPIOA) };
+//! peripherals!(stm32f30x, {
+//!     GPIOA: Peripheral {
+//!         register_block: Gpioa,
+//!         ceiling: C0,
+//!     },
+//!     RCC: Peripheral {
+//!         register_block: Rcc,
+//!         ceiling: C0,
+//!     },
+//! });
 //!
-//! static RCC: Peripheral<stm32f100xx::Rcc, C0> =
-//!     unsafe { Peripheral::new(stm32f100xx::RCC) };
-//!
-//! tasks!(stm32f100xx, {});
+//! tasks!(stm32f30x, {});
 //!
 //! fn init(priority: P0, ceiling: &C16) {
 //!     let gpioa = GPIOA.access(&priority, &ceiling);
@@ -343,7 +387,9 @@
 //!
 //! fn idle(_priority: P0) -> ! {
 //!     // Sleep
-//!     loop { rtfm::wfi() }
+//!     loop {
+//!         rtfm::wfi();
+//!     }
 //! }
 //! ```
 //!
@@ -352,8 +398,8 @@
 //! [`Peripheral`](./struct.Peripheral.html) abstraction.
 //!
 //! `Peripheral` and `Resource` has pretty much the same API except that
-//! `Peripheral.new` is `unsafe`. Care must be taken to NOT alias peripherals;
-//! i.e. don't create two `Peripheral`s that point to the same register block.
+//! `Peripheral` instances must be declared using the
+//! [`peripherals!`](./macro.peripherals.html) macro.
 //!
 //! # References
 //!
@@ -537,10 +583,10 @@ impl<Periph, RC> Peripheral<Periph, C<RC>> {
 
 unsafe impl<T, C> Sync for Peripheral<T, C> {}
 
-/// Runs the closure `f` in a *global* critical section
+/// Runs the closure `f` "atomically"
 ///
-/// No task can preempt this critical section
-pub fn critical<R, F>(f: F) -> R
+/// No task can preempt the execution of the closure
+pub fn atomic<R, F>(f: F) -> R
 where
     F: FnOnce(&CMAX) -> R,
 {
@@ -558,7 +604,7 @@ where
     r
 }
 
-/// Disables the `task`
+/// Disables a `task`
 ///
 /// The task won't run even if the underlying interrupt is raised
 pub fn disable<T, TP>(_task: fn(T, P<TP>))
@@ -572,7 +618,7 @@ where
     unsafe { (*_NVIC.get()).disable(_task) }
 }
 
-/// Enables the `task`
+/// Enables a `task`
 pub fn enable<T, TP>(_task: fn(T, P<TP>))
 where
     T: Context + Nr,
@@ -791,7 +837,9 @@ macro_rules! peripherals {
 ///
 /// fn idle(priority: P0) -> ! {
 ///     // Sleep
-///     loop { rtfm::wfi() }
+///     loop {
+///         rtfm::wfi();
+///     }
 /// }
 ///
 /// // NOTE signature must match the tasks! declaration
@@ -813,7 +861,7 @@ macro_rules! tasks {
         },)*
     }) => {
         fn main() {
-            $crate::critical(|cmax| {
+            $crate::atomic(|cmax| {
                 fn validate_signature(_: fn($crate::P0, &$crate::CMAX)) {}
 
                 validate_signature(init);
