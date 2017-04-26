@@ -17,8 +17,8 @@
 //! - **Data race free memory sharing** through fine grained *non global*
 //!   critical sections.
 //! - **Deadlock free execution** guaranteed at compile time.
-//! - **Minimal overhead** as the scheduler has no software component / runtime; the
-//!   hardware does all the scheduling.
+//! - **Minimal overhead** as the scheduler has no software component / runtime;
+//!   the hardware does all the scheduling.
 //! - Full support for all Cortex M3, M4 and M7 devices. M0(+) is also supported
 //!   but the whole API is not available (due to missing hardware features).
 //! - The number of task priority levels is configurable at compile time through
@@ -35,11 +35,11 @@
 //!
 //! # Dependencies
 //!
-//! - A device crate generated using [`svd2rust`] v0.6.x
+//! - A device crate generated using [`svd2rust`] v0.7.x
 //! - A `start` lang time: Vanilla `main` must be supported in binary crates.
 //!   You can use the [`cortex-m-rt`] crate to fulfill the requirement
 //!
-//! [`svd2rust`]: https://docs.rs/svd2rust/0.6.1/svd2rust/
+//! [`svd2rust`]: https://docs.rs/svd2rust/0.7.0/svd2rust/
 //! [`cortex-m-rt`]: https://docs.rs/cortex-m-rt/0.1.1/cortex_m_rt/
 //!
 //! # Examples
@@ -494,12 +494,15 @@ impl<T, RC> Resource<T, C<RC>> {
 unsafe impl<T, C> Sync for Resource<T, C> {}
 
 /// A hardware peripheral as a resource
-pub struct Peripheral<P, CEILING>
+///
+/// To assign a ceiling to a peripheral, use the
+/// [`peripherals!`](./macro.peripherals.html) macro
+pub struct Peripheral<P, PC>
 where
     P: 'static,
 {
     peripheral: cortex_m::peripheral::Peripheral<P>,
-    _ceiling: PhantomData<CEILING>,
+    _ceiling: PhantomData<PC>,
 }
 
 impl<P, CEILING> Peripheral<P, C<CEILING>>
@@ -507,12 +510,8 @@ where
     CEILING: GreaterThanOrEqual<U0>,
     CEILING: LessThanOrEqual<UMAX>,
 {
-    /// Assigns a ceiling `C` to the `peripheral`
-    ///
-    /// # Safety
-    ///
-    /// You MUST not create two resources that point to the same peripheral
-    pub const unsafe fn new(peripheral: cortex_m::peripheral::Peripheral<P>,)
+    #[doc(hidden)]
+    pub const unsafe fn _new(peripheral: cortex_m::peripheral::Peripheral<P>,)
         -> Self {
         Peripheral {
             _ceiling: PhantomData,
@@ -563,7 +562,7 @@ where
 ///
 /// The task won't run even if the underlying interrupt is raised
 pub fn disable<T, TP>(_task: fn(T, P<TP>))
-    where
+where
     T: Context + Nr,
 {
     // NOTE(safe) zero sized type
@@ -705,7 +704,31 @@ pub unsafe trait GreaterThanOrEqual<RHS> {}
 /// Do not implement this trait yourself. This is an implementation detail.
 pub unsafe trait LessThanOrEqual<RHS> {}
 
-/// Assigns ceilings to peripherals
+/// A macro to assign ceilings to peripherals
+///
+/// **NOTE** A peripheral instance, like RCC, can only be bound to a *single*
+/// ceiling. Trying to use this macro to bind the same peripheral to several
+/// ceiling will result in a compiler error.
+///
+/// # Example
+///
+/// ``` ignore
+/// #[macro_use]
+/// extern crate cortex_m_rtfm;
+/// // device crate generated using `svd2rust`
+/// extern crate stm32f30x;
+///
+/// peripherals!(stm32f30x, {
+///     GPIOA: Peripheral {
+///         register_block: Gpioa,
+///         ceiling: C1,
+///     },
+///     RCC: Peripheral {
+///         register_block: Rcc,
+///         ceiling: C0,
+///     },
+/// });
+/// ```
 #[macro_export]
 macro_rules! peripherals {
     ($device:ident, {
@@ -719,7 +742,7 @@ macro_rules! peripherals {
             #[no_mangle]
             static $PERIPHERAL:
                 $crate::Peripheral<::$device::$RegisterBlock, $crate::$C> =
-                    unsafe { $crate::Peripheral::new(::$device::$PERIPHERAL) };
+                    unsafe { $crate::Peripheral::_new(::$device::$PERIPHERAL) };
         )+
     }
 }
@@ -729,13 +752,57 @@ macro_rules! peripherals {
 /// **NOTE** This macro will expand to a `main` function.
 ///
 /// Each `$task` is bound to an `$Interrupt` handler and has a priority `$P`.
-/// `$enabled` indicates whether the task will be enabled before `idle` runs.
+/// The minimum priority of a task is `P1`. `$enabled` indicates whether the
+/// task will be enabled before `idle` runs.
 ///
 /// The `$Interrupt` handlers are defined in the `$device` crate.
 ///
 /// Apart from defining the listed `$tasks`, the `init` and `idle` functions
-/// must be defined as well. `init` has type signature `fn(P0, &C16)`, and
-/// `idle` has signature `fn(P0) -> !`.
+/// must be defined as well. `init` has signature `fn(P0, &C16)`, and `idle` has
+/// signature `fn(P0) -> !`.
+///
+/// # Example
+///
+/// ``` ignore
+/// #[macro_use]
+/// extern crate cortex_m_rtfm as rtfm;
+/// // device crate generated using `svd2rust`
+/// extern crate stm32f30x;
+///
+/// use rtfm::{C16, P0, P1, P2};
+/// use stm32f30x::interrupt::{Exti0, Tim7};
+///
+/// tasks!(stm32f30x, {
+///     periodic: Task {
+///         interrupt: Tim7,
+///         priority: P1,
+///         enabled: true,
+///     },
+///     button: Task {
+///         interrupt: Exti0,
+///         priority: P2,
+///         enabled: true,
+///     },
+/// });
+///
+/// fn init(priority: P0, ceiling: C16) {
+///     // ..
+/// }
+///
+/// fn idle(priority: P0) -> ! {
+///     // Sleep
+///     loop { rtfm::wfi() }
+/// }
+///
+/// // NOTE signature must match the tasks! declaration
+/// fn periodic(task: Tim7, priority: P1) {
+///     // ..
+/// }
+///
+/// fn button(task: Exti0, priority: P2) {
+///     // ..
+/// }
+/// ```
 #[macro_export]
 macro_rules! tasks {
     ($device:ident, {
