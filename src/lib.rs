@@ -3,9 +3,10 @@
 //! `cortex-m-rtfm` is a framework for building concurrent applications for ARM
 //! Cortex-M microcontrollers.
 //!
-//! This crate is based on [the RTFM framework] created by [prof. Per
-//! Lindgren][per] and uses a simplified version of the Stack Resource Policy as
-//! scheduling policy (check the [references] for details).
+//! This crate is based on [the RTFM framework] created by the Embedded Systems
+//! group at Luleå University of Technology, led by Prof. Per Lindgren, and uses
+//! a simplified version of the Stack Resource Policy as scheduling policy
+//! (check the [references] for details).
 //!
 //! [the RTFM framework]: http://www.rtfm-lang.org/
 //! [per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
