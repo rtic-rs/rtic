@@ -1,3 +1,6 @@
+[![crates.io](https://img.shields.io/crates/v/cortex-m-rtfm.svg)](https://crates.io/crates/cortex-m-rtfm)
+[![crates.io](https://img.shields.io/crates/d/cortex-m-rtfm.svg)](https://crates.io/crates/cortex-m-rtfm)
+
 # `cortex-m-rtfm`
 
 > Real Time For the Masses (Cortex-M edition)
