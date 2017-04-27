@@ -1,14 +1,13 @@
-//! RTFM: Real Time For the Masses (ARM Cortex-M edition)
-//!
-//! `cortex-m-rtfm` is a framework for building concurrent applications for ARM
-//! Cortex-M microcontrollers.
+//! Real Time For the Masses (RTFM), a framework for building concurrent
+//! applications, for ARM Cortex-M microcontrollers
 //!
 //! This crate is based on [the RTFM framework] created by the Embedded Systems
-//! group at Luleå University of Technology, led by Prof. Per Lindgren, and uses
-//! a simplified version of the Stack Resource Policy as scheduling policy
-//! (check the [references] for details).
+//! group at [Luleå University of Technology][ltu], led by Prof. Per Lindgren,
+//! and uses a simplified version of the Stack Resource Policy as scheduling
+//! policy (check the [references] for details).
 //!
 //! [the RTFM framework]: http://www.rtfm-lang.org/
+//! [ltu]: https://www.ltu.se/?l=en
 //! [per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 //! [references]: ./index.html#references
 //!
@@ -16,9 +15,9 @@
 //!
 //! - **Event triggered tasks** as the unit of concurrency.
 //! - Supports prioritization of tasks and, thus, **preemptive multitasking**.
-//! - **Efficient data race free memory sharing** through fine grained *non
+//! - **Efficient and data race free memory sharing** through fine grained *non
 //!   global* critical sections.
-//! - **Deadlock free execution** guaranteed at compile time.
+//! - **Deadlock free execution**, guaranteed at compile time.
 //! - **Minimal scheduling overhead** as the scheduler has no "software
 //!   component"; the hardware does all the scheduling.
 //! - **Highly efficient memory usage**. All the tasks share the call stack and
@@ -33,6 +32,11 @@
 //! - This task model is amenable to known WCET (Worst Case Execution Time)
 //!   analysis and scheduling analysis techniques. (Though we haven't yet
 //!   developed Rust friendly tooling for that.)
+//!
+//! # Requirements
+//!
+//! - Tasks must run to completion. That's it, tasks can't contain endless
+//!   loops.
 //!
 //! # Limitations
 //!

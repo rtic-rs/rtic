@@ -3,8 +3,13 @@ authors = [
   "Jorge Aparicio <jorge@japaric.io>",
   "Per Lindgren <per.lindgren@ltu.se>",
 ]
-build = "build.rs"
+categories = ["concurrency", "embedded", "no-std"]
+description = "Real Time For the Masses (RTFM), a framework for building concurrent applications, for ARM Cortex-M microcontrollers"
+documentation = "https://docs.rs/cortex-m-rtfm"
+keywords = ["arm", "cortex-m"]
+license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm"
+repository = "https://github.com/japaric/cortex-m-rtfm"
 version = "0.1.0"
 
 [build-dependencies]
