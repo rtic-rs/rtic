@@ -436,7 +436,7 @@ extern crate typenum;
 
 use core::cell::UnsafeCell;
 use core::marker::PhantomData;
-use core::ptr;
+use core::{mem, ptr};
 
 use cortex_m::ctxt::Context;
 use cortex_m::interrupt::Nr;
@@ -717,6 +717,15 @@ impl<SC> C<SC> {
 /// A type-level priority
 pub struct P<T> {
     _marker: PhantomData<T>,
+}
+
+impl<N> P<N> {
+    /// Turns this priority into a ceiling
+    pub fn as_ceiling(&self) -> &C<N> {
+        unsafe {
+            mem::transmute(self)
+        }
+    }
 }
 
 impl<T> P<T>
