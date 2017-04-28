@@ -37,9 +37,6 @@
 //!
 //! - Tasks must run to completion. That's it, tasks can't contain endless
 //!   loops.
-//!
-//! # Limitations
-//!
 //! - Task priorities must remain constant at runtime.
 //!
 //! # Dependencies
@@ -79,7 +76,7 @@
 //! // device crate generated using svd2rust
 //! extern crate stm32f30x;
 //!
-//! use rtfm::{C16, P0};
+//! use rtfm::{C0, C16, P0};
 //!
 //! // TASKS (None in this example)
 //! tasks!(stm32f30x, {});
@@ -90,7 +87,7 @@
 //! }
 //!
 //! // IDLE LOOP
-//! fn idle(_priority: P0) -> ! {
+//! fn idle(_priority: P0, _ceiling: C0) -> ! {
 //!     hprintln!("IDLE");
 //!
 //!     // Sleep
@@ -130,7 +127,7 @@
 //! extern crate stm32f30x;
 //!
 //! use stm32f30x::interrupt::Tim7;
-//! use rtfm::{C16, Local, P0, P1};
+//! use rtfm::{C0, C1, C16, Local, P0, P1};
 //!
 //! // INITIALIZATION PHASE
 //! fn init(_priority: P0, _ceiling: &C16) {
@@ -139,7 +136,7 @@
 //! }
 //!
 //! // IDLE LOOP
-//! fn idle(_priority: P0) -> ! {
+//! fn idle(_priority: P0, _ceiling: C0) -> ! {
 //!     // Sleep
 //!     loop {
 //!         rtfm::wfi();
@@ -155,7 +152,7 @@
 //!     },
 //! });
 //!
-//! fn periodic(mut task: Tim7, _priority: P1) {
+//! fn periodic(mut task: Tim7, _priority: P1, _ceiling: C1) {
 //!     // Task local data
 //!     static STATE: Local<bool, Tim7> = Local::new(false);
 //!
@@ -199,7 +196,7 @@
 //! use core::cell::Cell;
 //!
 //! use stm32f30x::interrupt::{Tim6Dacunder, Tim7};
-//! use rtfm::{C1, C16, P0, P1, Resource};
+//! use rtfm::{C0, C1, C16, P0, P1, Resource};
 //!
 //! // omitted: `idle`, `init`
 //!
@@ -223,25 +220,21 @@
 //!     // ..
 //! }
 //!
-//! fn idle(priority: P0) -> ! {
+//! fn idle(priority: P0, ceiling: C0) -> ! {
 //!     // Sleep
 //!     loop {
 //!         rtfm::wfi();
 //!     }
 //! }
 //!
-//! fn t1(_task: Tim6Dacunder, priority: P1) {
-//!     let ceiling = priority.as_ceiling();
-//!
-//!     let counter = COUNTER.access(&priority, ceiling);
+//! fn t1(_task: Tim6Dacunder, priority: P1, ceiling: C1) {
+//!     let counter = COUNTER.access(&priority, &ceiling);
 //!
 //!     counter.set(counter.get() + 1);
 //! }
 //!
-//! fn t2(_task: Tim7, priority: P1) {
-//!     let ceiling = priority.as_ceiling();
-//!
-//!     let counter = COUNTER.access(&priority, ceiling);
+//! fn t2(_task: Tim7, priority: P1, ceiling: C1) {
+//!     let counter = COUNTER.access(&priority, &ceiling);
 //!
 //!     counter.set(counter.get() + 2);
 //! }
@@ -279,7 +272,7 @@
 //! use core::cell::Cell;
 //!
 //! use stm32f30x::interrupt::{Tim6Dacunder, Tim7};
-//! use rtfm::{C1, C16, C2, P0, P1, P2, Resource};
+//! use rtfm::{C0, C1, C16, C2, P0, P1, P2, Resource};
 //!
 //! tasks!(stm32f30x, {
 //!     t1: Task {
@@ -300,17 +293,15 @@
 //!     // ..
 //! }
 //!
-//! fn idle(priority: P0) -> ! {
+//! fn idle(priority: P0, ceiling: C0) -> ! {
 //!     // Sleep
 //!     loop {
 //!         rtfm::wfi();
 //!     }
 //! }
 //!
-//! fn t1(_task: Tim6Dacunder, priority: P1) {
+//! fn t1(_task: Tim6Dacunder, priority: P1, ceiling: C1) {
 //!     // ..
-//!
-//!     let ceiling: &C1 = priority.as_ceiling();
 //!
 //!     ceiling.raise(
 //!         &COUNTER, |ceiling: &C2| {
@@ -323,10 +314,8 @@
 //!     // ..
 //! }
 //!
-//! fn t2(_task: Tim7, priority: P2) {
-//!     let ceiling = priority.as_ceiling();
-//!
-//!     let counter = COUNTER.access(&priority, ceiling);
+//! fn t2(_task: Tim7, priority: P2, ceiling: C2) {
+//!     let counter = COUNTER.access(&priority, &ceiling);
 //!
 //!     counter.set(counter.get() + 2);
 //! }

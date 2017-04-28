@@ -1,3 +1,4 @@
 **/*.rs.bk
+*.org
 Cargo.lock
 target/
