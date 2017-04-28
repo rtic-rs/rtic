@@ -436,7 +436,7 @@ extern crate typenum;
 
 use core::cell::UnsafeCell;
 use core::marker::PhantomData;
-use core::{mem, ptr};
+use core::ptr;
 
 use cortex_m::ctxt::Context;
 use cortex_m::interrupt::Nr;
@@ -612,7 +612,7 @@ where
 /// Disables a `task`
 ///
 /// The task won't run even if the underlying interrupt is raised
-pub fn disable<T, TP>(_task: fn(T, P<TP>))
+pub fn disable<T, TP>(_task: fn(T, P<TP>, C<TP>))
 where
     T: Context + Nr,
 {
@@ -624,7 +624,7 @@ where
 }
 
 /// Enables a `task`
-pub fn enable<T, TP>(_task: fn(T, P<TP>))
+pub fn enable<T, TP>(_task: fn(T, P<TP>, C<TP>))
 where
     T: Context + Nr,
 {
@@ -655,7 +655,7 @@ pub fn logical2hw(logical: u8) -> u8 {
 }
 
 /// Requests the execution of a `task`
-pub fn request<T, TP>(_task: fn(T, P<TP>))
+pub fn request<T, TP>(_task: fn(T, P<TP>, C<TP>))
 where
     T: Context + Nr,
 {
@@ -717,15 +717,6 @@ impl<SC> C<SC> {
 /// A type-level priority
 pub struct P<T> {
     _marker: PhantomData<T>,
-}
-
-impl<N> P<N> {
-    /// Turns this priority into a ceiling
-    pub fn as_ceiling(&self) -> &C<N> {
-        unsafe {
-            mem::transmute(self)
-        }
-    }
 }
 
 impl<T> P<T>
@@ -885,11 +876,12 @@ macro_rules! tasks {
                 enable_tasks();
             });
 
-            fn validate_signature(_: fn($crate::P0) -> !) {}
+            fn validate_signature(_: fn($crate::P0, $crate::C0) -> !) {}
 
             validate_signature(idle);
             let p0 = unsafe { ::core::mem::transmute::<_, P0>(()) };
-            idle(p0);
+            let c0 = unsafe { ::core::mem::transmute::<_, C0>(()) };
+            idle(p0, c0);
 
             fn set_priorities() {
                 // NOTE(safe) this function runs in an interrupt free context
@@ -931,11 +923,19 @@ macro_rules! tasks {
                         extern "C" fn $task(
                             task: ::$device::interrupt::$Interrupt
                         ) {
+                            fn validate_signature<N>(
+                                _: fn(::$device::interrupt::$Interrupt,
+                                      $crate::P<N>,
+                                      $crate::C<N>)) {}
+                            validate_signature(::$task);
                             let p = unsafe {
                                 ::core::mem::transmute::<_, $crate::$P>(())
                             };
+                            let c = unsafe {
+                                ::core::mem::transmute(())
+                            };
                             $crate::_validate_priority(&p);
-                            ::$task(task, p)
+                            ::$task(task, p, c)
                         }
 
                         $task

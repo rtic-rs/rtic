@@ -5,8 +5,8 @@
 #[macro_use]
 extern crate cortex_m_rtfm as rtfm;
 
+use rtfm::{C0, C1, C16, C2, P0, P1};
 use device::interrupt::Exti0;
-use rtfm::{C0, C1, C16, C2, P0, P1, P2};
 
 tasks!(device, {
     j1: Task {
@@ -22,8 +22,8 @@ fn idle(_: P0, _: C0) -> ! {
     loop {}
 }
 
-// Wrong priority token. Declared P1, got P2
-fn j1(_task: Exti0, _prio: P2, _ceil: C2) {}
+// Wrong ceiling token. `prio` and `ceil` must match in levels
+fn j1(_task: Exti0, _prio: P1, _ceil: C2) {}
 
 // fake device crate
 extern crate core;

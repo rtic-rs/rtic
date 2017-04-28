@@ -1,12 +1,10 @@
 extern crate cortex_m_rtfm as rtfm;
 
-use rtfm::{C2, C4, P1, P3, Resource};
+use rtfm::{C1, C2, C3, C4, P1, P3, Resource};
 
 static R1: Resource<i32, C2> = Resource::new(0);
 
-fn j1(prio: P1) {
-    let ceil = prio.as_ceiling();
-
+fn j1(prio: P1, ceil: C1) {
     ceil.raise(
         &R1, |ceil| {
             let r1 = R1.access(&prio, ceil);
@@ -17,7 +15,7 @@ fn j1(prio: P1) {
     );
 }
 
-fn j2(_task: Task, prio: P3) {
+fn j2(_task: Task, prio: P3, ceil: C3) {
     rtfm::atomic(
         |ceil| {
             // OK  C2 (R1's ceiling) <= C16 (system ceiling)

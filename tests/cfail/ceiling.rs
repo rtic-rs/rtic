@@ -1,12 +1,10 @@
 extern crate cortex_m_rtfm as rtfm;
 
-use rtfm::{C3, P0, P2, Resource};
+use rtfm::{C2, C3, P0, P2, Resource};
 
 static R1: Resource<(), C3> = Resource::new(());
 
-fn j1(prio: P2) {
-    let ceil = prio.as_ceiling();
-
+fn j1(prio: P2, ceil: C2) {
     let c3 = ceil.raise(
         &R1, |ceil| {
             // forbidden: ceiling token can't outlive the critical section

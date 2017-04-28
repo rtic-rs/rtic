@@ -9,9 +9,7 @@ static R4: Resource<i32, C5> = Resource::new(0);
 static R5: Resource<i32, C1> = Resource::new(0);
 static R6: Resource<i32, C2> = Resource::new(0);
 
-fn j1(prio: P2) {
-    let ceil = prio.as_ceiling();
-
+fn j1(prio: P2, ceil: C2) {
     ceil.raise(
         &R1, |ceil| {
             // NOTE SC = System Ceiling, P = task Priority
