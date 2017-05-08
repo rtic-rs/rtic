@@ -5,7 +5,7 @@
 #[macro_use]
 extern crate cortex_m_rtfm as rtfm;
 
-use rtfm::{C0, C1, C16, P0, P1};
+use rtfm::{P0, P1, T0, T1, TMax};
 use device::interrupt::Exti0;
 
 // WRONG: Tasks can't have a priority of 0.
@@ -18,13 +18,13 @@ tasks!(device, {
     },
 });
 
-fn init(_: P0, _: &C16) {}
+fn init(_: P0, _: &TMax) {}
 
-fn idle(_: P0, _: C0) -> ! {
+fn idle(_: P0, _: T0) -> ! {
     loop {}
 }
 
-fn j1(_task: Exti0, _prio: P1, _ceil: C1) {}
+fn j1(_task: Exti0, _prio: P1, _thr: T1) {}
 
 // fake device crate
 extern crate core;

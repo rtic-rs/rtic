@@ -5,7 +5,7 @@
 #[macro_use]
 extern crate cortex_m_rtfm as rtfm;
 
-use rtfm::{C0, C1, C16, C2, P0, P1, P2};
+use rtfm::{P0, P1, P2, T0, T1, T2, TMax};
 use device::interrupt::{Exti0, Exti1};
 
 // WRONG: Two tasks mapped to the same interrupt handler
@@ -22,15 +22,15 @@ tasks!(device, {
     },
 });
 
-fn init(_: P0, _: &C16) {}
+fn init(_: P0, _: &TMax) {}
 
-fn idle(_: P0, _: C0) -> ! {
+fn idle(_: P0, _: T0) -> ! {
     loop {}
 }
 
-fn j1(_task: Exti0, _prio: P1, _ceil: C1) {}
+fn j1(_task: Exti0, _prio: P1, _thr: T1) {}
 
-fn j2(_task: Exti0, _prio: P2, _ceil: C2) {}
+fn j2(_task: Exti0, _prio: P2, _thr: T2) {}
 
 // fake device crate
 extern crate core;

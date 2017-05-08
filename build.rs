@@ -39,16 +39,25 @@ fn main() {
         },
     );
 
-    // Ceilings
+    // Ceilings and thresholds
     for i in 0..(1 << bits) + 1 {
         let c = Ident::new(format!("C{}", i));
+        let t = Ident::new(format!("T{}", i));
         let u = Ident::new(format!("U{}", i));
 
         let doc = format!("A ceiling of {}", i);
         tokens.push(
             quote! {
                 #[doc = #doc]
-                pub type #c = C<::typenum::#u>;
+                pub type #c = Ceiling<::typenum::#u>;
+            },
+        );
+
+        let doc = format!("A preemption threshold of {}", i);
+        tokens.push(
+            quote! {
+                #[doc = #doc]
+                pub type #t = Threshold<::typenum::#u>;
             },
         );
     }
@@ -58,23 +67,21 @@ fn main() {
         let p = Ident::new(format!("P{}", i));
         let u = Ident::new(format!("U{}", i));
 
-        let doc = if i == 0 {
-            format!("A priority of 0, the lowest priority")
-        } else {
-            format!(
-                "A priority of {}{}",
-                i,
-                if i == (1 << bits) {
-                    ", the highest priority"
-                } else {
-                    ""
-                }
-            )
-        };
+        let doc = format!(
+            "A priority of {}{}",
+            i,
+            if i == 0 {
+                ", the lowest priority"
+            } else if i == (1 << bits) {
+                ", the highest priority"
+            } else {
+                ""
+            }
+        );
         tokens.push(
             quote! {
                 #[doc = #doc]
-                pub type #p = P<::typenum::#u>;
+                pub type #p = Priority<::typenum::#u>;
             },
         );
     }
@@ -99,13 +106,21 @@ fn main() {
 
     let u = Ident::new(format!("U{}", (1 << bits)));
     let c = Ident::new(format!("C{}", (1 << bits)));
+    let p = Ident::new(format!("P{}", (1 << bits)));
+    let t = Ident::new(format!("T{}", (1 << bits)));
     tokens.push(
         quote! {
             /// Maximum ceiling
-            pub type CMAX = #c;
+            pub type CMax = #c;
+
+            /// Maximum priority
+            pub type PMax = #p;
+
+            /// Maximum preemption threshold
+            pub type TMax = #t;
 
             /// Maximum priority level
-            pub type UMAX = ::typenum::#u;
+            pub type UMax = ::typenum::#u;
         },
     );
 

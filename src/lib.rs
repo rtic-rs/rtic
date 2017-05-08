@@ -14,17 +14,18 @@
 //! # Features
 //!
 //! - **Event triggered tasks** as the unit of concurrency.
-//! - Supports prioritization of tasks and, thus, **preemptive multitasking**.
+//! - Support for prioritization of tasks and, thus, **preemptive
+//!   multitasking**.
 //! - **Efficient and data race free memory sharing** through fine grained *non
 //!   global* critical sections.
 //! - **Deadlock free execution**, guaranteed at compile time.
 //! - **Minimal scheduling overhead** as the scheduler has no "software
 //!   component"; the hardware does all the scheduling.
-//! - **Highly efficient memory usage**. All the tasks share the call stack and
-//!   there's no hard dependency on a dynamic allocator.
+//! - **Highly efficient memory usage**. All the tasks share a single call stack
+//!   and there's no hard dependency on a dynamic memory allocator.
 //! - **All Cortex M3, M4 and M7 devices are fully supported**. M0(+) is
-//!   partially supported as the whole API is not available (due to missing
-//!   hardware features).
+//!   partially supported as the whole API is not available due to missing
+//!   hardware features.
 //! - The number of task priority levels is configurable at compile time through
 //!   the `P2` (4 levels), `P3` (8 levels), etc. Cargo features. The number of
 //!   priority levels supported by the hardware is device specific but this
@@ -76,18 +77,18 @@
 //! // device crate generated using svd2rust
 //! extern crate stm32f30x;
 //!
-//! use rtfm::{C0, C16, P0};
+//! use rtfm::{P0, T0, TMax};
 //!
 //! // TASKS (None in this example)
 //! tasks!(stm32f30x, {});
 //!
 //! // INITIALIZATION PHASE
-//! fn init(_priority: P0, _ceiling: &C16) {
+//! fn init(_priority: P0, _threshold: &TMax) {
 //!     hprintln!("INIT");
 //! }
 //!
 //! // IDLE LOOP
-//! fn idle(_priority: P0, _ceiling: C0) -> ! {
+//! fn idle(_priority: P0, _threshold: T0) -> ! {
 //!     hprintln!("IDLE");
 //!
 //!     // Sleep
@@ -112,7 +113,8 @@
 //!
 //! - `idle`, a never ending function that runs after `init`.
 //!
-//! Note that both `init` and `idle` have priority 0, the lowest priority.
+//! Both `init` and `idle` have a priority of 0, the lowest priority. In RTFM,
+//! a higher priority value means more urgent.
 //!
 //! # One task
 //!
@@ -127,16 +129,16 @@
 //! extern crate stm32f30x;
 //!
 //! use stm32f30x::interrupt::Tim7;
-//! use rtfm::{C0, C1, C16, Local, P0, P1};
+//! use rtfm::{Local, P0, P1, T0, T1, TMax};
 //!
 //! // INITIALIZATION PHASE
-//! fn init(_priority: P0, _ceiling: &C16) {
+//! fn init(_priority: P0, _threshold: &TMax) {
 //!     // Configure TIM7 for periodic interrupts
 //!     // Configure GPIO for LED driving
 //! }
 //!
 //! // IDLE LOOP
-//! fn idle(_priority: P0, _ceiling: C0) -> ! {
+//! fn idle(_priority: P0, _threshold: T0) -> ! {
 //!     // Sleep
 //!     loop {
 //!         rtfm::wfi();
@@ -152,7 +154,7 @@
 //!     },
 //! });
 //!
-//! fn periodic(mut task: Tim7, _priority: P1, _ceiling: C1) {
+//! fn periodic(mut task: Tim7, _priority: P1, _threshold: T1) {
 //!     // Task local data
 //!     static STATE: Local<bool, Tim7> = Local::new(false);
 //!
@@ -196,9 +198,7 @@
 //! use core::cell::Cell;
 //!
 //! use stm32f30x::interrupt::{Tim6Dacunder, Tim7};
-//! use rtfm::{C0, C1, C16, P0, P1, Resource};
-//!
-//! // omitted: `idle`, `init`
+//! use rtfm::{C1, P0, P1, Resource, T0, T1, TMax};
 //!
 //! tasks!(stm32f30x, {
 //!     t1: Task {
@@ -216,25 +216,25 @@
 //! // Data shared between tasks `t1` and `t2`
 //! static COUNTER: Resource<Cell<u32>, C1> = Resource::new(Cell::new(0));
 //!
-//! fn init(priority: P0, ceiling: &C16) {
+//! fn init(priority: P0, threshold: &TMax) {
 //!     // ..
 //! }
 //!
-//! fn idle(priority: P0, ceiling: C0) -> ! {
+//! fn idle(priority: P0, threshold: T0) -> ! {
 //!     // Sleep
 //!     loop {
 //!         rtfm::wfi();
 //!     }
 //! }
 //!
-//! fn t1(_task: Tim6Dacunder, priority: P1, ceiling: C1) {
-//!     let counter = COUNTER.access(&priority, &ceiling);
+//! fn t1(_task: Tim6Dacunder, priority: P1, threshold: T1) {
+//!     let counter = COUNTER.access(&priority, &threshold);
 //!
 //!     counter.set(counter.get() + 1);
 //! }
 //!
-//! fn t2(_task: Tim7, priority: P1, ceiling: C1) {
-//!     let counter = COUNTER.access(&priority, &ceiling);
+//! fn t2(_task: Tim7, priority: P1, threshold: T1) {
+//!     let counter = COUNTER.access(&priority, &threshold);
 //!
 //!     counter.set(counter.get() + 2);
 //! }
@@ -272,7 +272,7 @@
 //! use core::cell::Cell;
 //!
 //! use stm32f30x::interrupt::{Tim6Dacunder, Tim7};
-//! use rtfm::{C0, C1, C16, C2, P0, P1, P2, Resource};
+//! use rtfm::{C2, P0, P1, P2, Resource, T0, T1, T2, TMax};
 //!
 //! tasks!(stm32f30x, {
 //!     t1: Task {
@@ -289,23 +289,23 @@
 //!
 //! static COUNTER: Resource<Cell<u32>, C2> = Resource::new(Cell::new(0));
 //!
-//! fn init(priority: P0, ceiling: &C16) {
+//! fn init(priority: P0, threshold: &TMax) {
 //!     // ..
 //! }
 //!
-//! fn idle(priority: P0, ceiling: C0) -> ! {
+//! fn idle(priority: P0, threshold: T0) -> ! {
 //!     // Sleep
 //!     loop {
 //!         rtfm::wfi();
 //!     }
 //! }
 //!
-//! fn t1(_task: Tim6Dacunder, priority: P1, ceiling: C1) {
+//! fn t1(_task: Tim6Dacunder, priority: P1, threshold: T1) {
 //!     // ..
 //!
-//!     ceiling.raise(
-//!         &COUNTER, |ceiling: &C2| {
-//!             let counter = COUNTER.access(&priority, ceiling);
+//!     threshold.raise(
+//!         &COUNTER, |threshold: &T2| {
+//!             let counter = COUNTER.access(&priority, threshold);
 //!
 //!             counter.set(counter.get() + 1);
 //!         }
@@ -314,8 +314,8 @@
 //!     // ..
 //! }
 //!
-//! fn t2(_task: Tim7, priority: P2, ceiling: C2) {
-//!     let counter = COUNTER.access(&priority, &ceiling);
+//! fn t2(_task: Tim7, priority: P2, threshold: T2) {
+//!     let counter = COUNTER.access(&priority, &threshold);
 //!
 //!     counter.set(counter.get() + 2);
 //! }
@@ -328,9 +328,10 @@
 //!
 //! To avoid data races, `t1` must modify `COUNTER` in an atomic way; i.e. `t2`
 //! most not preempt `t1` while `COUNTER` is being modified. This is
-//! accomplished by [`raise`](./struct.C.html#method.raise)-ing the `ceiling`.
-//! This creates a critical section, denoted by a closure; for whose execution,
-//! `COUNTER` is accessible but `t2` is blocked from preempting `t1`.
+//! accomplished by [`raise`](./struct.C.html#method.raise)-ing the preemption
+//! `threshold`. This creates a critical section, denoted by a closure; for
+//! whose execution, `COUNTER` is accessible while `t2` is prevented from
+//! preempting `t1`.
 //!
 //! How `t2` accesses `COUNTER` remains unchanged. Since `t1` can't preempt `t2`
 //! due to the differences in priority; no critical section is needed in `t2`.
@@ -339,11 +340,12 @@
 //! required because the ceiling must be the maximum between `P1` and `P2`.
 //!
 //! Finally, it should be noted that the critical section in `t1` will only
-//! block tasks with a priority of 2 or lower. This is exactly what the ceiling
-//! represents: it's the "bar" that a task priority must pass in order to be
-//! able to preempt the current task / critical section. Note that a task with
-//! e.g. a priority of 3 (`P3`) effectively imposes a ceiling of 3 (`C3`)
-//! because only other task with a priority of 4 or greater can preempt it.
+//! block tasks with a priority of 2 or lower. This is exactly what the
+//! preemption threshold represents: it's the "bar" that a task priority must
+//! pass in order to be able to preempt the current task / critical section.
+//! Note that a task with a priority of e.g. 3 (`P3`) effectively imposes a
+//! threshold of 3 (`C3`) because only a task with a priority of 4 or greater
+//! can preempt it.
 //!
 //! # Peripherals as resources
 //!
@@ -357,7 +359,7 @@
 //! extern crate cortex_m_rtfm as rtfm;
 //! extern crate stm32f30x;
 //!
-//! use rtfm::{C0, C16, P0, Peripheral};
+//! use rtfm::{P0, Peripheral, T0, TMax};
 //!
 //! peripherals!(stm32f30x, {
 //!     GPIOA: Peripheral {
@@ -372,14 +374,14 @@
 //!
 //! tasks!(stm32f30x, {});
 //!
-//! fn init(priority: P0, ceiling: &C16) {
-//!     let gpioa = GPIOA.access(&priority, &ceiling);
-//!     let rcc = RCC.access(&priority, &ceiling);
+//! fn init(priority: P0, threshold: &TMax) {
+//!     let gpioa = GPIOA.access(&priority, threshold);
+//!     let rcc = RCC.access(&priority, threshold);
 //!
 //!     // ..
 //! }
 //!
-//! fn idle(_priority: P0) -> ! {
+//! fn idle(_priority: P0, _threshold: T0) -> ! {
 //!     // Sleep
 //!     loop {
 //!         rtfm::wfi();
@@ -491,10 +493,10 @@ pub struct Resource<T, C> {
     data: UnsafeCell<T>,
 }
 
-impl<T, RC> Resource<T, C<RC>>
+impl<T, RC> Resource<T, Ceiling<RC>>
 where
     RC: GreaterThanOrEqual<U0>,
-    RC: LessThanOrEqual<UMAX>,
+    RC: LessThanOrEqual<UMax>,
 {
     /// Creates a new resource
     pub const fn new(data: T) -> Self {
@@ -505,7 +507,7 @@ where
     }
 }
 
-impl<T, RC> Resource<T, C<RC>> {
+impl<T, RC> Resource<T, Ceiling<RC>> {
     /// Grants data race free and deadlock free access to the resource data
     ///
     /// This operation is zero cost and doesn't impose any additional blocking.
@@ -516,16 +518,16 @@ impl<T, RC> Resource<T, C<RC>> {
     ///
     /// - The resource ceiling must be greater than or equal to the task
     ///   priority
-    /// - The system ceiling must be greater than or equal to the resource
+    /// - The preemption threshold must be greater than or equal to the resource
     ///   ceiling
-    pub fn access<'cs, TP, SC>(
+    pub fn access<'cs, TP, PT>(
         &'static self,
-        _priority: &P<TP>,
-        _current_ceiling: &'cs C<SC>,
+        _task_priority: &Priority<TP>,
+        _preemption_threshold: &'cs Threshold<PT>,
     ) -> Ref<'cs, T>
     where
         RC: GreaterThanOrEqual<TP>,
-        SC: GreaterThanOrEqual<RC>,
+        PT: GreaterThanOrEqual<RC>,
     {
         unsafe { Ref::new(&*self.data.get()) }
     }
@@ -545,10 +547,10 @@ where
     _ceiling: PhantomData<PC>,
 }
 
-impl<P, CEILING> Peripheral<P, C<CEILING>>
+impl<P, PC> Peripheral<P, Ceiling<PC>>
 where
-    CEILING: GreaterThanOrEqual<U0>,
-    CEILING: LessThanOrEqual<UMAX>,
+    PC: GreaterThanOrEqual<U0>,
+    PC: LessThanOrEqual<UMax>,
 {
     #[doc(hidden)]
     pub const unsafe fn _new(peripheral: cortex_m::peripheral::Peripheral<P>,)
@@ -560,16 +562,16 @@ where
     }
 }
 
-impl<Periph, RC> Peripheral<Periph, C<RC>> {
+impl<Periph, PC> Peripheral<Periph, Ceiling<PC>> {
     /// See [Resource.access](./struct.Resource.html#method.access)
-    pub fn access<'cs, TP, SC>(
+    pub fn access<'cs, TP, PT>(
         &'static self,
-        _priority: &P<TP>,
-        _system_ceiling: &'cs C<SC>,
+        _task_priority: &Priority<TP>,
+        _preemption_threshold: &'cs Threshold<PT>,
     ) -> Ref<'cs, Periph>
     where
-        RC: GreaterThanOrEqual<TP>,
-        SC: GreaterThanOrEqual<RC>,
+        PC: GreaterThanOrEqual<TP>,
+        PT: GreaterThanOrEqual<PC>,
     {
         unsafe { Ref::new(&*self.peripheral.get()) }
     }
@@ -582,17 +584,17 @@ unsafe impl<T, C> Sync for Peripheral<T, C> {}
 /// No task can preempt the execution of the closure
 pub fn atomic<R, F>(f: F) -> R
 where
-    F: FnOnce(&CMAX) -> R,
+    F: FnOnce(&TMax) -> R,
 {
     let primask = ::cortex_m::register::primask::read();
     ::cortex_m::interrupt::disable();
 
-    let r = f(&C { _marker: PhantomData });
+    let r = f(&Threshold { _marker: PhantomData });
 
     // If the interrupts were active before our `disable` call, then re-enable
     // them. Otherwise, keep them disabled
     if primask.is_active() {
-        ::cortex_m::interrupt::enable();
+        unsafe { ::cortex_m::interrupt::enable() }
     }
 
     r
@@ -601,7 +603,7 @@ where
 /// Disables a `task`
 ///
 /// The task won't run even if the underlying interrupt is raised
-pub fn disable<T, TP>(_task: fn(T, P<TP>, C<TP>))
+pub fn disable<T, N>(_task: fn(T, Priority<N>, Threshold<N>))
 where
     T: Context + Nr,
 {
@@ -613,7 +615,7 @@ where
 }
 
 /// Enables a `task`
-pub fn enable<T, TP>(_task: fn(T, P<TP>, C<TP>))
+pub fn enable<T, N>(_task: fn(T, Priority<N>, Threshold<N>))
 where
     T: Context + Nr,
 {
@@ -644,7 +646,7 @@ pub fn logical2hw(logical: u8) -> u8 {
 }
 
 /// Requests the execution of a `task`
-pub fn request<T, TP>(_task: fn(T, P<TP>, C<TP>))
+pub fn request<T, N>(_task: fn(T, Priority<N>, Threshold<N>))
 where
     T: Context + Nr,
 {
@@ -671,31 +673,36 @@ where
 }
 
 #[doc(hidden)]
-pub fn _validate_priority<TP>(_: &P<TP>)
+pub fn _validate_priority<TP>(_: &Priority<TP>)
 where
-    TP: Cmp<U0, Output = Greater> + LessThanOrEqual<UMAX>,
+    TP: Cmp<U0, Output = Greater> + LessThanOrEqual<UMax>,
 {
 }
 
-/// A type-level ceiling
-pub struct C<T> {
+/// Resource ceiling
+pub struct Ceiling<N> {
+    _marker: PhantomData<N>,
+}
+
+/// Preemption threshold
+pub struct Threshold<T> {
     _marker: PhantomData<T>,
 }
 
-impl<SC> C<SC> {
-    /// Raises the system ceiling to match the `resource` ceiling
+impl<PT> Threshold<PT> {
+    /// Raises the preemption threshold to match the `resource` ceiling
     #[cfg(not(thumbv6m))]
     pub fn raise<RC, RES, R, F>(&self, _resource: &'static RES, f: F) -> R
     where
         RES: ResourceLike<Ceiling = RC>,
-        RC: Cmp<SC, Output = Greater> + Cmp<UMAX, Output = Less> + Unsigned,
-        F: FnOnce(&C<RC>) -> R,
+        RC: Cmp<PT, Output = Greater> + Cmp<UMax, Output = Less> + Unsigned,
+        F: FnOnce(&Threshold<RC>) -> R,
     {
         unsafe {
             let old_basepri = basepri::read();
             basepri_max::write(logical2hw(RC::to_u8()));
             barrier!();
-            let ret = f(&C { _marker: PhantomData });
+            let ret = f(&Threshold { _marker: PhantomData });
             barrier!();
             basepri::write(old_basepri);
             ret
@@ -703,12 +710,12 @@ impl<SC> C<SC> {
     }
 }
 
-/// A type-level priority
-pub struct P<T> {
-    _marker: PhantomData<T>,
+/// Priority
+pub struct Priority<N> {
+    _marker: PhantomData<N>,
 }
 
-impl<T> P<T>
+impl<T> Priority<T>
 where
     T: Unsigned,
 {
@@ -726,11 +733,11 @@ pub unsafe trait ResourceLike {
     type Ceiling;
 }
 
-unsafe impl<P, RC> ResourceLike for Peripheral<P, C<RC>> {
-    type Ceiling = RC;
+unsafe impl<P, PC> ResourceLike for Peripheral<P, Ceiling<PC>> {
+    type Ceiling = PC;
 }
 
-unsafe impl<T, RC> ResourceLike for Resource<T, C<RC>> {
+unsafe impl<T, RC> ResourceLike for Resource<T, Ceiling<RC>> {
     type Ceiling = RC;
 }
 
@@ -798,18 +805,22 @@ macro_rules! peripherals {
 /// The `$Interrupt` handlers are defined in the `$device` crate.
 ///
 /// Apart from defining the listed `$tasks`, the `init` and `idle` functions
-/// must be defined as well. `init` has signature `fn(P0, &C16)`, and `idle` has
-/// signature `fn(P0) -> !`.
+/// must be defined as well. `init` has signature `fn(P0, &TMax)`, and `idle`
+/// has signature `fn(P0) -> !`.
 ///
 /// # Example
 ///
 /// ``` ignore
+/// #[feature(used)]
+/// #[no_std]
+///
+/// extern crate cortex_m_rt;
 /// #[macro_use]
 /// extern crate cortex_m_rtfm as rtfm;
 /// // device crate generated using `svd2rust`
 /// extern crate stm32f30x;
 ///
-/// use rtfm::{C16, P0, P1, P2};
+/// use rtfm::{P0, P1, P2, T0, T1, T2, TMax};
 /// use stm32f30x::interrupt::{Exti0, Tim7};
 ///
 /// tasks!(stm32f30x, {
@@ -825,11 +836,11 @@ macro_rules! peripherals {
 ///     },
 /// });
 ///
-/// fn init(priority: P0, ceiling: C16) {
+/// fn init(priority: P0, threshold: &TMax) {
 ///     // ..
 /// }
 ///
-/// fn idle(priority: P0) -> ! {
+/// fn idle(priority: P0, threshold: T0) -> ! {
 ///     // Sleep
 ///     loop {
 ///         rtfm::wfi();
@@ -837,11 +848,11 @@ macro_rules! peripherals {
 /// }
 ///
 /// // NOTE signature must match the tasks! declaration
-/// fn periodic(task: Tim7, priority: P1) {
+/// fn periodic(task: Tim7, priority: P1, threshold: T1) {
 ///     // ..
 /// }
 ///
-/// fn button(task: Exti0, priority: P2) {
+/// fn button(task: Exti0, priority: P2, threshold: T2) {
 ///     // ..
 /// }
 /// ```
@@ -855,22 +866,22 @@ macro_rules! tasks {
         },)*
     }) => {
         fn main() {
-            $crate::atomic(|cmax| {
-                fn validate_signature(_: fn($crate::P0, &$crate::CMAX)) {}
+            $crate::atomic(|t_max| {
+                fn validate_signature(_: fn($crate::P0, &$crate::TMax)) {}
 
                 validate_signature(init);
                 let p0 = unsafe { ::core::mem::transmute::<_, P0>(()) };
-                init(p0, cmax);
+                init(p0, t_max);
                 set_priorities();
                 enable_tasks();
             });
 
-            fn validate_signature(_: fn($crate::P0, $crate::C0) -> !) {}
+            fn validate_signature(_: fn($crate::P0, $crate::T0) -> !) {}
 
             validate_signature(idle);
             let p0 = unsafe { ::core::mem::transmute::<_, P0>(()) };
-            let c0 = unsafe { ::core::mem::transmute::<_, C0>(()) };
-            idle(p0, c0);
+            let t0 = unsafe { ::core::mem::transmute::<_, T0>(()) };
+            idle(p0, t0);
 
             fn set_priorities() {
                 // NOTE(safe) this function runs in an interrupt free context
@@ -914,17 +925,17 @@ macro_rules! tasks {
                         ) {
                             fn validate_signature<N>(
                                 _: fn(::$device::interrupt::$Interrupt,
-                                      $crate::P<N>,
-                                      $crate::C<N>)) {}
+                                      $crate::Priority<N>,
+                                      $crate::Threshold<N>)) {}
                             validate_signature(::$task);
                             let p = unsafe {
                                 ::core::mem::transmute::<_, $crate::$P>(())
                             };
-                            let c = unsafe {
+                            let t = unsafe {
                                 ::core::mem::transmute(())
                             };
                             $crate::_validate_priority(&p);
-                            ::$task(task, p, c)
+                            ::$task(task, p, t)
                         }
 
                         $task

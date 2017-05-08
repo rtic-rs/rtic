@@ -5,7 +5,7 @@
 #[macro_use]
 extern crate cortex_m_rtfm as rtfm;
 
-use rtfm::{C0, C1, C16, C2, P0, P1};
+use rtfm::{C2, P0, P1, T0, T2, TMax};
 use device::interrupt::Exti0;
 
 tasks!(device, {
@@ -16,14 +16,14 @@ tasks!(device, {
     },
 });
 
-fn init(_: P0, _: &C16) {}
+fn init(_: P0, _: &TMax) {}
 
-fn idle(_: P0, _: C0) -> ! {
+fn idle(_: P0, _: T0) -> ! {
     loop {}
 }
 
-// Wrong ceiling token. `prio` and `ceil` must match in levels
-fn j1(_task: Exti0, _prio: P1, _ceil: C2) {}
+// Wrong ceiling token. `prio` and `thr` must match in levels
+fn j1(_task: Exti0, _prio: P1, _thr: T2) {}
 
 // fake device crate
 extern crate core;

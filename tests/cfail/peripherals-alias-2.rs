@@ -6,7 +6,7 @@
 #[macro_use]
 extern crate cortex_m_rtfm as rtfm;
 
-use rtfm::{C0, C16, P0, P1};
+use rtfm::{P0, P1, T0, TMax};
 use device::interrupt::Exti0;
 
 peripherals!(device, {
@@ -28,9 +28,9 @@ mod foo {
 
 tasks!(device, {});
 
-fn init(_: P0, _: &C16) {}
+fn init(_: P0, _: &TMax) {}
 
-fn idle(_: P0, _: C0) -> ! {
+fn idle(_: P0, _: T0) -> ! {
     loop {}
 }
 

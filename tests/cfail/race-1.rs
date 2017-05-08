@@ -1,13 +1,13 @@
 extern crate cortex_m_rtfm as rtfm;
 
-use rtfm::{C1, C2, C3, C4, P1, P3, Resource};
+use rtfm::{C2, P1, P3, Resource, T1, T3};
 
 static R1: Resource<i32, C2> = Resource::new(0);
 
-fn j1(prio: P1, ceil: C1) {
-    ceil.raise(
-        &R1, |ceil| {
-            let r1 = R1.access(&prio, ceil);
+fn j1(prio: P1, thr: T1) {
+    thr.raise(
+        &R1, |thr| {
+            let r1 = R1.access(&prio, thr);
 
             // `j2` preempts this critical section
             rtfm::request(j2);
@@ -15,12 +15,12 @@ fn j1(prio: P1, ceil: C1) {
     );
 }
 
-fn j2(_task: Task, prio: P3, ceil: C3) {
+fn j2(_task: Task, prio: P3, thr: T3) {
     rtfm::atomic(
-        |ceil| {
-            // OK  C2 (R1's ceiling) <= C16 (system ceiling)
+        |thr| {
+            // OK  C2 (R1's ceiling) <= T16 (preemption threshold)
             // BAD C2 (R1's ceiling) <  P3 (j2's priority)
-            let r1 = R1.access(&prio, &ceil);
+            let r1 = R1.access(&prio, &thr);
             //~^ error
         },
     );
