@@ -49,7 +49,7 @@ fn main() {
         tokens.push(
             quote! {
                 #[doc = #doc]
-                pub type #c = Ceiling<::typenum::#u>;
+                pub type #c = ::typenum::#u;
             },
         );
 

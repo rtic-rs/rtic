@@ -494,7 +494,7 @@ pub struct Resource<T, C> {
     data: UnsafeCell<T>,
 }
 
-impl<T, RC> Resource<T, Ceiling<RC>>
+impl<T, RC> Resource<T, RC>
 where
     RC: GreaterThanOrEqual<U0>,
     RC: LessThanOrEqual<UMax>,
@@ -508,7 +508,7 @@ where
     }
 }
 
-impl<T, RC> Resource<T, Ceiling<RC>> {
+impl<T, RC> Resource<T, RC> {
     /// Grants data race free and deadlock free access to the resource data
     ///
     /// This operation is zero cost and doesn't impose any additional blocking.
@@ -552,7 +552,7 @@ where
     _ceiling: PhantomData<PC>,
 }
 
-impl<P, PC> Peripheral<P, Ceiling<PC>>
+impl<P, PC> Peripheral<P, PC>
 where
     PC: GreaterThanOrEqual<U0>,
     PC: LessThanOrEqual<UMax>,
@@ -567,7 +567,7 @@ where
     }
 }
 
-impl<Periph, PC> Peripheral<Periph, Ceiling<PC>> {
+impl<Periph, PC> Peripheral<Periph, PC> {
     /// See [Resource.access](./struct.Resource.html#method.access)
     pub fn access<'cs, TP, PT>(
         &'static self,
@@ -684,13 +684,6 @@ where
 {
 }
 
-/// Resource ceiling
-pub struct Ceiling<N> {
-    _marker: PhantomData<N>,
-}
-
-impl<N> !Send for Ceiling<N> {}
-
 /// Preemption threshold
 pub struct Threshold<T> {
     _marker: PhantomData<T>,
@@ -744,11 +737,11 @@ pub unsafe trait ResourceLike {
     type Ceiling;
 }
 
-unsafe impl<P, PC> ResourceLike for Peripheral<P, Ceiling<PC>> {
+unsafe impl<P, PC> ResourceLike for Peripheral<P, PC> {
     type Ceiling = PC;
 }
 
-unsafe impl<T, RC> ResourceLike for Resource<T, Ceiling<RC>> {
+unsafe impl<T, RC> ResourceLike for Resource<T, RC> {
     type Ceiling = RC;
 }
 
