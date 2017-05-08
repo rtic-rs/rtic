@@ -419,6 +419,7 @@
 #![deny(warnings)]
 #![feature(asm)]
 #![feature(const_fn)]
+#![feature(optin_builtin_traits)]
 #![no_std]
 
 extern crate cortex_m;
@@ -533,7 +534,11 @@ impl<T, RC> Resource<T, Ceiling<RC>> {
     }
 }
 
-unsafe impl<T, C> Sync for Resource<T, C> {}
+unsafe impl<T, C> Sync for Resource<T, C>
+where
+    T: Send,
+{
+}
 
 /// A hardware peripheral as a resource
 ///
@@ -684,6 +689,8 @@ pub struct Ceiling<N> {
     _marker: PhantomData<N>,
 }
 
+impl<N> !Send for Ceiling<N> {}
+
 /// Preemption threshold
 pub struct Threshold<T> {
     _marker: PhantomData<T>,
@@ -710,6 +717,8 @@ impl<PT> Threshold<PT> {
     }
 }
 
+impl<N> !Send for Threshold<N> {}
+
 /// Priority
 pub struct Priority<N> {
     _marker: PhantomData<N>,
@@ -724,6 +733,8 @@ where
         logical2hw(T::to_u8())
     }
 }
+
+impl<N> !Send for Priority<N> {}
 
 /// Maps a `Resource` / `Peripheral` to its ceiling
 ///
