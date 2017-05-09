@@ -18,10 +18,10 @@
 //!   multitasking**.
 //! - **Efficient and data race free memory sharing** through fine grained *non
 //!   global* critical sections.
-//! - **Deadlock free execution**, guaranteed at compile time.
+//! - **Deadlock free execution** guaranteed at compile time.
 //! - **Minimal scheduling overhead** as the scheduler has no "software
-//!   component"; the hardware does all the scheduling.
-//! - **Highly efficient memory usage**. All the tasks share a single call stack
+//!   component": the hardware does all the scheduling.
+//! - **Highly efficient memory usage**: All the tasks share a single call stack
 //!   and there's no hard dependency on a dynamic memory allocator.
 //! - **All Cortex M3, M4 and M7 devices are fully supported**. M0(+) is
 //!   partially supported as the whole API is not available due to missing
@@ -489,6 +489,8 @@ impl<T, TASK> Local<T, TASK> {
 unsafe impl<T, TASK> Sync for Local<T, TASK> {}
 
 /// A resource with ceiling `C`
+///
+/// A resource is used to share memory between two or more tasks
 pub struct Resource<T, C> {
     _ceiling: PhantomData<C>,
     data: UnsafeCell<T>,

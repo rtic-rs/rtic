@@ -3,7 +3,8 @@
 
 # `cortex-m-rtfm`
 
-> Real Time For the Masses (Cortex-M edition)
+> Real Time For the Masses (RTFM), a framework for building concurrent
+> applications, for ARM Cortex-M MCUs
 
 # [Manual](https://docs.rs/cortex-m-rtfm)
 
