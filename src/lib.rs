@@ -426,9 +426,9 @@ extern crate cortex_m;
 extern crate static_ref;
 extern crate typenum;
 
-use core::cell::UnsafeCell;
+use core::cell::{Cell, UnsafeCell};
 use core::marker::PhantomData;
-use core::ptr;
+use core::{mem, ptr};
 
 use cortex_m::ctxt::Context;
 use cortex_m::interrupt::Nr;
@@ -533,6 +533,29 @@ impl<T, RC> Resource<T, RC> {
         PT: GreaterThanOrEqual<RC>,
     {
         unsafe { Ref::new(&*self.data.get()) }
+    }
+}
+
+impl<T, RC> Resource<Cell<T>, RC> {
+    /// Performs an atomic read of the resource value
+    ///
+    /// This method has no synchronization overhead, and doesn't impose
+    /// additional task blocking
+    ///
+    /// # Panics
+    ///
+    /// - This method will panic if the size of `T` is greater than the size
+    ///   of a word (4 bytes)
+    pub fn read(&self) -> T {
+        assert!(mem::size_of::<T>() <= mem::size_of::<usize>());
+
+        // NOTE(volatile) this has to be volatile because unlike a read through
+        // `access` there's no guarantee that the resource value will *not*
+        // change between two consecutive reads (e.g. an interrupt may occur
+        // in between)
+        unsafe {
+            ptr::read_volatile(self.data.get() as *const _)
+        }
     }
 }
 
