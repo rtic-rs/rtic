@@ -765,6 +765,9 @@ pub unsafe trait LessThanOrEqual<RHS> {}
 ///
 /// # Example
 ///
+/// NOTE With device crates generated using svd2rust 0.8+ you can omit the
+/// register_block field.
+///
 /// ``` ignore
 /// #[macro_use]
 /// extern crate cortex_m_rtfm;
@@ -796,6 +799,19 @@ macro_rules! peripherals {
             static $PERIPHERAL:
                 $crate::Peripheral<::$device::$RegisterBlock, $crate::$C> =
                     unsafe { $crate::Peripheral::_new(::$device::$PERIPHERAL) };
+        )+
+    };
+    ($device:ident, {
+        $($PERIPHERAL:ident: Peripheral {
+            ceiling: $C:ident,
+        },)+
+    }) => {
+        $(
+            #[allow(private_no_mangle_statics)]
+            #[no_mangle]
+            static $PERIPHERAL:
+            $crate::Peripheral<::$device::$PERIPHERAL, $crate::$C> =
+                unsafe { $crate::Peripheral::_new(::$device::$PERIPHERAL) };
         )+
     }
 }
