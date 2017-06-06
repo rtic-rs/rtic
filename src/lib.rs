@@ -445,6 +445,7 @@ pub use cortex_m::asm::{bkpt, wfi};
 pub use cortex_m::peripheral::NVIC as _NVIC;
 
 /// Compiler barrier
+#[cfg(not(thumbv6m))]
 macro_rules! barrier {
     () => {
         asm!(""
