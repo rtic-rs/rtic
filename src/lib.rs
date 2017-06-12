@@ -437,7 +437,7 @@ use cortex_m::register::{basepri, basepri_max};
 use static_ref::Ref;
 use typenum::{Cmp, Greater, U0, Unsigned};
 #[cfg(not(thumbv6m))]
-use typenum::Less;
+use typenum::{Less, Max};
 
 pub use cortex_m::asm::{bkpt, wfi};
 
@@ -535,6 +535,36 @@ impl<T, RC> Resource<T, RC> {
     {
         unsafe { Ref::new(&*self.data.get()) }
     }
+
+    /// Access the resource, raising the threshold if necessary
+    #[cfg(not(thumbv6m))]
+    pub fn claim<TP, PT, R, F>(
+        &'static self,
+        _task_priority: &Priority<TP>,
+        _preemption_threshold: &Threshold<PT>,
+        f: F,
+    ) -> R
+    where
+        F: FnOnce(&T, &Threshold<<PT as Max<RC>>::Output>) -> R,
+        RC: Cmp<UMax, Output = Less> + GreaterThanOrEqual<TP> + Unsigned,
+        PT: Max<RC> + Unsigned,
+    {
+        let t = Threshold { _marker: PhantomData };
+
+        unsafe {
+            if RC::to_u8() > PT::to_u8() {
+                let old_basepri = basepri::read();
+                basepri_max::write(logical2hw(RC::to_u8()));
+                barrier!();
+                let ret = f(&*self.data.get(), &t);
+                barrier!();
+                basepri::write(old_basepri);
+                ret
+            } else {
+                f(&*self.data.get(), &t)
+            }
+        }
+    }
 }
 
 unsafe impl<T, C> Sync for Resource<T, C>
@@ -561,8 +591,9 @@ where
     PC: LessThanOrEqual<UMax>,
 {
     #[doc(hidden)]
-    pub const unsafe fn _new(peripheral: cortex_m::peripheral::Peripheral<P>,)
-        -> Self {
+    pub const unsafe fn _new(
+        peripheral: cortex_m::peripheral::Peripheral<P>,
+    ) -> Self {
         Peripheral {
             _ceiling: PhantomData,
             peripheral: peripheral,
@@ -582,6 +613,36 @@ impl<Periph, PC> Peripheral<Periph, PC> {
         PT: GreaterThanOrEqual<PC>,
     {
         unsafe { Ref::new(&*self.peripheral.get()) }
+    }
+
+    /// Access the resource, raising the threshold if necessary
+    #[cfg(not(thumbv6m))]
+    pub fn claim<TP, PT, R, F>(
+        &'static self,
+        _task_priority: &Priority<TP>,
+        _preemption_threshold: &Threshold<PT>,
+        f: F,
+    ) -> R
+    where
+        F: FnOnce(&Periph, &Threshold<<PT as Max<PC>>::Output>) -> R,
+        PC: Cmp<UMax, Output = Less> + GreaterThanOrEqual<TP> + Unsigned,
+        PT: Max<PC> + Unsigned,
+    {
+        let t = Threshold { _marker: PhantomData };
+
+        unsafe {
+            if PC::to_u8() > PT::to_u8() {
+                let old_basepri = basepri::read();
+                basepri_max::write(logical2hw(PC::to_u8()));
+                barrier!();
+                let ret = f(&*self.peripheral.get(), &t);
+                barrier!();
+                basepri::write(old_basepri);
+                ret
+            } else {
+                f(&*self.peripheral.get(), &t)
+            }
+        }
     }
 }
 
