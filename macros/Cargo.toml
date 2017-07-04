@@ -1,0 +1,11 @@
+[package]
+authors = ["Jorge Aparicio <jorge@japaric.io>"]
+name = "rtfm-macros"
+version = "0.1.0"
+
+[dependencies]
+quote = "0.3.15"
+syn = "0.11.11"
+
+[lib]
+plugin = true

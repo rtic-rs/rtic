@@ -10,24 +10,8 @@ keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm"
 repository = "https://github.com/japaric/cortex-m-rtfm"
-version = "0.1.1"
-
-[build-dependencies]
-quote = "0.3.15"
-syn = "0.11.10"
+version = "0.2.0"
 
 [dependencies]
-cortex-m = "0.2.6"
-static-ref = "0.1.0"
-typenum = "1.7.0"
-
-[dev-dependencies]
-compiletest_rs = "0.2.5"
-
-[features]
-# Number of priority bits
-P2 = []
-P3 = []
-P4 = []
-P5 = []
-default = ["P4"]
+cortex-m = "0.3.0"
+static-ref = "0.2.0"
