@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use syn::{self, DelimToken, Ident, IntTy, Lit, Token, TokenTree};
-use quote::Tokens;
 
 use syntax::{App, Idle, Init, Kind, Resource, Resources, Task, Tasks};
 
@@ -136,10 +135,7 @@ pub fn app(input: &str) -> App {
     }
 }
 
-fn idle_init(
-    tts: Vec<TokenTree>,
-    allows_locals: bool,
-) -> (Option<Resources>, Tokens, HashSet<Ident>) {
+pub fn idle(tts: Vec<TokenTree>) -> Idle {
     let mut tts = tts.into_iter();
 
     let mut local = None;
@@ -161,7 +157,7 @@ fn idle_init(
         );
 
         match id.as_ref() {
-            "local" if allows_locals => {
+            "local" => {
                 assert!(local.is_none(), "duplicated local field");
 
                 let tt = tts.next();
@@ -183,7 +179,8 @@ fn idle_init(
 
                 let mut pieces = vec![];
                 loop {
-                    let tt = tts.next().expect("expected comma, found EOM");
+                    let tt = tts.next()
+                        .expect("expected comma, found end of macro");
 
                     if tt == TokenTree::Token(Token::Comma) {
                         path = Some(quote!(#(#pieces)*));
@@ -225,27 +222,52 @@ fn idle_init(
         );
     }
 
-    (
-        local,
-        path.expect("path field is missing"),
-        resources.unwrap_or(HashSet::new()),
-    )
-}
-
-pub fn idle(tts: Vec<TokenTree>) -> Idle {
-    let (locals, path, resources) = idle_init(tts, true);
-
     Idle {
-        local: locals.expect("local field is missing"),
-        path,
-        resources,
+        local: local.unwrap_or(HashMap::new()),
+        path: path.expect("path field is missing"),
+        resources: resources.unwrap_or(HashSet::new()),
     }
 }
 
 pub fn init(tts: Vec<TokenTree>) -> Init {
-    let (_, path, resources) = idle_init(tts, false);
+    let mut tts = tts.into_iter();
 
-    Init { path, resources }
+    let mut path = None;
+    while let Some(tt) = tts.next() {
+        let id = if let TokenTree::Token(Token::Ident(id)) = tt {
+            id
+        } else {
+            panic!("expected ident, found {:?}", tt);
+        };
+
+        let tt = tts.next();
+        assert_eq!(
+            tt,
+            Some(TokenTree::Token(Token::Colon)),
+            "expected colon, found {:?}",
+            tt
+        );
+
+        match id.as_ref() {
+            "path" => {
+                let mut pieces = vec![];
+                loop {
+                    let tt = tts.next()
+                        .expect("expected comma, found end of macro");
+
+                    if tt == TokenTree::Token(Token::Comma) {
+                        path = Some(quote!(#(#pieces)*));
+                        break;
+                    } else {
+                        pieces.push(tt);
+                    }
+                }
+            }
+            id => panic!("unexpected field {}", id),
+        }
+    }
+
+    Init { path: path.expect("path field is missing") }
 }
 
 fn idents(tts: Vec<TokenTree>) -> HashSet<Ident> {

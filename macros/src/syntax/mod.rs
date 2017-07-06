@@ -17,7 +17,6 @@ pub struct App {
 #[derive(Debug)]
 pub struct Init {
     pub path: Tokens,
-    pub resources: HashSet<Ident>,
 }
 
 #[derive(Debug)]

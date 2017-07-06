@@ -33,32 +33,24 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let mut fields = vec![];
     let mut exprs = vec![];
     let mut lifetime = None;
-    for name in &app.init.resources {
+    for (name, resource) in &app.resources {
         lifetime = Some(quote!('a));
 
-        if let Some(resource) = app.resources.get(name) {
-            let ty = &resource.ty;
+        let ty = &resource.ty;
 
-            fields.push(quote! {
-                pub #name: &'a mut #ty,
-            });
+        fields.push(quote! {
+            pub #name: &'a mut #ty,
+        });
 
-            exprs.push(quote! {
-                #name: &mut *super::#name.get(),
-            });
-        } else {
-            fields.push(quote! {
-                pub #name: &'a mut ::#device::#name,
-            });
-
-            exprs.push(quote! {
-                #name: &mut *::#device::#name.get(),
-            });
-        }
+        exprs.push(quote! {
+            #name: &mut *super::#name.get(),
+        });
     }
 
     root.push(quote! {
         mod init {
+            pub use ::#device::Peripherals;
+
             #[allow(non_snake_case)]
             pub struct Resources<#lifetime> {
                 #(#fields)*
@@ -122,10 +114,10 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let init = &app.init.path;
     main.push(quote! {
         // type check
-        let init: fn(init::Resources) = #init;
+        let init: fn(init::Peripherals, init::Resources) = #init;
 
         #krate::atomic(|cs| unsafe {
-            init(init::Resources::new());
+            init(init::Peripherals::all(), init::Resources::new());
 
             #(#exceptions)*
             #(#interrupts)*
