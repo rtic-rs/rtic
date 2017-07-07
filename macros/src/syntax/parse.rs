@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use syn::{self, DelimToken, Ident, IntTy, Lit, Token, TokenTree};
 
-use syntax::{App, Idle, Init, Kind, Resource, Resources, Task, Tasks};
+use syntax::{App, Idle, Init, Kind, Resource, Statics, Task, Tasks};
 
 pub fn app(input: &str) -> App {
     let tts = syn::parse_token_trees(input).unwrap();
@@ -96,7 +96,7 @@ pub fn app(input: &str) -> App {
                         block.delim
                     );
 
-                    resources = Some(super::parse::resources(block.tts));
+                    resources = Some(super::parse::statics(block.tts));
                 }
             }
             "tasks" => {
@@ -169,7 +169,7 @@ pub fn idle(tts: Vec<TokenTree>) -> Idle {
                         block.delim
                     );
 
-                    local = Some(super::parse::resources(block.tts));
+                    local = Some(super::parse::statics(block.tts));
                 } else {
                     panic!("expected block, found {:?}", tt);
                 }
@@ -273,7 +273,7 @@ pub fn init(tts: Vec<TokenTree>) -> Init {
 fn idents(tts: Vec<TokenTree>) -> HashSet<Ident> {
     let mut idents = HashSet::new();
 
-    let mut tts = tts.into_iter();
+    let mut tts = tts.into_iter().peekable();
     while let Some(tt) = tts.next() {
         if let TokenTree::Token(Token::Ident(id)) = tt {
             assert!(!idents.contains(&id), "ident {} already listed", id);
@@ -281,6 +281,10 @@ fn idents(tts: Vec<TokenTree>) -> HashSet<Ident> {
 
             if let Some(tt) = tts.next() {
                 assert_eq!(tt, TokenTree::Token(Token::Comma));
+
+                if tts.peek().is_none() {
+                    break;
+                }
             } else {
                 break;
             }
@@ -292,7 +296,7 @@ fn idents(tts: Vec<TokenTree>) -> HashSet<Ident> {
     idents
 }
 
-pub fn resources(tts: Vec<TokenTree>) -> Resources {
+pub fn statics(tts: Vec<TokenTree>) -> Statics {
     let mut resources = HashMap::new();
 
     let mut tts = tts.into_iter();
@@ -502,7 +506,7 @@ fn task(tts: Vec<TokenTree>) -> Task {
         );
     }
 
-    let resources = resources.expect("resources field is missing");
+    let resources = resources.unwrap_or(HashSet::new());
     let priority = priority.expect("priority field is missing");
     let kind = if let Some(enabled) = enabled {
         Kind::Interrupt { enabled }

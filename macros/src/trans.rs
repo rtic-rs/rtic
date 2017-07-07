@@ -39,22 +39,24 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         let ty = &resource.ty;
 
         fields.push(quote! {
-            pub #name: &'a mut #ty,
+            pub #name: &'a mut #krate::Static<#ty>,
         });
 
         exprs.push(quote! {
-            #name: &mut *super::#name.get(),
+            #name: ::#krate::Static::ref_mut(&mut *super::#name.get()),
         });
     }
 
     root.push(quote! {
+        #[allow(non_camel_case_types)]
+        #[allow(non_snake_case)]
+        pub struct _initResources<#lifetime> {
+            #(#fields)*
+        }
+
         mod init {
             pub use ::#device::Peripherals;
-
-            #[allow(non_snake_case)]
-            pub struct Resources<#lifetime> {
-                #(#fields)*
-            }
+            pub use ::_initResources as Resources;
 
             impl<#lifetime> Resources<#lifetime> {
                 pub unsafe fn new() -> Self {
@@ -184,36 +186,80 @@ fn idle(
         let device = &app.device;
         let mut lifetime = None;
 
+        let mut needs_reexport = false;
+        for name in &app.idle.resources {
+            if ceilings[name].is_owned() {
+                if app.resources.get(name).is_some() {
+                    needs_reexport = true;
+                    break
+                }
+            }
+        }
+
+        let super_ = if needs_reexport {
+            None
+        } else {
+            Some(Ident::new("super"))
+        };
         let mut rexprs = vec![];
         let mut rfields = vec![];
         for name in &app.idle.resources {
             if ceilings[name].is_owned() {
                 lifetime = Some(quote!('a));
+                if let Some(resource) = app.resources.get(name) {
+                    let ty = &resource.ty;
 
-                rfields.push(quote! {
-                    pub #name: &'a mut ::#device::#name,
-                });
+                    rfields.push(quote! {
+                        pub #name: &'a mut ::#krate::Static<#ty>,
+                    });
 
-                rexprs.push(quote! {
-                    #name: &mut *::#device::#name.get(),
-                });
+                    rexprs.push(quote! {
+                        #name: ::#krate::Static::ref_mut(
+                            &mut *#super_::#name.get(),
+                        ),
+                    });
+                } else {
+                    rfields.push(quote! {
+                        pub #name: &'a mut ::#device::#name,
+                    });
+
+                    rexprs.push(quote! {
+                        #name: &mut *::#device::#name.get(),
+                    });
+                }
             } else {
                 rfields.push(quote! {
-                    pub #name: super::_resource::#name,
+                    pub #name: #super_::_resource::#name,
                 });
 
                 rexprs.push(quote! {
-                    #name: super::_resource::#name::new(),
+                    #name: #super_::_resource::#name::new(),
                 });
             }
         }
 
-        mod_items.push(quote! {
-            #[allow(non_snake_case)]
-            pub struct Resources<#lifetime> {
-                #(#rfields)*
-            }
+        if needs_reexport {
+            root.push(quote! {
+                #[allow(non_camel_case_types)]
+                #[allow(non_snake_case)]
+                pub struct _idleResources<#lifetime> {
+                    #(#rfields)*
+                }
+            });
 
+            mod_items.push(quote! {
+                pub use ::_idleResources as Resources;
+            });
+        } else {
+            mod_items.push(quote! {
+                #[allow(non_snake_case)]
+                pub struct Resources<#lifetime> {
+                    #(#rfields)*
+                }
+            });
+        }
+
+        mod_items.push(quote! {
             impl<#lifetime> Resources<#lifetime> {
                 pub unsafe fn new() -> Self {
                     Resources {
@@ -252,6 +298,7 @@ fn tasks(app: &App, ceilings: &Ceilings, root: &mut Vec<Tokens>) {
 
         let device = &app.device;
         let mut lifetime = None;
+        let mut needs_reexport = false;
         for name in &task.resources {
             match ceilings[name] {
                 Ceiling::Shared(ceiling) if ceiling > task.priority => {
@@ -268,6 +315,7 @@ fn tasks(app: &App, ceilings: &Ceilings, root: &mut Vec<Tokens>) {
                 _ => {
                     lifetime = Some(quote!('a));
                     if let Some(resource) = app.resources.get(name) {
+                        needs_reexport = true;
                         let ty = &resource.ty;
 
                         fields.push(quote! {
@@ -292,12 +340,27 @@ fn tasks(app: &App, ceilings: &Ceilings, root: &mut Vec<Tokens>) {
             }
         }
 
-        items.push(quote! {
-            #[allow(non_snake_case)]
-            pub struct Resources<#lifetime> {
-                #(#fields)*
-            }
-        });
+        if needs_reexport {
+            let rname = Ident::new(format!("_{}Resources", name));
+            root.push(quote! {
+                #[allow(non_camel_case_types)]
+                #[allow(non_snake_case)]
+                pub struct #rname<#lifetime> {
+                    #(#fields)*
+                }
+            });
+
+            items.push(quote! {
+                pub use ::#rname as Resources;
+            });
+        } else {
+            items.push(quote! {
+                #[allow(non_snake_case)]
+                pub struct Resources<#lifetime> {
+                    #(#fields)*
+                }
+            });
+        }
 
         items.push(quote! {
             impl<#lifetime> Resources<#lifetime> {
@@ -339,7 +402,22 @@ fn resources(app: &App, ceilings: &Ceilings, root: &mut Vec<Tokens>) {
         let mut impl_items = vec![];
 
         match *ceiling {
-            Ceiling::Owned => continue,
+            Ceiling::Owned(_) => {
+                if let Some(resource) = app.resources.get(name) {
+                    // For owned resources we don't need claim() or borrow(),
+                    // just get()
+                    let expr = &resource.expr;
+                    let ty = &resource.ty;
+
+                    root.push(quote! {
+                        static #name: #krate::Resource<#ty> =
+                            #krate::Resource::new(#expr);
+                    });
+                } else {
+                    // Peripheral
+                    continue
+                }
+            },
             Ceiling::Shared(ceiling) => {
                 if let Some(resource) = app.resources.get(name) {
                     let expr = &resource.expr;

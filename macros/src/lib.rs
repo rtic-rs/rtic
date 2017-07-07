@@ -1,3 +1,4 @@
+#![deny(warnings)]
 #![feature(plugin_registrar)]
 #![feature(proc_macro_internals)]
 #![feature(rustc_private)]

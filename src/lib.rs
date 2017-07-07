@@ -12,6 +12,7 @@ pub use cortex_m::asm::{bkpt, wfi};
 pub use cortex_m::interrupt::CriticalSection;
 pub use cortex_m::interrupt::free as atomic;
 pub use static_ref::Static;
+use cortex_m::interrupt::Nr;
 #[cfg(not(armv6m))]
 use cortex_m::register::{basepri_max, basepri};
 
@@ -174,6 +175,16 @@ impl Threshold {
 }
 
 impl !Send for Threshold {}
+
+/// Sets an interrupt as pending
+pub fn set_pending<I>(interrupt: I)
+where
+    I: Nr,
+{
+    // NOTE(safe) atomic write
+    let nvic = unsafe { &*cortex_m::peripheral::NVIC.get() };
+    nvic.set_pending(interrupt);
+}
 
 #[macro_export]
 macro_rules! task {

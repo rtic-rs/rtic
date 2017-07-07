@@ -10,7 +10,7 @@ pub struct App {
     pub device: Tokens,
     pub idle: Idle,
     pub init: Init,
-    pub resources: Resources,
+    pub resources: Statics,
     pub tasks: Tasks,
 }
 
@@ -21,7 +21,7 @@ pub struct Init {
 
 #[derive(Debug)]
 pub struct Idle {
-    pub local: Resources,
+    pub local: Statics,
     pub path: Tokens,
     pub resources: HashSet<Ident>,
 }
@@ -46,6 +46,6 @@ pub struct Resource {
     pub ty: Tokens,
 }
 
-pub type Resources = HashMap<Ident, Resource>;
+pub type Statics = HashMap<Ident, Resource>;
 
 pub type Tasks = HashMap<Ident, Task>;
