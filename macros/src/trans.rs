@@ -30,41 +30,58 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let device = &app.device;
     let krate = krate();
 
-    let mut fields = vec![];
-    let mut exprs = vec![];
-    let mut lifetime = None;
-    for (name, resource) in &app.resources {
-        lifetime = Some(quote!('a));
+    let mut tys = vec![quote!(init::Peripherals)];
+    let mut exprs = vec![quote!(init::Peripherals::all())];
+    let mut mod_items = vec![];
 
-        let ty = &resource.ty;
+    if !app.resources.is_empty() {
+        let mut fields = vec![];
+        let mut lifetime = None;
+        let mut rexprs = vec![];
 
-        fields.push(quote! {
-            pub #name: &'a mut #krate::Static<#ty>,
-        });
+        for (name, resource) in &app.resources {
+            lifetime = Some(quote!('a));
 
-        exprs.push(quote! {
-            #name: ::#krate::Static::ref_mut(&mut *super::#name.get()),
-        });
-    }
+            let ty = &resource.ty;
 
-    root.push(quote! {
-        #[allow(non_camel_case_types)]
-        #[allow(non_snake_case)]
-        pub struct _initResources<#lifetime> {
-            #(#fields)*
+            fields.push(quote! {
+                pub #name: &'a mut #krate::Static<#ty>,
+            });
+
+            rexprs.push(quote! {
+                #name: ::#krate::Static::ref_mut(&mut *super::#name.get()),
+            });
         }
 
-        mod init {
-            pub use ::#device::Peripherals;
+        root.push(quote! {
+            #[allow(non_camel_case_types)]
+            #[allow(non_snake_case)]
+            pub struct _initResources<#lifetime> {
+                #(#fields)*
+            }
+        });
+
+        mod_items.push(quote! {
             pub use ::_initResources as Resources;
 
             impl<#lifetime> Resources<#lifetime> {
                 pub unsafe fn new() -> Self {
                     Resources {
-                        #(#exprs)*
+                        #(#rexprs)*
                     }
                 }
             }
+        });
+
+        tys.push(quote!(init::Resources));
+        exprs.push(quote!(init::Resources::new()));
+    }
+
+    root.push(quote! {
+        mod init {
+            pub use ::#device::Peripherals;
+
+            #(#mod_items)*
         }
     });
 
@@ -116,10 +133,10 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let init = &app.init.path;
     main.push(quote! {
         // type check
-        let init: fn(init::Peripherals, init::Resources) = #init;
+        let init: fn(#(#tys,)*) = #init;
 
         #krate::atomic(|_cs| unsafe {
-            init(init::Peripherals::all(), init::Resources::new());
+            init(#(#exprs,)*);
 
             #(#exceptions)*
             #(#interrupts)*
