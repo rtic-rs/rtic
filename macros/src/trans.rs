@@ -75,7 +75,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             Kind::Exception => {
                 if exceptions.is_empty() {
                     exceptions.push(quote! {
-                        let scb = #device::SCB.borrow(cs);
+                        let scb = #device::SCB.borrow(_cs);
                     });
                 }
 
@@ -89,7 +89,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             Kind::Interrupt { enabled } => {
                 if interrupts.is_empty() {
                     interrupts.push(quote! {
-                        let nvic = #device::NVIC.borrow(cs);
+                        let nvic = #device::NVIC.borrow(_cs);
                     });
                 }
 
@@ -118,7 +118,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         // type check
         let init: fn(init::Peripherals, init::Resources) = #init;
 
-        #krate::atomic(|cs| unsafe {
+        #krate::atomic(|_cs| unsafe {
             init(init::Peripherals::all(), init::Resources::new());
 
             #(#exceptions)*
