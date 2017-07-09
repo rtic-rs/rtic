@@ -1,6 +1,6 @@
 [package]
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
-name = "rtfm-macros"
+name = "cortex-m-rtfm-macros"
 version = "0.1.0"
 
 [dependencies]
