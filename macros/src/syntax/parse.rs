@@ -130,8 +130,8 @@ pub fn app(input: &str) -> App {
         device: device.expect("device field is missing"),
         idle: idle.expect("idle field is missing"),
         init: init.expect("init field is missing"),
-        resources: resources.expect("resources field is missing"),
-        tasks: tasks.expect("tasks field is missing"),
+        resources: resources.unwrap_or(HashMap::new()),
+        tasks: tasks.unwrap_or(HashMap::new()),
     }
 }
 
