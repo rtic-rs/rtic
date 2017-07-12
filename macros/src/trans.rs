@@ -100,7 +100,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                 exceptions.push(quote! {
                     let prio_bits = #device::NVIC_PRIO_BITS;
                     let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                    scb.shpr[rtfm::Exception::#name.nr() - 4].write(hw);
+                    scb.shpr[#krate::Exception::#name.nr() - 4].write(hw);
                 });
             }
             Kind::Interrupt { enabled } => {

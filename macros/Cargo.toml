@@ -8,4 +8,4 @@ quote = "0.3.15"
 syn = "0.11.11"
 
 [lib]
-plugin = true
+proc-macro = true
