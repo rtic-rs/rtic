@@ -4,8 +4,13 @@ name = "cortex-m-rtfm-macros"
 version = "0.1.0"
 
 [dependencies]
+error-chain = "0.10.0"
 quote = "0.3.15"
 syn = "0.11.11"
+
+[dependencies.rtfm-syntax]
+git = "https://github.com/japaric/rtfm-syntax"
+optional = false
 
 [lib]
 proc-macro = true

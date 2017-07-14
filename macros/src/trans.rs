@@ -1,21 +1,21 @@
-use quote::Tokens;
-use syn::Ident;
+use quote::{Ident, Tokens};
 
-use syntax::{App, Kind};
-use util::{Ceiling, Ceilings};
+use analyze::{Ownership, Ownerships};
+use check::App;
 
 fn krate() -> Ident {
-    Ident::new("rtfm")
+    Ident::from("rtfm")
 }
 
-pub fn app(app: &App, ceilings: &Ceilings) -> Tokens {
-    let mut main = vec![];
+pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     let mut root = vec![];
+    let mut main = vec![];
 
-    super::trans::init(app, &mut main, &mut root);
-    super::trans::idle(app, ceilings, &mut main, &mut root);
-    super::trans::resources(app, ceilings, &mut root);
-    super::trans::tasks(app, ceilings, &mut root);
+    // ::trans::check(app, &mut main);
+    ::trans::init(app, &mut main, &mut root);
+    ::trans::idle(app, ownerships, &mut main, &mut root);
+    ::trans::resources(app, ownerships, &mut root);
+    ::trans::tasks(app, ownerships, &mut root);
 
     root.push(quote! {
         fn main() {
@@ -26,127 +26,15 @@ pub fn app(app: &App, ceilings: &Ceilings) -> Tokens {
     quote!(#(#root)*)
 }
 
-fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
-    let device = &app.device;
-    let krate = krate();
-
-    let mut tys = vec![quote!(init::Peripherals)];
-    let mut exprs = vec![quote!(init::Peripherals::all())];
-    let mut mod_items = vec![];
-
-    if !app.resources.is_empty() {
-        let mut fields = vec![];
-        let mut lifetime = None;
-        let mut rexprs = vec![];
-
-        for (name, resource) in &app.resources {
-            lifetime = Some(quote!('a));
-
-            let ty = &resource.ty;
-
-            fields.push(quote! {
-                pub #name: &'a mut #krate::Static<#ty>,
-            });
-
-            rexprs.push(quote! {
-                #name: ::#krate::Static::ref_mut(&mut *super::#name.get()),
-            });
-        }
-
-        root.push(quote! {
-            #[allow(non_camel_case_types)]
-            #[allow(non_snake_case)]
-            pub struct _initResources<#lifetime> {
-                #(#fields)*
-            }
-        });
-
-        mod_items.push(quote! {
-            pub use ::_initResources as Resources;
-
-            impl<#lifetime> Resources<#lifetime> {
-                pub unsafe fn new() -> Self {
-                    Resources {
-                        #(#rexprs)*
-                    }
-                }
-            }
-        });
-
-        tys.push(quote!(init::Resources));
-        exprs.push(quote!(init::Resources::new()));
-    }
-
-    root.push(quote! {
-        mod init {
-            pub use ::#device::Peripherals;
-
-            #(#mod_items)*
-        }
-    });
-
-    let mut exceptions = vec![];
-    let mut interrupts = vec![];
-    for (name, task) in &app.tasks {
-        match task.kind {
-            Kind::Exception => {
-                if exceptions.is_empty() {
-                    exceptions.push(quote! {
-                        let scb = #device::SCB.borrow(_cs);
-                    });
-                }
-
-                let priority = task.priority;
-                exceptions.push(quote! {
-                    let prio_bits = #device::NVIC_PRIO_BITS;
-                    let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                    scb.shpr[#krate::Exception::#name.nr() - 4].write(hw);
-                });
-            }
-            Kind::Interrupt { enabled } => {
-                if interrupts.is_empty() {
-                    interrupts.push(quote! {
-                        let nvic = #device::NVIC.borrow(_cs);
-                    });
-                }
-
-                let priority = task.priority;
-                interrupts.push(quote! {
-                    let prio_bits = #device::NVIC_PRIO_BITS;
-                    let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                    nvic.set_priority(#device::Interrupt::#name, hw);
-                });
-
-                if enabled {
-                    interrupts.push(quote! {
-                        nvic.enable(#device::Interrupt::#name);
-                    });
-                } else {
-                    interrupts.push(quote! {
-                        nvic.disable(#device::Interrupt::#name);
-                    });
-                }
-            }
-        }
-    }
-
-    let init = &app.init.path;
-    main.push(quote! {
-        // type check
-        let init: fn(#(#tys,)*) = #init;
-
-        #krate::atomic(|_cs| unsafe {
-            init(#(#exprs,)*);
-
-            #(#exceptions)*
-            #(#interrupts)*
-        });
-    });
-}
+// Check that the exceptions / interrupts are valid
+// Sadly we can't do this test at expansion time. Instead we'll generate some
+// code that won't compile if the interrupt name is invalid.
+// fn check(app: &App, main: &mut Vec<Tokens>) {
+// }
 
 fn idle(
     app: &App,
-    ceilings: &Ceilings,
+    ownerships: &Ownerships,
     main: &mut Vec<Tokens>,
     root: &mut Vec<Tokens>,
 ) {
@@ -160,17 +48,17 @@ fn idle(
         !app.idle
             .resources
             .iter()
-            .all(|resource| ceilings[resource].is_owned())
+            .all(|resource| ownerships[resource].is_owned())
     {
         tys.push(quote!(#krate::Threshold));
         exprs.push(quote!(unsafe { #krate::Threshold::new(0) }));
     }
 
-    if !app.idle.local.is_empty() {
+    if !app.idle.locals.is_empty() {
         let mut lexprs = vec![];
         let mut lfields = vec![];
 
-        for (name, resource) in &app.idle.local {
+        for (name, resource) in &app.idle.locals {
             let expr = &resource.expr;
             let ty = &resource.ty;
 
@@ -184,16 +72,16 @@ fn idle(
         }
 
         mod_items.push(quote! {
-            pub struct Local {
+            pub struct Locals {
                 #(#lfields)*
             }
         });
 
-        tys.push(quote!(&'static mut idle::Local));
-        exprs.push(quote!(unsafe { &mut LOCAL }));
+        tys.push(quote!(&'static mut idle::Locals));
+        exprs.push(quote!(unsafe { &mut LOCALS }));
 
         main.push(quote! {
-            static mut LOCAL: idle::Local = idle::Local {
+            static mut LOCALS: idle::Locals = idle::Locals {
                 #(#lexprs)*
             };
         });
@@ -205,10 +93,10 @@ fn idle(
 
         let mut needs_reexport = false;
         for name in &app.idle.resources {
-            if ceilings[name].is_owned() {
+            if ownerships[name].is_owned() {
                 if app.resources.get(name).is_some() {
                     needs_reexport = true;
-                    break
+                    break;
                 }
             }
         }
@@ -221,7 +109,7 @@ fn idle(
         let mut rexprs = vec![];
         let mut rfields = vec![];
         for name in &app.idle.resources {
-            if ceilings[name].is_owned() {
+            if ownerships[name].is_owned() {
                 lifetime = Some(quote!('a));
                 if let Some(resource) = app.resources.get(name) {
                     let ty = &resource.ty;
@@ -305,7 +193,282 @@ fn idle(
     });
 }
 
-fn tasks(app: &App, ceilings: &Ceilings, root: &mut Vec<Tokens>) {
+fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
+    let device = &app.device;
+    let krate = krate();
+
+    let mut tys = vec![quote!(#device::Peripherals)];
+    let mut exprs = vec![quote!(#device::Peripherals::all())];
+    let mut mod_items = vec![];
+
+    if !app.resources.is_empty() {
+        let mut fields = vec![];
+        let mut lifetime = None;
+        let mut rexprs = vec![];
+
+        for (name, resource) in &app.resources {
+            lifetime = Some(quote!('a));
+
+            let ty = &resource.ty;
+
+            fields.push(quote! {
+                pub #name: &'a mut #krate::Static<#ty>,
+            });
+
+            rexprs.push(quote! {
+                #name: ::#krate::Static::ref_mut(&mut *super::#name.get()),
+            });
+        }
+
+        root.push(quote! {
+            #[allow(non_camel_case_types)]
+            #[allow(non_snake_case)]
+            pub struct _initResources<#lifetime> {
+                #(#fields)*
+            }
+        });
+
+        mod_items.push(quote! {
+            pub use ::_initResources as Resources;
+
+            impl<#lifetime> Resources<#lifetime> {
+                pub unsafe fn new() -> Self {
+                    Resources {
+                        #(#rexprs)*
+                    }
+                }
+            }
+        });
+
+        tys.push(quote!(init::Resources));
+        exprs.push(quote!(init::Resources::new()));
+    }
+
+    root.push(quote! {
+        mod init {
+            pub use ::#device::Peripherals;
+
+            #(#mod_items)*
+        }
+    });
+
+    let mut exceptions = vec![];
+    let mut interrupts = vec![];
+    for (name, task) in &app.tasks {
+        if let Some(enabled) = task.enabled {
+            // Interrupt. These can be enabled / disabled through the NVIC
+            if interrupts.is_empty() {
+                interrupts.push(quote! {
+                    let nvic = #device::NVIC.borrow(_cs);
+                });
+            }
+
+            let priority = task.priority;
+            interrupts.push(quote! {
+                let prio_bits = #device::NVIC_PRIO_BITS;
+                let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
+                nvic.set_priority(#device::Interrupt::#name, hw);
+            });
+
+            if enabled {
+                interrupts.push(quote! {
+                    nvic.enable(#device::Interrupt::#name);
+                });
+            } else {
+                interrupts.push(quote! {
+                    nvic.disable(#device::Interrupt::#name);
+                });
+            }
+        } else {
+            // Exception
+            if exceptions.is_empty() {
+                exceptions.push(quote! {
+                    let scb = #device::SCB.borrow(_cs);
+                });
+            }
+
+            let priority = task.priority;
+            exceptions.push(quote! {
+                let prio_bits = #device::NVIC_PRIO_BITS;
+                let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
+                scb.shpr[#krate::Exception::#name.nr() - 4].write(hw);
+            });
+        }
+    }
+
+    let init = &app.init.path;
+    main.push(quote! {
+        // type check
+        let init: fn(#(#tys,)*) = #init;
+
+        #krate::atomic(|_cs| unsafe {
+            init(#(#exprs,)*);
+
+            #(#exceptions)*
+            #(#interrupts)*
+        });
+    });
+}
+
+fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
+    let krate = krate();
+    let device = &app.device;
+
+    let mut items = vec![];
+    let mut impls = vec![];
+    for (name, ownership) in ownerships {
+        let mut impl_items = vec![];
+
+        match *ownership {
+            Ownership::Owned { .. } => {
+                if let Some(resource) = app.resources.get(name) {
+                    // For owned resources we don't need claim() or borrow(),
+                    // just get()
+                    let expr = &resource.expr;
+                    let ty = &resource.ty;
+
+                    root.push(quote! {
+                        static #name: #krate::Resource<#ty> =
+                            #krate::Resource::new(#expr);
+                    });
+                } else {
+                    // Peripheral
+                    continue;
+                }
+            }
+            Ownership::Shared { ceiling } => {
+                if let Some(resource) = app.resources.get(name) {
+                    let expr = &resource.expr;
+                    let ty = &resource.ty;
+
+                    root.push(quote! {
+                        static #name: #krate::Resource<#ty> =
+                            #krate::Resource::new(#expr);
+                    });
+
+                    impl_items.push(quote! {
+                        pub fn borrow<'cs>(
+                            &'cs self,
+                            cs: &'cs #krate::CriticalSection,
+                        ) -> &'cs #krate::Static<#ty> {
+                            unsafe { #name.borrow(cs) }
+                        }
+
+                        pub fn borrow_mut<'cs>(
+                            &'cs mut self,
+                            cs: &'cs #krate::CriticalSection,
+                        ) -> &'cs mut #krate::Static<#ty> {
+                            unsafe { #name.borrow_mut(cs) }
+                        }
+
+                        pub fn claim<R, F>(
+                            &self,
+                            t: &mut #krate::Threshold,
+                            f: F,
+                        ) -> R
+                        where
+                            F: FnOnce(
+                                &#krate::Static<#ty>,
+                                &mut #krate::Threshold) -> R
+                        {
+                            unsafe {
+                                #name.claim(
+                                    #ceiling,
+                                    #device::NVIC_PRIO_BITS,
+                                    t,
+                                    f,
+                                )
+                            }
+                        }
+
+                        pub fn claim_mut<R, F>(
+                            &mut self,
+                            t: &mut #krate::Threshold,
+                            f: F,
+                        ) -> R
+                        where
+                            F: FnOnce(
+                                &mut #krate::Static<#ty>,
+                                &mut #krate::Threshold) -> R
+                        {
+                            unsafe {
+                                #name.claim_mut(
+                                    #ceiling,
+                                    #device::NVIC_PRIO_BITS,
+                                    t,
+                                    f,
+                                )
+                            }
+                        }
+                    });
+                } else {
+                    root.push(quote! {
+                        static #name: #krate::Peripheral<#device::#name> =
+                            #krate::Peripheral::new(#device::#name);
+                    });
+
+                    impl_items.push(quote! {
+                        pub fn borrow<'cs>(
+                            &'cs self,
+                            cs: &'cs #krate::CriticalSection,
+                        ) -> &'cs #device::#name {
+                            unsafe { #name.borrow(cs) }
+                        }
+
+                        pub fn claim<R, F>(
+                            &self,
+                            t: &mut #krate::Threshold,
+                            f: F,
+                        ) -> R
+                        where
+                            F: FnOnce(
+                                &#device::#name,
+                                &mut #krate::Threshold) -> R
+                        {
+                            unsafe {
+                                #name.claim(
+                                    #ceiling,
+                                    #device::NVIC_PRIO_BITS,
+                                    t,
+                                    f,
+                                )
+                            }
+                        }
+                    });
+                }
+
+                impls.push(quote! {
+                    #[allow(dead_code)]
+                    impl _resource::#name {
+                        #(#impl_items)*
+                    }
+                });
+
+                items.push(quote! {
+                    #[allow(non_camel_case_types)]
+                    pub struct #name { _0: () }
+
+                    impl #name {
+                        pub unsafe fn new() -> Self {
+                            #name { _0: () }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    root.push(quote! {
+        mod _resource {
+            #(#items)*
+        }
+
+        #(#impls)*
+    });
+}
+
+fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
+    let device = &app.device;
     let krate = krate();
 
     for (name, task) in &app.tasks {
@@ -313,12 +476,11 @@ fn tasks(app: &App, ceilings: &Ceilings, root: &mut Vec<Tokens>) {
         let mut fields = vec![];
         let mut items = vec![];
 
-        let device = &app.device;
         let mut lifetime = None;
         let mut needs_reexport = false;
         for name in &task.resources {
-            match ceilings[name] {
-                Ceiling::Shared(ceiling) if ceiling > task.priority => {
+            match ownerships[name] {
+                Ownership::Shared { ceiling } if ceiling > task.priority => {
                     fields.push(quote! {
                         pub #name: super::_resource::#name,
                     });
@@ -405,169 +567,5 @@ fn tasks(app: &App, ceilings: &Ceilings, root: &mut Vec<Tokens>) {
                 #(#items)*
             }
         });
-
     }
-}
-
-fn resources(app: &App, ceilings: &Ceilings, root: &mut Vec<Tokens>) {
-    let krate = krate();
-    let device = &app.device;
-
-    let mut items = vec![];
-    let mut impls = vec![];
-    for (name, ceiling) in ceilings {
-        let mut impl_items = vec![];
-
-        match *ceiling {
-            Ceiling::Owned(_) => {
-                if let Some(resource) = app.resources.get(name) {
-                    // For owned resources we don't need claim() or borrow(),
-                    // just get()
-                    let expr = &resource.expr;
-                    let ty = &resource.ty;
-
-                    root.push(quote! {
-                        static #name: #krate::Resource<#ty> =
-                            #krate::Resource::new(#expr);
-                    });
-                } else {
-                    // Peripheral
-                    continue
-                }
-            },
-            Ceiling::Shared(ceiling) => {
-                if let Some(resource) = app.resources.get(name) {
-                    let expr = &resource.expr;
-                    let ty = &resource.ty;
-
-                    root.push(quote! {
-                        static #name: #krate::Resource<#ty> =
-                            #krate::Resource::new(#expr);
-                    });
-
-                    impl_items.push(quote! {
-                        pub fn borrow<'cs>(
-                            &'cs self,
-                            _cs: &'cs #krate::CriticalSection,
-                        ) -> &'cs #krate::Static<#ty> {
-                            unsafe {
-                                #krate::Static::ref_(&*#name.get())
-                            }
-                        }
-
-                        pub fn borrow_mut<'cs>(
-                            &'cs mut self,
-                            _cs: &'cs #krate::CriticalSection,
-                        ) -> &'cs mut #krate::Static<#ty> {
-                            unsafe {
-                                #krate::Static::ref_mut(&mut *#name.get())
-                            }
-                        }
-
-                        pub fn claim<R, F>(
-                            &self,
-                            t: &mut #krate::Threshold,
-                            f: F,
-                        ) -> R
-                        where
-                            F: FnOnce(
-                                &#krate::Static<#ty>,
-                                &mut #krate::Threshold) -> R
-                        {
-                            unsafe {
-                                #name.claim(
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
-                            }
-                        }
-
-                        pub fn claim_mut<R, F>(
-                            &mut self,
-                            t: &mut #krate::Threshold,
-                            f: F,
-                        ) -> R
-                        where
-                            F: FnOnce(
-                                &mut #krate::Static<#ty>,
-                                &mut #krate::Threshold) -> R
-                        {
-                            unsafe {
-                                #name.claim_mut(
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
-                            }
-                        }
-                    });
-                } else {
-                    root.push(quote! {
-                        static #name: #krate::Peripheral<#device::#name> =
-                            #krate::Peripheral::new(#device::#name);
-                    });
-
-                    impl_items.push(quote! {
-                        pub fn borrow<'cs>(
-                            &'cs self,
-                            _cs: &'cs #krate::CriticalSection,
-                        ) -> &'cs #device::#name {
-                            unsafe {
-                                &*#name.get()
-                            }
-                        }
-
-                        pub fn claim<R, F>(
-                            &self,
-                            t: &mut #krate::Threshold,
-                            f: F,
-                        ) -> R
-                        where
-                            F: FnOnce(
-                                &#device::#name,
-                                &mut #krate::Threshold) -> R
-                        {
-                            unsafe {
-                                #name.claim(
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
-                            }
-                        }
-                    });
-                }
-
-                impls.push(quote! {
-                    #[allow(dead_code)]
-                    impl _resource::#name {
-                        #(#impl_items)*
-                    }
-                });
-
-                items.push(quote! {
-                    #[allow(non_camel_case_types)]
-                    pub struct #name { _0: () }
-
-                    impl #name {
-                        pub unsafe fn new() -> Self {
-                            #name { _0: () }
-                        }
-                    }
-                });
-            }
-        }
-    }
-
-    root.push(quote! {
-        mod _resource {
-            #(#items)*
-        }
-
-        #(#impls)*
-    });
 }

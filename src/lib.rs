@@ -83,6 +83,14 @@ impl<P> Peripheral<P> {
     }
 
     #[inline(always)]
+    pub unsafe fn borrow<'cs>(
+        &'static self,
+        _cs: &'cs CriticalSection,
+    ) -> &'cs P {
+        &*self.peripheral.get()
+    }
+
+    #[inline(always)]
     pub unsafe fn claim<R, F>(
         &'static self,
         ceiling: u8,
@@ -123,7 +131,25 @@ pub struct Resource<T> {
 
 impl<T> Resource<T> {
     pub const fn new(value: T) -> Self {
-        Resource { data: UnsafeCell::new(value) }
+        Resource {
+            data: UnsafeCell::new(value),
+        }
+    }
+
+    #[inline(always)]
+    pub unsafe fn borrow<'cs>(
+        &'static self,
+        _cs: &'cs CriticalSection,
+    ) -> &'cs Static<T> {
+        Static::ref_(&*self.data.get())
+    }
+
+    #[inline(always)]
+    pub unsafe fn borrow_mut<'cs>(
+        &'static self,
+        _cs: &'cs CriticalSection,
+    ) -> &'cs mut Static<T> {
+        Static::ref_mut(&mut *self.data.get())
     }
 
     #[inline(always)]
