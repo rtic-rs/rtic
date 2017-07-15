@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
 use quote::Tokens;
-use rtfm_syntax::{Idents, Idle, Init, Statics};
 use syn::Ident;
+use syntax::check::{self, Idle, Init};
+use syntax::{self, Idents, Statics};
 
-use error::*;
+use syntax::error::*;
 
 pub struct App {
     pub device: Tokens,
@@ -22,27 +23,28 @@ pub struct Task {
     pub resources: Idents,
 }
 
-pub fn app(app: ::rtfm_syntax::App) -> Result<App> {
-    let mut tasks = HashMap::new();
-
-    for (k, v) in app.tasks {
-        let name = k.clone();
-        tasks.insert(
-            k,
-            ::check::task(v)
-                .chain_err(|| format!("checking task `{}`", name))?,
-        );
-    }
-
+pub fn app(app: check::App) -> Result<App> {
     let app = App {
         device: app.device,
         idle: app.idle,
         init: app.init,
         resources: app.resources,
-        tasks,
+        tasks: app.tasks
+            .into_iter()
+            .map(|(k, v)| {
+                let name = k.clone();
+                Ok((
+                    k,
+                    ::check::task(v)
+                        .chain_err(|| format!("checking task `{}`", name))?,
+                ))
+            })
+            .collect::<Result<_>>()
+            .chain_err(|| "checking `tasks`")?,
     };
 
-    ::check::resources(&app)?;
+    ::check::resources(&app)
+        .chain_err(|| "checking `resources`")?;
 
     Ok(app)
 }
@@ -66,7 +68,7 @@ fn resources(app: &App) -> Result<()> {
     Ok(())
 }
 
-fn task(task: ::rtfm_syntax::Task) -> Result<Task> {
+fn task(task: syntax::check::Task) -> Result<Task> {
     if let Some(priority) = task.priority {
         Ok(Task {
             enabled: task.enabled,
