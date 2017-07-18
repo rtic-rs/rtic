@@ -1,14 +1,13 @@
 use std::collections::HashMap;
 
-use quote::Tokens;
-use syn::Ident;
+use syn::{Ident, Path};
 use syntax::check::{self, Idle, Init};
 use syntax::{self, Idents, Statics};
 
 use syntax::error::*;
 
 pub struct App {
-    pub device: Tokens,
+    pub device: Path,
     pub idle: Idle,
     pub init: Init,
     pub resources: Statics,
