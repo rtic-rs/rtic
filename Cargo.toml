@@ -14,5 +14,11 @@ version = "0.2.0"
 
 [dependencies]
 cortex-m = "0.3.0"
-cortex-m-rtfm-macros = { path = "macros" }
 static-ref = "0.2.0"
+
+[dependencies.cortex-m-rtfm-macros]
+path = "macros"
+
+[dev-dependencies]
+compiletest_rs = "0.2.8"
+stm32f103xx = "0.7.1"
