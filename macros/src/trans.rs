@@ -89,7 +89,6 @@ fn idle(
 
     if !app.idle.resources.is_empty() {
         let device = &app.device;
-        let mut lifetime = None;
 
         let mut needs_reexport = false;
         for name in &app.idle.resources {
@@ -110,22 +109,19 @@ fn idle(
         let mut rfields = vec![];
         for name in &app.idle.resources {
             if ownerships[name].is_owned() {
-                lifetime = Some(quote!('a));
                 if let Some(resource) = app.resources.get(name) {
                     let ty = &resource.ty;
 
                     rfields.push(quote! {
-                        pub #name: &'a mut ::#krate::Static<#ty>,
+                        pub #name: &'static mut #ty,
                     });
 
                     rexprs.push(quote! {
-                        #name: ::#krate::Static::ref_mut(
-                            &mut *#super_::#name.get(),
-                        ),
+                        #name: &mut *#super_::#name.get(),
                     });
                 } else {
                     rfields.push(quote! {
-                        pub #name: &'a mut ::#device::#name,
+                        pub #name: &'static mut ::#device::#name,
                     });
 
                     rexprs.push(quote! {
@@ -147,7 +143,7 @@ fn idle(
             root.push(quote! {
                 #[allow(non_camel_case_types)]
                 #[allow(non_snake_case)]
-                pub struct _idleResources<#lifetime> {
+                pub struct _idleResources {
                     #(#rfields)*
                 }
             });
@@ -158,14 +154,14 @@ fn idle(
         } else {
             mod_items.push(quote! {
                 #[allow(non_snake_case)]
-                pub struct Resources<#lifetime> {
+                pub struct Resources {
                     #(#rfields)*
                 }
             });
         }
 
         mod_items.push(quote! {
-            impl<#lifetime> Resources<#lifetime> {
+            impl Resources {
                 pub unsafe fn new() -> Self {
                     Resources {
                         #(#rexprs)*
