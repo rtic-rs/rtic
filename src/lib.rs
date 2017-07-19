@@ -219,6 +219,7 @@ where
 macro_rules! task {
     ($NAME:ident, $body:path) => {
         #[allow(non_snake_case)]
+        #[allow(unsafe_code)]
         #[no_mangle]
         pub unsafe extern "C" fn $NAME() {
             let f: fn(&mut $crate::Threshold, ::$NAME::Resources) = $body;
@@ -237,6 +238,7 @@ macro_rules! task {
         }
 
         #[allow(non_snake_case)]
+        #[allow(unsafe_code)]
         #[no_mangle]
         pub unsafe extern "C" fn $NAME() {
             let f: fn(

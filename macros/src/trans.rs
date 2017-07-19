@@ -18,6 +18,7 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     ::trans::tasks(app, ownerships, &mut root);
 
     root.push(quote! {
+        #[allow(unsafe_code)]
         fn main() {
             #(#main)*
         }
@@ -161,6 +162,7 @@ fn idle(
         }
 
         mod_items.push(quote! {
+            #[allow(unsafe_code)]
             impl Resources {
                 pub unsafe fn new() -> Self {
                     Resources {
@@ -175,6 +177,7 @@ fn idle(
     }
 
     root.push(quote! {
+        #[allow(unsafe_code)]
         mod idle {
             #(#mod_items)*
         }
@@ -227,6 +230,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         mod_items.push(quote! {
             pub use ::_initResources as Resources;
 
+            #[allow(unsafe_code)]
             impl<#lifetime> Resources<#lifetime> {
                 pub unsafe fn new() -> Self {
                     Resources {
@@ -241,6 +245,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     }
 
     root.push(quote! {
+        #[allow(unsafe_code)]
         mod init {
             pub use ::#device::Peripherals;
 
@@ -435,6 +440,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
                 impls.push(quote! {
                     #[allow(dead_code)]
+                    #[allow(unsafe_code)]
                     impl _resource::#name {
                         #(#impl_items)*
                     }
@@ -444,6 +450,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     #[allow(non_camel_case_types)]
                     pub struct #name { _0: () }
 
+                    #[allow(unsafe_code)]
                     impl #name {
                         pub unsafe fn new() -> Self {
                             #name { _0: () }
@@ -455,6 +462,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
     }
 
     root.push(quote! {
+        #[allow(unsafe_code)]
         mod _resource {
             #(#items)*
         }
@@ -538,6 +546,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
         }
 
         items.push(quote! {
+            #[allow(unsafe_code)]
             impl<#lifetime> Resources<#lifetime> {
                 pub unsafe fn new() -> Self {
                     Resources {
@@ -551,6 +560,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
         root.push(quote!{
             #[allow(dead_code)]
             #[allow(non_snake_case)]
+            #[allow(unsafe_code)]
             mod #name {
                 #[deny(dead_code)]
                 pub const #name: u8 = #priority;
