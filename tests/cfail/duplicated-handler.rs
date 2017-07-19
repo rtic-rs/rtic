@@ -28,8 +28,8 @@ fn idle() -> ! {
 
 task!(EXTI0, exti0);
 
-fn exti0(_t: Threshold, _r: EXTI0::Resources) {}
+fn exti0(_t: &mut Threshold, _r: EXTI0::Resources) {}
 
 task!(EXTI0, exti1);
 
-fn exti1(_t: Threshold, _r: EXTI0::Resources) {}
+fn exti1(_t: &mut Threshold, _r: EXTI0::Resources) {}

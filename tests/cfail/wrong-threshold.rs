@@ -39,7 +39,7 @@ fn idle() -> ! {
 
 task!(EXTI0, exti0);
 
-fn exti0(mut ot: Threshold, r: EXTI0::Resources) {
+fn exti0(mut ot: &mut Threshold, r: EXTI0::Resources) {
     r.A.claim(&mut ot, |_a, mut _it| {
         //~^ error cannot borrow `ot` as mutable more than once at a time
         //~| error cannot borrow `ot` as mutable more than once at a time
@@ -50,4 +50,4 @@ fn exti0(mut ot: Threshold, r: EXTI0::Resources) {
 
 task!(EXTI1, exti1);
 
-fn exti1(_t: Threshold, r: EXTI1::Resources) {}
+fn exti1(_t: &mut Threshold, r: EXTI1::Resources) {}

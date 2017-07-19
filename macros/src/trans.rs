@@ -50,8 +50,8 @@ fn idle(
             .iter()
             .all(|resource| ownerships[resource].is_owned())
     {
-        tys.push(quote!(#krate::Threshold));
-        exprs.push(quote!(unsafe { #krate::Threshold::new(0) }));
+        tys.push(quote!(&mut #krate::Threshold));
+        exprs.push(quote!(unsafe { &mut #krate::Threshold::new(0) }));
     }
 
     if !app.idle.locals.is_empty() {

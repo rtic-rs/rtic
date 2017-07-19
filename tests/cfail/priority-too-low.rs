@@ -26,4 +26,4 @@ fn idle() -> ! {
 
 task!(SYS_TICK, sys_tick);
 
-fn sys_tick(_: Threshold, _: SYS_TICK::Resources) {}
+fn sys_tick(_: &mut Threshold, _: SYS_TICK::Resources) {}

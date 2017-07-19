@@ -221,10 +221,10 @@ macro_rules! task {
         #[allow(non_snake_case)]
         #[no_mangle]
         pub unsafe extern "C" fn $NAME() {
-            let f: fn($crate::Threshold, ::$NAME::Resources) = $body;
+            let f: fn(&mut $crate::Threshold, ::$NAME::Resources) = $body;
 
             f(
-                $crate::Threshold::new(::$NAME::$NAME),
+                &mut $crate::Threshold::new(::$NAME::$NAME),
                 ::$NAME::Resources::new(),
             );
         }
@@ -240,7 +240,7 @@ macro_rules! task {
         #[no_mangle]
         pub unsafe extern "C" fn $NAME() {
             let f: fn(
-                $crate::Threshold,
+                &mut $crate::Threshold,
                 &mut $local,
                 ::$NAME::Resources,
             ) = $body;
@@ -250,7 +250,7 @@ macro_rules! task {
             };
 
             f(
-                $crate::Threshold::new(::$NAME::$NAME),
+                &mut $crate::Threshold::new(::$NAME::$NAME),
                 &mut LOCAL,
                 ::$NAME::Resources::new(),
             );

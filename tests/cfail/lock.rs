@@ -45,7 +45,7 @@ fn idle() -> ! {
 
 task!(EXTI0, exti0);
 
-fn exti0(mut t: Threshold, r: EXTI0::Resources) {
+fn exti0(mut t: &mut Threshold, r: EXTI0::Resources) {
     // OK need to lock to access the resource
     if r.STATE.claim(&mut t, |state, _| **state) {}
 
@@ -55,7 +55,7 @@ fn exti0(mut t: Threshold, r: EXTI0::Resources) {
 
 task!(EXTI1, exti1);
 
-fn exti1(mut t: Threshold, r: EXTI1::Resources) {
+fn exti1(mut t: &mut Threshold, r: EXTI1::Resources) {
     // ERROR no need to lock. Has direct access because priority == ceiling
     if r.STATE.claim(&mut t, |state, _| **state) {
         //~^ error no method named `claim` found for type

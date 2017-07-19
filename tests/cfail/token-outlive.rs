@@ -38,7 +38,7 @@ fn idle() -> ! {
 
 task!(EXTI0, exti0);
 
-fn exti0(mut t: Threshold, r: EXTI0::Resources) {
+fn exti0(mut t: &mut Threshold, r: EXTI0::Resources) {
     // ERROR token should not outlive the critical section
     let t = r.STATE.claim(&mut t, |_state, t| t);
     //~^ error cannot infer an appropriate lifetime
@@ -46,4 +46,4 @@ fn exti0(mut t: Threshold, r: EXTI0::Resources) {
 
 task!(EXTI1, exti1);
 
-fn exti1(_t: Threshold, _r: EXTI1::Resources) {}
+fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {}
