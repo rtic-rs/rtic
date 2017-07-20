@@ -19,13 +19,6 @@ use cortex_m::interrupt::Nr;
 #[cfg(not(armv6m))]
 use cortex_m::register::{basepri_max, basepri};
 
-#[cfg(not(armv6m))]
-macro_rules! barrier {
-    () => {
-        asm!("" ::: "memory" : "volatile");
-    }
-}
-
 #[inline(always)]
 unsafe fn claim<T, U, R, F, G>(
     data: T,
@@ -54,9 +47,7 @@ where
                     let old = basepri::read();
                     let hw = (max_priority - ceiling) << (8 - nvic_prio_bits);
                     basepri_max::write(hw);
-                    barrier!();
                     let ret = f(g(data), &mut Threshold(ceiling));
-                    barrier!();
                     basepri::write(old);
                     ret
                 }
