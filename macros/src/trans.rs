@@ -130,7 +130,7 @@ fn idle(
                     });
 
                     rexprs.push(quote! {
-                        #name: ::krate::Static::ref_mut(
+                        #name: ::#krate::Static::ref_mut(
                             &mut *::#device::#name.get(),
                         ),
                     });
@@ -423,16 +423,16 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         fn borrow<'cs>(
                             &'cs self,
                             _cs: &'cs #krate::CriticalSection,
-                        ) -> &'cs #krate::Static<#name> {
-                            unsafe { #krate::Static::ref_(&*#name.get()) }
+                        ) -> &'cs #krate::Static<#device::#name> {
+                            unsafe { #krate::Static::ref_(&*#device::#name.get()) }
                         }
 
                         fn borrow_mut<'cs>(
                             &'cs mut self,
                             _cs: &'cs #krate::CriticalSection,
-                        ) -> &'cs mut #krate::Static<#name> {
+                        ) -> &'cs mut #krate::Static<#device::#name> {
                             unsafe {
-                                #krate::Static::ref_mut(&mut *#name.get())
+                                #krate::Static::ref_mut(&mut *#device::#name.get())
                             }
                         }
 
@@ -443,7 +443,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         ) -> R
                         where
                             F: FnOnce(
-                                &#krate::Static<#name>,
+                                &#krate::Static<#device::#name>,
                                 &mut #krate::Threshold) -> R
                         {
                             unsafe {
@@ -465,7 +465,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         ) -> R
                         where
                             F: FnOnce(
-                                &mut #krate::Static<#name>,
+                                &mut #krate::Static<#device::#name>,
                                 &mut #krate::Threshold) -> R
                         {
                             unsafe {
