@@ -64,15 +64,16 @@ fn idle(
             let ty = &resource.ty;
 
             lfields.push(quote! {
-                pub #name: #ty,
+                pub #name: #krate::Static<#ty>,
             });
 
             lexprs.push(quote! {
-                #name: #expr,
+                #name: unsafe { #krate::Static::new(#expr) },
             });
         }
 
         mod_items.push(quote! {
+            #[allow(non_snake_case)]
             pub struct Locals {
                 #(#lfields)*
             }
@@ -114,19 +115,24 @@ fn idle(
                     let ty = &resource.ty;
 
                     rfields.push(quote! {
-                        pub #name: &'static mut #ty,
+                        pub #name: &'static mut ::#krate::Static<#ty>,
                     });
 
                     rexprs.push(quote! {
-                        #name: &mut *#super_::#name.get(),
+                        #name: #krate::Static::ref_mut(
+                            &mut *#super_::#name.get(),
+                        ),
                     });
                 } else {
                     rfields.push(quote! {
-                        pub #name: &'static mut ::#device::#name,
+                        pub #name:
+                            &'static mut ::#krate::Static<::#device::#name>,
                     });
 
                     rexprs.push(quote! {
-                        #name: &mut *::#device::#name.get(),
+                        #name: ::krate::Static::ref_mut(
+                            &mut *::#device::#name.get(),
+                        ),
                     });
                 }
             } else {
@@ -329,8 +335,8 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     let ty = &resource.ty;
 
                     root.push(quote! {
-                        static #name: #krate::Resource<#ty> =
-                            #krate::Resource::new(#expr);
+                        static #name: #krate::Cell<#ty> =
+                            #krate::Cell::new(#expr);
                     });
                 } else {
                     // Peripheral
@@ -343,26 +349,30 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     let ty = &resource.ty;
 
                     root.push(quote! {
-                        static #name: #krate::Resource<#ty> =
-                            #krate::Resource::new(#expr);
+                        static #name: #krate::Cell<#ty> =
+                            #krate::Cell::new(#expr);
                     });
 
                     impl_items.push(quote! {
-                        pub fn borrow<'cs>(
+                        type Data = #ty;
+
+                        fn borrow<'cs>(
                             &'cs self,
-                            cs: &'cs #krate::CriticalSection,
+                            _cs: &'cs #krate::CriticalSection,
                         ) -> &'cs #krate::Static<#ty> {
-                            unsafe { #name.borrow(cs) }
+                            unsafe { #krate::Static::ref_(&*#name.get()) }
                         }
 
-                        pub fn borrow_mut<'cs>(
+                        fn borrow_mut<'cs>(
                             &'cs mut self,
-                            cs: &'cs #krate::CriticalSection,
+                            _cs: &'cs #krate::CriticalSection,
                         ) -> &'cs mut #krate::Static<#ty> {
-                            unsafe { #name.borrow_mut(cs) }
+                            unsafe {
+                                #krate::Static::ref_mut(&mut *#name.get())
+                            }
                         }
 
-                        pub fn claim<R, F>(
+                        fn claim<R, F>(
                             &self,
                             t: &mut #krate::Threshold,
                             f: F,
@@ -373,16 +383,18 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                                 &mut #krate::Threshold) -> R
                         {
                             unsafe {
-                                #name.claim(
+                                #krate::claim(
+                                    #name.get(),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
                                     f,
+                                    |data| #krate::Static::ref_(&*data),
                                 )
                             }
                         }
 
-                        pub fn claim_mut<R, F>(
+                        fn claim_mut<R, F>(
                             &mut self,
                             t: &mut #krate::Threshold,
                             f: F,
@@ -393,45 +405,77 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                                 &mut #krate::Threshold) -> R
                         {
                             unsafe {
-                                #name.claim_mut(
+                                #krate::claim(
+                                    #name.get(),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
                                     f,
+                                    |data| #krate::Static::ref_mut(&mut *data),
                                 )
                             }
                         }
                     });
                 } else {
-                    root.push(quote! {
-                        static #name: #krate::Peripheral<#device::#name> =
-                            #krate::Peripheral::new(#device::#name);
-                    });
-
                     impl_items.push(quote! {
-                        pub fn borrow<'cs>(
+                        type Data = #device::#name;
+
+                        fn borrow<'cs>(
                             &'cs self,
-                            cs: &'cs #krate::CriticalSection,
-                        ) -> &'cs #device::#name {
-                            unsafe { #name.borrow(cs) }
+                            _cs: &'cs #krate::CriticalSection,
+                        ) -> &'cs #krate::Static<#name> {
+                            unsafe { #krate::Static::ref_(&*#name.get()) }
                         }
 
-                        pub fn claim<R, F>(
+                        fn borrow_mut<'cs>(
+                            &'cs mut self,
+                            _cs: &'cs #krate::CriticalSection,
+                        ) -> &'cs mut #krate::Static<#name> {
+                            unsafe {
+                                #krate::Static::ref_mut(&mut *#name.get())
+                            }
+                        }
+
+                        fn claim<R, F>(
                             &self,
                             t: &mut #krate::Threshold,
                             f: F,
                         ) -> R
                         where
                             F: FnOnce(
-                                &#device::#name,
+                                &#krate::Static<#name>,
                                 &mut #krate::Threshold) -> R
                         {
                             unsafe {
-                                #name.claim(
+                                #krate::claim(
+                                    #device::#name.get(),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
                                     f,
+                                    |data| #krate::Static::ref_(&*data),
+                                )
+                            }
+                        }
+
+                        fn claim_mut<R, F>(
+                            &mut self,
+                            t: &mut #krate::Threshold,
+                            f: F,
+                        ) -> R
+                        where
+                            F: FnOnce(
+                                &mut #krate::Static<#name>,
+                                &mut #krate::Threshold) -> R
+                        {
+                            unsafe {
+                                #krate::claim(
+                                    #device::#name.get(),
+                                    #ceiling,
+                                    #device::NVIC_PRIO_BITS,
+                                    t,
+                                    f,
+                                    |data| #krate::Static::ref_mut(&mut *data),
                                 )
                             }
                         }
@@ -439,9 +483,8 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                 }
 
                 impls.push(quote! {
-                    #[allow(dead_code)]
                     #[allow(unsafe_code)]
-                    impl _resource::#name {
+                    impl #krate::Resource for _resource::#name {
                         #(#impl_items)*
                     }
                 });
@@ -512,11 +555,14 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         });
                     } else {
                         fields.push(quote! {
-                            pub #name: &'a mut ::#device::#name,
+                            pub #name:
+                                &'a mut ::#krate::Static<::#device::#name>,
                         });
 
                         exprs.push(quote! {
-                            #name: &mut *::#device::#name.get(),
+                            #name: ::#krate::Static::ref_mut(
+                                &mut *::#device::#name.get(),
+                            ),
                         });
                     }
                 }
@@ -558,12 +604,13 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
         let priority = task.priority;
         root.push(quote!{
-            #[allow(dead_code)]
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
             mod #name {
                 #[deny(dead_code)]
                 pub const #name: u8 = #priority;
+
+                #[allow(dead_code)]
                 #[deny(const_err)]
                 const CHECK_PRIORITY: (u8, u8) = (
                     #priority - 1,

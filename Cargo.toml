@@ -19,6 +19,16 @@ static-ref = "0.2.0"
 [dependencies.cortex-m-rtfm-macros]
 path = "macros"
 
-[dev-dependencies]
+[target.'cfg(target_arch = "x86_64")'.dev-dependencies]
 compiletest_rs = "0.2.8"
-stm32f103xx = "0.7.1"
+
+[dev-dependencies.cortex-m-rt]
+features = ["abort-on-panic"]
+version = "0.3.3"
+
+[dev-dependencies.stm32f103xx]
+features = ["rt"]
+version = "0.7.1"
+
+[profile.release]
+lto = true
