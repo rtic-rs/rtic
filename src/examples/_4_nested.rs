@@ -65,6 +65,9 @@
 //! fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
 //!     // because this task has a priority of 1 the preemption threshold is also 1
 //! 
+//!     let mut low = r.LOW;
+//!     let mut high = r.HIGH;
+//! 
 //!     // A
 //!     rtfm::bkpt();
 //! 
@@ -72,7 +75,7 @@
 //!     rtfm::set_pending(Interrupt::EXTI1); // ~> exti1
 //! 
 //!     // a claim creates a critical section
-//!     r.LOW.claim_mut(t, |_low, t| {
+//!     low.claim_mut(t, |_low, t| {
 //!         // this claim increases the preemption threshold to 2
 //!         // just high enough to not race with task `exti1` for access to the
 //!         // `LOW` resource
@@ -92,7 +95,7 @@
 //!         rtfm::bkpt();
 //! 
 //!         // claims can be nested
-//!         r.HIGH.claim_mut(t, |_high, _| {
+//!         high.claim_mut(t, |_high, _| {
 //!             // This claim increases the preemption threshold to 3
 //! 
 //!             // now `exti2` can't preempt this task
