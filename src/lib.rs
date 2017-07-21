@@ -48,7 +48,8 @@
 //!
 //! # Examples
 //!
-//! In increasing grade of complexity: [examples](./examples/index.html)
+//! In increasing grade of complexity, see the [examples](./examples/index.html)
+//! module.
 
 #![deny(missing_docs)]
 #![deny(warnings)]
@@ -64,10 +65,10 @@ extern crate static_ref;
 
 use core::cell::UnsafeCell;
 
-pub use cortex_m_rtfm_macros::app;
 pub use cortex_m::asm::{bkpt, wfi};
 pub use cortex_m::interrupt::CriticalSection;
 pub use cortex_m::interrupt::free as atomic;
+pub use cortex_m_rtfm_macros::app;
 pub use static_ref::Static;
 use cortex_m::interrupt::Nr;
 #[cfg(not(armv6m))]

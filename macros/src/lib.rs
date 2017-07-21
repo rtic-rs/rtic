@@ -1,3 +1,6 @@
+//! Procedural macros for the RTFM framework
+
+#![deny(warnings)]
 #![feature(proc_macro)]
 #![recursion_limit = "128"]
 
@@ -18,6 +21,8 @@ mod analyze;
 mod check;
 mod trans;
 
+/// The `app!` macro, a macro used to specify the tasks and resources of a
+/// RTFM application.
 #[proc_macro]
 pub fn app(ts: TokenStream) -> TokenStream {
     match run(ts) {
