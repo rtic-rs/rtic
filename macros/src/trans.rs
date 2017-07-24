@@ -11,6 +11,7 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     let mut root = vec![];
     let mut main = vec![];
 
+    ::trans::check(app, &mut main);
     ::trans::init(app, &mut main, &mut root);
     ::trans::idle(app, ownerships, &mut main, &mut root);
     ::trans::resources(app, ownerships, &mut root);
@@ -24,6 +25,22 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     });
 
     quote!(#(#root)*)
+}
+
+fn check(app: &App, main: &mut Vec<Tokens>) {
+    if !app.resources.is_empty() {
+        main.push(quote! {
+            fn is_send<T>() where T: Send {}
+        });
+    }
+
+    for resource in app.resources.values() {
+        let ty = &resource.ty;
+
+        main.push(quote! {
+            is_send::<#ty>();
+        });
+    }
 }
 
 fn idle(
@@ -79,7 +96,7 @@ fn idle(
 
                     rexprs.push(quote! {
                         #name: #krate::Static::ref_mut(
-                            &mut *#super_::#name.get(),
+                            &mut #super_::#name,
                         ),
                     });
                 } else {
@@ -180,7 +197,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             });
 
             rexprs.push(quote! {
-                #name: ::#krate::Static::ref_mut(&mut *super::#name.get()),
+                #name: ::#krate::Static::ref_mut(&mut super::#name),
             });
         }
 
@@ -288,14 +305,12 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
         match *ownership {
             Ownership::Owned { .. } => {
                 if let Some(resource) = app.resources.get(name) {
-                    // For owned resources we don't need claim() or borrow(),
-                    // just get()
+                    // For owned resources we don't need claim() or borrow()
                     let expr = &resource.expr;
                     let ty = &resource.ty;
 
                     root.push(quote! {
-                        static #name: #krate::Cell<#ty> =
-                            #krate::Cell::new(#expr);
+                        static mut #name: #ty = #expr;
                     });
                 } else {
                     // Peripheral
@@ -308,8 +323,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     let ty = &resource.ty;
 
                     root.push(quote! {
-                        static #name: #krate::Cell<#ty> =
-                            #krate::Cell::new(#expr);
+                        static mut #name: #ty = #expr;
                     });
 
                     impl_items.push(quote! {
@@ -319,7 +333,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                             &'cs self,
                             _cs: &'cs #krate::CriticalSection,
                         ) -> &'cs #krate::Static<#ty> {
-                            unsafe { #krate::Static::ref_(&*#name.get()) }
+                            unsafe { #krate::Static::ref_(&#name) }
                         }
 
                         fn borrow_mut<'cs>(
@@ -327,7 +341,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                             _cs: &'cs #krate::CriticalSection,
                         ) -> &'cs mut #krate::Static<#ty> {
                             unsafe {
-                                #krate::Static::ref_mut(&mut *#name.get())
+                                #krate::Static::ref_mut(&mut #name)
                             }
                         }
 
@@ -343,12 +357,11 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         {
                             unsafe {
                                 #krate::claim(
-                                    #name.get(),
+                                    #krate::Static::ref_(&#name),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
                                     f,
-                                    |data| #krate::Static::ref_(&*data),
                                 )
                             }
                         }
@@ -365,12 +378,11 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         {
                             unsafe {
                                 #krate::claim(
-                                    #name.get(),
+                                    #krate::Static::ref_mut(&mut #name),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
                                     f,
-                                    |data| #krate::Static::ref_mut(&mut *data),
                                 )
                             }
                         }
@@ -411,12 +423,13 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         {
                             unsafe {
                                 #krate::claim(
-                                    #device::#name.get(),
+                                    #krate::Static::ref_(
+                                        &*#device::#name.get(),
+                                    ),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
                                     f,
-                                    |data| #krate::Static::ref_(&*data),
                                 )
                             }
                         }
@@ -433,12 +446,13 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         {
                             unsafe {
                                 #krate::claim(
-                                    #device::#name.get(),
+                                    #krate::Static::ref_mut(
+                                        &mut *#device::#name.get(),
+                                    ),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
                                     f,
-                                    |data| #krate::Static::ref_mut(&mut *data),
                                 )
                             }
                         }
@@ -512,9 +526,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         });
 
                         exprs.push(quote! {
-                            #name: ::#krate::Static::ref_mut(
-                                &mut *super::#name.get(),
-                            ),
+                            #name: ::#krate::Static::ref_mut(&mut super::#name),
                         });
                     } else {
                         fields.push(quote! {

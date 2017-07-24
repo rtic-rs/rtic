@@ -63,8 +63,6 @@ extern crate cortex_m;
 extern crate cortex_m_rtfm_macros;
 extern crate static_ref;
 
-use core::cell::UnsafeCell;
-
 pub use cortex_m::asm::{bkpt, wfi};
 pub use cortex_m::interrupt::CriticalSection;
 pub use cortex_m::interrupt::free as atomic;
@@ -137,66 +135,40 @@ impl<T> Resource for Static<T> {
 }
 
 #[doc(hidden)]
-pub unsafe fn claim<T, U, R, F, G>(
-    data: *mut T,
+pub unsafe fn claim<T, R, F>(
+    data: T,
     ceiling: u8,
     nvic_prio_bits: u8,
     t: &mut Threshold,
     f: F,
-    g: G,
 ) -> R
 where
-    F: FnOnce(U, &mut Threshold) -> R,
-    G: FnOnce(*mut T) -> U,
+    F: FnOnce(T, &mut Threshold) -> R,
 {
     let max_priority = 1 << nvic_prio_bits;
     if ceiling > t.value {
         match () {
             #[cfg(armv6m)]
             () => {
-                atomic(|_| f(g(data), &mut Threshold::new(max_priority)))
+                atomic(|_| f(data, &mut Threshold::new(max_priority)))
             }
             #[cfg(not(armv6m))]
             () => {
                 if ceiling == max_priority {
-                    atomic(|_| f(g(data), &mut Threshold::new(max_priority)))
+                    atomic(|_| f(data, &mut Threshold::new(max_priority)))
                 } else {
                     let old = basepri::read();
                     let hw = (max_priority - ceiling) << (8 - nvic_prio_bits);
                     basepri_max::write(hw);
-                    let ret = f(g(data), &mut Threshold::new(ceiling));
+                    let ret = f(data, &mut Threshold::new(ceiling));
                     basepri::write(old);
                     ret
                 }
             }
         }
     } else {
-        f(g(data), t)
+        f(data, t)
     }
-}
-
-#[doc(hidden)]
-pub struct Cell<T> {
-    data: UnsafeCell<T>,
-}
-
-#[doc(hidden)]
-impl<T> Cell<T> {
-    pub const fn new(data: T) -> Self {
-        Cell {
-            data: UnsafeCell::new(data),
-        }
-    }
-
-    pub fn get(&self) -> *mut T {
-        self.data.get()
-    }
-}
-
-unsafe impl<T> Sync for Cell<T>
-where
-    T: Send,
-{
 }
 
 /// Preemption threshold token
