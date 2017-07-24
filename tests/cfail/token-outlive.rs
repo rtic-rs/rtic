@@ -1,18 +1,19 @@
 #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
+#![no_std]
 
 #[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
-use rtfm::{app, Threshold};
+use rtfm::{app, Resource, Threshold};
 
 app! {
     device: stm32f103xx,
 
     resources: {
-        STATE: bool = false;
+        static STATE: bool = false;
     },
 
     tasks: {

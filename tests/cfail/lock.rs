@@ -1,19 +1,20 @@
 #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
+#![no_std]
 
 #[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
-use rtfm::{app, Threshold};
+use rtfm::{app, Resource, Threshold};
 
 app! {
     device: stm32f103xx,
 
     resources: {
-        STATE: bool = false;
-        MAX: u8 = 0;
+        static STATE: bool = false;
+        static MAX: u8 = 0;
     },
 
     tasks: {
@@ -45,7 +46,7 @@ fn idle() -> ! {
 
 task!(EXTI0, exti0);
 
-fn exti0(mut t: &mut Threshold, r: EXTI0::Resources) {
+fn exti0(mut t: &mut Threshold, mut r: EXTI0::Resources) {
     // OK need to lock to access the resource
     if r.STATE.claim(&mut t, |state, _| **state) {}
 
@@ -57,7 +58,7 @@ task!(EXTI1, exti1);
 
 fn exti1(mut t: &mut Threshold, r: EXTI1::Resources) {
     // ERROR no need to lock. Has direct access because priority == ceiling
-    if r.STATE.claim(&mut t, |state, _| **state) {
+    if (**r.STATE).claim(&mut t, |state, _| **state) {
         //~^ error no method named `claim` found for type
     }
 
@@ -65,3 +66,7 @@ fn exti1(mut t: &mut Threshold, r: EXTI1::Resources) {
         // OK
     }
 }
+
+task!(EXTI2, exti2);
+
+fn exti2(_t: &mut Threshold, _r: EXTI2::Resources) {}

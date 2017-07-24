@@ -1,6 +1,7 @@
 #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
+#![no_std]
 
 #[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
@@ -26,11 +27,11 @@ fn idle() -> ! {
 }
 
 task!(EXTI0, exti0, Old {
-    token: Option<Threshold> = None;
+    static TOKEN: Option<Threshold> = None;
 });
 
 fn exti0(nt: &mut Threshold, old: &mut Old, _r: EXTI0::Resources) {
-    if let Some(ot) = old.token.take() {
+    if let Some(ot) = old.TOKEN.take() {
         let _: (Threshold, Threshold) = (*nt, ot);
         //~^ error cannot move out of borrowed content
 
@@ -39,6 +40,6 @@ fn exti0(nt: &mut Threshold, old: &mut Old, _r: EXTI0::Resources) {
 
     // ERROR can't store a threshold token in a local variable, otherwise you
     // would end up with two threshold tokens in a task (see `if let` above)
-    old.token = Some(*nt);
+    *old.TOKEN = Some(*nt);
     //~^ error cannot move out of borrowed content
 }

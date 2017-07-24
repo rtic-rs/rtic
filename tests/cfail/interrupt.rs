@@ -1,5 +1,6 @@
 #![deny(warnings)]
 #![feature(proc_macro)]
+#![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;

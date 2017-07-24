@@ -1,6 +1,7 @@
 #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
+#![no_std]
 
 #[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
@@ -8,11 +9,11 @@ extern crate stm32f103xx;
 
 use rtfm::{app, Threshold};
 
-app! { //~ error bound `rtfm::Threshold: std::marker::Send` is not satisfied
+app! { //~ error bound `rtfm::Threshold: core::marker::Send` is not satisfied
     device: stm32f103xx,
 
     resources: {
-        TOKEN: Option<Threshold> = None;
+        static TOKEN: Option<Threshold> = None;
     },
 
     tasks: {
