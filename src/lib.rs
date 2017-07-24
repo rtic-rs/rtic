@@ -201,6 +201,15 @@ where
 }
 
 /// Binds a task `$handler` to the interrupt / exception `$NAME`
+///
+/// This macro takes two arguments: the name of an exception / interrupt and the
+/// path to the function that will be used as the task handler. That function
+/// must have signature `fn(&mut Threshold, $NAME::Resources)`.
+///
+/// Optionally, a third argument may be used to declare task local data.
+/// The handler will have exclusive access to these *local* variables on each
+/// invocation. If the third argument is used then the signature of the handler
+/// function must be `fn(&mut Threshold, &mut $locals, $NAME::Resources)`.
 #[macro_export]
 macro_rules! task {
     ($NAME:ident, $handler:path) => {
