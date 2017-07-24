@@ -47,9 +47,9 @@ fn init_(_p: init::Peripherals, _r: init::Resources) {}
 
 fn idle_(t: &mut Threshold, mut r: idle::Resources) -> ! {
     loop {
-        **r.OWNED != **r.OWNED;
+        *r.OWNED != *r.OWNED;
 
-        if **r.OWNED {
+        if *r.OWNED {
             if r.SHARED.claim(t, |shared, _| **shared) {
                 rtfm::wfi();
             }

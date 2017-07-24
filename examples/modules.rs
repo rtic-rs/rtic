@@ -50,9 +50,9 @@ mod main {
 
     pub fn idle(t: &mut Threshold, mut r: ::idle::Resources) -> ! {
         loop {
-            **r.OWNED != **r.OWNED;
+            *r.OWNED != *r.OWNED;
 
-            if **r.OWNED {
+            if *r.OWNED {
                 if r.SHARED.claim(t, |shared, _| **shared) {
                     rtfm::wfi();
                 }

@@ -91,24 +91,19 @@ fn idle(
                     let ty = &resource.ty;
 
                     rfields.push(quote! {
-                        pub #name: &'static mut ::#krate::Static<#ty>,
+                        pub #name: &'static mut #ty,
                     });
 
                     rexprs.push(quote! {
-                        #name: #krate::Static::ref_mut(
-                            &mut #super_::#name,
-                        ),
+                        #name: &mut #super_::#name,
                     });
                 } else {
                     rfields.push(quote! {
-                        pub #name:
-                            &'static mut ::#krate::Static<::#device::#name>,
+                        pub #name: &'static mut ::#device::#name,
                     });
 
                     rexprs.push(quote! {
-                        #name: ::#krate::Static::ref_mut(
-                            &mut *::#device::#name.get(),
-                        ),
+                        #name: &mut *::#device::#name.get(),
                     });
                 }
             } else {
