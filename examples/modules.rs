@@ -25,9 +25,6 @@ app! {
     },
 
     idle: {
-        locals: {
-            static COUNTER: u32 = 0;
-        },
         path: main::idle,
         resources: [OWNED, SHARED],
     },
@@ -51,14 +48,8 @@ mod main {
 
     pub fn init(_p: ::init::Peripherals, _r: ::init::Resources) {}
 
-    pub fn idle(
-        t: &mut Threshold,
-        l: &mut ::idle::Locals,
-        mut r: ::idle::Resources,
-    ) -> ! {
+    pub fn idle(t: &mut Threshold, mut r: ::idle::Resources) -> ! {
         loop {
-            *l.COUNTER += 1;
-
             **r.OWNED != **r.OWNED;
 
             if **r.OWNED {

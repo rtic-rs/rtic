@@ -25,9 +25,6 @@ app! {
     },
 
     idle: {
-        locals: {
-            static COUNTER: u32 = 0;
-        },
         path: idle_, // this is a path to the "idle" function
         resources: [OWNED, SHARED],
     },
@@ -48,10 +45,8 @@ app! {
 
 fn init_(_p: init::Peripherals, _r: init::Resources) {}
 
-fn idle_(t: &mut Threshold, l: &mut idle::Locals, mut r: idle::Resources) -> ! {
+fn idle_(t: &mut Threshold, mut r: idle::Resources) -> ! {
     loop {
-        *l.COUNTER += 1;
-
         **r.OWNED != **r.OWNED;
 
         if **r.OWNED {
