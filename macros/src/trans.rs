@@ -11,7 +11,6 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     let mut root = vec![];
     let mut main = vec![];
 
-    // ::trans::check(app, &mut main);
     ::trans::init(app, &mut main, &mut root);
     ::trans::idle(app, ownerships, &mut main, &mut root);
     ::trans::resources(app, ownerships, &mut root);
@@ -26,12 +25,6 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
 
     quote!(#(#root)*)
 }
-
-// Check that the exceptions / interrupts are valid
-// Sadly we can't do this test at expansion time. Instead we'll generate some
-// code that won't compile if the interrupt name is invalid.
-// fn check(app: &App, main: &mut Vec<Tokens>) {
-// }
 
 fn idle(
     app: &App,
@@ -53,40 +46,6 @@ fn idle(
     {
         tys.push(quote!(&mut #krate::Threshold));
         exprs.push(quote!(unsafe { &mut #krate::Threshold::new(0) }));
-    }
-
-    if !app.idle.locals.is_empty() {
-        let mut lexprs = vec![];
-        let mut lfields = vec![];
-
-        for (name, resource) in &app.idle.locals {
-            let expr = &resource.expr;
-            let ty = &resource.ty;
-
-            lfields.push(quote! {
-                pub #name: #krate::Static<#ty>,
-            });
-
-            lexprs.push(quote! {
-                #name: unsafe { #krate::Static::new(#expr) },
-            });
-        }
-
-        mod_items.push(quote! {
-            #[allow(non_snake_case)]
-            pub struct Locals {
-                #(#lfields)*
-            }
-        });
-
-        tys.push(quote!(&'static mut idle::Locals));
-        exprs.push(quote!(unsafe { &mut LOCALS }));
-
-        main.push(quote! {
-            static mut LOCALS: idle::Locals = idle::Locals {
-                #(#lexprs)*
-            };
-        });
     }
 
     if !app.idle.resources.is_empty() {
@@ -424,7 +383,9 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                             &'cs self,
                             _cs: &'cs #krate::CriticalSection,
                         ) -> &'cs #krate::Static<#device::#name> {
-                            unsafe { #krate::Static::ref_(&*#device::#name.get()) }
+                            unsafe {
+                                #krate::Static::ref_(&*#device::#name.get())
+                            }
                         }
 
                         fn borrow_mut<'cs>(
@@ -432,7 +393,9 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                             _cs: &'cs #krate::CriticalSection,
                         ) -> &'cs mut #krate::Static<#device::#name> {
                             unsafe {
-                                #krate::Static::ref_mut(&mut *#device::#name.get())
+                                #krate::Static::ref_mut(
+                                    &mut *#device::#name.get(),
+                                )
                             }
                         }
 
