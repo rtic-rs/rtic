@@ -14,7 +14,7 @@ version = "0.2.0"
 
 [dependencies]
 cortex-m = "0.3.1"
-static-ref = "0.2.0"
+static-ref = "0.2.1"
 
 [dependencies.cortex-m-rtfm-macros]
 path = "macros"
