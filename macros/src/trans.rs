@@ -184,6 +184,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         let mut rexprs = vec![];
 
         for (name, resource) in &app.resources {
+            let _name = Ident::new(format!("_{}", name.as_ref()));
             lifetime = Some(quote!('a));
 
             let ty = &resource.ty;
@@ -193,7 +194,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             });
 
             rexprs.push(quote! {
-                #name: ::#krate::Static::ref_mut(&mut super::#name),
+                #name: ::#krate::Static::ref_mut(&mut ::#_name),
             });
         }
 
@@ -298,6 +299,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
     for (name, ownership) in ownerships {
         let mut impl_items = vec![];
 
+        let _name = Ident::new(format!("_{}", name.as_ref()));
         match *ownership {
             Ownership::Owned { .. } => {
                 if let Some(resource) = app.resources.get(name) {
@@ -306,7 +308,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     let ty = &resource.ty;
 
                     root.push(quote! {
-                        static mut #name: #ty = #expr;
+                        static mut #_name: #ty = #expr;
                     });
                 } else {
                     // Peripheral
@@ -319,7 +321,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     let ty = &resource.ty;
 
                     root.push(quote! {
-                        static mut #name: #ty = #expr;
+                        static mut #_name: #ty = #expr;
                     });
 
                     impl_items.push(quote! {
@@ -329,7 +331,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                             &'cs self,
                             _cs: &'cs #krate::CriticalSection,
                         ) -> &'cs #krate::Static<#ty> {
-                            unsafe { #krate::Static::ref_(&#name) }
+                            unsafe { #krate::Static::ref_(&#_name) }
                         }
 
                         fn borrow_mut<'cs>(
@@ -337,7 +339,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                             _cs: &'cs #krate::CriticalSection,
                         ) -> &'cs mut #krate::Static<#ty> {
                             unsafe {
-                                #krate::Static::ref_mut(&mut #name)
+                                #krate::Static::ref_mut(&mut #_name)
                             }
                         }
 
@@ -353,7 +355,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         {
                             unsafe {
                                 #krate::claim(
-                                    #krate::Static::ref_(&#name),
+                                    #krate::Static::ref_(&#_name),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
@@ -374,7 +376,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         {
                             unsafe {
                                 #krate::claim(
-                                    #krate::Static::ref_mut(&mut #name),
+                                    #krate::Static::ref_mut(&mut #_name),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
@@ -503,6 +505,8 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
         if has_resources {
             for name in &task.resources {
+                let _name = Ident::new(format!("_{}", name.as_ref()));
+
                 match ownerships[name] {
                     Ownership::Shared { ceiling }
                         if ceiling > task.priority =>
@@ -530,7 +534,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                             });
 
                             exprs.push(quote! {
-                                #name: ::#krate::Static::ref_mut(&mut super::#name),
+                                #name: ::#krate::Static::ref_mut(&mut ::#_name),
                             });
                         } else {
                             fields.push(quote! {
