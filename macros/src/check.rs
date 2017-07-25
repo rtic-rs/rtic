@@ -18,6 +18,7 @@ pub type Tasks = HashMap<Ident, Task>;
 
 pub struct Task {
     pub enabled: Option<bool>,
+    pub path: Option<Path>,
     pub priority: u8,
     pub resources: Idents,
 }
@@ -71,6 +72,7 @@ fn task(task: syntax::check::Task) -> Result<Task> {
     if let Some(priority) = task.priority {
         Ok(Task {
             enabled: task.enabled,
+            path: task.path,
             priority,
             resources: task.resources,
         })

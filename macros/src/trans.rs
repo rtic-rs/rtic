@@ -1,4 +1,5 @@
 use quote::{Ident, Tokens};
+use syn::{Lit, StrStyle};
 
 use analyze::{Ownership, Ownerships};
 use check::App;
@@ -497,89 +498,148 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
         let mut lifetime = None;
         let mut needs_reexport = false;
-        for name in &task.resources {
-            match ownerships[name] {
-                Ownership::Shared { ceiling } if ceiling > task.priority => {
-                    fields.push(quote! {
-                        pub #name: super::_resource::#name,
-                    });
+        let mut needs_threshold = false;
+        let has_resources = !task.resources.is_empty();
 
-                    exprs.push(quote! {
-                        #name: {
-                            super::_resource::#name::new()
-                        },
-                    });
-                }
-                _ => {
-                    lifetime = Some(quote!('a));
-                    if let Some(resource) = app.resources.get(name) {
-                        needs_reexport = true;
-                        let ty = &resource.ty;
+        if has_resources {
+            for name in &task.resources {
+                match ownerships[name] {
+                    Ownership::Shared { ceiling }
+                        if ceiling > task.priority =>
+                    {
+                        needs_threshold = true;
 
                         fields.push(quote! {
-                            pub #name: &'a mut ::#krate::Static<#ty>,
+                            pub #name: super::_resource::#name,
                         });
 
                         exprs.push(quote! {
-                            #name: ::#krate::Static::ref_mut(&mut super::#name),
+                            #name: {
+                                super::_resource::#name::new()
+                            },
                         });
-                    } else {
-                        fields.push(quote! {
-                            pub #name:
+                    }
+                    _ => {
+                        lifetime = Some(quote!('a));
+                        if let Some(resource) = app.resources.get(name) {
+                            needs_reexport = true;
+                            let ty = &resource.ty;
+
+                            fields.push(quote! {
+                                pub #name: &'a mut ::#krate::Static<#ty>,
+                            });
+
+                            exprs.push(quote! {
+                                #name: ::#krate::Static::ref_mut(&mut super::#name),
+                            });
+                        } else {
+                            fields.push(quote! {
+                                pub #name:
                                 &'a mut ::#krate::Static<::#device::#name>,
-                        });
+                            });
 
-                        exprs.push(quote! {
-                            #name: ::#krate::Static::ref_mut(
-                                &mut *::#device::#name.get(),
-                            ),
-                        });
+                            exprs.push(quote! {
+                                #name: ::#krate::Static::ref_mut(
+                                    &mut *::#device::#name.get(),
+                                ),
+                            });
+                        }
                     }
                 }
             }
+
+            if needs_reexport {
+                let rname = Ident::new(format!("_{}Resources", name));
+                root.push(quote! {
+                    #[allow(non_camel_case_types)]
+                    #[allow(non_snake_case)]
+                    pub struct #rname<#lifetime> {
+                        #(#fields)*
+                    }
+                });
+
+                items.push(quote! {
+                    pub use ::#rname as Resources;
+                });
+            } else {
+                items.push(quote! {
+                    #[allow(non_snake_case)]
+                    pub struct Resources<#lifetime> {
+                        #(#fields)*
+                    }
+                });
+            }
+
+            items.push(quote! {
+                #[allow(unsafe_code)]
+                impl<#lifetime> Resources<#lifetime> {
+                    pub unsafe fn new() -> Self {
+                        Resources {
+                            #(#exprs)*
+                        }
+                    }
+                }
+            });
         }
 
-        if needs_reexport {
-            let rname = Ident::new(format!("_{}Resources", name));
+        if let Some(path) = task.path.as_ref() {
+            let mut tys = vec![];
+            let mut exprs = vec![];
+
+            let priority = task.priority;
+            if needs_threshold {
+                tys.push(quote!(&mut Threshold));
+                exprs.push(quote!(&mut Threshold::new(#priority)));
+            }
+
+            if has_resources {
+                tys.push(quote!(#name::Resources));
+                exprs.push(quote!(#name::Resources::new()));
+            }
+
+            let _name = Ident::new(format!("_{}", name));
+            let export_name = Lit::Str(name.as_ref().to_owned(), StrStyle::Cooked);
             root.push(quote! {
-                #[allow(non_camel_case_types)]
                 #[allow(non_snake_case)]
-                pub struct #rname<#lifetime> {
-                    #(#fields)*
+                #[allow(unsafe_code)]
+                #[export_name = #export_name]
+                pub unsafe extern "C" fn #_name() {
+                    let f: fn(#(#tys,)*) = #path;
+
+                    f(#(#exprs,)*)
                 }
             });
-
+        } else if !has_resources {
             items.push(quote! {
-                pub use ::#rname as Resources;
-            });
-        } else {
-            items.push(quote! {
-                #[allow(non_snake_case)]
-                pub struct Resources<#lifetime> {
-                    #(#fields)*
+                pub struct Resources {
+                    _0: (),
                 }
-            });
-        }
 
-        items.push(quote! {
-            #[allow(unsafe_code)]
-            impl<#lifetime> Resources<#lifetime> {
-                pub unsafe fn new() -> Self {
-                    Resources {
-                        #(#exprs)*
+                impl Resources {
+                    pub unsafe fn new() -> Self {
+                        Resources { _0: () }
                     }
                 }
-            }
-        });
+            });
+            // the `task!` macro will be used so the `#NAME::Resources` type
+            // must exist
+        }
 
         let priority = task.priority;
+        if task.path.is_none() {
+            // This `const`ant is mainly used to make sure the user doesn't
+            // forget to set a task handler using the `task!` macro. They'll get
+            // an error if they do.
+            items.push(quote! {
+                #[deny(dead_code)]
+                pub const #name: u8 = #priority;
+            });
+        }
+
         root.push(quote!{
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
             mod #name {
-                #[deny(dead_code)]
-                pub const #name: u8 = #priority;
-
                 #[allow(dead_code)]
                 #[deny(const_err)]
                 const CHECK_PRIORITY: (u8, u8) = (

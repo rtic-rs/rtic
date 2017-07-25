@@ -191,6 +191,10 @@ impl Threshold {
 impl !Send for Threshold {}
 
 /// Sets an interrupt as pending
+///
+/// If the interrupt priority is high enough the interrupt will be serviced
+/// immediately, otherwise it will be serviced at some point after the current
+/// task ends.
 pub fn set_pending<I>(interrupt: I)
 where
     I: Nr,
