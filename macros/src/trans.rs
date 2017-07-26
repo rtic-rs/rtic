@@ -514,12 +514,12 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         needs_threshold = true;
 
                         fields.push(quote! {
-                            pub #name: super::_resource::#name,
+                            pub #name: ::_resource::#name,
                         });
 
                         exprs.push(quote! {
                             #name: {
-                                super::_resource::#name::new()
+                                ::_resource::#name::new()
                             },
                         });
                     }
@@ -592,8 +592,8 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
             let priority = task.priority;
             if needs_threshold {
-                tys.push(quote!(&mut Threshold));
-                exprs.push(quote!(&mut Threshold::new(#priority)));
+                tys.push(quote!(&mut #krate::Threshold));
+                exprs.push(quote!(&mut #krate::Threshold::new(#priority)));
             }
 
             if has_resources {
