@@ -28,6 +28,9 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     quote!(#(#root)*)
 }
 
+// Checks that the resource types are valid
+// Sadly we can't do this test at expansion time. Instead we'll generate some
+// code that won't compile if the types don't meet the requirements
 fn check(app: &App, main: &mut Vec<Tokens>) {
     if !app.resources.is_empty() {
         main.push(quote! {
@@ -95,8 +98,9 @@ fn idle(
                         pub #name: &'static mut #ty,
                     });
 
+                    let _name = Ident::new(format!("_{}", name.as_ref()));
                     rexprs.push(quote! {
-                        #name: &mut #super_::#name,
+                        #name: &mut #super_::#_name,
                     });
                 } else {
                     rfields.push(quote! {
