@@ -134,6 +134,7 @@ impl<T> Resource for Static<T> {
     }
 }
 
+#[inline]
 #[doc(hidden)]
 pub unsafe fn claim<T, R, F>(
     data: T,
