@@ -37,7 +37,9 @@ app! {
         },
 
         TIM2: {
-            enabled: true,
+            // tasks are enabled, between `init` and `idle`, by default but they
+            // can start disabled if `false` is specified here
+            enabled: false,
             path: tim2,
             priority: 1,
             resources: [CO_OWNED],

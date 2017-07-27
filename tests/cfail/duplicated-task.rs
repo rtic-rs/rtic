@@ -9,7 +9,6 @@ use rtfm::app;
 
 app! {
     //~^ error proc macro panicked
-    //~| help parsing
     device: stm32f103xx,
 
     tasks: {

@@ -7,14 +7,14 @@ extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! { //~ error no associated item named `EXTI0` found for type
+app! {
+    //~^ error no associated item named `EXTI33` found for type
+    //~| error no associated item named `EXTI33` found for type
     device: stm32f103xx,
 
     tasks: {
-        // ERROR `enabled` needs to be specified for interrupts
-        EXTI0: {
-            priority: 1,
-        },
+        // ERROR this interrupt doesn't exist
+        EXTI33: {},
     },
 }
 

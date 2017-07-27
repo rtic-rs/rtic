@@ -7,9 +7,7 @@ extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! {
-    //~^ error no associated item named `SYS_TICK` found for type
-    //~| error no associated item named `SYS_TICK` found for type
+app! { //~ error proc macro panicked
     device: stm32f103xx,
 
     tasks: {

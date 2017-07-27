@@ -18,14 +18,12 @@ app! {
 
     tasks: {
         EXTI0: {
-            enabled: true,
             path: exti0,
             priority: 1,
             resources: [A, B],
         },
 
         EXTI1: {
-            enabled: true,
             path: exti1,
             priority: 2,
             resources: [A, B],

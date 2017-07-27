@@ -25,7 +25,6 @@ app! {
         },
 
         TIM2: {
-            enabled: true,
             path: tim2,
             priority: 1,
             resources: [COUNTER],

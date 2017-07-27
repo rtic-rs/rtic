@@ -140,25 +140,3 @@ where
     let nvic = unsafe { &*cortex_m::peripheral::NVIC.get() };
     nvic.set_pending(interrupt);
 }
-
-#[allow(non_camel_case_types)]
-#[doc(hidden)]
-pub enum Exception {
-    /// System service call via SWI instruction
-    SVCALL,
-    /// Pendable request for system service
-    PENDSV,
-    /// System tick timer
-    SYS_TICK,
-}
-
-impl Exception {
-    #[doc(hidden)]
-    pub fn nr(&self) -> usize {
-        match *self {
-            Exception::SVCALL => 11,
-            Exception::PENDSV => 14,
-            Exception::SYS_TICK => 15,
-        }
-    }
-}

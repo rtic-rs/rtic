@@ -2,7 +2,7 @@ use quote::{Ident, Tokens};
 use syn::{Lit, StrStyle};
 
 use analyze::{Ownership, Ownerships};
-use check::App;
+use check::{App, Kind};
 
 fn krate() -> Ident {
     Ident::from("rtfm")
@@ -236,44 +236,47 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let mut exceptions = vec![];
     let mut interrupts = vec![];
     for (name, task) in &app.tasks {
-        if let Some(enabled) = task.enabled {
-            // Interrupt. These can be enabled / disabled through the NVIC
-            if interrupts.is_empty() {
-                interrupts.push(quote! {
-                    let nvic = &*#device::NVIC.get();
-                });
-            }
+        match task.kind {
+            Kind::Exception(ref e) => {
+                if exceptions.is_empty() {
+                    exceptions.push(quote! {
+                        let scb = &*#device::SCB.get();
+                    });
+                }
 
-            let priority = task.priority;
-            interrupts.push(quote! {
-                let prio_bits = #device::NVIC_PRIO_BITS;
-                let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                nvic.set_priority(#device::Interrupt::#name, hw);
-            });
-
-            if enabled {
-                interrupts.push(quote! {
-                    nvic.enable(#device::Interrupt::#name);
-                });
-            } else {
-                interrupts.push(quote! {
-                    nvic.disable(#device::Interrupt::#name);
-                });
-            }
-        } else {
-            // Exception
-            if exceptions.is_empty() {
+                let nr = e.nr();
+                let priority = task.priority;
                 exceptions.push(quote! {
-                    let scb = &*#device::SCB.get();
+                    let prio_bits = #device::NVIC_PRIO_BITS;
+                    let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
+                    scb.shpr[#nr - 4].write(hw);
                 });
             }
+            Kind::Interrupt { enabled } => {
+                // Interrupt. These can be enabled / disabled through the NVIC
+                if interrupts.is_empty() {
+                    interrupts.push(quote! {
+                        let nvic = &*#device::NVIC.get();
+                    });
+                }
 
-            let priority = task.priority;
-            exceptions.push(quote! {
-                let prio_bits = #device::NVIC_PRIO_BITS;
-                let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                scb.shpr[#krate::Exception::#name.nr() - 4].write(hw);
-            });
+                let priority = task.priority;
+                interrupts.push(quote! {
+                    let prio_bits = #device::NVIC_PRIO_BITS;
+                    let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
+                    nvic.set_priority(#device::Interrupt::#name, hw);
+                });
+
+                if enabled {
+                    interrupts.push(quote! {
+                        nvic.enable(#device::Interrupt::#name);
+                    });
+                } else {
+                    interrupts.push(quote! {
+                        nvic.disable(#device::Interrupt::#name);
+                    });
+                }
+            }
         }
     }
 

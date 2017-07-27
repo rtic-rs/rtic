@@ -31,14 +31,11 @@ app! {
     tasks: {
         SYS_TICK: {
             path: tasks::sys_tick,
-            priority: 1,
             resources: [CO_OWNED, ON, SHARED],
         },
 
         TIM2: {
-            enabled: true,
             path: tasks::tim2,
-            priority: 1,
             resources: [CO_OWNED],
         },
     },

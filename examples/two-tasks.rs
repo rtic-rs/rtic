@@ -33,7 +33,6 @@ app! {
             // For interrupts the `enabled` field must be specified. It
             // indicates if the interrupt will be enabled or disabled once
             // `idle` starts
-            enabled: true,
             path: tim2,
             priority: 1,
             resources: [COUNTER],

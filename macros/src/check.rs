@@ -16,8 +16,39 @@ pub struct App {
 
 pub type Tasks = HashMap<Ident, Task>;
 
+#[allow(non_camel_case_types)]
+pub enum Exception {
+    PENDSV,
+    SVCALL,
+    SYS_TICK,
+}
+
+impl Exception {
+    pub fn from(s: &str) -> Option<Self> {
+        Some(match s {
+            "PENDSV" => Exception::PENDSV,
+            "SVCALL" => Exception::SVCALL,
+            "SYS_TICK" => Exception::SYS_TICK,
+            _ => return None,
+        })
+    }
+
+    pub fn nr(&self) -> usize {
+        match *self {
+            Exception::PENDSV => 14,
+            Exception::SVCALL => 11,
+            Exception::SYS_TICK => 15,
+        }
+    }
+}
+
+pub enum Kind {
+    Exception(Exception),
+    Interrupt { enabled: bool },
+}
+
 pub struct Task {
-    pub enabled: Option<bool>,
+    pub kind: Kind,
     pub path: Option<Path>,
     pub priority: u8,
     pub resources: Idents,
@@ -31,8 +62,13 @@ pub fn app(app: check::App) -> Result<App> {
         resources: app.resources,
         tasks: app.tasks
             .into_iter()
-            .map(|(k, v)| (k, ::check::task(v)))
-            .collect(),
+            .map(|(k, v)| {
+                let v = ::check::task(k.as_ref(), v)
+                    .chain_err(|| format!("checking task `{}`", k))?;
+
+                Ok((k, v))
+            })
+            .collect::<Result<_>>()?,
     };
 
     ::check::resources(&app)
@@ -60,11 +96,34 @@ fn resources(app: &App) -> Result<()> {
     Ok(())
 }
 
-fn task(task: syntax::check::Task) -> Task {
-    Task {
-        enabled: task.enabled,
+fn task(name: &str, task: syntax::check::Task) -> Result<Task> {
+    let kind = match Exception::from(name) {
+        Some(e) => {
+            ensure!(
+                task.enabled.is_none(),
+                "`enabled` field is not valid for exceptions"
+            );
+
+            Kind::Exception(e)
+        }
+        None => {
+            if task.enabled == Some(true) {
+                bail!(
+                    "`enabled: true` is the default value; this line can be \
+                     omitted"
+                );
+            }
+
+            Kind::Interrupt {
+                enabled: task.enabled.unwrap_or(true),
+            }
+        }
+    };
+
+    Ok(Task {
+        kind,
         path: task.path,
         priority: task.priority.unwrap_or(1),
         resources: task.resources,
-    }
+    })
 }

@@ -21,7 +21,6 @@ app! {
 
     tasks: {
         EXTI0: {
-            enabled: true,
             path: exti0,
             priority: 1,
             resources: [ON],

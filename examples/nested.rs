@@ -24,21 +24,18 @@ app! {
 
     tasks: {
         EXTI0: {
-            enabled: true,
             path: exti0,
             priority: 1,
             resources: [LOW, HIGH],
         },
 
         EXTI1: {
-            enabled: true,
             path: exti1,
             priority: 2,
             resources: [LOW],
         },
 
         EXTI2: {
-            enabled: true,
             path: exti2,
             priority: 3,
             resources: [HIGH],

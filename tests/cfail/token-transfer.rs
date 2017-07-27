@@ -17,7 +17,6 @@ app! { //~ error bound `rtfm::Threshold: core::marker::Send` is not satisfied
 
     tasks: {
         EXTI0: {
-            enabled: true,
             path: exti0,
             priority: 1,
             resources: [TOKEN],
