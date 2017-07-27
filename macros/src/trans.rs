@@ -153,12 +153,14 @@ fn idle(
         exprs.push(quote!(unsafe { idle::Resources::new() }));
     }
 
-    root.push(quote! {
-        #[allow(unsafe_code)]
-        mod idle {
-            #(#mod_items)*
-        }
-    });
+    if !mod_items.is_empty() {
+        root.push(quote! {
+            #[allow(unsafe_code)]
+            mod idle {
+                #(#mod_items)*
+            }
+        });
+    }
 
     let idle = &app.idle.path;
     main.push(quote! {
@@ -486,12 +488,15 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
         }
     }
 
+    if !items.is_empty() {
+        root.push(quote! {
+            #[allow(unsafe_code)]
+            mod _resource {
+                #(#items)*
+            }
+        })
+    }
     root.push(quote! {
-        #[allow(unsafe_code)]
-        mod _resource {
-            #(#items)*
-        }
-
         #(#impls)*
     });
 }
