@@ -59,12 +59,7 @@ fn idle(
     let mut tys = vec![];
     let mut exprs = vec![];
 
-    if !app.idle.resources.is_empty() &&
-        !app.idle
-            .resources
-            .iter()
-            .all(|resource| ownerships[resource].is_owned())
-    {
+    if !app.idle.resources.is_empty() {
         tys.push(quote!(&mut #krate::Threshold));
         exprs.push(quote!(unsafe { &mut #krate::Threshold::new(0) }));
     }
@@ -508,6 +503,8 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
         let has_resources = !task.resources.is_empty();
 
         if has_resources {
+            needs_threshold = !task.resources.is_empty();
+
             for name in &task.resources {
                 let _name = Ident::new(format!("_{}", name.as_ref()));
 
@@ -606,7 +603,8 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
             }
 
             let _name = Ident::new(format!("_{}", name));
-            let export_name = Lit::Str(name.as_ref().to_owned(), StrStyle::Cooked);
+            let export_name =
+                Lit::Str(name.as_ref().to_owned(), StrStyle::Cooked);
             root.push(quote! {
                 #[allow(non_snake_case)]
                 #[allow(unsafe_code)]
