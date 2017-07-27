@@ -101,7 +101,6 @@ pub unsafe fn claim<T, R, F>(
 where
     F: FnOnce(T, &mut Threshold) -> R,
 {
-    let max_priority = 1 << nvic_prio_bits;
     if ceiling > t.value() {
         match () {
             #[cfg(armv6m)]
@@ -109,6 +108,8 @@ where
 
             #[cfg(not(armv6m))]
             () => {
+                let max_priority = 1 << nvic_prio_bits;
+
                 if ceiling == max_priority {
                     atomic(t, |t| f(data, t))
                 } else {
