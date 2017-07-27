@@ -238,7 +238,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             // Interrupt. These can be enabled / disabled through the NVIC
             if interrupts.is_empty() {
                 interrupts.push(quote! {
-                    let nvic = #device::NVIC.borrow(_cs);
+                    let nvic = &*#device::NVIC.get();
                 });
             }
 
@@ -262,7 +262,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             // Exception
             if exceptions.is_empty() {
                 exceptions.push(quote! {
-                    let scb = #device::SCB.borrow(_cs);
+                    let scb = &*#device::SCB.get();
                 });
             }
 
@@ -280,7 +280,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         // type check
         let init: fn(#(#tys,)*) = #init;
 
-        #krate::atomic(|_cs| unsafe {
+        #krate::atomic(unsafe { &mut #krate::Threshold::new(0) }, |_t| unsafe {
             init(#(#exprs,)*);
 
             #(#exceptions)*
@@ -328,15 +328,19 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
                         fn borrow<'cs>(
                             &'cs self,
-                            _cs: &'cs #krate::CriticalSection,
+                            t: &'cs #krate::Threshold,
                         ) -> &'cs #krate::Static<#ty> {
+                            assert!(t.value() >= #ceiling);
+
                             unsafe { #krate::Static::ref_(&#_name) }
                         }
 
                         fn borrow_mut<'cs>(
                             &'cs mut self,
-                            _cs: &'cs #krate::CriticalSection,
+                            t: &'cs #krate::Threshold,
                         ) -> &'cs mut #krate::Static<#ty> {
+                            assert!(t.value() >= #ceiling);
+
                             unsafe {
                                 #krate::Static::ref_mut(&mut #_name)
                             }
@@ -390,8 +394,10 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
                         fn borrow<'cs>(
                             &'cs self,
-                            _cs: &'cs #krate::CriticalSection,
+                            t: &'cs #krate::Threshold,
                         ) -> &'cs #krate::Static<#device::#name> {
+                            assert!(t.value() >= #ceiling);
+
                             unsafe {
                                 #krate::Static::ref_(&*#device::#name.get())
                             }
@@ -399,8 +405,10 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
                         fn borrow_mut<'cs>(
                             &'cs mut self,
-                            _cs: &'cs #krate::CriticalSection,
+                            t: &'cs #krate::Threshold,
                         ) -> &'cs mut #krate::Static<#device::#name> {
+                            assert!(t.value() >= #ceiling);
+
                             unsafe {
                                 #krate::Static::ref_mut(
                                     &mut *#device::#name.get(),
@@ -458,7 +466,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
                 impls.push(quote! {
                     #[allow(unsafe_code)]
-                    impl #krate::Resource for _resource::#name {
+                    unsafe impl #krate::Resource for _resource::#name {
                         #(#impl_items)*
                     }
                 });
@@ -594,7 +602,13 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
             let priority = task.priority;
             if needs_threshold {
                 tys.push(quote!(&mut #krate::Threshold));
-                exprs.push(quote!(&mut #krate::Threshold::new(#priority)));
+                exprs.push(quote! {
+                    &mut if #priority == 1 << #device::NVIC_PRIO_BITS {
+                        #krate::Threshold::new(::core::u8::MAX)
+                    } else {
+                        #krate::Threshold::new(#priority)
+                    }
+                });
             }
 
             if has_resources {

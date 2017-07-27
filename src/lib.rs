@@ -50,7 +50,6 @@
 //!
 //! In increasing grade of complexity, see the [examples](./examples/index.html)
 //! module.
-
 #![deny(missing_docs)]
 #![deny(warnings)]
 #![feature(asm)]
@@ -61,76 +60,32 @@
 
 extern crate cortex_m;
 extern crate cortex_m_rtfm_macros;
+extern crate rtfm_core;
 extern crate static_ref;
 
+use core::u8;
+
+pub use rtfm_core::{Resource, Static, Threshold};
 pub use cortex_m::asm::{bkpt, wfi};
-pub use cortex_m::interrupt::CriticalSection;
-pub use cortex_m::interrupt::free as atomic;
 pub use cortex_m_rtfm_macros::app;
-pub use static_ref::Static;
-use cortex_m::interrupt::Nr;
+use cortex_m::interrupt::{self, Nr};
 #[cfg(not(armv6m))]
-use cortex_m::register::{basepri, basepri_max};
+use cortex_m::register::basepri;
 
 pub mod examples;
 
-/// A resource, a means to share data between tasks
-pub trait Resource {
-    /// The data protected by the resource
-    type Data;
-
-    /// Borrows the resource data for the duration of a *global* critical
-    /// section
-    fn borrow<'cs>(
-        &'cs self,
-        cs: &'cs CriticalSection,
-    ) -> &'cs Static<Self::Data>;
-
-    /// Mutable variant of `borrow`
-    fn borrow_mut<'cs>(
-        &'cs mut self,
-        cs: &'cs CriticalSection,
-    ) -> &'cs mut Static<Self::Data>;
-
-    /// Claims the resource data for the span of the closure `f`. For the
-    /// duration of the closure other tasks that may access the resource data
-    /// are prevented from preempting the current task.
-    fn claim<R, F>(&self, t: &mut Threshold, f: F) -> R
-    where
-        F: FnOnce(&Static<Self::Data>, &mut Threshold) -> R;
-
-    /// Mutable variant of `claim`
-    fn claim_mut<R, F>(&mut self, t: &mut Threshold, f: F) -> R
-    where
-        F: FnOnce(&mut Static<Self::Data>, &mut Threshold) -> R;
-}
-
-impl<T> Resource for Static<T> {
-    type Data = T;
-
-    fn borrow<'cs>(&'cs self, _cs: &'cs CriticalSection) -> &'cs Static<T> {
-        self
-    }
-
-    fn borrow_mut<'cs>(
-        &'cs mut self,
-        _cs: &'cs CriticalSection,
-    ) -> &'cs mut Static<T> {
-        self
-    }
-
-    fn claim<R, F>(&self, t: &mut Threshold, f: F) -> R
-    where
-        F: FnOnce(&Static<Self::Data>, &mut Threshold) -> R,
-    {
-        f(self, t)
-    }
-
-    fn claim_mut<R, F>(&mut self, t: &mut Threshold, f: F) -> R
-    where
-        F: FnOnce(&mut Static<Self::Data>, &mut Threshold) -> R,
-    {
-        f(self, t)
+/// Executes the closure `f` in an interrupt free context
+pub fn atomic<R, F>(t: &mut Threshold, f: F) -> R
+where
+    F: FnOnce(&mut Threshold) -> R,
+{
+    if t.value() == u8::MAX {
+        f(t)
+    } else {
+        interrupt::disable();
+        let r = f(&mut unsafe { Threshold::max() });
+        unsafe { interrupt::enable() };
+        r
     }
 }
 
@@ -147,20 +102,19 @@ where
     F: FnOnce(T, &mut Threshold) -> R,
 {
     let max_priority = 1 << nvic_prio_bits;
-    if ceiling > t.value {
+    if ceiling > t.value() {
         match () {
             #[cfg(armv6m)]
-            () => {
-                atomic(|_| f(data, &mut Threshold::new(max_priority)))
-            }
+            () => atomic(t, |t| f(data, t)),
+
             #[cfg(not(armv6m))]
             () => {
                 if ceiling == max_priority {
-                    atomic(|_| f(data, &mut Threshold::new(max_priority)))
+                    atomic(t, |t| f(data, t))
                 } else {
                     let old = basepri::read();
                     let hw = (max_priority - ceiling) << (8 - nvic_prio_bits);
-                    basepri_max::write(hw);
+                    basepri::write(hw);
                     let ret = f(data, &mut Threshold::new(ceiling));
                     basepri::write(old);
                     ret
@@ -171,25 +125,6 @@ where
         f(data, t)
     }
 }
-
-/// Preemption threshold token
-///
-/// The preemption threshold indicates the priority a task must have to preempt
-/// the current context. For example a threshold of 2 indicates that only
-/// interrupts / exceptions with a priority of 3 or greater can preempt the
-/// current context
-pub struct Threshold {
-    value: u8,
-}
-
-impl Threshold {
-    #[doc(hidden)]
-    pub unsafe fn new(value: u8) -> Self {
-        Threshold { value }
-    }
-}
-
-impl !Send for Threshold {}
 
 /// Sets an interrupt as pending
 ///
@@ -203,63 +138,6 @@ where
     // NOTE(safe) atomic write
     let nvic = unsafe { &*cortex_m::peripheral::NVIC.get() };
     nvic.set_pending(interrupt);
-}
-
-/// Binds a task `$handler` to the interrupt / exception `$NAME`
-///
-/// This macro takes two arguments: the name of an exception / interrupt and the
-/// path to the function that will be used as the task handler. That function
-/// must have signature `fn(&mut Threshold, $NAME::Resources)`.
-///
-/// Optionally, a third argument may be used to declare task local data.
-/// The handler will have exclusive access to these *local* variables on each
-/// invocation. If the third argument is used then the signature of the handler
-/// function must be `fn(&mut Threshold, &mut $locals, $NAME::Resources)`.
-#[macro_export]
-macro_rules! task {
-    ($NAME:ident, $handler:path) => {
-        #[allow(non_snake_case)]
-        #[allow(unsafe_code)]
-        #[no_mangle]
-        pub unsafe extern "C" fn $NAME() {
-            let f: fn(&mut $crate::Threshold, ::$NAME::Resources) = $handler;
-
-            f(
-                &mut $crate::Threshold::new(::$NAME::$NAME),
-                ::$NAME::Resources::new(),
-            );
-        }
-    };
-
-    ($NAME:ident, $handler:path, $locals:ident {
-        $(static $var:ident: $ty:ty = $expr:expr;)+
-    }) => {
-        #[allow(non_snake_case)]
-        struct $locals {
-            $($var: $crate::Static<$ty>,)+
-        }
-
-        #[allow(non_snake_case)]
-        #[allow(unsafe_code)]
-        #[no_mangle]
-        pub unsafe extern "C" fn $NAME() {
-            let f: fn(
-                &mut $crate::Threshold,
-                &mut $locals,
-                ::$NAME::Resources,
-            ) = $handler;
-
-            static mut LOCALS: $locals = $locals {
-                $($var: unsafe { $crate::Static::new($expr) },)+
-            };
-
-            f(
-                &mut $crate::Threshold::new(::$NAME::$NAME),
-                &mut LOCALS,
-                ::$NAME::Resources::new(),
-            );
-        }
-    };
 }
 
 #[allow(non_camel_case_types)]
