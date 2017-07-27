@@ -3,7 +3,6 @@
 #![feature(proc_macro)]
 #![no_std]
 
-#[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
@@ -19,12 +18,14 @@ app! {
     tasks: {
         EXTI0: {
             enabled: true,
+            path: exti0,
             priority: 1,
             resources: [STATE],
         },
 
         EXTI1: {
             enabled: true,
+            path: exti1,
             priority: 2,
             resources: [STATE],
         },
@@ -37,14 +38,10 @@ fn idle() -> ! {
     loop {}
 }
 
-task!(EXTI0, exti0);
-
 fn exti0(mut t: &mut Threshold, r: EXTI0::Resources) {
     // ERROR token should not outlive the critical section
     let t = r.STATE.claim(&mut t, |_state, t| t);
     //~^ error cannot infer an appropriate lifetime
 }
-
-task!(EXTI1, exti1);
 
 fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {}

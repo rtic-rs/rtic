@@ -3,7 +3,6 @@
 #![feature(proc_macro)]
 #![no_std]
 
-#[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
@@ -13,25 +12,28 @@ app! {
     device: stm32f103xx,
 
     resources: {
-        static STATE: bool = false;
+        static ON: bool = false;
         static MAX: u8 = 0;
     },
 
     tasks: {
         EXTI0: {
             enabled: true,
+            path: exti0,
             priority: 1,
-            resources: [MAX, STATE],
+            resources: [MAX, ON],
         },
 
         EXTI1: {
             enabled: true,
+            path: exti1,
             priority: 2,
-            resources: [STATE],
+            resources: [ON],
         },
 
         EXTI2: {
             enabled: true,
+            path: exti2,
             priority: 16,
             resources: [MAX],
         },
@@ -44,29 +46,23 @@ fn idle() -> ! {
     loop {}
 }
 
-task!(EXTI0, exti0);
-
 fn exti0(mut t: &mut Threshold, mut r: EXTI0::Resources) {
     // OK need to lock to access the resource
-    if r.STATE.claim(&mut t, |state, _| **state) {}
+    if r.ON.claim(&mut t, |on, _| **on) {}
 
     // OK can claim a resource with maximum ceiling
     r.MAX.claim_mut(&mut t, |max, _| **max += 1);
 }
 
-task!(EXTI1, exti1);
-
 fn exti1(mut t: &mut Threshold, r: EXTI1::Resources) {
     // ERROR no need to lock. Has direct access because priority == ceiling
-    if (**r.STATE).claim(&mut t, |state, _| **state) {
+    if (**r.ON).claim(&mut t, |on, _| **on) {
         //~^ error no method named `claim` found for type
     }
 
-    if **r.STATE {
+    if **r.ON {
         // OK
     }
 }
-
-task!(EXTI2, exti2);
 
 fn exti2(_t: &mut Threshold, _r: EXTI2::Resources) {}

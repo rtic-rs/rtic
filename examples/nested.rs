@@ -8,7 +8,6 @@
 #![feature(proc_macro)]
 #![no_std]
 
-#[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
@@ -26,18 +25,21 @@ app! {
     tasks: {
         EXTI0: {
             enabled: true,
+            path: exti0,
             priority: 1,
             resources: [LOW, HIGH],
         },
 
         EXTI1: {
             enabled: true,
+            path: exti1,
             priority: 2,
             resources: [LOW],
         },
 
         EXTI2: {
             enabled: true,
+            path: exti2,
             priority: 3,
             resources: [HIGH],
         },
@@ -57,8 +59,6 @@ fn idle() -> ! {
         rtfm::wfi();
     }
 }
-
-task!(EXTI0, exti0);
 
 fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
     // because this task has a priority of 1 the preemption threshold is also 1
@@ -113,14 +113,10 @@ fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
     // ~> exti1
 }
 
-task!(EXTI1, exti1);
-
 fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {
     // B, H
     rtfm::bkpt();
 }
-
-task!(EXTI2, exti2);
 
 fn exti2(_t: &mut Threshold, _r: EXTI2::Resources) {
     // D, G

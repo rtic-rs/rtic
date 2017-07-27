@@ -5,7 +5,6 @@
 #![feature(proc_macro)]
 #![no_std]
 
-#[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
@@ -16,6 +15,7 @@ app! {
 
     resources: {
         static CO_OWNED: u32 = 0;
+        static ON: bool = false;
         static OWNED: bool = false;
         static SHARED: bool = false;
     },
@@ -31,12 +31,14 @@ app! {
 
     tasks: {
         SYS_TICK: {
+            path: sys_tick,
             priority: 1,
-            resources: [CO_OWNED, SHARED],
+            resources: [CO_OWNED, ON, SHARED],
         },
 
         TIM2: {
             enabled: true,
+            path: tim2,
             priority: 1,
             resources: [CO_OWNED],
         },
@@ -59,17 +61,11 @@ fn idle_(t: &mut Threshold, mut r: idle::Resources) -> ! {
     }
 }
 
-task!(SYS_TICK, sys_tick, Local {
-    static STATE: bool = true;
-});
-
-fn sys_tick(_t: &mut Threshold, l: &mut Local, r: SYS_TICK::Resources) {
-    *l.STATE = !*l.STATE;
+fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
+    **r.ON = !**r.ON;
 
     **r.CO_OWNED += 1;
 }
-
-task!(TIM2, tim2);
 
 fn tim2(_t: &mut Threshold, r: TIM2::Resources) {
     **r.CO_OWNED += 1;

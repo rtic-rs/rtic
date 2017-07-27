@@ -5,7 +5,6 @@
 #![feature(proc_macro)]
 #![no_std]
 
-#[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
@@ -23,6 +22,7 @@ app! {
 
     tasks: {
         SYS_TICK: {
+            path: sys_tick,
             priority: 1,
             // Both this task and TIM2 have access to the `COUNTER` resource
             resources: [COUNTER],
@@ -34,6 +34,7 @@ app! {
             // indicates if the interrupt will be enabled or disabled once
             // `idle` starts
             enabled: true,
+            path: tim2,
             priority: 1,
             resources: [COUNTER],
         },
@@ -52,8 +53,6 @@ fn idle() -> ! {
     }
 }
 
-task!(SYS_TICK, sys_tick);
-
 // As both tasks are running at the same priority one can't preempt the other.
 // Thus both tasks have direct access to the resource
 fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
@@ -63,8 +62,6 @@ fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 
     // ..
 }
-
-task!(TIM2, tim2);
 
 fn tim2(_t: &mut Threshold, r: TIM2::Resources) {
     // ..

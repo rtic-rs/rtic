@@ -1,11 +1,9 @@
 //! Two tasks running at different priorities with access to the same resource
-
 #![deny(unsafe_code)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
 #![no_std]
 
-#[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
@@ -21,12 +19,14 @@ app! {
     tasks: {
         // the task `SYS_TICK` has higher priority than `TIM2`
         SYS_TICK: {
+            path: sys_tick,
             priority: 2,
             resources: [COUNTER],
         },
 
         TIM2: {
             enabled: true,
+            path: tim2,
             priority: 1,
             resources: [COUNTER],
         },
@@ -43,8 +43,6 @@ fn idle() -> ! {
     }
 }
 
-task!(SYS_TICK, sys_tick);
-
 fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
     // ..
 
@@ -54,8 +52,6 @@ fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 
     // ..
 }
-
-task!(TIM2, tim2);
 
 fn tim2(t: &mut Threshold, mut r: TIM2::Resources) {
     // ..

@@ -3,7 +3,6 @@
 #![feature(proc_macro)]
 #![no_std]
 
-#[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
@@ -13,18 +12,19 @@ app! {
     device: stm32f103xx,
 
     resources: {
-        static STATE: bool = false;
+        static ON: bool = false;
     },
 
     idle: {
-        resources: [STATE],
+        resources: [ON],
     },
 
     tasks: {
         EXTI0: {
             enabled: true,
+            path: exti0,
             priority: 1,
-            resources: [STATE],
+            resources: [ON],
         },
     },
 }
@@ -32,19 +32,17 @@ app! {
 fn init(_p: init::Peripherals, _r: init::Resources) {}
 
 fn idle(t: &mut Threshold, r: idle::Resources) -> ! {
-    let state = rtfm::atomic(|cs| {
+    let state = rtfm::atomic(t, |t| {
         // ERROR borrow can't escape this *global* critical section
-        r.STATE.borrow(cs) //~ error cannot infer an appropriate lifetime
+        r.ON.borrow(t) //~ error cannot infer an appropriate lifetime
     });
 
-    let state = r.STATE.claim(t, |state, _t| {
+    let state = r.ON.claim(t, |state, _t| {
         // ERROR borrow can't escape this critical section
         state //~ error cannot infer an appropriate lifetime
     });
 
     loop {}
 }
-
-task!(EXTI0, exti0);
 
 fn exti0(_t: &mut Threshold, _r: EXTI0::Resources) {}

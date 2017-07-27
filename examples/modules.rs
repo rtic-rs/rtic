@@ -1,11 +1,9 @@
 //! Using paths and modules
-
 #![deny(unsafe_code)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
 #![no_std]
 
-#[macro_use(task)]
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
@@ -16,6 +14,7 @@ app! {
 
     resources: {
         static CO_OWNED: u32 = 0;
+        static ON: bool = false;
         static OWNED: bool = false;
         static SHARED: bool = false;
     },
@@ -31,12 +30,14 @@ app! {
 
     tasks: {
         SYS_TICK: {
+            path: tasks::sys_tick,
             priority: 1,
-            resources: [CO_OWNED, SHARED],
+            resources: [CO_OWNED, ON, SHARED],
         },
 
         TIM2: {
             enabled: true,
+            path: tasks::tim2,
             priority: 1,
             resources: [CO_OWNED],
         },
@@ -66,19 +67,13 @@ mod main {
 pub mod tasks {
     use rtfm::Threshold;
 
-    task!(SYS_TICK, sys_tick, Locals {
-        static STATE: bool = true;
-    });
-
-    fn sys_tick(_t: &mut Threshold, l: &mut Locals, r: ::SYS_TICK::Resources) {
-        *l.STATE = !*l.STATE;
+    pub fn sys_tick(_t: &mut Threshold, r: ::SYS_TICK::Resources) {
+        **r.ON = !**r.ON;
 
         **r.CO_OWNED += 1;
     }
 
-    task!(TIM2, tim2);
-
-    fn tim2(_t: &mut Threshold, r: ::TIM2::Resources) {
+    pub fn tim2(_t: &mut Threshold, r: ::TIM2::Resources) {
         **r.CO_OWNED += 1;
     }
 }
