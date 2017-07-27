@@ -31,16 +31,8 @@ pub fn app(app: check::App) -> Result<App> {
         resources: app.resources,
         tasks: app.tasks
             .into_iter()
-            .map(|(k, v)| {
-                let name = k.clone();
-                Ok((
-                    k,
-                    ::check::task(v)
-                        .chain_err(|| format!("checking task `{}`", name))?,
-                ))
-            })
-            .collect::<Result<_>>()
-            .chain_err(|| "checking `tasks`")?,
+            .map(|(k, v)| (k, ::check::task(v)))
+            .collect(),
     };
 
     ::check::resources(&app)
@@ -68,15 +60,11 @@ fn resources(app: &App) -> Result<()> {
     Ok(())
 }
 
-fn task(task: syntax::check::Task) -> Result<Task> {
-    if let Some(priority) = task.priority {
-        Ok(Task {
-            enabled: task.enabled,
-            path: task.path,
-            priority,
-            resources: task.resources,
-        })
-    } else {
-        bail!("should contain a `priority` field")
+fn task(task: syntax::check::Task) -> Task {
+    Task {
+        enabled: task.enabled,
+        path: task.path,
+        priority: task.priority.unwrap_or(1),
+        resources: task.resources,
     }
 }
