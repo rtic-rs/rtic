@@ -94,7 +94,7 @@ where
 pub unsafe fn claim<T, R, F>(
     data: T,
     ceiling: u8,
-    nvic_prio_bits: u8,
+    _nvic_prio_bits: u8,
     t: &mut Threshold,
     f: F,
 ) -> R
@@ -108,13 +108,13 @@ where
 
             #[cfg(not(armv6m))]
             () => {
-                let max_priority = 1 << nvic_prio_bits;
+                let max_priority = 1 << _nvic_prio_bits;
 
                 if ceiling == max_priority {
                     atomic(t, |t| f(data, t))
                 } else {
                     let old = basepri::read();
-                    let hw = (max_priority - ceiling) << (8 - nvic_prio_bits);
+                    let hw = (max_priority - ceiling) << (8 - _nvic_prio_bits);
                     basepri::write(hw);
                     let ret = f(data, &mut Threshold::new(ceiling));
                     basepri::write(old);
