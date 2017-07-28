@@ -1,7 +1,7 @@
 //! Minimal example with zero tasks
-
 #![deny(unsafe_code)]
-#![feature(proc_macro)] // IMPORTANT always include this feature gate
+// IMPORTANT always include this feature gate
+#![feature(proc_macro)]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm; // IMPORTANT always do this rename
@@ -15,7 +15,7 @@ use rtfm::app;
 // This macro will expand to a `main` function so you don't need to supply
 // `main` yourself.
 app! {
-    // this is a path to the device crate
+    // this is the path to the device crate
     device: stm32f103xx,
 }
 
@@ -28,20 +28,14 @@ fn init(p: init::Peripherals) {
     p.GPIOA;
     p.RCC;
     // ..
-
-    // You'll hit this breakpoint first
-    rtfm::bkpt();
 }
 
 // The idle loop.
 //
-// This runs afterwards and has a priority of 0. All tasks can preempt this
+// This runs after `init` and has a priority of 0. All tasks can preempt this
 // function. This function can never return so it must contain some sort of
 // endless loop.
 fn idle() -> ! {
-    // And then this breakpoint
-    rtfm::bkpt();
-
     loop {
         // This puts the processor to sleep until there's a task to service
         rtfm::wfi();

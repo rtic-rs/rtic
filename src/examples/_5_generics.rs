@@ -1,12 +1,10 @@
 //! Working with resources in a generic fashion
 //!
 //! ```
-//! 
 //! #![deny(unsafe_code)]
 //! #![feature(proc_macro)]
 //! #![no_std]
 //! 
-//! #[macro_use(task)]
 //! extern crate cortex_m_rtfm as rtfm;
 //! extern crate stm32f103xx;
 //! 
@@ -18,13 +16,13 @@
 //! 
 //!     tasks: {
 //!         EXTI0: {
-//!             enabled: true,
+//!             path: exti0,
 //!             priority: 1,
 //!             resources: [GPIOA, SPI1],
 //!         },
 //! 
 //!         EXTI1: {
-//!             enabled: true,
+//!             path: exti1,
 //!             priority: 2,
 //!             resources: [GPIOA, SPI1],
 //!         },
@@ -39,7 +37,7 @@
 //!     }
 //! }
 //! 
-//! // a generic function to use resources in any task (regardless of its priority)
+//! // A generic function that uses some resources
 //! fn work<G, S>(t: &mut Threshold, gpioa: &G, spi1: &S)
 //! where
 //!     G: Resource<Data = GPIOA>,
@@ -56,16 +54,12 @@
 //!     });
 //! }
 //! 
-//! task!(EXTI0, exti0);
-//! 
-//! // this task needs critical sections to access the resources
+//! // This task needs critical sections to access the resources
 //! fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
 //!     work(t, &r.GPIOA, &r.SPI1);
 //! }
 //! 
-//! task!(EXTI1, exti1);
-//! 
-//! // this task has direct access to the resources
+//! // This task has direct access to the resources
 //! fn exti1(t: &mut Threshold, r: EXTI1::Resources) {
 //!     work(t, r.GPIOA, r.SPI1);
 //! }

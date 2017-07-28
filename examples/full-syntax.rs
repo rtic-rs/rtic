@@ -1,5 +1,4 @@
 //! A showcase of the `app!` macro syntax
-
 #![deny(unsafe_code)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
@@ -8,7 +7,7 @@
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
-use rtfm::{app, Resource, Threshold};
+use rtfm::{app, Threshold};
 
 app! {
     device: stm32f103xx,
@@ -21,23 +20,30 @@ app! {
     },
 
     init: {
-        path: init_, // this is a path to the "init" function
+        // This is the path to the `init` function
+        //
+        // `init` doesn't necessarily has to be in the root of the crate
+        path: main::init,
     },
 
     idle: {
-        path: idle_, // this is a path to the "idle" function
+        // This is a path to the `idle` function
+        //
+        // `idle` doesn't necessarily has to be in the root of the crate
+        path: main::idle,
         resources: [OWNED, SHARED],
     },
 
     tasks: {
         SYS_TICK: {
             path: sys_tick,
-            priority: 1,
+            // If omitted priority is assumed to be 1
+            // priority: 1,
             resources: [CO_OWNED, ON, SHARED],
         },
 
         TIM2: {
-            // tasks are enabled, between `init` and `idle`, by default but they
+            // Tasks are enabled, between `init` and `idle`, by default but they
             // can start disabled if `false` is specified here
             enabled: false,
             path: tim2,
@@ -47,18 +53,22 @@ app! {
     },
 }
 
-fn init_(_p: init::Peripherals, _r: init::Resources) {}
+mod main {
+    use rtfm::{self, Resource, Threshold};
 
-fn idle_(t: &mut Threshold, mut r: idle::Resources) -> ! {
-    loop {
-        *r.OWNED != *r.OWNED;
+    pub fn init(_p: ::init::Peripherals, _r: ::init::Resources) {}
 
-        if *r.OWNED {
-            if r.SHARED.claim(t, |shared, _| **shared) {
-                rtfm::wfi();
+    pub fn idle(t: &mut Threshold, mut r: ::idle::Resources) -> ! {
+        loop {
+            *r.OWNED != *r.OWNED;
+
+            if *r.OWNED {
+                if r.SHARED.claim(t, |shared, _| **shared) {
+                    rtfm::wfi();
+                }
+            } else {
+                r.SHARED.claim_mut(t, |shared, _| **shared = !**shared);
             }
-        } else {
-            r.SHARED.claim_mut(t, |shared, _| **shared = !**shared);
         }
     }
 }

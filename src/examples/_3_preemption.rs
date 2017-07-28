@@ -1,13 +1,11 @@
-//! Two tasks running at different priorities with access to the same resource
+//! Two tasks running at *different* priorities with access to the same resource
 //!
 //! ```
-//! 
 //! #![deny(unsafe_code)]
 //! #![feature(const_fn)]
 //! #![feature(proc_macro)]
 //! #![no_std]
 //! 
-//! #[macro_use(task)]
 //! extern crate cortex_m_rtfm as rtfm;
 //! extern crate stm32f103xx;
 //! 
@@ -21,14 +19,15 @@
 //!     },
 //! 
 //!     tasks: {
-//!         // the task `SYS_TICK` has higher priority than `TIM2`
+//!         // The `SYS_TICK` task has higher priority than `TIM2`
 //!         SYS_TICK: {
+//!             path: sys_tick,
 //!             priority: 2,
 //!             resources: [COUNTER],
 //!         },
 //! 
 //!         TIM2: {
-//!             enabled: true,
+//!             path: tim2,
 //!             priority: 1,
 //!             resources: [COUNTER],
 //!         },
@@ -45,27 +44,23 @@
 //!     }
 //! }
 //! 
-//! task!(SYS_TICK, sys_tick);
-//! 
 //! fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 //!     // ..
 //! 
-//!     // this task can't be preempted by `tim2` so it has direct access to the
+//!     // This task can't be preempted by `tim2` so it has direct access to the
 //!     // resource data
 //!     **r.COUNTER += 1;
 //! 
 //!     // ..
 //! }
 //! 
-//! task!(TIM2, tim2);
-//! 
 //! fn tim2(t: &mut Threshold, mut r: TIM2::Resources) {
 //!     // ..
 //! 
-//!     // as this task runs at lower priority it needs a critical section to
+//!     // As this task runs at lower priority it needs a critical section to
 //!     // prevent `sys_tick` from preempting it while it modifies this resource
 //!     // data. The critical section is required to prevent data races which can
-//!     // lead to data corruption or data loss
+//!     // lead to undefined behavior
 //!     r.COUNTER.claim_mut(t, |counter, _t| { **counter += 1; });
 //! 
 //!     // ..

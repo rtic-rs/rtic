@@ -2,7 +2,6 @@
 //!
 //! If you run this program you'll hit the breakpoints as indicated by the
 //! letters in the comments: A, then B, then C, etc.
-
 #![deny(unsafe_code)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
@@ -46,9 +45,12 @@ app! {
 fn init(_p: init::Peripherals, _r: init::Resources) {}
 
 fn idle() -> ! {
-    // sets task `exti0` as pending
+    // A
+    rtfm::bkpt();
+
+    // Sets task `exti0` as pending
     //
-    // because `exti0` has higher priority than `idle` it will be executed
+    // Because `exti0` has higher priority than `idle` it will be executed
     // immediately
     rtfm::set_pending(Interrupt::EXTI0); // ~> exti0
 
@@ -58,64 +60,66 @@ fn idle() -> ! {
 }
 
 fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
-    // because this task has a priority of 1 the preemption threshold is also 1
+    // Because this task has a priority of 1 the preemption threshold `t` also
+    // starts at 1
 
     let mut low = r.LOW;
     let mut high = r.HIGH;
 
-    // A
+    // B
     rtfm::bkpt();
 
-    // because `exti1` has higher priority than `exti0` it can preempt it
+    // Because `exti1` has higher priority than `exti0` it can preempt it
     rtfm::set_pending(Interrupt::EXTI1); // ~> exti1
 
-    // a claim creates a critical section
+    // A claim creates a critical section
     low.claim_mut(t, |_low, t| {
-        // this claim increases the preemption threshold to 2
-        // just high enough to not race with task `exti1` for access to the
+        // This claim increases the preemption threshold to 2
+        //
+        // 2 is just high enough to not race with task `exti1` for access to the
         // `LOW` resource
 
-        // C
+        // D
         rtfm::bkpt();
 
-        // now `exti1` can't preempt this task because its priority is equal to
+        // Now `exti1` can't preempt this task because its priority is equal to
         // the current preemption threshold
         rtfm::set_pending(Interrupt::EXTI1);
 
-        // but `exti2` can, because its priority is higher than the current
+        // But `exti2` can, because its priority is higher than the current
         // preemption threshold
         rtfm::set_pending(Interrupt::EXTI2); // ~> exti2
 
-        // E
+        // F
         rtfm::bkpt();
 
-        // claims can be nested
+        // Claims can be nested
         high.claim_mut(t, |_high, _| {
             // This claim increases the preemption threshold to 3
 
-            // now `exti2` can't preempt this task
+            // Now `exti2` can't preempt this task
             rtfm::set_pending(Interrupt::EXTI2);
 
-            // F
+            // G
             rtfm::bkpt();
         });
 
-        // upon leaving the critical section the preemption threshold drops to 2
-        // and `exti2` immediately preempts this task
+        // Upon leaving the critical section the preemption threshold drops back
+        // to 2 and `exti2` immediately preempts this task
         // ~> exti2
     });
 
-    // once again the preemption threshold drops to 1
-    // now the pending `exti1` can preempt this task
+    // Once again the preemption threshold drops but this time to 1. Now the
+    // pending `exti1` task can preempt this task
     // ~> exti1
 }
 
 fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {
-    // B, H
+    // C, I
     rtfm::bkpt();
 }
 
 fn exti2(_t: &mut Threshold, _r: EXTI2::Resources) {
-    // D, G
+    // E, H
     rtfm::bkpt();
 }

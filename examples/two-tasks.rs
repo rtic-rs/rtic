@@ -1,4 +1,4 @@
-//! Two tasks running at the same priority with access to the same resource
+//! Two tasks running at the *same* priority with access to the same resource
 
 #![deny(unsafe_code)]
 #![feature(const_fn)]
@@ -13,34 +13,25 @@ use rtfm::{app, Threshold};
 app! {
     device: stm32f103xx,
 
-    // Resources that are plain data, not peripherals
     resources: {
-        // Declaration of resources looks like the declaration of `static`
-        // variables
         static COUNTER: u64 = 0;
     },
 
+    // Both SYS_TICK and TIM2 have access to the `COUNTER` data
     tasks: {
         SYS_TICK: {
             path: sys_tick,
-            priority: 1,
-            // Both this task and TIM2 have access to the `COUNTER` resource
             resources: [COUNTER],
         },
 
-        // An interrupt as a task
         TIM2: {
-            // For interrupts the `enabled` field must be specified. It
-            // indicates if the interrupt will be enabled or disabled once
-            // `idle` starts
             path: tim2,
-            priority: 1,
             resources: [COUNTER],
         },
     },
 }
 
-// when data resources are declared in the top `resources` field, `init` will
+// When data resources are declared in the top `resources` field, `init` will
 // have full access to them
 fn init(_p: init::Peripherals, _r: init::Resources) {
     // ..

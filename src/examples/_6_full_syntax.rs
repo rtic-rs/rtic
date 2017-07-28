@@ -1,82 +1,85 @@
 //! A showcase of the `app!` macro syntax
 //!
 //! ```
-//! 
 //! #![deny(unsafe_code)]
 //! #![feature(const_fn)]
 //! #![feature(proc_macro)]
 //! #![no_std]
 //! 
-//! #[macro_use(task)]
 //! extern crate cortex_m_rtfm as rtfm;
 //! extern crate stm32f103xx;
 //! 
-//! use rtfm::{app, Resource, Threshold};
+//! use rtfm::{app, Threshold};
 //! 
 //! app! {
 //!     device: stm32f103xx,
 //! 
 //!     resources: {
 //!         static CO_OWNED: u32 = 0;
+//!         static ON: bool = false;
 //!         static OWNED: bool = false;
 //!         static SHARED: bool = false;
 //!     },
 //! 
 //!     init: {
-//!         path: init_, // this is a path to the "init" function
+//!         // This is the path to the `init` function
+//!         //
+//!         // `init` doesn't necessarily has to be in the root of the crate
+//!         path: main::init,
 //!     },
 //! 
 //!     idle: {
-//!         locals: {
-//!             static COUNTER: u32 = 0;
-//!         },
-//!         path: idle_, // this is a path to the "idle" function
+//!         // This is a path to the `idle` function
+//!         //
+//!         // `idle` doesn't necessarily has to be in the root of the crate
+//!         path: main::idle,
 //!         resources: [OWNED, SHARED],
 //!     },
 //! 
 //!     tasks: {
 //!         SYS_TICK: {
-//!             priority: 1,
-//!             resources: [CO_OWNED, SHARED],
+//!             path: sys_tick,
+//!             // If omitted priority is assumed to be 1
+//!             // priority: 1,
+//!             resources: [CO_OWNED, ON, SHARED],
 //!         },
 //! 
 //!         TIM2: {
-//!             enabled: true,
+//!             // Tasks are enabled, between `init` and `idle`, by default but they
+//!             // can start disabled if `false` is specified here
+//!             enabled: false,
+//!             path: tim2,
 //!             priority: 1,
 //!             resources: [CO_OWNED],
 //!         },
 //!     },
 //! }
 //! 
-//! fn init_(_p: init::Peripherals, _r: init::Resources) {}
+//! mod main {
+//!     use rtfm::{self, Resource, Threshold};
 //! 
-//! fn idle_(t: &mut Threshold, l: &mut idle::Locals, mut r: idle::Resources) -> ! {
-//!     loop {
-//!         *l.COUNTER += 1;
+//!     pub fn init(_p: ::init::Peripherals, _r: ::init::Resources) {}
 //! 
-//!         **r.OWNED != **r.OWNED;
+//!     pub fn idle(t: &mut Threshold, mut r: ::idle::Resources) -> ! {
+//!         loop {
+//!             *r.OWNED != *r.OWNED;
 //! 
-//!         if **r.OWNED {
-//!             if r.SHARED.claim(t, |shared, _| **shared) {
-//!                 rtfm::wfi();
+//!             if *r.OWNED {
+//!                 if r.SHARED.claim(t, |shared, _| **shared) {
+//!                     rtfm::wfi();
+//!                 }
+//!             } else {
+//!                 r.SHARED.claim_mut(t, |shared, _| **shared = !**shared);
 //!             }
-//!         } else {
-//!             r.SHARED.claim_mut(t, |shared, _| **shared = !**shared);
 //!         }
 //!     }
 //! }
 //! 
-//! task!(SYS_TICK, sys_tick, Local {
-//!     static STATE: bool = true;
-//! });
-//! 
-//! fn sys_tick(_t: &mut Threshold, l: &mut Local, r: SYS_TICK::Resources) {
-//!     *l.STATE = !*l.STATE;
+//! fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
+//!     **r.ON = !**r.ON;
 //! 
 //!     **r.CO_OWNED += 1;
 //! }
-//! 
-//! task!(TIM2, tim2);
 //! 
 //! fn tim2(_t: &mut Threshold, r: TIM2::Resources) {
 //!     **r.CO_OWNED += 1;

@@ -14,11 +14,11 @@ use rtfm::{app, Threshold};
 app! {
     device: stm32f103xx,
 
-    // Here resources are declared
+    // Here data resources are declared
     //
-    // Resources are static variables that are safe to share across tasks
+    // Data resources are static variables that are safe to share across tasks
     resources: {
-        // declaration of resources looks exactly like declaration of static
+        // Declaration of resources looks exactly like declaration of static
         // variables
         static ON: bool = false;
     },
@@ -31,20 +31,24 @@ app! {
     tasks: {
         // Here we declare that we'll use the SYS_TICK exception as a task
         SYS_TICK: {
-            // Path to the task *handler*
+            // Path to the task handler
             path: sys_tick,
 
             // This is the priority of the task.
             //
-            // 1 is the lowest priority a task can have.
-            // The maximum priority is determined by the number of priority bits
-            // the device has. This device has 4 priority bits so 16 is the
-            // maximum value.
+            // 1 is the lowest priority a task can have, and the maximum
+            // priority is determined by the number of priority bits the device
+            // has. `stm32f103xx` has 4 priority bits so 16 is the maximum valid
+            // value.
+            //
+            // You can omit this field. If you do the priority is assumed to be
+            // 1.
             priority: 1,
 
-            // These are the *resources* associated with this task
+            // These are the resources this task has access to.
             //
-            // The peripherals that the task needs can be listed here
+            // A resource can be a peripheral like `GPIOC` or a static variable
+            // like `ON`
             resources: [GPIOC, ON],
         },
     }
@@ -75,8 +79,10 @@ fn idle() -> ! {
 
 // This is the task handler of the SYS_TICK exception
 //
-// `r` is the resources this task has access to. `SYS_TICK::Resources` has one
-// field per every resource declared in `app!`.
+// `_t` is the preemption threshold token. We won't use it in this program.
+//
+// `r` is the set of resources this task has access to. `TIMER0_A1::Resources`
+// has one field per resource declared in `app!`.
 fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
     // toggle state
     **r.ON = !**r.ON;
