@@ -603,66 +603,40 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
             });
         }
 
-        if let Some(path) = task.path.as_ref() {
-            let mut tys = vec![];
-            let mut exprs = vec![];
-
-            let priority = task.priority;
-            if needs_threshold {
-                tys.push(quote!(&mut #krate::Threshold));
-                exprs.push(quote! {
-                    &mut if #priority == 1 << #device::NVIC_PRIO_BITS {
-                        #krate::Threshold::new(::core::u8::MAX)
-                    } else {
-                        #krate::Threshold::new(#priority)
-                    }
-                });
-            }
-
-            if has_resources {
-                tys.push(quote!(#name::Resources));
-                exprs.push(quote!(#name::Resources::new()));
-            }
-
-            let _name = Ident::new(format!("_{}", name));
-            let export_name =
-                Lit::Str(name.as_ref().to_owned(), StrStyle::Cooked);
-            root.push(quote! {
-                #[allow(non_snake_case)]
-                #[allow(unsafe_code)]
-                #[export_name = #export_name]
-                pub unsafe extern "C" fn #_name() {
-                    let f: fn(#(#tys,)*) = #path;
-
-                    f(#(#exprs,)*)
-                }
-            });
-        } else if !has_resources {
-            items.push(quote! {
-                pub struct Resources {
-                    _0: (),
-                }
-
-                impl Resources {
-                    pub unsafe fn new() -> Self {
-                        Resources { _0: () }
-                    }
-                }
-            });
-            // the `task!` macro will be used so the `#NAME::Resources` type
-            // must exist
-        }
+        let mut tys = vec![];
+        let mut exprs = vec![];
 
         let priority = task.priority;
-        if task.path.is_none() {
-            // This `const`ant is mainly used to make sure the user doesn't
-            // forget to set a task handler using the `task!` macro. They'll get
-            // an error if they do.
-            items.push(quote! {
-                #[deny(dead_code)]
-                pub const #name: u8 = #priority;
+        if needs_threshold {
+            tys.push(quote!(&mut #krate::Threshold));
+            exprs.push(quote! {
+                &mut if #priority == 1 << #device::NVIC_PRIO_BITS {
+                    #krate::Threshold::new(::core::u8::MAX)
+                } else {
+                    #krate::Threshold::new(#priority)
+                }
             });
         }
+
+        if has_resources {
+            tys.push(quote!(#name::Resources));
+            exprs.push(quote!(#name::Resources::new()));
+        }
+
+        let path = &task.path;
+        let _name = Ident::new(format!("_{}", name));
+        let export_name =
+            Lit::Str(name.as_ref().to_owned(), StrStyle::Cooked);
+        root.push(quote! {
+            #[allow(non_snake_case)]
+            #[allow(unsafe_code)]
+            #[export_name = #export_name]
+            pub unsafe extern "C" fn #_name() {
+                let f: fn(#(#tys,)*) = #path;
+
+                f(#(#exprs,)*)
+            }
+        });
 
         root.push(quote!{
             #[allow(non_snake_case)]

@@ -49,7 +49,7 @@ pub enum Kind {
 
 pub struct Task {
     pub kind: Kind,
-    pub path: Option<Path>,
+    pub path: Path,
     pub priority: u8,
     pub resources: Idents,
 }
@@ -122,7 +122,7 @@ fn task(name: &str, task: syntax::check::Task) -> Result<Task> {
 
     Ok(Task {
         kind,
-        path: task.path,
+        path: task.path.ok_or("`path` field is missing")?,
         priority: task.priority.unwrap_or(1),
         resources: task.resources,
     })
