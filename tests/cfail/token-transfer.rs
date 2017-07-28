@@ -15,10 +15,13 @@ app! { //~ error bound `rtfm::Threshold: core::marker::Send` is not satisfied
         static TOKEN: Option<Threshold> = None;
     },
 
+    idle: {
+        resources: [TOKEN],
+    },
+
     tasks: {
         EXTI0: {
             path: exti0,
-            priority: 1,
             resources: [TOKEN],
         },
     }
@@ -26,7 +29,7 @@ app! { //~ error bound `rtfm::Threshold: core::marker::Send` is not satisfied
 
 fn init(_p: init::Peripherals, _r: init::Resources) {}
 
-fn idle() -> ! {
+fn idle(_t: &mut Threshold, _r: idle::Resources) -> ! {
     loop {}
 }
 

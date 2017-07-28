@@ -14,7 +14,9 @@ app! {
 
     tasks: {
         // ERROR this interrupt doesn't exist
-        EXTI33: {},
+        EXTI33: {
+            path: exti33,
+        },
     },
 }
 
@@ -23,3 +25,5 @@ fn init(_p: init::Peripherals) {}
 fn idle() -> ! {
     loop {}
 }
+
+fn exti33() {}

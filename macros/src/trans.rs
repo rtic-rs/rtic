@@ -12,7 +12,6 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     let mut root = vec![];
     let mut main = vec![];
 
-    ::trans::check(app, &mut main);
     ::trans::init(app, &mut main, &mut root);
     ::trans::idle(app, ownerships, &mut main, &mut root);
     ::trans::resources(app, ownerships, &mut root);
@@ -26,25 +25,6 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     });
 
     quote!(#(#root)*)
-}
-
-// Checks that the resource types are valid
-// Sadly we can't do this test at expansion time. Instead we'll generate some
-// code that won't compile if the types don't meet the requirements
-fn check(app: &App, main: &mut Vec<Tokens>) {
-    if !app.resources.is_empty() {
-        main.push(quote! {
-            fn is_send<T>() where T: Send {}
-        });
-    }
-
-    for resource in app.resources.values() {
-        let ty = &resource.ty;
-
-        main.push(quote! {
-            is_send::<#ty>();
-        });
-    }
 }
 
 fn idle(
