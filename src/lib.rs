@@ -937,7 +937,7 @@ macro_rules! tasks {
             }
 
             #[allow(dead_code)]
-            #[link_section = ".rodata.interrupts"]
+            #[link_section = ".vector_table.interrupts"]
             #[used]
             static INTERRUPTS: ::$device::interrupt::Handlers =
                 ::$device::interrupt::Handlers {
