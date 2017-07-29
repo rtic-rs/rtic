@@ -4,7 +4,7 @@ authors = [
   "Per Lindgren <per.lindgren@ltu.se>",
 ]
 categories = ["concurrency", "embedded", "no-std"]
-description = "Real Time For the Masses (RTFM), a framework for building concurrent applications, for ARM Cortex-M microcontrollers"
+description = "Real Time For the Masses (RTFM) framework for ARM Cortex-M microcontrollers"
 documentation = "https://docs.rs/cortex-m-rtfm"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
@@ -14,8 +14,8 @@ version = "0.2.0"
 
 [dependencies]
 cortex-m = "0.3.1"
+rtfm-core = "0.1.0"
 static-ref = "0.2.1"
-rtfm-core = { git = "https://github.com/japaric/rtfm-core" }
 
 [dependencies.cortex-m-rtfm-macros]
 path = "macros"

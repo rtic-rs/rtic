@@ -1,6 +1,5 @@
 //! A showcase of the `app!` macro syntax
 #![deny(unsafe_code)]
-#![feature(const_fn)]
 #![feature(proc_macro)]
 #![no_std]
 

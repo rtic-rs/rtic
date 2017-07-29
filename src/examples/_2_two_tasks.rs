@@ -1,9 +1,7 @@
 //! Two tasks running at the *same* priority with access to the same resource
 //!
 //! ```
-//! 
 //! #![deny(unsafe_code)]
-//! #![feature(const_fn)]
 //! #![feature(proc_macro)]
 //! #![no_std]
 //! 
@@ -33,8 +31,6 @@
 //!     },
 //! }
 //! 
-//! // When data resources are declared in the top `resources` field, `init` will
-//! // have full access to them
 //! fn init(_p: init::Peripherals, _r: init::Resources) {
 //!     // ..
 //! }

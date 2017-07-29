@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use syn::{Ident, Path};
 use syntax::check::{self, Idle, Init};
-use syntax::{self, Idents, Statics};
+use syntax::{self, Resources, Statics};
 
 use syntax::error::*;
 
@@ -51,7 +51,7 @@ pub struct Task {
     pub kind: Kind,
     pub path: Path,
     pub priority: u8,
-    pub resources: Idents,
+    pub resources: Resources,
 }
 
 pub fn app(app: check::App) -> Result<App> {

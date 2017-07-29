@@ -3,10 +3,9 @@
 
 # `cortex-m-rtfm`
 
-> Real Time For the Masses (RTFM), a framework for building concurrent
-> applications, for ARM Cortex-M MCUs
+> Real Time For the Masses (RTFM) framework for ARM Cortex-M microcontrollers
 
-# [Manual](https://docs.rs/cortex-m-rtfm)
+# [Documentation](https://docs.rs/cortex-m-rtfm)
 
 # License
 

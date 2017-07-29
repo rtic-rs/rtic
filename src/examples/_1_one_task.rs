@@ -2,7 +2,6 @@
 //!
 //! ```
 //! #![deny(unsafe_code)]
-//! #![feature(const_fn)]
 //! #![feature(proc_macro)]
 //! #![no_std]
 //! 
@@ -36,17 +35,6 @@
 //!             // Path to the task handler
 //!             path: sys_tick,
 //! 
-//!             // This is the priority of the task.
-//!             //
-//!             // 1 is the lowest priority a task can have, and the maximum
-//!             // priority is determined by the number of priority bits the device
-//!             // has. `stm32f103xx` has 4 priority bits so 16 is the maximum valid
-//!             // value.
-//!             //
-//!             // You can omit this field. If you do the priority is assumed to be
-//!             // 1.
-//!             priority: 1,
-//! 
 //!             // These are the resources this task has access to.
 //!             //
 //!             // A resource can be a peripheral like `GPIOC` or a static variable
@@ -56,7 +44,10 @@
 //!     }
 //! }
 //! 
-//! fn init(p: init::Peripherals, _r: init::Resources) {
+//! fn init(p: init::Peripherals, r: init::Resources) {
+//!     // `init` can modify all the `resources` declared in `app!`
+//!     r.ON;
+//! 
 //!     // power on GPIOC
 //!     p.RCC.apb2enr.modify(|_, w| w.iopcen().enabled());
 //! 
@@ -83,7 +74,7 @@
 //! //
 //! // `_t` is the preemption threshold token. We won't use it in this program.
 //! //
-//! // `r` is the set of resources this task has access to. `TIMER0_A1::Resources`
+//! // `r` is the set of resources this task has access to. `SYS_TICK::Resources`
 //! // has one field per resource declared in `app!`.
 //! fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 //!     // toggle state

@@ -3,7 +3,6 @@
 //! If you run this program you'll hit the breakpoints as indicated by the
 //! letters in the comments: A, then B, then C, etc.
 #![deny(unsafe_code)]
-#![feature(const_fn)]
 #![feature(proc_macro)]
 #![no_std]
 
@@ -59,12 +58,13 @@ fn idle() -> ! {
     }
 }
 
-fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
+#[allow(non_snake_case)]
+fn exti0(
+    t: &mut Threshold,
+    EXTI0::Resources { mut LOW, mut HIGH }: EXTI0::Resources,
+) {
     // Because this task has a priority of 1 the preemption threshold `t` also
     // starts at 1
-
-    let mut low = r.LOW;
-    let mut high = r.HIGH;
 
     // B
     rtfm::bkpt();
@@ -73,7 +73,7 @@ fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
     rtfm::set_pending(Interrupt::EXTI1); // ~> exti1
 
     // A claim creates a critical section
-    low.claim_mut(t, |_low, t| {
+    LOW.claim_mut(t, |_low, t| {
         // This claim increases the preemption threshold to 2
         //
         // 2 is just high enough to not race with task `exti1` for access to the
@@ -94,7 +94,7 @@ fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
         rtfm::bkpt();
 
         // Claims can be nested
-        high.claim_mut(t, |_high, _| {
+        HIGH.claim_mut(t, |_high, _| {
             // This claim increases the preemption threshold to 3
 
             // Now `exti2` can't preempt this task

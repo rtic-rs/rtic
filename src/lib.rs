@@ -1,5 +1,4 @@
-//! Real Time For the Masses (RTFM), a framework for building concurrent
-//! applications, for ARM Cortex-M microcontrollers
+//! Real Time For the Masses (RTFM) framework for ARM Cortex-M microcontrollers
 //!
 //! This crate is based on [the RTFM framework] created by the Embedded Systems
 //! group at [Luleå University of Technology][ltu], led by Prof. Per Lindgren,
@@ -37,24 +36,24 @@
 //!
 //! # Dependencies
 //!
-//! - A device crate generated using [`svd2rust`] v0.11.x. The input SVD file
-//!   *must* contain [`<cpu>`] information.
-//! - A `start` lang time: Vanilla `main` must be supported in binary crates.
-//!   You can use the [`cortex-m-rt`] crate to fulfill the requirement
+//! The application crate must depend on a device crate generated using
+//! [`svd2rust`] v0.11.x and the "rt" feature of that crate must be enabled. The
+//! SVD file used to generate the device crate *must* contain [`<cpu>`]
+//! information.
 //!
 //! [`svd2rust`]: https://docs.rs/svd2rust/0..0/svd2rust/
 //! [`<cpu>`]: https://www.keil.com/pack/doc/CMSIS/SVD/html/elem_cpu.html
-//! [`cortex-m-rt`]: https://docs.rs/cortex-m-rt/0.3.0/cortex_m_rt/
+//!
+//! # More documentation
+//!
+//! The `app!` macro is documented [here](../cortex_m_rtfm_macros/fn.app.html).
 //!
 //! # Examples
 //!
-//! In increasing grade of complexity, see the [examples](./examples/index.html)
+//! In increasing grade of complexity. See the [examples](./examples/index.html)
 //! module.
 #![deny(missing_docs)]
 #![deny(warnings)]
-#![feature(asm)]
-#![feature(const_fn)]
-#![feature(optin_builtin_traits)]
 #![feature(proc_macro)]
 #![no_std]
 
@@ -74,7 +73,9 @@ use cortex_m::register::basepri;
 
 pub mod examples;
 
-/// Executes the closure `f` in an interrupt free context
+/// Executes the closure `f` in a preemption free context
+///
+/// During the execution of the closure no task can preempt the current task.
 pub fn atomic<R, F>(t: &mut Threshold, f: F) -> R
 where
     F: FnOnce(&mut Threshold) -> R,
@@ -127,11 +128,10 @@ where
     }
 }
 
-/// Sets an interrupt as pending
+/// Sets an interrupt, that is a task, as pending
 ///
-/// If the interrupt priority is high enough the interrupt will be serviced
-/// immediately, otherwise it will be serviced at some point after the current
-/// task ends.
+/// If the task priority is high enough the task will be serviced immediately,
+/// otherwise it will be serviced at some point after the current task ends.
 pub fn set_pending<I>(interrupt: I)
 where
     I: Nr,

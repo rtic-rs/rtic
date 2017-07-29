@@ -1,6 +1,5 @@
 //! Two tasks running at *different* priorities with access to the same resource
 #![deny(unsafe_code)]
-#![feature(const_fn)]
 #![feature(proc_macro)]
 #![no_std]
 
@@ -58,8 +57,11 @@ fn tim2(t: &mut Threshold, mut r: TIM2::Resources) {
     // As this task runs at lower priority it needs a critical section to
     // prevent `sys_tick` from preempting it while it modifies this resource
     // data. The critical section is required to prevent data races which can
-    // lead to undefined behavior
-    r.COUNTER.claim_mut(t, |counter, _t| { **counter += 1; });
+    // lead to undefined behavior.
+    r.COUNTER.claim_mut(t, |counter, _t| {
+        // `claim_mut` creates a critical section
+        **counter += 1;
+    });
 
     // ..
 }
