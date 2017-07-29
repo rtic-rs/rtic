@@ -46,7 +46,9 @@
 //!
 //! # `app!`
 //!
-//! The `app!` macro is documented [here](../cortex_m_rtfm_macros/fn.app.html).
+//! The `app!` macro is documented [here].
+//!
+//! [here]: https://docs.rs/cortex-m-rtfm-macros/0.2.0/cortex_m_rtfm_macros/fn.app.html
 //!
 //! # Examples
 //!
