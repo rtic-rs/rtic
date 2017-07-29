@@ -21,6 +21,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - The `Resource` trait, which is used to write generic code that deals with
   resources.
 
+- Support for system handlers like SYS_TICK.
+
 ### Changed
 
 - [breaking-change] The signature of the `atomic` function has changed.
