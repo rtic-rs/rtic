@@ -14,11 +14,9 @@ version = "0.2.0"
 
 [dependencies]
 cortex-m = "0.3.1"
+cortex-m-rtfm-macros = "=0.2.0"
 rtfm-core = "0.1.0"
 static-ref = "0.2.1"
-
-[dependencies.cortex-m-rtfm-macros]
-path = "macros"
 
 [target.'cfg(target_arch = "x86_64")'.dev-dependencies]
 compiletest_rs = "0.2.8"

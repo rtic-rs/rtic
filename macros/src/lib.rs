@@ -1,4 +1,4 @@
-//! Procedural macros for the RTFM framework
+//! Procedural macros of the `cortex-m-rtfm` crate
 #![deny(warnings)]
 #![feature(proc_macro)]
 #![recursion_limit = "128"]
