@@ -157,14 +157,23 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
 
     let mut tys = vec![quote!(#device::Peripherals)];
     let mut exprs = vec![quote!(#device::Peripherals::all())];
+    let mut ret = None;
     let mut mod_items = vec![];
 
-    if !app.resources.is_empty() {
+    // Write resources usable by `init`, if any
+
+
+    // Are there any resources that have an initializer? Those can be used by `init`.
+    let has_initialized_resources = app.resources.iter()
+        .find(|&(_, res)| res.expr.is_some()).is_some();
+
+    if has_initialized_resources {
         let mut fields = vec![];
         let mut lifetime = None;
         let mut rexprs = vec![];
 
-        for (name, resource) in &app.resources {
+        for (name, resource) in app.resources.iter()
+                .filter(|&(_, res)| res.expr.is_some()) {
             let _name = Ident::new(format!("_{}", name.as_ref()));
             lifetime = Some(quote!('a));
 
@@ -202,6 +211,46 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
 
         tys.push(quote!(init::Resources));
         exprs.push(quote!(init::Resources::new()));
+    }
+
+    let mut late_resources = vec![];
+    let has_late_resources = app.resources.iter()
+        .find(|&(_, res)| res.expr.is_none()).is_some();
+
+    if has_late_resources {
+        // `init` must initialize and return resources
+
+        let mut fields = vec![];
+
+        for (name, resource) in app.resources.iter()
+            .filter(|&(_, res)| res.expr.is_none()) {
+            let _name = Ident::new(format!("_{}", name.as_ref()));
+
+            let ty = &resource.ty;
+
+            fields.push(quote! {
+                pub #name: #ty,
+            });
+
+            late_resources.push(quote! {
+                #_name = #krate::LateResource { init: _late_resources.#name };
+            });
+        }
+
+        root.push(quote! {
+            #[allow(non_camel_case_types)]
+            #[allow(non_snake_case)]
+            pub struct _initLateResourceValues {
+                #(#fields)*
+            }
+        });
+
+        mod_items.push(quote! {
+            pub use ::_initLateResourceValues as LateResourceValues;
+        });
+
+        // `init` must return the initialized resources
+        ret = Some(quote!( -> ::init::LateResourceValues));
     }
 
     root.push(quote! {
@@ -263,10 +312,11 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let init = &app.init.path;
     main.push(quote! {
         // type check
-        let init: fn(#(#tys,)*) = #init;
+        let init: fn(#(#tys,)*) #ret = #init;
 
         #krate::atomic(unsafe { &mut #krate::Threshold::new(0) }, |_t| unsafe {
-            init(#(#exprs,)*);
+            let _late_resources = init(#(#exprs,)*);
+            #(#late_resources)*
 
             #(#exceptions)*
             #(#interrupts)*
@@ -281,32 +331,33 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
     let mut items = vec![];
     let mut impls = vec![];
     for (name, ownership) in ownerships {
+        let _name = Ident::new(format!("_{}", name.as_ref()));
+
+        if let Some(resource) = app.resources.get(name) {
+            // Declare the static that holds the resource
+            let expr = &resource.expr;
+            let ty = &resource.ty;
+
+            root.push(match *expr {
+                Some(ref expr) => quote! {
+                    static mut #_name: #ty = #expr;
+                },
+                None => quote! {
+                    // Resource initialized in `init`
+                    static mut #_name: #krate::LateResource<#ty> = #krate::LateResource { uninit: () };
+                },
+            });
+        }
+
         let mut impl_items = vec![];
 
-        let _name = Ident::new(format!("_{}", name.as_ref()));
         match *ownership {
             Ownership::Owned { .. } => {
-                if let Some(resource) = app.resources.get(name) {
-                    // For owned resources we don't need claim() or borrow()
-                    let expr = &resource.expr;
-                    let ty = &resource.ty;
-
-                    root.push(quote! {
-                        static mut #_name: #ty = #expr;
-                    });
-                } else {
-                    // Peripheral
-                    continue;
-                }
+                // For owned resources we don't need claim() or borrow()
             }
             Ownership::Shared { ceiling } => {
                 if let Some(resource) = app.resources.get(name) {
-                    let expr = &resource.expr;
                     let ty = &resource.ty;
-
-                    root.push(quote! {
-                        static mut #_name: #ty = #expr;
-                    });
 
                     impl_items.push(quote! {
                         type Data = #ty;
@@ -530,8 +581,14 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                                 pub #name: &'a mut ::#krate::Static<#ty>,
                             });
 
-                            exprs.push(quote! {
-                                #name: ::#krate::Static::ref_mut(&mut ::#_name),
+                            exprs.push(if resource.expr.is_some() {
+                                quote! {
+                                    #name: ::#krate::Static::ref_mut(&mut ::#_name),
+                                }
+                            } else {
+                                quote! {
+                                    #name: ::#krate::Static::ref_mut(&mut ::#_name.init),
+                                }
                             });
                         } else {
                             fields.push(quote! {

@@ -80,11 +80,10 @@
 extern crate cortex_m;
 extern crate cortex_m_rtfm_macros;
 extern crate rtfm_core;
-extern crate static_ref;
 
 use core::u8;
 
-pub use rtfm_core::{Resource, Static, Threshold};
+pub use rtfm_core::{Resource, LateResource, Static, Threshold};
 pub use cortex_m::asm::{bkpt, wfi};
 pub use cortex_m_rtfm_macros::app;
 use cortex_m::interrupt::{self, Nr};

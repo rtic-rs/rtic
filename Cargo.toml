@@ -14,9 +14,10 @@ version = "0.2.1"
 
 [dependencies]
 cortex-m = "0.3.1"
-cortex-m-rtfm-macros = "=0.2.0"
-rtfm-core = "0.1.0"
-static-ref = "0.2.1"
+# TODO should this have been a `path` dep all along?
+cortex-m-rtfm-macros = { path = "macros" }
+# TODO revert before merging
+rtfm-core = { git = "https://github.com/jonas-schievink/rtfm-core.git", branch = "init-resources" }
 
 [target.'cfg(target_arch = "x86_64")'.dev-dependencies]
 compiletest_rs = "0.2.8"
