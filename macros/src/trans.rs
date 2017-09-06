@@ -233,7 +233,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             });
 
             late_resources.push(quote! {
-                #_name = #krate::LateResource { init: _late_resources.#name };
+                #_name = #krate::UntaggedOption { some: _late_resources.#name };
             });
         }
 
@@ -344,7 +344,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                 },
                 None => quote! {
                     // Resource initialized in `init`
-                    static mut #_name: #krate::LateResource<#ty> = #krate::LateResource { uninit: () };
+                    static mut #_name: #krate::UntaggedOption<#ty> = #krate::UntaggedOption { none: () };
                 },
             });
         }
@@ -587,7 +587,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                                 }
                             } else {
                                 quote! {
-                                    #name: ::#krate::Static::ref_mut(&mut ::#_name.init),
+                                    #name: ::#krate::Static::ref_mut(::#_name.as_mut()),
                                 }
                             });
                         } else {
