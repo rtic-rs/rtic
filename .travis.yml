@@ -51,10 +51,6 @@ script:
 
 after_script: set +e
 
-cache: cargo
-before_cache:
-  - chmod -R a+r $HOME/.cargo
-
 branches:
   only:
     - auto

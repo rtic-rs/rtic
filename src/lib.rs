@@ -80,7 +80,6 @@
 extern crate cortex_m;
 extern crate cortex_m_rtfm_macros;
 extern crate rtfm_core;
-extern crate static_ref;
 
 use core::u8;
 
