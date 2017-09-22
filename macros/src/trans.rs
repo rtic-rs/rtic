@@ -160,20 +160,15 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let mut ret = None;
     let mut mod_items = vec![];
 
-    // Write resources usable by `init`, if any
+    let (init_resources, late_resources): (Vec<_>, Vec<_>) = app.resources.iter()
+        .partition(|&(_, res)| res.expr.is_some());
 
-
-    // Are there any resources that have an initializer? Those can be used by `init`.
-    let has_initialized_resources = app.resources.iter()
-        .find(|&(_, res)| res.expr.is_some()).is_some();
-
-    if has_initialized_resources {
+    if !init_resources.is_empty() {
         let mut fields = vec![];
         let mut lifetime = None;
         let mut rexprs = vec![];
 
-        for (name, resource) in app.resources.iter()
-                .filter(|&(_, res)| res.expr.is_some()) {
+        for (name, resource) in init_resources {
             let _name = Ident::new(format!("_{}", name.as_ref()));
             lifetime = Some(quote!('a));
 
@@ -213,17 +208,15 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         exprs.push(quote!(init::Resources::new()));
     }
 
-    let mut late_resources = vec![];
-    let has_late_resources = app.resources.iter()
-        .find(|&(_, res)| res.expr.is_none()).is_some();
+    // Initialization statements for late resources
+    let mut late_resource_init = vec![];
 
-    if has_late_resources {
+    if !late_resources.is_empty() {
         // `init` must initialize and return resources
 
         let mut fields = vec![];
 
-        for (name, resource) in app.resources.iter()
-            .filter(|&(_, res)| res.expr.is_none()) {
+        for (name, resource) in late_resources {
             let _name = Ident::new(format!("_{}", name.as_ref()));
 
             let ty = &resource.ty;
@@ -232,7 +225,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                 pub #name: #ty,
             });
 
-            late_resources.push(quote! {
+            late_resource_init.push(quote! {
                 #_name = #krate::UntaggedOption { some: _late_resources.#name };
             });
         }
@@ -316,7 +309,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
 
         #krate::atomic(unsafe { &mut #krate::Threshold::new(0) }, |_t| unsafe {
             let _late_resources = init(#(#exprs,)*);
-            #(#late_resources)*
+            #(#late_resource_init)*
 
             #(#exceptions)*
             #(#interrupts)*
