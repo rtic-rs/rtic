@@ -12,8 +12,7 @@ version = "0.2.0"
 [dependencies]
 error-chain = "0.10.0"
 quote = "0.3.15"
-# TODO undo change
-rtfm-syntax = { git = "https://github.com/jonas-schievink/rtfm-syntax.git", branch = "init-resources" }
+rtfm-syntax = "0.2.0"
 syn = "0.11.11"
 
 [lib]
