@@ -87,7 +87,9 @@ use core::u8;
 pub use rtfm_core::{Resource, Static, Threshold};
 pub use cortex_m::asm::{bkpt, wfi};
 pub use cortex_m_rtfm_macros::app;
+#[doc(hidden)]
 pub use untagged_option::UntaggedOption;
+
 use cortex_m::interrupt::{self, Nr};
 #[cfg(not(armv6m))]
 use cortex_m::register::basepri;
