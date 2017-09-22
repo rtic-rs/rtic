@@ -27,7 +27,7 @@ version = "0.3.3"
 
 [dev-dependencies.stm32f103xx]
 features = ["rt"]
-version = "0.7.1"
+version = "0.7.5"
 
 [profile.release]
 lto = true
