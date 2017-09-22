@@ -26,13 +26,24 @@ app! {
         // the initializer. Doing that will require `init` to return the values of all "late"
         // resources.
         static IP_ADDRESS: u32;
+
+        // PORT is used by 2 tasks, making it a shared resource. This just tests another internal
+        // code path and is not important for the example.
+        static PORT: u16;
     },
 
     tasks: {
         SYS_TICK: {
+            priority: 1,
             path: sys_tick,
-            resources: [IP_ADDRESS, ON],
+            resources: [IP_ADDRESS, PORT, ON],
         },
+
+        EXTI0: {
+            priority: 2,
+            path: exti0,
+            resources: [PORT],
+        }
     }
 }
 
@@ -47,6 +58,7 @@ fn init(_p: init::Peripherals, _r: init::Resources) -> init::LateResourceValues 
     init::LateResourceValues {
         // This struct will contain fields for all resources with omitted initializers.
         IP_ADDRESS: ip_address,
+        PORT: 0,
     }
 }
 
@@ -56,6 +68,8 @@ fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 
     r.IP_ADDRESS;
 }
+
+fn exti0(_t: &mut Threshold, _r: EXTI0::Resources) {}
 
 fn idle() -> ! {
     loop {

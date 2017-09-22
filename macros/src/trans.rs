@@ -351,6 +351,11 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
             Ownership::Shared { ceiling } => {
                 if let Some(resource) = app.resources.get(name) {
                     let ty = &resource.ty;
+                    let res_rvalue = if resource.expr.is_some() {
+                        quote!(#_name)
+                    } else {
+                        quote!(#_name.some)
+                    };
 
                     impl_items.push(quote! {
                         type Data = #ty;
@@ -361,7 +366,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         ) -> &'cs #krate::Static<#ty> {
                             assert!(t.value() >= #ceiling);
 
-                            unsafe { #krate::Static::ref_(&#_name) }
+                            unsafe { #krate::Static::ref_(&#res_rvalue) }
                         }
 
                         fn borrow_mut<'cs>(
@@ -371,7 +376,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                             assert!(t.value() >= #ceiling);
 
                             unsafe {
-                                #krate::Static::ref_mut(&mut #_name)
+                                #krate::Static::ref_mut(&mut #res_rvalue)
                             }
                         }
 
@@ -387,7 +392,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         {
                             unsafe {
                                 #krate::claim(
-                                    #krate::Static::ref_(&#_name),
+                                    #krate::Static::ref_(&#res_rvalue),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
@@ -408,7 +413,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         {
                             unsafe {
                                 #krate::claim(
-                                    #krate::Static::ref_mut(&mut #_name),
+                                    #krate::Static::ref_mut(&mut #res_rvalue),
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
                                     t,
