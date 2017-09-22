@@ -1,5 +1,4 @@
 #![deny(warnings)]
-#![feature(const_fn)]
 #![feature(proc_macro)]
 #![no_std]
 
@@ -46,4 +45,4 @@ fn exti0(mut ot: &mut Threshold, r: EXTI0::Resources) {
     });
 }
 
-fn exti1(_t: &mut Threshold, r: EXTI1::Resources) {}
+fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {}
