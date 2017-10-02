@@ -32,6 +32,11 @@ app! {
         static PORT: u16;
     },
 
+    idle: {
+        // Test that late resources can be used in idle
+        resources: [IP_ADDRESS],
+    }
+
     tasks: {
         SYS_TICK: {
             priority: 1,

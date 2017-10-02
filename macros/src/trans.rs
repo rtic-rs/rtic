@@ -74,8 +74,14 @@ fn idle(
                     });
 
                     let _name = Ident::new(format!("_{}", name.as_ref()));
-                    rexprs.push(quote! {
-                        #name: &mut #super_::#_name,
+                    rexprs.push(if resource.expr.is_some() {
+                        quote! {
+                            #name: &mut #super_::#_name,
+                        }
+                    } else {
+                        quote! {
+                            #name: #super_::#_name.as_mut(),
+                        }
                     });
                 } else {
                     rfields.push(quote! {
