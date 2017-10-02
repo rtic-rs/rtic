@@ -35,7 +35,7 @@ app! {
     idle: {
         // Test that late resources can be used in idle
         resources: [IP_ADDRESS],
-    }
+    },
 
     tasks: {
         SYS_TICK: {
@@ -76,7 +76,7 @@ fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 
 fn exti0(_t: &mut Threshold, _r: EXTI0::Resources) {}
 
-fn idle() -> ! {
+fn idle(_t: &mut Threshold, _r: idle::Resources) -> ! {
     loop {
         rtfm::wfi();
     }
