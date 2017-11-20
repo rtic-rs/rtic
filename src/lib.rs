@@ -160,6 +160,6 @@ where
     I: Nr,
 {
     // NOTE(safe) atomic write
-    let nvic = unsafe { &*cortex_m::peripheral::NVIC.get() };
+    let nvic = unsafe { &*cortex_m::peripheral::NVIC::ptr() };
     nvic.set_pending(interrupt);
 }

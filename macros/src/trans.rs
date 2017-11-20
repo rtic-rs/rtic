@@ -161,8 +161,13 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let device = &app.device;
     let krate = krate();
 
-    let mut tys = vec![quote!(#device::Peripherals)];
-    let mut exprs = vec![quote!(#device::Peripherals::all())];
+    let mut tys = vec![quote!(init::Peripherals)];
+    let mut exprs = vec![quote!{
+        init::Peripherals {
+            core: ::#device::CorePeripherals::steal(),
+            device: ::#device::Peripherals::steal(),
+        }
+    }];
     let mut ret = None;
     let mut mod_items = vec![];
 
@@ -255,7 +260,10 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     root.push(quote! {
         #[allow(unsafe_code)]
         mod init {
-            pub use ::#device::Peripherals;
+            pub struct Peripherals {
+                pub core: ::#device::CorePeripherals,
+                pub device: ::#device::Peripherals,
+            }
 
             #(#mod_items)*
         }
@@ -268,7 +276,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             Kind::Exception(ref e) => {
                 if exceptions.is_empty() {
                     exceptions.push(quote! {
-                        let scb = &*#device::SCB.get();
+                        let scb = &*#device::SCB::ptr();
                     });
                 }
 
@@ -284,7 +292,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                 // Interrupt. These can be enabled / disabled through the NVIC
                 if interrupts.is_empty() {
                     interrupts.push(quote! {
-                        let nvic = &*#device::NVIC.get();
+                        let nvic = &*#device::NVIC::ptr();
                     });
                 }
 

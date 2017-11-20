@@ -12,6 +12,11 @@ use stm32f103xx::{SPI1, GPIOA};
 app! {
     device: stm32f103xx,
 
+    resources: {
+        static GPIOA: GPIOA;
+        static SPI1: SPI1;
+    },
+
     tasks: {
         EXTI0: {
             path: exti0,
@@ -27,7 +32,12 @@ app! {
     },
 }
 
-fn init(_p: init::Peripherals) {}
+fn init(p: init::Peripherals) -> init::LateResourceValues {
+    init::LateResourceValues {
+        GPIOA: p.device.GPIOA,
+        SPI1: p.device.SPI1,
+    }
+}
 
 fn idle() -> ! {
     loop {
