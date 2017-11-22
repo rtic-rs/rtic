@@ -3,12 +3,12 @@ set -euxo pipefail
 main() {
     if [ $TARGET = x86_64-unknown-linux-gnu ]; then
         cargo build
-        cargo test --tests
+        cargo test --test cfail
         return
     fi
 
     xargo build --target $TARGET
-    xargo test --target $TARGET --examples
+    xargo check --target $TARGET --examples
 }
 
 main
