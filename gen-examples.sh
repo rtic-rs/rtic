@@ -10,6 +10,7 @@ main() {
         two-tasks
         preemption
         nested
+        late-resources
         generics
         full-syntax
     )
