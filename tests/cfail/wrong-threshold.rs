@@ -39,7 +39,6 @@ fn idle() -> ! {
 fn exti0(mut ot: &mut Threshold, r: EXTI0::Resources) {
     r.A.claim(&mut ot, |_a, mut _it| {
         //~^ error cannot borrow `ot` as mutable more than once at a time
-        //~| error cannot borrow `ot` as mutable more than once at a time
         // ERROR must use inner token `it` instead of the outer one (`ot`)
         r.B.claim(&mut ot, |_b, _| {})
     });
