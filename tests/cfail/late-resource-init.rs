@@ -30,12 +30,12 @@ app! {
     },
 }
 
-fn init(_p: init::Peripherals, r: init::Resources) -> init::LateResourceValues {
+fn init(_p: init::Peripherals, r: init::Resources) -> init::LateResources {
     // Try to use a resource that's not yet initialized:
     r.LATE;
     //~^ error: no field `LATE`
 
-    init::LateResourceValues {
+    init::LateResources {
         LATE: 0,
     }
 }

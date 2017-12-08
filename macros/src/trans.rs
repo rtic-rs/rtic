@@ -234,17 +234,17 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         root.push(quote! {
             #[allow(non_camel_case_types)]
             #[allow(non_snake_case)]
-            pub struct _initLateResourceValues {
+            pub struct _initLateResources {
                 #(#fields)*
             }
         });
 
         mod_items.push(quote! {
-            pub use ::_initLateResourceValues as LateResourceValues;
+            pub use ::_initLateResources as LateResources;
         });
 
         // `init` must return the initialized resources
-        ret = Some(quote!( -> ::init::LateResourceValues));
+        ret = Some(quote!( -> ::init::LateResources));
     }
 
     root.push(quote! {

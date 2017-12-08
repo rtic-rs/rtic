@@ -57,7 +57,7 @@
 //! }
 //! 
 //! // The signature of `init` is now required to have a specific return type.
-//! fn init(_p: init::Peripherals, _r: init::Resources) -> init::LateResourceValues {
+//! fn init(_p: init::Peripherals, _r: init::Resources) -> init::LateResources {
 //!     // `init::Resources` does not contain `IP_ADDRESS`, since it is not yet
 //!     // initialized.
 //!     //_r.IP_ADDRESS;     // doesn't compile
@@ -65,7 +65,7 @@
 //!     // ...obtain value for IP_ADDRESS from EEPROM/DHCP...
 //!     let ip_address = 0x7f000001;
 //! 
-//!     init::LateResourceValues {
+//!     init::LateResources {
 //!         // This struct will contain fields for all resources with omitted
 //!         // initializers.
 //!         IP_ADDRESS: ip_address,
