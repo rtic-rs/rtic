@@ -8,7 +8,7 @@ extern crate stm32f103xx;
 use rtfm::app;
 
 app! {
-    //~^ error no associated item named `EXTI33` found for type
+    //~^ error no variant named `EXTI33` found for type
     device: stm32f103xx,
 
     tasks: {

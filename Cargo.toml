@@ -19,7 +19,7 @@ rtfm-core = "0.1.0"
 cortex-m-rtfm-macros = "0.2.1"
 
 [target.'cfg(target_arch = "x86_64")'.dev-dependencies]
-compiletest_rs = "0.2.8"
+compiletest_rs = "0.3.3"
 
 [dev-dependencies.cortex-m-rt]
 features = ["abort-on-panic"]
