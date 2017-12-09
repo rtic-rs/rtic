@@ -77,7 +77,7 @@ fn idle() -> ! {
 // `r` is the set of resources this task has access to. `SYS_TICK::Resources`
 // has one field per resource declared in `app!`.
 #[allow(unsafe_code)]
-fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
+fn sys_tick(_t: &mut Threshold, mut r: SYS_TICK::Resources) {
     // toggle state
     *r.ON = !*r.ON;
 

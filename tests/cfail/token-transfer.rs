@@ -9,7 +9,7 @@ extern crate stm32f103xx;
 
 use rtfm::{app, Threshold};
 
-app! { //~ error bound `rtfm::Threshold: core::marker::Send` is not satisfied
+app! { //~ error bound `*const (): core::marker::Send` is not satisfied
     device: stm32f103xx,
 
     resources: {

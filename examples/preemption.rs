@@ -42,7 +42,7 @@ fn idle() -> ! {
     }
 }
 
-fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
+fn sys_tick(_t: &mut Threshold, mut r: SYS_TICK::Resources) {
     // ..
 
     // This task can't be preempted by `tim2` so it has direct access to the

@@ -42,7 +42,7 @@ fn idle() -> ! {
 
 // As both tasks are running at the same priority one can't preempt the other.
 // Thus both tasks have direct access to the resource
-fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
+fn sys_tick(_t: &mut Threshold, mut r: SYS_TICK::Resources) {
     // ..
 
     *r.COUNTER += 1;
@@ -50,7 +50,7 @@ fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
     // ..
 }
 
-fn tim2(_t: &mut Threshold, r: TIM2::Resources) {
+fn tim2(_t: &mut Threshold, mut r: TIM2::Resources) {
     // ..
 
     *r.COUNTER += 1;
