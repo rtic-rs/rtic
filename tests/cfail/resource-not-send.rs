@@ -13,20 +13,20 @@ app! {
     device: stm32f103xx,
 
     resources: {
-        static STATE: bool = false;
+        static SHARED: bool = false;
     },
 
     tasks: {
         EXTI0: {
             path: exti0,
             priority: 1,
-            resources: [STATE],
+            resources: [SHARED],
         },
 
         EXTI1: {
             path: exti1,
             priority: 2,
-            resources: [STATE],
+            resources: [SHARED],
         },
     },
 }
@@ -37,10 +37,17 @@ fn idle() -> ! {
     loop {}
 }
 
-fn exti0(mut t: &mut Threshold, r: EXTI0::Resources) {
-    // ERROR token should not outlive the critical section
-    let t = r.STATE.claim(&mut t, |_state, t| t);
-    //~^ error cannot infer an appropriate lifetime
+fn is_send<T>(_: &T) where T: Send {}
+fn is_sync<T>(_: &T) where T: Sync {}
+
+fn exti0(_t: &mut Threshold, r: EXTI0::Resources) {
+    // OK
+    is_sync(&r.SHARED);
+
+    // ERROR resource proxies are not `Send`able across tasks
+    is_send(&r.SHARED);
+    //~^ error the trait bound `*const (): core::marker::Send` is not satisfied
 }
 
-fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {}
+fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {
+}

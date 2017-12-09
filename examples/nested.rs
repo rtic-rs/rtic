@@ -3,6 +3,7 @@
 //! If you run this program you'll hit the breakpoints as indicated by the
 //! letters in the comments: A, then B, then C, etc.
 #![deny(unsafe_code)]
+#![deny(warnings)]
 #![feature(proc_macro)]
 #![no_std]
 

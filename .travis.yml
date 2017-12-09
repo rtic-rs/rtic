@@ -51,7 +51,10 @@ script:
 
 after_script: set +e
 
-cache: cargo
+cache:
+  cargo: true
+  directories:
+    - $HOME/.xargo
 before_cache:
   - chmod -R a+r $HOME/.cargo
 
