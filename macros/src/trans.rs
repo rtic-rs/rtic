@@ -27,12 +27,7 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     quote!(#(#root)*)
 }
 
-fn idle(
-    app: &App,
-    ownerships: &Ownerships,
-    main: &mut Vec<Tokens>,
-    root: &mut Vec<Tokens>,
-) {
+fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let krate = krate();
 
     let mut mod_items = vec![];
@@ -45,8 +40,6 @@ fn idle(
     }
 
     if !app.idle.resources.is_empty() {
-        let device = &app.device;
-
         let mut needs_reexport = false;
         for name in &app.idle.resources {
             if ownerships[name].is_owned() {
@@ -66,32 +59,26 @@ fn idle(
         let mut rfields = vec![];
         for name in &app.idle.resources {
             if ownerships[name].is_owned() {
-                if let Some(resource) = app.resources.get(name) {
-                    let ty = &resource.ty;
+                let resource = app.resources.get(name).expect(&format!(
+                    "BUG: resource {} assigned to `idle` has no definition",
+                    name
+                ));
+                let ty = &resource.ty;
 
-                    rfields.push(quote! {
-                        pub #name: &'static mut #ty,
-                    });
+                rfields.push(quote! {
+                    pub #name: &'static mut #ty,
+                });
 
-                    let _name = Ident::new(format!("_{}", name.as_ref()));
-                    rexprs.push(if resource.expr.is_some() {
-                        quote! {
-                            #name: &mut #super_::#_name,
-                        }
-                    } else {
-                        quote! {
-                            #name: #super_::#_name.as_mut(),
-                        }
-                    });
+                let _name = Ident::new(format!("_{}", name.as_ref()));
+                rexprs.push(if resource.expr.is_some() {
+                    quote! {
+                        #name: &mut #super_::#_name,
+                    }
                 } else {
-                    rfields.push(quote! {
-                        pub #name: &'static mut ::#device::#name,
-                    });
-
-                    rexprs.push(quote! {
-                        #name: &mut *::#device::#name.get(),
-                    });
-                }
+                    quote! {
+                        #name: #super_::#_name.as_mut(),
+                    }
+                });
             } else {
                 rfields.push(quote! {
                     pub #name: #super_::_resource::#name,
@@ -162,16 +149,19 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     let krate = krate();
 
     let mut tys = vec![quote!(init::Peripherals)];
-    let mut exprs = vec![quote!{
-        init::Peripherals {
-            core: ::#device::CorePeripherals::steal(),
-            device: ::#device::Peripherals::steal(),
-        }
-    }];
+    let mut exprs = vec![
+        quote!{
+            init::Peripherals {
+                core: ::#device::CorePeripherals::steal(),
+                device: ::#device::Peripherals::steal(),
+            }
+        },
+    ];
     let mut ret = None;
     let mut mod_items = vec![];
 
-    let (init_resources, late_resources): (Vec<_>, Vec<_>) = app.resources.iter()
+    let (init_resources, late_resources): (Vec<_>, Vec<_>) = app.resources
+        .iter()
         .partition(|&(_, res)| res.expr.is_some());
 
     if !init_resources.is_empty() {
@@ -363,154 +353,81 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                 // For owned resources we don't need claim() or borrow()
             }
             Ownership::Shared { ceiling } => {
-                if let Some(resource) = app.resources.get(name) {
-                    let ty = &resource.ty;
-                    let res_rvalue = if resource.expr.is_some() {
-                        quote!(#_name)
-                    } else {
-                        quote!(#_name.some)
-                    };
-
-                    impl_items.push(quote! {
-                        type Data = #ty;
-
-                        fn borrow<'cs>(
-                            &'cs self,
-                            t: &'cs #krate::Threshold,
-                        ) -> &'cs #krate::Static<#ty> {
-                            assert!(t.value() >= #ceiling);
-
-                            unsafe { #krate::Static::ref_(&#res_rvalue) }
-                        }
-
-                        fn borrow_mut<'cs>(
-                            &'cs mut self,
-                            t: &'cs #krate::Threshold,
-                        ) -> &'cs mut #krate::Static<#ty> {
-                            assert!(t.value() >= #ceiling);
-
-                            unsafe {
-                                #krate::Static::ref_mut(&mut #res_rvalue)
-                            }
-                        }
-
-                        fn claim<R, F>(
-                            &self,
-                            t: &mut #krate::Threshold,
-                            f: F,
-                        ) -> R
-                        where
-                            F: FnOnce(
-                                &#krate::Static<#ty>,
-                                &mut #krate::Threshold) -> R
-                        {
-                            unsafe {
-                                #krate::claim(
-                                    #krate::Static::ref_(&#res_rvalue),
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
-                            }
-                        }
-
-                        fn claim_mut<R, F>(
-                            &mut self,
-                            t: &mut #krate::Threshold,
-                            f: F,
-                        ) -> R
-                        where
-                            F: FnOnce(
-                                &mut #krate::Static<#ty>,
-                                &mut #krate::Threshold) -> R
-                        {
-                            unsafe {
-                                #krate::claim(
-                                    #krate::Static::ref_mut(&mut #res_rvalue),
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
-                            }
-                        }
-                    });
+                let resource = app.resources
+                    .get(name)
+                    .expect(&format!("BUG: resource {} has no definition", name));
+                let ty = &resource.ty;
+                let res_rvalue = if resource.expr.is_some() {
+                    quote!(#_name)
                 } else {
-                    impl_items.push(quote! {
-                        type Data = #device::#name;
+                    quote!(#_name.some)
+                };
 
-                        fn borrow<'cs>(
-                            &'cs self,
-                            t: &'cs #krate::Threshold,
-                        ) -> &'cs #krate::Static<#device::#name> {
-                            assert!(t.value() >= #ceiling);
+                impl_items.push(quote! {
+                    type Data = #ty;
 
-                            unsafe {
-                                #krate::Static::ref_(&*#device::#name.get())
-                            }
+                    fn borrow<'cs>(
+                        &'cs self,
+                        t: &'cs #krate::Threshold,
+                    ) -> &'cs #krate::Static<#ty> {
+                        assert!(t.value() >= #ceiling);
+
+                        unsafe { #krate::Static::ref_(&#res_rvalue) }
+                    }
+
+                    fn borrow_mut<'cs>(
+                        &'cs mut self,
+                        t: &'cs #krate::Threshold,
+                    ) -> &'cs mut #krate::Static<#ty> {
+                        assert!(t.value() >= #ceiling);
+
+                        unsafe {
+                            #krate::Static::ref_mut(&mut #res_rvalue)
                         }
+                    }
 
-                        fn borrow_mut<'cs>(
-                            &'cs mut self,
-                            t: &'cs #krate::Threshold,
-                        ) -> &'cs mut #krate::Static<#device::#name> {
-                            assert!(t.value() >= #ceiling);
-
-                            unsafe {
-                                #krate::Static::ref_mut(
-                                    &mut *#device::#name.get(),
-                                )
-                            }
+                    fn claim<R, F>(
+                        &self,
+                        t: &mut #krate::Threshold,
+                        f: F,
+                    ) -> R
+                    where
+                        F: FnOnce(
+                            &#krate::Static<#ty>,
+                            &mut #krate::Threshold) -> R
+                    {
+                        unsafe {
+                            #krate::claim(
+                                #krate::Static::ref_(&#res_rvalue),
+                                #ceiling,
+                                #device::NVIC_PRIO_BITS,
+                                t,
+                                f,
+                            )
                         }
+                    }
 
-                        fn claim<R, F>(
-                            &self,
-                            t: &mut #krate::Threshold,
-                            f: F,
-                        ) -> R
-                        where
-                            F: FnOnce(
-                                &#krate::Static<#device::#name>,
-                                &mut #krate::Threshold) -> R
-                        {
-                            unsafe {
-                                #krate::claim(
-                                    #krate::Static::ref_(
-                                        &*#device::#name.get(),
-                                    ),
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
-                            }
+                    fn claim_mut<R, F>(
+                        &mut self,
+                        t: &mut #krate::Threshold,
+                        f: F,
+                    ) -> R
+                    where
+                        F: FnOnce(
+                            &mut #krate::Static<#ty>,
+                            &mut #krate::Threshold) -> R
+                    {
+                        unsafe {
+                            #krate::claim(
+                                #krate::Static::ref_mut(&mut #res_rvalue),
+                                #ceiling,
+                                #device::NVIC_PRIO_BITS,
+                                t,
+                                f,
+                            )
                         }
-
-                        fn claim_mut<R, F>(
-                            &mut self,
-                            t: &mut #krate::Threshold,
-                            f: F,
-                        ) -> R
-                        where
-                            F: FnOnce(
-                                &mut #krate::Static<#device::#name>,
-                                &mut #krate::Threshold) -> R
-                        {
-                            unsafe {
-                                #krate::claim(
-                                    #krate::Static::ref_mut(
-                                        &mut *#device::#name.get(),
-                                    ),
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
-                            }
-                        }
-                    });
-                }
+                    }
+                });
 
                 impls.push(quote! {
                     #[allow(unsafe_code)]
@@ -568,9 +485,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                 let _name = Ident::new(format!("_{}", name.as_ref()));
 
                 match ownerships[name] {
-                    Ownership::Shared { ceiling }
-                        if ceiling > task.priority =>
-                    {
+                    Ownership::Shared { ceiling } if ceiling > task.priority => {
                         needs_threshold = true;
 
                         fields.push(quote! {
@@ -585,35 +500,26 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     }
                     _ => {
                         lifetime = Some(quote!('a));
-                        if let Some(resource) = app.resources.get(name) {
-                            needs_reexport = true;
-                            let ty = &resource.ty;
+                        let resource = app.resources
+                            .get(name)
+                            .expect(&format!("BUG: resource {} has no definition", name));
 
-                            fields.push(quote! {
-                                pub #name: &'a mut ::#krate::Static<#ty>,
-                            });
+                        needs_reexport = true;
+                        let ty = &resource.ty;
 
-                            exprs.push(if resource.expr.is_some() {
-                                quote! {
-                                    #name: ::#krate::Static::ref_mut(&mut ::#_name),
-                                }
-                            } else {
-                                quote! {
-                                    #name: ::#krate::Static::ref_mut(::#_name.as_mut()),
-                                }
-                            });
+                        fields.push(quote! {
+                            pub #name: &'a mut ::#krate::Static<#ty>,
+                        });
+
+                        exprs.push(if resource.expr.is_some() {
+                            quote! {
+                                #name: ::#krate::Static::ref_mut(&mut ::#_name),
+                            }
                         } else {
-                            fields.push(quote! {
-                                pub #name:
-                                &'a mut ::#krate::Static<::#device::#name>,
-                            });
-
-                            exprs.push(quote! {
-                                #name: ::#krate::Static::ref_mut(
-                                    &mut *::#device::#name.get(),
-                                ),
-                            });
-                        }
+                            quote! {
+                                #name: ::#krate::Static::ref_mut(::#_name.as_mut()),
+                            }
+                        });
                     }
                 }
             }
@@ -674,8 +580,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
         let path = &task.path;
         let _name = Ident::new(format!("_{}", name));
-        let export_name =
-            Lit::Str(name.as_ref().to_owned(), StrStyle::Cooked);
+        let export_name = Lit::Str(name.as_ref().to_owned(), StrStyle::Cooked);
         root.push(quote! {
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
