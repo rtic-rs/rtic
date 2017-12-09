@@ -440,8 +440,6 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     #[allow(non_camel_case_types)]
                     pub struct #name { _0: PhantomData<*const ()> }
 
-                    unsafe impl Sync for #name {}
-
                     #[allow(unsafe_code)]
                     impl #name {
                         pub unsafe fn new() -> Self {

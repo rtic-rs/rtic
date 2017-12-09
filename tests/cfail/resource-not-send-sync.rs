@@ -41,8 +41,9 @@ fn is_send<T>(_: &T) where T: Send {}
 fn is_sync<T>(_: &T) where T: Sync {}
 
 fn exti0(_t: &mut Threshold, r: EXTI0::Resources) {
-    // OK
+    // ERROR resource proxies can't be shared between tasks
     is_sync(&r.SHARED);
+    //~^ error the trait bound `*const (): core::marker::Sync` is not satisfied
 
     // ERROR resource proxies are not `Send`able across tasks
     is_send(&r.SHARED);
