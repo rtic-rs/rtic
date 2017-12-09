@@ -32,8 +32,8 @@ app! {
     },
 }
 
-fn init(p: init::Peripherals) -> init::LateResourceValues {
-    init::LateResourceValues {
+fn init(p: init::Peripherals) -> init::LateResources {
+    init::LateResources {
         GPIOA: p.device.GPIOA,
         SPI1: p.device.SPI1,
     }
