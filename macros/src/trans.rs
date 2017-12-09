@@ -12,6 +12,7 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     let mut root = vec![];
     let mut main = vec![];
 
+    ::trans::root(app, &mut main);
     ::trans::init(app, &mut main, &mut root);
     ::trans::idle(app, ownerships, &mut main, &mut root);
     ::trans::resources(app, ownerships, &mut root);
@@ -307,18 +308,34 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     }
 
     let init = &app.init.path;
-    main.push(quote! {
-        // type check
-        let init: fn(#(#tys,)*) #ret = #init;
+    // TODO DRY
+    if app.root.is_some() {
+        main.push(quote! {
+            // type check
+            let init: fn(#(#tys,)* &'static mut _) #ret = #init;
 
-        #krate::atomic(unsafe { &mut #krate::Threshold::new(0) }, |_t| unsafe {
-            let _late_resources = init(#(#exprs,)*);
-            #(#late_resource_init)*
+            #krate::atomic(unsafe { &mut #krate::Threshold::new(0) }, |_t| unsafe {
+                let _late_resources = init(#(#exprs,)* &mut *(&mut root as *mut _));
+                #(#late_resource_init)*
 
-            #(#exceptions)*
-            #(#interrupts)*
+                #(#exceptions)*
+                #(#interrupts)*
+            });
         });
-    });
+    } else {
+        main.push(quote! {
+            // type check
+            let init: fn(#(#tys,)*) #ret = #init;
+
+            #krate::atomic(unsafe { &mut #krate::Threshold::new(0) }, |_t| unsafe {
+                let _late_resources = init(#(#exprs,)*);
+                #(#late_resource_init)*
+
+                #(#exceptions)*
+                #(#interrupts)*
+            });
+        });
+    }
 }
 
 fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
@@ -464,6 +481,15 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
     root.push(quote! {
         #(#impls)*
     });
+}
+
+fn root(app: &App, main: &mut Vec<Tokens>) {
+    if let Some(root) = app.root.as_ref() {
+        main.push(quote! {
+            let root: fn() -> _ = #root;
+            let mut root = root();
+        });
+    }
 }
 
 fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {

@@ -11,6 +11,7 @@ pub struct App {
     pub idle: Idle,
     pub init: Init,
     pub resources: Statics,
+    pub root: Option<Path>,
     pub tasks: Tasks,
 }
 
@@ -60,6 +61,7 @@ pub fn app(app: check::App) -> Result<App> {
         idle: app.idle,
         init: app.init,
         resources: app.resources,
+        root: app.root,
         tasks: app.tasks
             .into_iter()
             .map(|(k, v)| {
