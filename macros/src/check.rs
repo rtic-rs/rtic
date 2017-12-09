@@ -63,16 +63,15 @@ pub fn app(app: check::App) -> Result<App> {
         tasks: app.tasks
             .into_iter()
             .map(|(k, v)| {
-                let v = ::check::task(k.as_ref(), v)
-                    .chain_err(|| format!("checking task `{}`", k))?;
+                let v =
+                    ::check::task(k.as_ref(), v).chain_err(|| format!("checking task `{}`", k))?;
 
                 Ok((k, v))
             })
             .collect::<Result<_>>()?,
     };
 
-    ::check::resources(&app)
-        .chain_err(|| "checking `resources`")?;
+    ::check::resources(&app).chain_err(|| "checking `resources`")?;
 
     Ok(app)
 }
@@ -91,6 +90,17 @@ fn resources(app: &App) -> Result<()> {
         }
 
         bail!("resource `{}` is unused", resource);
+    }
+
+    for (name, task) in &app.tasks {
+        for resource in &task.resources {
+            ensure!(
+                app.resources.contains_key(&resource),
+                "task {} contains an undeclared resource with name {}",
+                name,
+                resource
+            );
+        }
     }
 
     Ok(())

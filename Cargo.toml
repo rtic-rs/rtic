@@ -10,13 +10,13 @@ keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm"
 repository = "https://github.com/japaric/cortex-m-rtfm"
-version = "0.2.2"
+version = "0.3.0"
 
 [dependencies]
-cortex-m = "0.3.1"
+cortex-m = { git = "https://github.com/japaric/cortex-m" }
 untagged-option = "0.1.1"
 rtfm-core = "0.1.0"
-cortex-m-rtfm-macros = "0.2.1"
+cortex-m-rtfm-macros = { path = "macros" }
 
 [target.'cfg(target_arch = "x86_64")'.dev-dependencies]
 compiletest_rs = "0.3.3"
@@ -27,7 +27,8 @@ version = "0.3.3"
 
 [dev-dependencies.stm32f103xx]
 features = ["rt"]
-version = "0.7.5"
+git = "https://github.com/japaric/stm32f103xx"
+# version = "0.8.0"
 
 [profile.release]
 lto = true
