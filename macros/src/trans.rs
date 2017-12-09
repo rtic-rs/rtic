@@ -438,12 +438,14 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
 
                 items.push(quote! {
                     #[allow(non_camel_case_types)]
-                    pub struct #name { _0: () }
+                    pub struct #name { _0: PhantomData<*const ()> }
+
+                    unsafe impl Sync for #name {}
 
                     #[allow(unsafe_code)]
                     impl #name {
                         pub unsafe fn new() -> Self {
-                            #name { _0: () }
+                            #name { _0: PhantomData }
                         }
                     }
                 });
@@ -455,6 +457,8 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
         root.push(quote! {
             #[allow(unsafe_code)]
             mod _resource {
+                use core::marker::PhantomData;
+
                 #(#items)*
             }
         })
