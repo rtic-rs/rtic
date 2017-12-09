@@ -1,5 +1,6 @@
 //! Working with resources in a generic fashion
 #![deny(unsafe_code)]
+#![deny(warnings)]
 #![feature(proc_macro)]
 #![no_std]
 

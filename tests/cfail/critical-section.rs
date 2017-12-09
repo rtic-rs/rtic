@@ -1,3 +1,4 @@
+#![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]

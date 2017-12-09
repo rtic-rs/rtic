@@ -1,5 +1,6 @@
 //! Two tasks running at *different* priorities with access to the same resource
 #![deny(unsafe_code)]
+#![deny(warnings)]
 #![feature(proc_macro)]
 #![no_std]
 
