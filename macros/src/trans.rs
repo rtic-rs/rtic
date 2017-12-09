@@ -249,18 +249,30 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         let mut rexprs = vec![];
 
         for (name, resource) in init_resources {
-            let _name = Ident::new(format!("_{}", name.as_ref()));
-            lifetime = Some(quote!('a));
-
             let ty = &resource.ty;
 
-            fields.push(quote! {
-                pub #name: &'a mut #ty,
-            });
+            if app.init.resources.contains(name) {
+                fields.push(quote! {
+                    pub #name: &'static mut #ty,
+                });
 
-            rexprs.push(quote! {
-                #name: &mut ::#_name,
-            });
+                let expr = &resource.expr;
+                rexprs.push(quote!(#name: {
+                    static mut #name: #ty = #expr;
+                    &mut #name
+                }));
+            } else {
+                let _name = Ident::new(format!("_{}", name.as_ref()));
+                lifetime = Some(quote!('a));
+
+                fields.push(quote! {
+                    pub #name: &'a mut #ty,
+                });
+
+                rexprs.push(quote! {
+                    #name: &mut ::#_name,
+                });
+            }
         }
 
         root.push(quote! {
