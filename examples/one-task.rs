@@ -79,9 +79,9 @@ fn idle() -> ! {
 #[allow(unsafe_code)]
 fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
     // toggle state
-    **r.ON = !**r.ON;
+    *r.ON = !*r.ON;
 
-    if **r.ON {
+    if *r.ON {
         // set the pin PC13 high
         // NOTE(unsafe) atomic write to a stateless register
         unsafe {

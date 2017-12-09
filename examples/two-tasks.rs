@@ -45,7 +45,7 @@ fn idle() -> ! {
 fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
     // ..
 
-    **r.COUNTER += 1;
+    *r.COUNTER += 1;
 
     // ..
 }
@@ -53,7 +53,7 @@ fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 fn tim2(_t: &mut Threshold, r: TIM2::Resources) {
     // ..
 
-    **r.COUNTER += 1;
+    *r.COUNTER += 1;
 
     // ..
 }

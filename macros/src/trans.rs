@@ -176,11 +176,11 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
             let ty = &resource.ty;
 
             fields.push(quote! {
-                pub #name: &'a mut #krate::Static<#ty>,
+                pub #name: &'a mut #ty,
             });
 
             rexprs.push(quote! {
-                #name: ::#krate::Static::ref_mut(&mut ::#_name),
+                #name: &mut ::#_name,
             });
         }
 
@@ -369,20 +369,20 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     fn borrow<'cs>(
                         &'cs self,
                         t: &'cs #krate::Threshold,
-                    ) -> &'cs #krate::Static<#ty> {
+                    ) -> &'cs #ty {
                         assert!(t.value() >= #ceiling);
 
-                        unsafe { #krate::Static::ref_(&#res_rvalue) }
+                        unsafe { &#res_rvalue }
                     }
 
                     fn borrow_mut<'cs>(
                         &'cs mut self,
                         t: &'cs #krate::Threshold,
-                    ) -> &'cs mut #krate::Static<#ty> {
+                    ) -> &'cs mut #ty {
                         assert!(t.value() >= #ceiling);
 
                         unsafe {
-                            #krate::Static::ref_mut(&mut #res_rvalue)
+                            &mut #res_rvalue
                         }
                     }
 
@@ -393,12 +393,12 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     ) -> R
                     where
                         F: FnOnce(
-                            &#krate::Static<#ty>,
+                            &#ty,
                             &mut #krate::Threshold) -> R
                     {
                         unsafe {
                             #krate::claim(
-                                #krate::Static::ref_(&#res_rvalue),
+                                &#res_rvalue,
                                 #ceiling,
                                 #device::NVIC_PRIO_BITS,
                                 t,
@@ -414,12 +414,12 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                     ) -> R
                     where
                         F: FnOnce(
-                            &mut #krate::Static<#ty>,
+                            &mut #ty,
                             &mut #krate::Threshold) -> R
                     {
                         unsafe {
                             #krate::claim(
-                                #krate::Static::ref_mut(&mut #res_rvalue),
+                                &mut #res_rvalue,
                                 #ceiling,
                                 #device::NVIC_PRIO_BITS,
                                 t,
@@ -510,16 +510,16 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                         let ty = &resource.ty;
 
                         fields.push(quote! {
-                            pub #name: &'a mut ::#krate::Static<#ty>,
+                            pub #name: &'a mut #ty,
                         });
 
                         exprs.push(if resource.expr.is_some() {
                             quote! {
-                                #name: ::#krate::Static::ref_mut(&mut ::#_name),
+                                #name: &mut ::#_name,
                             }
                         } else {
                             quote! {
-                                #name: ::#krate::Static::ref_mut(::#_name.as_mut()),
+                                #name: ::#_name.as_mut(),
                             }
                         });
                     }

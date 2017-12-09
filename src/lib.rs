@@ -84,7 +84,7 @@ extern crate untagged_option;
 
 use core::u8;
 
-pub use rtfm_core::{Resource, Static, Threshold};
+pub use rtfm_core::{Resource, Threshold};
 pub use cortex_m::asm::{bkpt, wfi};
 pub use cortex_m_rtfm_macros::app;
 #[doc(hidden)]

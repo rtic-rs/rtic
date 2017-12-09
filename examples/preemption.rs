@@ -47,7 +47,7 @@ fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 
     // This task can't be preempted by `tim2` so it has direct access to the
     // resource data
-    **r.COUNTER += 1;
+    *r.COUNTER += 1;
 
     // ..
 }
@@ -61,7 +61,7 @@ fn tim2(t: &mut Threshold, mut r: TIM2::Resources) {
     // lead to undefined behavior.
     r.COUNTER.claim_mut(t, |counter, _t| {
         // `claim_mut` creates a critical section
-        **counter += 1;
+        *counter += 1;
     });
 
     // ..
