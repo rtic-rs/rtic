@@ -260,7 +260,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                 rexprs.push(quote!(#name: {
                     static mut #name: #ty = #expr;
                     &mut #name
-                }));
+                },));
             } else {
                 let _name = Ident::new(format!("_{}", name.as_ref()));
                 lifetime = Some(quote!('a));
