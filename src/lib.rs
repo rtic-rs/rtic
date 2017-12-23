@@ -74,6 +74,7 @@
 //! [rtfm]: http://www.diva-portal.org/smash/get/diva2:1005680/FULLTEXT01.pdf
 #![deny(missing_docs)]
 #![deny(warnings)]
+#![feature(asm)]
 #![feature(proc_macro)]
 #![no_std]
 
@@ -119,6 +120,7 @@ pub unsafe fn claim<T, R, F>(
     data: T,
     ceiling: u8,
     _nvic_prio_bits: u8,
+    _cpu: &str,
     t: &mut Threshold,
     f: F,
 ) -> R
@@ -132,6 +134,7 @@ where
 
             #[cfg(not(armv6m))]
             () => {
+                let is_cm7 = _cpu == "CM7";
                 let max_priority = 1 << _nvic_prio_bits;
 
                 if ceiling == max_priority {
@@ -139,9 +142,21 @@ where
                 } else {
                     let old = basepri::read();
                     let hw = (max_priority - ceiling) << (8 - _nvic_prio_bits);
-                    basepri::write(hw);
+                    if is_cm7 {
+                        asm!("cpsid i
+                              msr BASEPRI, $0
+                              cpsie i" :: "r"(hw) : "memory" : "volatile");
+                    } else {
+                        basepri::write(hw);
+                    }
                     let ret = f(data, &mut Threshold::new(ceiling));
-                    basepri::write(old);
+                    if is_cm7 {
+                        asm!("cpsid i
+                              msr BASEPRI, $0
+                              cpsie i" :: "r"(old) : "memory" : "volatile");
+                    } else {
+                        basepri::write(old);
+                    }
                     ret
                 }
             }

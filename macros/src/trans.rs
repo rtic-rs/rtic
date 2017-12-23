@@ -181,6 +181,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
                             &#_static,
                             #ceiling,
                             #device::NVIC_PRIO_BITS,
+                            #device::CPU,
                             t,
                             f,
                         )
@@ -196,6 +197,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
                             &mut #_static,
                             #ceiling,
                             #device::NVIC_PRIO_BITS,
+                            #device::CPU,
                             t,
                             f,
                         )
@@ -499,6 +501,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                                     &#_static,
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
+                                    #device::CPU,
                                     t,
                                     f,
                                 )
@@ -514,6 +517,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                                     &mut #_static,
                                     #ceiling,
                                     #device::NVIC_PRIO_BITS,
+                                    #device::CPU,
                                     t,
                                     f,
                                 )
