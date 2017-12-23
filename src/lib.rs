@@ -50,6 +50,11 @@
 //!
 //! [here]: https://docs.rs/cortex-m-rtfm-macros/0.2.0/cortex_m_rtfm_macros/fn.app.html
 //!
+//! # Important: Cortex-M7 devices
+//!
+//! If targeting a Cortex-M7 device with revision r0p1 then you MUST enable the `cm7-r0p1` Cargo
+//! feature of this crate or the `Resource.claim` and `Resource.claim_mut` methods WILL misbehave.
+//!
 //! # Examples
 //!
 //! In increasing grade of complexity. See the [examples](./examples/index.html)

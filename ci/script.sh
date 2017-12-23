@@ -7,7 +7,14 @@ main() {
         return
     fi
 
-    xargo build --target $TARGET
+    case $TARGET in
+        thumbv7em-none-eabi*)
+            xargo check --target $TARGET --features cm7-r0p1
+            xargo check --target $TARGET --features cm7-r0p1 --examples
+        ;;
+    esac
+
+    xargo check --target $TARGET
     xargo check --target $TARGET --examples
 }
 

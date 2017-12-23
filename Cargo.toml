@@ -13,7 +13,7 @@ repository = "https://github.com/japaric/cortex-m-rtfm"
 version = "0.3.0"
 
 [dependencies]
-cortex-m = { git = "https://github.com/japaric/cortex-m" }
+cortex-m = { git = "https://github.com/japaric/cortex-m", branch = "cm7-r0p1" }
 untagged-option = "0.1.1"
 # rtfm-core = "0.2.0"
 rtfm-core = { git = "https://github.com/japaric/rtfm-core" }
@@ -31,6 +31,9 @@ version = "0.3.3"
 features = ["rt"]
 git = "https://github.com/japaric/stm32f103xx"
 # version = "0.8.0"
+
+[features]
+cm7-r0p1 = ["cortex-m/cm7-r0p1"]
 
 [profile.release]
 lto = true
