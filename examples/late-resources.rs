@@ -1,5 +1,4 @@
 //! Demonstrates initialization of resources in `init`.
-
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]

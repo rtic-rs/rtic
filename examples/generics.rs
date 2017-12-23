@@ -70,5 +70,5 @@ fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
 
 // This task has direct access to the resources
 fn exti1(t: &mut Threshold, r: EXTI1::Resources) {
-    work(t, r.GPIOA, r.SPI1);
+    work(t, &r.GPIOA, &r.SPI1);
 }

@@ -77,7 +77,38 @@ pub fn app(app: check::App) -> Result<App> {
 }
 
 fn resources(app: &App) -> Result<()> {
+    for name in &app.init.resources {
+        if let Some(resource) = app.resources.get(name) {
+            ensure!(
+                resource.expr.is_some(),
+                "resource `{}`, allocated to `init`, must have an initial value",
+                name
+            );
+        } else {
+            bail!(
+                "resource `{}`, allocated to `init`, must be a data resource",
+                name
+            );
+        }
+
+        ensure!(
+            !app.idle.resources.contains(name),
+            "resources assigned to `init` can't be shared with `idle`"
+        );
+
+        ensure!(
+            app.tasks
+                .iter()
+                .all(|(_, task)| !task.resources.contains(name)),
+            "resources assigned to `init` can't be shared with tasks"
+        )
+    }
+
     for resource in app.resources.keys() {
+        if app.init.resources.contains(resource) {
+            continue;
+        }
+
         if app.idle.resources.contains(resource) {
             continue;
         }

@@ -17,6 +17,13 @@ pub enum Ownership {
 }
 
 impl Ownership {
+    pub fn ceiling(&self) -> u8 {
+        match *self {
+            Ownership::Owned { priority } => priority,
+            Ownership::Shared { ceiling } => ceiling,
+        }
+    }
+
     pub fn is_owned(&self) -> bool {
         match *self {
             Ownership::Owned { .. } => true,

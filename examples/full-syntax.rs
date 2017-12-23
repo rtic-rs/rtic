@@ -63,22 +63,22 @@ mod main {
             *r.OWNED != *r.OWNED;
 
             if *r.OWNED {
-                if r.SHARED.claim(t, |shared, _| **shared) {
+                if r.SHARED.claim(t, |shared, _| *shared) {
                     rtfm::wfi();
                 }
             } else {
-                r.SHARED.claim_mut(t, |shared, _| **shared = !**shared);
+                r.SHARED.claim_mut(t, |shared, _| *shared = !*shared);
             }
         }
     }
 }
 
-fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
-    **r.ON = !**r.ON;
+fn sys_tick(_t: &mut Threshold, mut r: SYS_TICK::Resources) {
+    *r.ON = !*r.ON;
 
-    **r.CO_OWNED += 1;
+    *r.CO_OWNED += 1;
 }
 
-fn tim2(_t: &mut Threshold, r: TIM2::Resources) {
-    **r.CO_OWNED += 1;
+fn tim2(_t: &mut Threshold, mut r: TIM2::Resources) {
+    *r.CO_OWNED += 1;
 }
