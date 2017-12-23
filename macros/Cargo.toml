@@ -13,7 +13,7 @@ version = "0.2.1"
 error-chain = "0.10.0"
 quote = "0.3.15"
 # rtfm-syntax = "0.2.0"
-rtfm-syntax = { git = "https://github.com/japaric/rtfm-syntax", branch = "init-resources" }
+rtfm-syntax = { git = "https://github.com/japaric/rtfm-syntax" }
 syn = "0.11.11"
 
 [lib]
