@@ -13,7 +13,7 @@ repository = "https://github.com/japaric/cortex-m-rtfm"
 version = "0.3.0"
 
 [dependencies]
-cortex-m = { git = "https://github.com/japaric/cortex-m", branch = "cm7-r0p1" }
+cortex-m = { git = "https://github.com/japaric/cortex-m" }
 untagged-option = "0.1.1"
 # rtfm-core = "0.2.0"
 rtfm-core = { git = "https://github.com/japaric/rtfm-core" }
