@@ -20,8 +20,7 @@ rtfm-core = { git = "https://github.com/japaric/rtfm-core" }
 cortex-m-rtfm-macros = { path = "macros" }
 
 [target.'cfg(target_arch = "x86_64")'.dev-dependencies]
-# compiletest_rs = "0.3.4"
-compiletest_rs = { git = "https://github.com/dwrensha/compiletest-rs", branch = "rustup" }
+compiletest_rs = "0.3.5"
 
 [dev-dependencies.cortex-m-rt]
 features = ["abort-on-panic"]
@@ -31,6 +30,9 @@ version = "0.3.3"
 features = ["rt"]
 git = "https://github.com/japaric/stm32f103xx"
 # version = "0.8.0"
+
+[features]
+cm7-r0p1 = ["cortex-m/cm7-r0p1"]
 
 [profile.release]
 lto = true
