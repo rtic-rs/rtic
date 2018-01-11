@@ -370,10 +370,10 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                 });
             }
             Kind::Interrupt { enabled } => {
-                // Interrupt. These can be enabled / disabled through the NVIC
+                // Interrupt. These are enabled / disabled through the NVIC
                 if interrupts.is_empty() {
                     interrupts.push(quote! {
-                        let nvic = &*#device::NVIC::ptr();
+                        let mut nvic: #device::NVIC = core::mem::transmute(());
                     });
                 }
 

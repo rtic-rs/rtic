@@ -2,6 +2,7 @@
 //!
 //! ```
 //! #![deny(unsafe_code)]
+//! #![deny(warnings)]
 //! #![feature(proc_macro)]
 //! #![no_std]
 //! 
@@ -13,6 +14,11 @@
 //! 
 //! app! {
 //!     device: stm32f103xx,
+//! 
+//!     resources: {
+//!         static GPIOA: GPIOA;
+//!         static SPI1: SPI1;
+//!     },
 //! 
 //!     tasks: {
 //!         EXTI0: {
@@ -29,7 +35,12 @@
 //!     },
 //! }
 //! 
-//! fn init(_p: init::Peripherals) {}
+//! fn init(p: init::Peripherals) -> init::LateResources {
+//!     init::LateResources {
+//!         GPIOA: p.device.GPIOA,
+//!         SPI1: p.device.SPI1,
+//!     }
+//! }
 //! 
 //! fn idle() -> ! {
 //!     loop {
@@ -61,7 +72,7 @@
 //! 
 //! // This task has direct access to the resources
 //! fn exti1(t: &mut Threshold, r: EXTI1::Resources) {
-//!     work(t, r.GPIOA, r.SPI1);
+//!     work(t, &r.GPIOA, &r.SPI1);
 //! }
 //! ```
 // Auto-generated. Do not modify.
