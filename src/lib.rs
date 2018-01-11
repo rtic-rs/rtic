@@ -87,11 +87,12 @@ extern crate cortex_m_rtfm_macros;
 extern crate rtfm_core;
 extern crate untagged_option;
 
-use core::u8;
+use core::{mem, u8};
 
-pub use rtfm_core::{Resource, Threshold};
 pub use cortex_m::asm::{bkpt, wfi};
+pub use cortex_m::peripheral::NVIC;
 pub use cortex_m_rtfm_macros::app;
+pub use rtfm_core::{Resource, Threshold};
 #[doc(hidden)]
 pub use untagged_option::UntaggedOption;
 
@@ -165,6 +166,6 @@ where
     I: Nr,
 {
     // NOTE(safe) atomic write
-    let nvic = unsafe { &*cortex_m::peripheral::NVIC::ptr() };
+    let mut nvic: NVIC = unsafe { mem::transmute(()) };
     nvic.set_pending(interrupt);
 }

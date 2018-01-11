@@ -43,7 +43,7 @@ app! {
     }
 }
 
-fn init(p: init::Peripherals, r: init::Resources) {
+fn init(mut p: init::Peripherals, r: init::Resources) {
     // `init` can modify all the `resources` declared in `app!`
     r.ON;
 

@@ -2,6 +2,7 @@
 //!
 //! ```
 //! #![deny(unsafe_code)]
+//! #![deny(warnings)]
 //! // IMPORTANT always include this feature gate
 //! #![feature(proc_macro)]
 //! #![no_std]
@@ -27,8 +28,9 @@
 //! // this function.
 //! fn init(p: init::Peripherals) {
 //!     // This function has access to all the peripherals of the device
-//!     p.GPIOA;
-//!     p.RCC;
+//!     p.core.SYST;
+//!     p.device.GPIOA;
+//!     p.device.RCC;
 //!     // ..
 //! }
 //! 
