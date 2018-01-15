@@ -22,7 +22,7 @@ app! {
 }
 
 fn init(_p: init::Peripherals, r: init::Resources) {
-    let _buf: &'static mut [u8] = r.BUFFER;
+    let _buf: &'static mut [u8; 16] = r.BUFFER;
 }
 
 fn idle() -> ! {

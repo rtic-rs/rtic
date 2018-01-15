@@ -11,6 +11,7 @@ main() {
         preemption
         nested
         late-resources
+        safe-static-mut-ref
         generics
         full-syntax
     )

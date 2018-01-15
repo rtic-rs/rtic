@@ -58,7 +58,7 @@ mod trans;
 /// ```
 ///
 /// The initial value of a resource can be omitted. This means that the resource will be runtime
-/// initialized.
+/// initialized; these runtime initialized resources are also known as *late resources*.
 ///
 /// If this key is omitted its value defaults to an empty list.
 ///
@@ -78,6 +78,18 @@ mod trans;
 /// initialization function.
 ///
 /// If the key is omitted its value defaults to `init`.
+///
+/// ## `init.resources`
+///
+/// This key is optional. Its value is a set of resources the `init` function *owns*. The resources
+/// in this list must be a subset of the resources listed in the top `resources` key. Note that some
+/// restrictions apply:
+///
+/// - The resources in this list can't be late resources.
+/// - The resources that appear in this list can't appear in other list like `idle.resources` or
+/// `tasks.$TASK.resources`
+///
+/// If this key is omitted its value is assumed to be an empty list.
 ///
 /// # `idle`
 ///
@@ -100,9 +112,7 @@ mod trans;
 /// ## `idle.resources`
 ///
 /// This key is optional. Its value is a list of resources the `idle` loop has access to. The
-/// resources in this list can refer to the resources listed in the top `resources` key. If the name
-/// doesn't match one of the resources /// listed in the top `resources` key the resource is assumed
-/// to be a peripheral.
+/// resources in this list must be a subset of the resources listed in the top `resources` key.
 ///
 /// If omitted its value defaults to an empty list.
 ///
@@ -154,9 +164,7 @@ mod trans;
 /// ## `tasks.$TASK.resources`
 ///
 /// This key is optional. Its value is a list of resources this task has access to. The resources in
-/// this list can refer to the resources listed in the top `resources` key. If the name doesn't
-/// match one of the resources listed in the top `resources` key the resource is assumed to be a
-/// peripheral.
+/// this list must be a subset of the resources listed in the top `resources` key.
 ///
 /// If omitted its value defaults to an empty list.
 #[proc_macro]
