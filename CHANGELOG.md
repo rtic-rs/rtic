@@ -5,6 +5,27 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.3.0] - 2018-01-15
+
+### Added
+
+- [feat] `&'static mut` references can be safely created by assigning resources to `init`. See the
+  `init.resources` section of the `app!` macro documentation and the `safe-static-mut-ref` example
+  for details.
+
+### Changed
+
+- [breaking-change] svd2rust dependency has been bumped to v0.12.0
+
+- [breaking-change] resources assigned to tasks, or to idle, that were not declared in the top
+  `resources` field generate compiler errors. Before these were assumed to be peripherals, that's no
+  longer the case.
+
+- [breaking-change] the layout of `init::Peripherals` has changed. This struct now has two fields:
+  `core` and `device`. The value of the `core` field is a struct that owns all the core peripherals
+  of the device and the value of the `device` field is a struct that owns all the device specific
+  peripherals of the device.
+
 ## [v0.2.2] - 2017-11-22
 
 ### Added
@@ -56,7 +77,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Initial release
 
-[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.0...HEAD
+[v0.3.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.2...v0.3.0
 [v0.2.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.1...v0.2.2
 [v0.2.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.1.1...v0.2.0

@@ -37,18 +37,18 @@
 //! # Dependencies
 //!
 //! The application crate must depend on a device crate generated using
-//! [`svd2rust`] v0.11.x and the "rt" feature of that crate must be enabled. The
+//! [`svd2rust`] v0.12.x and the "rt" feature of that crate must be enabled. The
 //! SVD file used to generate the device crate *must* contain [`<cpu>`]
 //! information.
 //!
-//! [`svd2rust`]: https://docs.rs/svd2rust/0..0/svd2rust/
+//! [`svd2rust`]: https://docs.rs/svd2rust/0.12.0/svd2rust/
 //! [`<cpu>`]: https://www.keil.com/pack/doc/CMSIS/SVD/html/elem_cpu.html
 //!
 //! # `app!`
 //!
 //! The `app!` macro is documented [here].
 //!
-//! [here]: https://docs.rs/cortex-m-rtfm-macros/0.2.0/cortex_m_rtfm_macros/fn.app.html
+//! [here]: https://docs.rs/cortex-m-rtfm-macros/0.2.1/cortex_m_rtfm_macros/fn.app.html
 //!
 //! # Important: Cortex-M7 devices
 //!
@@ -90,13 +90,13 @@ extern crate untagged_option;
 use core::{mem, u8};
 
 pub use cortex_m::asm::{bkpt, wfi};
-pub use cortex_m::peripheral::NVIC;
 pub use cortex_m_rtfm_macros::app;
 pub use rtfm_core::{Resource, Threshold};
 #[doc(hidden)]
 pub use untagged_option::UntaggedOption;
 
 use cortex_m::interrupt::{self, Nr};
+use cortex_m::peripheral::NVIC;
 #[cfg(not(armv6m))]
 use cortex_m::register::basepri;
 
