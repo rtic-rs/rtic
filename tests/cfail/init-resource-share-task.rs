@@ -21,8 +21,8 @@ app! { //~ proc macro panicked
     tasks: {
         SYS_TICK: {
             path: sys_tick,
-            // ERROR resources assigned to `init` can't be shared with tasks
             resources: [BUFFER],
+            //~^ error: this resource is owned by `init` and can't be shared
         },
     },
 }

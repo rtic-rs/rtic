@@ -7,7 +7,7 @@
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
-use rtfm::{app, Resource, Threshold};
+use rtfm::{app, Threshold};
 
 app! {
     device: stm32f103xx,
@@ -43,7 +43,7 @@ fn is_sync<T>(_: &T) where T: Sync {}
 fn exti0(_t: &mut Threshold, r: EXTI0::Resources) {
     // ERROR resource proxies can't be shared between tasks
     is_sync(&r.SHARED);
-    //~^ error the trait bound `*const (): core::marker::Sync` is not satisfied
+    //~^ error `*const ()` cannot be shared between threads safely
 
     // ERROR resource proxies are not `Send`able across tasks
     is_send(&r.SHARED);

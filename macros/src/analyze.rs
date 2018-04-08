@@ -40,7 +40,7 @@ pub fn app(app: &App) -> Ownerships {
     }
 
     for task in app.tasks.values() {
-        for resource in &task.resources {
+        for resource in task.resources.iter() {
             if let Some(ownership) = ownerships.get_mut(resource) {
                 match *ownership {
                     Ownership::Owned { priority } => {

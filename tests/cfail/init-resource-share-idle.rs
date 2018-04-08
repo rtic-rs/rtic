@@ -19,8 +19,8 @@ app! { //~ proc macro panicked
     },
 
     idle: {
-        // ERROR resources assigned to `init` can't be shared with `idle`
         resources: [BUFFER],
+        //~^ error: this resource is owned by `init` and can't be shared
     },
 }
 

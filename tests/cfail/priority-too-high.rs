@@ -9,6 +9,7 @@ extern crate stm32f103xx;
 use rtfm::app;
 
 app! { //~ error attempt to subtract with overflow
+    //~^ error constant evaluation error
     device: stm32f103xx,
 
     tasks: {

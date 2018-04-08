@@ -9,13 +9,13 @@ main() {
 
     case $TARGET in
         thumbv7em-none-eabi*)
-            xargo check --target $TARGET --features cm7-r0p1
-            xargo check --target $TARGET --features cm7-r0p1 --examples
+            cargo check --target $TARGET --features cm7-r0p1
+            cargo check --target $TARGET --features cm7-r0p1 --examples
         ;;
     esac
 
-    xargo check --target $TARGET
-    xargo check --target $TARGET --examples
+    cargo check --target $TARGET
+    cargo check --target $TARGET --examples
 }
 
 main
