@@ -10,9 +10,8 @@ fn cfail() {
     let mut config = Config::default();
     config.mode = Mode::CompileFail;
     config.src_base = PathBuf::from(format!("tests/cfail"));
-    config.target_rustcflags = Some(
-        "-C panic=abort -L target/debug -L target/debug/deps ".to_string(),
-    );
+    config.target_rustcflags =
+        Some("-C panic=abort -L target/debug -L target/debug/deps ".to_string());
 
     compiletest::run_tests(&config);
 }

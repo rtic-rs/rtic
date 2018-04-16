@@ -1,5 +1,6 @@
-use quote::{Ident, Tokens};
-use syn::{Lit, StrStyle};
+use proc_macro2::Span;
+use quote::Tokens;
+use syn::{Ident, LitStr};
 
 use analyze::Ownerships;
 use check::{App, Kind};
@@ -10,12 +11,12 @@ fn krate() -> Ident {
 
 pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     let mut root = vec![];
-    let mut main = vec![];
+    let mut main = vec![quote!(#![allow(path_statements)])];
 
+    ::trans::tasks(app, ownerships, &mut root, &mut main);
     ::trans::init(app, &mut main, &mut root);
     ::trans::idle(app, ownerships, &mut main, &mut root);
     ::trans::resources(app, ownerships, &mut root);
-    ::trans::tasks(app, ownerships, &mut root);
 
     root.push(quote! {
         #[allow(unsafe_code)]
@@ -53,7 +54,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
         let super_ = if needs_reexport {
             None
         } else {
-            Some(Ident::new("super"))
+            Some(Ident::from("super"))
         };
         let mut rexprs = vec![];
         let mut rfields = vec![];
@@ -69,7 +70,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
                     pub #name: &'static mut #ty,
                 });
 
-                let _name = Ident::new(format!("_{}", name.as_ref()));
+                let _name = Ident::from(format!("_{}", name.as_ref()));
                 rexprs.push(if resource.expr.is_some() {
                     quote! {
                         #name: &mut #super_::#_name,
@@ -132,10 +133,10 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
 
         // owned resource
         if ceiling == 0 {
-            continue
+            continue;
         }
 
-        let _name = Ident::new(format!("_{}", name.as_ref()));
+        let _name = Ident::from(format!("_{}", name.as_ref()));
         let resource = app.resources
             .get(name)
             .expect(&format!("BUG: resource {} has no definition", name));
@@ -262,7 +263,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                     &mut #name
                 },));
             } else {
-                let _name = Ident::new(format!("_{}", name.as_ref()));
+                let _name = Ident::from(format!("_{}", name.as_ref()));
                 lifetime = Some(quote!('a));
 
                 fields.push(quote! {
@@ -309,7 +310,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         let mut fields = vec![];
 
         for (name, resource) in late_resources {
-            let _name = Ident::new(format!("_{}", name.as_ref()));
+            let _name = Ident::from(format!("_{}", name.as_ref()));
 
             let ty = &resource.ty;
 
@@ -373,6 +374,8 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                 // Interrupt. These are enabled / disabled through the NVIC
                 if interrupts.is_empty() {
                     interrupts.push(quote! {
+                        use #device::Interrupt;
+
                         let mut nvic: #device::NVIC = core::mem::transmute(());
                     });
                 }
@@ -381,16 +384,16 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                 interrupts.push(quote! {
                     let prio_bits = #device::NVIC_PRIO_BITS;
                     let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                    nvic.set_priority(#device::Interrupt::#name, hw);
+                    nvic.set_priority(Interrupt::#name, hw);
                 });
 
                 if enabled {
                     interrupts.push(quote! {
-                        nvic.enable(#device::Interrupt::#name);
+                        nvic.enable(Interrupt::#name);
                     });
                 } else {
                     interrupts.push(quote! {
-                        nvic.disable(#device::Interrupt::#name);
+                        nvic.disable(Interrupt::#name);
                     });
                 }
             }
@@ -416,7 +419,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
     let krate = krate();
 
     for name in ownerships.keys() {
-        let _name = Ident::new(format!("_{}", name.as_ref()));
+        let _name = Ident::from(format!("_{}", name.as_ref()));
 
         // Declare the static that holds the resource
         let resource = app.resources
@@ -439,7 +442,7 @@ fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
     }
 }
 
-fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
+fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>, main: &mut Vec<Tokens>) {
     let device = &app.device;
     let krate = krate();
 
@@ -453,7 +456,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
         if has_resources {
             for rname in &task.resources {
                 let ceiling = ownerships[rname].ceiling();
-                let _rname = Ident::new(format!("_{}", rname.as_ref()));
+                let _rname = Ident::from(format!("_{}", rname.as_ref()));
                 let resource = app.resources
                     .get(rname)
                     .expect(&format!("BUG: resource {} has no definition", rname));
@@ -591,8 +594,8 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
         }
 
         let path = &task.path;
-        let _tname = Ident::new(format!("_{}", tname));
-        let export_name = Lit::Str(tname.as_ref().to_owned(), StrStyle::Cooked);
+        let _tname = Ident::from(format!("_{}", tname));
+        let export_name = LitStr::new(tname.as_ref(), Span::call_site());
         root.push(quote! {
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
@@ -608,11 +611,12 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
             mod #tname {
+                #[allow(unused_imports)]
                 use core::marker::PhantomData;
 
                 #[allow(dead_code)]
                 #[deny(const_err)]
-                const CHECK_PRIORITY: (u8, u8) = (
+                pub const CHECK_PRIORITY: (u8, u8) = (
                     #priority - 1,
                     (1 << ::#device::NVIC_PRIO_BITS) - #priority,
                 );
@@ -620,5 +624,9 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
                 #(#items)*
             }
         });
+
+        // after miri landed (?) rustc won't analyze `const` items unless they are used so we force
+        // evaluation with this path statement
+        main.push(quote!(#tname::CHECK_PRIORITY;));
     }
 }

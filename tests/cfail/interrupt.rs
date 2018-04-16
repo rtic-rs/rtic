@@ -8,12 +8,10 @@ extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! {
-    //~^ error no variant named `EXTI33` found for type
+app! { //~ error no variant named `EXTI33` found for type
     device: stm32f103xx,
 
     tasks: {
-        // ERROR this interrupt doesn't exist
         EXTI33: {
             path: exti33,
         },
