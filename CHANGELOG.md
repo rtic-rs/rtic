@@ -5,6 +5,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.3.2] - 2018-04-16
+
+### Added
+
+- Span information to error messages
+
+### Changed
+
+- Some non fatal error messages have become warning messages. For example, specifying an empty list
+  of resources now produces a warning instead of a hard error.
+
 ## [v0.3.1] - 2018-01-16
 
 ### Fixed

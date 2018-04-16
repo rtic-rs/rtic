@@ -7,13 +7,13 @@ keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm-macros"
 repository = "https://github.com/japaric/cortex-m-rtfm"
-version = "0.3.0"
+version = "0.3.1"
 
 [dependencies]
 failure = "0.1.1"
 proc-macro2 = "0.3.6"
 quote = "0.5.1"
-rtfm-syntax = { git = "https://github.com/japaric/rtfm-syntax", branch = "syn-up" }
+rtfm-syntax = "0.3.0"
 syn = "0.13.1"
 
 [lib]
