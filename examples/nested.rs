@@ -10,8 +10,8 @@
 extern crate cortex_m_rtfm as rtfm;
 extern crate stm32f103xx;
 
-use stm32f103xx::Interrupt;
 use rtfm::{app, Resource, Threshold};
+use stm32f103xx::Interrupt;
 
 app! {
     device: stm32f103xx,
@@ -60,10 +60,7 @@ fn idle() -> ! {
 }
 
 #[allow(non_snake_case)]
-fn exti0(
-    t: &mut Threshold,
-    EXTI0::Resources { mut LOW, mut HIGH }: EXTI0::Resources,
-) {
+fn exti0(t: &mut Threshold, EXTI0::Resources { mut LOW, mut HIGH }: EXTI0::Resources) {
     // Because this task has a priority of 1 the preemption threshold `t` also
     // starts at 1
 
