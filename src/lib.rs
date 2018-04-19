@@ -77,13 +77,16 @@
 //! > A description of the RTFM task and resource model. [PDF][rtfm]
 //!
 //! [rtfm]: http://www.diva-portal.org/smash/get/diva2:1005680/FULLTEXT01.pdf
-#![deny(missing_docs)]
-#![deny(warnings)]
+// #![deny(missing_docs)]
+// #![deny(warnings)]
+#![feature(const_fn)]
 #![feature(proc_macro)]
+#![feature(unsize)]
 #![no_std]
 
 extern crate cortex_m;
 extern crate cortex_m_rtfm_macros;
+extern crate heapless;
 extern crate rtfm_core;
 extern crate untagged_option;
 
@@ -101,6 +104,8 @@ use cortex_m::peripheral::NVIC;
 use cortex_m::register::basepri;
 
 pub mod examples;
+#[doc(hidden)]
+pub mod ll;
 
 /// Executes the closure `f` in a preemption free context
 ///
