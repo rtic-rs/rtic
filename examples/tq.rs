@@ -14,12 +14,12 @@ use core::cmp;
 
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::ITM;
-use rtfm::ll::{Consumer, FreeList, Instant, Node, Producer, RingBuffer, Slot, TaggedPayload,
+use rtfm::ll::{self, Consumer, FreeList, Instant, Node, Producer, RingBuffer, Slot, TaggedPayload,
                TimerQueue};
 use rtfm::{app, Resource, Threshold};
 use stm32f103xx::Interrupt;
 
-const ACAP: usize = 2;
+const ACAP: usize = 4;
 
 const MS: u32 = 8_000;
 
@@ -28,11 +28,11 @@ app! {
 
     resources: {
         /* timer queue */
-        static TQ: TimerQueue<Task, [TaggedPayload<Task>; 2]>;
+        static TQ: TimerQueue<Task, [TaggedPayload<Task>; ACAP]>;
 
         /* a */
         // payloads w/ after
-        static AN: [Node<i32>; 2] = [Node::new(), Node::new()];
+        static AN: [Node<i32>; ACAP] = unsafe { ll::uninitialized() };
         static AFL: FreeList<i32> = FreeList::new();
 
         /* exti0 */
@@ -59,7 +59,7 @@ app! {
         EXTI0: {
             path: exti0,
             resources: [Q1C, AFL],
-            priority: 1,
+            priority: 3,
         },
 
         // timer queue
@@ -123,6 +123,8 @@ fn exti1(t: &mut Threshold, r: EXTI1::Resources) {
     unsafe { iprintln!(&mut (*ITM::ptr()).stim[0], "EXTI0(bl={:?})", bl) }
     async.a(t, 100 * MS, 0).unwrap();
     async.a(t, 50 * MS, 1).unwrap();
+    async.a(t, 75 * MS, 2).unwrap();
+    async.a(t, 75 * MS + 1, 3).unwrap();
 }
 
 /* auto generated */
@@ -134,7 +136,7 @@ fn exti0(t: &mut Threshold, mut r: EXTI0::Resources) {
 
                 r.AFL.claim_mut(t, |afl, _| afl.push(slot));
 
-                a(&mut unsafe { Threshold::new(1) }, bl, payload);
+                a(&mut unsafe { Threshold::new(3) }, bl, payload);
             }
         }
     }

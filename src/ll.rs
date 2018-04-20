@@ -37,16 +37,6 @@ impl<T> PartialOrd for Node<T> {
     }
 }
 
-impl<T> Node<T> {
-    pub const fn new() -> Self {
-        Node {
-            baseline: Instant(0),
-            next: None,
-            payload: uninitialized(),
-        }
-    }
-}
-
 pub struct Slot<T>
 where
     T: 'static,
@@ -250,12 +240,12 @@ impl ops::Sub for Instant {
     }
 }
 
-const fn uninitialized<T>() -> T {
+pub const unsafe fn uninitialized<T>() -> T {
     #[allow(unions_with_drop_fields)]
     union U<T> {
         some: T,
         none: (),
     }
 
-    unsafe { U { none: () }.some }
+    U { none: () }.some
 }
