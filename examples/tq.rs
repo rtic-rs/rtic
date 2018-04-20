@@ -13,8 +13,9 @@ extern crate stm32f103xx;
 use core::cmp;
 
 use cortex_m::peripheral::syst::SystClkSource;
-use cortex_m::peripheral::{DWT, ITM};
-use rtfm::ll::{Consumer, FreeList, Message, Node, Payload, Producer, RingBuffer, Slot, TimerQueue};
+use cortex_m::peripheral::ITM;
+use rtfm::ll::{Consumer, FreeList, Instant, Node, Producer, RingBuffer, Slot, TaggedPayload,
+               TimerQueue};
 use rtfm::{app, Resource, Threshold};
 use stm32f103xx::Interrupt;
 
@@ -27,25 +28,22 @@ app! {
 
     resources: {
         /* timer queue */
-        static TQ: TimerQueue<Task, [Message<Task>; 2]>;
+        static TQ: TimerQueue<Task, [TaggedPayload<Task>; 2]>;
 
         /* a */
         // payloads w/ after
         static AN: [Node<i32>; 2] = [Node::new(), Node::new()];
         static AFL: FreeList<i32> = FreeList::new();
 
-        static AQ: RingBuffer<(u32, i32), [(u32, i32); ACAP + 1], u8> = RingBuffer::u8();
-        static AQC: Consumer<'static, (u32, i32), [(u32, i32); ACAP + 1], u8>;
-        static AQP: Producer<'static, (u32, i32), [(u32, i32); ACAP + 1], u8>;
-
         /* exti0 */
-        static Q1: RingBuffer<Task1, [Task1; ACAP + 1], u8> = RingBuffer::u8();
-        static Q1C: Consumer<'static, Task1, [Task1; ACAP + 1], u8>;
-        static Q1P: Producer<'static, Task1, [Task1; ACAP + 1], u8>;
+        static Q1: RingBuffer<TaggedPayload<Task1>, [TaggedPayload<Task1>; ACAP + 1], u8> =
+            RingBuffer::u8();
+        static Q1C: Consumer<'static, TaggedPayload<Task1>, [TaggedPayload<Task1>; ACAP + 1], u8>;
+        static Q1P: Producer<'static, TaggedPayload<Task1>, [TaggedPayload<Task1>; ACAP + 1], u8>;
     },
 
     init: {
-        resources: [AN, Q1, AQ],
+        resources: [AN, Q1],
     },
 
     tasks: {
@@ -60,14 +58,14 @@ app! {
         // dispatch interrupt
         EXTI0: {
             path: exti0,
-            resources: [AQC, Q1C],
+            resources: [Q1C, AFL],
             priority: 1,
         },
 
         // timer queue
         SYS_TICK: {
             path: sys_tick,
-            resources: [TQ, AQP, Q1P, AFL],
+            resources: [TQ, Q1P],
             priority: 2,
         },
     },
@@ -88,12 +86,9 @@ pub fn init(mut p: ::init::Peripherals, r: init::Resources) -> init::LateResourc
         r.AFL.push(Slot::new(n));
     }
 
-    let (aqp, aqc) = r.AQ.split();
     let (q1p, q1c) = r.Q1.split();
     init::LateResources {
         TQ: TimerQueue::new(p.core.SYST),
-        AQC: aqc,
-        AQP: aqp,
         Q1C: q1c,
         Q1P: q1p,
     }
@@ -107,13 +102,12 @@ pub fn idle() -> ! {
     }
 }
 
-fn a(_t: &mut Threshold, bl: u32, payload: i32) {
-    let now = DWT::get_cycle_count();
+fn a(_t: &mut Threshold, bl: Instant, payload: i32) {
     unsafe {
         iprintln!(
             &mut (*ITM::ptr()).stim[0],
-            "a(now={}, bl={}, payload={})",
-            now,
+            "a(now={:?}, bl={:?}, payload={})",
+            Instant::now(),
             bl,
             payload
         )
@@ -122,21 +116,24 @@ fn a(_t: &mut Threshold, bl: u32, payload: i32) {
 
 fn exti1(t: &mut Threshold, r: EXTI1::Resources) {
     /* expansion */
-    let bl = DWT::get_cycle_count();
+    let bl = Instant::now();
     let mut async = a::Async::new(bl, r.TQ, r.AFL);
     /* end of expansion */
 
-    unsafe { iprintln!(&mut (*ITM::ptr()).stim[0], "EXTI0(bl={})", bl) }
+    unsafe { iprintln!(&mut (*ITM::ptr()).stim[0], "EXTI0(bl={:?})", bl) }
     async.a(t, 100 * MS, 0).unwrap();
     async.a(t, 50 * MS, 1).unwrap();
 }
 
 /* auto generated */
-fn exti0(_t: &mut Threshold, mut r: EXTI0::Resources) {
-    while let Some(task) = r.Q1C.dequeue() {
-        match task {
+fn exti0(t: &mut Threshold, mut r: EXTI0::Resources) {
+    while let Some(payload) = r.Q1C.dequeue() {
+        match payload.tag() {
             Task1::a => {
-                let (bl, payload) = r.AQC.dequeue().unwrap();
+                let (bl, payload, slot) = unsafe { payload.coerce() }.read();
+
+                r.AFL.claim_mut(t, |afl, _| afl.push(slot));
+
                 a(&mut unsafe { Threshold::new(1) }, bl, payload);
             }
         }
@@ -145,29 +142,26 @@ fn exti0(_t: &mut Threshold, mut r: EXTI0::Resources) {
 
 fn sys_tick(t: &mut Threshold, r: SYS_TICK::Resources) {
     #[allow(non_snake_case)]
-    let SYS_TICK::Resources {
-        mut AFL,
-        mut AQP,
-        mut Q1P,
-        mut TQ,
-    } = r;
+    let SYS_TICK::Resources { mut Q1P, mut TQ } = r;
 
-    enum State<T> {
-        Message(Message<T>),
-        Baseline(u32),
+    enum State<T>
+    where
+        T: Copy,
+    {
+        Payload(TaggedPayload<T>),
+        Baseline(Instant),
         Done,
     }
 
     loop {
         let state = TQ.claim_mut(t, |tq, _| {
-            if let Some(m) = tq.queue.peek().cloned() {
-                if (DWT::get_cycle_count() as i32).wrapping_sub(m.baseline as i32) >= 0 {
+            if let Some(bl) = tq.queue.peek().map(|p| p.baseline()) {
+                if Instant::now() >= bl {
                     // message ready
-                    tq.queue.pop();
-                    State::Message(m)
+                    State::Payload(tq.queue.pop().unwrap())
                 } else {
-                    // set timeout
-                    State::Baseline(m.baseline)
+                    // new timeout
+                    State::Baseline(bl)
                 }
             } else {
                 // empty queue
@@ -177,30 +171,16 @@ fn sys_tick(t: &mut Threshold, r: SYS_TICK::Resources) {
         });
 
         match state {
-            State::Message(m) => {
-                match m.task {
-                    Task::a => {
-                        // read payload
-                        let (payload, slot) = unsafe { Payload::<i32>::from(m.payload) }.read();
-
-                        // return free slot to the free list
-                        AFL.claim_mut(t, |afl, _| afl.push(slot));
-
-                        // enqueue a new `a` task
-                        AQP.claim_mut(t, |aqp, t| {
-                            aqp.enqueue_unchecked((m.baseline, payload));
-                            Q1P.claim_mut(t, |q1p, _| {
-                                q1p.enqueue_unchecked(Task1::a);
-                                rtfm::set_pending(Interrupt::EXTI0);
-                            });
-                        });
-                    }
+            State::Payload(p) => match p.tag() {
+                Task::a => {
+                    Q1P.claim_mut(t, |q1p, _| q1p.enqueue_unchecked(p.retag(Task1::a)));
+                    rtfm::set_pending(Interrupt::EXTI0);
                 }
-            }
+            },
             State::Baseline(bl) => {
                 const MAX: u32 = 0x00ffffff;
 
-                let diff = (bl as i32).wrapping_sub(DWT::get_cycle_count() as i32);
+                let diff = bl - Instant::now();
 
                 if diff < 0 {
                     // message became ready
@@ -237,21 +217,21 @@ pub enum Task {
 mod a {
     use cortex_m::peripheral::SCB;
 
-    use rtfm::ll::Message;
+    use rtfm::ll::Instant;
     use rtfm::{Resource, Threshold};
     use Task;
 
     #[allow(non_snake_case)]
     pub struct Async {
         // inherited baseline
-        baseline: u32,
+        baseline: Instant,
         TQ: ::EXTI1::TQ,
         AFL: ::EXTI1::AFL,
     }
 
     impl Async {
         #[allow(non_snake_case)]
-        pub fn new(bl: u32, TQ: ::EXTI1::TQ, AFL: ::EXTI1::AFL) -> Self {
+        pub fn new(bl: Instant, TQ: ::EXTI1::TQ, AFL: ::EXTI1::AFL) -> Self {
             Async {
                 baseline: bl,
                 TQ,
@@ -267,10 +247,10 @@ mod a {
                         // full
                         Err(payload)
                     } else {
-                        let bl = baseline.wrapping_add(after);
+                        let bl = baseline + after;
                         if tq.queue
                             .peek()
-                            .map(|head| (bl as i32).wrapping_sub(head.baseline as i32) < 0)
+                            .map(|head| bl < head.baseline())
                             .unwrap_or(true)
                         {
                             tq.syst.enable_interrupt();
@@ -278,9 +258,7 @@ mod a {
                             unsafe { (*SCB::ptr()).icsr.write(1 << 26) }
                         }
 
-                        tq.queue
-                            .push(Message::new(bl, Task::a, slot.write(payload)))
-                            .ok();
+                        tq.queue.push(slot.write(bl, payload).tag(Task::a)).ok();
 
                         Ok(())
                     }

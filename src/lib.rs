@@ -81,6 +81,7 @@
 // #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
+#![feature(untagged_unions)]
 #![feature(unsize)]
 #![no_std]
 
