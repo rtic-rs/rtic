@@ -2,55 +2,16 @@ use core::cmp::Ordering;
 use core::marker::Unsize;
 use core::ptr;
 
-use cortex_m::peripheral::{DWT, SCB, SYST};
+use cortex_m::peripheral::SYST;
 use heapless::binary_heap::{BinaryHeap, Min};
 pub use heapless::ring_buffer::{Consumer, Producer, RingBuffer};
 use untagged_option::UntaggedOption;
-
-#[derive(Clone, Copy)]
-pub struct Message<T> {
-    // relative to the TimerQueue baseline
-    pub deadline: u32,
-    pub task: T,
-    pub payload: usize,
-}
-
-impl<T> Message<T> {
-    fn new<P>(dl: u32, task: T, payload: Payload<P>) -> Self {
-        Message {
-            deadline: dl,
-            task,
-            payload: payload.erase(),
-        }
-    }
-}
-
-impl<T> PartialEq for Message<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.deadline.eq(&other.deadline)
-    }
-}
-
-impl<T> Eq for Message<T> {}
-
-impl<T> PartialOrd for Message<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.deadline.partial_cmp(&other.deadline)
-    }
-}
-
-impl<T> Ord for Message<T> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.deadline.cmp(&other.deadline)
-    }
-}
 
 pub struct TimerQueue<T, A>
 where
     A: Unsize<[Message<T>]>,
 {
     pub syst: SYST,
-    pub baseline: u32,
     pub queue: BinaryHeap<Message<T>, A, Min>,
 }
 
@@ -60,51 +21,48 @@ where
 {
     pub fn new(syst: SYST) -> Self {
         TimerQueue {
-            baseline: 0,
-            queue: BinaryHeap::new(),
             syst,
+            queue: BinaryHeap::new(),
         }
     }
+}
 
-    pub fn insert<P>(
-        &mut self,
-        bl: u32,
-        after: u32,
-        task: T,
-        payload: P,
-        slot: Slot<P>,
-    ) -> Result<(), (P, Slot<P>)> {
-        if self.queue.len() == self.queue.capacity() {
-            Err((payload, slot))
-        } else {
-            if self.queue.is_empty() {
-                self.baseline = bl;
-            }
+#[derive(Clone, Copy)]
+pub struct Message<T> {
+    pub baseline: u32,
+    pub task: T,
+    pub payload: usize,
+}
 
-            let dl = bl.wrapping_add(after).wrapping_sub(self.baseline);
-
-            if self.queue.peek().map(|m| dl < m.deadline).unwrap_or(true) {
-                // the new message is the most urgent; set a new timeout
-                let now = DWT::get_cycle_count();
-
-                if let Some(timeout) = dl.wrapping_add(self.baseline).checked_sub(now) {
-                    self.syst.disable_counter();
-                    self.syst.set_reload(timeout);
-                    self.syst.clear_current();
-                    self.syst.enable_counter();
-                } else {
-                    // message already expired, pend immediately
-                    // NOTE(unsafe) atomic write to a stateless (from the programmer PoV) register
-                    unsafe { (*SCB::ptr()).icsr.write(1 << 26) }
-                }
-            }
-
-            self.queue
-                .push(Message::new(dl, task, slot.write(payload)))
-                .unwrap_or_else(|_| unreachable!());
-
-            Ok(())
+impl<T> Message<T> {
+    pub fn new<P>(bl: u32, task: T, payload: Payload<P>) -> Self {
+        Message {
+            baseline: bl,
+            task,
+            payload: payload.erase(),
         }
+    }
+}
+
+impl<T> PartialEq for Message<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.baseline.eq(&other.baseline)
+    }
+}
+
+impl<T> Eq for Message<T> {}
+
+impl<T> PartialOrd for Message<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T> Ord for Message<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (self.baseline as i32)
+            .wrapping_sub(other.baseline as i32)
+            .cmp(&0)
     }
 }
 
