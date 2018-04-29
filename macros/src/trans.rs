@@ -1,632 +1,817 @@
-use proc_macro2::Span;
 use quote::Tokens;
-use syn::{Ident, LitStr};
 
-use analyze::Ownerships;
-use check::{App, Kind};
+use either::Either;
+use syn::Ident;
+use syntax::check::App;
 
-fn krate() -> Ident {
-    Ident::from("rtfm")
-}
+use analyze::Context;
 
-pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
+pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let mut root = vec![];
-    let mut main = vec![quote!(#![allow(path_statements)])];
+    let krate = Ident::from("cortex_m_rtfm");
+    let device = &app.device;
+    let hidden = Ident::from("__hidden");
 
-    ::trans::tasks(app, ownerships, &mut root, &mut main);
-    ::trans::init(app, &mut main, &mut root);
-    ::trans::idle(app, ownerships, &mut main, &mut root);
-    ::trans::resources(app, ownerships, &mut root);
+    let needs_tq = !ctxt.async_after.is_empty();
 
+    /* root */
+    // NOTE we can't use paths like `#krate::foo` in the root because there's no guarantee that the
+    // user has not renamed `cortex_m_rtfm` (e.g. `extern crate cortex_m_rtfm as rtfm`) so instead
+    // we add this `#hidden` module and use `#hidden::#krate::foo` in the root.
     root.push(quote! {
-        #[allow(unsafe_code)]
-        fn main() {
-            #(#main)*
+        mod #hidden {
+            pub extern crate #krate;
         }
     });
 
-    quote!(#(#root)*)
-}
-
-fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
-    let krate = krate();
-
-    let mut mod_items = vec![];
-    let mut tys = vec![];
-    let mut exprs = vec![];
-
-    if !app.idle.resources.is_empty() {
-        tys.push(quote!(&mut #krate::Threshold));
-        exprs.push(quote!(unsafe { &mut #krate::Threshold::new(0) }));
-    }
-
-    if !app.idle.resources.is_empty() {
-        let mut needs_reexport = false;
-        for name in &app.idle.resources {
-            if ownerships[name].is_owned() {
-                if app.resources.get(name).is_some() {
-                    needs_reexport = true;
-                    break;
-                }
-            }
-        }
-
-        let super_ = if needs_reexport {
-            None
-        } else {
-            Some(Ident::from("super"))
-        };
-        let mut rexprs = vec![];
-        let mut rfields = vec![];
-        for name in &app.idle.resources {
-            if ownerships[name].is_owned() {
-                let resource = app.resources.get(name).expect(&format!(
-                    "BUG: resource {} assigned to `idle` has no definition",
-                    name
-                ));
-                let ty = &resource.ty;
-
-                rfields.push(quote! {
-                    pub #name: &'static mut #ty,
-                });
-
-                let _name = Ident::from(format!("_{}", name.as_ref()));
-                rexprs.push(if resource.expr.is_some() {
-                    quote! {
-                        #name: &mut #super_::#_name,
-                    }
-                } else {
-                    quote! {
-                        #name: #super_::#_name.as_mut(),
-                    }
-                });
-            } else {
-                rfields.push(quote! {
-                    pub #name: ::idle::#name,
-                });
-
-                rexprs.push(quote! {
-                    #name: ::idle::#name { _0: core::marker::PhantomData },
-                });
-            }
-        }
-
-        if needs_reexport {
-            root.push(quote! {
-                #[allow(non_camel_case_types)]
-                #[allow(non_snake_case)]
-                pub struct _idleResources {
-                    #(#rfields)*
-                }
-            });
-
-            mod_items.push(quote! {
-                pub use ::_idleResources as Resources;
-            });
-        } else {
-            mod_items.push(quote! {
-                #[allow(non_snake_case)]
-                pub struct Resources {
-                    #(#rfields)*
-                }
-            });
-        }
-
-        mod_items.push(quote! {
-            #[allow(unsafe_code)]
-            impl Resources {
-                pub unsafe fn new() -> Self {
-                    Resources {
-                        #(#rexprs)*
-                    }
-                }
-            }
-        });
-
-        tys.push(quote!(idle::Resources));
-        exprs.push(quote!(unsafe { idle::Resources::new() }));
-    }
-
-    let device = &app.device;
-    for name in &app.idle.resources {
-        let ceiling = ownerships[name].ceiling();
-
-        // owned resource
-        if ceiling == 0 {
-            continue;
-        }
-
-        let _name = Ident::from(format!("_{}", name.as_ref()));
-        let resource = app.resources
-            .get(name)
-            .expect(&format!("BUG: resource {} has no definition", name));
-
+    /* Resources */
+    let mut resources = vec![];
+    for (name, resource) in &app.resources {
         let ty = &resource.ty;
-        let _static = if resource.expr.is_some() {
-            quote!(#_name)
-        } else {
-            quote!(#_name.some)
-        };
+        let expr = resource
+            .expr
+            .as_ref()
+            .map(|e| quote!(#e))
+            .unwrap_or_else(|| quote!(unsafe { #hidden::#krate::uninitialized() }));
 
-        mod_items.push(quote! {
-            #[allow(non_camel_case_types)]
-            pub struct #name { _0: core::marker::PhantomData<*const ()> }
-        });
-
+        let ceiling = Ident::from(format!(
+            "U{}",
+            ctxt.ceilings
+                .resources()
+                .get(name)
+                .cloned()
+                .map(u8::from)
+                .unwrap_or(0) // 0 = resource owned by `init`
+        ));
         root.push(quote! {
-            #[allow(unsafe_code)]
-            unsafe impl #krate::Resource for idle::#name {
+            unsafe impl #hidden::#krate::Resource for __resource::#name {
+                const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
+                type Ceiling = #hidden::#krate::#ceiling;
                 type Data = #ty;
 
-                fn borrow<'cs>(&'cs self, t: &'cs Threshold) -> &'cs Self::Data {
-                    assert!(t.value() >= #ceiling);
-
-                    unsafe { &#_static }
-                }
-
-                fn borrow_mut<'cs>(
-                    &'cs mut self,
-                    t: &'cs Threshold,
-                ) -> &'cs mut Self::Data {
-                    assert!(t.value() >= #ceiling);
-
-                    unsafe { &mut #_static }
-                }
-
-                fn claim<R, F>(&self, t: &mut Threshold, f: F) -> R
-                where
-                    F: FnOnce(&Self::Data, &mut Threshold) -> R
-                {
-                    unsafe {
-                        #krate::claim(
-                            &#_static,
-                            #ceiling,
-                            #device::NVIC_PRIO_BITS,
-                            t,
-                            f,
-                        )
-                    }
-                }
-
-                fn claim_mut<R, F>(&mut self, t: &mut Threshold, f: F) -> R
-                where
-                    F: FnOnce(&mut Self::Data, &mut Threshold) -> R
-                {
-                    unsafe {
-                        #krate::claim(
-                            &mut #_static,
-                            #ceiling,
-                            #device::NVIC_PRIO_BITS,
-                            t,
-                            f,
-                        )
-                    }
-                }
-            }
-        });
-    }
-
-    if !mod_items.is_empty() {
-        root.push(quote! {
-            #[allow(unsafe_code)]
-            mod idle {
-                #(#mod_items)*
-            }
-        });
-    }
-
-    let idle = &app.idle.path;
-    main.push(quote! {
-        // type check
-        let idle: fn(#(#tys),*) -> ! = #idle;
-
-        idle(#(#exprs),*);
-    });
-}
-
-fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
-    let device = &app.device;
-    let krate = krate();
-
-    let mut tys = vec![quote!(init::Peripherals)];
-    let mut exprs = vec![
-        quote!{
-            init::Peripherals {
-                core: ::#device::CorePeripherals::steal(),
-                device: ::#device::Peripherals::steal(),
-            }
-        },
-    ];
-    let mut ret = None;
-    let mut mod_items = vec![];
-
-    let (init_resources, late_resources): (Vec<_>, Vec<_>) = app.resources
-        .iter()
-        .partition(|&(_, res)| res.expr.is_some());
-
-    if !init_resources.is_empty() {
-        let mut fields = vec![];
-        let mut lifetime = None;
-        let mut rexprs = vec![];
-
-        for (name, resource) in init_resources {
-            let ty = &resource.ty;
-
-            if app.init.resources.contains(name) {
-                fields.push(quote! {
-                    pub #name: &'static mut #ty,
-                });
-
-                let expr = &resource.expr;
-                rexprs.push(quote!(#name: {
+                unsafe fn get() -> &'static mut Self::Data {
                     static mut #name: #ty = #expr;
+
                     &mut #name
-                },));
-            } else {
-                let _name = Ident::from(format!("_{}", name.as_ref()));
-                lifetime = Some(quote!('a));
-
-                fields.push(quote! {
-                    pub #name: &'a mut #ty,
-                });
-
-                rexprs.push(quote! {
-                    #name: &mut ::#_name,
-                });
-            }
-        }
-
-        root.push(quote! {
-            #[allow(non_camel_case_types)]
-            #[allow(non_snake_case)]
-            pub struct _initResources<#lifetime> {
-                #(#fields)*
+                }
             }
         });
 
-        mod_items.push(quote! {
-            pub use ::_initResources as Resources;
+        resources.push(quote! {
+            pub struct #name { _0: () }
 
-            #[allow(unsafe_code)]
+            impl #name {
+                pub unsafe fn new() -> Self {
+                    #name { _0: () }
+                }
+            }
+        });
+    }
+
+    root.push(quote! {
+        mod __resource {
+            extern crate #krate;
+
+            #(#resources)*
+        }
+    });
+
+    /* Tasks */
+    for (name, task) in &app.tasks {
+        let path = &task.path;
+        let input = &task.input;
+
+        let lifetime = if task.resources
+            .iter()
+            .any(|res| ctxt.ceilings.resources()[res].is_owned())
+        {
+            Some(quote!('a))
+        } else {
+            None
+        };
+
+        let __context = Ident::from(format!("__{}_Context", name));
+
+        let mut mod_ = vec![];
+
+        // NOTE some stuff has to go in the root because `#input` is not guaranteed to be a
+        // primitive type and there's no way to import that type into a module (we don't know its
+        // full path). So instead we just assume that `#input` has been imported in the root; this
+        // forces us to put anything that refers to `#input` in the root.
+        root.push(quote! {
+            pub struct #__context<#lifetime> {
+                pub async: #name::Async,
+                pub baseline: u32,
+                pub input: #input,
+                pub resources: #name::Resources<#lifetime>,
+                pub threshold: #hidden::#krate::Threshold<#name::Priority>,
+            }
+
+            impl<#lifetime> #__context<#lifetime> {
+                pub unsafe fn new(bl: #hidden::#krate::Instant, payload: #input) -> Self {
+                    #__context {
+                        async: #name::Async::new(bl),
+                        baseline: bl.into(),
+                        input: payload,
+                        resources: #name::Resources::new(),
+                        threshold: #hidden::#krate::Threshold::new(),
+                    }
+                }
+            }
+        });
+
+        let res_fields = task.resources
+            .iter()
+            .map(|res| {
+                if ctxt.ceilings.resources()[res].is_owned() {
+                    let ty = &app.resources[res].ty;
+                    quote!(pub #res: &'a mut #ty)
+                } else {
+                    quote!(pub #res: super::__resource::#res)
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let res_exprs = task.resources.iter().map(|res| {
+            if ctxt.ceilings.resources()[res].is_owned() {
+                quote!(#res: super::__resource::#res::get())
+            } else {
+                quote!(#res: super::__resource::#res::new())
+            }
+        });
+
+        let async_fields = task.async
+            .iter()
+            .map(|task| quote!(pub #task: ::__async::#task))
+            .chain(
+                task.async_after
+                    .iter()
+                    .map(|task| quote!(pub #task: ::__async_after::#task)),
+            )
+            .collect::<Vec<_>>();
+
+        let async_exprs = task.async
+            .iter()
+            .map(|task| quote!(#task: ::__async::#task::new(bl)))
+            .chain(
+                task.async_after
+                    .iter()
+                    .map(|task| quote!(#task: ::__async_after::#task::new(bl))),
+            )
+            .collect::<Vec<_>>();
+
+        let priority = Ident::from(format!("U{}", task.priority));
+        mod_.push(quote! {
+            extern crate #krate;
+
+            pub const HANDLER: fn(Context) = ::#path;
+
+            // The priority at this task is dispatched at
+            pub type Priority = #krate::#priority;
+
+            pub use super::#__context as Context;
+
+            pub struct Async {
+                #(#async_fields,)*
+            }
+
+            impl Async {
+                pub unsafe fn new(bl: #krate::Instant) -> Self {
+                    Async {
+                        #(#async_exprs,)*
+                    }
+                }
+            }
+
+            pub struct Resources<#lifetime> {
+                #(#res_fields,)*
+            }
+
             impl<#lifetime> Resources<#lifetime> {
                 pub unsafe fn new() -> Self {
                     Resources {
-                        #(#rexprs)*
+                        #(#res_exprs,)*
                     }
                 }
             }
         });
 
-        tys.push(quote!(init::Resources));
-        exprs.push(quote!(init::Resources::new()));
-    }
-
-    // Initialization statements for late resources
-    let mut late_resource_init = vec![];
-
-    if !late_resources.is_empty() {
-        // `init` must initialize and return resources
-
-        let mut fields = vec![];
-
-        for (name, resource) in late_resources {
-            let _name = Ident::from(format!("_{}", name.as_ref()));
-
-            let ty = &resource.ty;
-
-            fields.push(quote! {
-                pub #name: #ty,
-            });
-
-            late_resource_init.push(quote! {
-                #_name = #krate::UntaggedOption { some: _late_resources.#name };
-            });
-        }
-
-        root.push(quote! {
-            #[allow(non_camel_case_types)]
-            #[allow(non_snake_case)]
-            pub struct _initLateResources {
-                #(#fields)*
-            }
-        });
-
-        mod_items.push(quote! {
-            pub use ::_initLateResources as LateResources;
-        });
-
-        // `init` must return the initialized resources
-        ret = Some(quote!( -> ::init::LateResources));
-    }
-
-    root.push(quote! {
-        #[allow(unsafe_code)]
-        mod init {
-            pub struct Peripherals {
-                pub core: ::#device::CorePeripherals,
-                pub device: ::#device::Peripherals,
-            }
-
-            #(#mod_items)*
-        }
-    });
-
-    let mut exceptions = vec![];
-    let mut interrupts = vec![];
-    for (name, task) in &app.tasks {
-        match task.kind {
-            Kind::Exception(ref e) => {
-                if exceptions.is_empty() {
-                    exceptions.push(quote! {
-                        let scb = &*#device::SCB::ptr();
-                    });
-                }
-
-                let nr = e.nr();
-                let priority = task.priority;
-                exceptions.push(quote! {
-                    let prio_bits = #device::NVIC_PRIO_BITS;
-                    let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                    scb.shpr[#nr - 4].write(hw);
-                });
-            }
-            Kind::Interrupt { enabled } => {
-                // Interrupt. These are enabled / disabled through the NVIC
-                if interrupts.is_empty() {
-                    interrupts.push(quote! {
-                        use #device::Interrupt;
-
-                        let mut nvic: #device::NVIC = core::mem::transmute(());
-                    });
-                }
-
-                let priority = task.priority;
-                interrupts.push(quote! {
-                    let prio_bits = #device::NVIC_PRIO_BITS;
-                    let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                    nvic.set_priority(Interrupt::#name, hw);
-                });
-
-                if enabled {
-                    interrupts.push(quote! {
-                        nvic.enable(Interrupt::#name);
-                    });
-                } else {
-                    interrupts.push(quote! {
-                        nvic.disable(Interrupt::#name);
-                    });
-                }
-            }
-        }
-    }
-
-    let init = &app.init.path;
-    main.push(quote! {
-        // type check
-        let init: fn(#(#tys,)*) #ret = #init;
-
-        #krate::atomic(unsafe { &mut #krate::Threshold::new(0) }, |_t| unsafe {
-            let _late_resources = init(#(#exprs,)*);
-            #(#late_resource_init)*
-
-            #(#exceptions)*
-            #(#interrupts)*
-        });
-    });
-}
-
-fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
-    let krate = krate();
-
-    for name in ownerships.keys() {
-        let _name = Ident::from(format!("_{}", name.as_ref()));
-
-        // Declare the static that holds the resource
-        let resource = app.resources
-            .get(name)
-            .expect(&format!("BUG: resource {} has no definition", name));
-
-        let expr = &resource.expr;
-        let ty = &resource.ty;
-
-        root.push(match *expr {
-            Some(ref expr) => quote! {
-                static mut #_name: #ty = #expr;
-            },
-            None => quote! {
-                // Resource initialized in `init`
-                static mut #_name: #krate::UntaggedOption<#ty> =
-                    #krate::UntaggedOption { none: () };
-            },
-        });
-    }
-}
-
-fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>, main: &mut Vec<Tokens>) {
-    let device = &app.device;
-    let krate = krate();
-
-    for (tname, task) in &app.tasks {
-        let mut exprs = vec![];
-        let mut fields = vec![];
-        let mut items = vec![];
-
-        let has_resources = !task.resources.is_empty();
-
-        if has_resources {
-            for rname in &task.resources {
-                let ceiling = ownerships[rname].ceiling();
-                let _rname = Ident::from(format!("_{}", rname.as_ref()));
-                let resource = app.resources
-                    .get(rname)
-                    .expect(&format!("BUG: resource {} has no definition", rname));
-
-                let ty = &resource.ty;
-                let _static = if resource.expr.is_some() {
-                    quote!(#_rname)
-                } else {
-                    quote!(#_rname.some)
-                };
-
-                items.push(quote! {
-                    #[allow(non_camel_case_types)]
-                    pub struct #rname { _0: PhantomData<*const ()> }
-                });
+        match task.interrupt_or_capacity {
+            Either::Left(interrupt) => {
+                let export_name = interrupt.as_ref();
+                let fn_name = Ident::from(format!("__{}", interrupt));
 
                 root.push(quote! {
-                    #[allow(unsafe_code)]
-                    unsafe impl #krate::Resource for #tname::#rname {
-                        type Data = #ty;
+                    #[export_name = #export_name]
+                    pub unsafe extern "C" fn #fn_name() {
+                        let _ = #device::Interrupt::#interrupt; // verify that the interrupt exists
+                        #name::HANDLER(#name::Context::new(#hidden::#krate::Instant::now(), ()))
+                    }
+                });
+            }
+            Either::Right(capacity) => {
+                let capacity = Ident::from(format!("U{}", capacity));
 
-                        fn borrow<'cs>(&'cs self, t: &'cs Threshold) -> &'cs Self::Data {
-                            assert!(t.value() >= #ceiling);
+                root.push(quote! {
+                    unsafe impl #hidden::#krate::Resource for #name::SQ {
+                        const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
+                        type Ceiling = #name::Ceiling;
+                        type Data = #hidden::#krate::SlotQueue<#input, #hidden::#krate::#capacity>;
 
-                            unsafe { &#_static }
+                        unsafe fn get() -> &'static mut Self::Data {
+                            static mut SQ:
+                                #hidden::#krate::SlotQueue<#input, #hidden::#krate::#capacity> =
+                                #hidden::#krate::SlotQueue::u8();
+
+                            &mut SQ
                         }
+                    }
 
-                        fn borrow_mut<'cs>(
-                            &'cs mut self,
-                            t: &'cs Threshold,
-                        ) -> &'cs mut Self::Data {
-                            assert!(t.value() >= #ceiling);
+                });
 
-                            unsafe { &mut #_static }
+                let ceiling = Ident::from(format!(
+                    "U{}",
+                    ctxt.ceilings.slot_queues().get(name).cloned() // 0 = owned by init
+                        .unwrap_or(0)
+                ));
+                mod_.push(quote! {
+                    pub struct SQ { _0: () }
+
+                    impl SQ {
+                        pub unsafe fn new() -> Self {
+                            SQ { _0: () }
                         }
+                    }
 
-                        fn claim<R, F>(&self, t: &mut Threshold, f: F) -> R
-                        where
-                            F: FnOnce(&Self::Data, &mut Threshold) -> R
-                        {
-                            unsafe {
-                                #krate::claim(
-                                    &#_static,
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
-                            }
-                        }
+                    // Ceiling of the `SQ` resource
+                    pub type Ceiling = #krate::#ceiling;
+                });
+            }
+        }
 
-                        fn claim_mut<R, F>(&mut self, t: &mut Threshold, f: F) -> R
-                        where
-                            F: FnOnce(&mut Self::Data, &mut Threshold) -> R
-                        {
-                            unsafe {
-                                #krate::claim(
-                                    &mut #_static,
-                                    #ceiling,
-                                    #device::NVIC_PRIO_BITS,
-                                    t,
-                                    f,
-                                )
+        root.push(quote! {
+            mod #name {
+                #(#mod_)*
+            }
+        });
+    }
+
+    /* Async */
+    let async = ctxt.async
+        .iter()
+        .map(|name| {
+            let task = &app.tasks[name];
+            let priority = task.priority;
+            let __priority = Ident::from(format!("__{}", priority));
+            let ty = &task.input;
+
+            let sqc = Ident::from(format!(
+                "U{}",
+                ctxt.ceilings.slot_queues().get(name).cloned() // 0 = owned by init
+                    .unwrap_or(0)
+            ));
+            let qc = Ident::from(format!("U{}", ctxt.ceilings.dispatch_queues()[&priority]));
+
+            quote! {
+                pub struct #name { baseline: #krate::Instant }
+
+                impl #name {
+                    pub unsafe fn new(bl: #krate::Instant) -> Self {
+                        #name { baseline: bl }
+                    }
+
+                    // XXX or take `self`?
+                    #[inline]
+                    pub fn post<P>(
+                        &self,
+                        t: &mut #krate::Threshold<P>,
+                        payload: #ty,
+                    ) -> Result<(), #ty>
+                    where
+                        P: #krate::Unsigned +
+                            #krate::Max<#krate::#sqc> +
+                            #krate::Max<#krate::#qc>,
+                        #krate::Maximum<P, #krate::#sqc>: #krate::Unsigned,
+                        #krate::Maximum<P, #krate::#qc>: #krate::Unsigned,
+                    {
+                        unsafe {
+                            use self::#krate::Resource;
+
+                            if let Some(slot) =
+                                ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                let tp = slot
+                                    .write(self.baseline, payload)
+                                    .tag(::#__priority::Task::#name);
+
+                                ::#__priority::Q::new().claim_mut(t, |q, _| {
+                                    q.split().0.enqueue_unchecked(tp);
+                                });
+
+                                Ok(())
+                            } else {
+                                Err(payload)
                             }
                         }
                     }
-                });
+                }
+            }
+        })
+        .collect::<Vec<_>>();
+    root.push(quote! {
+        mod __async {
+            extern crate #krate;
 
-                if ceiling <= task.priority {
-                    root.push(quote! {
-                        #[allow(unsafe_code)]
-                        impl core::ops::Deref for #tname::#rname {
-                            type Target = #ty;
+            #(#async)*
+        }
+    });
 
-                            fn deref(&self) -> &Self::Target {
-                                unsafe { &#_static }
+    /* Async (+after) */
+    let async_after = ctxt.async_after
+        .iter()
+        .map(|name| {
+            let task = &app.tasks[name];
+            let ty = &task.input;
+
+            let sqc = Ident::from(format!("U{}", ctxt.ceilings.slot_queues()[name]));
+            let tqc = Ident::from(format!("U{}", ctxt.ceilings.timer_queue()));
+
+            quote! {
+                pub struct #name { baseline: #krate::Instant }
+
+                impl #name {
+                    pub unsafe fn new(bl: #krate::Instant) -> Self {
+                        #name { baseline: bl }
+                    }
+
+                    // XXX or take `self`?
+                    #[inline]
+                    pub fn post<P>(
+                        &self,
+                        t: &mut #krate::Threshold<P>,
+                        after: u32,
+                        payload: #ty,
+                    ) -> Result<(), #ty>
+                    where
+                        P: #krate::Unsigned +
+                            #krate::Max<#krate::#sqc> +
+                            #krate::Max<#krate::#tqc>,
+                        #krate::Maximum<P, #krate::#sqc>: #krate::Unsigned,
+                        #krate::Maximum<P, #krate::#tqc>: #krate::Unsigned,
+                    {
+                        unsafe {
+                            use self::#krate::Resource;
+
+                            if let Some(slot) =
+                                ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                let bl = self.baseline + after;
+                                let tp = slot
+                                    .write(bl, payload)
+                                    .tag(::__tq::Task::#name);
+
+                                ::__tq::TQ::new().claim_mut(t, |tq, _| tq.enqueue(bl, tp));
+
+                                Ok(())
+                            } else {
+                                Err(payload)
                             }
                         }
+                    }
+                }
+            }
+        })
+        .collect::<Vec<_>>();
+    root.push(quote! {
+        mod __async_after {
+            extern crate #krate;
 
-                        #[allow(unsafe_code)]
-                        impl core::ops::DerefMut for #tname::#rname {
-                            fn deref_mut(&mut self) -> &mut Self::Target {
-                                unsafe { &mut #_static }
-                            }
+            #(#async_after)*
+        }
+    });
+
+    /* Timer queue */
+    if needs_tq {
+        let capacity = Ident::from(format!("U{}", ctxt.timer_queue.capacity()));
+        let tasks = ctxt.timer_queue.tasks().keys();
+        let arms = ctxt.timer_queue
+            .tasks()
+            .iter()
+            .map(|(name, priority)| {
+                let __priority = Ident::from(format!("__{}", priority));
+                let interrupt = ctxt.dispatchers[priority].interrupt();
+
+                quote! {
+                    __tq::Task::#name => {
+                        #__priority::Q::new().claim_mut(t, |q, _| {
+                            q.split().0.enqueue_unchecked(tp.retag(#__priority::Task::#name))
+                        });
+                        #hidden::#krate::set_pending(#device::Interrupt::#interrupt);
+                    }
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let ceiling = Ident::from(format!("U{}", ctxt.ceilings.timer_queue()));
+        let priority = Ident::from(format!("U{}", ctxt.sys_tick));
+        root.push(quote! {
+            mod __tq {
+                extern crate #krate;
+
+                pub struct TQ { _0: () }
+
+                impl TQ {
+                    pub unsafe fn new() -> Self {
+                        TQ { _0: () }
+                    }
+                }
+
+                unsafe impl #krate::Resource for TQ {
+                    const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
+                    type Ceiling = #krate::#ceiling;
+                    type Data = #krate::TimerQueue<Task, #krate::#capacity>;
+
+                    unsafe fn get() -> &'static mut Self::Data {
+                        static mut TQ: #krate::TimerQueue<Task, #krate::#capacity> =
+                            unsafe { #krate::uninitialized() };
+
+                        &mut TQ
+                    }
+                }
+
+                // SysTick priority
+                pub type Priority = #krate::#priority;
+
+                #[derive(Clone, Copy)]
+                pub enum Task { #(#tasks,)* }
+            }
+
+            #[export_name = "SYS_TICK"]
+            pub unsafe extern "C" fn __SYS_TICK() {
+                use #hidden::#krate::Resource;
+
+                #hidden::#krate::dispatch(
+                    &mut #hidden::#krate::Threshold::<__tq::Priority>::new(),
+                    &mut __tq::TQ::new(),
+                    |t, tp| {
+                        match tp.tag() {
+                            #(#arms,)*
                         }
                     })
-                }
-
-                fields.push(quote! {
-                    pub #rname: #rname,
-                });
-
-                exprs.push(quote! {
-                    #rname: #rname { _0: PhantomData },
-                });
             }
+        });
+    }
 
-            items.push(quote! {
-                #[allow(non_snake_case)]
-                pub struct Resources {
-                    #(#fields)*
-                }
-            });
+    /* Dispatchers */
+    for (priority, dispatcher) in &ctxt.dispatchers {
+        let __priority = Ident::from(format!("__{}", priority));
+        let capacity = Ident::from(format!("U{}", dispatcher.capacity()));
+        let tasks = dispatcher.tasks();
+        let ceiling = Ident::from(format!("U{}", ctxt.ceilings.dispatch_queues()[priority]));
 
-            items.push(quote! {
-                #[allow(unsafe_code)]
-                impl Resources {
+        root.push(quote! {
+            mod #__priority {
+                extern crate #krate;
+
+                pub struct Q { _0: () }
+
+                impl Q {
                     pub unsafe fn new() -> Self {
-                        Resources {
-                            #(#exprs)*
-                        }
+                        Q { _0: () }
                     }
                 }
-            });
-        }
 
-        let mut tys = vec![];
-        let mut exprs = vec![];
+                unsafe impl #krate::Resource for Q {
+                    const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
+                    type Ceiling = #krate::#ceiling;
+                    type Data = #krate::PayloadQueue<Task, #krate::#capacity>;
 
-        let priority = task.priority;
-        if has_resources {
-            tys.push(quote!(&mut #krate::Threshold));
-            exprs.push(quote! {
-                &mut if #priority == 1 << #device::NVIC_PRIO_BITS {
-                    #krate::Threshold::new(::core::u8::MAX)
-                } else {
-                    #krate::Threshold::new(#priority)
+                    unsafe fn get() -> &'static mut Self::Data {
+                        static mut Q: #krate::PayloadQueue<Task, #krate::#capacity> =
+                            #krate::PayloadQueue::u8();
+
+                        &mut Q
+                    }
                 }
+
+                #[derive(Clone, Copy)]
+                pub enum Task { #(#tasks,)* }
+            }
+        });
+
+        let arms = dispatcher
+            .tasks()
+            .iter()
+            .map(|name| {
+                quote! {
+                    #__priority::Task::#name => {
+                        let (bl, payload, slot) = payload.coerce().read();
+                        // NOTE(get) only `Slot` producer because a task can only be dispatched at one
+                        // priority
+                        #name::SQ::get().split().0.enqueue_unchecked(slot);
+                        #name::HANDLER(#name::Context::new(bl, payload));
+                    }
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let interrupt = dispatcher.interrupt();
+        let export_name = interrupt.as_ref();
+        let fn_name = Ident::from(format!("__{}", export_name));
+        root.push(quote! {
+            #[export_name = #export_name]
+            pub unsafe extern "C" fn #fn_name() {
+                use #hidden::#krate::Resource;
+
+                // NOTE(get) the dispatcher is the only consumer of this queue
+                while let Some(payload) = #__priority::Q::get().split().1.dequeue() {
+                    match payload.tag() {
+                        #(#arms,)*
+                    }
+                }
+            }
+        })
+    }
+
+    /* pre-init */
+    // Initialize the slot queues
+    let mut pre_init = vec![];
+    for (name, task) in &app.tasks {
+        let input = &task.input;
+
+        if let Either::Right(capacity) = task.interrupt_or_capacity {
+            let capacity = capacity as usize;
+
+            pre_init.push(quote! {
+                {
+                    static mut N: [#hidden::#krate::Node<#input>; #capacity] =
+                        unsafe { #hidden::#krate::uninitialized() };
+
+                    for node in N.iter_mut() {
+                        #name::SQ::get().split().0.enqueue_unchecked(node.into());
+                    }
+                }
+            })
+        }
+    }
+
+    let prio_bits = quote!(#device::NVIC_PRIO_BITS);
+    if needs_tq {
+        let priority = ctxt.sys_tick;
+
+        pre_init.push(quote! {
+            // Configure the system timer
+            syst.set_clock_source(#hidden::#krate::SystClkSource::Core);
+            syst.enable_counter();
+
+            // Set the priority of the SysTick exception
+            let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
+            core.SCB.shpr[11].write(priority);
+
+            // Initialize the timer queue
+            core::ptr::write(__tq::TQ::get(), #hidden::#krate::TimerQueue::new(syst));
+        });
+    }
+
+    /* init */
+    let res_fields = app.init
+        .resources
+        .iter()
+        .map(|r| {
+            let ty = &app.resources[r].ty;
+            quote!(#r: &'static mut #ty)
+        })
+        .collect::<Vec<_>>();
+
+    let res_exprs = app.init
+        .resources
+        .iter()
+        .map(|r| quote!(#r: __resource::#r::get()))
+        .collect::<Vec<_>>();
+
+    let async_fields = app.init
+        .async
+        .iter()
+        .map(|task| quote!(pub #task: ::__async::#task))
+        .chain(
+            app.init
+                .async_after
+                .iter()
+                .map(|task| quote!(pub #task: ::__async_after::#task)),
+        )
+        .collect::<Vec<_>>();
+
+    let async_exprs = app.init
+        .async
+        .iter()
+        .map(|task| quote!(#task: ::__async::#task::new(bl)))
+        .chain(
+            app.init
+                .async_after
+                .iter()
+                .map(|task| quote!(#task: ::__async_after::#task::new(bl))),
+        )
+        .collect::<Vec<_>>();
+
+    let late_resources = app.resources
+        .iter()
+        .filter_map(|(name, res)| {
+            if res.expr.is_none() {
+                let ty = &res.ty;
+                Some(quote!(pub #name: #ty))
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
+    root.push(quote! {
+        pub struct _ZN4init13LateResourcesE {
+            #(#late_resources,)*
+        }
+
+        mod init {
+            extern crate #krate;
+
+            pub use ::#device::Peripherals as Device;
+            pub use ::_ZN4init13LateResourcesE as LateResources;
+
+            pub struct Context {
+                pub async: Async,
+                pub baseline: u32,
+                pub core: #krate::Core,
+                pub device: Device,
+                pub resources: Resources,
+                pub threshold: #krate::Threshold<#krate::U255>,
+            }
+
+            impl Context {
+                pub unsafe fn new(core: #krate::Core) -> Self {
+                    Context {
+                        async: Async::new(),
+                        baseline: 0,
+                        core,
+                        device: Device::steal(),
+                        resources: Resources::new(),
+                        threshold: #krate::Threshold::new(),
+                    }
+                }
+            }
+
+            pub struct Async {
+                #(#async_fields,)*
+            }
+
+            impl Async {
+                unsafe fn new() -> Self {
+                    let bl = #krate::Instant::new(0);
+
+                    Async {
+                        #(#async_exprs,)*
+                    }
+                }
+            }
+
+            pub struct Resources {
+                #(#res_fields,)*
+            }
+
+            impl Resources {
+                unsafe fn new() -> Self {
+                    use self::#krate::Resource;
+
+                    Resources {
+                        #(#res_exprs,)*
+                    }
+                }
+            }
+        }
+    });
+
+    /* post-init */
+    let mut post_init = vec![];
+
+    // Initialize LateResources
+    for (name, res) in &app.resources {
+        if res.expr.is_none() {
+            post_init.push(quote! {
+                core::ptr::write(__resource::#name::get(), lr.#name);
             });
         }
+    }
 
-        if has_resources {
-            tys.push(quote!(#tname::Resources));
-            exprs.push(quote!(#tname::Resources::new()));
+    // Set dispatcher priorities
+    for (priority, dispatcher) in &ctxt.dispatchers {
+        let interrupt = dispatcher.interrupt();
+        post_init.push(quote! {
+            let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
+            nvic.set_priority(#device::Interrupt::#interrupt, priority);
+        });
+    }
+
+    // Set trigger priorities
+    for (interrupt, (_, priority)) in &ctxt.triggers {
+        post_init.push(quote! {
+            let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
+            nvic.set_priority(#device::Interrupt::#interrupt, priority);
+        });
+    }
+
+    // Enable the dispatcher interrupts
+    for dispatcher in ctxt.dispatchers.values() {
+        let interrupt = dispatcher.interrupt();
+        post_init.push(quote! {
+            nvic.enable(#device::Interrupt::#interrupt);
+        });
+    }
+
+    // Enable triggers
+    for interrupt in ctxt.triggers.keys() {
+        post_init.push(quote! {
+            nvic.enable(#device::Interrupt::#interrupt);
+        });
+    }
+
+    /* idle */
+    let res_fields = app.idle
+        .resources
+        .iter()
+        .map(|res| {
+            let ty = &app.resources[res].ty;
+
+            quote!(pub #res: &'static mut #ty)
+        })
+        .collect::<Vec<_>>();
+
+    let res_exprs = app.idle
+        .resources
+        .iter()
+        .map(|res| quote!(#res: __resource::#res::get()))
+        .collect::<Vec<_>>();
+
+    root.push(quote! {
+        mod idle {
+            extern crate #krate;
+
+            pub struct Context {
+                pub resources: Resources,
+            }
+
+            impl Context {
+                pub unsafe fn new() -> Self {
+                    Context {
+                        resources: Resources::new(),
+                    }
+                }
+            }
+
+            pub struct Resources {
+                #(#res_fields,)*
+            }
+
+            impl Resources {
+                unsafe fn new() -> Self {
+                    use self::#krate::Resource;
+
+                    Resources {
+                        #(#res_exprs,)*
+                    }
+                }
+            }
         }
+    });
 
-        let path = &task.path;
-        let _tname = Ident::from(format!("_{}", tname));
-        let export_name = LitStr::new(tname.as_ref(), Span::call_site());
-        root.push(quote! {
-            #[allow(non_snake_case)]
-            #[allow(unsafe_code)]
-            #[export_name = #export_name]
-            pub unsafe extern "C" fn #_tname() {
-                let f: fn(#(#tys,)*) = #path;
+    /* main */
+    let idle = &app.idle.path;
+    let init = &app.init.path;
+    root.push(quote! {
+        fn main() {
+            use #hidden::#krate::Resource;
 
-                f(#(#exprs,)*)
+            unsafe {
+                let init: fn(init::Context) -> init::LateResources = #init;
+                let idle: fn(idle::Context) -> ! = #idle;
+
+                #hidden::#krate::interrupt::disable();
+
+                let (mut core, mut dwt, mut nvic, mut syst) = #hidden::#krate::Core::steal();
+
+                #(#pre_init)*
+
+                let lr = init(init::Context::new(core));
+
+                #(#post_init)*
+
+                // Set the system baseline to zero
+                dwt.enable_cycle_counter();
+                dwt.cyccnt.write(0);
+
+                #hidden::#krate::interrupt::enable();
+
+                idle(idle::Context::new())
             }
-        });
+        }
+    });
 
-        root.push(quote!{
-            #[allow(non_snake_case)]
-            #[allow(unsafe_code)]
-            mod #tname {
-                #[allow(unused_imports)]
-                use core::marker::PhantomData;
-
-                #[allow(dead_code)]
-                #[deny(const_err)]
-                pub const CHECK_PRIORITY: (u8, u8) = (
-                    #priority - 1,
-                    (1 << ::#device::NVIC_PRIO_BITS) - #priority,
-                );
-
-                #(#items)*
-            }
-        });
-
-        // after miri landed (?) rustc won't analyze `const` items unless they are used so we force
-        // evaluation with this path statement
-        main.push(quote!(#tname::CHECK_PRIORITY;));
+    quote! {
+        #(#root)*
     }
 }
