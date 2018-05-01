@@ -15,6 +15,7 @@ extern crate typenum;
 mod instant;
 mod node;
 mod resource;
+#[cfg(feature = "timer-queue")]
 mod tq;
 
 use core::mem;
@@ -38,6 +39,7 @@ pub use instant::Instant;
 pub use node::Node;
 use node::{Slot, TaggedPayload};
 pub use resource::{Resource, Threshold};
+#[cfg(feature = "timer-queue")]
 pub use tq::{dispatch, TimerQueue};
 
 pub type PayloadQueue<T, N> = RingBuffer<TaggedPayload<T>, N, u8>;

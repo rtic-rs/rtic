@@ -108,28 +108,51 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         // primitive type and there's no way to import that type into a module (we don't know its
         // full path). So instead we just assume that `#input` has been imported in the root; this
         // forces us to put anything that refers to `#input` in the root.
-        root.push(quote! {
-            pub struct #__context<#lifetime> {
-                pub async: #name::Async,
-                pub baseline: u32,
-                pub input: #input,
-                pub resources: #name::Resources<#lifetime>,
-                pub threshold: #hidden::#krate::Threshold<#name::Priority>,
-            }
+        if cfg!(feature = "timer-queue") {
+            root.push(quote! {
+                pub struct #__context<#lifetime> {
+                    pub async: #name::Async,
+                    pub baseline: u32,
+                    pub input: #input,
+                    pub resources: #name::Resources<#lifetime>,
+                    pub threshold: #hidden::#krate::Threshold<#name::Priority>,
+                }
 
-            #[allow(unsafe_code)]
-            impl<#lifetime> #__context<#lifetime> {
-                pub unsafe fn new(bl: #hidden::#krate::Instant, payload: #input) -> Self {
-                    #__context {
-                        async: #name::Async::new(bl),
-                        baseline: bl.into(),
-                        input: payload,
-                        resources: #name::Resources::new(),
-                        threshold: #hidden::#krate::Threshold::new(),
+                #[allow(unsafe_code)]
+                impl<#lifetime> #__context<#lifetime> {
+                    pub unsafe fn new(bl: #hidden::#krate::Instant, payload: #input) -> Self {
+                        #__context {
+                            async: #name::Async::new(bl),
+                            baseline: bl.into(),
+                            input: payload,
+                            resources: #name::Resources::new(),
+                            threshold: #hidden::#krate::Threshold::new(),
+                        }
                     }
                 }
-            }
-        });
+            });
+        } else {
+            root.push(quote! {
+                pub struct #__context<#lifetime> {
+                    pub async: #name::Async,
+                    pub input: #input,
+                    pub resources: #name::Resources<#lifetime>,
+                    pub threshold: #hidden::#krate::Threshold<#name::Priority>,
+                }
+
+                #[allow(unsafe_code)]
+                impl<#lifetime> #__context<#lifetime> {
+                    pub unsafe fn new(payload: #input) -> Self {
+                        #__context {
+                            async: #name::Async::new(),
+                            input: payload,
+                            resources: #name::Resources::new(),
+                            threshold: #hidden::#krate::Threshold::new(),
+                        }
+                    }
+                }
+            });
+        }
 
         let res_fields = task.resources
             .iter()
@@ -163,7 +186,13 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
         let async_exprs = task.async
             .iter()
-            .map(|task| quote!(#task: ::__async::#task::new(_bl)))
+            .map(|task| {
+                if cfg!(feature = "timer-queue") {
+                    quote!(#task: ::__async::#task::new(_bl))
+                } else {
+                    quote!(#task: ::__async::#task::new())
+                }
+            })
             .chain(
                 task.async_after
                     .iter()
@@ -189,15 +218,6 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 #(#async_fields,)*
             }
 
-            #[allow(unsafe_code)]
-            impl Async {
-                pub unsafe fn new(_bl: #krate::Instant) -> Self {
-                    Async {
-                        #(#async_exprs,)*
-                    }
-                }
-            }
-
             #[allow(non_snake_case)]
             pub struct Resources<#lifetime> {
                 #(#res_fields,)*
@@ -213,18 +233,49 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             }
         });
 
+        if cfg!(feature = "timer-queue") {
+            mod_.push(quote! {
+                #[allow(unsafe_code)]
+                impl Async {
+                    pub unsafe fn new(_bl: #krate::Instant) -> Self {
+                        Async {
+                            #(#async_exprs,)*
+                        }
+                    }
+                }
+
+            });
+        } else {
+            mod_.push(quote! {
+                #[allow(unsafe_code)]
+                impl Async {
+                    pub unsafe fn new() -> Self {
+                        Async {
+                            #(#async_exprs,)*
+                        }
+                    }
+                }
+
+            });
+        }
+
         match task.interrupt_or_capacity {
             Either::Left(interrupt) => {
                 let export_name = interrupt.as_ref();
                 let fn_name = Ident::from(format!("__{}", interrupt));
 
+                let bl = if cfg!(feature = "timer-queue") {
+                    Some(quote!(#hidden::#krate::Instant::now(),))
+                } else {
+                    None
+                };
                 root.push(quote! {
                     #[allow(non_snake_case)]
                     #[allow(unsafe_code)]
                     #[export_name = #export_name]
                     pub unsafe extern "C" fn #fn_name() {
                         let _ = #device::Interrupt::#interrupt; // verify that the interrupt exists
-                        #name::HANDLER(#name::Context::new(#hidden::#krate::Instant::now(), ()))
+                        #name::HANDLER(#name::Context::new(#bl ()))
                     }
                 });
             }
@@ -293,44 +344,90 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             ));
             let qc = Ident::from(format!("U{}", ctxt.ceilings.dispatch_queues()[&priority]));
 
-            quote! {
-                #[allow(non_camel_case_types)]
-                pub struct #name { baseline: #krate::Instant }
+            if cfg!(feature = "timer-queue") {
+                quote! {
+                    #[allow(non_camel_case_types)]
+                    pub struct #name { baseline: #krate::Instant }
 
-                #[allow(unsafe_code)]
-                impl #name {
-                    pub unsafe fn new(bl: #krate::Instant) -> Self {
-                        #name { baseline: bl }
+                    #[allow(unsafe_code)]
+                    impl #name {
+                        pub unsafe fn new(bl: #krate::Instant) -> Self {
+                            #name { baseline: bl }
+                        }
+
+                        // XXX or take `self`?
+                        #[inline]
+                        pub fn post<P>(
+                            &self,
+                            t: &mut #krate::Threshold<P>,
+                            payload: #ty,
+                        ) -> Result<(), #ty>
+                        where
+                            P: #krate::Unsigned +
+                                #krate::Max<#krate::#sqc> +
+                                #krate::Max<#krate::#qc>,
+                            #krate::Maximum<P, #krate::#sqc>: #krate::Unsigned,
+                            #krate::Maximum<P, #krate::#qc>: #krate::Unsigned,
+                        {
+                            unsafe {
+                                if let Some(slot) =
+                                    ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                    let tp = slot
+                                        .write(self.baseline, payload)
+                                        .tag(::#__priority::Task::#name);
+
+                                    ::#__priority::Q::new().claim_mut(t, |q, _| {
+                                        q.split().0.enqueue_unchecked(tp);
+                                    });
+
+                                    Ok(())
+                                } else {
+                                    Err(payload)
+                                }
+                            }
+                        }
                     }
+                }
+            } else {
+                quote! {
+                    #[allow(non_camel_case_types)]
+                    pub struct #name {}
 
-                    // XXX or take `self`?
-                    #[inline]
-                    pub fn post<P>(
-                        &self,
-                        t: &mut #krate::Threshold<P>,
-                        payload: #ty,
-                    ) -> Result<(), #ty>
-                    where
-                        P: #krate::Unsigned +
-                            #krate::Max<#krate::#sqc> +
-                            #krate::Max<#krate::#qc>,
-                        #krate::Maximum<P, #krate::#sqc>: #krate::Unsigned,
-                        #krate::Maximum<P, #krate::#qc>: #krate::Unsigned,
-                    {
-                        unsafe {
-                            if let Some(slot) =
-                                ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
-                                let tp = slot
-                                    .write(self.baseline, payload)
-                                    .tag(::#__priority::Task::#name);
+                    #[allow(unsafe_code)]
+                    impl #name {
+                        pub unsafe fn new() -> Self {
+                            #name {}
+                        }
 
-                                ::#__priority::Q::new().claim_mut(t, |q, _| {
-                                    q.split().0.enqueue_unchecked(tp);
-                                });
+                        // XXX or take `self`?
+                        #[inline]
+                        pub fn post<P>(
+                            &self,
+                            t: &mut #krate::Threshold<P>,
+                            payload: #ty,
+                        ) -> Result<(), #ty>
+                        where
+                            P: #krate::Unsigned +
+                                #krate::Max<#krate::#sqc> +
+                                #krate::Max<#krate::#qc>,
+                            #krate::Maximum<P, #krate::#sqc>: #krate::Unsigned,
+                            #krate::Maximum<P, #krate::#qc>: #krate::Unsigned,
+                        {
+                            unsafe {
+                                if let Some(slot) =
+                                    ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                    let tp = slot
+                                        .write(payload)
+                                        .tag(::#__priority::Task::#name);
 
-                                Ok(())
-                            } else {
-                                Err(payload)
+                                    ::#__priority::Q::new().claim_mut(t, |q, _| {
+                                        q.split().0.enqueue_unchecked(tp);
+                                    });
+
+                                    Ok(())
+                                } else {
+                                    Err(payload)
+                                }
                             }
                         }
                     }
@@ -537,13 +634,26 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             .tasks()
             .iter()
             .map(|name| {
-                quote! {
+                // NOTE(get) this is the only `Slot` producer because a task can only be
+                // dispatched at one priority
+                if cfg!(feature = "timer-queue") {
+                    quote! {
                     #__priority::Task::#name => {
                         let (bl, payload, slot) = payload.coerce().read();
-                        // NOTE(get) only `Slot` producer because a task can only be dispatched at one
                         // priority
                         #name::SQ::get().split().0.enqueue_unchecked(slot);
                         #name::HANDLER(#name::Context::new(bl, payload));
+                    }
+
+                    }
+                } else {
+                    quote! {
+                    #__priority::Task::#name => {
+                        let (payload, slot) = payload.coerce().read();
+                        // priority
+                        #name::SQ::get().split().0.enqueue_unchecked(slot);
+                        #name::HANDLER(#name::Context::new(payload));
+                    }
                     }
                 }
             })
@@ -640,7 +750,11 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let async_exprs = app.init
         .async
         .iter()
-        .map(|task| quote!(#task: ::__async::#task::new(_bl)))
+        .map(|task| if cfg!(feature = "timer-queue") {
+            quote!(#task: ::__async::#task::new(_bl))
+        } else {
+            quote!(#task: ::__async::#task::new())
+        })
         .chain(
             app.init
                 .async_after
@@ -661,6 +775,21 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         })
         .collect::<Vec<_>>();
 
+    let bl = if cfg!(feature = "timer-queue") {
+        Some(quote!(let _bl = #krate::Instant::new(0);))
+    } else {
+        None
+    };
+    let baseline_field = if cfg!(feature = "timer-queue") {
+        Some(quote!(pub baseline: u32,))
+    } else {
+        None
+    };
+    let baseline_expr = if cfg!(feature = "timer-queue") {
+        Some(quote!(baseline: 0,))
+    } else {
+        None
+    };
     root.push(quote! {
         #[allow(non_snake_case)]
         pub struct _ZN4init13LateResourcesE {
@@ -678,7 +807,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
             pub struct Context {
                 pub async: Async,
-                pub baseline: u32,
+                #baseline_field
                 pub core: #krate::Core,
                 pub device: Device,
                 pub resources: Resources,
@@ -690,7 +819,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 pub unsafe fn new(core: #krate::Core) -> Self {
                     Context {
                         async: Async::new(),
-                        baseline: 0,
+                        #baseline_expr
                         core,
                         device: Device::steal(),
                         resources: Resources::new(),
@@ -706,7 +835,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             #[allow(unsafe_code)]
             impl Async {
                 unsafe fn new() -> Self {
-                    let _bl = #krate::Instant::new(0);
+                    #bl
 
                     Async {
                         #(#async_exprs,)*

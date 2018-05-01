@@ -12,6 +12,35 @@ name = "cortex-m-rtfm"
 repository = "https://github.com/japaric/cortex-m-rtfm"
 version = "0.3.2"
 
+[[example]]
+name = "async-after"
+required-features = ["timer-queue"]
+
+[[example]]
+name = "async"
+
+[[example]]
+name = "empty"
+
+[[example]]
+name = "interrupt"
+
+[[example]]
+name = "periodic-payload"
+required-features = ["timer-queue"]
+
+[[example]]
+name = "periodic-preemption-payload"
+required-features = ["timer-queue"]
+
+[[example]]
+name = "periodic-preemption"
+required-features = ["timer-queue"]
+
+[[example]]
+name = "periodic"
+required-features = ["timer-queue"]
+
 [dependencies]
 cortex-m = "0.4.0"
 cortex-m-rtfm-macros = { path = "macros", version = "0.3.1" }
@@ -32,6 +61,7 @@ version = "0.9.0"
 
 [features]
 cm7-r0p1 = ["cortex-m/cm7-r0p1"]
+timer-queue = ["cortex-m-rtfm-macros/timer-queue"]
 
 [profile.release]
 lto = true

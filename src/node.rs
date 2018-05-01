@@ -9,24 +9,29 @@ pub struct Node<T>
 where
     T: 'static,
 {
+    #[cfg(feature = "timer-queue")]
     baseline: Instant,
     payload: T,
 }
 
+#[cfg(feature = "timer-queue")]
 impl<T> Eq for Node<T> {}
 
+#[cfg(feature = "timer-queue")]
 impl<T> Ord for Node<T> {
     fn cmp(&self, rhs: &Self) -> Ordering {
         self.baseline.cmp(&rhs.baseline)
     }
 }
 
+#[cfg(feature = "timer-queue")]
 impl<T> PartialEq for Node<T> {
     fn eq(&self, rhs: &Self) -> bool {
         self.baseline.eq(&rhs.baseline)
     }
 }
 
+#[cfg(feature = "timer-queue")]
 impl<T> PartialOrd for Node<T> {
     fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
         Some(self.cmp(rhs))
@@ -42,8 +47,15 @@ where
 }
 
 impl<T> Slot<T> {
+    #[cfg(feature = "timer-queue")]
     pub fn write(self, bl: Instant, data: T) -> Payload<T> {
         self.node.baseline = bl;
+        unsafe { ptr::write(&mut self.node.payload, data) }
+        Payload { node: self.node }
+    }
+
+    #[cfg(not(feature = "timer-queue"))]
+    pub fn write(self, data: T) -> Payload<T> {
         unsafe { ptr::write(&mut self.node.payload, data) }
         Payload { node: self.node }
     }
@@ -64,9 +76,16 @@ where
 }
 
 impl<T> Payload<T> {
+    #[cfg(feature = "timer-queue")]
     pub fn read(self) -> (Instant, T, Slot<T>) {
         let data = unsafe { ptr::read(&self.node.payload) };
         (self.node.baseline, data, Slot { node: self.node })
+    }
+
+    #[cfg(not(feature = "timer-queue"))]
+    pub fn read(self) -> (T, Slot<T>) {
+        let data = unsafe { ptr::read(&self.node.payload) };
+        (data, Slot { node: self.node })
     }
 
     pub fn tag<A>(self, tag: A) -> TaggedPayload<A>
@@ -97,6 +116,7 @@ where
         mem::transmute(self.payload)
     }
 
+    #[cfg(feature = "timer-queue")]
     pub fn baseline(&self) -> Instant {
         self.payload.node.baseline
     }
@@ -116,12 +136,14 @@ where
     }
 }
 
+#[cfg(feature = "timer-queue")]
 impl<T> Eq for TaggedPayload<T>
 where
     T: Copy,
 {
 }
 
+#[cfg(feature = "timer-queue")]
 impl<T> Ord for TaggedPayload<T>
 where
     T: Copy,
@@ -131,6 +153,7 @@ where
     }
 }
 
+#[cfg(feature = "timer-queue")]
 impl<T> PartialEq for TaggedPayload<T>
 where
     T: Copy,
@@ -140,6 +163,7 @@ where
     }
 }
 
+#[cfg(feature = "timer-queue")]
 impl<T> PartialOrd for TaggedPayload<T>
 where
     T: Copy,
