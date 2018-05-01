@@ -26,6 +26,14 @@ name = "empty"
 name = "interrupt"
 
 [[example]]
+name = "interrupt-async"
+required-features = ["timer-queue"]
+
+[[example]]
+name = "interrupt-async-after"
+required-features = ["timer-queue"]
+
+[[example]]
 name = "periodic-payload"
 required-features = ["timer-queue"]
 

@@ -7,7 +7,6 @@
 // a(bl=8000000, now=8000168)
 // a(bl=16000000, now=16000168)
 
-#![allow(warnings)]
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]

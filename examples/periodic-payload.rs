@@ -10,7 +10,6 @@
 // a(bl=16000000, now=16000168, input=1)
 // a(bl=24000000, now=24000168, input=2)
 
-#![allow(warnings)]
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]

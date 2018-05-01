@@ -23,7 +23,6 @@
 // b(bl=96000000, now=96000259, input=3)
 // a(bl=96000000, now=96002397, input=5)
 
-#![allow(warnings)]
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]

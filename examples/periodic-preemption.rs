@@ -24,7 +24,6 @@
 // b(bl=96000000, now=96000257)
 // a(bl=96000000, now=96001705)
 
-#![allow(warnings)]
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]
@@ -33,8 +32,7 @@
 #[macro_use]
 extern crate cortex_m;
 extern crate cortex_m_rtfm as rtfm;
-// extern crate panic_abort;
-extern crate panic_itm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
 use cortex_m::asm;

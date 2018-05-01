@@ -335,6 +335,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             let task = &app.tasks[name];
             let priority = task.priority;
             let __priority = Ident::from(format!("__{}", priority));
+            let interrupt = ctxt.dispatchers[&priority].interrupt();
             let ty = &task.input;
 
             let sqc = Ident::from(format!(
@@ -370,8 +371,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                             #krate::Maximum<P, #krate::#qc>: #krate::Unsigned,
                         {
                             unsafe {
-                                if let Some(slot) =
-                                    ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                let slot = ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue());
+                                if let Some(slot) = slot {
                                     let tp = slot
                                         .write(self.baseline, payload)
                                         .tag(::#__priority::Task::#name);
@@ -379,6 +380,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                                     ::#__priority::Q::new().claim_mut(t, |q, _| {
                                         q.split().0.enqueue_unchecked(tp);
                                     });
+
+                                    #krate::set_pending(#device::Interrupt::#interrupt);
 
                                     Ok(())
                                 } else {
@@ -423,6 +426,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                                     ::#__priority::Q::new().claim_mut(t, |q, _| {
                                         q.split().0.enqueue_unchecked(tp);
                                     });
+
+                                        #krate::set_pending(#device::Interrupt::#interrupt);
 
                                     Ok(())
                                 } else {
@@ -750,10 +755,12 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let async_exprs = app.init
         .async
         .iter()
-        .map(|task| if cfg!(feature = "timer-queue") {
-            quote!(#task: ::__async::#task::new(_bl))
-        } else {
-            quote!(#task: ::__async::#task::new())
+        .map(|task| {
+            if cfg!(feature = "timer-queue") {
+                quote!(#task: ::__async::#task::new(_bl))
+            } else {
+                quote!(#task: ::__async::#task::new())
+            }
         })
         .chain(
             app.init
