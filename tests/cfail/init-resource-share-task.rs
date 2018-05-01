@@ -1,8 +1,10 @@
+#![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
 use rtfm::app;
@@ -19,18 +21,20 @@ app! { //~ proc macro panicked
     },
 
     tasks: {
-        SYS_TICK: {
-            path: sys_tick,
+        exti0: {
+            interrupt: EXTI0,
             resources: [BUFFER],
             //~^ error: this resource is owned by `init` and can't be shared
         },
     },
 }
 
-fn init(_p: init::Peripherals) {}
+fn init(_ctxt: init::Context) -> init::LateResources {
+    init::LateResources {}
+}
 
-fn idle() -> ! {
+fn idle(_ctxt: idle::Context) -> ! {
     loop {}
 }
 
-fn sys_tick() {}
+fn exti0(_ctxt: exti0::Context) {}

@@ -3,7 +3,8 @@ use core::marker::PhantomData;
 #[cfg(not(armv6m))]
 use cortex_m::register::basepri;
 
-use typenum::{Max, Maximum, Unsigned};
+use typenum::type_operators::IsGreaterOrEqual;
+use typenum::{Max, Maximum, True, Unsigned};
 
 pub struct Threshold<N>
 where
@@ -34,11 +35,17 @@ pub unsafe trait Resource {
     #[doc(hidden)]
     unsafe fn get() -> &'static mut Self::Data;
 
-    fn borrow<'cs>(&'cs self, _t: &'cs Threshold<Self::Ceiling>) -> &'cs Self::Data {
+    fn borrow<'cs, P>(&'cs self, _t: &'cs Threshold<P>) -> &'cs Self::Data
+    where
+        P: IsGreaterOrEqual<Self::Ceiling, Output = True> + Unsigned,
+    {
         unsafe { Self::get() }
     }
 
-    fn borrow_mut<'cs>(&'cs mut self, _t: &'cs Threshold<Self::Ceiling>) -> &'cs mut Self::Data {
+    fn borrow_mut<'cs, P>(&'cs mut self, _t: &'cs Threshold<P>) -> &'cs mut Self::Data
+    where
+        P: IsGreaterOrEqual<Self::Ceiling, Output = True> + Unsigned,
+    {
         unsafe { Self::get() }
     }
 

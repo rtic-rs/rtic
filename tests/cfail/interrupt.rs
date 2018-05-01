@@ -4,24 +4,27 @@
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! { //~ error no variant named `EXTI33` found for type
+app! { //~ error no variant named `EXTI33` found for type `stm32f103xx::Interrupt`
     device: stm32f103xx,
 
     tasks: {
-        EXTI33: {
-            path: exti33,
+        exti33: {
+            interrupt: EXTI33,
         },
     },
 }
 
-fn init(_p: init::Peripherals) {}
+fn init(_ctxt: init::Context) -> init::LateResources {
+    init::LateResources {}
+}
 
-fn idle() -> ! {
+fn idle(_ctxt: idle::Context) -> ! {
     loop {}
 }
 
-fn exti33() {}
+fn exti33(_ctxt: exti33::Context) {}

@@ -4,27 +4,26 @@
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! { //~ error attempt to subtract with overflow
-    //~^ error constant evaluation error
+app! {
     device: stm32f103xx,
 
     tasks: {
-        SYS_TICK: {
-            path: sys_tick,
-            // ERROR priority must be in the range [1, 16]
-            priority: 0,
+        exti0: {
+            interrupt: EXTI0,
+            priority: 0, //~ error this value is outside the valid range of `(1, 255)`
         },
     },
 }
 
-fn init(_p: init::Peripherals) {}
+fn init(_ctxt: init::Context) -> init::LateResources {}
 
-fn idle() -> ! {
+fn idle(_ctxt: idle::Context) -> ! {
     loop {}
 }
 
-fn sys_tick() {}
+fn exti0(_ctxt: exti0::Context) {}

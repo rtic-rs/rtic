@@ -5,9 +5,10 @@
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
-use rtfm::{app, Resource, Threshold};
+use rtfm::{app, Resource};
 
 app! {
     device: stm32f103xx,
@@ -21,23 +22,27 @@ app! {
     },
 
     tasks: {
-        EXTI0: {
-            path: exti0,
-            priority: 1,
+        exti0: {
+            interrupt: EXTI0,
             resources: [ON],
         },
     },
 }
 
-fn init(_p: init::Peripherals, _r: init::Resources) {}
+fn init(_ctxt: init::Context) -> init::LateResources {
+    init::LateResources {}
+}
 
-fn idle(t: &mut Threshold, r: idle::Resources) -> ! {
+fn idle(mut ctxt: idle::Context) -> ! {
+    let t = &mut ctxt.threshold;
+    let on = ctxt.resources.ON;
+
     let state = rtfm::atomic(t, |t| {
         // ERROR borrow can't escape this *global* critical section
-        r.ON.borrow(t) //~ error cannot infer an appropriate lifetime
+        on.borrow(t) //~ error cannot infer an appropriate lifetime
     });
 
-    let state = r.ON.claim(t, |state, _t| {
+    let state = on.claim(t, |state, _t| {
         // ERROR borrow can't escape this critical section
         state //~ error cannot infer an appropriate lifetime
     });
@@ -45,4 +50,4 @@ fn idle(t: &mut Threshold, r: idle::Resources) -> ! {
     loop {}
 }
 
-fn exti0(_t: &mut Threshold, _r: EXTI0::Resources) {}
+fn exti0(_ctxt: exti0::Context) {}

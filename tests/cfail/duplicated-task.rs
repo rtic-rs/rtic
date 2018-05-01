@@ -8,21 +8,22 @@ extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! {
-    //~^ error proc macro panicked
+app! { //~ error proc macro panicked
     device: stm32f103xx,
 
     tasks: {
-        SYS_TICK: {
+        a: {
+            interrupt: EXTI0, //~ error this interrupt is already bound to another task
             priority: 1,
         },
 
-        SYS_TICK: {
+        b: {
+            interrupt: EXTI0,
             priority: 2,
         },
     },
 }
 
-fn init(_p: init::Peripherals) {}
+fn init(_ctxt: init::Context) -> init::LateResources {}
 
-fn idle() -> ! {}
+fn idle(_ctxt: idle::Context) -> ! {}

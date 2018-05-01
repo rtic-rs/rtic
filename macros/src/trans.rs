@@ -59,13 +59,13 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         });
 
         resources.push(quote! {
-            pub struct #name { _0: () }
+            pub struct #name { _not_send_or_sync: PhantomData<*const ()> }
 
             #[allow(dead_code)]
             #[allow(unsafe_code)]
             impl #name {
                 pub unsafe fn new() -> Self {
-                    #name { _0: () }
+                    #name { _not_send_or_sync: PhantomData }
                 }
             }
         });
@@ -74,6 +74,9 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     root.push(quote! {
         mod __resource {
             extern crate #krate;
+
+            #[allow(unused_imports)]
+            use core::marker::PhantomData;
 
             #(#resources)*
         }
@@ -776,16 +779,26 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         .resources
         .iter()
         .map(|res| {
-            let ty = &app.resources[res].ty;
+            if ctxt.ceilings.resources()[res].is_owned() {
+                let ty = &app.resources[res].ty;
 
-            quote!(pub #res: &'static mut #ty)
+                quote!(pub #res: &'static mut #ty)
+            } else {
+                quote!(pub #res: __resource::#res)
+            }
         })
         .collect::<Vec<_>>();
 
     let res_exprs = app.idle
         .resources
         .iter()
-        .map(|res| quote!(#res: __resource::#res::get()))
+        .map(|res| {
+            if ctxt.ceilings.resources()[res].is_owned() {
+                quote!(#res: __resource::#res::get())
+            } else {
+                quote!(#res: __resource::#res::new())
+            }
+        })
         .collect::<Vec<_>>();
 
     root.push(quote! {
@@ -797,6 +810,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
             pub struct Context {
                 pub resources: Resources,
+                pub threshold: #krate::Threshold<#krate::U0>,
             }
 
             #[allow(unsafe_code)]
@@ -804,6 +818,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 pub unsafe fn new() -> Self {
                     Context {
                         resources: Resources::new(),
+                        threshold: #krate::Threshold::new(),
                     }
                 }
             }
@@ -829,6 +844,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let init = &app.init.path;
     root.push(quote! {
         #[allow(unsafe_code)]
+        #[deny(const_err)]
         fn main() {
             #[allow(unused_imports)]
             use #hidden::#krate::Resource;

@@ -4,9 +4,10 @@
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
-use rtfm::{app, Resource, Threshold};
+use rtfm::{app, Resource};
 
 app! {
     device: stm32f103xx,
@@ -17,32 +18,37 @@ app! {
     },
 
     tasks: {
-        EXTI0: {
-            path: exti0,
-            priority: 1,
+        exti0: {
+            interrupt: EXTI0,
+            // priority: 1,
             resources: [A, B],
         },
 
-        EXTI1: {
-            path: exti1,
+        exti1: {
+            interrupt: EXTI1,
             priority: 2,
             resources: [A, B],
         },
     },
 }
 
-fn init(_p: init::Peripherals, _r: init::Resources) {}
+fn init(_ctxt: init::Context) -> init::LateResources {
+    init::LateResources {}
+}
 
-fn idle() -> ! {
+fn idle(_ctxt: idle::Context) -> ! {
     loop {}
 }
 
-fn exti0(mut ot: &mut Threshold, r: EXTI0::Resources) {
-    r.A.claim(&mut ot, |_a, mut _it| {
-        //~^ error cannot borrow `ot` as mutable more than once at a time
+fn exti0(mut ctxt: exti0::Context) {
+    let ot = &mut ctxt.threshold;
+    let exti0::Resources { A, B } = ctxt.resources;
+
+    A.claim(ot, |_a, _it| {
+        //~^ error closure requires unique access to `ot` but `*ot` is already borrowed
         // ERROR must use inner token `it` instead of the outer one (`ot`)
-        r.B.claim(&mut ot, |_b, _| {})
+        B.claim(ot, |_b, _| {})
     });
 }
 
-fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {}
+fn exti1(_ctxt: exti1::Context) {}

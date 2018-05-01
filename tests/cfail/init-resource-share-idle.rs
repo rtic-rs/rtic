@@ -3,6 +3,7 @@
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
 use rtfm::app;
@@ -24,8 +25,10 @@ app! { //~ proc macro panicked
     },
 }
 
-fn init(_p: init::Peripherals, _r: init::Resources) {}
+fn init(_ctxt: init::Context) -> init::LateResources {
+    init::LateResources {}
+}
 
-fn idle(_r: init::Resources) -> ! {
+fn idle(_ctxt: idle::Context) -> ! {
     loop {}
 }

@@ -4,9 +4,10 @@
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
-use rtfm::{app, Threshold};
+use rtfm::app;
 
 app! {
     device: stm32f103xx,
@@ -17,34 +18,32 @@ app! {
     },
 
     tasks: {
-        EXTI0: {
-            path: exti0,
-            priority: 1,
+        exti0: {
+            interrupt: EXTI0,
+            // priority: 1,
             resources: [A, LATE],
         },
 
-        EXTI1: {
-            path: exti1,
+        exti1: {
+            interrupt: EXTI1,
             priority: 2,
             resources: [A, LATE],
         },
     },
 }
 
-fn init(_p: init::Peripherals, r: init::Resources) -> init::LateResources {
-    // Try to use a resource that's not yet initialized:
-    r.LATE;
-    //~^ error: no field `LATE`
+fn init(ctxt: init::Context) -> init::LateResources {
+    // Tried to use a resource that's not yet initialized:
+    let _late = ctxt.resources.LATE;
+    //~^ error: no field `LATE` on type `init::Resources`
 
-    init::LateResources {
-        LATE: 0,
-    }
+    init::LateResources { LATE: 0 }
 }
 
-fn idle() -> ! {
+fn idle(_ctxt: idle::Context) -> ! {
     loop {}
 }
 
-fn exti0(_t: &mut Threshold, _r: EXTI0::Resources) {}
+fn exti0(_ctxt: exti0::Context) {}
 
-fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {}
+fn exti1(_ctxt: exti1::Context) {}

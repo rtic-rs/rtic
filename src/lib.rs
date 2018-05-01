@@ -91,6 +91,25 @@ impl Core {
     }
 }
 
+pub fn atomic<R, P, F>(t: &mut Threshold<P>, f: F) -> R
+where
+    F: FnOnce(&mut Threshold<U255>) -> R,
+    P: Unsigned,
+{
+    unsafe {
+        debug_assert!(P::to_u8() <= 255);
+
+        if P::to_u8() < 255 {
+            interrupt::disable();
+            let r = f(&mut Threshold::new());
+            interrupt::enable();
+            r
+        } else {
+            f(&mut Threshold::new())
+        }
+    }
+}
+
 #[doc(hidden)]
 pub const unsafe fn uninitialized<T>() -> T {
     #[allow(unions_with_drop_fields)]
@@ -102,6 +121,7 @@ pub const unsafe fn uninitialized<T>() -> T {
     U { none: () }.some
 }
 
+#[doc(hidden)]
 pub unsafe fn set_pending<I>(interrupt: I)
 where
     I: Nr,

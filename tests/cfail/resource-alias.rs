@@ -4,6 +4,7 @@
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
+extern crate panic_abort;
 extern crate stm32f103xx;
 
 use rtfm::app;
@@ -12,21 +13,23 @@ app! { //~ error proc macro panicked
     device: stm32f103xx,
 
     resources: {
-        // resource `MAX` listed twice
-        MAX: u8 = 0;
-        MAX: u16 = 0;
+        static MAX: u8 = 0;
+        static MAX: u16 = 0; //~ error this resource name appears more than once in this list
     },
 
     tasks: {
-        EXTI0: {
-            enabled: true,
-            priority: 1,
+        exti0: {
+            interrupt: EXTI0,
+            resources: [
+                MAX,
+                MAX, //~ error this resource name appears more than once in this list
+            ],
         },
     },
 }
 
-fn init(_p: init::Peripherals) {}
+fn init(_ctxt: init::Context) -> init::LateResources {}
 
-fn idle() -> ! {
+fn idle(_ctxt: idle::Context) -> ! {
     loop {}
 }
