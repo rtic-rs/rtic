@@ -25,8 +25,8 @@
 // a(bl=96000000, now=96001705)
 
 #![allow(warnings)]
-// #![deny(unsafe_code)]
-// #![deny(warnings)]
+#![deny(unsafe_code)]
+#![deny(warnings)]
 #![feature(proc_macro)]
 #![no_std]
 
@@ -36,8 +36,6 @@ extern crate cortex_m_rtfm as rtfm;
 // extern crate panic_abort;
 extern crate panic_itm;
 extern crate stm32f103xx;
-
-use core::mem;
 
 use cortex_m::asm;
 use cortex_m::peripheral::{DWT, ITM};
@@ -84,7 +82,7 @@ fn init(mut ctxt: init::Context) -> init::LateResources {
 }
 
 #[inline(always)]
-fn idle(ctxt: idle::Context) -> ! {
+fn idle(_ctxt: idle::Context) -> ! {
     loop {
         asm::wfi();
     }

@@ -44,6 +44,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 .unwrap_or(0) // 0 = resource owned by `init`
         ));
         root.push(quote! {
+            #[allow(unsafe_code)]
             unsafe impl #hidden::#krate::Resource for __resource::#name {
                 const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
                 type Ceiling = #hidden::#krate::#ceiling;
@@ -60,6 +61,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         resources.push(quote! {
             pub struct #name { _0: () }
 
+            #[allow(dead_code)]
+            #[allow(unsafe_code)]
             impl #name {
                 pub unsafe fn new() -> Self {
                     #name { _0: () }
@@ -90,7 +93,11 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             None
         };
 
-        let __context = Ident::from(format!("__{}_Context", name));
+        let __context = Ident::from(format!(
+            "_ZN{}{}7ContextE",
+            name.as_ref().as_bytes().len(),
+            name
+        ));
 
         let mut mod_ = vec![];
 
@@ -107,6 +114,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 pub threshold: #hidden::#krate::Threshold<#name::Priority>,
             }
 
+            #[allow(unsafe_code)]
             impl<#lifetime> #__context<#lifetime> {
                 pub unsafe fn new(bl: #hidden::#krate::Instant, payload: #input) -> Self {
                     #__context {
@@ -152,17 +160,20 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
         let async_exprs = task.async
             .iter()
-            .map(|task| quote!(#task: ::__async::#task::new(bl)))
+            .map(|task| quote!(#task: ::__async::#task::new(_bl)))
             .chain(
                 task.async_after
                     .iter()
-                    .map(|task| quote!(#task: ::__async_after::#task::new(bl))),
+                    .map(|task| quote!(#task: ::__async_after::#task::new(_bl))),
             )
             .collect::<Vec<_>>();
 
         let priority = Ident::from(format!("U{}", task.priority));
         mod_.push(quote! {
             extern crate #krate;
+
+            #[allow(unused_imports)]
+            use self::#krate::Resource;
 
             pub const HANDLER: fn(Context) = ::#path;
 
@@ -175,18 +186,21 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 #(#async_fields,)*
             }
 
+            #[allow(unsafe_code)]
             impl Async {
-                pub unsafe fn new(bl: #krate::Instant) -> Self {
+                pub unsafe fn new(_bl: #krate::Instant) -> Self {
                     Async {
                         #(#async_exprs,)*
                     }
                 }
             }
 
+            #[allow(non_snake_case)]
             pub struct Resources<#lifetime> {
                 #(#res_fields,)*
             }
 
+            #[allow(unsafe_code)]
             impl<#lifetime> Resources<#lifetime> {
                 pub unsafe fn new() -> Self {
                     Resources {
@@ -202,6 +216,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 let fn_name = Ident::from(format!("__{}", interrupt));
 
                 root.push(quote! {
+                    #[allow(non_snake_case)]
+                    #[allow(unsafe_code)]
                     #[export_name = #export_name]
                     pub unsafe extern "C" fn #fn_name() {
                         let _ = #device::Interrupt::#interrupt; // verify that the interrupt exists
@@ -213,6 +229,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 let capacity = Ident::from(format!("U{}", capacity));
 
                 root.push(quote! {
+                    #[allow(unsafe_code)]
                     unsafe impl #hidden::#krate::Resource for #name::SQ {
                         const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
                         type Ceiling = #name::Ceiling;
@@ -237,6 +254,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 mod_.push(quote! {
                     pub struct SQ { _0: () }
 
+                    #[allow(unsafe_code)]
                     impl SQ {
                         pub unsafe fn new() -> Self {
                             SQ { _0: () }
@@ -273,8 +291,10 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             let qc = Ident::from(format!("U{}", ctxt.ceilings.dispatch_queues()[&priority]));
 
             quote! {
+                #[allow(non_camel_case_types)]
                 pub struct #name { baseline: #krate::Instant }
 
+                #[allow(unsafe_code)]
                 impl #name {
                     pub unsafe fn new(bl: #krate::Instant) -> Self {
                         #name { baseline: bl }
@@ -295,8 +315,6 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         #krate::Maximum<P, #krate::#qc>: #krate::Unsigned,
                     {
                         unsafe {
-                            use self::#krate::Resource;
-
                             if let Some(slot) =
                                 ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
                                 let tp = slot
@@ -321,6 +339,9 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         mod __async {
             extern crate #krate;
 
+            #[allow(unused_imports)]
+            use self::#krate::Resource;
+
             #(#async)*
         }
     });
@@ -336,8 +357,10 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             let tqc = Ident::from(format!("U{}", ctxt.ceilings.timer_queue()));
 
             quote! {
+                #[allow(non_camel_case_types)]
                 pub struct #name { baseline: #krate::Instant }
 
+                #[allow(unsafe_code)]
                 impl #name {
                     pub unsafe fn new(bl: #krate::Instant) -> Self {
                         #name { baseline: bl }
@@ -359,8 +382,6 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         #krate::Maximum<P, #krate::#tqc>: #krate::Unsigned,
                     {
                         unsafe {
-                            use self::#krate::Resource;
-
                             if let Some(slot) =
                                 ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
                                 let bl = self.baseline + after;
@@ -383,6 +404,9 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     root.push(quote! {
         mod __async_after {
             extern crate #krate;
+
+            #[allow(unused_imports)]
+            use self::#krate::Resource;
 
             #(#async_after)*
         }
@@ -418,12 +442,14 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
                 pub struct TQ { _0: () }
 
+                #[allow(unsafe_code)]
                 impl TQ {
                     pub unsafe fn new() -> Self {
                         TQ { _0: () }
                     }
                 }
 
+                #[allow(unsafe_code)]
                 unsafe impl #krate::Resource for TQ {
                     const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
                     type Ceiling = #krate::#ceiling;
@@ -440,10 +466,13 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 // SysTick priority
                 pub type Priority = #krate::#priority;
 
+                #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
                 pub enum Task { #(#tasks,)* }
             }
 
+            #[allow(non_snake_case)]
+            #[allow(unsafe_code)]
             #[export_name = "SYS_TICK"]
             pub unsafe extern "C" fn __SYS_TICK() {
                 use #hidden::#krate::Resource;
@@ -473,12 +502,15 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
                 pub struct Q { _0: () }
 
+                #[allow(unsafe_code)]
+                #[allow(dead_code)]
                 impl Q {
                     pub unsafe fn new() -> Self {
                         Q { _0: () }
                     }
                 }
 
+                #[allow(unsafe_code)]
                 unsafe impl #krate::Resource for Q {
                     const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
                     type Ceiling = #krate::#ceiling;
@@ -492,6 +524,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                     }
                 }
 
+                #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
                 pub enum Task { #(#tasks,)* }
             }
@@ -517,6 +550,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         let export_name = interrupt.as_ref();
         let fn_name = Ident::from(format!("__{}", export_name));
         root.push(quote! {
+            #[allow(non_snake_case)]
+            #[allow(unsafe_code)]
             #[export_name = #export_name]
             pub unsafe extern "C" fn #fn_name() {
                 use #hidden::#krate::Resource;
@@ -559,15 +594,15 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
         pre_init.push(quote! {
             // Configure the system timer
-            syst.set_clock_source(#hidden::#krate::SystClkSource::Core);
-            syst.enable_counter();
+            _syst.set_clock_source(#hidden::#krate::SystClkSource::Core);
+            _syst.enable_counter();
 
             // Set the priority of the SysTick exception
             let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
             core.SCB.shpr[11].write(priority);
 
             // Initialize the timer queue
-            core::ptr::write(__tq::TQ::get(), #hidden::#krate::TimerQueue::new(syst));
+            core::ptr::write(__tq::TQ::get(), #hidden::#krate::TimerQueue::new(_syst));
         });
     }
 
@@ -602,12 +637,12 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let async_exprs = app.init
         .async
         .iter()
-        .map(|task| quote!(#task: ::__async::#task::new(bl)))
+        .map(|task| quote!(#task: ::__async::#task::new(_bl)))
         .chain(
             app.init
                 .async_after
                 .iter()
-                .map(|task| quote!(#task: ::__async_after::#task::new(bl))),
+                .map(|task| quote!(#task: ::__async_after::#task::new(_bl))),
         )
         .collect::<Vec<_>>();
 
@@ -624,12 +659,16 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         .collect::<Vec<_>>();
 
     root.push(quote! {
+        #[allow(non_snake_case)]
         pub struct _ZN4init13LateResourcesE {
             #(#late_resources,)*
         }
 
         mod init {
             extern crate #krate;
+
+            #[allow(unused_imports)]
+            use self::#krate::Resource;
 
             pub use ::#device::Peripherals as Device;
             pub use ::_ZN4init13LateResourcesE as LateResources;
@@ -643,6 +682,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 pub threshold: #krate::Threshold<#krate::U255>,
             }
 
+            #[allow(unsafe_code)]
             impl Context {
                 pub unsafe fn new(core: #krate::Core) -> Self {
                     Context {
@@ -660,9 +700,10 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 #(#async_fields,)*
             }
 
+            #[allow(unsafe_code)]
             impl Async {
                 unsafe fn new() -> Self {
-                    let bl = #krate::Instant::new(0);
+                    let _bl = #krate::Instant::new(0);
 
                     Async {
                         #(#async_exprs,)*
@@ -670,14 +711,14 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 }
             }
 
+            #[allow(non_snake_case)]
             pub struct Resources {
                 #(#res_fields,)*
             }
 
+            #[allow(unsafe_code)]
             impl Resources {
                 unsafe fn new() -> Self {
-                    use self::#krate::Resource;
-
                     Resources {
                         #(#res_exprs,)*
                     }
@@ -693,7 +734,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     for (name, res) in &app.resources {
         if res.expr.is_none() {
             post_init.push(quote! {
-                core::ptr::write(__resource::#name::get(), lr.#name);
+                core::ptr::write(__resource::#name::get(), _lr.#name);
             });
         }
     }
@@ -703,7 +744,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         let interrupt = dispatcher.interrupt();
         post_init.push(quote! {
             let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
-            nvic.set_priority(#device::Interrupt::#interrupt, priority);
+            _nvic.set_priority(#device::Interrupt::#interrupt, priority);
         });
     }
 
@@ -711,7 +752,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     for (interrupt, (_, priority)) in &ctxt.triggers {
         post_init.push(quote! {
             let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
-            nvic.set_priority(#device::Interrupt::#interrupt, priority);
+            _nvic.set_priority(#device::Interrupt::#interrupt, priority);
         });
     }
 
@@ -719,14 +760,14 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     for dispatcher in ctxt.dispatchers.values() {
         let interrupt = dispatcher.interrupt();
         post_init.push(quote! {
-            nvic.enable(#device::Interrupt::#interrupt);
+            _nvic.enable(#device::Interrupt::#interrupt);
         });
     }
 
     // Enable triggers
     for interrupt in ctxt.triggers.keys() {
         post_init.push(quote! {
-            nvic.enable(#device::Interrupt::#interrupt);
+            _nvic.enable(#device::Interrupt::#interrupt);
         });
     }
 
@@ -751,10 +792,14 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         mod idle {
             extern crate #krate;
 
+            #[allow(unused_imports)]
+            use self::#krate::Resource;
+
             pub struct Context {
                 pub resources: Resources,
             }
 
+            #[allow(unsafe_code)]
             impl Context {
                 pub unsafe fn new() -> Self {
                     Context {
@@ -763,14 +808,14 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 }
             }
 
+            #[allow(non_snake_case)]
             pub struct Resources {
                 #(#res_fields,)*
             }
 
+            #[allow(unsafe_code)]
             impl Resources {
                 unsafe fn new() -> Self {
-                    use self::#krate::Resource;
-
                     Resources {
                         #(#res_exprs,)*
                     }
@@ -783,20 +828,23 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let idle = &app.idle.path;
     let init = &app.init.path;
     root.push(quote! {
+        #[allow(unsafe_code)]
         fn main() {
+            #[allow(unused_imports)]
             use #hidden::#krate::Resource;
 
+            #[allow(unused_mut)]
             unsafe {
                 let init: fn(init::Context) -> init::LateResources = #init;
                 let idle: fn(idle::Context) -> ! = #idle;
 
                 #hidden::#krate::interrupt::disable();
 
-                let (mut core, mut dwt, mut nvic, mut syst) = #hidden::#krate::Core::steal();
+                let (mut core, mut dwt, mut _nvic, mut _syst) = #hidden::#krate::Core::steal();
 
                 #(#pre_init)*
 
-                let lr = init(init::Context::new(core));
+                let _lr = init(init::Context::new(core));
 
                 #(#post_init)*
 
