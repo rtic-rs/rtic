@@ -14,30 +14,6 @@ where
     payload: T,
 }
 
-#[cfg(feature = "timer-queue")]
-impl<T> Eq for Node<T> {}
-
-#[cfg(feature = "timer-queue")]
-impl<T> Ord for Node<T> {
-    fn cmp(&self, rhs: &Self) -> Ordering {
-        self.baseline.cmp(&rhs.baseline)
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl<T> PartialEq for Node<T> {
-    fn eq(&self, rhs: &Self) -> bool {
-        self.baseline.eq(&rhs.baseline)
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl<T> PartialOrd for Node<T> {
-    fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
-        Some(self.cmp(rhs))
-    }
-}
-
 #[doc(hidden)]
 pub struct Slot<T>
 where

@@ -699,7 +699,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         unsafe { #hidden::#krate::uninitialized() };
 
                     for node in N.iter_mut() {
-                        #name::SQ::get().split().0.enqueue_unchecked(node.into());
+                        #name::SQ::get().enqueue_unchecked(node.into());
                     }
                 }
             })
