@@ -1,13 +1,33 @@
-// 52 bytes .bss
+// # Pointers (old)
 //
-// # -Os
+// ~52~ 40 bytes .bss
+//
+// ## -Os
+//
 // init
 // a(bl=8000000, now=8000180)
 // a(bl=16000000, now=16000180)
 //
-// # -O3
+// ## -O3
+//
 // a(bl=8000000, now=8000168)
 // a(bl=16000000, now=16000168)
+//
+// # Indices (new)
+//
+// 28 bytes .bss
+//
+// ## -Os
+//
+// init
+// a(bl=8000000, now=8000176)
+// a(bl=16000000, now=16000176)
+//
+// ## -O3
+//
+// init
+// a(bl=8000000, now=8000167)
+// a(bl=16000000, now=16000167)
 
 #![deny(unsafe_code)]
 #![deny(warnings)]

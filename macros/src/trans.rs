@@ -280,18 +280,19 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 });
             }
             Either::Right(capacity) => {
-                let capacity = Ident::from(format!("U{}", capacity));
+                let ucapacity = Ident::from(format!("U{}", capacity));
+                let capacity = capacity as usize;
 
                 root.push(quote! {
                     #[allow(unsafe_code)]
                     unsafe impl #hidden::#krate::Resource for #name::SQ {
                         const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
                         type Ceiling = #name::Ceiling;
-                        type Data = #hidden::#krate::SlotQueue<#input, #hidden::#krate::#capacity>;
+                        type Data = #hidden::#krate::SlotQueue<#hidden::#krate::#ucapacity>;
 
                         unsafe fn get() -> &'static mut Self::Data {
                             static mut SQ:
-                                #hidden::#krate::SlotQueue<#input, #hidden::#krate::#capacity> =
+                                #hidden::#krate::SlotQueue<#hidden::#krate::#ucapacity> =
                                 #hidden::#krate::SlotQueue::u8();
 
                             &mut SQ
@@ -306,6 +307,10 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         .unwrap_or(0)
                 ));
                 mod_.push(quote! {
+                    #[allow(unsafe_code)]
+                    pub static mut BUFFER: [#krate::Node<#input>; #capacity] =
+                        unsafe { #krate::uninitialized() };
+
                     pub struct SQ { _0: () }
 
                     #[allow(unsafe_code)]
@@ -372,13 +377,15 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         {
                             unsafe {
                                 let slot = ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue());
-                                if let Some(slot) = slot {
-                                    let tp = slot
-                                        .write(self.baseline, payload)
-                                        .tag(::#__priority::Task::#name);
+                                if let Some(index) = slot {
+                                    let task = ::#__priority::Task::#name;
+                                    core::ptr::write(
+                                        ::#name::BUFFER.get_unchecked_mut(index as usize),
+                                        #krate::Node { baseline: self.baseline, payload }
+                                    );
 
                                     ::#__priority::Q::new().claim_mut(t, |q, _| {
-                                        q.split().0.enqueue_unchecked(tp);
+                                        q.split().0.enqueue_unchecked((task, index));
                                     });
 
                                     #krate::set_pending(#device::Interrupt::#interrupt);
@@ -417,17 +424,19 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                             #krate::Maximum<P, #krate::#qc>: #krate::Unsigned,
                         {
                             unsafe {
-                                if let Some(slot) =
+                                if let Some(index) =
                                     ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
-                                    let tp = slot
-                                        .write(payload)
-                                        .tag(::#__priority::Task::#name);
+                                    let task = ::#__priority::Task::#name;
+                                    core::ptr::write(
+                                        ::#name::BUFFER.get_unchecked_mut(index as usize),
+                                        #krate::Node { payload }
+                                    );
 
                                     ::#__priority::Q::new().claim_mut(t, |q, _| {
-                                        q.split().0.enqueue_unchecked(tp);
+                                        q.split().0.enqueue_unchecked((task, index));
                                     });
 
-                                        #krate::set_pending(#device::Interrupt::#interrupt);
+                                    #krate::set_pending(#device::Interrupt::#interrupt);
 
                                     Ok(())
                                 } else {
@@ -487,14 +496,21 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         #krate::Maximum<P, #krate::#tqc>: #krate::Unsigned,
                     {
                         unsafe {
-                            if let Some(slot) =
+                            if let Some(index) =
                                 ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
                                 let bl = self.baseline + after;
-                                let tp = slot
-                                    .write(bl, payload)
-                                    .tag(::__tq::Task::#name);
+                                let task = ::__tq::Task::#name;
+                                    core::ptr::write(
+                                        ::#name::BUFFER.get_unchecked_mut(index as usize),
+                                        #krate::Node { baseline: bl, payload },
+                                    );
+                                let m = #krate::Message {
+                                    baseline: bl,
+                                    index,
+                                    task,
+                                };
 
-                                ::__tq::TQ::new().claim_mut(t, |tq, _| tq.enqueue(bl, tp));
+                                ::__tq::TQ::new().claim_mut(t, |tq, _| tq.enqueue(m));
 
                                 Ok(())
                             } else {
@@ -531,7 +547,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 quote! {
                     __tq::Task::#name => {
                         #__priority::Q::new().claim_mut(t, |q, _| {
-                            q.split().0.enqueue_unchecked(tp.retag(#__priority::Task::#name))
+                            q.split().0.enqueue_unchecked((#__priority::Task::#name, index))
                         });
                         #hidden::#krate::set_pending(#device::Interrupt::#interrupt);
                     }
@@ -585,8 +601,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 #hidden::#krate::dispatch(
                     &mut #hidden::#krate::Threshold::<__tq::Priority>::new(),
                     &mut __tq::TQ::new(),
-                    |t, tp| {
-                        match tp.tag() {
+                    |t, task, index| {
+                        match task {
                             #(#arms,)*
                         }
                     })
@@ -644,20 +660,18 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 if cfg!(feature = "timer-queue") {
                     quote! {
                     #__priority::Task::#name => {
-                        let (bl, payload, slot) = payload.coerce().read();
-                        // priority
-                        #name::SQ::get().split().0.enqueue_unchecked(slot);
-                        #name::HANDLER(#name::Context::new(bl, payload));
+                        let node = core::ptr::read(::#name::BUFFER.get_unchecked(index as usize));
+                        #name::SQ::get().split().0.enqueue_unchecked(index);
+                        #name::HANDLER(#name::Context::new(node.baseline, node.payload));
                     }
 
                     }
                 } else {
                     quote! {
                     #__priority::Task::#name => {
-                        let (payload, slot) = payload.coerce().read();
-                        // priority
-                        #name::SQ::get().split().0.enqueue_unchecked(slot);
-                        #name::HANDLER(#name::Context::new(payload));
+                        let node = core::ptr::read(::#name::BUFFER.get_unchecked(index as usize));
+                        #name::SQ::get().split().0.enqueue_unchecked(index);
+                        #name::HANDLER(#name::Context::new(node.payload));
                     }
                     }
                 }
@@ -675,8 +689,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 use #hidden::#krate::Resource;
 
                 // NOTE(get) the dispatcher is the only consumer of this queue
-                while let Some(payload) = #__priority::Q::get().split().1.dequeue() {
-                    match payload.tag() {
+                while let Some((task, index)) = #__priority::Q::get().split().1.dequeue() {
+                    match task {
                         #(#arms,)*
                     }
                 }
@@ -691,16 +705,9 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         let input = &task.input;
 
         if let Either::Right(capacity) = task.interrupt_or_capacity {
-            let capacity = capacity as usize;
-
             pre_init.push(quote! {
-                {
-                    static mut N: [#hidden::#krate::Node<#input>; #capacity] =
-                        unsafe { #hidden::#krate::uninitialized() };
-
-                    for node in N.iter_mut() {
-                        #name::SQ::get().enqueue_unchecked(node.into());
-                    }
+                for i in 0..#capacity {
+                    #name::SQ::get().enqueue_unchecked(i);
                 }
             })
         }

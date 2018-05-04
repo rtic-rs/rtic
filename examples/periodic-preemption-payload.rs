@@ -1,6 +1,9 @@
-// 104 bytes .bss
+// # Pointers (old)
 //
-// # -Os
+// ~104~ 88 bytes .bss
+//
+// ## -Os
+//
 // a(bl=16000000, now=16000248, input=0)
 // b(bl=24000000, now=24000251, input=0)
 // a(bl=32000000, now=32000248, input=1)
@@ -11,8 +14,9 @@
 // a(bl=80000000, now=80000248, input=4)
 // b(bl=96000000, now=96000283, input=3)
 // a(bl=96000000, now=96002427, input=5)
-
-// # -O3
+//
+// ## -O3
+//
 // init
 // a(bl=16000000, now=16000231, input=0)
 // b(bl=24000000, now=24000230, input=0)
@@ -24,6 +28,37 @@
 // a(bl=80000000, now=80000231, input=4)
 // b(bl=96000000, now=96000259, input=3)
 // a(bl=96000000, now=96002397, input=5)
+//
+// # Indices (new)
+//
+// 56 bytes .bss
+//
+// ## -O3
+//
+// a(bl=16000000, now=16000215, input=0)
+// b(bl=24000000, now=24000214, input=0)
+// a(bl=32000000, now=32000215, input=1)
+// b(bl=48000000, now=48000236, input=1)
+// a(bl=48000000, now=48002281, input=2)
+// a(bl=64000000, now=64000215, input=3)
+// b(bl=72000000, now=72000214, input=2)
+// a(bl=80000000, now=80000215, input=4)
+// b(bl=96000000, now=96000236, input=3)
+// a(bl=96000000, now=96002281, input=5)
+//
+// ## -Os
+//
+// init
+// a(bl=16000000, now=16000257, input=0)
+// b(bl=24000000, now=24000252, input=0)
+// a(bl=32000000, now=32000257, input=1)
+// b(bl=48000000, now=48000284, input=1)
+// a(bl=48000000, now=48002326, input=2)
+// a(bl=64000000, now=64000257, input=3)
+// b(bl=72000000, now=72000252, input=2)
+// a(bl=80000000, now=80000257, input=4)
+// b(bl=96000000, now=96000284, input=3)
+// a(bl=96000000, now=96002326, input=5)
 
 #![deny(unsafe_code)]
 #![deny(warnings)]

@@ -1,3 +1,11 @@
+// # Pointers (old)
+//
+// ~40~ 32 bytes .bss
+//
+// # Indices (new)
+//
+// 12 bytes .bss
+
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]

@@ -37,13 +37,12 @@ pub use typenum::{Max, Maximum, Unsigned};
 
 pub use instant::Instant;
 pub use node::Node;
-use node::{Slot, TaggedPayload};
 pub use resource::{Resource, Threshold};
 #[cfg(feature = "timer-queue")]
-pub use tq::{dispatch, TimerQueue};
+pub use tq::{dispatch, Message, TimerQueue};
 
-pub type PayloadQueue<T, N> = RingBuffer<TaggedPayload<T>, N, u8>;
-pub type SlotQueue<T, N> = RingBuffer<Slot<T>, N, u8>;
+pub type PayloadQueue<T, N> = RingBuffer<(T, u8), N, u8>;
+pub type SlotQueue<N> = RingBuffer<u8, N, u8>;
 pub type Ceiling<R> = <R as Resource>::Ceiling;
 
 pub struct Core {
