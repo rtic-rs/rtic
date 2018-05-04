@@ -1,3 +1,5 @@
+// 52 bytes .bss
+//
 // # -Os
 // init
 // a(bl=8000000, now=8000180, input=0)
