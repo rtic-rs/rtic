@@ -35,6 +35,7 @@ pub unsafe trait Resource {
     #[doc(hidden)]
     unsafe fn get() -> &'static mut Self::Data;
 
+    #[inline(always)]
     fn borrow<'cs, P>(&'cs self, _t: &'cs Threshold<P>) -> &'cs Self::Data
     where
         P: IsGreaterOrEqual<Self::Ceiling, Output = True> + Unsigned,
@@ -42,6 +43,7 @@ pub unsafe trait Resource {
         unsafe { Self::get() }
     }
 
+    #[inline(always)]
     fn borrow_mut<'cs, P>(&'cs mut self, _t: &'cs Threshold<P>) -> &'cs mut Self::Data
     where
         P: IsGreaterOrEqual<Self::Ceiling, Output = True> + Unsigned,
@@ -49,6 +51,7 @@ pub unsafe trait Resource {
         unsafe { Self::get() }
     }
 
+    #[inline(always)]
     fn claim<'cs, R, F, P>(&self, _t: &mut Threshold<P>, f: F) -> R
     where
         F: FnOnce(&Self::Data, &mut Threshold<Maximum<P, Self::Ceiling>>) -> R,
@@ -71,6 +74,7 @@ pub unsafe trait Resource {
         }
     }
 
+    #[inline(always)]
     fn claim_mut<'cs, R, F, P>(&mut self, _t: &mut Threshold<P>, f: F) -> R
     where
         F: FnOnce(&mut Self::Data, &mut Threshold<Maximum<P, Self::Ceiling>>) -> R,

@@ -34,15 +34,6 @@ impl<T> PartialOrd for Message<T> {
     }
 }
 
-enum State<T>
-where
-    T: Copy,
-{
-    Payload { task: T, index: u8 },
-    Baseline(Instant),
-    Done,
-}
-
 #[doc(hidden)]
 pub struct TimerQueue<T, N>
 where
@@ -67,12 +58,19 @@ where
 
     #[inline]
     pub unsafe fn enqueue(&mut self, m: Message<T>) {
+        let mut is_empty = true;
         if self.queue
             .peek()
-            .map(|head| m.baseline < head.baseline)
+            .map(|head| {
+                is_empty = false;
+                m.baseline < head.baseline
+            })
             .unwrap_or(true)
         {
-            self.syst.enable_interrupt();
+            if is_empty {
+                self.syst.enable_interrupt();
+            }
+
             // set SysTick pending
             unsafe { (*SCB::ptr()).icsr.write(1 << 26) }
         }
@@ -91,48 +89,36 @@ where
     TQ: Resource<Data = TimerQueue<T, N>>,
 {
     loop {
-        let state = tq.claim_mut(t, |tq, _| {
+        let next = tq.claim_mut(t, |tq, _| {
             if let Some(bl) = tq.queue.peek().map(|p| p.baseline) {
-                if Instant::now() >= bl {
+                let diff = bl - Instant::now();
+
+                if diff < 0 {
                     // message ready
                     let m = unsafe { tq.queue.pop_unchecked() };
-                    State::Payload {
-                        task: m.task,
-                        index: m.index,
-                    }
+
+                    Some((m.task, m.index))
                 } else {
-                    // set a new timeout
-                    State::Baseline(bl)
+                    const MAX: u32 = 0x00ffffff;
+
+                    tq.syst.set_reload(cmp::min(MAX, diff as u32));
+
+                    // start counting from the new reload
+                    tq.syst.clear_current();
+
+                    None
                 }
             } else {
                 // empty queue
                 tq.syst.disable_interrupt();
-                State::Done
+                None
             }
         });
 
-        match state {
-            State::Payload { task, index } => f(t, task, index),
-            State::Baseline(bl) => {
-                const MAX: u32 = 0x00ffffff;
-
-                let diff = bl - Instant::now();
-
-                if diff < 0 {
-                    // message became ready
-                    continue;
-                } else {
-                    tq.claim_mut(t, |tq, _| {
-                        tq.syst.set_reload(cmp::min(MAX, diff as u32));
-                        // start counting from the new reload
-                        tq.syst.clear_current();
-                    });
-                    return;
-                }
-            }
-            State::Done => {
-                return;
-            }
+        if let Some((task, index)) = next {
+            f(t, task, index)
+        } else {
+            return;
         }
     }
 }

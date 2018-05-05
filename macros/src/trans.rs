@@ -364,7 +364,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         // XXX or take `self`?
                         #[inline]
                         pub fn post<P>(
-                            &self,
+                            &mut self,
                             t: &mut #krate::Threshold<P>,
                             payload: #ty,
                         ) -> Result<(), #ty>
@@ -412,7 +412,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         // XXX or take `self`?
                         #[inline]
                         pub fn post<P>(
-                            &self,
+                            &mut self,
                             t: &mut #krate::Threshold<P>,
                             payload: #ty,
                         ) -> Result<(), #ty>
