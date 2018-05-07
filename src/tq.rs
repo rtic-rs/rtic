@@ -99,6 +99,7 @@ where
 
                     Some((m.task, m.index))
                 } else {
+                    // set a new timeout
                     const MAX: u32 = 0x00ffffff;
 
                     tq.syst.set_reload(cmp::min(MAX, diff as u32));

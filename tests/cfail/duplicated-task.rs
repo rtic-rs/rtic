@@ -14,7 +14,7 @@ app! { //~ error proc macro panicked
     tasks: {
         a: {
             interrupt: EXTI0, //~ error this interrupt is already bound to another task
-            priority: 1,
+            // priority: 1,
         },
 
         b: {

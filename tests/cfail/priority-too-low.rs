@@ -4,12 +4,12 @@
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
-extern crate panic_abort;
+extern crate panic_itm;
 extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! {
+app! { //~ error proc macro panicked
     device: stm32f103xx,
 
     tasks: {

@@ -52,7 +52,7 @@ app! {
     },
 
     init: {
-        async_after: [a],
+        async: [a],
     },
 
     free_interrupts: [EXTI0],
@@ -72,7 +72,7 @@ const S: u32 = 1_000 * MS;
 fn init(mut ctxt: init::Context) -> init::LateResources {
     iprintln!(&mut ctxt.core.ITM.stim[0], "init");
 
-    ctxt.async.a.post(&mut ctxt.threshold, 1 * S, ()).ok();
+    ctxt.async.a.post(&mut ctxt.threshold, ()).ok();
 
     init::LateResources { ITM: ctxt.core.ITM }
 }

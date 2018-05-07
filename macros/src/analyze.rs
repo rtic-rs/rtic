@@ -14,7 +14,16 @@ pub fn app(app: &App) -> Context {
     let mut free_interrupts = app.free_interrupts.iter().cloned().collect::<Vec<_>>();
 
     async.extend(&app.init.async);
-    async_after.extend(&app.init.async_after);
+
+    for task in &app.init.async_after {
+        async_after.insert(*task);
+
+        // Timer queue
+        if let Entry::Vacant(entry) = tq.tasks.entry(*task) {
+            tq.capacity += app.tasks[task].interrupt_or_capacity.right().unwrap();
+            entry.insert(app.tasks[task].priority);
+        }
+    }
 
     // compute dispatchers
     for (name, task) in &app.tasks {
@@ -23,9 +32,9 @@ pub fn app(app: &App) -> Context {
                 triggers.insert(interrupt, (*name, task.priority));
             }
             Either::Right(capacity) => {
-                let dispatcher = dispatchers.entry(task.priority).or_insert(Dispatcher::new(
-                    free_interrupts.pop().expect("not enough free interrupts"),
-                ));
+                let dispatcher = dispatchers.entry(task.priority).or_insert_with(|| {
+                    Dispatcher::new(free_interrupts.pop().expect("not enough free interrupts"))
+                });
                 dispatcher.tasks.push(*name);
                 dispatcher.capacity += capacity;
             }
