@@ -77,3 +77,4 @@ timer-queue = ["cortex-m-rtfm-macros/timer-queue"]
 
 [profile.release]
 lto = true
+codegen-units = 1

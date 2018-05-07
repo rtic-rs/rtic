@@ -15,7 +15,7 @@
 //
 // # Indices (new)
 //
-// 28 bytes .bss
+// 32 bytes .bss
 //
 // ## -Os
 //
@@ -26,8 +26,9 @@
 // ## -O3
 //
 // init
-// a(bl=8000000, now=8000169)
-// a(bl=16000000, now=16000169)
+// a(bl=0, now=68)
+// a(bl=8000000, now=8000165)
+// a(bl=16000000, now=16000165)
 
 #![deny(unsafe_code)]
 #![deny(warnings)]

@@ -35,16 +35,17 @@
 //
 // ## -O3
 //
-// a(bl=16000000, now=16000207, input=0)
-// b(bl=24000000, now=24000202, input=0)
-// a(bl=32000000, now=32000207, input=1)
-// b(bl=48000000, now=48000229, input=1)
-// a(bl=48000000, now=48001984, input=2)
-// a(bl=64000000, now=64000207, input=3)
-// b(bl=72000000, now=72000202, input=2)
-// a(bl=80000000, now=80000207, input=4)
-// b(bl=96000000, now=96000229, input=3)
-// a(bl=96000000, now=96001984, input=5)
+// init
+// a(bl=16000000, now=16000193, input=0)
+// b(bl=24000000, now=24000196, input=0)
+// a(bl=32000000, now=32000193, input=1)
+// b(bl=48000000, now=48000225, input=1)
+// a(bl=48000000, now=48001958, input=2)
+// a(bl=64000000, now=64000193, input=3)
+// b(bl=72000000, now=72000196, input=2)
+// a(bl=80000000, now=80000193, input=4)
+// b(bl=96000000, now=96000225, input=3)
+// a(bl=96000000, now=96001958, input=5)
 //
 // ## -Os
 //
@@ -91,13 +92,13 @@ app! {
     tasks: {
         a: {
             async_after: [a],
-            input: u32,
+            input: u16,
             resources: [ITM],
         },
 
         b: {
             async_after: [b],
-            input: u32,
+            input: u16,
             priority: 2,
             resources: [ITM],
         },
