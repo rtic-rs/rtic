@@ -13,7 +13,6 @@ extern crate heapless;
 extern crate typenum;
 
 mod instant;
-mod node;
 mod resource;
 #[cfg(feature = "timer-queue")]
 mod tq;
@@ -36,7 +35,6 @@ pub use typenum::consts::*;
 pub use typenum::{Max, Maximum, Unsigned};
 
 pub use instant::Instant;
-pub use node::Node;
 pub use resource::{Resource, Threshold};
 #[cfg(feature = "timer-queue")]
 pub use tq::{dispatch, Message, TimerQueue};

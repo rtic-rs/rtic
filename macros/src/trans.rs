@@ -308,19 +308,25 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         .unwrap_or(0)
                 ));
 
-                let mangled = Ident::from(format!("_ZN{}{}6BUFFERE", name.as_ref().len(), name));
+                let mangled = Ident::from(format!("_ZN{}{}6PAYLOADSE", name.as_ref().len(), name));
 
                 // NOTE must be in the root because of `#input`
                 root.push(quote! {
                     #[allow(non_upper_case_globals)]
                     #[allow(unsafe_code)]
-                    pub static mut #mangled: [#hidden::#krate::Node<#input>; #capacity] =
+                    pub static mut #mangled: [#input; #capacity] =
                         unsafe { #hidden::#krate::uninitialized() };
 
                 });
 
                 mod_.push(quote! {
-                    pub use ::#mangled as BUFFER;
+                    pub use ::#mangled as PAYLOADS;
+
+                    #[allow(dead_code)]
+                    #[allow(unsafe_code)]
+                    pub static mut BASELINES: [#krate::Instant; #capacity] = unsafe {
+                        #krate::uninitialized()
+                    };
 
                     pub struct SQ { _0: () }
 
@@ -387,8 +393,12 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                                 if let Some(index) = slot {
                                     let task = ::#__priority::Task::#name;
                                     core::ptr::write(
-                                        #name::BUFFER.get_unchecked_mut(index as usize),
-                                        #hidden::#krate::Node { baseline: self.baseline(), payload }
+                                        #name::PAYLOADS.get_unchecked_mut(index as usize),
+                                        payload,
+                                    );
+                                    core::ptr::write(
+                                        #name::BASELINES.get_unchecked_mut(index as usize),
+                                        self.baseline(),
                                     );
 
                                     #__priority::Q::new().claim_mut(t, |q, _| {
@@ -448,8 +458,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                                     ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
                                     let task = ::#__priority::Task::#name;
                                     core::ptr::write(
-                                        ::#name::BUFFER.get_unchecked_mut(index as usize),
-                                        #hidden::#krate::Node { payload }
+                                        ::#name::PAYLOADS.get_unchecked_mut(index as usize),
+                                        payload,
                                     );
 
                                     ::#__priority::Q::new().claim_mut(t, |q, _| {
@@ -533,10 +543,14 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                                 ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
                                 let bl = self.baseline() + after;
                                 let task = ::__tq::Task::#name;
-                                    core::ptr::write(
-                                        ::#name::BUFFER.get_unchecked_mut(index as usize),
-                                        #hidden::#krate::Node { baseline: bl, payload },
-                                    );
+                                core::ptr::write(
+                                    ::#name::PAYLOADS.get_unchecked_mut(index as usize),
+                                    payload,
+                                );
+                                core::ptr::write(
+                                    ::#name::BASELINES.get_unchecked_mut(index as usize),
+                                    bl,
+                                );
                                 let m = #hidden::#krate::Message {
                                     baseline: bl,
                                     index,
@@ -713,18 +727,19 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 if cfg!(feature = "timer-queue") {
                     quote! {
                     #__priority::Task::#name => {
-                        let node = core::ptr::read(::#name::BUFFER.get_unchecked(index as usize));
+                        let payload = core::ptr::read(::#name::PAYLOADS.get_unchecked(index as usize));
+                        let baseline = core::ptr::read(::#name::BASELINES.get_unchecked(index as usize));
                         #name::SQ::get().split().0.enqueue_unchecked(index);
-                        #name::HANDLER(#name::Context::new(node.baseline, node.payload));
+                        #name::HANDLER(#name::Context::new(baseline, payload));
                     }
 
                     }
                 } else {
                     quote! {
                     #__priority::Task::#name => {
-                        let node = core::ptr::read(::#name::BUFFER.get_unchecked(index as usize));
+                        let payload = core::ptr::read(::#name::PAYLOADS.get_unchecked(index as usize));
                         #name::SQ::get().split().0.enqueue_unchecked(index);
-                        #name::HANDLER(#name::Context::new(node.payload));
+                        #name::HANDLER(#name::Context::new(payload));
                     }
                     }
                 }
