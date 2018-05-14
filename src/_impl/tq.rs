@@ -5,48 +5,47 @@ use heapless::binary_heap::{BinaryHeap, Min};
 use heapless::ArrayLength;
 use typenum::{Max, Maximum, Unsigned};
 
-use instant::Instant;
-use resource::{Resource, Threshold};
+use _impl::Instant;
+use resource::{Priority, Resource};
 
-pub struct Message<T> {
-    pub baseline: Instant,
+pub struct NotReady<T> {
+    pub scheduled_time: Instant,
     pub index: u8,
     pub task: T,
 }
 
-impl<T> Eq for Message<T> {}
+impl<T> Eq for NotReady<T> {}
 
-impl<T> Ord for Message<T> {
-    fn cmp(&self, other: &Message<T>) -> Ordering {
-        self.baseline.cmp(&other.baseline)
+impl<T> Ord for NotReady<T> {
+    fn cmp(&self, other: &NotReady<T>) -> Ordering {
+        self.scheduled_time.cmp(&other.scheduled_time)
     }
 }
 
-impl<T> PartialEq for Message<T> {
-    fn eq(&self, other: &Message<T>) -> bool {
-        self.baseline == other.baseline
+impl<T> PartialEq for NotReady<T> {
+    fn eq(&self, other: &NotReady<T>) -> bool {
+        self.scheduled_time == other.scheduled_time
     }
 }
 
-impl<T> PartialOrd for Message<T> {
-    fn partial_cmp(&self, other: &Message<T>) -> Option<Ordering> {
+impl<T> PartialOrd for NotReady<T> {
+    fn partial_cmp(&self, other: &NotReady<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-#[doc(hidden)]
 pub struct TimerQueue<T, N>
 where
-    N: ArrayLength<Message<T>>,
+    N: ArrayLength<NotReady<T>>,
     T: Copy,
 {
     pub syst: SYST,
-    pub queue: BinaryHeap<Message<T>, N, Min>,
+    pub queue: BinaryHeap<NotReady<T>, N, Min>,
 }
 
 impl<T, N> TimerQueue<T, N>
 where
-    N: ArrayLength<Message<T>>,
+    N: ArrayLength<NotReady<T>>,
     T: Copy,
 {
     pub const fn new(syst: SYST) -> Self {
@@ -57,13 +56,13 @@ where
     }
 
     #[inline]
-    pub unsafe fn enqueue(&mut self, m: Message<T>) {
+    pub unsafe fn enqueue(&mut self, m: NotReady<T>) {
         let mut is_empty = true;
         if self.queue
             .peek()
             .map(|head| {
                 is_empty = false;
-                m.baseline < head.baseline
+                m.scheduled_time < head.scheduled_time
             })
             .unwrap_or(true)
         {
@@ -79,22 +78,22 @@ where
     }
 }
 
-pub fn dispatch<T, TQ, N, F, P>(t: &mut Threshold<P>, tq: &mut TQ, mut f: F)
+pub fn dispatch<T, TQ, N, F, P>(t: &mut Priority<P>, tq: &mut TQ, mut f: F)
 where
-    F: FnMut(&mut Threshold<P>, T, u8),
-    Maximum<P, TQ::Ceiling>: Unsigned,
-    N: 'static + ArrayLength<Message<T>>,
-    P: Unsigned + Max<TQ::Ceiling>,
+    F: FnMut(&mut Priority<P>, T, u8),
+    N: 'static + ArrayLength<NotReady<T>>,
+    P: Max<TQ::Ceiling> + Unsigned,
     T: 'static + Copy + Send,
     TQ: Resource<Data = TimerQueue<T, N>>,
+    TQ::Ceiling: Unsigned,
 {
     loop {
         let next = tq.claim_mut(t, |tq, _| {
-            if let Some(bl) = tq.queue.peek().map(|p| p.baseline) {
-                let diff = bl - Instant::now();
+            if let Some(st) = tq.queue.peek().map(|p| p.scheduled_time) {
+                let diff = st - Instant::now();
 
                 if diff < 0 {
-                    // message ready
+                    // became ready
                     let m = unsafe { tq.queue.pop_unchecked() };
 
                     Some((m.task, m.index))

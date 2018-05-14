@@ -2,6 +2,7 @@
 #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
+#![no_main]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -51,19 +52,19 @@ fn idle(_ctxt: idle::Context) -> ! {
 #[allow(non_snake_case)]
 fn exti0(mut ctxt: exti0::Context) {
     let exti0::Resources { ON, mut MAX } = ctxt.resources;
-    let t = &mut ctxt.threshold;
+    let p = &mut ctxt.priority;
 
     // ERROR need to lock to access the resource because priority < ceiling
     {
-        let _on = ON.borrow(t);
+        let _on = ON.borrow(p);
         //~^ error type mismatch resolving
     }
 
     // OK need to lock to access the resource
-    if ON.claim(t, |on, _| *on) {}
+    if ON.claim(p, |on, _| *on) {}
 
     // OK can claim a resource with maximum ceiling
-    MAX.claim_mut(t, |max, _| *max += 1);
+    MAX.claim_mut(p, |max, _| *max += 1);
 }
 
 #[allow(non_snake_case)]

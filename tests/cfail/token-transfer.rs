@@ -2,6 +2,7 @@
 #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
+#![no_main]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -9,14 +10,14 @@ extern crate panic_itm;
 extern crate stm32f103xx;
 extern crate typenum;
 
-use rtfm::{app, Threshold};
+use rtfm::{app, Priority};
 use typenum::consts::U1;
 
 app! { //~ error bound `*const (): core::marker::Send` is not satisfied
     device: stm32f103xx,
 
     resources: {
-        static TOKEN: Option<Threshold<U1>> = None;
+        static TOKEN: Option<Priority<U1>> = None;
     },
 
     idle: {
@@ -31,7 +32,9 @@ app! { //~ error bound `*const (): core::marker::Send` is not satisfied
     }
 }
 
-fn init(_ctxt: init::Context) {}
+fn init(_ctxt: init::Context) -> init::LateResources {
+    init::LateResources {}
+}
 
 fn idle(_ctxt: idle::Context) -> ! {
     loop {}

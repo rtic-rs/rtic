@@ -2,5 +2,6 @@
 *.org
 .#*
 .gdb_history
+/book/book
 Cargo.lock
 target/

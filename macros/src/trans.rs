@@ -8,20 +8,13 @@ use analyze::Context;
 
 pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let mut root = vec![];
-    let krate = Ident::from("cortex_m_rtfm");
+    let k = Ident::from("_rtfm");
     let device = &app.device;
-    let hidden = Ident::from("__hidden");
 
-    let needs_tq = !ctxt.async_after.is_empty();
+    let needs_tq = !ctxt.schedule_after.is_empty();
 
-    /* root */
-    // NOTE we can't use paths like `#krate::foo` in the root because there's no guarantee that the
-    // user has not renamed `cortex_m_rtfm` (e.g. `extern crate cortex_m_rtfm as rtfm`) so instead
-    // we add this `#hidden` module and use `#hidden::#krate::foo` in the root.
     root.push(quote! {
-        mod #hidden {
-            pub extern crate #krate;
-        }
+        extern crate cortex_m_rtfm as #k;
     });
 
     /* Resources */
@@ -32,7 +25,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             .expr
             .as_ref()
             .map(|e| quote!(#e))
-            .unwrap_or_else(|| quote!(unsafe { #hidden::#krate::uninitialized() }));
+            .unwrap_or_else(|| quote!(unsafe { ::#k::_impl::uninitialized() }));
 
         let ceiling = Ident::from(format!(
             "U{}",
@@ -45,12 +38,12 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         ));
         root.push(quote! {
             #[allow(unsafe_code)]
-            unsafe impl #hidden::#krate::Resource for __resource::#name {
+            unsafe impl ::#k::Resource for _resource::#name {
                 const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
-                type Ceiling = #hidden::#krate::#ceiling;
+                type Ceiling = ::#k::_impl::#ceiling;
                 type Data = #ty;
 
-                unsafe fn get() -> &'static mut Self::Data {
+                unsafe fn _var() -> &'static mut Self::Data {
                     static mut #name: #ty = #expr;
 
                     &mut #name
@@ -72,9 +65,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     }
 
     root.push(quote! {
-        mod __resource {
-            extern crate #krate;
-
+        mod _resource {
             #[allow(unused_imports)]
             use core::marker::PhantomData;
 
@@ -85,7 +76,6 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     /* Tasks */
     for (name, task) in &app.tasks {
         let path = &task.path;
-        let input = &task.input;
 
         let lifetime = if task.resources
             .iter()
@@ -96,7 +86,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             None
         };
 
-        let __context = Ident::from(format!(
+        let _context = Ident::from(format!(
             "_ZN{}{}7ContextE",
             name.as_ref().as_bytes().len(),
             name
@@ -104,50 +94,61 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
         let mut mod_ = vec![];
 
+        let time_field = if task.interrupt_or_instances.is_left() {
+            quote!(start_time)
+        } else {
+            quote!(scheduled_time)
+        };
+
+        let input_ = task.input
+            .as_ref()
+            .map(|input| quote!(#input))
+            .unwrap_or(quote!(()));
+
         // NOTE some stuff has to go in the root because `#input` is not guaranteed to be a
         // primitive type and there's no way to import that type into a module (we don't know its
         // full path). So instead we just assume that `#input` has been imported in the root; this
         // forces us to put anything that refers to `#input` in the root.
         if cfg!(feature = "timer-queue") {
             root.push(quote! {
-                pub struct #__context<#lifetime> {
-                    pub async: #name::Async,
-                    pub baseline: u32,
-                    pub input: #input,
+                pub struct #_context<#lifetime> {
+                    pub #time_field: u32,
+                    pub input: #input_,
                     pub resources: #name::Resources<#lifetime>,
-                    pub threshold: #hidden::#krate::Threshold<#name::Priority>,
+                    pub tasks: #name::Tasks,
+                    pub priority: ::#k::Priority<#name::Priority>,
                 }
 
                 #[allow(unsafe_code)]
-                impl<#lifetime> #__context<#lifetime> {
-                    pub unsafe fn new(bl: #hidden::#krate::Instant, payload: #input) -> Self {
-                        #__context {
-                            async: #name::Async::new(bl),
-                            baseline: bl.into(),
+                impl<#lifetime> #_context<#lifetime> {
+                    pub unsafe fn new(bl: ::#k::_impl::Instant, payload: #input_) -> Self {
+                        #_context {
+                            tasks: #name::Tasks::new(bl),
+                            #time_field: bl.into(),
                             input: payload,
                             resources: #name::Resources::new(),
-                            threshold: #hidden::#krate::Threshold::new(),
+                            priority: ::#k::Priority::_new(),
                         }
                     }
                 }
             });
         } else {
             root.push(quote! {
-                pub struct #__context<#lifetime> {
-                    pub async: #name::Async,
-                    pub input: #input,
+                pub struct #_context<#lifetime> {
+                    pub tasks: #name::Tasks,
+                    pub input: #input_,
                     pub resources: #name::Resources<#lifetime>,
-                    pub threshold: #hidden::#krate::Threshold<#name::Priority>,
+                    pub priority: ::#k::Priority<#name::Priority>,
                 }
 
                 #[allow(unsafe_code)]
-                impl<#lifetime> #__context<#lifetime> {
-                    pub unsafe fn new(payload: #input) -> Self {
-                        #__context {
-                            async: #name::Async::new(),
+                impl<#lifetime> #_context<#lifetime> {
+                    pub unsafe fn new(payload: #input_) -> Self {
+                        #_context {
+                            tasks: #name::Tasks::new(),
                             input: payload,
                             resources: #name::Resources::new(),
-                            threshold: #hidden::#krate::Threshold::new(),
+                            priority: ::#k::Priority::_new(),
                         }
                     }
                 }
@@ -161,61 +162,59 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                     let ty = &app.resources[res].ty;
                     quote!(pub #res: &'a mut #ty)
                 } else {
-                    quote!(pub #res: super::__resource::#res)
+                    quote!(pub #res: ::_resource::#res)
                 }
             })
             .collect::<Vec<_>>();
 
         let res_exprs = task.resources.iter().map(|res| {
             if ctxt.ceilings.resources()[res].is_owned() {
-                quote!(#res: super::__resource::#res::get())
+                quote!(#res: ::_resource::#res::_var())
             } else {
-                quote!(#res: super::__resource::#res::new())
+                quote!(#res: ::_resource::#res::new())
             }
         });
 
-        let async_fields = task.async
+        let tasks_fields = task.schedule_now
             .iter()
-            .map(|task| quote!(pub #task: ::__async::#task))
+            .map(|task| quote!(pub #task: ::_schedule_now::#task))
             .chain(
-                task.async_after
+                task.schedule_after
                     .iter()
-                    .map(|task| quote!(pub #task: ::__async_after::#task)),
+                    .map(|task| quote!(pub #task: ::_schedule_after::#task)),
             )
             .collect::<Vec<_>>();
 
-        let async_exprs = task.async
+        let tasks_exprs = task.schedule_now
             .iter()
             .map(|task| {
                 if cfg!(feature = "timer-queue") {
-                    quote!(#task: ::__async::#task::new(_bl))
+                    quote!(#task: ::_schedule_now::#task::new(_bl))
                 } else {
-                    quote!(#task: ::__async::#task::new())
+                    quote!(#task: ::_schedule_now::#task::new())
                 }
             })
             .chain(
-                task.async_after
+                task.schedule_after
                     .iter()
-                    .map(|task| quote!(#task: ::__async_after::#task::new(_bl))),
+                    .map(|task| quote!(#task: ::_schedule_after::#task::new(_bl))),
             )
             .collect::<Vec<_>>();
 
         let priority = Ident::from(format!("U{}", task.priority));
         mod_.push(quote! {
-            extern crate #krate;
-
             #[allow(unused_imports)]
-            use self::#krate::Resource;
+            use ::#k::Resource;
 
             pub const HANDLER: fn(Context) = ::#path;
 
             // The priority at this task is dispatched at
-            pub type Priority = #krate::#priority;
+            pub type Priority = ::#k::_impl::#priority;
 
-            pub use super::#__context as Context;
+            pub use ::#_context as Context;
 
-            pub struct Async {
-                #(#async_fields,)*
+            pub struct Tasks {
+                #(#tasks_fields,)*
             }
 
             #[allow(non_snake_case)]
@@ -236,39 +235,38 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         if cfg!(feature = "timer-queue") {
             mod_.push(quote! {
                 #[allow(unsafe_code)]
-                impl Async {
-                    pub unsafe fn new(_bl: #krate::Instant) -> Self {
-                        Async {
-                            #(#async_exprs,)*
+                impl Tasks {
+                    pub unsafe fn new(_bl: ::#k::_impl::Instant) -> Self {
+                        Tasks {
+                            #(#tasks_exprs,)*
                         }
                     }
                 }
-
             });
         } else {
             mod_.push(quote! {
                 #[allow(unsafe_code)]
-                impl Async {
+                impl Tasks {
                     pub unsafe fn new() -> Self {
-                        Async {
-                            #(#async_exprs,)*
+                        Tasks {
+                            #(#tasks_exprs,)*
                         }
                     }
                 }
-
             });
         }
 
-        match task.interrupt_or_capacity {
+        match task.interrupt_or_instances {
             Either::Left(interrupt) => {
                 let export_name = interrupt.as_ref();
-                let fn_name = Ident::from(format!("__{}", interrupt));
+                let fn_name = Ident::from(format!("_{}", interrupt));
 
                 let bl = if cfg!(feature = "timer-queue") {
-                    Some(quote!(#hidden::#krate::Instant::now(),))
+                    Some(quote!(_now,))
                 } else {
                     None
                 };
+
                 root.push(quote! {
                     #[allow(non_snake_case)]
                     #[allow(unsafe_code)]
@@ -276,27 +274,29 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                     pub unsafe extern "C" fn #fn_name() {
                         use #device::Interrupt;
                         let _ = Interrupt::#interrupt; // verify that the interrupt exists
+                        let _now = ::#k::_impl::Instant::now();
+                        core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
                         #name::HANDLER(#name::Context::new(#bl ()))
                     }
                 });
             }
-            Either::Right(capacity) => {
-                let ucapacity = Ident::from(format!("U{}", capacity));
-                let capacity = capacity as usize;
+            Either::Right(instances) => {
+                let ucapacity = Ident::from(format!("U{}", instances));
+                let capacity = instances as usize;
 
                 root.push(quote! {
                     #[allow(unsafe_code)]
-                    unsafe impl #hidden::#krate::Resource for #name::SQ {
+                    unsafe impl ::#k::Resource for #name::FREE_QUEUE {
                         const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
                         type Ceiling = #name::Ceiling;
-                        type Data = #hidden::#krate::SlotQueue<#hidden::#krate::#ucapacity>;
+                        type Data = ::#k::_impl::FreeQueue<::#k::_impl::#ucapacity>;
 
-                        unsafe fn get() -> &'static mut Self::Data {
-                            static mut SQ:
-                                #hidden::#krate::SlotQueue<#hidden::#krate::#ucapacity> =
-                                #hidden::#krate::SlotQueue::u8();
+                        unsafe fn _var() -> &'static mut Self::Data {
+                            static mut FREE_QUEUE:
+                                ::#k::_impl::FreeQueue<::#k::_impl::#ucapacity> =
+                                ::#k::_impl::FreeQueue::u8();
 
-                            &mut SQ
+                            &mut FREE_QUEUE
                         }
                     }
 
@@ -314,8 +314,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 root.push(quote! {
                     #[allow(non_upper_case_globals)]
                     #[allow(unsafe_code)]
-                    pub static mut #mangled: [#input; #capacity] =
-                        unsafe { #hidden::#krate::uninitialized() };
+                    pub static mut #mangled: [#input_; #capacity] =
+                        unsafe { ::#k::_impl::uninitialized() };
 
                 });
 
@@ -324,22 +324,23 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
                     #[allow(dead_code)]
                     #[allow(unsafe_code)]
-                    pub static mut BASELINES: [#krate::Instant; #capacity] = unsafe {
-                        #krate::uninitialized()
+                    pub static mut SCHEDULED_TIMES: [::#k::_impl::Instant; #capacity] = unsafe {
+                        ::#k::_impl::uninitialized()
                     };
 
-                    pub struct SQ { _0: () }
+                    #[allow(non_camel_case_types)]
+                    pub struct FREE_QUEUE { _0: () }
 
                     #[allow(dead_code)]
                     #[allow(unsafe_code)]
-                    impl SQ {
+                    impl FREE_QUEUE {
                         pub unsafe fn new() -> Self {
-                            SQ { _0: () }
+                            FREE_QUEUE { _0: () }
                         }
                     }
 
-                    // Ceiling of the `SQ` resource
-                    pub type Ceiling = #krate::#ceiling;
+                    // Ceiling of the `FREE_QUEUE` resource
+                    pub type Ceiling = ::#k::_impl::#ceiling;
                 });
             }
         }
@@ -351,15 +352,24 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         });
     }
 
-    /* Async */
-    let async = ctxt.async
+    /* schedule_now */
+    let schedule_now = ctxt.schedule_now
         .iter()
         .map(|name| {
             let task = &app.tasks[name];
             let priority = task.priority;
-            let __priority = Ident::from(format!("__{}", priority));
+            let _priority = Ident::from(format!("_{}", priority));
             let interrupt = ctxt.dispatchers[&priority].interrupt();
-            let ty = &task.input;
+
+            let input_ = task.input
+                .as_ref()
+                .map(|input| quote!(#input))
+                .unwrap_or(quote!(()));
+            let (payload_in, payload_out) = if let Some(input) = task.input.as_ref() {
+                (quote!(payload: #input,), quote!(payload))
+            } else {
+                (quote!(), quote!(()))
+            };
 
             let sqc = Ident::from(format!(
                 "U{}",
@@ -372,45 +382,44 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 root.push(quote! {
                     #[allow(dead_code)]
                     #[allow(unsafe_code)]
-                    impl __async::#name {
+                    impl _schedule_now::#name {
                         #[inline]
-                        pub fn post<P>(
+                        pub fn schedule_now<P>(
                             &mut self,
-                            t: &mut #hidden::#krate::Threshold<P>,
-                            payload: #ty,
-                        ) -> Result<(), #ty>
+                            t: &mut ::#k::Priority<P>,
+                            #payload_in
+                        ) -> Result<(), #input_>
                         where
-                            P: #hidden::#krate::Unsigned +
-                                #hidden::#krate::Max<#hidden::#krate::#sqc> +
-                                #hidden::#krate::Max<#hidden::#krate::#qc>,
-                            #hidden::#krate::Maximum<P, #hidden::#krate::#sqc>: #hidden::#krate::Unsigned,
-                            #hidden::#krate::Maximum<P, #hidden::#krate::#qc>: #hidden::#krate::Unsigned,
+                            P: ::#k::_impl::Unsigned +
+                                ::#k::_impl::Max<::#k::_impl::#sqc> +
+                                ::#k::_impl::Max<::#k::_impl::#qc>,
+                            ::#k::_impl::Maximum<P, ::#k::_impl::#sqc>: ::#k::_impl::Unsigned,
+                            ::#k::_impl::Maximum<P, ::#k::_impl::#qc>: ::#k::_impl::Unsigned,
                         {
                             unsafe {
-                                use #hidden::#krate::Resource;
+                                use ::#k::Resource;
 
-                                let slot = ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue());
+                                let slot = ::#name::FREE_QUEUE::new()
+                                    .claim_mut(t, |sq, _| sq.dequeue());
                                 if let Some(index) = slot {
-                                    let task = ::#__priority::Task::#name;
+                                    let task = ::#_priority::Task::#name;
                                     core::ptr::write(
                                         #name::PAYLOADS.get_unchecked_mut(index as usize),
-                                        payload,
+                                        #payload_out,
                                     );
-                                    core::ptr::write(
-                                        #name::BASELINES.get_unchecked_mut(index as usize),
-                                        self.baseline(),
-                                    );
+                                    *#name::SCHEDULED_TIMES.get_unchecked_mut(index as usize) =
+                                        self.scheduled_time();
 
-                                    #__priority::Q::new().claim_mut(t, |q, _| {
+                                    #_priority::READY_QUEUE::new().claim_mut(t, |q, _| {
                                         q.split().0.enqueue_unchecked((task, index));
                                     });
 
                                     use #device::Interrupt;
-                                    #hidden::#krate::set_pending(Interrupt::#interrupt);
+                                    ::#k::_impl::trigger(Interrupt::#interrupt);
 
                                     Ok(())
                                 } else {
-                                    Err(payload)
+                                    Err(#payload_out)
                                 }
                             }
                         }
@@ -419,17 +428,17 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
                 quote! {
                     #[allow(non_camel_case_types)]
-                    pub struct #name { baseline: #krate::Instant }
+                    pub struct #name { scheduled_time: ::#k::_impl::Instant }
 
                     #[allow(dead_code)]
                     #[allow(unsafe_code)]
                     impl #name {
-                        pub unsafe fn new(bl: #krate::Instant) -> Self {
-                            #name { baseline: bl }
+                        pub unsafe fn new(bl: ::#k::_impl::Instant) -> Self {
+                            #name { scheduled_time: bl }
                         }
 
-                        pub fn baseline(&self) -> #krate::Instant {
-                            self.baseline
+                        pub fn scheduled_time(&self) -> ::#k::_impl::Instant {
+                            self.scheduled_time
                         }
                     }
                 }
@@ -437,41 +446,41 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 root.push(quote! {
                     #[allow(dead_code)]
                     #[allow(unsafe_code)]
-                    impl __async::#name {
+                    impl _schedule_now::#name {
                         #[inline]
-                        pub fn post<P>(
+                        pub fn schedule_now<P>(
                             &mut self,
-                            t: &mut #hidden::#krate::Threshold<P>,
-                            payload: #ty,
-                        ) -> Result<(), #ty>
+                            t: &mut ::#k::Priority<P>,
+                            #payload_in
+                        ) -> Result<(), #input_>
                         where
-                            P: #hidden::#krate::Unsigned +
-                                #hidden::#krate::Max<#hidden::#krate::#sqc> +
-                                #hidden::#krate::Max<#hidden::#krate::#qc>,
-                            #hidden::#krate::Maximum<P, #hidden::#krate::#sqc>: #hidden::#krate::Unsigned,
-                            #hidden::#krate::Maximum<P, #hidden::#krate::#qc>: #hidden::#krate::Unsigned,
+                            P: ::#k::_impl::Unsigned +
+                                ::#k::_impl::Max<::#k::_impl::#sqc> +
+                                ::#k::_impl::Max<::#k::_impl::#qc>,
+                            ::#k::_impl::Maximum<P, ::#k::_impl::#sqc>: ::#k::_impl::Unsigned,
+                            ::#k::_impl::Maximum<P, ::#k::_impl::#qc>: ::#k::_impl::Unsigned,
                         {
                             unsafe {
-                                use #hidden::#krate::Resource;
+                                use ::#k::Resource;
 
                                 if let Some(index) =
-                                    ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
-                                    let task = ::#__priority::Task::#name;
+                                    ::#name::FREE_QUEUE::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                    let task = ::#_priority::Task::#name;
                                     core::ptr::write(
                                         ::#name::PAYLOADS.get_unchecked_mut(index as usize),
-                                        payload,
+                                        #payload_out,
                                     );
 
-                                    ::#__priority::Q::new().claim_mut(t, |q, _| {
+                                    ::#_priority::READY_QUEUE::new().claim_mut(t, |q, _| {
                                         q.split().0.enqueue_unchecked((task, index));
                                     });
 
                                     use #device::Interrupt;
-                                    #hidden::#krate::set_pending(Interrupt::#interrupt);
+                                    ::#k::_impl::trigger(Interrupt::#interrupt);
 
                                     Ok(())
                                 } else {
-                                    Err(payload)
+                                    Err(#payload_out)
                                 }
                             }
                         }
@@ -494,22 +503,19 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         })
         .collect::<Vec<_>>();
     root.push(quote! {
-        mod __async {
-            extern crate #krate;
-
+        mod _schedule_now {
             #[allow(unused_imports)]
-            use self::#krate::Resource;
+            use ::#k::Resource;
 
-            #(#async)*
+            #(#schedule_now)*
         }
     });
 
-    /* Async (+after) */
-    let async_after = ctxt.async_after
+    /* schedule_after */
+    let schedule_after = ctxt.schedule_after
         .iter()
         .map(|name| {
             let task = &app.tasks[name];
-            let ty = &task.input;
 
             let sqc = Ident::from(format!(
                 "U{}",
@@ -517,51 +523,61 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             ));
             let tqc = Ident::from(format!("U{}", ctxt.ceilings.timer_queue()));
 
+            let input_ = task.input
+                .as_ref()
+                .map(|input| quote!(#input))
+                .unwrap_or(quote!(()));
+            let (payload_in, payload_out) = if let Some(input) = task.input.as_ref() {
+                (quote!(payload: #input,), quote!(payload))
+            } else {
+                (quote!(), quote!(()))
+            };
+
             // NOTE needs to be in the root because of `#ty`
             root.push(quote! {
                 #[allow(dead_code)]
                 #[allow(unsafe_code)]
-                impl __async_after::#name {
+                impl _schedule_after::#name {
                     #[inline]
-                    pub fn post<P>(
+                    pub fn schedule_after<P>(
                         &self,
-                        t: &mut #hidden::#krate::Threshold<P>,
+                        t: &mut ::#k::Priority<P>,
                         after: u32,
-                        payload: #ty,
-                    ) -> Result<(), #ty>
+                        #payload_in
+                    ) -> Result<(), #input_>
                     where
-                        P: #hidden::#krate::Unsigned +
-                            #hidden::#krate::Max<#hidden::#krate::#sqc> +
-                            #hidden::#krate::Max<#hidden::#krate::#tqc>,
-                        #hidden::#krate::Maximum<P, #hidden::#krate::#sqc>: #hidden::#krate::Unsigned,
-                        #hidden::#krate::Maximum<P, #hidden::#krate::#tqc>: #hidden::#krate::Unsigned,
+                        P: ::#k::_impl::Unsigned +
+                            ::#k::_impl::Max<::#k::_impl::#sqc> +
+                            ::#k::_impl::Max<::#k::_impl::#tqc>,
+                        ::#k::_impl::Maximum<P, ::#k::_impl::#sqc>: ::#k::_impl::Unsigned,
+                        ::#k::_impl::Maximum<P, ::#k::_impl::#tqc>: ::#k::_impl::Unsigned,
                     {
                         unsafe {
-                            use #hidden::#krate::Resource;
+                            use ::#k::Resource;
 
                             if let Some(index) =
-                                ::#name::SQ::new().claim_mut(t, |sq, _| sq.dequeue()) {
-                                let bl = self.baseline() + after;
-                                let task = ::__tq::Task::#name;
+                                ::#name::FREE_QUEUE::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                let ss = self.scheduled_time() + after;
+                                let task = ::_tq::Task::#name;
+
                                 core::ptr::write(
                                     ::#name::PAYLOADS.get_unchecked_mut(index as usize),
-                                    payload,
+                                    #payload_out,
                                 );
-                                core::ptr::write(
-                                    ::#name::BASELINES.get_unchecked_mut(index as usize),
-                                    bl,
-                                );
-                                let m = #hidden::#krate::Message {
-                                    baseline: bl,
+
+                                *::#name::SCHEDULED_TIMES.get_unchecked_mut(index as usize) = ss;
+
+                                let m = ::#k::_impl::NotReady {
+                                    scheduled_time: ss,
                                     index,
                                     task,
                                 };
 
-                                ::__tq::TQ::new().claim_mut(t, |tq, _| tq.enqueue(m));
+                                ::_tq::TIMER_QUEUE::new().claim_mut(t, |tq, _| tq.enqueue(m));
 
                                 Ok(())
                             } else {
-                                Err(payload)
+                                Err(#payload_out)
                             }
                         }
                     }
@@ -570,30 +586,28 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
             quote! {
                 #[allow(non_camel_case_types)]
-                pub struct #name { baseline: #krate::Instant }
+                pub struct #name { scheduled_time: ::#k::_impl::Instant }
 
                 #[allow(dead_code)]
                 #[allow(unsafe_code)]
                 impl #name {
-                    pub unsafe fn new(bl: #krate::Instant) -> Self {
-                        #name { baseline: bl }
+                    pub unsafe fn new(ss: ::#k::_impl::Instant) -> Self {
+                        #name { scheduled_time: ss }
                     }
 
-                    pub fn baseline(&self) -> #krate::Instant {
-                        self.baseline
+                    pub fn scheduled_time(&self) -> ::#k::_impl::Instant {
+                        self.scheduled_time
                     }
                 }
             }
         })
         .collect::<Vec<_>>();
     root.push(quote! {
-        mod __async_after {
-            extern crate #krate;
-
+        mod _schedule_after {
             #[allow(unused_imports)]
-            use self::#krate::Resource;
+            use ::#k::Resource;
 
-            #(#async_after)*
+            #(#schedule_after)*
         }
     });
 
@@ -605,16 +619,16 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             .tasks()
             .iter()
             .map(|(name, priority)| {
-                let __priority = Ident::from(format!("__{}", priority));
+                let _priority = Ident::from(format!("_{}", priority));
                 let interrupt = ctxt.dispatchers[priority].interrupt();
 
                 quote! {
-                    __tq::Task::#name => {
-                        #__priority::Q::new().claim_mut(t, |q, _| {
-                            q.split().0.enqueue_unchecked((#__priority::Task::#name, index))
+                    _tq::Task::#name => {
+                        #_priority::READY_QUEUE::new().claim_mut(t, |q, _| {
+                            q.split().0.enqueue_unchecked((#_priority::Task::#name, index))
                         });
                         use #device::Interrupt;
-                        #hidden::#krate::set_pending(Interrupt::#interrupt);
+                        ::#k::_impl::trigger(Interrupt::#interrupt);
                     }
                 }
             })
@@ -623,34 +637,33 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         let ceiling = Ident::from(format!("U{}", ctxt.ceilings.timer_queue()));
         let priority = Ident::from(format!("U{}", ctxt.sys_tick));
         root.push(quote! {
-            mod __tq {
-                extern crate #krate;
-
-                pub struct TQ { _0: () }
+            mod _tq {
+                #[allow(non_camel_case_types)]
+                pub struct TIMER_QUEUE { _0: () }
 
                 #[allow(unsafe_code)]
-                impl TQ {
+                impl TIMER_QUEUE {
                     pub unsafe fn new() -> Self {
-                        TQ { _0: () }
+                        TIMER_QUEUE { _0: () }
                     }
                 }
 
                 #[allow(unsafe_code)]
-                unsafe impl #krate::Resource for TQ {
+                unsafe impl ::#k::Resource for TIMER_QUEUE {
                     const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
-                    type Ceiling = #krate::#ceiling;
-                    type Data = #krate::TimerQueue<Task, #krate::#capacity>;
+                    type Ceiling = ::#k::_impl::#ceiling;
+                    type Data = ::#k::_impl::TimerQueue<Task, ::#k::_impl::#capacity>;
 
-                    unsafe fn get() -> &'static mut Self::Data {
-                        static mut TQ: #krate::TimerQueue<Task, #krate::#capacity> =
-                            unsafe { #krate::uninitialized() };
+                    unsafe fn _var() -> &'static mut Self::Data {
+                        static mut TIMER_QUEUE: ::#k::_impl::TimerQueue<Task, ::#k::_impl::#capacity> =
+                            unsafe { ::#k::_impl::uninitialized() };
 
-                        &mut TQ
+                        &mut TIMER_QUEUE
                     }
                 }
 
                 // SysTick priority
-                pub type Priority = #krate::#priority;
+                pub type Priority = ::#k::_impl::#priority;
 
                 #[allow(non_camel_case_types)]
                 #[allow(dead_code)]
@@ -660,13 +673,13 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
-            #[export_name = "SYS_TICK"]
-            pub unsafe extern "C" fn __SYS_TICK() {
-                use #hidden::#krate::Resource;
+            #[export_name = "SysTick"]
+            pub unsafe extern "C" fn _impl_SysTick() {
+                use ::#k::Resource;
 
-                #hidden::#krate::dispatch(
-                    &mut #hidden::#krate::Threshold::<__tq::Priority>::new(),
-                    &mut __tq::TQ::new(),
+                ::#k::_impl::dispatch(
+                    &mut ::#k::Priority::<_tq::Priority>::_new(),
+                    &mut _tq::TIMER_QUEUE::new(),
                     |t, task, index| {
                         match task {
                             #(#arms,)*
@@ -678,36 +691,36 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
     /* Dispatchers */
     for (priority, dispatcher) in &ctxt.dispatchers {
-        let __priority = Ident::from(format!("__{}", priority));
+        let _priority = Ident::from(format!("_{}", priority));
         let capacity = Ident::from(format!("U{}", dispatcher.capacity()));
         let tasks = dispatcher.tasks();
         let ceiling = Ident::from(format!("U{}", ctxt.ceilings.dispatch_queues()[priority]));
 
         root.push(quote! {
-            mod #__priority {
-                extern crate #krate;
-
-                pub struct Q { _0: () }
+            mod #_priority {
+                #[allow(non_camel_case_types)]
+                pub struct READY_QUEUE { _0: () }
 
                 #[allow(unsafe_code)]
                 #[allow(dead_code)]
-                impl Q {
+                impl READY_QUEUE {
                     pub unsafe fn new() -> Self {
-                        Q { _0: () }
+                        READY_QUEUE { _0: () }
                     }
                 }
 
                 #[allow(unsafe_code)]
-                unsafe impl #krate::Resource for Q {
+                unsafe impl ::#k::Resource for READY_QUEUE {
                     const NVIC_PRIO_BITS: u8 = ::#device::NVIC_PRIO_BITS;
-                    type Ceiling = #krate::#ceiling;
-                    type Data = #krate::PayloadQueue<Task, #krate::#capacity>;
+                    type Ceiling = ::#k::_impl::#ceiling;
+                    type Data = ::#k::_impl::ReadyQueue<Task, ::#k::_impl::#capacity>;
 
-                    unsafe fn get() -> &'static mut Self::Data {
-                        static mut Q: #krate::PayloadQueue<Task, #krate::#capacity> =
-                            #krate::PayloadQueue::u8();
+                    unsafe fn _var() -> &'static mut Self::Data {
+                        static mut READY_QUEUE:
+                            ::#k::_impl::ReadyQueue<Task, ::#k::_impl::#capacity> =
+                            ::#k::_impl::ReadyQueue::u8();
 
-                        &mut Q
+                        &mut READY_QUEUE
                     }
                 }
 
@@ -722,23 +735,27 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             .tasks()
             .iter()
             .map(|name| {
-                // NOTE(get) this is the only `Slot` producer because a task can only be
+                // NOTE(_var) this is the only free slot producer because a task can only be
                 // dispatched at one priority
                 if cfg!(feature = "timer-queue") {
                     quote! {
-                    #__priority::Task::#name => {
-                        let payload = core::ptr::read(::#name::PAYLOADS.get_unchecked(index as usize));
-                        let baseline = core::ptr::read(::#name::BASELINES.get_unchecked(index as usize));
-                        #name::SQ::get().split().0.enqueue_unchecked(index);
-                        #name::HANDLER(#name::Context::new(baseline, payload));
+                    #_priority::Task::#name => {
+                        let payload =
+                            core::ptr::read(::#name::PAYLOADS.get_unchecked(index as usize));
+                        let ss = *::#name::SCHEDULED_TIMES.get_unchecked(index as usize);
+
+                        #name::FREE_QUEUE::_var().split().0.enqueue_unchecked(index);
+
+                        #name::HANDLER(#name::Context::new(ss, payload));
                     }
 
                     }
                 } else {
                     quote! {
-                    #__priority::Task::#name => {
-                        let payload = core::ptr::read(::#name::PAYLOADS.get_unchecked(index as usize));
-                        #name::SQ::get().split().0.enqueue_unchecked(index);
+                    #_priority::Task::#name => {
+                        let payload =
+                            core::ptr::read(::#name::PAYLOADS.get_unchecked(index as usize));
+                        #name::FREE_QUEUE::_var().split().0.enqueue_unchecked(index);
                         #name::HANDLER(#name::Context::new(payload));
                     }
                     }
@@ -748,16 +765,17 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
         let interrupt = dispatcher.interrupt();
         let export_name = interrupt.as_ref();
-        let fn_name = Ident::from(format!("__{}", export_name));
+        let fn_name = Ident::from(format!("_{}", export_name));
         root.push(quote! {
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
             #[export_name = #export_name]
             pub unsafe extern "C" fn #fn_name() {
-                use #hidden::#krate::Resource;
+                use ::#k::Resource;
 
-                // NOTE(get) the dispatcher is the only consumer of this queue
-                while let Some((task, index)) = #__priority::Q::get().split().1.dequeue() {
+                // NOTE(_var) the dispatcher is the only consumer of this queue
+                while let Some((task, index)) =
+                    #_priority::READY_QUEUE::_var().split().1.dequeue() {
                     match task {
                         #(#arms,)*
                     }
@@ -772,32 +790,61 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     for (name, task) in &app.tasks {
         let input = &task.input;
 
-        if let Either::Right(capacity) = task.interrupt_or_capacity {
+        if let Either::Right(instances) = task.interrupt_or_instances {
             pre_init.push(quote! {
-                for i in 0..#capacity {
-                    #name::SQ::get().enqueue_unchecked(i);
+                for i in 0..#instances {
+                    #name::FREE_QUEUE::_var().enqueue_unchecked(i);
                 }
             })
         }
     }
 
     let prio_bits = quote!(#device::NVIC_PRIO_BITS);
-    if needs_tq {
-        let priority = ctxt.sys_tick;
 
+    if needs_tq {
         pre_init.push(quote! {
             // Configure the system timer
-            _syst.set_clock_source(#hidden::#krate::SystClkSource::Core);
-            _syst.enable_counter();
-
-            // Set the priority of the SysTick exception
-            let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
-            core.SCB.shpr[11].write(priority);
+            p.SYST.set_clock_source(::#k::_impl::SystClkSource::Core);
+            p.SYST.enable_counter();
 
             // Initialize the timer queue
-            core::ptr::write(__tq::TQ::get(), #hidden::#krate::TimerQueue::new(_syst));
+            core::ptr::write(_tq::TIMER_QUEUE::_var(), ::#k::_impl::TimerQueue::new(p.SYST));
         });
     }
+
+    let core = if cfg!(feature = "timer-queue") {
+        quote! {
+            ::#k::_impl::Peripherals {
+                CBP: p.CBP,
+                CPUID: p.CPUID,
+                DCB: p.DCB,
+                // DWT: p.DWT,
+                FPB: p.FPB,
+                FPU: p.FPU,
+                ITM: p.ITM,
+                MPU: p.MPU,
+                SCB: &mut p.SCB,
+                // SYST: p.SYST,
+                TPIU: p.TPIU,
+            }
+        }
+    } else {
+        quote! {
+            ::#k::_impl::Peripherals {
+                CBP: p.CBP,
+                CPUID: p.CPUID,
+                DCB: p.DCB,
+                DWT: p.DWT,
+                FPB: p.FPB,
+                FPU: p.FPU,
+                ITM: p.ITM,
+                MPU: p.MPU,
+                SCB: p.SCB,
+                SYST: p.SYST,
+                TPIU: p.TPIU,
+            }
+        }
+    };
 
     /* init */
     let res_fields = app.init
@@ -812,36 +859,36 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let res_exprs = app.init
         .resources
         .iter()
-        .map(|r| quote!(#r: __resource::#r::get()))
+        .map(|r| quote!(#r: _resource::#r::_var()))
         .collect::<Vec<_>>();
 
-    let async_fields = app.init
-        .async
+    let tasks_fields = app.init
+        .schedule_now
         .iter()
-        .map(|task| quote!(pub #task: ::__async::#task))
+        .map(|task| quote!(pub #task: ::_schedule_now::#task))
         .chain(
             app.init
-                .async_after
+                .schedule_after
                 .iter()
-                .map(|task| quote!(pub #task: ::__async_after::#task)),
+                .map(|task| quote!(pub #task: ::_schedule_after::#task)),
         )
         .collect::<Vec<_>>();
 
-    let async_exprs = app.init
-        .async
+    let tasks_exprs = app.init
+        .schedule_now
         .iter()
         .map(|task| {
             if cfg!(feature = "timer-queue") {
-                quote!(#task: ::__async::#task::new(_bl))
+                quote!(#task: ::_schedule_now::#task::new(_bl))
             } else {
-                quote!(#task: ::__async::#task::new())
+                quote!(#task: ::_schedule_now::#task::new())
             }
         })
         .chain(
             app.init
-                .async_after
+                .schedule_after
                 .iter()
-                .map(|task| quote!(#task: ::__async_after::#task::new(_bl))),
+                .map(|task| quote!(#task: ::_schedule_after::#task::new(_bl))),
         )
         .collect::<Vec<_>>();
 
@@ -857,20 +904,13 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         })
         .collect::<Vec<_>>();
 
-    let bl = if cfg!(feature = "timer-queue") {
-        Some(quote!(let _bl = #krate::Instant::new(0);))
+    let (bl, lt) = if cfg!(feature = "timer-queue") {
+        (
+            Some(quote!(let _bl = ::#k::_impl::Instant(0);)),
+            Some(quote!('a)),
+        )
     } else {
-        None
-    };
-    let baseline_field = if cfg!(feature = "timer-queue") {
-        Some(quote!(pub baseline: u32,))
-    } else {
-        None
-    };
-    let baseline_expr = if cfg!(feature = "timer-queue") {
-        Some(quote!(baseline: 0,))
-    } else {
-        None
+        (None, None)
     };
     root.push(quote! {
         #[allow(non_snake_case)]
@@ -879,49 +919,45 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         }
 
         mod init {
-            extern crate #krate;
-
             #[allow(unused_imports)]
-            use self::#krate::Resource;
+            use ::#k::Resource;
 
             pub use ::#device::Peripherals as Device;
             pub use ::_ZN4init13LateResourcesE as LateResources;
 
             #[allow(dead_code)]
-            pub struct Context {
-                pub async: Async,
-                #baseline_field
-                pub core: #krate::Core,
+            pub struct Context<#lt> {
+                pub core: ::#k::_impl::Peripherals<#lt>,
                 pub device: Device,
                 pub resources: Resources,
-                pub threshold: #krate::Threshold<#krate::U255>,
+                pub tasks: Tasks,
+                pub priority: ::#k::Priority<::#k::_impl::U255>,
             }
 
             #[allow(unsafe_code)]
-            impl Context {
-                pub unsafe fn new(core: #krate::Core) -> Self {
+            impl<#lt> Context<#lt> {
+                pub unsafe fn new(core: ::#k::_impl::Peripherals<#lt>) -> Self {
                     Context {
-                        async: Async::new(),
-                        #baseline_expr
+                        tasks: Tasks::new(),
                         core,
                         device: Device::steal(),
                         resources: Resources::new(),
-                        threshold: #krate::Threshold::new(),
+                        priority: ::#k::Priority::_new(),
                     }
                 }
             }
 
-            pub struct Async {
-                #(#async_fields,)*
+            pub struct Tasks {
+                #(#tasks_fields,)*
             }
 
             #[allow(unsafe_code)]
-            impl Async {
+            impl Tasks {
                 unsafe fn new() -> Self {
                     #bl
 
-                    Async {
-                        #(#async_exprs,)*
+                    Tasks {
+                        #(#tasks_exprs,)*
                     }
                 }
             }
@@ -945,11 +981,21 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     /* post-init */
     let mut post_init = vec![];
 
+    if needs_tq {
+        let priority = ctxt.sys_tick;
+
+        post_init.push(quote! {
+            // Set the priority of the SysTick exception
+            let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
+            p.SCB.shpr[11].write(priority);
+        });
+    }
+
     // Initialize LateResources
     for (name, res) in &app.resources {
         if res.expr.is_none() {
             post_init.push(quote! {
-                core::ptr::write(__resource::#name::get(), _lr.#name);
+                core::ptr::write(_resource::#name::_var(), _lr.#name);
             });
         }
     }
@@ -959,7 +1005,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         let interrupt = dispatcher.interrupt();
         post_init.push(quote! {
             let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
-            _nvic.set_priority(Interrupt::#interrupt, priority);
+            p.NVIC.set_priority(Interrupt::#interrupt, priority);
         });
     }
 
@@ -967,7 +1013,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     for (interrupt, (_, priority)) in &ctxt.triggers {
         post_init.push(quote! {
             let priority = ((1 << #prio_bits) - #priority) << (8 - #prio_bits);
-            _nvic.set_priority(Interrupt::#interrupt, priority);
+            p.NVIC.set_priority(Interrupt::#interrupt, priority);
         });
     }
 
@@ -975,14 +1021,22 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     for dispatcher in ctxt.dispatchers.values() {
         let interrupt = dispatcher.interrupt();
         post_init.push(quote! {
-            _nvic.enable(Interrupt::#interrupt);
+            p.NVIC.enable(Interrupt::#interrupt);
         });
     }
 
     // Enable triggers
     for interrupt in ctxt.triggers.keys() {
         post_init.push(quote! {
-            _nvic.enable(Interrupt::#interrupt);
+            p.NVIC.enable(Interrupt::#interrupt);
+        });
+    }
+
+    if needs_tq {
+        post_init.push(quote! {
+            // Set the system time to zero
+            p.DWT.enable_cycle_counter();
+            p.DWT.cyccnt.write(0);
         });
     }
 
@@ -996,7 +1050,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
                 quote!(pub #res: &'static mut #ty)
             } else {
-                quote!(pub #res: __resource::#res)
+                quote!(pub #res: _resource::#res)
             }
         })
         .collect::<Vec<_>>();
@@ -1006,24 +1060,22 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         .iter()
         .map(|res| {
             if ctxt.ceilings.resources()[res].is_owned() {
-                quote!(#res: __resource::#res::get())
+                quote!(#res: _resource::#res::_var())
             } else {
-                quote!(#res: __resource::#res::new())
+                quote!(#res: _resource::#res::new())
             }
         })
         .collect::<Vec<_>>();
 
     root.push(quote! {
         mod idle {
-            extern crate #krate;
-
             #[allow(unused_imports)]
-            use self::#krate::Resource;
+            use ::#k::Resource;
 
             #[allow(dead_code)]
             pub struct Context {
                 pub resources: Resources,
-                pub threshold: #krate::Threshold<#krate::U0>,
+                pub priority: ::#k::Priority<::#k::_impl::U0>,
             }
 
             #[allow(unsafe_code)]
@@ -1031,7 +1083,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 pub unsafe fn new() -> Self {
                     Context {
                         resources: Resources::new(),
-                        threshold: #krate::Threshold::new(),
+                        priority: ::#k::Priority::_new(),
                     }
                 }
             }
@@ -1057,36 +1109,31 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let init = &app.init.path;
     root.push(quote! {
         #[allow(unsafe_code)]
+        #[allow(unused_mut)]
         #[deny(const_err)]
-        fn main() {
+        #[no_mangle]
+        pub unsafe extern "C" fn main() -> ! {
             #[allow(unused_imports)]
-            use #hidden::#krate::Resource;
+            use ::#k::Resource;
             #[allow(unused_imports)]
             use #device::Interrupt;
 
-            #[allow(unused_mut)]
-            unsafe {
-                let init: fn(init::Context) -> init::LateResources = #init;
-                let idle: fn(idle::Context) -> ! = #idle;
+            let init: fn(init::Context) -> init::LateResources = #init;
+            let idle: fn(idle::Context) -> ! = #idle;
 
-                #hidden::#krate::interrupt::disable();
+            ::#k::_impl::interrupt::disable();
 
-                let (mut core, mut dwt, mut _nvic, mut _syst) = #hidden::#krate::Core::steal();
+            let mut p = ::#k::_impl::steal();
 
-                #(#pre_init)*
+            #(#pre_init)*
 
-                let _lr = init(init::Context::new(core));
+            let _lr = init(init::Context::new(#core));
 
-                #(#post_init)*
+            #(#post_init)*
 
-                // Set the system baseline to zero
-                dwt.enable_cycle_counter();
-                dwt.cyccnt.write(0);
+            ::#k::_impl::interrupt::enable();
 
-                #hidden::#krate::interrupt::enable();
-
-                idle(idle::Context::new())
-            }
+            idle(idle::Context::new())
         }
     });
 

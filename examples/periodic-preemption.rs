@@ -65,16 +65,20 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]
+#![no_main]
 #![no_std]
 
 #[macro_use]
 extern crate cortex_m;
+#[macro_use]
+extern crate cortex_m_rt as rt;
 extern crate cortex_m_rtfm as rtfm;
 extern crate panic_abort;
 extern crate stm32f103xx;
 
 use cortex_m::asm;
 use cortex_m::peripheral::{DWT, ITM};
+use rt::ExceptionFrame;
 use rtfm::{app, Resource};
 
 app! {
@@ -85,19 +89,19 @@ app! {
     },
 
     init: {
-        async_after: [a, b],
+        schedule_now: [a, b],
     },
 
     free_interrupts: [EXTI0, EXTI1],
 
     tasks: {
         a: {
-            async_after: [a],
+            schedule_after: [a],
             resources: [ITM],
         },
 
         b: {
-            async_after: [b],
+            schedule_after: [b],
             priority: 2,
             resources: [ITM],
         },
@@ -111,8 +115,8 @@ const S: u32 = 1_000 * MS;
 fn init(mut ctxt: init::Context) -> init::LateResources {
     iprintln!(&mut ctxt.core.ITM.stim[0], "init");
 
-    ctxt.async.a.post(&mut ctxt.threshold, 2 * S, ()).ok();
-    ctxt.async.b.post(&mut ctxt.threshold, 3 * S, ()).ok();
+    ctxt.tasks.a.schedule_now(&mut ctxt.priority).ok();
+    ctxt.tasks.b.schedule_now(&mut ctxt.priority).ok();
 
     init::LateResources { ITM: ctxt.core.ITM }
 }
@@ -127,25 +131,39 @@ fn idle(_ctxt: idle::Context) -> ! {
 fn a(mut ctxt: a::Context) {
     let now = DWT::get_cycle_count();
 
-    let bl = ctxt.baseline;
-    ctxt.resources.ITM.claim_mut(&mut ctxt.threshold, |itm, _| {
-        iprintln!(&mut itm.stim[0], "a(bl={}, now={})", bl, now);
+    let st = ctxt.scheduled_time;
+    ctxt.resources.ITM.claim_mut(&mut ctxt.priority, |itm, _| {
+        iprintln!(&mut itm.stim[0], "a(st={}, now={})", st, now);
     });
 
-    ctxt.async.a.post(&mut ctxt.threshold, 2 * S, ()).ok();
+    ctxt.tasks.a.schedule_after(&mut ctxt.priority, 2 * S).ok();
 }
 
 fn b(mut ctxt: b::Context) {
     let now = DWT::get_cycle_count();
 
-    let bl = ctxt.baseline;
-    let t = &mut ctxt.threshold;
+    let st = ctxt.scheduled_time;
+    let t = &mut ctxt.priority;
     iprintln!(
         &mut ctxt.resources.ITM.borrow_mut(t).stim[0],
-        "b(bl={}, now={})",
-        bl,
+        "b(st={}, now={})",
+        st,
         now
     );
 
-    ctxt.async.b.post(t, 3 * S, ()).ok();
+    ctxt.tasks.b.schedule_after(t, 3 * S).ok();
+}
+
+exception!(HardFault, hard_fault);
+
+#[inline(always)]
+fn hard_fault(ef: &ExceptionFrame) -> ! {
+    panic!("HardFault at {:#?}", ef);
+}
+
+exception!(*, default_handler);
+
+#[inline(always)]
+fn default_handler(irqn: i16) {
+    panic!("Unhandled exception (IRQn = {})", irqn);
 }

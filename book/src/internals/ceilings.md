@@ -1,0 +1,1 @@
+# Ceiling analysis

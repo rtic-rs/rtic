@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]
+#![no_main]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -41,13 +42,13 @@ fn idle(_ctxt: idle::Context) -> ! {
 }
 
 fn exti0(mut ctxt: exti0::Context) {
-    let ot = &mut ctxt.threshold;
+    let op = &mut ctxt.priority;
     let exti0::Resources { A, B } = ctxt.resources;
 
-    A.claim(ot, |_a, _it| {
-        //~^ error closure requires unique access to `ot` but `*ot` is already borrowed
-        // ERROR must use inner token `it` instead of the outer one (`ot`)
-        B.claim(ot, |_b, _| {})
+    A.claim(op, |_a, _ip| {
+        //~^ error closure requires unique access to `op` but `*op` is already borrowed
+        // ERROR must use inner token `_ip` instead of the outer one (`op`)
+        B.claim(op, |_b, _| {})
     });
 }
 

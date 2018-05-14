@@ -1,11 +1,10 @@
 use core::cmp::Ordering;
-use core::ops;
+use core::{ops, ptr};
 
 use cortex_m::peripheral::DWT;
 
-#[doc(hidden)]
 #[derive(Clone, Copy, Debug)]
-pub struct Instant(u32);
+pub struct Instant(pub u32);
 
 impl Into<u32> for Instant {
     fn into(self) -> u32 {
@@ -14,12 +13,11 @@ impl Into<u32> for Instant {
 }
 
 impl Instant {
-    pub unsafe fn new(timestamp: u32) -> Self {
-        Instant(timestamp)
-    }
-
     pub fn now() -> Self {
-        Instant(DWT::get_cycle_count())
+        const DWT_CYCCNT: *const u32 = 0xE000_1004 as *const u32;
+
+        // NOTE(ptr::read) don't use a volatile load to let the compiler optimize this away
+        Instant(unsafe { ptr::read(DWT_CYCCNT) })
     }
 }
 

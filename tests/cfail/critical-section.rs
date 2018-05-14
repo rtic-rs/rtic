@@ -2,6 +2,7 @@
 #![deny(warnings)]
 #![feature(const_fn)]
 #![feature(proc_macro)]
+#![no_main]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -34,15 +35,15 @@ fn init(_ctxt: init::Context) -> init::LateResources {
 }
 
 fn idle(mut ctxt: idle::Context) -> ! {
-    let t = &mut ctxt.threshold;
+    let p = &mut ctxt.priority;
     let on = ctxt.resources.ON;
 
-    let state = rtfm::atomic(t, |t| {
+    let state = rtfm::atomic(p, |p| {
         // ERROR borrow can't escape this *global* critical section
-        on.borrow(t) //~ error cannot infer an appropriate lifetime
+        on.borrow(p) //~ error cannot infer an appropriate lifetime
     });
 
-    let state = on.claim(t, |state, _t| {
+    let state = on.claim(p, |state, _p| {
         // ERROR borrow can't escape this critical section
         state //~ error cannot infer an appropriate lifetime
     });

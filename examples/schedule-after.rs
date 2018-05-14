@@ -1,14 +1,18 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]
+#![no_main]
 #![no_std]
 
 extern crate cortex_m;
+#[macro_use]
+extern crate cortex_m_rt as rt;
 extern crate cortex_m_rtfm as rtfm;
 extern crate panic_abort;
 extern crate stm32f103xx;
 
 use cortex_m::asm;
+use rt::ExceptionFrame;
 use rtfm::app;
 
 app! {
@@ -19,7 +23,7 @@ app! {
     tasks: {
         exti0: {
             interrupt: EXTI0,
-            async_after: [a],
+            schedule_after: [a],
         },
 
         a: {},
@@ -41,9 +45,21 @@ fn idle(_ctxt: idle::Context) -> ! {
 }
 
 fn exti0(mut ctxt: exti0::Context) {
-    ctxt.async.a.post(&mut ctxt.threshold, 1 * S, ()).ok();
+    ctxt.tasks.a.schedule_after(&mut ctxt.priority, 1 * S).ok();
 }
 
 fn a(_ctxt: a::Context) {
     asm::bkpt();
+}
+
+exception!(HardFault, hard_fault);
+
+fn hard_fault(ef: &ExceptionFrame) -> ! {
+    panic!("HardFault at {:#?}", ef);
+}
+
+exception!(*, default_handler);
+
+fn default_handler(irqn: i16) {
+    panic!("Unhandled exception (IRQn = {})", irqn);
 }

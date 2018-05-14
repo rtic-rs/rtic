@@ -6,50 +6,50 @@ use syn::{Ident, Type};
 use syntax::check::App;
 
 pub fn app(app: &App) -> Context {
-    let mut async = HashSet::new();
-    let mut async_after = HashSet::new();
+    let mut schedule_now = HashSet::new();
+    let mut schedule_after = HashSet::new();
     let mut dispatchers = HashMap::new();
     let mut triggers = HashMap::new();
     let mut tq = TimerQueue::new();
     let mut free_interrupts = app.free_interrupts.iter().cloned().collect::<Vec<_>>();
 
-    async.extend(&app.init.async);
+    schedule_now.extend(&app.init.schedule_now);
 
-    for task in &app.init.async_after {
-        async_after.insert(*task);
+    for task in &app.init.schedule_after {
+        schedule_after.insert(*task);
 
         // Timer queue
         if let Entry::Vacant(entry) = tq.tasks.entry(*task) {
-            tq.capacity += app.tasks[task].interrupt_or_capacity.right().unwrap();
+            tq.capacity += app.tasks[task].interrupt_or_instances.right().unwrap();
             entry.insert(app.tasks[task].priority);
         }
     }
 
     // compute dispatchers
     for (name, task) in &app.tasks {
-        match task.interrupt_or_capacity {
+        match task.interrupt_or_instances {
             Either::Left(interrupt) => {
                 triggers.insert(interrupt, (*name, task.priority));
             }
-            Either::Right(capacity) => {
+            Either::Right(instances) => {
                 let dispatcher = dispatchers.entry(task.priority).or_insert_with(|| {
                     Dispatcher::new(free_interrupts.pop().expect("not enough free interrupts"))
                 });
                 dispatcher.tasks.push(*name);
-                dispatcher.capacity += capacity;
+                dispatcher.capacity += instances;
             }
         }
 
-        for task in &task.async {
-            async.insert(*task);
+        for task in &task.schedule_now {
+            schedule_now.insert(*task);
         }
 
-        for task in &task.async_after {
-            async_after.insert(*task);
+        for task in &task.schedule_after {
+            schedule_after.insert(*task);
 
             // Timer queue
             if let Entry::Vacant(entry) = tq.tasks.entry(*task) {
-                tq.capacity += app.tasks[task].interrupt_or_capacity.right().unwrap();
+                tq.capacity += app.tasks[task].interrupt_or_instances.right().unwrap();
                 entry.insert(app.tasks[task].priority);
             }
         }
@@ -86,12 +86,15 @@ pub fn app(app: &App) -> Context {
         }
     }
 
-    // async
-    for (caller_priority, task) in app.tasks
-        .values()
-        .flat_map(|caller| caller.async.iter().map(move |task| (caller.priority, task)))
-    {
-        // async callers contend for the consumer end of the task slot queue (#task::SQ) and ...
+    // schedule_now
+    for (caller_priority, task) in app.tasks.values().flat_map(|caller| {
+        caller
+            .schedule_now
+            .iter()
+            .map(move |task| (caller.priority, task))
+    }) {
+        // schedule_now callers contend for the consumer end of the task slot queue (#task::SQ) and
+        // ..
         let ceiling = ceilings.slot_queues.entry(*task).or_insert(caller_priority);
 
         if caller_priority > *ceiling {
@@ -110,15 +113,15 @@ pub fn app(app: &App) -> Context {
         }
     }
 
-    // async_after
+    // schedule_after
     for (caller_priority, task) in app.tasks.values().flat_map(|caller| {
         caller
-            .async_after
+            .schedule_after
             .iter()
             .map(move |task| (caller.priority, task))
     }) {
-        // async_after callers contend for the consumer end of the task slot queue (#task::SQ) and
-        // ...
+        // schedule_after callers contend for the consumer end of the task slot queue (#task::SQ)
+        // and ..
         let ceiling = ceilings.slot_queues.entry(*task).or_insert(caller_priority);
 
         if caller_priority > *ceiling {
@@ -132,8 +135,8 @@ pub fn app(app: &App) -> Context {
     }
 
     Context {
-        async,
-        async_after,
+        schedule_now,
+        schedule_after,
         ceilings,
         dispatchers,
         sys_tick,
@@ -143,10 +146,10 @@ pub fn app(app: &App) -> Context {
 }
 
 pub struct Context {
-    // set of `async` tasks
-    pub async: HashSet<Ident>,
-    // set of `async_after` tasks
-    pub async_after: HashSet<Ident>,
+    // set of `schedule_now` tasks
+    pub schedule_now: HashSet<Ident>,
+    // set of `schedule_after` tasks
+    pub schedule_after: HashSet<Ident>,
     pub ceilings: Ceilings,
     // Priority:u8 -> Dispatcher
     pub dispatchers: HashMap<u8, Dispatcher>,

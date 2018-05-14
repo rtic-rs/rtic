@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]
+#![no_main]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -41,8 +42,8 @@ fn idle(_ctxt: idle::Context) -> ! {
 
 fn exti0(ctxt: exti0::Context) {
     // ERROR token should not outlive the critical section
-    let t = &mut ctxt.threshold;
-    let t = ctxt.resources.STATE.claim(t, |_state, t| t);
+    let op = &mut ctxt.priority;
+    let p = ctxt.resources.STATE.claim(op, |_state, ip| ip);
     //~^ error cannot infer an appropriate lifetime
 }
 
