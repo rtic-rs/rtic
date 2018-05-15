@@ -6,7 +6,7 @@ use cortex_m::register::basepri;
 use typenum::type_operators::IsGreaterOrEqual;
 use typenum::{Max, Maximum, True, Unsigned};
 
-/// TODO
+/// Token that represents the current priority level of a task
 pub struct Priority<N> {
     _not_send_or_sync: PhantomData<*const ()>,
     _n: PhantomData<N>,
@@ -22,22 +22,22 @@ impl<N> Priority<N> {
     }
 }
 
-/// TODO
+/// A resource shared between two or more tasks
 pub unsafe trait Resource {
     #[doc(hidden)]
     const NVIC_PRIO_BITS: u8;
 
-    /// TODO
+    /// The priority ceiling of the resource
     type Ceiling;
 
-    /// TODO
+    /// The data protected by the resource
     type Data: 'static + Send;
 
     // The `static mut` variable that the resource protects fs
     #[doc(hidden)]
     unsafe fn _var() -> &'static mut Self::Data;
 
-    /// TODO
+    /// Borrows the resource data for the span of the current priority
     #[inline(always)]
     fn borrow<'cs, P>(&'cs self, _p: &'cs Priority<P>) -> &'cs Self::Data
     where
@@ -46,7 +46,7 @@ pub unsafe trait Resource {
         unsafe { Self::_var() }
     }
 
-    /// TODO
+    /// Mutably borrows the resource data for the span of the current priority
     #[inline(always)]
     fn borrow_mut<'cs, P>(&'cs mut self, _p: &'cs Priority<P>) -> &'cs mut Self::Data
     where
@@ -55,7 +55,7 @@ pub unsafe trait Resource {
         unsafe { Self::_var() }
     }
 
-    /// TODO
+    /// Creates a critical section, by raising the task priority, to access the resource data
     #[inline(always)]
     fn claim<'cs, R, F, P>(&self, _p: &mut Priority<P>, f: F) -> R
     where
@@ -79,7 +79,8 @@ pub unsafe trait Resource {
         }
     }
 
-    /// TODO
+    /// Creates a critical section, by raising the task priority, to mutably access the resource
+    /// data
     #[inline(always)]
     fn claim_mut<'cs, R, F, P>(&mut self, _p: &mut Priority<P>, f: F) -> R
     where

@@ -3,7 +3,7 @@ use core::cmp::{self, Ordering};
 use cortex_m::peripheral::{SCB, SYST};
 use heapless::binary_heap::{BinaryHeap, Min};
 use heapless::ArrayLength;
-use typenum::{Max, Maximum, Unsigned};
+use typenum::{Max, Unsigned};
 
 use _impl::Instant;
 use resource::{Priority, Resource};
@@ -71,7 +71,7 @@ where
             }
 
             // set SysTick pending
-            unsafe { (*SCB::ptr()).icsr.write(1 << 26) }
+            (*SCB::ptr()).icsr.write(1 << 26);
         }
 
         self.queue.push_unchecked(m);

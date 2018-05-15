@@ -16,6 +16,7 @@ mod tq;
 pub type FreeQueue<N> = Queue<u8, N, u8>;
 pub type ReadyQueue<T, N> = Queue<(T, u8), N, u8>;
 
+#[allow(non_snake_case)]
 #[cfg(feature = "timer-queue")]
 pub struct Peripherals<'a> {
     pub CBP: CBP,
@@ -30,6 +31,7 @@ pub struct Peripherals<'a> {
     pub TPIU: TPIU,
 }
 
+#[allow(non_snake_case)]
 #[cfg(not(feature = "timer-queue"))]
 pub struct Peripherals {
     pub CBP: CBP,

@@ -1,8 +1,6 @@
 use core::cmp::Ordering;
 use core::{ops, ptr};
 
-use cortex_m::peripheral::DWT;
-
 #[derive(Clone, Copy, Debug)]
 pub struct Instant(pub u32);
 
