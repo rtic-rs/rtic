@@ -60,7 +60,7 @@ required-features = ["timer-queue"]
 cortex-m = "0.5.0"
 cortex-m-rtfm-macros = { path = "macros", version = "0.3.1" }
 # heapless = "0.3.6"
-heapless = { git = "https://github.com/japaric//heapless", branch = "object-pool" }
+heapless = { git = "https://github.com/japaric/heapless", branch = "object-pool" }
 typenum = "1.10.0"
 
 [dependencies.stable_deref_trait]
