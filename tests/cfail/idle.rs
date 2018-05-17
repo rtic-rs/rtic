@@ -1,3 +1,4 @@
+// error-pattern: mismatched types
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]
@@ -10,8 +11,10 @@ extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! { //~ mismatched types
+app! {
     device: stm32f103xx,
+
+    idle: {},
 }
 
 fn init(_ctxt: init::Context) -> init::LateResources {

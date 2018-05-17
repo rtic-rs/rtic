@@ -30,7 +30,3 @@ app! { //~ error proc macro panicked
 }
 
 fn init(_ctxt: init::Context) -> init::LateResources {}
-
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {}
-}

@@ -12,13 +12,8 @@ use rtfm::app;
 
 app! { //~ error mismatched types
     //~^ incorrect number of function parameters
-    //~| note expected type `fn(init::Context) -> _ZN4init13LateResourcesE`
     device: stm32f103xx,
 }
 
 // ERROR `init` must have signature `fn (init::Peripherals)`
 fn init() {}
-
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {}
-}

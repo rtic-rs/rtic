@@ -36,10 +36,6 @@ fn init(_ctxt: init::Context) -> init::LateResources {
     init::LateResources {}
 }
 
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {}
-}
-
 fn exti0(ctxt: exti0::Context) {
     // ERROR token should not outlive the critical section
     let op = &mut ctxt.priority;

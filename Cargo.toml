@@ -20,7 +20,10 @@ required-features = ["timer-queue"]
 name = "schedule-now"
 
 [[example]]
-name = "empty"
+name = "minimal"
+
+[[example]]
+name = "idle"
 
 [[example]]
 name = "event-task"
@@ -56,8 +59,13 @@ required-features = ["timer-queue"]
 [dependencies]
 cortex-m = "0.5.0"
 cortex-m-rtfm-macros = { path = "macros", version = "0.3.1" }
-heapless = "0.3.6"
+# heapless = "0.3.6"
+heapless = { git = "https://github.com/japaric//heapless", branch = "object-pool" }
 typenum = "1.10.0"
+
+[dependencies.stable_deref_trait]
+default-features = false
+version = "1"
 
 [target.'cfg(target_arch = "x86_64")'.dev-dependencies]
 compiletest_rs = "0.3.5"

@@ -36,10 +36,6 @@ fn init(_ctxt: init::Context) -> init::LateResources {
     init::LateResources {}
 }
 
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {}
-}
-
 fn is_send<T>(_: &T)
 where
     T: Send,

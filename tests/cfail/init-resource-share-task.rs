@@ -34,8 +34,4 @@ fn init(_ctxt: init::Context) -> init::LateResources {
     init::LateResources {}
 }
 
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {}
-}
-
 fn exti0(_ctxt: exti0::Context) {}

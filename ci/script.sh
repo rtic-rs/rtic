@@ -10,7 +10,8 @@ main() {
     # examples that don't require the timer-queue feature
     local examples=(
         schedule-now
-        empty
+        minimal
+        idle
         event-task
     )
 

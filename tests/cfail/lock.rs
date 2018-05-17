@@ -45,10 +45,6 @@ fn init(_ctxt: init::Context) -> init::LateResources {
     init::LateResources {}
 }
 
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {}
-}
-
 #[allow(non_snake_case)]
 fn exti0(mut ctxt: exti0::Context) {
     let exti0::Resources { ON, mut MAX } = ctxt.resources;

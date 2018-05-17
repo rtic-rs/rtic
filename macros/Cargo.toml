@@ -13,8 +13,8 @@ version = "0.3.1"
 failure = "0.1.1"
 proc-macro2 = "0.3.6"
 quote = "0.5.1"
-# rtfm-syntax = "0.3.0"
-rtfm-syntax = { path = "../../rtfm-syntax" }
+# rtfm-syntax = "0.4.0"
+rtfm-syntax = { git = "https://github.com/japaric/rtfm-syntax", branch = "tq" }
 syn = "0.13.1"
 
 [dependencies.either]

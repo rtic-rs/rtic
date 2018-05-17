@@ -24,8 +24,4 @@ fn init(_ctxt: init::Context) -> init::LateResources {
     init::LateResources {}
 }
 
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {}
-}
-
 fn sys_tick(_ctxt: sys_tick::Context) {}
