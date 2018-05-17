@@ -4,31 +4,34 @@
 #![no_main]
 #![no_std]
 
+extern crate cortex_m;
 #[macro_use]
-extern crate cortex_m_rt as rt;
+extern crate cortex_m_rt;
 extern crate cortex_m_rtfm as rtfm;
-extern crate panic_abort;
+extern crate panic_semihosting;
 extern crate stm32f103xx;
 
-use rt::ExceptionFrame;
+use cortex_m::asm;
+use cortex_m_rt::ExceptionFrame;
 use rtfm::app;
 
 app! {
     device: stm32f103xx,
 
-    tasks: {
-        exti0: {
-            interrupt: EXTI0,
-        },
-    },
+    idle: {},
 }
 
 #[inline(always)]
-fn init(mut _ctxt: init::Context) -> init::LateResources {
+fn init(_ctxt: init::Context) -> init::LateResources {
     init::LateResources {}
 }
 
-fn exti0(_ctxt: exti0::Context) {}
+#[inline(always)]
+fn idle(_ctxt: idle::Context) -> ! {
+    loop {
+        asm::wfi();
+    }
+}
 
 exception!(HardFault, hard_fault);
 

@@ -15,6 +15,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
     root.push(quote! {
         extern crate cortex_m_rtfm as #k;
+        #[allow(unused_imports)]
         use #k::Resource as _cortex_m_rtfm_Resource;
     });
 
@@ -90,9 +91,11 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         }
 
         let ty = &resource.ty;
-        let expr = resource.expr.as_ref().map(|e| quote!(#e)).unwrap_or_else(|| {
-            quote!(unsafe { #k::_impl::uninitialized() })
-        });
+        let expr = resource
+            .expr
+            .as_ref()
+            .map(|e| quote!(#e))
+            .unwrap_or_else(|| quote!(unsafe { #k::_impl::uninitialized() }));
 
         // TODO replace this with a call to `heapless::singleton!` when it doesn't require a feature
         // gate in the user code
@@ -942,7 +945,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 FPU: p.FPU,
                 ITM: p.ITM,
                 MPU: p.MPU,
-                SCB: p.SCB,
+                SCB: &mut p.SCB,
                 SYST: p.SYST,
                 TPIU: p.TPIU,
             }
@@ -1010,13 +1013,10 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         })
         .collect::<Vec<_>>();
 
-    let (bl, lt) = if cfg!(feature = "timer-queue") {
-        (
-            Some(quote!(let _bl = ::#k::_impl::Instant(0);)),
-            Some(quote!('a)),
-        )
+    let bl = if cfg!(feature = "timer-queue") {
+        Some(quote!(let _bl = ::#k::_impl::Instant(0);))
     } else {
-        (None, None)
+        None
     };
     root.push(quote! {
         #[allow(non_snake_case)]
@@ -1032,8 +1032,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             pub use ::_ZN4init13LateResourcesE as LateResources;
 
             #[allow(dead_code)]
-            pub struct Context<#lt> {
-                pub core: ::#k::_impl::Peripherals<#lt>,
+            pub struct Context<'a> {
+                pub core: ::#k::_impl::Peripherals<'a>,
                 pub device: Device,
                 pub resources: Resources,
                 pub tasks: Tasks,
@@ -1041,8 +1041,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             }
 
             #[allow(unsafe_code)]
-            impl<#lt> Context<#lt> {
-                pub unsafe fn new(core: ::#k::_impl::Peripherals<#lt>) -> Self {
+            impl<'a> Context<'a> {
+                pub unsafe fn new(core: ::#k::_impl::Peripherals<'a>) -> Self {
                     Context {
                         tasks: Tasks::new(),
                         core,
@@ -1138,6 +1138,13 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         });
     }
 
+    if app.idle.is_none() {
+        post_init.push(quote! {
+            // Set SLEEPONEXIT
+            p.SCB.scr.modify(|r| r | (1 << 1));
+        });
+    }
+
     if needs_tq {
         post_init.push(quote! {
             // Set the system time to zero
@@ -1147,99 +1154,112 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     }
 
     /* idle */
-    let res_fields = app.idle
-        .resources
-        .iter()
-        .map(|res| {
-            if ctxt.ceilings.resources()[res].is_owned() {
-                let ty = &app.resources[res].ty;
+    if let Some(idle) = app.idle.as_ref() {
+        let res_fields = idle.resources
+            .iter()
+            .map(|res| {
+                if ctxt.ceilings.resources()[res].is_owned() {
+                    let ty = &app.resources[res].ty;
 
-                quote!(pub #res: &'static mut #ty)
-            } else {
-                quote!(pub #res: _resource::#res)
-            }
-        })
-        .collect::<Vec<_>>();
+                    quote!(pub #res: &'static mut #ty)
+                } else {
+                    quote!(pub #res: _resource::#res)
+                }
+            })
+            .collect::<Vec<_>>();
 
-    let res_exprs = app.idle
-        .resources
-        .iter()
-        .map(|res| {
-            if ctxt.ceilings.resources()[res].is_owned() {
-                quote!(#res: _resource::#res::_var())
-            } else {
-                quote!(#res: _resource::#res::new())
-            }
-        })
-        .collect::<Vec<_>>();
+        let res_exprs = idle.resources
+            .iter()
+            .map(|res| {
+                if ctxt.ceilings.resources()[res].is_owned() {
+                    quote!(#res: _resource::#res::_var())
+                } else {
+                    quote!(#res: _resource::#res::new())
+                }
+            })
+            .collect::<Vec<_>>();
 
-    root.push(quote! {
-        mod idle {
-            #[allow(unused_imports)]
-            use ::#k::Resource;
+        root.push(quote! {
+            mod idle {
+                #[allow(unused_imports)]
+                use ::#k::Resource;
 
-            #[allow(dead_code)]
-            pub struct Context {
-                pub resources: Resources,
-                pub priority: ::#k::Priority<::#k::_impl::U0>,
-            }
+                #[allow(dead_code)]
+                pub struct Context {
+                    pub resources: Resources,
+                    pub priority: ::#k::Priority<::#k::_impl::U0>,
+                }
 
-            #[allow(unsafe_code)]
-            impl Context {
-                pub unsafe fn new() -> Self {
-                    Context {
-                        resources: Resources::new(),
-                        priority: ::#k::Priority::_new(),
+                #[allow(unsafe_code)]
+                impl Context {
+                    pub unsafe fn new() -> Self {
+                        Context {
+                            resources: Resources::new(),
+                            priority: ::#k::Priority::_new(),
+                        }
+                    }
+                }
+
+                #[allow(non_snake_case)]
+                pub struct Resources {
+                    #(#res_fields,)*
+                }
+
+                #[allow(unsafe_code)]
+                impl Resources {
+                    unsafe fn new() -> Self {
+                        Resources {
+                            #(#res_exprs,)*
+                        }
                     }
                 }
             }
-
-            #[allow(non_snake_case)]
-            pub struct Resources {
-                #(#res_fields,)*
-            }
-
-            #[allow(unsafe_code)]
-            impl Resources {
-                unsafe fn new() -> Self {
-                    Resources {
-                        #(#res_exprs,)*
-                    }
-                }
-            }
-        }
-    });
+        });
+    }
 
     /* main */
-    let idle = &app.idle.path;
     let init = &app.init.path;
+    let mut main = vec![quote! {
+        #[allow(unused_imports)]
+        use ::#k::Resource;
+        #[allow(unused_imports)]
+        use #device::Interrupt;
+
+        let init: fn(init::Context) -> init::LateResources = #init;
+
+        ::#k::_impl::interrupt::disable();
+
+        let mut p = ::#k::_impl::steal();
+
+        #(#pre_init)*
+
+        let _lr = init(init::Context::new(#core));
+
+        #(#post_init)*
+
+        ::#k::_impl::interrupt::enable();
+    }];
+
+    if let Some(idle) = app.idle.as_ref().map(|idle| &idle.path) {
+        main.push(quote! {
+            let idle: fn(idle::Context) -> ! = #idle;
+            idle(idle::Context::new())
+        });
+    } else {
+        main.push(quote! {
+            loop {
+                #k::_impl::asm::wfi();
+            }
+        });
+    }
+
     root.push(quote! {
         #[allow(unsafe_code)]
         #[allow(unused_mut)]
         #[deny(const_err)]
         #[no_mangle]
         pub unsafe extern "C" fn main() -> ! {
-            #[allow(unused_imports)]
-            use ::#k::Resource;
-            #[allow(unused_imports)]
-            use #device::Interrupt;
-
-            let init: fn(init::Context) -> init::LateResources = #init;
-            let idle: fn(idle::Context) -> ! = #idle;
-
-            ::#k::_impl::interrupt::disable();
-
-            let mut p = ::#k::_impl::steal();
-
-            #(#pre_init)*
-
-            let _lr = init(init::Context::new(#core));
-
-            #(#post_init)*
-
-            ::#k::_impl::interrupt::enable();
-
-            idle(idle::Context::new())
+            #(#main)*
         }
     });
 

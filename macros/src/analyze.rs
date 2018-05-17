@@ -70,11 +70,17 @@ pub fn app(app: &App) -> Context {
     }
 
     // resources
-    for (priority, resource) in app.idle.resources.iter().map(|res| (0, res)).chain(
-        app.tasks
+    let empty = HashSet::new();
+    for (priority, resource) in
+        app.idle
+            .as_ref()
+            .map(|idle| &idle.resources)
+            .unwrap_or(&empty)
             .iter()
-            .flat_map(|(name, task)| task.resources.iter().map(move |res| (task.priority, res))),
-    ) {
+            .map(|res| (0, res))
+            .chain(app.tasks.iter().flat_map(|(name, task)| {
+                task.resources.iter().map(move |res| (task.priority, res))
+            })) {
         let ceiling = ceilings
             .resources
             .entry(*resource)

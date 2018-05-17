@@ -49,15 +49,8 @@ fn init(mut ctxt: init::Context) -> init::LateResources {
     init::LateResources {}
 }
 
-#[inline(always)]
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {
-        asm::wfi();
-    }
-}
-
 fn exti0(mut ctxt: exti0::Context) {
-    ctxt.tasks.a.schedule_now(&mut ctxt.priority).ok();
+    ctxt.tasks.a.schedule_now(&mut ctxt.priority).unwrap();
 }
 
 fn a(_ctxt: a::Context) {

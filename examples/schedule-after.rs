@@ -11,7 +11,6 @@ extern crate cortex_m_rtfm as rtfm;
 extern crate panic_abort;
 extern crate stm32f103xx;
 
-use cortex_m::asm;
 use rt::ExceptionFrame;
 use rtfm::app;
 
@@ -37,20 +36,11 @@ fn init(_ctxt: init::Context) -> init::LateResources {
     init::LateResources {}
 }
 
-#[inline(always)]
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {
-        asm::wfi();
-    }
-}
-
 fn exti0(mut ctxt: exti0::Context) {
     ctxt.tasks.a.schedule_after(&mut ctxt.priority, 1 * S).ok();
 }
 
-fn a(_ctxt: a::Context) {
-    asm::bkpt();
-}
+fn a(_ctxt: a::Context) {}
 
 exception!(HardFault, hard_fault);
 

@@ -2,15 +2,15 @@ use core::mem;
 
 pub use self::instant::Instant;
 pub use self::tq::{dispatch, NotReady, TimerQueue};
-pub use cortex_m::interrupt;
 use cortex_m::interrupt::Nr;
 pub use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::{CBP, CPUID, DCB, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU};
 #[cfg(not(feature = "timer-queue"))]
 use cortex_m::peripheral::{DWT, SYST};
+pub use cortex_m::{asm, interrupt};
 pub use heapless::object_pool::{Singleton, Uninit};
-pub use stable_deref_trait::StableDeref;
 use heapless::RingBuffer as Queue;
+pub use stable_deref_trait::StableDeref;
 pub use typenum::consts::*;
 pub use typenum::{Max, Maximum, Unsigned};
 

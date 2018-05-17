@@ -46,7 +46,6 @@ extern crate cortex_m_rtfm as rtfm;
 extern crate panic_abort;
 extern crate stm32f103xx;
 
-use cortex_m::asm;
 use cortex_m::peripheral::{DWT, ITM};
 use rt::ExceptionFrame;
 use rtfm::app;
@@ -83,13 +82,6 @@ fn init(mut ctxt: init::Context) -> init::LateResources {
     ctxt.tasks.a.schedule_now(&mut ctxt.priority, 0).ok();
 
     init::LateResources { ITM: ctxt.core.ITM }
-}
-
-#[inline(always)]
-fn idle(_ctxt: idle::Context) -> ! {
-    loop {
-        asm::wfi();
-    }
 }
 
 fn a(mut ctxt: a::Context) {
