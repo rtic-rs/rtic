@@ -5,7 +5,11 @@ pub use self::tq::{dispatch, NotReady, TimerQueue};
 pub use cortex_m::interrupt;
 use cortex_m::interrupt::Nr;
 pub use cortex_m::peripheral::syst::SystClkSource;
-use cortex_m::peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, SYST, TPIU};
+use cortex_m::peripheral::{CBP, CPUID, DCB, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU};
+#[cfg(not(feature = "timer-queue"))]
+use cortex_m::peripheral::{DWT, SYST};
+pub use heapless::object_pool::{Singleton, Uninit};
+pub use stable_deref_trait::StableDeref;
 use heapless::RingBuffer as Queue;
 pub use typenum::consts::*;
 pub use typenum::{Max, Maximum, Unsigned};
@@ -15,6 +19,16 @@ mod tq;
 
 pub type FreeQueue<N> = Queue<u8, N, u8>;
 pub type ReadyQueue<T, N> = Queue<(T, u8), N, u8>;
+
+pub struct Private {
+    _0: (),
+}
+
+impl Private {
+    pub unsafe fn new() -> Self {
+        Private { _0: () }
+    }
+}
 
 #[allow(non_snake_case)]
 #[cfg(feature = "timer-queue")]
@@ -33,7 +47,7 @@ pub struct Peripherals<'a> {
 
 #[allow(non_snake_case)]
 #[cfg(not(feature = "timer-queue"))]
-pub struct Peripherals {
+pub struct Peripherals<'a> {
     pub CBP: CBP,
     pub CPUID: CPUID,
     pub DCB: DCB,
@@ -43,7 +57,7 @@ pub struct Peripherals {
     pub ITM: ITM,
     pub MPU: MPU,
     // pub NVIC: NVIC,
-    pub SCB: SCB,
+    pub SCB: &'a mut SCB,
     pub SYST: SYST,
     pub TPIU: TPIU,
 }

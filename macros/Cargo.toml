@@ -16,7 +16,10 @@ quote = "0.5.1"
 # rtfm-syntax = "0.3.0"
 rtfm-syntax = { path = "../../rtfm-syntax" }
 syn = "0.13.1"
-either = "1.5.0"
+
+[dependencies.either]
+version = "1"
+default-features = false
 
 [lib]
 proc-macro = true

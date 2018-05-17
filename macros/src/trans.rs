@@ -15,11 +15,17 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
     root.push(quote! {
         extern crate cortex_m_rtfm as #k;
+        use #k::Resource as _cortex_m_rtfm_Resource;
     });
 
     /* Resources */
     let mut resources = vec![];
     for (name, resource) in &app.resources {
+        if app.init.resources.contains(name) {
+            // `init` resources are handled below
+            continue;
+        }
+
         let ty = &resource.ty;
         let expr = resource
             .expr
@@ -52,6 +58,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         });
 
         resources.push(quote! {
+            #[allow(non_camel_case_types)]
             pub struct #name { _not_send_or_sync: PhantomData<*const ()> }
 
             #[allow(dead_code)]
@@ -72,6 +79,102 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             #(#resources)*
         }
     });
+
+    /* "resources" owned by `init` */
+    // These don't implement the `Resource` trait because they are never shared. Instead they
+    // implement the `Singleton` trait and may or may not appear wrapped in `Uninit`
+    for (name, resource) in &app.resources {
+        if !app.init.resources.contains(name) {
+            // `init` resources are handled below
+            continue;
+        }
+
+        let ty = &resource.ty;
+        let expr = resource.expr.as_ref().map(|e| quote!(#e)).unwrap_or_else(|| {
+            quote!(unsafe { #k::_impl::uninitialized() })
+        });
+
+        // TODO replace this with a call to `heapless::singleton!` when it doesn't require a feature
+        // gate in the user code
+        root.push(quote! {
+            pub struct #name { _private: #k::_impl::Private }
+
+            #[allow(unsafe_code)]
+            unsafe impl #k::_impl::Singleton for #name {
+                type Data = #ty;
+
+                unsafe fn _var() -> &'static mut #ty {
+                    static mut VAR: #ty = #expr;
+
+                    &mut VAR
+                }
+            }
+
+            #[allow(unsafe_code)]
+            impl AsRef<#ty> for #name {
+                fn as_ref(&self) -> &#ty {
+                    use #k::_impl::Singleton;
+
+                    unsafe { #name::_var() }
+                }
+            }
+
+            #[allow(unsafe_code)]
+            impl AsMut<#ty> for #name {
+                fn as_mut(&mut self) -> &mut #ty {
+                    use #k::_impl::Singleton;
+
+                    unsafe { #name::_var() }
+                }
+            }
+
+            impl core::ops::Deref for #name {
+                type Target = #ty;
+
+                fn deref(&self) -> &#ty {
+                    self.as_ref()
+                }
+            }
+
+            impl core::ops::DerefMut for #name {
+                fn deref_mut(&mut self) -> &mut #ty {
+                    self.as_mut()
+                }
+            }
+
+            #[allow(unsafe_code)]
+            impl Into<&'static mut #ty> for #name {
+                fn into(self) -> &'static mut #ty {
+                    use #k::_impl::Singleton;
+
+                    unsafe { #name::_var() }
+                }
+            }
+
+            #[allow(unsafe_code)]
+            unsafe impl #k::_impl::StableDeref for #name {}
+        });
+
+        if resource.expr.is_some() {
+            root.push(quote! {
+                impl #name {
+                    #[allow(unsafe_code)]
+                    unsafe fn _new() -> Self {
+                        #name { _private: #k::_impl::Private::new() }
+                    }
+                }
+            });
+        } else {
+            root.push(quote! {
+                impl #name {
+                    #[allow(unsafe_code)]
+                    unsafe fn _new() -> #k::_impl::Uninit<Self> {
+                        #k::_impl::Uninit::new(#name { _private: #k::_impl::Private::new() })
+                    }
+                }
+            });
+        }
+    }
 
     /* Tasks */
     for (name, task) in &app.tasks {
@@ -851,15 +954,18 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         .resources
         .iter()
         .map(|r| {
-            let ty = &app.resources[r].ty;
-            quote!(#r: &'static mut #ty)
+            if app.resources[r].expr.is_some() {
+                quote!(pub #r: ::#r)
+            } else {
+                quote!(pub #r: #k::_impl::Uninit<::#r>)
+            }
         })
         .collect::<Vec<_>>();
 
     let res_exprs = app.init
         .resources
         .iter()
-        .map(|r| quote!(#r: _resource::#r::_var()))
+        .map(|r| quote!(#r: #r::_new()))
         .collect::<Vec<_>>();
 
     let tasks_fields = app.init
@@ -895,7 +1001,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     let late_resources = app.resources
         .iter()
         .filter_map(|(name, res)| {
-            if res.expr.is_none() {
+            if res.expr.is_none() && !app.init.resources.contains(name) {
                 let ty = &res.ty;
                 Some(quote!(pub #name: #ty))
             } else {
@@ -993,7 +1099,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
     // Initialize LateResources
     for (name, res) in &app.resources {
-        if res.expr.is_none() {
+        if res.expr.is_none() && !app.init.resources.contains(name) {
             post_init.push(quote! {
                 core::ptr::write(_resource::#name::_var(), _lr.#name);
             });
