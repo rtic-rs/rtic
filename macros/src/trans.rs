@@ -16,7 +16,7 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     ::trans::tasks(app, ownerships, &mut root, &mut main);
     ::trans::init(app, &mut main, &mut root);
     ::trans::idle(app, ownerships, &mut main, &mut root);
-    ::trans::resources(app, ownerships, &mut root);
+    ::trans::resources(app, &mut root);
 
     root.push(quote! {
         #[allow(unsafe_code)]
@@ -415,17 +415,13 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     });
 }
 
-fn resources(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>) {
+fn resources(app: &App, root: &mut Vec<Tokens>) {
     let krate = krate();
 
-    for name in ownerships.keys() {
-        let _name = Ident::from(format!("_{}", name.as_ref()));
+    for (name, resource) in app.resources.iter() {
+        let _name = Ident::from(format!("_{}", name));
 
         // Declare the static that holds the resource
-        let resource = app.resources
-            .get(name)
-            .expect(&format!("BUG: resource {} has no definition", name));
-
         let expr = &resource.expr;
         let ty = &resource.ty;
 
