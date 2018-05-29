@@ -492,7 +492,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         #[inline]
                         pub fn schedule_now<P>(
                             &mut self,
-                            t: &mut ::#k::Priority<P>,
+                            _p: &::#k::Priority<P>,
                             #payload_in
                         ) -> Result<(), #input_>
                         where
@@ -505,8 +505,9 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                             unsafe {
                                 use ::#k::Resource;
 
+                                let p: &mut ::#k::Priority<P> = &mut ::#k::Priority::_new();
                                 let slot = ::#name::FREE_QUEUE::new()
-                                    .claim_mut(t, |sq, _| sq.dequeue());
+                                    .claim_mut(p, |sq, _| sq.dequeue());
                                 if let Some(index) = slot {
                                     let task = ::#_priority::Task::#name;
                                     core::ptr::write(
@@ -516,7 +517,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                                     *#name::SCHEDULED_TIMES.get_unchecked_mut(index as usize) =
                                         self.scheduled_time();
 
-                                    #_priority::READY_QUEUE::new().claim_mut(t, |q, _| {
+                                    #_priority::READY_QUEUE::new().claim_mut(p, |q, _| {
                                         q.split().0.enqueue_unchecked((task, index));
                                     });
 
@@ -556,7 +557,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         #[inline]
                         pub fn schedule_now<P>(
                             &mut self,
-                            t: &mut ::#k::Priority<P>,
+                            _p: &::#k::Priority<P>,
                             #payload_in
                         ) -> Result<(), #input_>
                         where
@@ -569,15 +570,16 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                             unsafe {
                                 use ::#k::Resource;
 
+                                let p: &mut ::#k::Priority<P> = &mut ::#k::Priority::_new();
                                 if let Some(index) =
-                                    ::#name::FREE_QUEUE::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                    ::#name::FREE_QUEUE::new().claim_mut(p, |sq, _| sq.dequeue()) {
                                     let task = ::#_priority::Task::#name;
                                     core::ptr::write(
                                         ::#name::PAYLOADS.get_unchecked_mut(index as usize),
                                         #payload_out,
                                     );
 
-                                    ::#_priority::READY_QUEUE::new().claim_mut(t, |q, _| {
+                                    ::#_priority::READY_QUEUE::new().claim_mut(p, |q, _| {
                                         q.split().0.enqueue_unchecked((task, index));
                                     });
 
@@ -647,7 +649,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                     #[inline]
                     pub fn schedule_after<P>(
                         &self,
-                        t: &mut ::#k::Priority<P>,
+                        p: &::#k::Priority<P>,
                         after: u32,
                         #payload_in
                     ) -> Result<(), #input_>
@@ -661,8 +663,9 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                         unsafe {
                             use ::#k::Resource;
 
+                            let p: &mut ::#k::Priority<P> = &mut ::#k::Priority::_new();
                             if let Some(index) =
-                                ::#name::FREE_QUEUE::new().claim_mut(t, |sq, _| sq.dequeue()) {
+                                ::#name::FREE_QUEUE::new().claim_mut(p, |sq, _| sq.dequeue()) {
                                 let ss = self.scheduled_time() + after;
                                 let task = ::_tq::Task::#name;
 
@@ -679,7 +682,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                                     task,
                                 };
 
-                                ::_tq::TIMER_QUEUE::new().claim_mut(t, |tq, _| tq.enqueue(m));
+                                ::_tq::TIMER_QUEUE::new().claim_mut(p, |tq, _| tq.enqueue(m));
 
                                 Ok(())
                             } else {
