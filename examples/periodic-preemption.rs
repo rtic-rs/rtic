@@ -65,6 +65,7 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(proc_macro)]
+#![feature(proc_macro_gen)]
 #![no_main]
 #![no_std]
 
@@ -78,7 +79,7 @@ extern crate stm32f103xx;
 
 use cortex_m::peripheral::{DWT, ITM};
 use rt::ExceptionFrame;
-use rtfm::{app, Resource};
+use rtfm::app;
 
 app! {
     device: stm32f103xx,

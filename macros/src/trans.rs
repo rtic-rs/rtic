@@ -1,14 +1,14 @@
-use quote::Tokens;
-
 use either::Either;
+use proc_macro2::Span;
+use proc_macro2::TokenStream;
 use syn::Ident;
 use syntax::check::App;
 
 use analyze::Context;
 
-pub fn app(ctxt: &Context, app: &App) -> Tokens {
+pub fn app(ctxt: &Context, app: &App) -> TokenStream {
     let mut root = vec![];
-    let k = Ident::from("_rtfm");
+    let k = Ident::new("_rtfm", Span::call_site());
     let device = &app.device;
 
     let needs_tq = !ctxt.schedule_after.is_empty();
@@ -34,15 +34,18 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             .map(|e| quote!(#e))
             .unwrap_or_else(|| quote!(unsafe { ::#k::_impl::uninitialized() }));
 
-        let ceiling = Ident::from(format!(
-            "U{}",
-            ctxt.ceilings
-                .resources()
-                .get(name)
-                .cloned()
-                .map(u8::from)
-                .unwrap_or(0) // 0 = resource owned by `init`
-        ));
+        let ceiling = Ident::new(
+            &format!(
+                "U{}",
+                ctxt.ceilings
+                    .resources()
+                    .get(name)
+                    .cloned()
+                    .map(u8::from)
+                    .unwrap_or(0) // 0 = resource owned by `init`
+            ),
+            Span::call_site(),
+        );
         root.push(quote! {
             #[allow(unsafe_code)]
             unsafe impl ::#k::Resource for _resource::#name {
@@ -183,7 +186,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     for (name, task) in &app.tasks {
         let path = &task.path;
 
-        let lifetime = if task.resources
+        let lifetime = if task
+            .resources
             .iter()
             .any(|res| ctxt.ceilings.resources()[res].is_owned())
         {
@@ -192,11 +196,10 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             None
         };
 
-        let _context = Ident::from(format!(
-            "_ZN{}{}7ContextE",
-            name.as_ref().as_bytes().len(),
-            name
-        ));
+        let _context = Ident::new(
+            &format!("_ZN{}{}7ContextE", name.to_string().as_bytes().len(), name),
+            Span::call_site(),
+        );
 
         let mut mod_ = vec![];
 
@@ -206,7 +209,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             quote!(scheduled_time)
         };
 
-        let input_ = task.input
+        let input_ = task
+            .input
             .as_ref()
             .map(|input| quote!(#input))
             .unwrap_or(quote!(()));
@@ -261,7 +265,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             });
         }
 
-        let res_fields = task.resources
+        let res_fields = task
+            .resources
             .iter()
             .map(|res| {
                 if ctxt.ceilings.resources()[res].is_owned() {
@@ -281,7 +286,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             }
         });
 
-        let tasks_fields = task.schedule_now
+        let tasks_fields = task
+            .schedule_now
             .iter()
             .map(|task| quote!(pub #task: ::_schedule_now::#task))
             .chain(
@@ -291,7 +297,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             )
             .collect::<Vec<_>>();
 
-        let tasks_exprs = task.schedule_now
+        let tasks_exprs = task
+            .schedule_now
             .iter()
             .map(|task| {
                 if cfg!(feature = "timer-queue") {
@@ -307,7 +314,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             )
             .collect::<Vec<_>>();
 
-        let priority = Ident::from(format!("U{}", task.priority));
+        let priority = Ident::new(&format!("U{}", task.priority), Span::call_site());
         mod_.push(quote! {
             #[allow(unused_imports)]
             use ::#k::Resource;
@@ -363,9 +370,9 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         }
 
         match task.interrupt_or_instances {
-            Either::Left(interrupt) => {
-                let export_name = interrupt.as_ref();
-                let fn_name = Ident::from(format!("_{}", interrupt));
+            Either::Left(ref interrupt) => {
+                let export_name = interrupt.to_string();
+                let fn_name = Ident::new(&format!("_{}", interrupt), Span::call_site());
 
                 let bl = if cfg!(feature = "timer-queue") {
                     Some(quote!(_now,))
@@ -387,7 +394,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 });
             }
             Either::Right(instances) => {
-                let ucapacity = Ident::from(format!("U{}", instances));
+                let ucapacity = Ident::new(&format!("U{}", instances), Span::call_site());
                 let capacity = instances as usize;
 
                 root.push(quote! {
@@ -408,13 +415,19 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
                 });
 
-                let ceiling = Ident::from(format!(
-                    "U{}",
-                    ctxt.ceilings.slot_queues().get(name).cloned() // 0 = owned by init
+                let ceiling = Ident::new(
+                    &format!(
+                        "U{}",
+                        ctxt.ceilings.slot_queues().get(name).cloned() // 0 = owned by init
                         .unwrap_or(0)
-                ));
+                    ),
+                    Span::call_site(),
+                );
 
-                let mangled = Ident::from(format!("_ZN{}{}6PAYLOADSE", name.as_ref().len(), name));
+                let mangled = Ident::new(
+                    &format!("_ZN{}{}6PAYLOADSE", name.to_string().len(), name),
+                    Span::call_site(),
+                );
 
                 // NOTE must be in the root because of `#input`
                 root.push(quote! {
@@ -459,15 +472,17 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     }
 
     /* schedule_now */
-    let schedule_now = ctxt.schedule_now
+    let schedule_now = ctxt
+        .schedule_now
         .iter()
         .map(|name| {
             let task = &app.tasks[name];
             let priority = task.priority;
-            let _priority = Ident::from(format!("_{}", priority));
+            let _priority = Ident::new(&format!("_{}", priority), Span::call_site());
             let interrupt = ctxt.dispatchers[&priority].interrupt();
 
-            let input_ = task.input
+            let input_ = task
+                .input
                 .as_ref()
                 .map(|input| quote!(#input))
                 .unwrap_or(quote!(()));
@@ -477,12 +492,18 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                 (quote!(), quote!(()))
             };
 
-            let sqc = Ident::from(format!(
-                "U{}",
-                ctxt.ceilings.slot_queues().get(name).cloned() // 0 = owned by init
+            let sqc = Ident::new(
+                &format!(
+                    "U{}",
+                    ctxt.ceilings.slot_queues().get(name).cloned() // 0 = owned by init
                     .unwrap_or(0)
-            ));
-            let qc = Ident::from(format!("U{}", ctxt.ceilings.dispatch_queues()[&priority]));
+                ),
+                Span::call_site(),
+            );
+            let qc = Ident::new(
+                &format!("U{}", ctxt.ceilings.dispatch_queues()[&priority]),
+                Span::call_site(),
+            );
 
             if cfg!(feature = "timer-queue") {
                 root.push(quote! {
@@ -620,18 +641,26 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     });
 
     /* schedule_after */
-    let schedule_after = ctxt.schedule_after
+    let schedule_after = ctxt
+        .schedule_after
         .iter()
         .map(|name| {
             let task = &app.tasks[name];
 
-            let sqc = Ident::from(format!(
-                "U{}",
-                ctxt.ceilings.slot_queues().get(name).unwrap_or(&0) // 0 = owned by init
-            ));
-            let tqc = Ident::from(format!("U{}", ctxt.ceilings.timer_queue()));
+            let sqc = Ident::new(
+                &format!(
+                    "U{}",
+                    ctxt.ceilings.slot_queues().get(name).unwrap_or(&0) // 0 = owned by init
+                ),
+                Span::call_site(),
+            );
+            let tqc = Ident::new(
+                &format!("U{}", ctxt.ceilings.timer_queue()),
+                Span::call_site(),
+            );
 
-            let input_ = task.input
+            let input_ = task
+                .input
                 .as_ref()
                 .map(|input| quote!(#input))
                 .unwrap_or(quote!(()));
@@ -649,7 +678,7 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
                     #[inline]
                     pub fn schedule_after<P>(
                         &self,
-                        p: &::#k::Priority<P>,
+                        _p: &::#k::Priority<P>,
                         after: u32,
                         #payload_in
                     ) -> Result<(), #input_>
@@ -722,13 +751,17 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
     /* Timer queue */
     if needs_tq {
-        let capacity = Ident::from(format!("U{}", ctxt.timer_queue.capacity()));
+        let capacity = Ident::new(
+            &format!("U{}", ctxt.timer_queue.capacity()),
+            Span::call_site(),
+        );
         let tasks = ctxt.timer_queue.tasks().keys();
-        let arms = ctxt.timer_queue
+        let arms = ctxt
+            .timer_queue
             .tasks()
             .iter()
             .map(|(name, priority)| {
-                let _priority = Ident::from(format!("_{}", priority));
+                let _priority = Ident::new(&format!("_{}", priority), Span::call_site());
                 let interrupt = ctxt.dispatchers[priority].interrupt();
 
                 quote! {
@@ -743,8 +776,11 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             })
             .collect::<Vec<_>>();
 
-        let ceiling = Ident::from(format!("U{}", ctxt.ceilings.timer_queue()));
-        let priority = Ident::from(format!("U{}", ctxt.sys_tick));
+        let ceiling = Ident::new(
+            &format!("U{}", ctxt.ceilings.timer_queue()),
+            Span::call_site(),
+        );
+        let priority = Ident::new(&format!("U{}", ctxt.sys_tick), Span::call_site());
         root.push(quote! {
             mod _tq {
                 #[allow(non_camel_case_types)]
@@ -800,10 +836,13 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
     /* Dispatchers */
     for (priority, dispatcher) in &ctxt.dispatchers {
-        let _priority = Ident::from(format!("_{}", priority));
-        let capacity = Ident::from(format!("U{}", dispatcher.capacity()));
+        let _priority = Ident::new(&format!("_{}", priority), Span::call_site());
+        let capacity = Ident::new(&format!("U{}", dispatcher.capacity()), Span::call_site());
         let tasks = dispatcher.tasks();
-        let ceiling = Ident::from(format!("U{}", ctxt.ceilings.dispatch_queues()[priority]));
+        let ceiling = Ident::new(
+            &format!("U{}", ctxt.ceilings.dispatch_queues()[priority]),
+            Span::call_site(),
+        );
 
         root.push(quote! {
             mod #_priority {
@@ -873,8 +912,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             .collect::<Vec<_>>();
 
         let interrupt = dispatcher.interrupt();
-        let export_name = interrupt.as_ref();
-        let fn_name = Ident::from(format!("_{}", export_name));
+        let export_name = interrupt.to_string();
+        let fn_name = Ident::new(&format!("_{}", export_name), Span::call_site());
         root.push(quote! {
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
@@ -956,7 +995,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
     };
 
     /* init */
-    let res_fields = app.init
+    let res_fields = app
+        .init
         .resources
         .iter()
         .map(|r| {
@@ -968,13 +1008,15 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         })
         .collect::<Vec<_>>();
 
-    let res_exprs = app.init
+    let res_exprs = app
+        .init
         .resources
         .iter()
         .map(|r| quote!(#r: #r::_new()))
         .collect::<Vec<_>>();
 
-    let tasks_fields = app.init
+    let tasks_fields = app
+        .init
         .schedule_now
         .iter()
         .map(|task| quote!(pub #task: ::_schedule_now::#task))
@@ -986,7 +1028,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         )
         .collect::<Vec<_>>();
 
-    let tasks_exprs = app.init
+    let tasks_exprs = app
+        .init
         .schedule_now
         .iter()
         .map(|task| {
@@ -1004,7 +1047,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
         )
         .collect::<Vec<_>>();
 
-    let late_resources = app.resources
+    let late_resources = app
+        .resources
         .iter()
         .filter_map(|(name, res)| {
             if res.expr.is_none() && !app.init.resources.contains(name) {
@@ -1158,7 +1202,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
 
     /* idle */
     if let Some(idle) = app.idle.as_ref() {
-        let res_fields = idle.resources
+        let res_fields = idle
+            .resources
             .iter()
             .map(|res| {
                 if ctxt.ceilings.resources()[res].is_owned() {
@@ -1171,7 +1216,8 @@ pub fn app(ctxt: &Context, app: &App) -> Tokens {
             })
             .collect::<Vec<_>>();
 
-        let res_exprs = idle.resources
+        let res_exprs = idle
+            .resources
             .iter()
             .map(|res| {
                 if ctxt.ceilings.resources()[res].is_owned() {

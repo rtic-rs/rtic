@@ -13,14 +13,19 @@ pub fn app(app: &App) -> Context {
     let mut tq = TimerQueue::new();
     let mut free_interrupts = app.free_interrupts.iter().cloned().collect::<Vec<_>>();
 
-    schedule_now.extend(&app.init.schedule_now);
+    schedule_now.extend(app.init.schedule_now.iter().cloned());
 
     for task in &app.init.schedule_after {
-        schedule_after.insert(*task);
+        schedule_after.insert(task.clone());
 
         // Timer queue
-        if let Entry::Vacant(entry) = tq.tasks.entry(*task) {
-            tq.capacity += app.tasks[task].interrupt_or_instances.right().unwrap();
+        if let Entry::Vacant(entry) = tq.tasks.entry(task.clone()) {
+            tq.capacity += app.tasks[task]
+                .interrupt_or_instances
+                .as_ref()
+                .right()
+                .clone()
+                .unwrap();
             entry.insert(app.tasks[task].priority);
         }
     }
@@ -28,28 +33,33 @@ pub fn app(app: &App) -> Context {
     // compute dispatchers
     for (name, task) in &app.tasks {
         match task.interrupt_or_instances {
-            Either::Left(interrupt) => {
-                triggers.insert(interrupt, (*name, task.priority));
+            Either::Left(ref interrupt) => {
+                triggers.insert(interrupt.clone(), (name.clone(), task.priority));
             }
             Either::Right(instances) => {
                 let dispatcher = dispatchers.entry(task.priority).or_insert_with(|| {
                     Dispatcher::new(free_interrupts.pop().expect("not enough free interrupts"))
                 });
-                dispatcher.tasks.push(*name);
+                dispatcher.tasks.push(name.clone());
                 dispatcher.capacity += instances;
             }
         }
 
         for task in &task.schedule_now {
-            schedule_now.insert(*task);
+            schedule_now.insert(task.clone());
         }
 
         for task in &task.schedule_after {
-            schedule_after.insert(*task);
+            schedule_after.insert(task.clone());
 
             // Timer queue
-            if let Entry::Vacant(entry) = tq.tasks.entry(*task) {
-                tq.capacity += app.tasks[task].interrupt_or_instances.right().unwrap();
+            if let Entry::Vacant(entry) = tq.tasks.entry(task.clone()) {
+                tq.capacity += app.tasks[task]
+                    .interrupt_or_instances
+                    .as_ref()
+                    .right()
+                    .clone()
+                    .unwrap();
                 entry.insert(app.tasks[task].priority);
             }
         }
@@ -83,7 +93,7 @@ pub fn app(app: &App) -> Context {
             })) {
         let ceiling = ceilings
             .resources
-            .entry(*resource)
+            .entry(resource.clone())
             .or_insert(Ceiling::Owned(priority));
         if priority > (*ceiling).into() {
             *ceiling = Ceiling::Shared(priority);
@@ -101,7 +111,10 @@ pub fn app(app: &App) -> Context {
     }) {
         // schedule_now callers contend for the consumer end of the task slot queue (#task::SQ) and
         // ..
-        let ceiling = ceilings.slot_queues.entry(*task).or_insert(caller_priority);
+        let ceiling = ceilings
+            .slot_queues
+            .entry(task.clone())
+            .or_insert(caller_priority);
 
         if caller_priority > *ceiling {
             *ceiling = caller_priority;
@@ -128,7 +141,10 @@ pub fn app(app: &App) -> Context {
     }) {
         // schedule_after callers contend for the consumer end of the task slot queue (#task::SQ)
         // and ..
-        let ceiling = ceilings.slot_queues.entry(*task).or_insert(caller_priority);
+        let ceiling = ceilings
+            .slot_queues
+            .entry(task.clone())
+            .or_insert(caller_priority);
 
         if caller_priority > *ceiling {
             *ceiling = caller_priority;
@@ -209,7 +225,7 @@ impl Dispatcher {
     }
 
     pub fn interrupt(&self) -> Ident {
-        self.interrupt
+        self.interrupt.clone()
     }
 
     pub fn tasks(&self) -> &[Ident] {
