@@ -31,7 +31,7 @@ pub unsafe trait Resource {
     type Ceiling;
 
     /// The data protected by the resource
-    type Data: 'static + Send;
+    type Data: 'static;
 
     // The `static mut` variable that the resource protects fs
     #[doc(hidden)]
@@ -103,4 +103,11 @@ pub unsafe trait Resource {
             }
         }
     }
+}
+
+/// A Resource that may be shared between multiple threads
+pub trait SharedResource: Resource
+where
+    <Self as Resource>::Data: Send,
+{
 }

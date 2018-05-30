@@ -162,7 +162,7 @@ pub use cortex_m_rtfm_macros::app;
 use typenum::consts::*;
 use typenum::Unsigned;
 
-pub use resource::{Priority, Resource};
+pub use resource::{Priority, SharedResource, Resource};
 
 #[doc(hidden)]
 pub mod _impl;

@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use syn::Ident;
 use syntax::check::App;
 
-use analyze::Context;
+use analyze::{Context, Ceiling};
 
 pub fn app(ctxt: &Context, app: &App) -> TokenStream {
     let mut root = vec![];
@@ -34,18 +34,18 @@ pub fn app(ctxt: &Context, app: &App) -> TokenStream {
             .map(|e| quote!(#e))
             .unwrap_or_else(|| quote!(unsafe { ::#k::_impl::uninitialized() }));
 
-        let ceiling = Ident::new(
-            &format!(
-                "U{}",
-                ctxt.ceilings
-                    .resources()
-                    .get(name)
-                    .cloned()
-                    .map(u8::from)
-                    .unwrap_or(0) // 0 = resource owned by `init`
-            ),
-            Span::call_site(),
-        );
+        let (shared, priority) = ctxt.ceilings
+            .resources()
+            .get(name)
+            .cloned()
+            .map(|ceiling| match ceiling {
+                Ceiling::Owned(p) => (false, p),
+                Ceiling::Shared(p) => (true, p),
+            })
+            .unwrap_or( (false, 0) ); // 0 = resource owned by `init`
+
+        let ceiling = Ident::new(&format!("U{}", priority), Span::call_site());
+
         root.push(quote! {
             #[allow(unsafe_code)]
             unsafe impl ::#k::Resource for _resource::#name {
@@ -60,6 +60,12 @@ pub fn app(ctxt: &Context, app: &App) -> TokenStream {
                 }
             }
         });
+
+        if shared {
+            root.push(quote! {
+                impl ::#k::SharedResource for _resource::#name {}
+            })
+        }
 
         resources.push(quote! {
             #[allow(non_camel_case_types)]
@@ -412,6 +418,8 @@ pub fn app(ctxt: &Context, app: &App) -> TokenStream {
                             &mut FREE_QUEUE
                         }
                     }
+
+                    impl ::#k::SharedResource for #name::FREE_QUEUE {}
 
                 });
 
@@ -807,6 +815,8 @@ pub fn app(ctxt: &Context, app: &App) -> TokenStream {
                     }
                 }
 
+                impl ::#k::SharedResource for TIMER_QUEUE;
+
                 // SysTick priority
                 pub type Priority = ::#k::_impl::#priority;
 
@@ -871,6 +881,8 @@ pub fn app(ctxt: &Context, app: &App) -> TokenStream {
                         &mut READY_QUEUE
                     }
                 }
+
+                impl ::#k::SharedResource for READY_QUEUE {}
 
                 #[allow(non_camel_case_types)]
                 #[allow(dead_code)]
