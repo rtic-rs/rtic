@@ -11,10 +11,10 @@ version = "0.3.1"
 
 [dependencies]
 failure = "0.1.1"
-proc-macro2 = "0.3.6"
-quote = "0.5.1"
-rtfm-syntax = "0.3.0"
-syn = "0.13.1"
+proc-macro2 = "0.4.6"
+quote = "0.6.3"
+rtfm-syntax = {git = "https://github.com/chocol4te/rtfm-syntax.git"}
+syn = "0.14.2"
 
 [lib]
 proc-macro = true
