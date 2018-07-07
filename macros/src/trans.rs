@@ -1,15 +1,21 @@
-use proc_macro2::Span;
-use quote::Tokens;
-use syn::{Ident, LitStr};
+use proc_macro2::{Ident, Span, TokenStream};
+use syn::LitStr;
 
 use analyze::Ownerships;
 use check::{App, Kind};
 
+
+fn identifier(s: &str) -> Ident {
+    Ident::new(s, Span::call_site())
+}
 fn krate() -> Ident {
-    Ident::from("rtfm")
+    identifier("rtfm")
+}
+fn leading_underscore(i: &Ident) -> Ident {
+    Ident::new(&format!("_{}", i), i.span())
 }
 
-pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
+pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
     let mut root = vec![];
     let mut main = vec![quote!(#![allow(path_statements)])];
 
@@ -28,7 +34,7 @@ pub fn app(app: &App, ownerships: &Ownerships) -> Tokens {
     quote!(#(#root)*)
 }
 
-fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
+fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<TokenStream>, root: &mut Vec<TokenStream>) {
     let krate = krate();
 
     let mut mod_items = vec![];
@@ -54,7 +60,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
         let super_ = if needs_reexport {
             None
         } else {
-            Some(Ident::from("super"))
+            Some(identifier("super"))
         };
         let mut rexprs = vec![];
         let mut rfields = vec![];
@@ -70,7 +76,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
                     pub #name: &'static mut #ty,
                 });
 
-                let _name = Ident::from(format!("_{}", name.as_ref()));
+                let _name = leading_underscore(name);
                 rexprs.push(if resource.expr.is_some() {
                     quote! {
                         #name: &mut #super_::#_name,
@@ -136,7 +142,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
             continue;
         }
 
-        let _name = Ident::from(format!("_{}", name.as_ref()));
+        let _name = leading_underscore(name);
         let resource = app.resources
             .get(name)
             .expect(&format!("BUG: resource {} has no definition", name));
@@ -224,7 +230,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<Tokens>, root: &mut V
     });
 }
 
-fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
+fn init(app: &App, main: &mut Vec<TokenStream>, root: &mut Vec<TokenStream>) {
     let device = &app.device;
     let krate = krate();
 
@@ -263,7 +269,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
                     &mut #name
                 },));
             } else {
-                let _name = Ident::from(format!("_{}", name.as_ref()));
+                let _name = leading_underscore(name);
                 lifetime = Some(quote!('a));
 
                 fields.push(quote! {
@@ -310,7 +316,7 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
         let mut fields = vec![];
 
         for (name, resource) in late_resources {
-            let _name = Ident::from(format!("_{}", name.as_ref()));
+            let _name = leading_underscore(name);
 
             let ty = &resource.ty;
 
@@ -415,11 +421,11 @@ fn init(app: &App, main: &mut Vec<Tokens>, root: &mut Vec<Tokens>) {
     });
 }
 
-fn resources(app: &App, root: &mut Vec<Tokens>) {
+fn resources(app: &App, root: &mut Vec<TokenStream>) {
     let krate = krate();
 
     for (name, resource) in app.resources.iter() {
-        let _name = Ident::from(format!("_{}", name));
+        let _name = leading_underscore(name);
 
         // Declare the static that holds the resource
         let expr = &resource.expr;
@@ -438,7 +444,7 @@ fn resources(app: &App, root: &mut Vec<Tokens>) {
     }
 }
 
-fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>, main: &mut Vec<Tokens>) {
+fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<TokenStream>, main: &mut Vec<TokenStream>) {
     let device = &app.device;
     let krate = krate();
 
@@ -452,7 +458,7 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>, main: &mut 
         if has_resources {
             for rname in &task.resources {
                 let ceiling = ownerships[rname].ceiling();
-                let _rname = Ident::from(format!("_{}", rname.as_ref()));
+                let _rname = leading_underscore(rname);
                 let resource = app.resources
                     .get(rname)
                     .expect(&format!("BUG: resource {} has no definition", rname));
@@ -590,8 +596,8 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<Tokens>, main: &mut 
         }
 
         let path = &task.path;
-        let _tname = Ident::from(format!("_{}", tname));
-        let export_name = LitStr::new(tname.as_ref(), Span::call_site());
+        let _tname = leading_underscore(tname);
+        let export_name = LitStr::new(&tname.to_string(), tname.span());
         root.push(quote! {
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
