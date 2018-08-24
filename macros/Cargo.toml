@@ -7,7 +7,7 @@ keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm-macros"
 repository = "https://github.com/japaric/cortex-m-rtfm"
-version = "0.3.1"
+version = "0.3.2"
 
 [dependencies]
 failure = "0.1.1"

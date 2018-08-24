@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.3.3] - 2018-08-24
+
+### Fixed
+
+- Compilation with latest nightly
+
 ## [v0.3.2] - 2018-04-16
 
 ### Added
@@ -94,7 +100,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Initial release
 
-[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.3...HEAD
+[v0.3.3]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.2...v0.3.3
+[v0.3.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.1...v0.3.2
 [v0.3.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.2...v0.3.0
 [v0.2.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.1...v0.2.2
