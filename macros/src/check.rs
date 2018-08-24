@@ -61,7 +61,7 @@ pub fn app(app: check::App) -> Result<App> {
         tasks: app.tasks
             .into_iter()
             .map(|(k, v)| {
-                let v = ::check::task(k.as_ref(), v)?;
+                let v = ::check::task(&k.to_string(), v)?;
 
                 Ok((k, v))
             })
