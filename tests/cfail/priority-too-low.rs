@@ -1,6 +1,5 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![feature(proc_macro)]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -8,8 +7,9 @@ extern crate stm32f103xx;
 
 use rtfm::app;
 
-app! { //~ error attempt to subtract with overflow
-    //~^ error constant evaluation error
+app! { //~ error referenced constant has errors
+    //~^ error could not evaluate constant
+    //~| error constant evaluation error
     device: stm32f103xx,
 
     tasks: {
