@@ -1,8 +1,6 @@
 //! Minimal example with zero tasks
 #![deny(unsafe_code)]
 #![deny(warnings)]
-// IMPORTANT always include this feature gate
-#![feature(proc_macro)]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm; // IMPORTANT always do this rename

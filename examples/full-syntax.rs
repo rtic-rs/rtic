@@ -1,7 +1,6 @@
 //! A showcase of the `app!` macro syntax
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![feature(proc_macro)]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -60,7 +59,7 @@ mod main {
 
     pub fn idle(t: &mut Threshold, mut r: ::idle::Resources) -> ! {
         loop {
-            *r.OWNED != *r.OWNED;
+            *r.OWNED = !*r.OWNED;
 
             if *r.OWNED {
                 if r.SHARED.claim(t, |shared, _| *shared) {

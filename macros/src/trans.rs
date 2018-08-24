@@ -85,7 +85,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<TokenStream>, root: &
                 });
 
                 rexprs.push(quote! {
-                    #name: ::idle::#name { _0: core::marker::PhantomData },
+                    #name: ::idle::#name { _0: ::core::marker::PhantomData },
                 });
             }
         }
@@ -149,7 +149,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<TokenStream>, root: &
 
         mod_items.push(quote! {
             #[allow(non_camel_case_types)]
-            pub struct #name { _0: core::marker::PhantomData<*const ()> }
+            pub struct #name { _0: ::core::marker::PhantomData<*const ()> }
         });
 
         root.push(quote! {

@@ -6,14 +6,13 @@
 //! ```
 //! #![deny(unsafe_code)]
 //! #![deny(warnings)]
-//! #![feature(proc_macro)]
 //! #![no_std]
 //! 
 //! extern crate cortex_m_rtfm as rtfm;
 //! extern crate stm32f103xx;
 //! 
-//! use stm32f103xx::Interrupt;
 //! use rtfm::{app, Resource, Threshold};
+//! use stm32f103xx::Interrupt;
 //! 
 //! app! {
 //!     device: stm32f103xx,
@@ -64,7 +63,10 @@
 //! #[allow(non_snake_case)]
 //! fn exti0(
 //!     t: &mut Threshold,
-//!     EXTI0::Resources { mut LOW, mut HIGH }: EXTI0::Resources,
+//!     EXTI0::Resources {
+//!         LOW: mut low,
+//!         HIGH: mut high,
+//!     }: EXTI0::Resources,
 //! ) {
 //!     // Because this task has a priority of 1 the preemption threshold `t` also
 //!     // starts at 1
@@ -76,7 +78,7 @@
 //!     rtfm::set_pending(Interrupt::EXTI1); // ~> exti1
 //! 
 //!     // A claim creates a critical section
-//!     LOW.claim_mut(t, |_low, t| {
+//!     low.claim_mut(t, |_low, t| {
 //!         // This claim increases the preemption threshold to 2
 //!         //
 //!         // 2 is just high enough to not race with task `exti1` for access to the
@@ -97,7 +99,7 @@
 //!         rtfm::bkpt();
 //! 
 //!         // Claims can be nested
-//!         HIGH.claim_mut(t, |_high, _| {
+//!         high.claim_mut(t, |_high, _| {
 //!             // This claim increases the preemption threshold to 3
 //! 
 //!             // Now `exti2` can't preempt this task

@@ -1,7 +1,6 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(const_fn)]
-#![feature(proc_macro)]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -47,7 +46,7 @@ fn exti0(_t: &mut Threshold, r: EXTI0::Resources) {
 
     // ERROR resource proxies are not `Send`able across tasks
     is_send(&r.SHARED);
-    //~^ error the trait bound `*const (): core::marker::Send` is not satisfied
+    //~^ error `*const ()` cannot be sent between threads safely
 }
 
 fn exti1(_t: &mut Threshold, _r: EXTI1::Resources) {

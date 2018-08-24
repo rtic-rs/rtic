@@ -1,7 +1,6 @@
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![feature(const_fn)]
-#![feature(proc_macro)]
 #![no_std]
 
 extern crate cortex_m_rtfm as rtfm;
@@ -9,7 +8,7 @@ extern crate stm32f103xx;
 
 use rtfm::{app, Threshold};
 
-app! { //~ error bound `*const (): core::marker::Send` is not satisfied
+app! { //~ error `*const ()` cannot be sent between threads safely
     device: stm32f103xx,
 
     resources: {
