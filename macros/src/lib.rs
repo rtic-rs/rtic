@@ -1,6 +1,5 @@
 //! Procedural macros of the `cortex-m-rtfm` crate
 // #![deny(warnings)]
-#![feature(proc_macro)]
 #![recursion_limit = "128"]
 
 #[macro_use]
