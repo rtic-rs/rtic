@@ -18,4 +18,6 @@ main() {
     cargo check --target $TARGET --examples
 }
 
-main
+if [ $TRAVIS_BRANCH != master ]; then
+    main
+fi
