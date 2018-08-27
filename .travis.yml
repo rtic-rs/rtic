@@ -26,6 +26,9 @@ install:
 script:
   - bash ci/script.sh
 
+after_success:
+  - bash ci/after-success.sh
+
 after_script: set +e
 
 branches:
