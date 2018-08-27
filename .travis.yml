@@ -7,15 +7,19 @@ matrix:
 
     - env: TARGET=thumbv6m-none-eabi
       rust: nightly
+      if: branch != master
 
     - env: TARGET=thumbv7m-none-eabi
       rust: nightly
+      if: branch != master
 
     - env: TARGET=thumbv7em-none-eabi
       rust: nightly
+      if: branch != master
 
     - env: TARGET=thumbv7em-none-eabihf
       rust: nightly
+      if: branch != master
 
 before_install: set -e
 

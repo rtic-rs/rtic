@@ -5,12 +5,12 @@ authors = [
 ]
 categories = ["concurrency", "embedded", "no-std"]
 description = "Real Time For the Masses (RTFM) framework for ARM Cortex-M microcontrollers"
-documentation = "https://docs.rs/cortex-m-rtfm"
+documentation = "https://japaric.github.io/cortex-m-rtfm/cortex_m_rtfm/"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm"
 repository = "https://github.com/japaric/cortex-m-rtfm"
-version = "0.3.3"
+version = "0.3.4"
 
 [dependencies]
 cortex-m = "0.4.0"

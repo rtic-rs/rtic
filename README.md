@@ -5,7 +5,7 @@
 
 > Real Time For the Masses (RTFM) framework for ARM Cortex-M microcontrollers
 
-# [Documentation](https://docs.rs/cortex-m-rtfm)
+# [Documentation](https://japaric.github.io/cortex-m-rtfm/cortex_m_rtfm/)
 
 # License
 
