@@ -18,8 +18,10 @@ pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
     ::trans::resources(app, ownerships, &mut root);
 
     root.push(quote! {
+        entry!(main);
+
         #[allow(unsafe_code)]
-        fn main() {
+        fn main() -> ! {
             #(#main)*
         }
     });
