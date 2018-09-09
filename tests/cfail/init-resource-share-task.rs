@@ -18,7 +18,7 @@ app! { //~ proc macro panicked
     },
 
     tasks: {
-        SYS_TICK: {
+        SysTick: {
             path: sys_tick,
             resources: [BUFFER],
             //~^ error: this resource is owned by `init` and can't be shared

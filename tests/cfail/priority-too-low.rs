@@ -13,7 +13,7 @@ app! { //~ error referenced constant has errors
     device: stm32f103xx,
 
     tasks: {
-        SYS_TICK: {
+        SysTick: {
             path: sys_tick,
             // ERROR priority must be in the range [1, 16]
             priority: 0,

@@ -12,11 +12,11 @@ app! {
     device: stm32f103xx,
 
     tasks: {
-        SYS_TICK: {
+        SysTick: {
             priority: 1,
         },
 
-        SYS_TICK: {
+        SysTick: {
             priority: 2,
         },
     },

@@ -40,7 +40,7 @@
 //!     },
 //! 
 //!     tasks: {
-//!         SYS_TICK: {
+//!         SysTick: {
 //!             path: sys_tick,
 //!             // If omitted priority is assumed to be 1
 //!             // priority: 1,
@@ -78,7 +78,7 @@
 //!     }
 //! }
 //! 
-//! fn sys_tick(_t: &mut Threshold, mut r: SYS_TICK::Resources) {
+//! fn sys_tick(_t: &mut Threshold, mut r: SysTick::Resources) {
 //!     *r.ON = !*r.ON;
 //! 
 //!     *r.CO_OWNED += 1;

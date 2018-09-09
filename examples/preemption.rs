@@ -20,8 +20,8 @@ app! {
     },
 
     tasks: {
-        // The `SYS_TICK` task has higher priority than `TIM2`
-        SYS_TICK: {
+        // The `SysTick` task has higher priority than `TIM2`
+        SysTick: {
             path: sys_tick,
             priority: 2,
             resources: [COUNTER],
@@ -45,7 +45,7 @@ fn idle() -> ! {
     }
 }
 
-fn sys_tick(_t: &mut Threshold, mut r: SYS_TICK::Resources) {
+fn sys_tick(_t: &mut Threshold, mut r: SysTick::Resources) {
     // ..
 
     // This task can't be preempted by `tim2` so it has direct access to the

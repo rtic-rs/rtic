@@ -43,7 +43,7 @@ app! {
     },
 
     tasks: {
-        SYS_TICK: {
+        SysTick: {
             priority: 1,
             path: sys_tick,
             resources: [IP_ADDRESS, PORT, ON],
@@ -74,7 +74,7 @@ fn init(_p: init::Peripherals, _r: init::Resources) -> init::LateResources {
     }
 }
 
-fn sys_tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
+fn sys_tick(_t: &mut Threshold, r: SysTick::Resources) {
     // Other tasks can access late resources like any other, since they are
     // guaranteed to be initialized when tasks are run.
 

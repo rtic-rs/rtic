@@ -135,8 +135,8 @@ mod trans;
 ///
 /// ## `tasks.$TASK`
 ///
-/// The key must be either a Cortex-M exception or a device specific interrupt. `PENDSV`, `SVCALL`,
-/// `SYS_TICK` are considered as exceptions. All other names are assumed to be interrupts.
+/// The key must be either a Cortex-M exception or a device specific interrupt. `PendSV`, `SVCall`,
+/// `SysTick` are considered as exceptions. All other names are assumed to be interrupts.
 ///
 /// ## `tasks.$TASK.enabled`
 ///

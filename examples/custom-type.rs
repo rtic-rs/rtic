@@ -28,7 +28,7 @@ app! {
     },
 
     tasks: {
-        SYS_TICK: {
+        SysTick: {
             path: sys_tick,
             resources: [CO_OWNED, ON, SHARED],
         },
@@ -48,6 +48,6 @@ fn idle(_t: &mut Threshold, _r: ::idle::Resources) -> ! {
     loop {}
 }
 
-fn sys_tick(_t: &mut Threshold, _r: SYS_TICK::Resources) {}
+fn sys_tick(_t: &mut Threshold, _r: SysTick::Resources) {}
 
 fn tim2(_t: &mut Threshold, _r: TIM2::Resources) {}

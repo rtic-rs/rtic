@@ -21,9 +21,9 @@
 //!         static COUNTER: u64 = 0;
 //!     },
 //! 
-//!     // Both SYS_TICK and TIM2 have access to the `COUNTER` data
+//!     // Both SysTick and TIM2 have access to the `COUNTER` data
 //!     tasks: {
-//!         SYS_TICK: {
+//!         SysTick: {
 //!             path: sys_tick,
 //!             resources: [COUNTER],
 //!         },
@@ -47,7 +47,7 @@
 //! 
 //! // As both tasks are running at the same priority one can't preempt the other.
 //! // Thus both tasks have direct access to the resource
-//! fn sys_tick(_t: &mut Threshold, mut r: SYS_TICK::Resources) {
+//! fn sys_tick(_t: &mut Threshold, mut r: SysTick::Resources) {
 //!     // ..
 //! 
 //!     *r.COUNTER += 1;

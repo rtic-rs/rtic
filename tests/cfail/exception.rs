@@ -12,7 +12,7 @@ app! { //~ error proc macro panicked
 
     tasks: {
         // ERROR exceptions can't be enabled / disabled here
-        SYS_TICK: {
+        SysTick: {
             enabled: true,
             priority: 1,
         },

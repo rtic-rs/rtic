@@ -33,8 +33,8 @@ app! {
     // interrupt or exception becomes *pending* the corresponding task handler
     // will be executed.
     tasks: {
-        // Here we declare that we'll use the SYS_TICK exception as a task
-        SYS_TICK: {
+        // Here we declare that we'll use the SysTick exception as a task
+        SysTick: {
             // Path to the task handler
             path: sys_tick,
 
@@ -73,14 +73,14 @@ fn idle() -> ! {
     }
 }
 
-// This is the task handler of the SYS_TICK exception
+// This is the task handler of the SysTick exception
 //
 // `_t` is the preemption threshold token. We won't use it in this program.
 //
-// `r` is the set of resources this task has access to. `SYS_TICK::Resources`
+// `r` is the set of resources this task has access to. `SysTick::Resources`
 // has one field per resource declared in `app!`.
 #[allow(unsafe_code)]
-fn sys_tick(_t: &mut Threshold, mut r: SYS_TICK::Resources) {
+fn sys_tick(_t: &mut Threshold, mut r: SysTick::Resources) {
     // toggle state
     *r.ON = !*r.ON;
 
