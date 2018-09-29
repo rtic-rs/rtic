@@ -22,7 +22,6 @@ untagged-option = "0.1.1"
 compiletest_rs = "0.3.14"
 
 [dev-dependencies]
-cortex-m-rt = "0.6.4"
 cortex-m-rt-macros = "0.1.2"
 panic-halt = "0.2.0"
 

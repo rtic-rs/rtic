@@ -6,7 +6,6 @@
 //! #![no_std]
 //! #![no_main]
 //! 
-//! extern crate cortex_m_rt as rt;
 //! extern crate cortex_m_rt_macros;
 //! extern crate cortex_m_rtfm as rtfm; // IMPORTANT always do this rename
 //! extern crate panic_halt;
