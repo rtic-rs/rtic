@@ -1,5 +1,5 @@
 #![deny(unsafe_code)]
-// #![deny(warnings)]
+#![deny(warnings)]
 #![no_std]
 #![no_main]
 
