@@ -8,7 +8,7 @@ extern crate cortex_m;
 #[macro_use(entry)]
 extern crate cortex_m_rt as rt;
 extern crate cortex_m_rtfm as rtfm;
-extern crate panic_abort;
+extern crate panic_halt;
 extern crate stm32f103xx;
 
 use cortex_m::peripheral::syst::SystClkSource;
