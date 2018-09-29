@@ -1,10 +1,10 @@
 #![deny(unsafe_code)]
-#![deny(warnings)]
+// #![deny(warnings)]
 #![no_std]
 #![no_main]
 
-#[macro_use(entry)]
 extern crate cortex_m_rt as rt;
+extern crate cortex_m_rt_macros;
 extern crate cortex_m_rtfm as rtfm;
 extern crate panic_halt;
 extern crate stm32f103xx;

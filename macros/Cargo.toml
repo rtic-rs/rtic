@@ -10,11 +10,11 @@ repository = "https://github.com/japaric/cortex-m-rtfm"
 version = "0.3.2"
 
 [dependencies]
-failure = "0.1.1"
-proc-macro2 = "0.4.6"
-quote = "0.6.3"
+failure = "0.1.2"
+proc-macro2 = "0.4.19"
+quote = "0.6.8"
 rtfm-syntax = "0.3.4"
-syn = "0.14.2"
+syn = "0.14.9"
 
 [lib]
 proc-macro = true

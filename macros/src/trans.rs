@@ -18,10 +18,15 @@ pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
     ::trans::resources(app, ownerships, &mut root);
 
     root.push(quote! {
-        entry!(main);
+        use cortex_m_rt_macros::entry;
+
+        #[entry]
+        fn main() -> ! {
+            main_impl();
+        }
 
         #[allow(unsafe_code)]
-        fn main() -> ! {
+        fn main_impl() -> ! {
             #(#main)*
         }
     });
