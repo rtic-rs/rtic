@@ -9,6 +9,7 @@ fn krate() -> Ident {
 }
 
 pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
+    let krate = krate();
     let mut root = vec![];
     let mut main = vec![quote!(#![allow(path_statements)])];
 
@@ -18,7 +19,7 @@ pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
     ::trans::resources(app, ownerships, &mut root);
 
     root.push(quote! {
-        use cortex_m_rt_macros::entry;
+        use #krate::entry;
 
         #[entry]
         fn main() -> ! {
