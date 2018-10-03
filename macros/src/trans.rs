@@ -11,7 +11,7 @@ fn krate() -> Ident {
 pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
     let krate = krate();
     let mut root = vec![];
-    let mut main = vec![quote!(#![allow(path_statements)])];
+    let mut main = vec![];
 
     ::trans::tasks(app, ownerships, &mut root, &mut main);
     ::trans::init(app, &mut main, &mut root);
@@ -22,12 +22,8 @@ pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
         use #krate::entry;
 
         #[entry]
+        #[allow(path_statements, unsafe_code)]
         fn main() -> ! {
-            main_impl();
-        }
-
-        #[allow(unsafe_code)]
-        fn main_impl() -> ! {
             #(#main)*
         }
     });
