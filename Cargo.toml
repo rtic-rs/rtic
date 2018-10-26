@@ -9,6 +9,7 @@ documentation = "https://japaric.github.io/cortex-m-rtfm/cortex_m_rtfm/"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm"
+readme = "README.md"
 repository = "https://github.com/japaric/cortex-m-rtfm"
 version = "0.3.4"
 
