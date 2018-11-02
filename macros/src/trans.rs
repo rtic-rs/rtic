@@ -2,7 +2,7 @@ use proc_macro2::{TokenStream, Span};
 use syn::{Ident, LitStr};
 
 use analyze::Ownerships;
-use check::{App, Kind};
+use check::{App, Kind, Exception};
 
 fn krate() -> Ident {
     Ident::new("rtfm", Span::call_site())
@@ -10,7 +10,7 @@ fn krate() -> Ident {
 
 pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
     let mut root = vec![];
-    let mut main = vec![quote!(#![allow(path_statements)])];
+    let mut main = vec![];
 
     ::trans::tasks(app, ownerships, &mut root, &mut main);
     ::trans::init(app, &mut main, &mut root);
@@ -18,8 +18,13 @@ pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
     ::trans::resources(app, ownerships, &mut root);
 
     root.push(quote! {
+        extern crate cortex_m_rt;
+        use cortex_m_rt::entry;
+
         #[allow(unsafe_code)]
-        fn main() {
+        #[entry]
+        #[allow(path_statements)]
+        fn main() -> ! {
             #(#main)*
         }
     });
@@ -593,13 +598,17 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<TokenStream>, main: 
         }
 
         let path = &task.path;
-        let _tname = Ident::new(&tname.to_string(), Span::call_site());
-        let export_name = LitStr::new(&tname.to_string(), Span::call_site());
+        let handler_name = match &task.kind {
+            Kind::Interrupt {..} => tname.to_string(),
+            Kind::Exception(exception) => exception_handler_name(exception)
+        };
+        let handler_name_ident = Ident::new(&handler_name, Span::call_site());
+        let export_name = LitStr::new(&handler_name, Span::call_site());
         root.push(quote! {
             #[allow(non_snake_case)]
             #[allow(unsafe_code)]
             #[export_name = #export_name]
-            pub unsafe extern "C" fn #_tname() {
+            pub unsafe extern "C" fn #handler_name_ident() {
                 let f: fn(#(#tys,)*) = #path;
 
                 f(#(#exprs,)*)
@@ -628,4 +637,14 @@ fn tasks(app: &App, ownerships: &Ownerships, root: &mut Vec<TokenStream>, main: 
         // evaluation with this path statement
         main.push(quote!(#tname::CHECK_PRIORITY;));
     }
+}
+
+// In cortex-m-rt 0.5.0 they changed the names of handlers to these
+fn exception_handler_name(exception: &Exception) -> String {
+    let name = match exception {
+        Exception::PENDSV => "PendSV",
+        Exception::SVCALL => "SVCall",
+        Exception::SYS_TICK => "SysTick",
+    };
+    name.to_string()
 }

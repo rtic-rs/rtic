@@ -86,7 +86,7 @@ extern crate cortex_m_rtfm_macros;
 extern crate rtfm_core;
 extern crate untagged_option;
 
-use core::{mem, u8};
+use core::u8;
 
 pub use cortex_m::asm::{bkpt, wfi};
 pub use cortex_m_rtfm_macros::app;
@@ -165,6 +165,5 @@ where
     I: Nr,
 {
     // NOTE(safe) atomic write
-    let mut nvic: NVIC = unsafe { mem::transmute(()) };
-    nvic.set_pending(interrupt);
+    NVIC::pend(interrupt);
 }
