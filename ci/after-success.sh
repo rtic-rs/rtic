@@ -1,20 +1,27 @@
 set -euxo pipefail
 
 main() {
-    cargo doc
+    rm -f .cargo/config
+    cargo doc --features timer-queue
+    ( cd book && mdbook build )
+
+    local td=$(mktemp -d)
+    cp -r target/doc $td/api
+    cp -r book/book $td/
+    cp LICENSE-* $td/book/
 
     mkdir ghp-import
-
     curl -Ls https://github.com/davisp/ghp-import/archive/master.tar.gz |
         tar --strip-components 1 -C ghp-import -xz
 
-    ./ghp-import/ghp_import.py target/doc
+    ./ghp-import/ghp_import.py $td
 
     set +x
     git push -fq https://$GH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git gh-pages && echo OK
+
+    rm -rf $td
 }
 
-# only publish on successful merges to master
-if [ $TRAVIS_BRANCH = master ] && [ $TRAVIS_PULL_REQUEST = false ] && [ $TARGET = x86_64-unknown-linux-gnu ]; then
+if [ $TRAVIS_BRANCH = master ] && [ $TRAVIS_PULL_REQUEST = false ]; then
     main
 fi

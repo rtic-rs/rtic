@@ -1,20 +1,22 @@
 [package]
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
-categories = ["concurrency", "embedded", "no-std"]
-description = "Procedural macros of the cortex-m-rtfm crate"
-documentation = "https://docs.rs/cortex-m-rtfm-macros"
-keywords = ["arm", "cortex-m"]
-license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm-macros"
-repository = "https://github.com/japaric/cortex-m-rtfm"
-version = "0.3.2"
-
-[dependencies]
-failure = "0.1.1"
-proc-macro2 = "0.4.6"
-quote = "0.6.3"
-rtfm-syntax = "0.3.4"
-syn = "0.14.2"
+version = "0.4.0-beta.1"
 
 [lib]
 proc-macro = true
+
+[dependencies]
+quote = "0.6.8"
+proc-macro2 = "0.4.20"
+
+[dependencies.syn]
+features = ["extra-traits", "full"]
+version = "0.15.6"
+
+[dependencies.rand]
+default-features = false
+version = "0.5.5"
+
+[features]
+timer-queue = []

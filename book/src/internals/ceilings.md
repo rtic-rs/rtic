@@ -1,0 +1,3 @@
+# Ceiling analysis
+
+**TODO**

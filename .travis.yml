@@ -2,38 +2,48 @@ language: rust
 
 matrix:
   include:
+    # NOTE used to build docs on successful merges to master
+    - env: TARGET=x86_64-unknown-linux-gnu
+      rust: beta
+
+    - env: TARGET=thumbv6m-none-eabi
+      rust: beta
+      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
+
+    - env: TARGET=thumbv7m-none-eabi
+      rust: beta
+      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
+
     - env: TARGET=x86_64-unknown-linux-gnu
       rust: nightly
+      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
     - env: TARGET=thumbv6m-none-eabi
       rust: nightly
-      if: branch != master
+      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
     - env: TARGET=thumbv7m-none-eabi
       rust: nightly
-      if: branch != master
-
-    - env: TARGET=thumbv7em-none-eabi
-      rust: nightly
-      if: branch != master
-
-    - env: TARGET=thumbv7em-none-eabihf
-      rust: nightly
-      if: branch != master
+      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
 before_install: set -e
 
 install:
   - bash ci/install.sh
-  - export PATH="$PATH:$PWD/gcc/bin"
+  - export PATH="$PATH:$PWD/qemu"
 
 script:
   - bash ci/script.sh
 
+after_script: set +e
+
 after_success:
   - bash ci/after-success.sh
 
-after_script: set +e
+cache: cache
+
+before_cache:
+  - chmod -R a+r $HOME/.cargo;
 
 branches:
   only:

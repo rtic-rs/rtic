@@ -1,0 +1,3 @@
+foo(scheduled = Instant(8000000), now = Instant(8000196))
+foo(scheduled = Instant(16000000), now = Instant(16000196))
+foo(scheduled = Instant(24000000), now = Instant(24000196))
