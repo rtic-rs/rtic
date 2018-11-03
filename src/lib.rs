@@ -7,7 +7,7 @@
 //!
 //! The user level documentation can be found [here].
 //!
-//! [here]: ../../book/index.html
+//! [here]: ../../book/
 //!
 //! Don't forget to check the documentation of the [`#[app]`] attribute, which is the main component
 //! of the framework.

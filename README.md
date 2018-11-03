@@ -52,7 +52,7 @@ behave the way you expect please open [an issue]!
 
 - Applications must be written using the 2018 edition.
 
-## [User documentation](https://japaric.github.io/cortex-m-rtfm/book/index.html)
+## [User documentation](https://japaric.github.io/cortex-m-rtfm/book/)
 
 ## [API reference](https://japaric.github.io/cortex-m-rtfm/api/rtfm/index.html)
 
