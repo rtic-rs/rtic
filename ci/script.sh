@@ -90,6 +90,6 @@ if [ -z ${TRAVIS_RUST_VERSION-} ]; then
     esac
 fi
 
-if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST = true ]; then
+if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST != false ]; then
     main
 fi

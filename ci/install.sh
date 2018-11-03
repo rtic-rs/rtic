@@ -10,6 +10,6 @@ main() {
     chmod +x qemu/qemu-system-arm
 }
 
-if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST = true ]; then
+if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST != false ]; then
     main
 fi
