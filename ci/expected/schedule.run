@@ -1,0 +1,3 @@
+init @ Instant(0)
+bar  @ Instant(4000236)
+foo  @ Instant(8000173)

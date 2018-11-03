@@ -1,31 +1,13 @@
 [target.thumbv6m-none-eabi]
-runner = 'arm-none-eabi-gdb'
-rustflags = [
-  "-C", "link-arg=-Tlink.x",
-  "-C", "linker=true",
-  "-Z", "linker-flavor=ld",
-]
+runner = "qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -kernel"
 
 [target.thumbv7m-none-eabi]
-runner = 'arm-none-eabi-gdb'
+runner = "qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -kernel"
+
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
 rustflags = [
   "-C", "link-arg=-Tlink.x",
-  "-C", "linker=arm-none-eabi-ld",
-  "-Z", "linker-flavor=ld",
 ]
 
-[target.thumbv7em-none-eabi]
-runner = 'arm-none-eabi-gdb'
-rustflags = [
-  "-C", "link-arg=-Tlink.x",
-  "-C", "linker=arm-none-eabi-ld",
-  "-Z", "linker-flavor=ld",
-]
-
-[target.thumbv7em-none-eabihf]
-runner = 'arm-none-eabi-gdb'
-rustflags = [
-  "-C", "link-arg=-Tlink.x",
-  "-C", "linker=arm-none-eabi-ld",
-  "-Z", "linker-flavor=ld",
-]
+[build]
+target = "thumbv7m-none-eabi"

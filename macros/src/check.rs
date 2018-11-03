@@ -1,95 +1,115 @@
-use std::collections::HashMap;
+use std::{collections::HashSet, iter};
 
-use syn::{Ident, Path};
-use syntax::check::{self, Idents, Idle, Init, Statics};
-use syntax::{self, Result};
+use proc_macro2::Span;
+use syn::parse;
 
-pub struct App {
-    pub device: Path,
-    pub idle: Idle,
-    pub init: Init,
-    pub resources: Statics,
-    pub tasks: Tasks,
-}
+use syntax::App;
 
-pub type Tasks = HashMap<Ident, Task>;
+pub fn app(app: &App) -> parse::Result<()> {
+    // Check that all referenced resources have been declared
+    for res in app
+        .idle
+        .as_ref()
+        .map(|idle| -> Box<Iterator<Item = _>> { Box::new(idle.args.resources.iter()) })
+        .unwrap_or_else(|| Box::new(iter::empty()))
+        .chain(&app.init.args.resources)
+        .chain(app.exceptions.values().flat_map(|e| &e.args.resources))
+        .chain(app.interrupts.values().flat_map(|i| &i.args.resources))
+        .chain(app.tasks.values().flat_map(|t| &t.args.resources))
+    {
+        if !app.resources.contains_key(res) {
+            return Err(parse::Error::new(
+                res.span(),
+                "this resource has NOT been declared",
+            ));
+        }
+    }
 
-#[allow(non_camel_case_types)]
-pub enum Exception {
-    PENDSV,
-    SVCALL,
-    SYS_TICK,
-}
+    // Check that late resources have not been assigned to `init`
+    for res in &app.init.args.resources {
+        if app.resources.get(res).unwrap().expr.is_none() {
+            return Err(parse::Error::new(
+                res.span(),
+                "late resources can NOT be assigned to `init`",
+            ));
+        }
+    }
 
-impl Exception {
-    pub fn from(s: &str) -> Option<Self> {
-        Some(match s {
-            "PENDSV" => Exception::PENDSV,
-            "SVCALL" => Exception::SVCALL,
-            "SYS_TICK" => Exception::SYS_TICK,
-            _ => return None,
+    // Check that all late resources have been initialized in `#[init]`
+    for res in app
+        .resources
+        .iter()
+        .filter_map(|(name, res)| if res.expr.is_none() { Some(name) } else { None })
+    {
+        if app.init.assigns.iter().all(|assign| assign.left != *res) {
+            return Err(parse::Error::new(
+                res.span(),
+                "late resources MUST be initialized at the end of `init`",
+            ));
+        }
+    }
+
+    // Check that all referenced tasks have been declared
+    for task in app
+        .idle
+        .as_ref()
+        .map(|idle| -> Box<Iterator<Item = _>> {
+            Box::new(idle.args.schedule.iter().chain(&idle.args.spawn))
         })
-    }
-
-    pub fn nr(&self) -> usize {
-        match *self {
-            Exception::PENDSV => 14,
-            Exception::SVCALL => 11,
-            Exception::SYS_TICK => 15,
+        .unwrap_or_else(|| Box::new(iter::empty()))
+        .chain(&app.init.args.schedule)
+        .chain(&app.init.args.spawn)
+        .chain(
+            app.exceptions
+                .values()
+                .flat_map(|e| e.args.schedule.iter().chain(&e.args.spawn)),
+        )
+        .chain(
+            app.interrupts
+                .values()
+                .flat_map(|i| i.args.schedule.iter().chain(&i.args.spawn)),
+        )
+        .chain(
+            app.tasks
+                .values()
+                .flat_map(|t| t.args.schedule.iter().chain(&t.args.spawn)),
+        ) {
+        if !app.tasks.contains_key(task) {
+            return Err(parse::Error::new(
+                task.span(),
+                "this task has NOT been declared",
+            ));
         }
     }
-}
 
-pub enum Kind {
-    Exception(Exception),
-    Interrupt { enabled: bool },
-}
+    // Check that there are enough free interrupts to dispatch all tasks
+    let ndispatchers = app
+        .tasks
+        .values()
+        .map(|t| t.args.priority)
+        .collect::<HashSet<_>>()
+        .len();
+    if ndispatchers > app.free_interrupts.len() {
+        return Err(parse::Error::new(
+            Span::call_site(),
+            &*format!(
+                "{} free interrupt{} (`extern {{ .. }}`) {} required to dispatch all soft tasks",
+                ndispatchers,
+                if ndispatchers > 1 { "s" } else { "" },
+                if ndispatchers > 1 { "are" } else { "is" },
+            ),
+        ));
+    }
 
-pub struct Task {
-    pub kind: Kind,
-    pub path: Path,
-    pub priority: u8,
-    pub resources: Idents,
-}
-
-pub fn app(app: check::App) -> Result<App> {
-    let app = App {
-        device: app.device,
-        idle: app.idle,
-        init: app.init,
-        resources: app.resources,
-        tasks: app.tasks
-            .into_iter()
-            .map(|(k, v)| {
-                let v = ::check::task(&k.to_string(), v)?;
-
-                Ok((k, v))
-            })
-            .collect::<Result<_>>()?,
-    };
-
-    Ok(app)
-}
-
-fn task(name: &str, task: syntax::check::Task) -> Result<Task> {
-    let kind = match Exception::from(name) {
-        Some(e) => {
-            ensure!(
-                task.enabled.is_none(),
-                "`enabled` field is not valid for exceptions"
-            );
-
-            Kind::Exception(e)
+    // Check that free interrupts are not being used
+    for int in app.interrupts.keys() {
+        if app.free_interrupts.contains_key(int) {
+            return Err(parse::Error::new(
+                int.span(),
+                "free interrupts (`extern { .. }`) can't be used as interrupt handlers",
+            ));
         }
-        None => Kind::Interrupt {
-            enabled: task.enabled.unwrap_or(true),
-        },
-    };
+    }
 
-    Ok(Task {
-        kind,
-        path: task.path,
-        priority: task.priority.unwrap_or(1),
-        resources: task.resources,
-    })
+    Ok(())
 }
