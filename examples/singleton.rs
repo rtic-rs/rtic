@@ -8,19 +8,9 @@
 extern crate panic_semihosting;
 
 use alloc_singleton::stable::pool::{Box, Pool};
-use cortex_m_semihosting::debug;
+use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use rtfm::app;
-
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -48,7 +38,7 @@ const APP: () = {
 
     #[task(resources = [P])]
     fn foo(x: Box<M>) {
-        println!("foo({})", x);
+        hprintln!("foo({})", x).unwrap();
 
         resources.P.lock(|p| p.dealloc(x));
 
@@ -57,7 +47,7 @@ const APP: () = {
 
     #[task(priority = 2, resources = [P])]
     fn bar(x: Box<M>) {
-        println!("bar({})", x);
+        hprintln!("bar({})", x).unwrap();
 
         resources.P.dealloc(x);
     }

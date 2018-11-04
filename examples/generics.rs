@@ -7,21 +7,9 @@
 
 extern crate panic_semihosting;
 
-use cortex_m_semihosting::debug;
+use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use rtfm::{app, Mutex};
-
-// NOTE: This convenience macro will appear in all the other examples and
-// will always look the same
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -37,7 +25,7 @@ const APP: () = {
     fn UART0() {
         static mut STATE: u32 = 0;
 
-        println!("UART0(STATE = {})", *STATE);
+        hprintln!("UART0(STATE = {})", *STATE).unwrap();
 
         advance(STATE, resources.SHARED);
 
@@ -50,7 +38,7 @@ const APP: () = {
     fn UART1() {
         static mut STATE: u32 = 0;
 
-        println!("UART1(STATE = {})", *STATE);
+        hprintln!("UART1(STATE = {})", *STATE).unwrap();
 
         // just to show that `SHARED` can be accessed directly and ..
         *resources.SHARED += 0;
@@ -70,5 +58,5 @@ fn advance(state: &mut u32, mut shared: impl Mutex<T = u32>) {
         (old, *shared)
     });
 
-    println!("SHARED: {} -> {}", old, new);
+    hprintln!("SHARED: {} -> {}", old, new).unwrap();
 }

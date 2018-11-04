@@ -7,19 +7,9 @@
 
 extern crate panic_semihosting;
 
-use cortex_m_semihosting::debug;
+use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use rtfm::app;
-
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -40,12 +30,12 @@ const APP: () = {
 
     #[task(capacity = 4)]
     fn foo(x: u32) {
-        println!("foo({})", x);
+        hprintln!("foo({})", x).unwrap();
     }
 
     #[task]
     fn bar() {
-        println!("bar");
+        hprintln!("bar").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
     }

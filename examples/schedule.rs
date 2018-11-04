@@ -7,17 +7,8 @@
 
 extern crate panic_semihosting;
 
+use cortex_m_semihosting::hprintln;
 use rtfm::{app, Instant};
-
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 // NOTE: does NOT work on QEMU!
 #[app(device = lm3s6965)]
@@ -26,7 +17,7 @@ const APP: () = {
     fn init() {
         let now = Instant::now();
 
-        println!("init @ {:?}", now);
+        hprintln!("init @ {:?}", now).unwrap();
 
         // Schedule `foo` to run 8e6 cycles (clock cycles) in the future
         schedule.foo(now + 8_000_000.cycles()).unwrap();
@@ -37,12 +28,12 @@ const APP: () = {
 
     #[task]
     fn foo() {
-        println!("foo  @ {:?}", Instant::now());
+        hprintln!("foo  @ {:?}", Instant::now()).unwrap();
     }
 
     #[task]
     fn bar() {
-        println!("bar  @ {:?}", Instant::now());
+        hprintln!("bar  @ {:?}", Instant::now()).unwrap();
     }
 
     extern "C" {
