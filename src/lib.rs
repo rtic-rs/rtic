@@ -26,16 +26,14 @@
 #![deny(warnings)]
 #![no_std]
 
-use core::{cell::Cell, u8};
 #[cfg(feature = "timer-queue")]
-use core::{cmp::Ordering, ops};
+use core::cmp::Ordering;
+use core::{fmt, ops};
 
 #[cfg(not(feature = "timer-queue"))]
 use cortex_m::peripheral::SYST;
-#[cfg(armv7m)]
-use cortex_m::register::basepri;
 use cortex_m::{
-    interrupt::{self, Nr},
+    interrupt::Nr,
     peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
 };
 pub use cortex_m_rtfm_macros::app;
@@ -253,81 +251,76 @@ impl U32Ext for u32 {
 /// [BASEPRI]) of the current context.
 ///
 /// [BASEPRI]: https://developer.arm.com/products/architecture/cpu-architecture/m-profile/docs/100701/latest/special-purpose-mask-registers
-pub unsafe trait Mutex {
-    /// IMPLEMENTATION DETAIL. DO NOT USE THIS CONSTANT
-    #[doc(hidden)]
-    const CEILING: u8;
-
-    /// IMPLEMENTATION DETAIL. DO NOT USE THIS CONSTANT
-    #[doc(hidden)]
-    const NVIC_PRIO_BITS: u8;
-
+pub trait Mutex {
     /// Data protected by the mutex
-    type Data: Send;
-
-    /// IMPLEMENTATION DETAIL. DO NOT USE THIS METHOD
-    #[doc(hidden)]
-    unsafe fn priority(&self) -> &Cell<u8>;
-
-    /// IMPLEMENTATION DETAIL. DO NOT USE THIS METHOD
-    #[doc(hidden)]
-    fn ptr(&self) -> *mut Self::Data;
+    type T;
 
     /// Creates a critical section and grants temporary access to the protected data
-    #[inline(always)]
-    #[cfg(armv7m)]
     fn lock<R, F>(&mut self, f: F) -> R
     where
-        F: FnOnce(&mut Self::Data) -> R,
-    {
-        unsafe {
-            let current = self.priority().get();
+        F: FnOnce(&mut Self::T) -> R;
+}
 
-            if self.priority().get() < Self::CEILING {
-                if Self::CEILING == (1 << Self::NVIC_PRIO_BITS) {
-                    self.priority().set(u8::MAX);
-                    let r = interrupt::free(|_| f(&mut *self.ptr()));
-                    self.priority().set(current);
-                    r
-                } else {
-                    self.priority().set(Self::CEILING);
-                    basepri::write(logical2hw(Self::CEILING, Self::NVIC_PRIO_BITS));
-                    let r = f(&mut *self.ptr());
-                    basepri::write(logical2hw(current, Self::NVIC_PRIO_BITS));
-                    self.priority().set(current);
-                    r
-                }
-            } else {
-                f(&mut *self.ptr())
-            }
-        }
-    }
+impl<'a, M> Mutex for &'a mut M
+where
+    M: Mutex,
+{
+    type T = M::T;
 
-    /// Creates a critical section and grants temporary access to the protected data
-    #[cfg(not(armv7m))]
     fn lock<R, F>(&mut self, f: F) -> R
     where
-        F: FnOnce(&mut Self::Data) -> R,
+        F: FnOnce(&mut Self::T) -> R,
     {
-        unsafe {
-            let current = self.priority().get();
-
-            if self.priority().get() < Self::CEILING {
-                self.priority().set(u8::MAX);
-                let r = interrupt::free(|_| f(&mut *self.ptr()));
-                self.priority().set(current);
-                r
-            } else {
-                f(&mut *self.ptr())
-            }
-        }
+        (**self).lock(f)
     }
 }
 
-#[cfg(armv7m)]
-#[inline]
-fn logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
-    ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
+/// Newtype over `&'a mut T` that implements the `Mutex` trait
+///
+/// The `Mutex` implementation for this type is a no-op, no critical section is created
+pub struct Exclusive<'a, T>(pub &'a mut T);
+
+impl<'a, T> Mutex for Exclusive<'a, T> {
+    type T = T;
+
+    fn lock<R, F>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut Self::T) -> R,
+    {
+        f(self.0)
+    }
+}
+
+impl<'a, T> fmt::Debug for Exclusive<'a, T>
+where
+    T: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        (**self).fmt(f)
+    }
+}
+
+impl<'a, T> fmt::Display for Exclusive<'a, T>
+where
+    T: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        (**self).fmt(f)
+    }
+}
+
+impl<'a, T> ops::Deref for Exclusive<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        self.0
+    }
+}
+
+impl<'a, T> ops::DerefMut for Exclusive<'a, T> {
+    fn deref_mut(&mut self) -> &mut T {
+        self.0
+    }
 }
 
 /// Sets the given `interrupt` as pending

@@ -7,20 +7,8 @@
 
 extern crate panic_semihosting;
 
-use cortex_m_semihosting::debug;
+use cortex_m_semihosting::{debug, hprintln};
 use rtfm::app;
-
-// NOTE: This convenience macro will appear in all the other examples and
-// will always look the same
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -37,7 +25,7 @@ const APP: () = {
         // Safe access to local `static mut` variable
         let _x: &'static mut u32 = X;
 
-        println!("init");
+        hprintln!("init").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
     }

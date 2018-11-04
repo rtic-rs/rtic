@@ -7,18 +7,8 @@
 
 extern crate panic_semihosting;
 
-use cortex_m_semihosting::debug;
+use cortex_m_semihosting::{debug, hprintln};
 use rtfm::app;
-
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -29,7 +19,7 @@ const APP: () = {
 
     #[task(spawn = [bar, baz])]
     fn foo() {
-        println!("foo");
+        hprintln!("foo").unwrap();
 
         // spawns `bar` onto the task scheduler
         // `foo` and `bar` have the same priority so `bar` will not run until
@@ -43,14 +33,14 @@ const APP: () = {
 
     #[task]
     fn bar() {
-        println!("bar");
+        hprintln!("bar").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
     }
 
     #[task(priority = 2)]
     fn baz() {
-        println!("baz");
+        hprintln!("baz").unwrap();
     }
 
     // Interrupt handlers used to dispatch software tasks

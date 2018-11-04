@@ -7,19 +7,9 @@
 
 extern crate panic_semihosting;
 
-use cortex_m_semihosting::debug;
+use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use rtfm::app;
-
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -47,7 +37,7 @@ const APP: () = {
     fn UART0() {
         *resources.SHARED += 1;
 
-        println!("UART0: SHARED = {}", resources.SHARED);
+        hprintln!("UART0: SHARED = {}", resources.SHARED).unwrap();
     }
 
     // `SHARED` can be access from this context
@@ -55,6 +45,6 @@ const APP: () = {
     fn UART1() {
         *resources.SHARED += 1;
 
-        println!("UART1: SHARED = {}", resources.SHARED);
+        hprintln!("UART1: SHARED = {}", resources.SHARED).unwrap();
     }
 };

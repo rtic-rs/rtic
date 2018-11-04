@@ -7,19 +7,9 @@
 
 extern crate panic_semihosting;
 
-use cortex_m_semihosting::debug;
+use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use rtfm::app;
-
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -33,7 +23,7 @@ const APP: () = {
     // when omitted priority is assumed to be `1`
     #[interrupt(resources = [SHARED])]
     fn GPIOA() {
-        println!("A");
+        hprintln!("A").unwrap();
 
         // the lower priority task requires a critical section to access the data
         resources.SHARED.lock(|shared| {
@@ -43,7 +33,7 @@ const APP: () = {
             // GPIOB will *not* run right now due to the critical section
             rtfm::pend(Interrupt::GPIOB);
 
-            println!("B - SHARED = {}", *shared);
+            hprintln!("B - SHARED = {}", *shared).unwrap();
 
             // GPIOC does not contend for `SHARED` so it's allowed to run now
             rtfm::pend(Interrupt::GPIOC);
@@ -51,7 +41,7 @@ const APP: () = {
 
         // critical section is over: GPIOB can now start
 
-        println!("E");
+        hprintln!("E").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
     }
@@ -61,11 +51,11 @@ const APP: () = {
         // the higher priority task does *not* need a critical section
         *resources.SHARED += 1;
 
-        println!("D - SHARED = {}", *resources.SHARED);
+        hprintln!("D - SHARED = {}", *resources.SHARED).unwrap();
     }
 
     #[interrupt(priority = 3)]
     fn GPIOC() {
-        println!("C");
+        hprintln!("C").unwrap();
     }
 };

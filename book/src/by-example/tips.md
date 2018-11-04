@@ -1,5 +1,25 @@
 # Tips & tricks
 
+## Generics
+
+Resources shared between two or more tasks implement the `Mutex` trait in *all*
+contexts, even on those where a critical section is not required to access the
+data. This lets you easily write generic code that operates on resources and can
+be called from different tasks. Here's one such example:
+
+``` rust
+{{#include ../../../examples/generics.rs}}
+```
+
+``` console
+$ cargo run --example generics
+{{#include ../../../ci/expected/generics.run}}```
+
+This also lets you change the static priorities of tasks without having to
+rewrite code. If you consistently use `lock`s to access the data behind shared
+resources then your code will continue to compile when you change the priority
+of tasks.
+
 ## Running tasks from RAM
 
 The main goal of moving the specification of RTFM applications to attributes in

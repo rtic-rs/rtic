@@ -7,18 +7,8 @@
 
 extern crate panic_semihosting;
 
-use cortex_m_semihosting::debug;
+use cortex_m_semihosting::{debug, hprintln};
 use rtfm::app;
-
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -31,7 +21,7 @@ const APP: () = {
     fn foo() {
         static mut COUNT: u32 = 0;
 
-        println!("foo");
+        hprintln!("foo").unwrap();
 
         spawn.bar(*COUNT).unwrap();
         *COUNT += 1;
@@ -39,14 +29,14 @@ const APP: () = {
 
     #[task(spawn = [baz])]
     fn bar(x: u32) {
-        println!("bar({})", x);
+        hprintln!("bar({})", x).unwrap();
 
         spawn.baz(x + 1, x + 2).unwrap();
     }
 
     #[task(spawn = [foo])]
     fn baz(x: u32, y: u32) {
-        println!("baz({}, {})", x, y);
+        hprintln!("baz({}, {})", x, y).unwrap();
 
         if x + y > 4 {
             debug::exit(debug::EXIT_SUCCESS);

@@ -676,6 +676,7 @@ fn prelude(
                 }
             } else {
                 let ownership = &analysis.ownerships[name];
+                let mut exclusive = false;
 
                 if ownership.needs_lock(logical_prio) {
                     may_call_lock = true;
@@ -710,28 +711,61 @@ fn prelude(
                             exprs.push(quote!(#name: <#name as owned_singleton::Singleton>::new()));
                         } else {
                             needs_unsafe = true;
-                            defs.push(quote!(pub #name: &'a mut #name));
-                            exprs.push(
-                                quote!(#name: &mut <#name as owned_singleton::Singleton>::new()),
-                            );
+                            if ownership.is_owned() || mut_.is_none() {
+                                defs.push(quote!(pub #name: &'a #mut_ #name));
+                                let alias = mk_ident();
+                                items.push(quote!(
+                                    let #mut_ #alias = unsafe {
+                                        <#name as owned_singleton::Singleton>::new()
+                                    };
+                                ));
+                                exprs.push(quote!(#name: &#mut_ #alias));
+                            } else {
+                                may_call_lock = true;
+                                defs.push(quote!(pub #name: rtfm::Exclusive<'a, #name>));
+                                let alias = mk_ident();
+                                items.push(quote!(
+                                    let #mut_ #alias = unsafe {
+                                        <#name as owned_singleton::Singleton>::new()
+                                    };
+                                ));
+                                exprs.push(quote!(
+                                    #name: rtfm::Exclusive(&mut #alias)
+                                ));
+                            }
                         }
                         continue;
                     } else {
-                        defs.push(quote!(pub #name: &#lt #mut_ #ty));
+                        if ownership.is_owned() || mut_.is_none() {
+                            defs.push(quote!(pub #name: &#lt #mut_ #ty));
+                        } else {
+                            exclusive = true;
+                            may_call_lock = true;
+                            defs.push(quote!(pub #name: rtfm::Exclusive<#lt, #ty>));
+                        }
                     }
                 }
 
                 let alias = &ctxt.statics[name];
                 needs_unsafe = true;
                 if initialized {
-                    exprs.push(quote!(#name: &#mut_ #alias));
+                    if exclusive {
+                        exprs.push(quote!(#name: rtfm::Exclusive(&mut #alias)));
+                    } else {
+                        exprs.push(quote!(#name: &#mut_ #alias));
+                    }
                 } else {
                     let method = if mut_.is_some() {
                         quote!(get_mut)
                     } else {
                         quote!(get_ref)
                     };
-                    exprs.push(quote!(#name: #alias.#method() ));
+
+                    if exclusive {
+                        exprs.push(quote!(#name: rtfm::Exclusive(#alias.#method()) ));
+                    } else {
+                        exprs.push(quote!(#name: #alias.#method() ));
+                    }
                 }
             }
         }
@@ -1655,19 +1689,23 @@ fn mk_resource(
     };
 
     items.push(quote!(
-        unsafe impl<'a> rtfm::Mutex for #path<'a> {
-            const CEILING: u8 = #ceiling;
-            const NVIC_PRIO_BITS: u8 = #device::NVIC_PRIO_BITS;
-            type Data = #ty;
+        impl<'a> rtfm::Mutex for #path<'a> {
+            type T = #ty;
 
-            #[inline(always)]
-            unsafe fn priority(&self) -> &core::cell::Cell<u8> {
-                &self.#priority
-            }
-
-            #[inline(always)]
-            fn ptr(&self) -> *mut Self::Data {
-                unsafe { #ptr }
+            #[inline]
+            fn lock<R, F>(&mut self, f: F) -> R
+            where
+                F: FnOnce(&mut Self::T) -> R,
+            {
+                unsafe {
+                    rtfm::export::claim(
+                        #ptr,
+                        &self.#priority,
+                        #ceiling,
+                        #device::NVIC_PRIO_BITS,
+                        f,
+                    )
+                }
             }
         }
     ));

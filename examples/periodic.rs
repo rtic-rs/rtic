@@ -7,17 +7,8 @@
 
 extern crate panic_semihosting;
 
+use cortex_m_semihosting::hprintln;
 use rtfm::{app, Instant};
-
-macro_rules! println {
-    ($($tt:tt)*) => {
-        if let Ok(mut stdout) = cortex_m_semihosting::hio::hstdout() {
-            use core::fmt::Write;
-
-            writeln!(stdout, $($tt)*).ok();
-        }
-    };
-}
 
 const PERIOD: u32 = 8_000_000;
 
@@ -32,7 +23,7 @@ const APP: () = {
     #[task(schedule = [foo])]
     fn foo() {
         let now = Instant::now();
-        println!("foo(scheduled = {:?}, now = {:?})", scheduled, now);
+        hprintln!("foo(scheduled = {:?}, now = {:?})", scheduled, now).unwrap();
 
         schedule.foo(scheduled + PERIOD.cycles()).unwrap();
     }
