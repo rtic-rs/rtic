@@ -7,7 +7,7 @@ extern crate owned_singleton;
 extern crate panic_halt;
 extern crate rtfm;
 
-use rtfm::app;
+use rtfm::{app, Exclusive};
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -27,7 +27,7 @@ const APP: () = {
     #[Singleton]
     static mut S1: u32 = 0;
     #[Singleton]
-    static mut S2: u32 = 0;
+    static S2: u32 = 0;
 
     #[init(resources = [O1, O2, O3, O4, O5, O6, S1, S2])]
     fn init() {
@@ -55,13 +55,13 @@ const APP: () = {
         let _: &mut O3 = resources.O3;
         let _: &O6 = resources.O6;
 
-        let _: &mut S1 = resources.S1;
+        let _: Exclusive<S1> = resources.S1;
         let _: &S2 = resources.S2;
     }
 
     #[interrupt(resources = [S1, S2])]
     fn UART1() {
-        let _: &mut S1 = resources.S1;
+        let _: Exclusive<S1> = resources.S1;
         let _: &S2 = resources.S2;
     }
 };

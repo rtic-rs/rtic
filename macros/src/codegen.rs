@@ -711,18 +711,26 @@ fn prelude(
                             exprs.push(quote!(#name: <#name as owned_singleton::Singleton>::new()));
                         } else {
                             needs_unsafe = true;
-                            if ownership.is_owned() {
-                                defs.push(quote!(pub #name: &'a mut #name));
-                                exprs.push(quote!(
-                                    #name: &mut <#name as owned_singleton::Singleton>::new()
+                            if ownership.is_owned() || mut_.is_none() {
+                                defs.push(quote!(pub #name: &'a #mut_ #name));
+                                let alias = mk_ident();
+                                items.push(quote!(
+                                    let #mut_ #alias = unsafe {
+                                        <#name as owned_singleton::Singleton>::new()
+                                    };
                                 ));
+                                exprs.push(quote!(#name: &#mut_ #alias));
                             } else {
                                 may_call_lock = true;
                                 defs.push(quote!(pub #name: rtfm::Exclusive<'a, #name>));
+                                let alias = mk_ident();
+                                items.push(quote!(
+                                    let #mut_ #alias = unsafe {
+                                        <#name as owned_singleton::Singleton>::new()
+                                    };
+                                ));
                                 exprs.push(quote!(
-                                    #name: rtfm::Exclusive(
-                                        &mut <#name as owned_singleton::Singleton>::new()
-                                    )
+                                    #name: rtfm::Exclusive(&mut #alias)
                                 ));
                             }
                         }

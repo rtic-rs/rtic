@@ -8,7 +8,7 @@ extern crate lm3s6965;
 extern crate panic_halt;
 extern crate rtfm;
 
-use rtfm::app;
+use rtfm::{app, Exclusive};
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -59,11 +59,11 @@ const APP: () = {
         // owned by interrupt == `&mut`
         let _: &mut u32 = resources.O3;
 
-        // no `Mutex` when access from highest priority task
-        let _: &mut u32 = resources.S1;
+        // no `Mutex` proxy when access from highest priority task
+        let _: Exclusive<u32> = resources.S1;
 
-        // no `Mutex` when co-owned by cooperative (same priority) tasks
-        let _: &mut u32 = resources.S2;
+        // no `Mutex` proxy when co-owned by cooperative (same priority) tasks
+        let _: Exclusive<u32> = resources.S2;
 
         // `&` if read-only
         let _: &u32 = resources.S3;
@@ -74,7 +74,7 @@ const APP: () = {
         // owned by interrupt == `&` if read-only
         let _: &u32 = resources.O5;
 
-        // no `Mutex` when co-owned by cooperative (same priority) tasks
-        let _: &mut u32 = resources.S2;
+        // no `Mutex` proxy when co-owned by cooperative (same priority) tasks
+        let _: Exclusive<u32> = resources.S2;
     }
 };
