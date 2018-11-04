@@ -57,6 +57,7 @@ main() {
                 not-send
                 not-sync
 
+                generics
                 ramfunc
             )
 

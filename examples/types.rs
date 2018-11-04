@@ -8,7 +8,7 @@
 extern crate panic_semihosting;
 
 use cortex_m_semihosting::debug;
-use rtfm::{app, Instant};
+use rtfm::{app, Exclusive, Instant};
 
 #[app(device = lm3s6965)]
 const APP: () = {
@@ -43,6 +43,7 @@ const APP: () = {
     #[task(priority = 2, resources = [SHARED], schedule = [foo], spawn = [foo])]
     fn foo() {
         let _: Instant = scheduled;
+        let _: Exclusive<u32> = resources.SHARED;
         let _: foo::Resources = resources;
         let _: foo::Schedule = schedule;
         let _: foo::Spawn = spawn;

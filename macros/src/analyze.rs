@@ -30,18 +30,26 @@ pub struct Analysis {
 pub enum Ownership {
     // NOTE priorities and ceilings are "logical" (0 = lowest priority, 255 = highest priority)
     Owned { priority: u8 },
+    CoOwned { priority: u8 },
     Shared { ceiling: u8 },
 }
 
 impl Ownership {
     pub fn needs_lock(&self, priority: u8) -> bool {
         match *self {
-            Ownership::Owned { .. } => false,
+            Ownership::Owned { .. } | Ownership::CoOwned { .. } => false,
             Ownership::Shared { ceiling } => {
                 debug_assert!(ceiling >= priority);
 
                 priority < ceiling
             }
+        }
+    }
+
+    pub fn is_owned(&self) -> bool {
+        match *self {
+            Ownership::Owned { .. } => true,
+            _ => false,
         }
     }
 }
@@ -72,18 +80,24 @@ pub fn app(app: &App) -> Analysis {
     for (priority, res) in app.resource_accesses() {
         if let Some(ownership) = ownerships.get_mut(res) {
             match *ownership {
-                Ownership::Owned { priority: ceiling } | Ownership::Shared { ceiling } => {
-                    if priority != ceiling {
-                        *ownership = Ownership::Shared {
-                            ceiling: cmp::max(ceiling, priority),
-                        };
+                Ownership::Owned { priority: ceiling }
+                | Ownership::CoOwned { priority: ceiling }
+                | Ownership::Shared { ceiling }
+                    if priority != ceiling =>
+                {
+                    *ownership = Ownership::Shared {
+                        ceiling: cmp::max(ceiling, priority),
+                    };
 
-                        let res = &app.resources[res];
-                        if res.mutability.is_none() {
-                            assert_sync.insert(res.ty.clone());
-                        }
+                    let res = &app.resources[res];
+                    if res.mutability.is_none() {
+                        assert_sync.insert(res.ty.clone());
                     }
                 }
+                Ownership::Owned { priority: ceiling } if ceiling == priority => {
+                    *ownership = Ownership::CoOwned { priority };
+                }
+                _ => {}
             }
 
             continue;

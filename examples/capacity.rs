@@ -23,7 +23,7 @@ macro_rules! println {
 
 #[app(device = lm3s6965)]
 const APP: () = {
-    #[init(spawn = [foo])]
+    #[init]
     fn init() {
         rtfm::pend(Interrupt::UART0);
     }

@@ -91,7 +91,7 @@ where
 #[inline(always)]
 pub fn isr<TQ, T, N, F>(mut tq: TQ, mut f: F)
 where
-    TQ: Mutex<Data = TimerQueue<T, N>>,
+    TQ: Mutex<T = TimerQueue<T, N>>,
     T: Copy + Send,
     N: ArrayLength<NotReady<T>>,
     F: FnMut(T, u8),
