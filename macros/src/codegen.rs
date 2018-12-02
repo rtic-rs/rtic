@@ -1,3 +1,5 @@
+#![deny(warnings)]
+
 use proc_macro::TokenStream;
 use std::{
     collections::HashMap,
@@ -58,23 +60,23 @@ impl Default for Context {
     fn default() -> Self {
         Context {
             #[cfg(feature = "timer-queue")]
-            baseline: mk_ident(),
+            baseline: mk_ident(None),
             enums: HashMap::new(),
             free_queues: Aliases::new(),
-            idle: mk_ident(),
-            init: mk_ident(),
+            idle: mk_ident(Some("idle")),
+            init: mk_ident(Some("init")),
             inputs: Aliases::new(),
-            priority: mk_ident(),
+            priority: mk_ident(None),
             ready_queues: HashMap::new(),
             statics: Aliases::new(),
             resources: HashMap::new(),
             #[cfg(feature = "timer-queue")]
             scheduleds: Aliases::new(),
             spawn_fn: Aliases::new(),
-            schedule_enum: mk_ident(),
+            schedule_enum: mk_ident(None),
             schedule_fn: Aliases::new(),
             tasks: Aliases::new(),
-            timer_queue: mk_ident(),
+            timer_queue: mk_ident(None),
         }
     }
 }
@@ -216,7 +218,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
                 pub static #mut_ #name: #ty = #expr;
             ));
 
-            let alias = mk_ident();
+            let alias = mk_ident(None);
             if let Some(Ownership::Shared { ceiling }) = analysis.ownerships.get(name) {
                 items.push(mk_resource(
                     ctxt,
@@ -231,7 +233,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
 
             ctxt.statics.insert(name.clone(), alias);
         } else {
-            let alias = mk_ident();
+            let alias = mk_ident(None);
             let symbol = format!("{}::{}", name, alias);
 
             items.push(
@@ -239,14 +241,14 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
                     .map(|expr| {
                         quote!(
                             #(#attrs)*
-                            #[export_name = #symbol]
+                            #[doc = #symbol]
                             static mut #alias: #ty = #expr;
                         )
                     })
                     .unwrap_or_else(|| {
                         quote!(
                             #(#attrs)*
-                            #[export_name = #symbol]
+                            #[doc = #symbol]
                             static mut #alias: rtfm::export::MaybeUninit<#ty> =
                                 rtfm::export::MaybeUninit::uninitialized();
                         )
@@ -282,7 +284,8 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
             /// Resource proxies
             pub mod resources {
                 #(#module)*
-            }));
+            }
+        ));
     }
 
     quote!(#(#items)*)
@@ -356,12 +359,10 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
     let unsafety = &app.init.unsafety;
     let device = &app.args.device;
     let init = &ctxt.init;
-    let name = format!("init::{}", init);
     quote!(
         #module
 
         #(#attrs)*
-        #[export_name = #name]
         #unsafety fn #init(mut core: rtfm::Peripherals) {
             #(#locals)*
 
@@ -713,7 +714,7 @@ fn prelude(
                             needs_unsafe = true;
                             if ownership.is_owned() || mut_.is_none() {
                                 defs.push(quote!(pub #name: &'a #mut_ #name));
-                                let alias = mk_ident();
+                                let alias = mk_ident(None);
                                 items.push(quote!(
                                     let #mut_ #alias = unsafe {
                                         <#name as owned_singleton::Singleton>::new()
@@ -723,7 +724,7 @@ fn prelude(
                             } else {
                                 may_call_lock = true;
                                 defs.push(quote!(pub #name: rtfm::Exclusive<'a, #name>));
-                                let alias = mk_ident();
+                                let alias = mk_ident(None);
                                 items.push(quote!(
                                     let #mut_ #alias = unsafe {
                                         <#name as owned_singleton::Singleton>::new()
@@ -770,7 +771,7 @@ fn prelude(
             }
         }
 
-        let alias = mk_ident();
+        let alias = mk_ident(None);
         let unsafety = if needs_unsafe {
             Some(quote!(unsafe))
         } else {
@@ -807,7 +808,7 @@ fn prelude(
                 continue;
             }
 
-            ctxt.spawn_fn.insert(task.clone(), mk_ident());
+            ctxt.spawn_fn.insert(task.clone(), mk_ident(None));
         }
 
         if kind.is_idle() {
@@ -839,7 +840,7 @@ fn prelude(
                 continue;
             }
 
-            ctxt.schedule_fn.insert(task.clone(), mk_ident());
+            ctxt.schedule_fn.insert(task.clone(), mk_ident(None));
         }
 
         items.push(quote!(
@@ -894,20 +895,19 @@ fn idle(
         let unsafety = &idle.unsafety;
         let idle = &ctxt.idle;
 
-        let name = format!("idle::{}", idle);
         (
             quote!(
                 #module
 
                 #(#attrs)*
-                #[export_name = #name]
                 #unsafety fn #idle() -> ! {
                     #(#locals)*
 
                     #prelude
 
                     #(#stmts)*
-                }),
+                }
+            ),
             quote!(#idle()),
         )
     } else {
@@ -959,9 +959,9 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
             let start_let = match () {
                 #[cfg(feature = "timer-queue")]
                 () => quote!(
-                        #[allow(unused_variables)]
-                        let start = #baseline;
-                    ),
+                    #[allow(unused_variables)]
+                    let start = #baseline;
+                ),
                 #[cfg(not(feature = "timer-queue"))]
                 () => quote!(),
             };
@@ -985,7 +985,8 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
                     rtfm::export::run(move || {
                         #(#stmts)*
                     })
-                })
+                }
+            )
         })
         .collect()
 }
@@ -1057,7 +1058,8 @@ fn interrupts(
                 rtfm::export::run(move || {
                     #(#stmts)*
                 })
-            }));
+            }
+        ));
     }
 
     (quote!(#(#root)*), quote!(#(#scoped)*))
@@ -1067,10 +1069,10 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
     let mut items = vec![];
     for (name, task) in &app.tasks {
         #[cfg(feature = "timer-queue")]
-        let scheduleds_alias = mk_ident();
-        let free_alias = mk_ident();
-        let inputs_alias = mk_ident();
-        let task_alias = mk_ident();
+        let scheduleds_alias = mk_ident(None);
+        let free_alias = mk_ident(None);
+        let inputs_alias = mk_ident(None);
+        let task_alias = mk_ident(Some(&name.to_string()));
 
         let attrs = &task.attrs;
         let inputs = &task.inputs;
@@ -1109,7 +1111,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
                 let scheduleds_symbol = format!("{}::SCHEDULED_TIMES::{}", name, scheduleds_alias);
 
                 quote!(
-                    #[export_name = #scheduleds_symbol]
+                    #[doc = #scheduleds_symbol]
                     static mut #scheduleds_alias:
                     rtfm::export::MaybeUninit<[rtfm::Instant; #capacity_lit]> =
                         rtfm::export::MaybeUninit::uninitialized();
@@ -1138,28 +1140,26 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
             #[cfg(not(feature = "timer-queue"))]
             () => quote!(),
         };
-        let task_symbol = format!("{}::{}", name, task_alias);
         let inputs_symbol = format!("{}::INPUTS::{}", name, inputs_alias);
         let free_symbol = format!("{}::FREE_QUEUE::{}", name, free_alias);
         let unsafety = &task.unsafety;
         items.push(quote!(
             // FIXME(MaybeUninit) MaybeUninit won't be necessary when core::mem::MaybeUninit
             // stabilizes because heapless constructors will work in const context
-            #[export_name = #free_symbol]
+            #[doc = #free_symbol]
             static mut #free_alias: rtfm::export::MaybeUninit<
                     rtfm::export::FreeQueue<#capacity_ty>
                 > = rtfm::export::MaybeUninit::uninitialized();
 
             #resource
 
-            #[export_name = #inputs_symbol]
+            #[doc = #inputs_symbol]
             static mut #inputs_alias: rtfm::export::MaybeUninit<[#ty; #capacity_lit]> =
                 rtfm::export::MaybeUninit::uninitialized();
 
             #scheduleds_static
 
             #(#attrs)*
-            #[export_name = #task_symbol]
             #unsafety fn #task_alias(#baseline_arg #(#inputs,)*) {
                 #(#locals)*
 
@@ -1198,8 +1198,8 @@ fn dispatchers(
     let mut dispatchers = vec![];
 
     for (level, dispatcher) in &analysis.dispatchers {
-        let ready_alias = mk_ident();
-        let enum_alias = mk_ident();
+        let ready_alias = mk_ident(None);
+        let enum_alias = mk_ident(None);
         let tasks = &dispatcher.tasks;
         let capacity = mk_typenum_capacity(dispatcher.capacity, true);
 
@@ -1221,7 +1221,7 @@ fn dispatchers(
             #[allow(non_camel_case_types)]
             enum #enum_alias { #(#tasks,)* }
 
-            #[export_name = #symbol]
+            #[doc = #symbol]
             static mut #ready_alias: #e::MaybeUninit<#ty> = #e::MaybeUninit::uninitialized();
 
             #resource
@@ -1516,7 +1516,7 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
     let tq = &ctxt.timer_queue;
     let symbol = format!("TIMER_QUEUE::{}", tq);
     items.push(quote!(
-        #[export_name = #symbol]
+        #[doc = #symbol]
         static mut #tq:
             rtfm::export::MaybeUninit<rtfm::export::TimerQueue<#enum_, #cap>> =
                 rtfm::export::MaybeUninit::uninitialized();
@@ -1731,7 +1731,7 @@ fn mk_typenum_capacity(capacity: u8, power_of_two: bool) -> proc_macro2::TokenSt
     quote!(rtfm::export::consts::#ident)
 }
 
-fn mk_ident() -> Ident {
+fn mk_ident(name: Option<&str>) -> Ident {
     static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
 
     let elapsed = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
@@ -1754,19 +1754,25 @@ fn mk_ident() -> Ident {
         *v = ((count >> (i * 8)) & 0xFF) as u8
     }
 
+    let n;
+    let mut s = if let Some(name) = name {
+        n = 4;
+        format!("{}_", name)
+    } else {
+        n = 16;
+        String::new()
+    };
+
     let mut rng = rand::rngs::SmallRng::from_seed(seed);
-    Ident::new(
-        &(0..16)
-            .map(|i| {
-                if i == 0 || rng.gen() {
-                    ('a' as u8 + rng.gen::<u8>() % 25) as char
-                } else {
-                    ('0' as u8 + rng.gen::<u8>() % 10) as char
-                }
-            })
-            .collect::<String>(),
-        Span::call_site(),
-    )
+    for i in 0..n {
+        if i == 0 || rng.gen() {
+            s.push(('a' as u8 + rng.gen::<u8>() % 25) as char)
+        } else {
+            s.push(('0' as u8 + rng.gen::<u8>() % 10) as char)
+        }
+    }
+
+    Ident::new(&s, Span::call_site())
 }
 
 // `once = true` means that these locals will be called from a function that will run *once*
