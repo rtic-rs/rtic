@@ -35,7 +35,7 @@ required-features = ["timer-queue"]
 
 [dependencies]
 cortex-m = "0.5.8"
-cortex-m-rt = "0.6.5"
+cortex-m-rt = "0.6.7"
 cortex-m-rtfm-macros = { path = "macros", version = "0.4.0-beta.3" }
 heapless = "0.4.0"
 owned-singleton = "0.1.0"
