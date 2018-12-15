@@ -24,16 +24,13 @@ struct Context {
     // Alias
     #[cfg(feature = "timer-queue")]
     baseline: Ident,
-    // Dispatcher -> Alias (`enum`)
-    enums: HashMap<u8, Ident>,
+    dispatchers: HashMap<u8, Dispatcher>,
     // Alias (`fn`)
     idle: Ident,
     // Alias (`fn`)
     init: Ident,
     // Alias
     priority: Ident,
-    // Dispatcher -> Alias (`static` / resource)
-    ready_queues: HashMap<u8, Ident>,
     // For non-singletons this maps the resource name to its `static mut` variable name
     statics: Aliases,
     /// Task -> Alias (`struct`)
@@ -45,6 +42,11 @@ struct Context {
     tasks: HashMap<Ident, Task>,
     // Alias (`struct` / `static mut`)
     timer_queue: Ident,
+}
+
+struct Dispatcher {
+    enum_: Ident,
+    ready_queue: Ident,
 }
 
 struct Task {
@@ -62,11 +64,10 @@ impl Default for Context {
         Context {
             #[cfg(feature = "timer-queue")]
             baseline: mk_ident(None),
-            enums: HashMap::new(),
+            dispatchers: HashMap::new(),
             idle: mk_ident(Some("idle")),
             init: mk_ident(Some("init")),
             priority: mk_ident(None),
-            ready_queues: HashMap::new(),
             statics: Aliases::new(),
             resources: HashMap::new(),
             schedule_enum: mk_ident(None),
@@ -1289,8 +1290,13 @@ fn dispatchers(
             }
         ));
 
-        ctxt.ready_queues.insert(*level, ready_alias);
-        ctxt.enums.insert(*level, enum_alias);
+        ctxt.dispatchers.insert(
+            *level,
+            Dispatcher {
+                ready_queue: ready_alias,
+                enum_: enum_alias,
+            },
+        );
     }
 
     (quote!(#(#data)*), quote!(#(#dispatchers)*))
@@ -1309,8 +1315,9 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
         let task_ = &app.tasks[name];
         let free = &task.free_queue;
         let level = task_.args.priority;
-        let ready = &ctxt.ready_queues[&level];
-        let enum_ = &ctxt.enums[&level];
+        let dispatcher = &ctxt.dispatchers[&level];
+        let ready = &dispatcher.ready_queue;
+        let enum_ = &dispatcher.enum_;
         let dispatcher = &analysis.dispatchers[&level].interrupt;
         let inputs = &task.inputs;
         let args = &task_.inputs;
@@ -1546,8 +1553,9 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
         .iter()
         .map(|task| {
             let level = app.tasks[task].args.priority;
-            let tenum = &ctxt.enums[&level];
-            let ready = &ctxt.ready_queues[&level];
+            let dispatcher_ = &ctxt.dispatchers[&level];
+            let tenum = &dispatcher_.enum_;
+            let ready = &dispatcher_.ready_queue;
             let dispatcher = &analysis.dispatchers[&level].interrupt;
 
             quote!(
@@ -1604,8 +1612,9 @@ fn pre_init(ctxt: &Context, analysis: &Analysis) -> proc_macro2::TokenStream {
     }
 
     // these are `MaybeUninit` `ReadyQueue`s
-    for queue in ctxt.ready_queues.values() {
-        exprs.push(quote!(#queue.set(rtfm::export::ReadyQueue::new());))
+    for dispatcher in ctxt.dispatchers.values() {
+        let rq = &dispatcher.ready_queue;
+        exprs.push(quote!(#rq.set(rtfm::export::ReadyQueue::new());))
     }
 
     // these are `MaybeUninit` `FreeQueue`s
