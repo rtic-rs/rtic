@@ -142,7 +142,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
 
     let timer_queue = timer_queue(&ctxt, app, analysis);
 
-    let pre_init = pre_init(&ctxt, analysis);
+    let pre_init = pre_init(&ctxt, &app, analysis);
 
     let assertions = assertions(app, analysis);
 
@@ -385,16 +385,6 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
     // the device into compile errors
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
-    for (name, interrupt) in &app.interrupts {
-        let priority = interrupt.args.priority;
-        exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name)));
-        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
-        exprs.push(quote!(p.NVIC.set_priority(
-            #device::Interrupt::#name,
-            ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
-        )));
-    }
-
     for (name, exception) in &app.exceptions {
         let priority = exception.args.priority;
         exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
@@ -409,16 +399,6 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
         exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
         exprs.push(quote!(p.SCB.set_priority(
             rtfm::export::SystemHandler::SysTick,
-            ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
-        )));
-    }
-
-    for (priority, dispatcher) in &analysis.dispatchers {
-        let name = &dispatcher.interrupt;
-        exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name)));
-        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
-        exprs.push(quote!(p.NVIC.set_priority(
-            #device::Interrupt::#name,
             ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
         )));
     }
@@ -1592,7 +1572,7 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
     quote!(#(#items)*)
 }
 
-fn pre_init(ctxt: &Context, analysis: &Analysis) -> proc_macro2::TokenStream {
+fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
     let mut exprs = vec![];
 
     // FIXME(MaybeUninit) Because we are using a fake MaybeUninit we need to set the Option tag to
@@ -1640,6 +1620,30 @@ fn pre_init(ctxt: &Context, analysis: &Analysis) -> proc_macro2::TokenStream {
                 #fq.get_mut().enqueue_unchecked(i);
             }
         ))
+    }
+
+    // TODO turn the assertions that check that the priority is not larger than what's supported by
+    // the device into compile errors
+    let device = &app.args.device;
+    let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
+    for (name, interrupt) in &app.interrupts {
+        let priority = interrupt.args.priority;
+        exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
+        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits));));
+        exprs.push(quote!(p.NVIC.set_priority(
+            #device::Interrupt::#name,
+            ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
+        );));
+    }
+
+    for (priority, dispatcher) in &analysis.dispatchers {
+        let name = &dispatcher.interrupt;
+        exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
+        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits));));
+        exprs.push(quote!(p.NVIC.set_priority(
+            #device::Interrupt::#name,
+            ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
+        );));
     }
 
     // Set the cycle count to 0 and disable it while `init` executes
