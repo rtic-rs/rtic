@@ -1003,6 +1003,9 @@ fn parse_args(input: ParseStream, accept_capacity: bool) -> parse::Result<TaskAr
 }
 
 pub struct Static {
+    /// `#[cfg]` attributes
+    pub cfgs: Vec<Attribute>,
+    /// Attributes that are not `#[cfg]`
     pub attrs: Vec<Attribute>,
     pub ty: Box<Type>,
     pub expr: Box<Expr>,
@@ -1020,10 +1023,13 @@ impl Static {
                 ));
             }
 
+            let (cfgs, attrs) = extract_cfgs(item.attrs);
+
             statics.insert(
                 item.ident,
                 Static {
-                    attrs: item.attrs,
+                    cfgs,
+                    attrs,
                     ty: item.ty,
                     expr: item.expr,
                 },
@@ -1148,6 +1154,21 @@ fn eq(attr: &Attribute, name: &str) -> bool {
         let segment = pair.value();
         segment.arguments == PathArguments::None && segment.ident.to_string() == name
     }
+}
+
+fn extract_cfgs(attrs: Vec<Attribute>) -> (Vec<Attribute>, Vec<Attribute>) {
+    let mut cfgs = vec![];
+    let mut not_cfgs = vec![];
+
+    for attr in attrs {
+        if eq(&attr, "cfg") {
+            cfgs.push(attr);
+        } else {
+            not_cfgs.push(attr);
+        }
+    }
+
+    (cfgs, not_cfgs)
 }
 
 /// Extracts `static mut` vars from the beginning of the given statements
