@@ -1808,14 +1808,17 @@ fn mk_locals(locals: &HashMap<Ident, Static>, once: bool) -> proc_macro2::TokenS
         .iter()
         .map(|(name, static_)| {
             let attrs = &static_.attrs;
+            let cfgs = &static_.cfgs;
             let expr = &static_.expr;
             let ident = name;
             let ty = &static_.ty;
 
             quote!(
                 #[allow(non_snake_case)]
+                #(#cfgs)*
                 let #ident: &#lt mut #ty = {
                     #(#attrs)*
+                    #(#cfgs)*
                     static mut #ident: #ty = #expr;
 
                     unsafe { &mut #ident }
