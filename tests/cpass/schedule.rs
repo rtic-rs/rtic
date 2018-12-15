@@ -1,4 +1,3 @@
-#![feature(extern_crate_item_prelude)] // ???
 #![no_main]
 #![no_std]
 

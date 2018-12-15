@@ -24,36 +24,39 @@ struct Context {
     // Alias
     #[cfg(feature = "timer-queue")]
     baseline: Ident,
-    // Dispatcher -> Alias (`enum`)
-    enums: HashMap<u8, Ident>,
-    // Task -> Alias (`static` / resource)
-    free_queues: Aliases,
+    dispatchers: HashMap<u8, Dispatcher>,
     // Alias (`fn`)
     idle: Ident,
     // Alias (`fn`)
     init: Ident,
-    // Task -> Alias (`static`)
-    inputs: Aliases,
     // Alias
     priority: Ident,
-    // Dispatcher -> Alias (`static` / resource)
-    ready_queues: HashMap<u8, Ident>,
     // For non-singletons this maps the resource name to its `static mut` variable name
     statics: Aliases,
     /// Task -> Alias (`struct`)
     resources: HashMap<Kind, Resources>,
-    // Task -> Alias (`static`)
-    #[cfg(feature = "timer-queue")]
-    scheduleds: Aliases,
-    // Task -> Alias (`fn`)
-    spawn_fn: Aliases,
     // Alias (`enum`)
     schedule_enum: Ident,
     // Task -> Alias (`fn`)
     schedule_fn: Aliases,
-    tasks: Aliases,
+    tasks: HashMap<Ident, Task>,
     // Alias (`struct` / `static mut`)
     timer_queue: Ident,
+}
+
+struct Dispatcher {
+    enum_: Ident,
+    ready_queue: Ident,
+}
+
+struct Task {
+    alias: Ident,
+    free_queue: Ident,
+    inputs: Ident,
+    spawn_fn: Ident,
+
+    #[cfg(feature = "timer-queue")]
+    scheduleds: Ident,
 }
 
 impl Default for Context {
@@ -61,21 +64,15 @@ impl Default for Context {
         Context {
             #[cfg(feature = "timer-queue")]
             baseline: mk_ident(None),
-            enums: HashMap::new(),
-            free_queues: Aliases::new(),
+            dispatchers: HashMap::new(),
             idle: mk_ident(Some("idle")),
             init: mk_ident(Some("init")),
-            inputs: Aliases::new(),
             priority: mk_ident(None),
-            ready_queues: HashMap::new(),
             statics: Aliases::new(),
             resources: HashMap::new(),
-            #[cfg(feature = "timer-queue")]
-            scheduleds: Aliases::new(),
-            spawn_fn: Aliases::new(),
             schedule_enum: mk_ident(None),
             schedule_fn: Aliases::new(),
-            tasks: Aliases::new(),
+            tasks: HashMap::new(),
             timer_queue: mk_ident(None),
         }
     }
@@ -145,7 +142,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
 
     let timer_queue = timer_queue(&ctxt, app, analysis);
 
-    let pre_init = pre_init(&ctxt, analysis);
+    let pre_init = pre_init(&ctxt, &app, analysis);
 
     let assertions = assertions(app, analysis);
 
@@ -388,16 +385,6 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
     // the device into compile errors
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
-    for (name, interrupt) in &app.interrupts {
-        let priority = interrupt.args.priority;
-        exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name)));
-        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
-        exprs.push(quote!(p.NVIC.set_priority(
-            #device::Interrupt::#name,
-            ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
-        )));
-    }
-
     for (name, exception) in &app.exceptions {
         let priority = exception.args.priority;
         exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
@@ -412,16 +399,6 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
         exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
         exprs.push(quote!(p.SCB.set_priority(
             rtfm::export::SystemHandler::SysTick,
-            ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
-        )));
-    }
-
-    for (priority, dispatcher) in &analysis.dispatchers {
-        let name = &dispatcher.interrupt;
-        exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name)));
-        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
-        exprs.push(quote!(p.NVIC.set_priority(
-            #device::Interrupt::#name,
             ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
         )));
     }
@@ -802,15 +779,6 @@ fn prelude(
     }
 
     if !spawn.is_empty() {
-        // Populate `spawn_fn`
-        for task in spawn {
-            if ctxt.spawn_fn.contains_key(task) {
-                continue;
-            }
-
-            ctxt.spawn_fn.insert(task.clone(), mk_ident(None));
-        }
-
         if kind.is_idle() {
             items.push(quote!(
                 #[allow(unused_variables)]
@@ -1067,6 +1035,8 @@ fn interrupts(
 
 fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
     let mut items = vec![];
+
+    // first pass to generate buffers (statics and resources) and spawn aliases
     for (name, task) in &app.tasks {
         #[cfg(feature = "timer-queue")]
         let scheduleds_alias = mk_ident(None);
@@ -1074,21 +1044,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
         let inputs_alias = mk_ident(None);
         let task_alias = mk_ident(Some(&name.to_string()));
 
-        let attrs = &task.attrs;
         let inputs = &task.inputs;
-        let locals = mk_locals(&task.statics, false);
-        let stmts = &task.stmts;
-
-        let prelude = prelude(
-            ctxt,
-            Kind::Task(name.clone()),
-            &task.args.resources,
-            &task.args.spawn,
-            &task.args.schedule,
-            app,
-            task.args.priority,
-            analysis,
-        );
 
         let ty = tuple_ty(inputs);
 
@@ -1121,28 +1077,8 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
             () => quote!(),
         };
 
-        let scheduled_let = match () {
-            #[cfg(feature = "timer-queue")]
-            () => {
-                let baseline = &ctxt.baseline;
-                quote!(let scheduled = #baseline;)
-            }
-            #[cfg(not(feature = "timer-queue"))]
-            () => quote!(),
-        };
-
-        let baseline_arg = match () {
-            #[cfg(feature = "timer-queue")]
-            () => {
-                let baseline = &ctxt.baseline;
-                quote!(#baseline: rtfm::Instant,)
-            }
-            #[cfg(not(feature = "timer-queue"))]
-            () => quote!(),
-        };
         let inputs_symbol = format!("{}::INPUTS::{}", name, inputs_alias);
         let free_symbol = format!("{}::FREE_QUEUE::{}", name, free_alias);
-        let unsafety = &task.unsafety;
         items.push(quote!(
             // FIXME(MaybeUninit) MaybeUninit won't be necessary when core::mem::MaybeUninit
             // stabilizes because heapless constructors will work in const context
@@ -1158,7 +1094,70 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
                 rtfm::export::MaybeUninit::uninitialized();
 
             #scheduleds_static
+        ));
 
+        ctxt.tasks.insert(
+            name.clone(),
+            Task {
+                alias: task_alias,
+                free_queue: free_alias,
+                inputs: inputs_alias,
+                spawn_fn: mk_ident(None),
+
+                #[cfg(feature = "timer-queue")]
+                scheduleds: scheduleds_alias,
+            },
+        );
+    }
+
+    // second pass to generate the actual task function
+    for (name, task) in &app.tasks {
+        let attrs = &task.attrs;
+        let inputs = &task.inputs;
+        let locals = mk_locals(&task.statics, false);
+        let stmts = &task.stmts;
+        let unsafety = &task.unsafety;
+
+        let scheduled_let = match () {
+            #[cfg(feature = "timer-queue")]
+            () => {
+                let baseline = &ctxt.baseline;
+                quote!(let scheduled = #baseline;)
+            }
+            #[cfg(not(feature = "timer-queue"))]
+            () => quote!(),
+        };
+
+        let prelude = prelude(
+            ctxt,
+            Kind::Task(name.clone()),
+            &task.args.resources,
+            &task.args.spawn,
+            &task.args.schedule,
+            app,
+            task.args.priority,
+            analysis,
+        );
+
+        items.push(module(
+            ctxt,
+            Kind::Task(name.clone()),
+            !task.args.schedule.is_empty(),
+            !task.args.spawn.is_empty(),
+            app,
+        ));
+
+        let task_alias = &ctxt.tasks[name].alias;
+        let baseline_arg = match () {
+            #[cfg(feature = "timer-queue")]
+            () => {
+                let baseline = &ctxt.baseline;
+                quote!(#baseline: rtfm::Instant,)
+            }
+            #[cfg(not(feature = "timer-queue"))]
+            () => quote!(),
+        };
+        items.push(quote!(
             #(#attrs)*
             #unsafety fn #task_alias(#baseline_arg #(#inputs,)*) {
                 #(#locals)*
@@ -1170,20 +1169,6 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
                 #(#stmts)*
             }
         ));
-
-        items.push(module(
-            ctxt,
-            Kind::Task(name.clone()),
-            !task.args.schedule.is_empty(),
-            !task.args.spawn.is_empty(),
-            app,
-        ));
-
-        #[cfg(feature = "timer-queue")]
-        ctxt.scheduleds.insert(name.clone(), scheduleds_alias);
-        ctxt.free_queues.insert(name.clone(), free_alias);
-        ctxt.inputs.insert(name.clone(), inputs_alias);
-        ctxt.tasks.insert(name.clone(), task_alias);
     }
 
     quote!(#(#items)*)
@@ -1233,17 +1218,18 @@ fn dispatchers(
             .tasks
             .iter()
             .map(|task| {
-                let inputs = &ctxt.inputs[task];
-                let free = &ctxt.free_queues[task];
+                let task_ = &ctxt.tasks[task];
+                let inputs = &task_.inputs;
+                let free = &task_.free_queue;
                 let pats = tuple_pat(&app.tasks[task].inputs);
-                let alias = &ctxt.tasks[task];
+                let alias = &task_.alias;
 
                 let baseline_let;
                 let call;
                 match () {
                     #[cfg(feature = "timer-queue")]
                     () => {
-                        let scheduleds = &ctxt.scheduleds[task];
+                        let scheduleds = &task_.scheduleds;
                         baseline_let = quote!(
                             let baseline =
                                 ptr::read(#scheduleds.get_ref().get_unchecked(usize::from(index)));
@@ -1284,8 +1270,13 @@ fn dispatchers(
             }
         ));
 
-        ctxt.ready_queues.insert(*level, ready_alias);
-        ctxt.enums.insert(*level, enum_alias);
+        ctxt.dispatchers.insert(
+            *level,
+            Dispatcher {
+                ready_queue: ready_alias,
+                enum_: enum_alias,
+            },
+        );
     }
 
     (quote!(#(#data)*), quote!(#(#dispatchers)*))
@@ -1299,21 +1290,24 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
     let priority = &ctxt.priority;
     #[cfg(feature = "timer-queue")]
     let baseline = &ctxt.baseline;
-    for (task, alias) in &ctxt.spawn_fn {
-        let free = &ctxt.free_queues[task];
-        let level = app.tasks[task].args.priority;
-        let ready = &ctxt.ready_queues[&level];
-        let enum_ = &ctxt.enums[&level];
+    for (name, task) in &ctxt.tasks {
+        let alias = &task.spawn_fn;
+        let task_ = &app.tasks[name];
+        let free = &task.free_queue;
+        let level = task_.args.priority;
+        let dispatcher = &ctxt.dispatchers[&level];
+        let ready = &dispatcher.ready_queue;
+        let enum_ = &dispatcher.enum_;
         let dispatcher = &analysis.dispatchers[&level].interrupt;
-        let inputs = &ctxt.inputs[task];
-        let args = &app.tasks[task].inputs;
+        let inputs = &task.inputs;
+        let args = &task_.inputs;
         let ty = tuple_ty(args);
         let pats = tuple_pat(args);
 
         let scheduleds_write = match () {
             #[cfg(feature = "timer-queue")]
             () => {
-                let scheduleds = &ctxt.scheduleds[task];
+                let scheduleds = &ctxt.tasks[name].scheduleds;
                 quote!(
                     ptr::write(
                         #scheduleds.get_mut().get_unchecked_mut(usize::from(index)),
@@ -1348,7 +1342,7 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
                     #scheduleds_write
 
                     #ready { #priority }.lock(|rq| {
-                        rq.split().0.enqueue_unchecked((#enum_::#task, index))
+                        rq.split().0.enqueue_unchecked((#enum_::#name, index))
                     });
 
                     rtfm::pend(#device::Interrupt::#dispatcher);
@@ -1372,7 +1366,7 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
 
         let mut methods = vec![];
         for task in spawn {
-            let alias = &ctxt.spawn_fn[task];
+            let alias = &ctxt.tasks[task].spawn_fn;
             let inputs = &app.tasks[task].inputs;
             let ty = tuple_ty(inputs);
             let pats = tuple_pat(inputs);
@@ -1416,10 +1410,11 @@ fn schedule(ctxt: &Context, app: &App) -> proc_macro2::TokenStream {
     let priority = &ctxt.priority;
     let timer_queue = &ctxt.timer_queue;
     for (task, alias) in &ctxt.schedule_fn {
-        let free = &ctxt.free_queues[task];
+        let task_ = &ctxt.tasks[task];
+        let free = &task_.free_queue;
         let enum_ = &ctxt.schedule_enum;
-        let inputs = &ctxt.inputs[task];
-        let scheduleds = &ctxt.scheduleds[task];
+        let inputs = &task_.inputs;
+        let scheduleds = &task_.scheduleds;
         let args = &app.tasks[task].inputs;
         let ty = tuple_ty(args);
         let pats = tuple_pat(args);
@@ -1538,8 +1533,9 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
         .iter()
         .map(|task| {
             let level = app.tasks[task].args.priority;
-            let tenum = &ctxt.enums[&level];
-            let ready = &ctxt.ready_queues[&level];
+            let dispatcher_ = &ctxt.dispatchers[&level];
+            let tenum = &dispatcher_.enum_;
+            let ready = &dispatcher_.ready_queue;
             let dispatcher = &analysis.dispatchers[&level].interrupt;
 
             quote!(
@@ -1576,7 +1572,7 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
     quote!(#(#items)*)
 }
 
-fn pre_init(ctxt: &Context, analysis: &Analysis) -> proc_macro2::TokenStream {
+fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
     let mut exprs = vec![];
 
     // FIXME(MaybeUninit) Because we are using a fake MaybeUninit we need to set the Option tag to
@@ -1584,23 +1580,27 @@ fn pre_init(ctxt: &Context, analysis: &Analysis) -> proc_macro2::TokenStream {
     // be constructed in const context; we have to initialize them at runtime (i.e. here).
 
     // these are `MaybeUninit` arrays
-    for inputs in ctxt.inputs.values() {
+    for task in ctxt.tasks.values() {
+        let inputs = &task.inputs;
         exprs.push(quote!(#inputs.set(core::mem::uninitialized());))
     }
 
     #[cfg(feature = "timer-queue")]
-    for inputs in ctxt.scheduleds.values() {
-        exprs.push(quote!(#inputs.set(core::mem::uninitialized());))
+    for task in ctxt.tasks.values() {
+        let scheduleds = &task.scheduleds;
+        exprs.push(quote!(#scheduleds.set(core::mem::uninitialized());))
     }
 
     // these are `MaybeUninit` `ReadyQueue`s
-    for queue in ctxt.ready_queues.values() {
-        exprs.push(quote!(#queue.set(rtfm::export::ReadyQueue::new());))
+    for dispatcher in ctxt.dispatchers.values() {
+        let rq = &dispatcher.ready_queue;
+        exprs.push(quote!(#rq.set(rtfm::export::ReadyQueue::new());))
     }
 
     // these are `MaybeUninit` `FreeQueue`s
-    for free in ctxt.free_queues.values() {
-        exprs.push(quote!(#free.set(rtfm::export::FreeQueue::new());))
+    for task in ctxt.tasks.values() {
+        let fq = &task.free_queue;
+        exprs.push(quote!(#fq.set(rtfm::export::FreeQueue::new());))
     }
 
     // end-of-FIXME
@@ -1612,13 +1612,38 @@ fn pre_init(ctxt: &Context, analysis: &Analysis) -> proc_macro2::TokenStream {
     }
 
     // Populate the `FreeQueue`s
-    for (task, alias) in &ctxt.free_queues {
-        let capacity = analysis.capacities[task];
+    for (name, task) in &ctxt.tasks {
+        let fq = &task.free_queue;
+        let capacity = analysis.capacities[name];
         exprs.push(quote!(
             for i in 0..#capacity {
-                #alias.get_mut().enqueue_unchecked(i);
+                #fq.get_mut().enqueue_unchecked(i);
             }
         ))
+    }
+
+    // TODO turn the assertions that check that the priority is not larger than what's supported by
+    // the device into compile errors
+    let device = &app.args.device;
+    let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
+    for (name, interrupt) in &app.interrupts {
+        let priority = interrupt.args.priority;
+        exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
+        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits));));
+        exprs.push(quote!(p.NVIC.set_priority(
+            #device::Interrupt::#name,
+            ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
+        );));
+    }
+
+    for (priority, dispatcher) in &analysis.dispatchers {
+        let name = &dispatcher.interrupt;
+        exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
+        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits));));
+        exprs.push(quote!(p.NVIC.set_priority(
+            #device::Interrupt::#name,
+            ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
+        );));
     }
 
     // Set the cycle count to 0 and disable it while `init` executes

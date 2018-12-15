@@ -1,6 +1,5 @@
 //! Check code generation of resources
 
-#![feature(extern_crate_item_prelude)] // ???
 #![no_main]
 #![no_std]
 

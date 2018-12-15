@@ -5,10 +5,11 @@ main() {
 
     if [ $T = x86_64-unknown-linux-gnu ]; then
         # compile-fail and compile-pass tests
-        if [ $TRAVIS_RUST_VERSION = nightly ]; then
-            # TODO how to run a subset of these tests when timer-queue is disabled?
-            cargo test --features timer-queue --test compiletest --target $T
-        fi
+        case $TRAVIS_RUST_VERSION in
+            nightly*)
+                # TODO how to run a subset of these tests when timer-queue is disabled?
+                cargo test --features timer-queue --test compiletest --target $T
+        esac
 
         cargo check --target $T
         cargo check --features timer-queue --target $T
