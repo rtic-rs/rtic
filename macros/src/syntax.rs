@@ -47,7 +47,7 @@ impl Parse for AppArgs {
                     return Err(parse::Error::new(
                         ident.span(),
                         "expected `device`; other keys are not accepted",
-                    ))
+                    ));
                 }
             }
 
@@ -228,7 +228,7 @@ impl App {
                     return Err(parse::Error::new(
                         item.span(),
                         "this item must live outside the `#[app]` module",
-                    ))
+                    ));
                 }
             }
         }
@@ -526,7 +526,7 @@ impl Parse for InitArgs {
                     return Err(parse::Error::new(
                         ident.span(),
                         "expected one of: resources, schedule or spawn",
-                    ))
+                    ));
                 }
             }
 
@@ -597,6 +597,7 @@ impl Parse for InitArgs {
 }
 
 pub struct Assign {
+    pub attrs: Vec<Attribute>,
     pub left: Ident,
     pub right: Box<Expr>,
 }
@@ -649,7 +650,7 @@ pub struct Exception {
     pub args: ExceptionArgs,
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
-    pub statics: Statics,
+    pub statics: HashMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
 
@@ -727,7 +728,7 @@ impl Exception {
             args,
             attrs: item.attrs,
             unsafety: item.unsafety,
-            statics,
+            statics: Static::parse(statics)?,
             stmts,
         })
     }
@@ -737,7 +738,7 @@ pub struct Interrupt {
     pub args: InterruptArgs,
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
-    pub statics: Statics,
+    pub statics: HashMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
 
@@ -780,7 +781,7 @@ impl Interrupt {
             args,
             attrs: item.attrs,
             unsafety: item.unsafety,
-            statics,
+            statics: Static::parse(statics)?,
             stmts,
         })
     }
@@ -788,6 +789,7 @@ impl Interrupt {
 
 pub struct Resource {
     pub singleton: bool,
+    pub cfgs: Vec<Attribute>,
     pub attrs: Vec<Attribute>,
     pub mutability: Option<Token![mut]>,
     pub ty: Box<Type>,
@@ -817,9 +819,12 @@ impl Resource {
             );
         }
 
+        let (cfgs, attrs) = extract_cfgs(item.attrs);
+
         Ok(Resource {
             singleton: pos.is_some(),
-            attrs: item.attrs,
+            cfgs,
+            attrs,
             mutability: item.mutability,
             ty: item.ty,
             expr: if uninitialized { None } else { Some(item.expr) },
@@ -981,7 +986,7 @@ fn parse_args(input: ParseStream, accept_capacity: bool) -> parse::Result<TaskAr
                 return Err(parse::Error::new(
                     ident.span(),
                     "expected one of: priority, resources, schedule or spawn",
-                ))
+                ));
             }
         }
 
@@ -1210,6 +1215,7 @@ fn extract_assignments(stmts: Vec<Stmt>) -> (Vec<Stmt>, Vec<Assign>) {
                 if let Expr::Path(ref expr) = *assign.left {
                     if expr.path.segments.len() == 1 {
                         assigns.push(Assign {
+                            attrs: assign.attrs,
                             left: expr.path.segments[0].ident.clone(),
                             right: assign.right,
                         });

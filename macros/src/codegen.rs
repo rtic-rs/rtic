@@ -10,7 +10,7 @@ use std::{
 use proc_macro2::Span;
 use quote::quote;
 use rand::{Rng, SeedableRng};
-use syn::{ArgCaptured, Ident, IntSuffix, LitInt};
+use syn::{parse_quote, ArgCaptured, Attribute, Ident, IntSuffix, LitInt};
 
 use analyze::{Analysis, Ownership};
 use syntax::{App, Idents, Static};
@@ -86,8 +86,6 @@ struct Resources {
 pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
     let mut ctxt = Context::default();
 
-    let device = &app.args.device;
-
     let resources = resources(&mut ctxt, &app, analysis);
 
     let tasks = tasks(&mut ctxt, &app, analysis);
@@ -146,6 +144,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
 
     let assertions = assertions(app, analysis);
 
+    let main = mk_ident(None);
     let init = &ctxt.init;
     quote!(
         #resources
@@ -162,11 +161,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
 
         #root_interrupts
 
-        // We put these items into a pseudo-module to avoid a collision between the `interrupt`
-        // import and user code
         const APP: () = {
-            use #device::interrupt;
-
             #scoped_interrupts
 
             #(#dispatchers)*
@@ -178,10 +173,10 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
 
         #idle_fn
 
+        #[export_name = "main"]
         #[allow(unsafe_code)]
-        #[rtfm::export::entry]
         #[doc(hidden)]
-        unsafe fn main() -> ! {
+        unsafe fn #main() -> ! {
             #assertions
 
             rtfm::export::interrupt::disable();
@@ -204,6 +199,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
     let mut items = vec![];
     let mut module = vec![];
     for (name, res) in &app.resources {
+        let cfgs = &res.cfgs;
         let attrs = &res.attrs;
         let mut_ = &res.mutability;
         let ty = &res.ty;
@@ -219,6 +215,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
             if let Some(Ownership::Shared { ceiling }) = analysis.ownerships.get(name) {
                 items.push(mk_resource(
                     ctxt,
+                    cfgs,
                     name,
                     quote!(#name),
                     *ceiling,
@@ -238,6 +235,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
                     .map(|expr| {
                         quote!(
                             #(#attrs)*
+                            #(#cfgs)*
                             #[doc = #symbol]
                             static mut #alias: #ty = #expr;
                         )
@@ -245,6 +243,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
                     .unwrap_or_else(|| {
                         quote!(
                             #(#attrs)*
+                            #(#cfgs)*
                             #[doc = #symbol]
                             static mut #alias: rtfm::export::MaybeUninit<#ty> =
                                 rtfm::export::MaybeUninit::uninitialized();
@@ -262,6 +261,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
 
                     items.push(mk_resource(
                         ctxt,
+                        cfgs,
                         name,
                         quote!(#ty),
                         *ceiling,
@@ -297,6 +297,7 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
         .assigns
         .iter()
         .map(|assign| {
+            let attrs = &assign.attrs;
             if app
                 .resources
                 .get(&assign.left)
@@ -305,11 +306,17 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
             {
                 let alias = &ctxt.statics[&assign.left];
                 let expr = &assign.right;
-                quote!(unsafe { #alias.set(#expr); })
+                quote!(
+                    #(#attrs)*
+                    unsafe { #alias.set(#expr); }
+                )
             } else {
                 let left = &assign.left;
                 let right = &assign.right;
-                quote!(#left = #right;)
+                quote!(
+                    #(#attrs)*
+                    #left = #right;
+                )
             }
         })
         .collect::<Vec<_>>();
@@ -607,12 +614,14 @@ fn prelude(
 
         // NOTE This field is just to avoid unused type parameter errors around `'a`
         defs.push(quote!(#[allow(dead_code)] #priority: &'a core::cell::Cell<u8>));
-        exprs.push(quote!(#priority));
+        exprs.push(parse_quote!(#priority));
 
         let mut may_call_lock = false;
         let mut needs_unsafe = false;
         for name in resources {
             let res = &app.resources[name];
+            let cfgs = &res.cfgs;
+
             let initialized = res.expr.is_some();
             let singleton = res.singleton;
             let mut_ = res.mutability;
@@ -624,23 +633,40 @@ fn prelude(
                     // owned by Init
                     if singleton {
                         needs_unsafe = true;
-                        defs.push(quote!(pub #name: #name));
-                        exprs.push(quote!(#name: <#name as owned_singleton::Singleton>::new()));
+                        defs.push(quote!(
+                            #(#cfgs)*
+                            pub #name: #name
+                        ));
+                        exprs.push(quote!(
+                            #(#cfgs)*
+                            #name: <#name as owned_singleton::Singleton>::new()
+                        ));
                         continue;
                     } else {
-                        defs.push(quote!(pub #name: &'static #mut_ #ty));
+                        defs.push(quote!(
+                            #(#cfgs)*
+                            pub #name: &'static #mut_ #ty
+                        ));
                     }
                 } else {
                     // owned by someone else
                     if singleton {
                         needs_unsafe = true;
-                        defs.push(quote!(pub #name: &'a mut #name));
-                        exprs
-                            .push(quote!(#name: &mut <#name as owned_singleton::Singleton>::new()));
+                        defs.push(quote!(
+                            #(#cfgs)*
+                            pub #name: &'a mut #name
+                        ));
+                        exprs.push(quote!(
+                            #(#cfgs)*
+                            #name: &mut <#name as owned_singleton::Singleton>::new()
+                        ));
                         continue;
                     } else {
                         force_mut = true;
-                        defs.push(quote!(pub #name: &'a mut #ty));
+                        defs.push(quote!(
+                            #(#cfgs)*
+                            pub #name: &'a mut #ty
+                        ));
                     }
                 }
 
@@ -648,9 +674,15 @@ fn prelude(
                 // Resources assigned to init are always const initialized
                 needs_unsafe = true;
                 if force_mut {
-                    exprs.push(quote!(#name: &mut #alias));
+                    exprs.push(quote!(
+                        #(#cfgs)*
+                        #name: &mut #alias
+                    ));
                 } else {
-                    exprs.push(quote!(#name: &#mut_ #alias));
+                    exprs.push(quote!(
+                        #(#cfgs)*
+                        #name: &#mut_ #alias
+                    ));
                 }
             } else {
                 let ownership = &analysis.ownerships[name];
@@ -661,23 +693,43 @@ fn prelude(
                     if singleton {
                         if mut_.is_none() {
                             needs_unsafe = true;
-                            defs.push(quote!(pub #name: &'a #name));
-                            exprs
-                                .push(quote!(#name: &<#name as owned_singleton::Singleton>::new()));
+                            defs.push(quote!(
+                                #(#cfgs)*
+                                pub #name: &'a #name
+                            ));
+                            exprs.push(quote!(
+                                #(#cfgs)*
+                                #name: &<#name as owned_singleton::Singleton>::new()
+                            ));
                             continue;
                         } else {
                             // Generate a resource proxy
-                            defs.push(quote!(pub #name: resources::#name<'a>));
-                            exprs.push(quote!(#name: resources::#name { #priority }));
+                            defs.push(quote!(
+                                #(#cfgs)*
+                                pub #name: resources::#name<'a>
+                            ));
+                            exprs.push(quote!(
+                                #(#cfgs)*
+                                #name: resources::#name { #priority }
+                            ));
                             continue;
                         }
                     } else {
                         if mut_.is_none() {
-                            defs.push(quote!(pub #name: &'a #ty));
+                            defs.push(quote!(
+                                #(#cfgs)*
+                                pub #name: &'a #ty
+                            ));
                         } else {
                             // Generate a resource proxy
-                            defs.push(quote!(pub #name: resources::#name<'a>));
-                            exprs.push(quote!(#name: resources::#name { #priority }));
+                            defs.push(quote!(
+                                #(#cfgs)*
+                                pub #name: resources::#name<'a>
+                            ));
+                            exprs.push(quote!(
+                                #(#cfgs)*
+                                #name: resources::#name { #priority }
+                            ));
                             continue;
                         }
                     }
@@ -685,29 +737,47 @@ fn prelude(
                     if singleton {
                         if kind.runs_once() {
                             needs_unsafe = true;
-                            defs.push(quote!(pub #name: #name));
-                            exprs.push(quote!(#name: <#name as owned_singleton::Singleton>::new()));
+                            defs.push(quote!(
+                                #(#cfgs)*
+                                pub #name: #name
+                            ));
+                            exprs.push(quote!(
+                                #(#cfgs)*
+                                #name: <#name as owned_singleton::Singleton>::new()
+                            ));
                         } else {
                             needs_unsafe = true;
                             if ownership.is_owned() || mut_.is_none() {
-                                defs.push(quote!(pub #name: &'a #mut_ #name));
-                                let alias = mk_ident(None);
-                                items.push(quote!(
-                                    let #mut_ #alias = unsafe {
-                                        <#name as owned_singleton::Singleton>::new()
-                                    };
+                                defs.push(quote!(
+                                    #(#cfgs)*
+                                    pub #name: &'a #mut_ #name
                                 ));
-                                exprs.push(quote!(#name: &#mut_ #alias));
-                            } else {
-                                may_call_lock = true;
-                                defs.push(quote!(pub #name: rtfm::Exclusive<'a, #name>));
                                 let alias = mk_ident(None);
                                 items.push(quote!(
+                                    #(#cfgs)*
                                     let #mut_ #alias = unsafe {
                                         <#name as owned_singleton::Singleton>::new()
                                     };
                                 ));
                                 exprs.push(quote!(
+                                    #(#cfgs)*
+                                    #name: &#mut_ #alias
+                                ));
+                            } else {
+                                may_call_lock = true;
+                                defs.push(quote!(
+                                    #(#cfgs)*
+                                    pub #name: rtfm::Exclusive<'a, #name>
+                                ));
+                                let alias = mk_ident(None);
+                                items.push(quote!(
+                                    #(#cfgs)*
+                                    let #mut_ #alias = unsafe {
+                                        <#name as owned_singleton::Singleton>::new()
+                                    };
+                                ));
+                                exprs.push(quote!(
+                                    #(#cfgs)*
                                     #name: rtfm::Exclusive(&mut #alias)
                                 ));
                             }
@@ -715,11 +785,17 @@ fn prelude(
                         continue;
                     } else {
                         if ownership.is_owned() || mut_.is_none() {
-                            defs.push(quote!(pub #name: &#lt #mut_ #ty));
+                            defs.push(quote!(
+                                #(#cfgs)*
+                                pub #name: &#lt #mut_ #ty
+                            ));
                         } else {
                             exclusive = true;
                             may_call_lock = true;
-                            defs.push(quote!(pub #name: rtfm::Exclusive<#lt, #ty>));
+                            defs.push(quote!(
+                                #(#cfgs)*
+                                pub #name: rtfm::Exclusive<#lt, #ty>
+                            ));
                         }
                     }
                 }
@@ -728,9 +804,15 @@ fn prelude(
                 needs_unsafe = true;
                 if initialized {
                     if exclusive {
-                        exprs.push(quote!(#name: rtfm::Exclusive(&mut #alias)));
+                        exprs.push(quote!(
+                            #(#cfgs)*
+                            #name: rtfm::Exclusive(&mut #alias)
+                        ));
                     } else {
-                        exprs.push(quote!(#name: &#mut_ #alias));
+                        exprs.push(quote!(
+                            #(#cfgs)*
+                            #name: &#mut_ #alias
+                        ));
                     }
                 } else {
                     let method = if mut_.is_some() {
@@ -740,9 +822,15 @@ fn prelude(
                     };
 
                     if exclusive {
-                        exprs.push(quote!(#name: rtfm::Exclusive(#alias.#method()) ));
+                        exprs.push(quote!(
+                            #(#cfgs)*
+                            #name: rtfm::Exclusive(#alias.#method())
+                        ));
                     } else {
-                        exprs.push(quote!(#name: #alias.#method() ));
+                        exprs.push(quote!(
+                            #(#cfgs)*
+                            #name: #alias.#method()
+                        ));
                     }
                 }
             }
@@ -755,6 +843,7 @@ fn prelude(
             None
         };
 
+        let defs = &defs;
         let doc = format!("`{}::Resources`", kind.ident().to_string());
         let decl = quote!(
             #[doc = #doc]
@@ -893,7 +982,6 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
         .iter()
         .map(|(ident, exception)| {
             let attrs = &exception.attrs;
-            let statics = &exception.statics;
             let stmts = &exception.stmts;
 
             let prelude = prelude(
@@ -934,15 +1022,18 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
                 () => quote!(),
             };
 
+            let locals = mk_locals(&exception.statics, false);
+            let symbol = ident.to_string();
+            let alias = mk_ident(None);
             let unsafety = &exception.unsafety;
             quote!(
                 #module
 
-                #[rtfm::export::exception]
                 #[doc(hidden)]
+                #[export_name = #symbol]
                 #(#attrs)*
-                #unsafety fn #ident() {
-                    #(#statics)*
+                #unsafety fn #alias() {
+                    #(#locals)*
 
                     #baseline_let
 
@@ -967,9 +1058,9 @@ fn interrupts(
     let mut root = vec![];
     let mut scoped = vec![];
 
+    let device = &app.args.device;
     for (ident, interrupt) in &app.interrupts {
         let attrs = &interrupt.attrs;
-        let statics = &interrupt.statics;
         let stmts = &interrupt.stmts;
 
         let prelude = prelude(
@@ -1010,12 +1101,18 @@ fn interrupts(
             () => quote!(),
         };
 
+        let locals = mk_locals(&interrupt.statics, false);
+        let alias = mk_ident(None);
+        let symbol = ident.to_string();
         let unsafety = &interrupt.unsafety;
         scoped.push(quote!(
-            #[interrupt]
             #(#attrs)*
-            #unsafety fn #ident() {
-                #(#statics)*
+            #[export_name = #symbol]
+            #unsafety fn #alias() {
+                // check that this interrupt exists
+                let _ = #device::interrupt::#ident;
+
+                #(#locals)*
 
                 #baseline_let
 
@@ -1053,6 +1150,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
 
         let resource = mk_resource(
             ctxt,
+            &[],
             &free_alias,
             quote!(rtfm::export::FreeQueue<#capacity_ty>),
             *analysis.free_queues.get(name).unwrap_or(&0),
@@ -1182,6 +1280,7 @@ fn dispatchers(
     let mut data = vec![];
     let mut dispatchers = vec![];
 
+    let device = &app.args.device;
     for (level, dispatcher) in &analysis.dispatchers {
         let ready_alias = mk_ident(None);
         let enum_alias = mk_ident(None);
@@ -1194,6 +1293,7 @@ fn dispatchers(
         let ceiling = *analysis.ready_queues.get(&level).unwrap_or(&0);
         let resource = mk_resource(
             ctxt,
+            &[],
             &ready_alias,
             ty.clone(),
             ceiling,
@@ -1211,8 +1311,6 @@ fn dispatchers(
 
             #resource
         ));
-
-        let interrupt = &dispatcher.interrupt;
 
         let arms = dispatcher
             .tasks
@@ -1254,11 +1352,17 @@ fn dispatchers(
             .collect::<Vec<_>>();
 
         let attrs = &dispatcher.attrs;
+        let interrupt = &dispatcher.interrupt;
+        let symbol = interrupt.to_string();
+        let alias = mk_ident(None);
         dispatchers.push(quote!(
             #(#attrs)*
-            #[interrupt]
-            unsafe fn #interrupt() {
+            #[export_name = #symbol]
+            unsafe fn #alias() {
                 use core::ptr;
+
+                // check that this interrupt exists
+                let _ = #device::interrupt::#interrupt;
 
                 rtfm::export::run(|| {
                     while let Some((task, index)) = #ready_alias.get_mut().split().1.dequeue() {
@@ -1519,6 +1623,7 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
 
     items.push(mk_resource(
         ctxt,
+        &[],
         tq,
         quote!(rtfm::export::TimerQueue<#enum_, #cap>),
         analysis.timer_queue.ceiling,
@@ -1551,10 +1656,11 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
         .collect::<Vec<_>>();
 
     let logical_prio = analysis.timer_queue.priority;
+    let alias = mk_ident(None);
     items.push(quote!(
-        #[rtfm::export::exception]
+        #[export_name = "SysTick"]
         #[doc(hidden)]
-        unsafe fn SysTick() {
+        unsafe fn #alias() {
             use rtfm::Mutex;
 
             let ref #priority = core::cell::Cell::new(#logical_prio);
@@ -1680,6 +1786,7 @@ fn assertions(app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
 
 fn mk_resource(
     ctxt: &Context,
+    cfgs: &[Attribute],
     struct_: &Ident,
     ty: proc_macro2::TokenStream,
     ceiling: u8,
@@ -1696,6 +1803,7 @@ fn mk_resource(
         let doc = format!("`{}`", ty);
         module.push(quote!(
             #[doc = #doc]
+            #(#cfgs)*
             pub struct #struct_<'a> {
                 #[doc(hidden)]
                 pub #priority: &'a core::cell::Cell<u8>,
@@ -1705,6 +1813,7 @@ fn mk_resource(
         quote!(resources::#struct_)
     } else {
         items.push(quote!(
+            #(#cfgs)*
             struct #struct_<'a> {
                 #priority: &'a core::cell::Cell<u8>,
             }
@@ -1714,6 +1823,7 @@ fn mk_resource(
     };
 
     items.push(quote!(
+        #(#cfgs)*
         impl<'a> rtfm::Mutex for #path<'a> {
             type T = #ty;
 
@@ -1852,7 +1962,7 @@ fn tuple_ty(inputs: &[ArgCaptured]) -> proc_macro2::TokenStream {
     }
 }
 
-#[derive(Clone, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 enum Kind {
     Exception(Ident),
     Idle,

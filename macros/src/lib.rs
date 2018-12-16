@@ -1,4 +1,4 @@
-// #![deny(warnings)]
+#![deny(warnings)]
 #![recursion_limit = "128"]
 
 extern crate proc_macro;
@@ -308,5 +308,5 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     let analysis = analyze::app(&app);
 
     // Code generation
-    codegen::app(&app, &analysis)
+    codegen::app(&app, &analysis).into()
 }
