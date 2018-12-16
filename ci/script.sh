@@ -68,6 +68,8 @@ main() {
 
                 generics
                 ramfunc
+
+                cfg
             )
 
             for ex in ${exs[@]}; do
