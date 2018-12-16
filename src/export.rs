@@ -12,13 +12,13 @@ pub use cortex_m::{
 };
 pub use cortex_m_rt::{entry, exception};
 pub use heapless::consts;
-use heapless::spsc::Queue;
+use heapless::spsc::{Queue, SingleCore};
 
 #[cfg(feature = "timer-queue")]
 pub use crate::tq::{isr as sys_tick, NotReady, TimerQueue};
 
-pub type FreeQueue<N> = Queue<u8, N>;
-pub type ReadyQueue<T, N> = Queue<(T, u8), N>;
+pub type FreeQueue<N> = Queue<u8, N, usize, SingleCore>;
+pub type ReadyQueue<T, N> = Queue<(T, u8), N, usize, SingleCore>;
 
 #[cfg(armv7m)]
 #[inline(always)]
