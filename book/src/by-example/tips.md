@@ -20,6 +20,20 @@ rewrite code. If you consistently use `lock`s to access the data behind shared
 resources then your code will continue to compile when you change the priority
 of tasks.
 
+## Conditional compilation
+
+You can use conditional compilation (`#[cfg]`) on resources (`static [mut]`
+items) and tasks (`fn` items). The effect of using `#[cfg]` attributes is that
+the resource / task will *not* be injected into the prelude of tasks that use
+them (see `resources`, `spawn` and `schedule`) if the condition doesn't hold.
+
+The example below logs a message whenever the `foo` task is spawned, but only if
+the program has been compiled using the `dev` profile.
+
+``` rust
+{{#include ../../../examples/cfg.rs}}
+```
+
 ## Running tasks from RAM
 
 The main goal of moving the specification of RTFM applications to attributes in

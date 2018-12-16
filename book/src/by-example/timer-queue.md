@@ -1,8 +1,16 @@
 # Timer queue
 
 When the `timer-queue` feature is enabled the RTFM framework includes a *global
-timer queue* that applications can use to *schedule* software tasks to run some
-time in the future.
+timer queue* that applications can use to *schedule* software tasks to run at
+some time in the future.
+
+> **NOTE**: The timer-queue feature can't be enabled when the target is
+> `thumbv6m-none-eabi` because there's no timer queue support for ARMv6-M. This
+> may change in the future.
+
+> **NOTE**: When the `timer-queue` feature is enabled you will *not* be able to
+> use the `SysTick` exception as a hardware task because the runtime uses it to
+> implement the global timer queue.
 
 To be able to schedule a software task the name of the task must appear in the
 `schedule` argument of the context attribute. When scheduling a task the

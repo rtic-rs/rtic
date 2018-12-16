@@ -16,9 +16,9 @@ $ cargo generate \
 $ # follow the rest of the instructions
 ```
 
-2. Add a device crate that was generated using [`svd2rust`] **v0.14.x**, or a
-   board support crate that depends on one such device crate as a dependency.
-   Make sure that the `rt` feature of the crate is enabled.
+2. Add a peripheral access crate (PAC) that was generated using [`svd2rust`]
+   **v0.14.x**, or a board support crate that depends on one such PAC as a
+   dependency. Make sure that the `rt` feature of the crate is enabled.
 
 [`svd2rust`]: https://crates.io/crates/svd2rust
 
@@ -40,7 +40,7 @@ $ rm memory.x build.rs
    `timer-queue` feature.
 
 ``` console
-$ cargo add cortex-m-rtfm --allow-prerelease --upgrade=none
+$ cargo add cortex-m-rtfm
 ```
 
 4. Write your RTFM application.
@@ -49,7 +49,7 @@ Here I'll use the `init` example from the `cortex-m-rtfm` crate.
 
 ``` console
 $ curl \
-    -L https://github.com/japaric/cortex-m-rtfm/raw/v0.4.0-beta.1/examples/init.rs \
+    -L https://github.com/japaric/cortex-m-rtfm/raw/v0.4.0/examples/init.rs \
     > src/main.rs
 ```
 
