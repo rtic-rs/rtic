@@ -9,8 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- This crate now compiles on 1.31-beta and will compile on the stable 1.31
-  release.
+- This crate now compiles on stable 1.31.
 
 - [breaking-change] The `app!` macro has been transformed into an attribute. See
   the documentation for details.

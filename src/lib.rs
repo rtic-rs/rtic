@@ -44,6 +44,11 @@ pub mod export;
 #[cfg(feature = "timer-queue")]
 mod tq;
 
+#[cfg(all(feature = "timer-queue", armv6m))]
+compile_error!(
+    "The `timer-queue` feature is currently not supported on ARMv6-M (`thumbv6m-none-eabi`)"
+);
+
 /// Core peripherals
 ///
 /// This is `cortex_m::Peripherals` minus the peripherals that the RTFM runtime uses

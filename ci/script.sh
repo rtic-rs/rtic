@@ -12,11 +12,17 @@ main() {
         esac
 
         cargo check --target $T
-        cargo check --features timer-queue --target $T
+        if [ $TARGET != thumbv6m-none-eabi ]; then
+            cargo check --features timer-queue --target $T
+        fi
 
-        if [ $TRAVIS_RUST_VERSION = beta ]; then
+        if [ $TRAVIS_RUST_VERSION != nightly ]; then
             rm -f .cargo/config
-            cargo doc --features timer-queue
+            if [ $TARGET != thumbv6m-none-eabi ]; then
+                cargo doc --features timer-queue
+            else
+                cargo doc
+            fi
             ( cd book && mdbook build )
 
             local td=$(mktemp -d)
@@ -33,7 +39,9 @@ main() {
     fi
 
     cargo check --target $T --examples
-    cargo check --features timer-queue --target $T --examples
+    if [ $TARGET != thumbv6m-none-eabi ]; then
+        cargo check --features timer-queue --target $T --examples
+    fi
 
     # run-pass tests
     case $T in
@@ -76,11 +84,13 @@ main() {
                         diff -u ci/expected/$ex.run -
                 fi
 
-                cargo run --features timer-queue --example $ex --target $T | \
-                    diff -u ci/expected/$ex.run -
+                if [ $TARGET != thumbv6m-none-eabi ]; then
+                    cargo run --features timer-queue --example $ex --target $T | \
+                        diff -u ci/expected/$ex.run -
 
-                cargo run --features timer-queue --example $ex --target $T --release | \
-                    diff -u ci/expected/$ex.run -
+                    cargo run --features timer-queue --example $ex --target $T --release | \
+                        diff -u ci/expected/$ex.run -
+                fi
             done
     esac
 }
