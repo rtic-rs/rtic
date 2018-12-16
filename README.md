@@ -2,15 +2,6 @@
 
 A concurrency framework for building real time systems.
 
-**IMPORTANT** This crate is currently in pre-release (beta) state . We reserve
-the right to make breaking changes in the syntax or to patch memory safety holes
-before the v0.4.0 release, which is planned for 2018-12-07. When v0.4.0 is
-released *all the pre-releases will be yanked*. If you run into a panic message
-or an unhelpful error message (e.g. misleading span), or if something doesn't
-behave the way you expect please open [an issue]!
-
-[an issue]: https://github.com/japaric/cortex-m-rtfm/issues
-
 ## Features
 
 - **Tasks** as the unit of concurrency [^1]. Tasks can be *event triggered*

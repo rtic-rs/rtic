@@ -7,6 +7,6 @@
 This book contains user level documentation for the Real Time For the Masses
 (RTFM) framework. The API reference can be found [here](../api/rtfm/index.html).
 
-{{#include ../../README.md:5:55}}
+{{#include ../../README.md:5:46}}
 
-{{#include ../../README.md:61:}}
+{{#include ../../README.md:52:}}
