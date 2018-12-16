@@ -1594,13 +1594,13 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
     // these are `MaybeUninit` `ReadyQueue`s
     for dispatcher in ctxt.dispatchers.values() {
         let rq = &dispatcher.ready_queue;
-        exprs.push(quote!(#rq.set(rtfm::export::ReadyQueue::new());))
+        exprs.push(quote!(#rq.set(rtfm::export::ReadyQueue::new_sc());))
     }
 
     // these are `MaybeUninit` `FreeQueue`s
     for task in ctxt.tasks.values() {
         let fq = &task.free_queue;
-        exprs.push(quote!(#fq.set(rtfm::export::FreeQueue::new());))
+        exprs.push(quote!(#fq.set(rtfm::export::FreeQueue::new_sc());))
     }
 
     // end-of-FIXME
