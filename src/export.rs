@@ -10,7 +10,6 @@ pub use cortex_m::{
     asm::wfi, interrupt, peripheral::scb::SystemHandler, peripheral::syst::SystClkSource,
     peripheral::Peripherals,
 };
-pub use cortex_m_rt::{entry, exception};
 pub use heapless::consts;
 use heapless::spsc::{Queue, SingleCore};
 

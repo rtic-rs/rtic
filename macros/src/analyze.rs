@@ -5,7 +5,7 @@ use std::{
 
 use syn::{Attribute, Ident, Type};
 
-use syntax::{App, Idents};
+use crate::syntax::{App, Idents};
 
 pub type Ownerships = HashMap<Ident, Ownership>;
 
