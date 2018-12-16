@@ -12,8 +12,10 @@ use quote::quote;
 use rand::{Rng, SeedableRng};
 use syn::{parse_quote, ArgCaptured, Attribute, Ident, IntSuffix, LitInt};
 
-use analyze::{Analysis, Ownership};
-use syntax::{App, Idents, Static};
+use crate::{
+    analyze::{Analysis, Ownership},
+    syntax::{App, Idents, Static},
+};
 
 // NOTE to avoid polluting the user namespaces we map some identifiers to pseudo-hygienic names.
 // In some instances we also use the pseudo-hygienic names for safety, for example the user should

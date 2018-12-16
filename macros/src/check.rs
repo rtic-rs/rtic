@@ -3,14 +3,14 @@ use std::{collections::HashSet, iter};
 use proc_macro2::Span;
 use syn::parse;
 
-use syntax::App;
+use crate::syntax::App;
 
 pub fn app(app: &App) -> parse::Result<()> {
     // Check that all referenced resources have been declared
     for res in app
         .idle
         .as_ref()
-        .map(|idle| -> Box<Iterator<Item = _>> { Box::new(idle.args.resources.iter()) })
+        .map(|idle| -> Box<dyn Iterator<Item = _>> { Box::new(idle.args.resources.iter()) })
         .unwrap_or_else(|| Box::new(iter::empty()))
         .chain(&app.init.args.resources)
         .chain(app.exceptions.values().flat_map(|e| &e.args.resources))
@@ -53,7 +53,7 @@ pub fn app(app: &App) -> parse::Result<()> {
     for task in app
         .idle
         .as_ref()
-        .map(|idle| -> Box<Iterator<Item = _>> {
+        .map(|idle| -> Box<dyn Iterator<Item = _>> {
             Box::new(idle.args.schedule.iter().chain(&idle.args.spawn))
         })
         .unwrap_or_else(|| Box::new(iter::empty()))

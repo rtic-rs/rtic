@@ -20,7 +20,7 @@ pub struct AppArgs {
 }
 
 impl Parse for AppArgs {
-    fn parse(input: ParseStream) -> parse::Result<Self> {
+    fn parse(input: ParseStream<'_>) -> parse::Result<Self> {
         let mut device = None;
         loop {
             if input.is_empty() {
@@ -80,8 +80,8 @@ pub struct Input {
 }
 
 impl Parse for Input {
-    fn parse(input: ParseStream) -> parse::Result<Self> {
-        fn parse_items(input: ParseStream) -> parse::Result<Vec<Item>> {
+    fn parse(input: ParseStream<'_>) -> parse::Result<Self> {
+        fn parse_items(input: ParseStream<'_>) -> parse::Result<Vec<Item>> {
             let mut items = vec![];
 
             while !input.is_empty() {
@@ -254,7 +254,7 @@ impl App {
     pub fn resource_accesses(&self) -> impl Iterator<Item = (u8, &Ident)> {
         self.idle
             .as_ref()
-            .map(|idle| -> Box<Iterator<Item = _>> {
+            .map(|idle| -> Box<dyn Iterator<Item = _>> {
                 Box::new(idle.args.resources.iter().map(|res| (0, res)))
             })
             .unwrap_or_else(|| Box::new(iter::empty()))
@@ -293,7 +293,7 @@ impl App {
             .chain(
                 self.idle
                     .as_ref()
-                    .map(|idle| -> Box<Iterator<Item = _>> {
+                    .map(|idle| -> Box<dyn Iterator<Item = _>> {
                         Box::new(idle.args.spawn.iter().map(|s| (Some(0), s)))
                     })
                     .unwrap_or_else(|| Box::new(iter::empty())),
@@ -329,7 +329,7 @@ impl App {
             .chain(
                 self.idle
                     .as_ref()
-                    .map(|idle| -> Box<Iterator<Item = _>> {
+                    .map(|idle| -> Box<dyn Iterator<Item = _>> {
                         Box::new(idle.args.schedule.iter().map(|s| (Some(0), s)))
                     })
                     .unwrap_or_else(|| Box::new(iter::empty())),
@@ -358,7 +358,7 @@ impl App {
     pub fn schedule_callers(&self) -> impl Iterator<Item = (Ident, &Idents)> {
         self.idle
             .as_ref()
-            .map(|idle| -> Box<Iterator<Item = _>> {
+            .map(|idle| -> Box<dyn Iterator<Item = _>> {
                 Box::new(iter::once((
                     Ident::new("idle", Span::call_site()),
                     &idle.args.schedule,
@@ -389,7 +389,7 @@ impl App {
     pub fn spawn_callers(&self) -> impl Iterator<Item = (Ident, &Idents)> {
         self.idle
             .as_ref()
-            .map(|idle| -> Box<Iterator<Item = _>> {
+            .map(|idle| -> Box<dyn Iterator<Item = _>> {
                 Box::new(iter::once((
                     Ident::new("idle", Span::call_site()),
                     &idle.args.spawn,
@@ -492,7 +492,7 @@ impl Default for InitArgs {
 }
 
 impl Parse for InitArgs {
-    fn parse(input: ParseStream) -> parse::Result<InitArgs> {
+    fn parse(input: ParseStream<'_>) -> parse::Result<InitArgs> {
         if input.is_empty() {
             return Ok(InitArgs::default());
         }
@@ -662,7 +662,7 @@ pub struct ExceptionArgs {
 }
 
 impl Parse for ExceptionArgs {
-    fn parse(input: ParseStream) -> parse::Result<Self> {
+    fn parse(input: ParseStream<'_>) -> parse::Result<Self> {
         parse_args(input, false).map(
             |TaskArgs {
                  priority,
@@ -853,13 +853,13 @@ impl Default for TaskArgs {
 }
 
 impl Parse for TaskArgs {
-    fn parse(input: ParseStream) -> parse::Result<Self> {
+    fn parse(input: ParseStream<'_>) -> parse::Result<Self> {
         parse_args(input, true)
     }
 }
 
 // Parser shared by TaskArgs and ExceptionArgs / InterruptArgs
-fn parse_args(input: ParseStream, accept_capacity: bool) -> parse::Result<TaskArgs> {
+fn parse_args(input: ParseStream<'_>, accept_capacity: bool) -> parse::Result<TaskArgs> {
     if input.is_empty() {
         return Ok(TaskArgs::default());
     }

@@ -3,6 +3,7 @@ authors = ["Jorge Aparicio <jorge@japaric.io>"]
 categories = ["concurrency", "embedded", "no-std"]
 description = "Procedural macros of the cortex-m-rtfm crate"
 documentation = "https://japaric.github.io/cortex-m-rtfm/api/cortex_m_rtfm"
+edition = "2018"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm-macros"
