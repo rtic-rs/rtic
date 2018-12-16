@@ -30,17 +30,21 @@ const APP: () = {
         loop {}
     }
 
-    #[task(resources = [FOO])]
+    #[task(resources = [FOO], schedule = [quux], spawn = [quux])]
     fn foo() {
         #[cfg(never)]
         static mut BAR: u32 = 0;
     }
 
-    #[task(priority = 3, resources = [FOO])]
+    #[task(priority = 3, resources = [FOO], schedule = [quux], spawn = [quux])]
     fn bar() {
         #[cfg(never)]
         static mut BAR: u32 = 0;
     }
+
+    #[cfg(never)]
+    #[task]
+    fn quux() {}
 
     extern "C" {
         fn UART0();

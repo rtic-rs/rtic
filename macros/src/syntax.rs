@@ -1047,6 +1047,7 @@ impl Static {
 
 pub struct Task {
     pub args: TaskArgs,
+    pub cfgs: Vec<Attribute>,
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
     pub inputs: Vec<ArgCaptured>,
@@ -1098,9 +1099,11 @@ impl Task {
             _ => {}
         }
 
+        let (cfgs, attrs) = extract_cfgs(item.attrs);
         Ok(Task {
             args,
-            attrs: item.attrs,
+            cfgs,
+            attrs,
             unsafety: item.unsafety,
             inputs,
             statics: Static::parse(statics)?,

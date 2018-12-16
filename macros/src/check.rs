@@ -73,7 +73,8 @@ pub fn app(app: &App) -> parse::Result<()> {
             app.tasks
                 .values()
                 .flat_map(|t| t.args.schedule.iter().chain(&t.args.spawn)),
-        ) {
+        )
+    {
         if !app.tasks.contains_key(task) {
             return Err(parse::Error::new(
                 task.span(),

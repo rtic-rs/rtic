@@ -1210,7 +1210,6 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
 
     // second pass to generate the actual task function
     for (name, task) in &app.tasks {
-        let attrs = &task.attrs;
         let inputs = &task.inputs;
         let locals = mk_locals(&task.statics, false);
         let stmts = &task.stmts;
@@ -1245,6 +1244,8 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
             app,
         ));
 
+        let attrs = &task.attrs;
+        let cfgs = &task.cfgs;
         let task_alias = &ctxt.tasks[name].alias;
         let baseline_arg = match () {
             #[cfg(feature = "timer-queue")]
@@ -1257,6 +1258,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
         };
         items.push(quote!(
             #(#attrs)*
+            #(#cfgs)*
             #unsafety fn #task_alias(#baseline_arg #(#inputs,)*) {
                 #(#locals)*
 
@@ -1284,9 +1286,21 @@ fn dispatchers(
     for (level, dispatcher) in &analysis.dispatchers {
         let ready_alias = mk_ident(None);
         let enum_alias = mk_ident(None);
-        let tasks = &dispatcher.tasks;
         let capacity = mk_typenum_capacity(dispatcher.capacity, true);
 
+        let variants = dispatcher
+            .tasks
+            .iter()
+            .map(|task| {
+                let task_ = &app.tasks[task];
+                let cfgs = &task_.cfgs;
+
+                quote!(
+                    #(#cfgs)*
+                    #task
+                )
+            })
+            .collect::<Vec<_>>();
         let symbol = format!("P{}::READY_QUEUE::{}", level, ready_alias);
         let e = quote!(rtfm::export);
         let ty = quote!(#e::ReadyQueue<#enum_alias, #capacity>);
@@ -1304,7 +1318,7 @@ fn dispatchers(
         data.push(quote!(
             #[allow(dead_code)]
             #[allow(non_camel_case_types)]
-            enum #enum_alias { #(#tasks,)* }
+            enum #enum_alias { #(#variants,)* }
 
             #[doc = #symbol]
             static mut #ready_alias: #e::MaybeUninit<#ty> = #e::MaybeUninit::uninitialized();
@@ -1319,8 +1333,11 @@ fn dispatchers(
                 let task_ = &ctxt.tasks[task];
                 let inputs = &task_.inputs;
                 let free = &task_.free_queue;
-                let pats = tuple_pat(&app.tasks[task].inputs);
                 let alias = &task_.alias;
+
+                let task__ = &app.tasks[task];
+                let pats = tuple_pat(&task__.inputs);
+                let cfgs = &task__.cfgs;
 
                 let baseline_let;
                 let call;
@@ -1341,13 +1358,16 @@ fn dispatchers(
                     }
                 };
 
-                quote!(#enum_alias::#task => {
-                    #baseline_let
-                    let input = ptr::read(#inputs.get_ref().get_unchecked(usize::from(index)));
-                    #free.get_mut().split().0.enqueue_unchecked(index);
-                    let (#pats) = input;
-                    #call
-                })
+                quote!(
+                    #(#cfgs)*
+                    #enum_alias::#task => {
+                        #baseline_let
+                        let input = ptr::read(#inputs.get_ref().get_unchecked(usize::from(index)));
+                        #free.get_mut().split().0.enqueue_unchecked(index);
+                        let (#pats) = input;
+                        #call
+                    }
+                )
             })
             .collect::<Vec<_>>();
 
@@ -1397,6 +1417,7 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
     for (name, task) in &ctxt.tasks {
         let alias = &task.spawn_fn;
         let task_ = &app.tasks[name];
+        let cfgs = &task_.cfgs;
         let free = &task.free_queue;
         let level = task_.args.priority;
         let dispatcher = &ctxt.dispatchers[&level];
@@ -1432,6 +1453,7 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
 
         items.push(quote!(
             #[inline(always)]
+            #(#cfgs)*
             unsafe fn #alias(
                 #baseline_arg
                 #priority: &core::cell::Cell<u8>,
@@ -1470,8 +1492,10 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
 
         let mut methods = vec![];
         for task in spawn {
+            let task_ = &app.tasks[task];
             let alias = &ctxt.tasks[task].spawn_fn;
-            let inputs = &app.tasks[task].inputs;
+            let inputs = &task_.inputs;
+            let cfgs = &task_.cfgs;
             let ty = tuple_ty(inputs);
             let pats = tuple_pat(inputs);
 
@@ -1490,6 +1514,7 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
             methods.push(quote!(
                 #[allow(unsafe_code)]
                 #[inline]
+                #(#cfgs)*
                 pub fn #task(&self, #(#inputs,)*) -> Result<(), #ty> {
                     unsafe { #alias(#instant &self.#priority, #pats) }
                 }
@@ -1519,12 +1544,15 @@ fn schedule(ctxt: &Context, app: &App) -> proc_macro2::TokenStream {
         let enum_ = &ctxt.schedule_enum;
         let inputs = &task_.inputs;
         let scheduleds = &task_.scheduleds;
-        let args = &app.tasks[task].inputs;
+        let task__ = &app.tasks[task];
+        let args = &task__.inputs;
+        let cfgs = &task__.cfgs;
         let ty = tuple_ty(args);
         let pats = tuple_pat(args);
 
         items.push(quote!(
             #[inline(always)]
+            #(#cfgs)*
             unsafe fn #alias(
                 #priority: &core::cell::Cell<u8>,
                 instant: rtfm::Instant,
@@ -1568,12 +1596,15 @@ fn schedule(ctxt: &Context, app: &App) -> proc_macro2::TokenStream {
         let mut methods = vec![];
         for task in schedule {
             let alias = &ctxt.schedule_fn[task];
-            let inputs = &app.tasks[task].inputs;
+            let task_ = &app.tasks[task];
+            let inputs = &task_.inputs;
+            let cfgs = &task_.cfgs;
             let ty = tuple_ty(inputs);
             let pats = tuple_pat(inputs);
 
             methods.push(quote!(
                 #[inline]
+                #(#cfgs)*
                 pub fn #task(
                     &self,
                     instant: rtfm::Instant,
@@ -1603,12 +1634,22 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
 
     let mut items = vec![];
 
+    let variants = tasks
+        .iter()
+        .map(|task| {
+            let cfgs = &app.tasks[task].cfgs;
+            quote!(
+                #(#cfgs)*
+                #task
+            )
+        })
+        .collect::<Vec<_>>();
     let enum_ = &ctxt.schedule_enum;
     items.push(quote!(
         #[allow(dead_code)]
         #[allow(non_camel_case_types)]
         #[derive(Clone, Copy)]
-        enum #enum_ { #(#tasks,)* }
+        enum #enum_ { #(#variants,)* }
     ));
 
     let cap = mk_typenum_capacity(analysis.timer_queue.capacity, false);
@@ -1637,13 +1678,16 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
     let arms = tasks
         .iter()
         .map(|task| {
-            let level = app.tasks[task].args.priority;
+            let task_ = &app.tasks[task];
+            let level = task_.args.priority;
+            let cfgs = &task_.cfgs;
             let dispatcher_ = &ctxt.dispatchers[&level];
             let tenum = &dispatcher_.enum_;
             let ready = &dispatcher_.ready_queue;
             let dispatcher = &analysis.dispatchers[&level].interrupt;
 
             quote!(
+                #(#cfgs)*
                 #enum_::#task => {
                     (#ready { #priority }).lock(|rq| {
                         rq.split().0.enqueue_unchecked((#tenum::#task, index))
