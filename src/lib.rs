@@ -253,7 +253,8 @@ impl U32Ext for u32 {
 ///
 /// In RTFM, locks are implemented as critical sections that prevent other tasks from *starting*.
 /// These critical sections are implemented by temporarily increasing the dynamic priority (see
-/// [BASEPRI]) of the current context.
+/// [BASEPRI]) of the current context. Entering and leaving these critical sections is always done
+/// in constant time (a few instructions).
 ///
 /// [BASEPRI]: https://developer.arm.com/products/architecture/cpu-architecture/m-profile/docs/100701/latest/special-purpose-mask-registers
 pub trait Mutex {
