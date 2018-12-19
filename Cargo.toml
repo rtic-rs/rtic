@@ -57,6 +57,9 @@ timer-queue = ["cortex-m-rtfm-macros/timer-queue"]
 compiletest_rs = "0.3.16"
 tempdir = "0.3.7"
 
+[package.metadata.docs.rs]
+features = ["timer-queue"]
+
 [profile.release]
 codegen-units = 1
 lto = true
