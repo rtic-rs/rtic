@@ -28,7 +28,10 @@
 
 #[cfg(feature = "timer-queue")]
 use core::cmp::Ordering;
-use core::{fmt, ops};
+use core::{
+    fmt, ops,
+    ptr::{self, NonNull},
+};
 
 #[cfg(not(feature = "timer-queue"))]
 use cortex_m::peripheral::SYST;
@@ -249,6 +252,58 @@ impl U32Ext for u32 {
     }
 }
 
+/// A message buffer
+///
+/// IMPORTANT: Dropping this value will free up space in the message queue
+pub struct Message<T> {
+    ptr: NonNull<T>,
+    index: u8,
+    // callback to return the message slot to the free queue
+    free: fn(u8),
+}
+
+impl<T> Message<T> {
+    #[doc(hidden)]
+    pub unsafe fn new(ptr: &mut T, index: u8, free: fn(u8)) -> Self {
+        Message {
+            ptr: NonNull::new_unchecked(ptr),
+            index,
+            free,
+        }
+    }
+
+    /// Copies the message payload to the stack, freeing the message buffer
+    pub fn read(self) -> T {
+        unsafe {
+            let val = ptr::read(&*self);
+            (self.free)(self.index);
+            val
+        }
+    }
+}
+
+impl<T> Drop for Message<T> {
+    fn drop(&mut self) {
+        unsafe {
+            ptr::drop_in_place(self.ptr.as_ptr());
+            (self.free)(self.index);
+        }
+    }
+}
+
+impl<T> ops::Deref for Message<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        unsafe { self.ptr.as_ref() }
+    }
+}
+
+impl<T> ops::DerefMut for Message<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        unsafe { self.ptr.as_mut() }
+    }
+}
 /// Memory safe access to shared resources
 ///
 /// In RTFM, locks are implemented as critical sections that prevent other tasks from *starting*.

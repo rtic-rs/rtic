@@ -10,9 +10,9 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     token::Brace,
-    ArgCaptured, AttrStyle, Attribute, Expr, FnArg, ForeignItem, Ident, IntSuffix, Item, ItemFn,
-    ItemForeignMod, ItemStatic, LitInt, Path, PathArguments, PathSegment, ReturnType, Stmt, Token,
-    Type, TypeTuple, Visibility,
+    ArgCaptured, AttrStyle, Attribute, Expr, FnArg, ForeignItem, GenericArgument, Ident, IntSuffix,
+    Item, ItemFn, ItemForeignMod, ItemStatic, LitInt, Pat, Path, PathArguments, PathSegment,
+    ReturnType, Stmt, Token, Type, TypeTuple, Visibility,
 };
 
 pub struct AppArgs {
@@ -129,7 +129,7 @@ impl App {
         for item in items {
             match item {
                 Item::Fn(mut item) => {
-                    if let Some(pos) = item.attrs.iter().position(|attr| eq(attr, "idle")) {
+                    if let Some(pos) = item.attrs.iter().position(|attr| attr_is(attr, "idle")) {
                         if idle.is_some() {
                             return Err(parse::Error::new(
                                 item.span(),
@@ -140,7 +140,9 @@ impl App {
                         let args = syn::parse2(item.attrs.swap_remove(pos).tts)?;
 
                         idle = Some(Idle::check(args, item)?);
-                    } else if let Some(pos) = item.attrs.iter().position(|attr| eq(attr, "init")) {
+                    } else if let Some(pos) =
+                        item.attrs.iter().position(|attr| attr_is(attr, "init"))
+                    {
                         if init.is_some() {
                             return Err(parse::Error::new(
                                 item.span(),
@@ -151,8 +153,10 @@ impl App {
                         let args = syn::parse2(item.attrs.swap_remove(pos).tts)?;
 
                         init = Some(Init::check(args, item)?);
-                    } else if let Some(pos) =
-                        item.attrs.iter().position(|attr| eq(attr, "exception"))
+                    } else if let Some(pos) = item
+                        .attrs
+                        .iter()
+                        .position(|attr| attr_is(attr, "exception"))
                     {
                         if exceptions.contains_key(&item.ident)
                             || interrupts.contains_key(&item.ident)
@@ -167,8 +171,10 @@ impl App {
                         let args = syn::parse2(item.attrs.swap_remove(pos).tts)?;
 
                         exceptions.insert(item.ident.clone(), Exception::check(args, item)?);
-                    } else if let Some(pos) =
-                        item.attrs.iter().position(|attr| eq(attr, "interrupt"))
+                    } else if let Some(pos) = item
+                        .attrs
+                        .iter()
+                        .position(|attr| attr_is(attr, "interrupt"))
                     {
                         if exceptions.contains_key(&item.ident)
                             || interrupts.contains_key(&item.ident)
@@ -183,7 +189,9 @@ impl App {
                         let args = syn::parse2(item.attrs.swap_remove(pos).tts)?;
 
                         interrupts.insert(item.ident.clone(), Interrupt::check(args, item)?);
-                    } else if let Some(pos) = item.attrs.iter().position(|attr| eq(attr, "task")) {
+                    } else if let Some(pos) =
+                        item.attrs.iter().position(|attr| attr_is(attr, "task"))
+                    {
                         if exceptions.contains_key(&item.ident)
                             || interrupts.contains_key(&item.ident)
                             || tasks.contains_key(&item.ident)
@@ -810,7 +818,10 @@ impl Resource {
             _ => false,
         };
 
-        let pos = item.attrs.iter().position(|attr| eq(attr, "Singleton"));
+        let pos = item
+            .attrs
+            .iter()
+            .position(|attr| attr_is(attr, "Singleton"));
 
         if let Some(pos) = pos {
             item.attrs[pos].path.segments.insert(
@@ -1050,7 +1061,7 @@ pub struct Task {
     pub cfgs: Vec<Attribute>,
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
-    pub inputs: Vec<ArgCaptured>,
+    pub inputs: Inputs,
     pub statics: HashMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
@@ -1077,17 +1088,67 @@ impl Task {
 
         let (statics, stmts) = extract_statics(item.block.stmts);
 
-        let mut inputs = vec![];
-        for input in item.decl.inputs {
-            if let FnArg::Captured(capture) = input {
-                inputs.push(capture);
+        let mut iargs = vec![];
+        let single_input = item.decl.inputs.len() == 1;
+        let mut finputs = item.decl.inputs.into_iter();
+        let message = if single_input {
+            if let FnArg::Captured(mut captured) = finputs.next().expect("unreachable") {
+                if let Type::Path(ty) = captured.ty {
+                    if ty.qself.is_none() && path_is(&ty.path, "Message") {
+                        let segment = ty.path.segments.into_iter().next().expect("unreachable");
+                        if let PathArguments::AngleBracketed(args) = segment.arguments {
+                            if args.colon2_token.is_none() && args.args.len() == 1 {
+                                if let GenericArgument::Type(ty) =
+                                    args.args.into_iter().next().expect("unreachable")
+                                {
+                                    Some(Inputs::Message(captured.pat, ty))
+                                } else {
+                                    // TODO
+                                    panic!("error")
+                                }
+                            } else {
+                                // TODO
+                                panic!("error")
+                            }
+                        } else {
+                            // TODO
+                            panic!("error")
+                        }
+                    } else {
+                        captured.ty = Type::Path(ty);
+                        iargs.push(captured);
+                        None
+                    }
+                } else {
+                    iargs.push(captured);
+                    None
+                }
             } else {
                 return Err(parse::Error::new(
                     span,
                     "inputs must be named arguments (e.f. `foo: u32`) and not include `self`",
                 ));
             }
-        }
+        } else {
+            None
+        };
+
+        let inputs = if let Some(message) = message {
+            message
+        } else {
+            for input in finputs {
+                if let FnArg::Captured(capture) = input {
+                    iargs.push(capture);
+                } else {
+                    return Err(parse::Error::new(
+                        span,
+                        "inputs must be named arguments (e.f. `foo: u32`) and not include `self`",
+                    ));
+                }
+            }
+
+            Inputs::Raw(iargs)
+        };
 
         match &*item.ident.to_string() {
             "init" | "idle" | "resources" => {
@@ -1110,6 +1171,11 @@ impl Task {
             stmts,
         })
     }
+}
+
+pub enum Inputs {
+    Raw(Vec<ArgCaptured>),
+    Message(Pat, Type),
 }
 
 pub struct FreeInterrupt {
@@ -1156,7 +1222,13 @@ impl FreeInterrupt {
     }
 }
 
-fn eq(attr: &Attribute, name: &str) -> bool {
+fn path_is(path: &Path, name: &str) -> bool {
+    path.leading_colon.is_none()
+        && path.segments.len() == 1
+        && path.segments[0].ident.to_string() == name
+}
+
+fn attr_is(attr: &Attribute, name: &str) -> bool {
     attr.style == AttrStyle::Outer && attr.path.segments.len() == 1 && {
         let pair = attr.path.segments.first().unwrap();
         let segment = pair.value();
@@ -1169,7 +1241,7 @@ fn extract_cfgs(attrs: Vec<Attribute>) -> (Vec<Attribute>, Vec<Attribute>) {
     let mut not_cfgs = vec![];
 
     for attr in attrs {
-        if eq(&attr, "cfg") {
+        if attr_is(&attr, "cfg") {
             cfgs.push(attr);
         } else {
             not_cfgs.push(attr);

@@ -10,11 +10,11 @@ use std::{
 use proc_macro2::Span;
 use quote::quote;
 use rand::{Rng, SeedableRng};
-use syn::{parse_quote, ArgCaptured, Attribute, Ident, IntSuffix, LitInt};
+use syn::{parse_quote, Attribute, Ident, IntSuffix, LitInt};
 
 use crate::{
     analyze::{Analysis, Ownership},
-    syntax::{App, Idents, Static},
+    syntax::{App, Idents, Inputs, Static},
 };
 
 // NOTE to avoid polluting the user namespaces we map some identifiers to pseudo-hygienic names.
@@ -1258,10 +1258,14 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
             #[cfg(not(feature = "timer-queue"))]
             () => quote!(),
         };
+        let inputs = match inputs {
+            Inputs::Raw(inputs) => quote!(#(#inputs,)*),
+            Inputs::Message(pat, ty) => quote!(#pat: rtfm::Message<#ty>),
+        };
         items.push(quote!(
             #(#attrs)*
             #(#cfgs)*
-            #unsafety fn #task_alias(#baseline_arg #(#inputs,)*) {
+            #unsafety fn #task_alias(#baseline_arg #inputs) {
                 #(#locals)*
 
                 #prelude
@@ -1360,16 +1364,34 @@ fn dispatchers(
                     }
                 };
 
-                quote!(
-                    #(#cfgs)*
-                    #enum_alias::#task => {
-                        #baseline_let
-                        let input = ptr::read(#inputs.get_ref().get_unchecked(usize::from(index)));
-                        #free.get_mut().split().0.enqueue_unchecked(index);
-                        let (#pats) = input;
-                        #call
+                match &task__.inputs {
+                    Inputs::Raw(..) => {
+                        quote!(
+                            #(#cfgs)*
+                            #enum_alias::#task => {
+                                #baseline_let
+                                let input =
+                                    ptr::read(#inputs.get_ref().get_unchecked(usize::from(index)));
+                                #free.get_mut().split().0.enqueue_unchecked(index);
+                                let (#pats) = input;
+                                #call
+                            }
+                        )
                     }
-                )
+                    Inputs::Message(pat, _) => {
+                        quote!(
+                            #(#cfgs)*
+                            #enum_alias::#task => {
+                                #baseline_let
+                                let ptr = #inputs.get_mut().get_unchecked_mut(usize::from(index));
+                                let #pat = rtfm::Message::new(ptr, index, |index| {
+                                    #free.get_mut().split().0.enqueue_unchecked(index);
+                                });
+                                #call
+                            }
+                        )
+                    }
+                }
             })
             .collect::<Vec<_>>();
 
@@ -1453,13 +1475,17 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
             () => quote!(),
         };
 
+        let args = match args {
+            Inputs::Raw(inputs) => quote!(#(#inputs,)*),
+            Inputs::Message(pat, ty) => quote!(#pat: #ty),
+        };
         items.push(quote!(
             #[inline(always)]
             #(#cfgs)*
             unsafe fn #alias(
                 #baseline_arg
                 #priority: &core::cell::Cell<u8>,
-                #(#args,)*
+                #args
             ) -> Result<(), #ty> {
                 use core::ptr;
 
@@ -1513,11 +1539,15 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
                 #[cfg(not(feature = "timer-queue"))]
                 () => quote!(),
             };
+            let inputs = match inputs {
+                Inputs::Raw(inputs) => quote!(#(#inputs,)*),
+                Inputs::Message(pat, ty) => quote!(#pat: #ty),
+            };
             methods.push(quote!(
                 #[allow(unsafe_code)]
                 #[inline]
                 #(#cfgs)*
-                pub fn #task(&self, #(#inputs,)*) -> Result<(), #ty> {
+                pub fn #task(&self, #inputs) -> Result<(), #ty> {
                     unsafe { #alias(#instant &self.#priority, #pats) }
                 }
             ));
@@ -1986,25 +2016,35 @@ fn mk_locals(locals: &HashMap<Ident, Static>, once: bool) -> proc_macro2::TokenS
     quote!(#(#locals)*)
 }
 
-fn tuple_pat(inputs: &[ArgCaptured]) -> proc_macro2::TokenStream {
-    if inputs.len() == 1 {
-        let pat = &inputs[0].pat;
-        quote!(#pat)
-    } else {
-        let pats = inputs.iter().map(|i| &i.pat).collect::<Vec<_>>();
+fn tuple_pat(inputs: &Inputs) -> proc_macro2::TokenStream {
+    match inputs {
+        Inputs::Raw(inputs) => {
+            if inputs.len() == 1 {
+                let pat = &inputs[0].pat;
+                quote!(#pat)
+            } else {
+                let pats = inputs.iter().map(|i| &i.pat).collect::<Vec<_>>();
 
-        quote!(#(#pats,)*)
+                quote!(#(#pats,)*)
+            }
+        }
+        Inputs::Message(pat, _) => quote!(#pat),
     }
 }
 
-fn tuple_ty(inputs: &[ArgCaptured]) -> proc_macro2::TokenStream {
-    if inputs.len() == 1 {
-        let ty = &inputs[0].ty;
-        quote!(#ty)
-    } else {
-        let tys = inputs.iter().map(|i| &i.ty).collect::<Vec<_>>();
+fn tuple_ty(inputs: &Inputs) -> proc_macro2::TokenStream {
+    match inputs {
+        Inputs::Raw(inputs) => {
+            if inputs.len() == 1 {
+                let ty = &inputs[0].ty;
+                quote!(#ty)
+            } else {
+                let tys = inputs.iter().map(|i| &i.ty).collect::<Vec<_>>();
 
-        quote!((#(#tys,)*))
+                quote!((#(#tys,)*))
+            }
+        }
+        Inputs::Message(_, ty) => quote!(#ty),
     }
 }
 
