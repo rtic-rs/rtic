@@ -48,7 +48,7 @@ Task dispatchers do *not* use any dynamic memory allocation. The memory required
 to store messages is statically reserved. The framework will reserve enough
 space for every context to be able to spawn each task at most once. This is a
 sensible default but the "inbox" capacity of each task can be controlled using
-the `capacicy` argument of the `task` attribute.
+the `capacity` argument of the `task` attribute.
 
 The example below sets the capacity of the software task `foo` to 4. If the
 capacity is not specified then the second `spawn.foo` call in `UART0` would
