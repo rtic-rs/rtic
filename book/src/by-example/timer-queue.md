@@ -69,7 +69,7 @@ jitter even though `schedule.foo` was invoked at the *end* of `foo`. Using
 
 For the tasks scheduled from `init` we have exact information about their
 `scheduled` time. For hardware tasks there's no `scheduled` time because these
-tasks are asynchronous in nature. For hardware task the runtime provides a
+tasks are asynchronous in nature. For hardware tasks the runtime provides a
 `start` time, which indicates the time at which the task handler started
 executing.
 
