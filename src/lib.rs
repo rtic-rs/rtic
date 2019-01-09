@@ -7,7 +7,7 @@
 //!
 //! The user level documentation can be found [here].
 //!
-//! [here]: ../../book/
+//! [here]: https://japaric.github.io/cortex-m-rtfm/book/
 //!
 //! Don't forget to check the documentation of the [`#[app]`] attribute, which is the main component
 //! of the framework.

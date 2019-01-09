@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+- Use an absolute link to the book so it works when landing from crates.io
+  documentation page
+
 ## [v0.4.0] - 2018-11-03
 
 ### Changed
