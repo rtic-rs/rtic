@@ -1,5 +1,36 @@
 set -euxo pipefail
 
+arm_example() {
+    local COMMAND=$1
+    local EXAMPLE=$2
+    local BUILD_MODE=$3
+    local FEATURES=$4
+    local BUILD_NUM=$5
+
+    if [ $BUILD_MODE = "release" ]; then
+        local RELEASE_FLAG="--release"
+    else
+        local RELEASE_FLAG=""
+    fi
+
+    if [ -n "$FEATURES" ]; then
+        local FEATURES_FLAG="--features $FEATURES"
+        local FEATURES_STR=${FEATURES/,/_}_
+    else
+        local FEATURES_FLAG=""
+        local FEATURES_STR=""
+    fi
+    local CARGO_FLAGS="--example $EXAMPLE --target $TARGET $RELEASE_FLAG $FEATURES_FLAG"
+
+    if [ $COMMAND = "run" ]; then
+        cargo $COMMAND $CARGO_FLAGS | diff -u ci/expected/$EXAMPLE.run -
+    else
+        cargo $COMMAND $CARGO_FLAGS
+    fi
+    arm-none-eabi-objcopy -O ihex target/$TARGET/$BUILD_MODE/examples/$EXAMPLE ${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
+}
+
+
 main() {
     local T=$TARGET
 
@@ -76,45 +107,31 @@ main() {
                     continue
                 fi
 
-                test_arm_example() {
-                    local EXAMPLE=$1
-                    local TARGET=$2
-                    local BUILD_MODE=$3
-                    local FEATURES=$4
-
-                    if [ $BUILD_MODE = "release" ]; then
-                        local RELEASE_FLAG="--release"
-                    else
-                        local RELEASE_FLAG=""
-                    fi
-
-                    if [ -n "$FEATURES" ]; then
-                        local FEATURES_FLAG="--features $FEATURES"
-                    else
-                        local FEATURES_FLAG=""
-                    fi
-                    local CARGO_FLAGS="--example $EXAMPLE --target $TARGET $RELEASE_FLAG $FEATURES_FLAG"
-
-                    cargo run $CARGO_FLAGS | diff -u ci/expected/$EXAMPLE.run -
-                    arm-none-eabi-objcopy -O ihex target/$TARGET/$BUILD_MODE/examples/$EXAMPLE ${EXAMPLE}_1.hex
-
-                    # build again to ensure that the build is reproducable
-                    cargo clean
-                    cargo build $CARGO_FLAGS
-                    arm-none-eabi-objcopy -O ihex target/$TARGET/$BUILD_MODE/examples/$EXAMPLE ${EXAMPLE}_2.hex
-
-                    # compare results of both builds
-                    cmp ${EXAMPLE}_1.hex ${EXAMPLE}_2.hex
-                }
-
                 if [ $ex != types ]; then
-                    test_arm_example $ex $T "debug" ""
-                    test_arm_example $ex $T "release" ""
+                    arm_example "run" $ex "debug" "" "1"
+                    arm_example "run" $ex "release" "" "1"
                 fi
 
                 if [ $TARGET != thumbv6m-none-eabi ]; then
-                    test_arm_example $ex $T "debug" "timer-queue"
-                    test_arm_example $ex $T "release" "timer-queue"
+                    arm_example "run" $ex "debug" "timer-queue" "1"
+                    arm_example "run" $ex "release" "timer-queue" "1"
+                fi
+            done
+
+            cargo clean
+            for ex in ${exs[@]}; do
+                if [ $ex != types ]; then
+                    arm_example "build" $ex "debug" "" "2"
+                    cmp ${ex}_debug_1.hex ${ex}_debug_2.hex
+                    arm_example "build" $ex "release" "" "2"
+                    cmp ${ex}_release_1.hex ${ex}_release_2.hex
+                fi
+
+                if [ $TARGET != thumbv6m-none-eabi ]; then
+                    arm_example "build" $ex "debug" "timer-queue" "2"
+                    cmp ${ex}_timer-queue_debug_1.hex ${ex}_timer-queue_debug_2.hex
+                    arm_example "build" $ex "release" "timer-queue" "2"
+                    cmp ${ex}_timer-queue_release_1.hex ${ex}_timer-queue_release_2.hex
                 fi
             done
     esac
