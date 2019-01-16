@@ -76,20 +76,45 @@ main() {
                     continue
                 fi
 
-                if [ $ex != types ]; then
-                    cargo run --example $ex --target $T | \
-                        diff -u ci/expected/$ex.run -
+                test_arm_example() {
+                    local EXAMPLE=$1
+                    local TARGET=$2
+                    local BUILD_MODE=$3
+                    local FEATURES=$4
 
-                    cargo run --example $ex --target $T --release | \
-                        diff -u ci/expected/$ex.run -
+                    if [ $BUILD_MODE = "release" ]; then
+                        local RELEASE_FLAG="--release"
+                    else
+                        local RELEASE_FLAG=""
+                    fi
+
+                    if [ -n "$FEATURES" ]; then
+                        local FEATURES_FLAG="--features $FEATURES"
+                    else
+                        local FEATURES_FLAG=""
+                    fi
+                    local CARGO_FLAGS="--example $EXAMPLE --target $TARGET $RELEASE_FLAG $FEATURES_FLAG"
+
+                    cargo run $CARGO_FLAGS | diff -u ci/expected/$EXAMPLE.run -
+                    arm-none-eabi-objcopy -O ihex target/$TARGET/$BUILD_MODE/examples/$EXAMPLE ${EXAMPLE}_1.hex
+
+                    # build again to ensure that the build is reproducable
+                    cargo clean
+                    cargo build $CARGO_FLAGS
+                    arm-none-eabi-objcopy -O ihex target/$TARGET/$BUILD_MODE/examples/$EXAMPLE ${EXAMPLE}_2.hex
+
+                    # compare results of both builds
+                    cmp ${EXAMPLE}_1.hex ${EXAMPLE}_2.hex
+                }
+
+                if [ $ex != types ]; then
+                    test_arm_example $ex $T "debug" ""
+                    test_arm_example $ex $T "release" ""
                 fi
 
                 if [ $TARGET != thumbv6m-none-eabi ]; then
-                    cargo run --features timer-queue --example $ex --target $T | \
-                        diff -u ci/expected/$ex.run -
-
-                    cargo run --features timer-queue --example $ex --target $T --release | \
-                        diff -u ci/expected/$ex.run -
+                    test_arm_example $ex $T "debug" "timer-queue"
+                    test_arm_example $ex $T "release" "timer-queue"
                 fi
             done
     esac

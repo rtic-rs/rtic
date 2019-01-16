@@ -2,7 +2,7 @@
 
 use proc_macro::TokenStream;
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     sync::atomic::{AtomicUsize, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -20,13 +20,13 @@ use crate::{
 // NOTE to avoid polluting the user namespaces we map some identifiers to pseudo-hygienic names.
 // In some instances we also use the pseudo-hygienic names for safety, for example the user should
 // not modify the priority field of resources.
-type Aliases = HashMap<Ident, Ident>;
+type Aliases = BTreeMap<Ident, Ident>;
 
 struct Context {
     // Alias
     #[cfg(feature = "timer-queue")]
     baseline: Ident,
-    dispatchers: HashMap<u8, Dispatcher>,
+    dispatchers: BTreeMap<u8, Dispatcher>,
     // Alias (`fn`)
     idle: Ident,
     // Alias (`fn`)
@@ -41,7 +41,7 @@ struct Context {
     schedule_enum: Ident,
     // Task -> Alias (`fn`)
     schedule_fn: Aliases,
-    tasks: HashMap<Ident, Task>,
+    tasks: BTreeMap<Ident, Task>,
     // Alias (`struct` / `static mut`)
     timer_queue: Ident,
 }
@@ -66,7 +66,7 @@ impl Default for Context {
         Context {
             #[cfg(feature = "timer-queue")]
             baseline: mk_ident(None),
-            dispatchers: HashMap::new(),
+            dispatchers: BTreeMap::new(),
             idle: mk_ident(Some("idle")),
             init: mk_ident(Some("init")),
             priority: mk_ident(None),
@@ -74,7 +74,7 @@ impl Default for Context {
             resources: HashMap::new(),
             schedule_enum: mk_ident(None),
             schedule_fn: Aliases::new(),
-            tasks: HashMap::new(),
+            tasks: BTreeMap::new(),
             timer_queue: mk_ident(None),
         }
     }
@@ -1957,7 +1957,7 @@ fn mk_ident(name: Option<&str>) -> Ident {
 }
 
 // `once = true` means that these locals will be called from a function that will run *once*
-fn mk_locals(locals: &HashMap<Ident, Static>, once: bool) -> proc_macro2::TokenStream {
+fn mk_locals(locals: &BTreeMap<Ident, Static>, once: bool) -> proc_macro2::TokenStream {
     let lt = if once { Some(quote!('static)) } else { None };
 
     let locals = locals

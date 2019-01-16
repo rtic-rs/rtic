@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     iter, u8,
 };
 
@@ -120,10 +120,10 @@ impl App {
     pub fn parse(items: Vec<Item>, args: AppArgs) -> parse::Result<Self> {
         let mut idle = None;
         let mut init = None;
-        let mut exceptions = HashMap::new();
-        let mut interrupts = HashMap::new();
-        let mut resources = HashMap::new();
-        let mut tasks = HashMap::new();
+        let mut exceptions = BTreeMap::new();
+        let mut interrupts = BTreeMap::new();
+        let mut resources = BTreeMap::new();
+        let mut tasks = BTreeMap::new();
         let mut free_interrupts = None;
 
         for item in items {
@@ -418,25 +418,25 @@ impl App {
     }
 }
 
-pub type Idents = HashSet<Ident>;
+pub type Idents = BTreeSet<Ident>;
 
-pub type Exceptions = HashMap<Ident, Exception>;
+pub type Exceptions = BTreeMap<Ident, Exception>;
 
-pub type Interrupts = HashMap<Ident, Interrupt>;
+pub type Interrupts = BTreeMap<Ident, Interrupt>;
 
-pub type Resources = HashMap<Ident, Resource>;
+pub type Resources = BTreeMap<Ident, Resource>;
 
 pub type Statics = Vec<ItemStatic>;
 
-pub type Tasks = HashMap<Ident, Task>;
+pub type Tasks = BTreeMap<Ident, Task>;
 
-pub type FreeInterrupts = HashMap<Ident, FreeInterrupt>;
+pub type FreeInterrupts = BTreeMap<Ident, FreeInterrupt>;
 
 pub struct Idle {
     pub args: IdleArgs,
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
-    pub statics: HashMap<Ident, Static>,
+    pub statics: BTreeMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
 
@@ -606,7 +606,7 @@ pub struct Init {
     pub args: InitArgs,
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
-    pub statics: HashMap<Ident, Static>,
+    pub statics: BTreeMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
     pub assigns: Vec<Assign>,
 }
@@ -650,7 +650,7 @@ pub struct Exception {
     pub args: ExceptionArgs,
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
-    pub statics: HashMap<Ident, Static>,
+    pub statics: BTreeMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
 
@@ -738,7 +738,7 @@ pub struct Interrupt {
     pub args: InterruptArgs,
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
-    pub statics: HashMap<Ident, Static>,
+    pub statics: BTreeMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
 
@@ -1017,8 +1017,8 @@ pub struct Static {
 }
 
 impl Static {
-    fn parse(items: Vec<ItemStatic>) -> parse::Result<HashMap<Ident, Static>> {
-        let mut statics = HashMap::new();
+    fn parse(items: Vec<ItemStatic>) -> parse::Result<BTreeMap<Ident, Static>> {
+        let mut statics = BTreeMap::new();
 
         for item in items {
             if statics.contains_key(&item.ident) {
@@ -1051,7 +1051,7 @@ pub struct Task {
     pub attrs: Vec<Attribute>,
     pub unsafety: Option<Token![unsafe]>,
     pub inputs: Vec<ArgCaptured>,
-    pub statics: HashMap<Ident, Static>,
+    pub statics: BTreeMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
 
