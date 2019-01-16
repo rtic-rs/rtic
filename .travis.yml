@@ -23,7 +23,10 @@ matrix:
       rust: nightly
       if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
-before_install: set -e
+before_install:
+  - set -e
+  - sudo apt-get update
+  - sudo apt-get install -y binutils-arm-none-eabi
 
 install:
   - bash ci/install.sh
