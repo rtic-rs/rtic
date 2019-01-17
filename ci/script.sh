@@ -120,6 +120,11 @@ main() {
 
             cargo clean
             for ex in ${exs[@]}; do
+                if [ $ex = ramfunc ] && [ $T = thumbv6m-none-eabi ]; then
+                    # LLD doesn't support this at the moment
+                    continue
+                fi
+
                 if [ $ex = singleton ]; then
                     # singleton build is currently not reproducible due to
                     # https://github.com/japaric/owned-singleton/issues/2
