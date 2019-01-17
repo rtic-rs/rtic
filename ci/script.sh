@@ -120,6 +120,12 @@ main() {
 
             cargo clean
             for ex in ${exs[@]}; do
+                if [ $ex = singleton ]; then
+                    # singleton build is currently not reproducible due to
+                    # https://github.com/japaric/owned-singleton/issues/2
+                    continue
+                fi
+
                 if [ $ex != types ]; then
                     arm_example "build" $ex "debug" "" "2"
                     cmp ${ex}_debug_1.hex ${ex}_debug_2.hex

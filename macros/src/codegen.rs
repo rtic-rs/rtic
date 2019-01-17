@@ -3,8 +3,6 @@
 use proc_macro::TokenStream;
 use std::{
     collections::{BTreeMap, HashMap},
-    sync::atomic::{AtomicUsize, Ordering},
-    time::{SystemTime, UNIX_EPOCH},
 };
 
 use proc_macro2::Span;
@@ -44,6 +42,8 @@ struct Context {
     tasks: BTreeMap<Ident, Task>,
     // Alias (`struct` / `static mut`)
     timer_queue: Ident,
+    // Generator of Ident names or suffixes
+    ident_gen: IdentGenerator,
 }
 
 struct Dispatcher {
@@ -63,19 +63,22 @@ struct Task {
 
 impl Default for Context {
     fn default() -> Self {
+        let mut ident_gen = IdentGenerator::new();
+
         Context {
             #[cfg(feature = "timer-queue")]
-            baseline: mk_ident(None),
+            baseline: ident_gen.mk_ident(None),
             dispatchers: BTreeMap::new(),
-            idle: mk_ident(Some("idle")),
-            init: mk_ident(Some("init")),
-            priority: mk_ident(None),
+            idle: ident_gen.mk_ident(Some("idle")),
+            init: ident_gen.mk_ident(Some("init")),
+            priority: ident_gen.mk_ident(None),
             statics: Aliases::new(),
             resources: HashMap::new(),
-            schedule_enum: mk_ident(None),
+            schedule_enum: ident_gen.mk_ident(None),
             schedule_fn: Aliases::new(),
             tasks: BTreeMap::new(),
-            timer_queue: mk_ident(None),
+            timer_queue: ident_gen.mk_ident(None),
+            ident_gen,
         }
     }
 }
@@ -140,13 +143,13 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
         () => quote!(),
     };
 
-    let timer_queue = timer_queue(&ctxt, app, analysis);
+    let timer_queue = timer_queue(&mut ctxt, app, analysis);
 
     let pre_init = pre_init(&ctxt, &app, analysis);
 
     let assertions = assertions(app, analysis);
 
-    let main = mk_ident(None);
+    let main = ctxt.ident_gen.mk_ident(None);
     let init = &ctxt.init;
     quote!(
         #resources
@@ -213,7 +216,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
                 pub static #mut_ #name: #ty = #expr;
             ));
 
-            let alias = mk_ident(None);
+            let alias = ctxt.ident_gen.mk_ident(None);
             if let Some(Ownership::Shared { ceiling }) = analysis.ownerships.get(name) {
                 items.push(mk_resource(
                     ctxt,
@@ -229,7 +232,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
 
             ctxt.statics.insert(name.clone(), alias);
         } else {
-            let alias = mk_ident(None);
+            let alias = ctxt.ident_gen.mk_ident(None);
             let symbol = format!("{}::{}", name, alias);
 
             items.push(
@@ -754,7 +757,7 @@ fn prelude(
                                     #(#cfgs)*
                                     pub #name: &'a #mut_ #name
                                 ));
-                                let alias = mk_ident(None);
+                                let alias = ctxt.ident_gen.mk_ident(None);
                                 items.push(quote!(
                                     #(#cfgs)*
                                     let #mut_ #alias = unsafe {
@@ -771,7 +774,7 @@ fn prelude(
                                     #(#cfgs)*
                                     pub #name: rtfm::Exclusive<'a, #name>
                                 ));
-                                let alias = mk_ident(None);
+                                let alias = ctxt.ident_gen.mk_ident(None);
                                 items.push(quote!(
                                     #(#cfgs)*
                                     let #mut_ #alias = unsafe {
@@ -838,7 +841,7 @@ fn prelude(
             }
         }
 
-        let alias = mk_ident(None);
+        let alias = ctxt.ident_gen.mk_ident(None);
         let unsafety = if needs_unsafe {
             Some(quote!(unsafe))
         } else {
@@ -899,7 +902,7 @@ fn prelude(
                 continue;
             }
 
-            ctxt.schedule_fn.insert(task.clone(), mk_ident(None));
+            ctxt.schedule_fn.insert(task.clone(), ctxt.ident_gen.mk_ident(None));
         }
 
         items.push(quote!(
@@ -1026,7 +1029,7 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
 
             let locals = mk_locals(&exception.statics, false);
             let symbol = ident.to_string();
-            let alias = mk_ident(None);
+            let alias = ctxt.ident_gen.mk_ident(None);
             let unsafety = &exception.unsafety;
             quote!(
                 #module
@@ -1104,7 +1107,7 @@ fn interrupts(
         };
 
         let locals = mk_locals(&interrupt.statics, false);
-        let alias = mk_ident(None);
+        let alias = ctxt.ident_gen.mk_ident(None);
         let symbol = ident.to_string();
         let unsafety = &interrupt.unsafety;
         scoped.push(quote!(
@@ -1138,10 +1141,10 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
     // first pass to generate buffers (statics and resources) and spawn aliases
     for (name, task) in &app.tasks {
         #[cfg(feature = "timer-queue")]
-        let scheduleds_alias = mk_ident(None);
-        let free_alias = mk_ident(None);
-        let inputs_alias = mk_ident(None);
-        let task_alias = mk_ident(Some(&name.to_string()));
+        let scheduleds_alias = ctxt.ident_gen.mk_ident(None);
+        let free_alias = ctxt.ident_gen.mk_ident(None);
+        let inputs_alias = ctxt.ident_gen.mk_ident(None);
+        let task_alias = ctxt.ident_gen.mk_ident(Some(&name.to_string()));
 
         let inputs = &task.inputs;
 
@@ -1202,7 +1205,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
                 alias: task_alias,
                 free_queue: free_alias,
                 inputs: inputs_alias,
-                spawn_fn: mk_ident(None),
+                spawn_fn: ctxt.ident_gen.mk_ident(None),
 
                 #[cfg(feature = "timer-queue")]
                 scheduleds: scheduleds_alias,
@@ -1286,8 +1289,8 @@ fn dispatchers(
 
     let device = &app.args.device;
     for (level, dispatcher) in &analysis.dispatchers {
-        let ready_alias = mk_ident(None);
-        let enum_alias = mk_ident(None);
+        let ready_alias = ctxt.ident_gen.mk_ident(None);
+        let enum_alias = ctxt.ident_gen.mk_ident(None);
         let capacity = mk_typenum_capacity(dispatcher.capacity, true);
 
         let variants = dispatcher
@@ -1376,7 +1379,7 @@ fn dispatchers(
         let attrs = &dispatcher.attrs;
         let interrupt = &dispatcher.interrupt;
         let symbol = interrupt.to_string();
-        let alias = mk_ident(None);
+        let alias = ctxt.ident_gen.mk_ident(None);
         dispatchers.push(quote!(
             #(#attrs)*
             #[export_name = #symbol]
@@ -1627,7 +1630,7 @@ fn schedule(ctxt: &Context, app: &App) -> proc_macro2::TokenStream {
     quote!(#(#items)*)
 }
 
-fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
+fn timer_queue(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
     let tasks = &analysis.timer_queue.tasks;
 
     if tasks.is_empty() {
@@ -1702,7 +1705,7 @@ fn timer_queue(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::T
         .collect::<Vec<_>>();
 
     let logical_prio = analysis.timer_queue.priority;
-    let alias = mk_ident(None);
+    let alias = ctxt.ident_gen.mk_ident(None);
     items.push(quote!(
         #[export_name = "SysTick"]
         #[doc(hidden)]
@@ -1912,48 +1915,35 @@ fn mk_typenum_capacity(capacity: u8, power_of_two: bool) -> proc_macro2::TokenSt
     quote!(rtfm::export::consts::#ident)
 }
 
-fn mk_ident(name: Option<&str>) -> Ident {
-    static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
+struct IdentGenerator {
+    rng: rand::rngs::SmallRng,
+}
 
-    let elapsed = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-
-    let secs = elapsed.as_secs();
-    let nanos = elapsed.subsec_nanos();
-
-    let count = CALL_COUNT.fetch_add(1, Ordering::SeqCst) as u32;
-    let mut seed: [u8; 16] = [0; 16];
-
-    for (i, v) in seed.iter_mut().take(8).enumerate() {
-        *v = ((secs >> (i * 8)) & 0xFF) as u8
+impl IdentGenerator {
+    fn new() -> IdentGenerator {
+        IdentGenerator { rng: rand::rngs::SmallRng::seed_from_u64(0) }
     }
 
-    for (i, v) in seed.iter_mut().skip(8).take(4).enumerate() {
-        *v = ((nanos >> (i * 8)) & 0xFF) as u8
-    }
-
-    for (i, v) in seed.iter_mut().skip(12).enumerate() {
-        *v = ((count >> (i * 8)) & 0xFF) as u8
-    }
-
-    let n;
-    let mut s = if let Some(name) = name {
-        n = 4;
-        format!("{}_", name)
-    } else {
-        n = 16;
-        String::new()
-    };
-
-    let mut rng = rand::rngs::SmallRng::from_seed(seed);
-    for i in 0..n {
-        if i == 0 || rng.gen() {
-            s.push(('a' as u8 + rng.gen::<u8>() % 25) as char)
+    fn mk_ident(&mut self, name: Option<&str>) -> Ident {
+        let n;
+        let mut s = if let Some(name) = name {
+            n = 4;
+            format!("{}_", name)
         } else {
-            s.push(('0' as u8 + rng.gen::<u8>() % 10) as char)
-        }
-    }
+            n = 16;
+            String::new()
+        };
 
-    Ident::new(&s, Span::call_site())
+        for i in 0..n {
+            if i == 0 || self.rng.gen() {
+                s.push(('a' as u8 + self.rng.gen::<u8>() % 25) as char)
+            } else {
+                s.push(('0' as u8 + self.rng.gen::<u8>() % 10) as char)
+            }
+        }
+
+        Ident::new(&s, Span::call_site())
+    }
 }
 
 // `once = true` means that these locals will be called from a function that will run *once*
