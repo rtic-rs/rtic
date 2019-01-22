@@ -1922,7 +1922,12 @@ struct IdentGenerator {
 
 impl IdentGenerator {
     fn new() -> IdentGenerator {
-        IdentGenerator { rng: rand::rngs::SmallRng::seed_from_u64(0) }
+        let crate_name = env!("CARGO_PKG_NAME");
+        let seed = [0u8; 16];
+        for (i, b) in crate_name.bytes().enumerate() {
+            seed[i%seed.len()].wrapping_add(b);
+        }
+        IdentGenerator { rng: rand::rngs::SmallRng::from_seed(seed) }
     }
 
     fn mk_ident(&mut self, name: Option<&str>) -> Ident {
@@ -1931,8 +1936,9 @@ impl IdentGenerator {
             n = 4;
             format!("{}_", name)
         } else {
+            let crate_name = env!("CARGO_PKG_NAME").replace("-", "_").to_lowercase();
             n = 16;
-            String::new()
+            format!("{}__internal__", crate_name)
         };
 
         for i in 0..n {
