@@ -576,6 +576,7 @@ fn module(
         #root
 
         #[doc = #doc]
+        #[allow(non_snake_case)]
         pub mod #name {
             /// Variables injected into this context by the `app` attribute
             pub struct Context<#lt> {
