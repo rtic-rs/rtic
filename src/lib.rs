@@ -197,7 +197,7 @@ impl PartialOrd for Instant {
 /// A `Duration` type to represent a span of time.
 ///
 /// This data type is only available when the `timer-queue` feature is enabled
-#[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Default, Eq, Ord, PartialEq, PartialOrd)]
 #[cfg(feature = "timer-queue")]
 pub struct Duration(u32);
 
