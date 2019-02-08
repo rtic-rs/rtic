@@ -1,0 +1,5 @@
+[book]
+authors = ["Jorge Aparicio"]
+multilingual = false
+src = "src"
+title = "Real Time For the Masses"

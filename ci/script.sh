@@ -24,6 +24,7 @@ main() {
                 cargo doc
             fi
             ( cd book && mdbook build )
+            ( cd ru && mdbook build )
 
             local td=$(mktemp -d)
             cp -r target/doc $td/api
