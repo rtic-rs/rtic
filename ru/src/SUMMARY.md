@@ -2,7 +2,7 @@
 
 [Введение](./preface.md)
 - [RTFM в примерах](./by-example.md)
-  - [Атрибут `app](./by-example/app.md)
+  - [Атрибут `app`](./by-example/app.md)
   - [Ресурсы](./by-example/resources.md)
   - [Задачи](./by-example/tasks.md)
   - [Очередь таймера](./by-example/timer-queue.md)
