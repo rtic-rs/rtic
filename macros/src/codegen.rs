@@ -3,6 +3,7 @@
 use proc_macro::TokenStream;
 use std::{
     collections::{BTreeMap, HashMap},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use proc_macro2::Span;
@@ -1993,29 +1994,47 @@ fn mk_typenum_capacity(capacity: u8, power_of_two: bool) -> proc_macro2::TokenSt
 }
 
 struct IdentGenerator {
+    call_count: u32,
     rng: rand::rngs::SmallRng,
 }
 
 impl IdentGenerator {
     fn new() -> IdentGenerator {
-        let crate_name = env!("CARGO_PKG_NAME");
-        let seed = [0u8; 16];
-        for (i, b) in crate_name.bytes().enumerate() {
-            seed[i%seed.len()].wrapping_add(b);
+        let elapsed = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
+        let secs = elapsed.as_secs();
+        let nanos = elapsed.subsec_nanos();
+
+        let mut seed: [u8; 16] = [0; 16];
+
+        for (i, v) in seed.iter_mut().take(8).enumerate() {
+            *v = ((secs >> (i * 8)) & 0xFF) as u8
         }
-        IdentGenerator { rng: rand::rngs::SmallRng::from_seed(seed) }
+
+        for (i, v) in seed.iter_mut().skip(8).take(4).enumerate() {
+            *v = ((nanos >> (i * 8)) & 0xFF) as u8
+        }
+
+        let rng = rand::rngs::SmallRng::from_seed(seed);
+
+        IdentGenerator {
+            call_count: 0,
+            rng,
+        }
     }
 
     fn mk_ident(&mut self, name: Option<&str>) -> Ident {
         let n;
-        let mut s = if let Some(name) = name {
+        let s = if let Some(name) = name {
             n = 4;
             format!("{}_", name)
         } else {
             let crate_name = env!("CARGO_PKG_NAME").replace("-", "_").to_lowercase();
-            n = 16;
+            n = 4;
             format!("{}__internal__", crate_name)
         };
+
+        let mut s = format!("{}{}_", s, self.call_count);
 
         for i in 0..n {
             if i == 0 || self.rng.gen() {
@@ -2024,6 +2043,8 @@ impl IdentGenerator {
                 s.push(('0' as u8 + self.rng.gen::<u8>() % 10) as char)
             }
         }
+
+        self.call_count += 1;
 
         Ident::new(&s, Span::call_site())
     }
