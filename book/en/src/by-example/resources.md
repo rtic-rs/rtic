@@ -19,12 +19,12 @@ no preemption is possible. The `SHARED` resource can only be accessed by these
 two handlers.
 
 ``` rust
-{{#include ../../../examples/resource.rs}}
+{{#include ../../../../examples/resource.rs}}
 ```
 
 ``` console
 $ cargo run --example resource
-{{#include ../../../ci/expected/resource.run}}```
+{{#include ../../../../ci/expected/resource.run}}```
 
 ## Priorities
 
@@ -62,12 +62,12 @@ the critical section created by the lowest priority handler.
 [`lock`]: ../../api/rtfm/trait.Mutex.html#method.lock
 
 ``` rust
-{{#include ../../../examples/lock.rs}}
+{{#include ../../../../examples/lock.rs}}
 ```
 
 ``` console
 $ cargo run --example lock
-{{#include ../../../ci/expected/lock.run}}```
+{{#include ../../../../ci/expected/lock.run}}```
 
 ## Late resources
 
@@ -91,12 +91,12 @@ the consumer resource.
 [`Queue`]: ../../api/heapless/spsc/struct.Queue.html
 
 ``` rust
-{{#include ../../../examples/late.rs}}
+{{#include ../../../../examples/late.rs}}
 ```
 
 ``` console
 $ cargo run --example late
-{{#include ../../../ci/expected/late.run}}```
+{{#include ../../../../ci/expected/late.run}}```
 
 ## `static` resources
 
@@ -111,9 +111,9 @@ In the example below a key is loaded (or created) at runtime and then used from
 two tasks that run at different priorities.
 
 ``` rust
-{{#include ../../../examples/static.rs}}
+{{#include ../../../../examples/static.rs}}
 ```
 
 ``` console
 $ cargo run --example static
-{{#include ../../../ci/expected/static.run}}```
+{{#include ../../../../ci/expected/static.run}}```

@@ -1,0 +1,16 @@
+# Summary
+
+[Введение](./preface.md)
+- [RTFM в примерах](./by-example.md)
+  - [Атрибут `app`](./by-example/app.md)
+  - [Ресурсы](./by-example/resources.md)
+  - [Задачи](./by-example/tasks.md)
+  - [Очередь таймера](./by-example/timer-queue.md)
+  - [Одиночки](./by-example/singletons.md)
+  - [Типы, Send и Sync](./by-example/types-send-sync.md)
+  - [Создание нового проекта](./by-example/new.md)
+  - [Советы и хитрости](./by-example/tips.md)
+- [Под капотом](./internals.md)
+  - [Ceiling analysis](./internals/ceilings.md)
+  - [Диспетчер задач](./internals/tasks.md)
+  - [Очередь таймера](./internals/timer-queue.md)
