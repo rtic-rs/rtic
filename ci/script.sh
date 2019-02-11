@@ -139,15 +139,15 @@ main() {
                 fi
 
                 if [ $ex != types ]; then
-                    arm_example "build" $ex "debug" "" "2"
-                    cmp ci/builds/${ex}_debug_1.hex ci/builds/${ex}_debug_2.hex
+                    # arm_example "build" $ex "debug" "" "2"
+                    # cmp ci/builds/${ex}_debug_1.hex ci/builds/${ex}_debug_2.hex
                     arm_example "build" $ex "release" "" "2"
                     cmp ci/builds/${ex}_release_1.hex ci/builds/${ex}_release_2.hex
                 fi
 
                 if [ $TARGET != thumbv6m-none-eabi ]; then
-                    arm_example "build" $ex "debug" "timer-queue" "2"
-                    cmp ci/builds/${ex}_timer-queue_debug_1.hex ci/builds/${ex}_timer-queue_debug_2.hex
+                    # arm_example "build" $ex "debug" "timer-queue" "2"
+                    # cmp ci/builds/${ex}_timer-queue_debug_1.hex ci/builds/${ex}_timer-queue_debug_2.hex
                     arm_example "build" $ex "release" "timer-queue" "2"
                     cmp ci/builds/${ex}_timer-queue_release_1.hex ci/builds/${ex}_timer-queue_release_2.hex
                 fi
