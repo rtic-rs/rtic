@@ -1,16 +1,19 @@
 set -euxo pipefail
 
 main() {
+    local langs=( en ru )
+
     rm -f .cargo/config
     cargo doc --features timer-queue
-    ( cd book && mdbook build )
-    ( cd ru && mdbook build )
 
     local td=$(mktemp -d)
     cp -r target/doc $td/api
-    cp -r book/book $td/
-    cp -r ru/book $td/book/ru
-    cp LICENSE-* $td/book/
+    mkdir $td/book/
+    for lang in ${langs[@]}; do
+        ( cd book/$lang && mdbook build )
+        cp -r book/$lang/book $td/book/$lang
+        cp LICENSE-* $td/book/$lang/
+    done
 
     mkdir ghp-import
     curl -Ls https://github.com/davisp/ghp-import/archive/master.tar.gz |
