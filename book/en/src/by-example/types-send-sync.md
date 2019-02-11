@@ -13,7 +13,7 @@ function.
 The example below shows the different types generates by the `app` attribute.
 
 ``` rust
-{{#include ../../../examples/types.rs}}
+{{#include ../../../../examples/types.rs}}
 ```
 
 ## `Send`
@@ -36,7 +36,7 @@ shared `static mut` resources.
 The example below shows where a type that doesn't implement `Send` can be used.
 
 ``` rust
-{{#include ../../../examples/not-send.rs}}
+{{#include ../../../../examples/not-send.rs}}
 ```
 
 ## `Sync`
@@ -56,5 +56,5 @@ resources shared between tasks that run at the *same* priority.
 The example below shows where a type that doesn't implement `Sync` can be used.
 
 ``` rust
-{{#include ../../../examples/not-sync.rs}}
+{{#include ../../../../examples/not-sync.rs}}
 ```

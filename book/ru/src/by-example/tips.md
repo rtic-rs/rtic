@@ -8,12 +8,12 @@
 ресурсами, который можно вызывать из различных задач. Вот такой пример:
 
 ``` rust
-{{#include ../../../examples/generics.rs}}
+{{#include ../../../../examples/generics.rs}}
 ```
 
 ``` console
 $ cargo run --example generics
-{{#include ../../../ci/expected/generics.run}}```
+{{#include ../../../../ci/expected/generics.run}}```
 
 Это также позволяет Вам изменять статические приоритеты задач без
 переписывания кода. Если Вы единообразно используете `lock`-и для доступа
@@ -42,22 +42,22 @@ RTFM v0.4.x была возможность взаимодействия с др
 В примере ниже показано как разместить высокоприоритетную задачу `bar` в ОЗУ.
 
 ``` rust
-{{#include ../../../examples/ramfunc.rs}}
+{{#include ../../../../examples/ramfunc.rs}}
 ```
 
 Запуск этой программы произведет ожидаемый вывод.
 
 ``` console
 $ cargo run --example ramfunc
-{{#include ../../../ci/expected/ramfunc.run}}```
+{{#include ../../../../ci/expected/ramfunc.run}}```
 
 Можно посмотреть на вывод `cargo-nm`, чтобы убедиться, что `bar` расположен в ОЗУ
 (`0x2000_0000`), тогда как `foo` расположен во Flash (`0x0000_0000`).
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' foo::'
-{{#include ../../../ci/expected/ramfunc.grep.foo}}```
+{{#include ../../../../ci/expected/ramfunc.grep.foo}}```
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
-{{#include ../../../ci/expected/ramfunc.grep.bar}}```
+{{#include ../../../../ci/expected/ramfunc.grep.bar}}```

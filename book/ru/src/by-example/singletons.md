@@ -18,9 +18,9 @@
 [`alloc-singleton`]: https://crates.io/crates/alloc-singleton
 
 ``` rust
-{{#include ../../../examples/singleton.rs}}
+{{#include ../../../../examples/singleton.rs}}
 ```
 
 ``` console
 $ cargo run --example singleton
-{{#include ../../../ci/expected/singleton.run}}```
+{{#include ../../../../ci/expected/singleton.run}}```

@@ -23,15 +23,19 @@ main() {
             else
                 cargo doc
             fi
-            ( cd book && mdbook build )
-            ( cd ru && mdbook build )
+            ( cd book/en && mdbook build )
+            ( cd book/ru && mdbook build )
 
             local td=$(mktemp -d)
             cp -r target/doc $td/api
-            cp -r book/book $td/
-            cp LICENSE-* $td/book/
+            mkdir $td/book
+            cp -r book/en/book $td/book/en
+            cp -r book/ru/book $td/book/ru
+            cp LICENSE-* $td/book/en
+            cp LICENSE-* $td/book/ru
 
-            linkchecker $td/book/
+            linkchecker $td/book/en/
+            linkchecker $td/book/ru/
             linkchecker $td/api/rtfm/
             linkchecker $td/api/cortex_m_rtfm_macros/
         fi

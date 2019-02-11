@@ -9,8 +9,8 @@ This book contains user level documentation for the Real Time For the Masses
 
 There is a translation of this book in [Russian].
 
-[Russian]: ru/index.html
+[Russian]: ../ru/index.html
 
-{{#include ../../README.md:5:46}}
+{{#include ../../../README.md:5:46}}
 
-{{#include ../../README.md:52:}}
+{{#include ../../../README.md:52:}}

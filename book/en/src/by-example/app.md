@@ -3,7 +3,7 @@
 This is the smallest possible RTFM application:
 
 ``` rust
-{{#include ../../../examples/smallest.rs}}
+{{#include ../../../../examples/smallest.rs}}
 ```
 
 All RTFM applications use the [`app`] attribute (`#[app(..)]`). This attribute
@@ -47,7 +47,7 @@ The example below shows the types of the `core` and `device` variables and
 showcases safe access to a `static mut` variable.
 
 ``` rust
-{{#include ../../../examples/init.rs}}
+{{#include ../../../../examples/init.rs}}
 ```
 
 Running the example will print `init` to the console and then exit the QEMU
@@ -55,7 +55,7 @@ process.
 
 ```  console
 $ cargo run --example init
-{{#include ../../../ci/expected/init.run}}```
+{{#include ../../../../ci/expected/init.run}}```
 
 ## `idle`
 
@@ -78,12 +78,12 @@ references that are safe to access.
 The example below shows that `idle` runs after `init`.
 
 ``` rust
-{{#include ../../../examples/idle.rs}}
+{{#include ../../../../examples/idle.rs}}
 ```
 
 ``` console
 $ cargo run --example idle
-{{#include ../../../ci/expected/idle.run}}```
+{{#include ../../../../ci/expected/idle.run}}```
 
 ## `interrupt` / `exception`
 
@@ -93,12 +93,12 @@ and exception handlers. In RTFM, we refer to interrupt and exception handlers as
 *hardware* tasks.
 
 ``` rust
-{{#include ../../../examples/interrupt.rs}}
+{{#include ../../../../examples/interrupt.rs}}
 ```
 
 ``` console
 $ cargo run --example interrupt
-{{#include ../../../ci/expected/interrupt.run}}```
+{{#include ../../../../ci/expected/interrupt.run}}```
 
 So far all the RTFM applications we have seen look no different that the
 applications one can write using only the `cortex-m-rt` crate. In the next

@@ -3,7 +3,7 @@
 Это наименьшая возможная программа на RTFM:
 
 ``` rust
-{{#include ../../../examples/smallest.rs}}
+{{#include ../../../../examples/smallest.rs}}
 ```
 
 Все программы на RTFM используют атрибут [`app`] (`#[app(..)]`). Этот атрибут
@@ -44,14 +44,14 @@
 демонстрирует безопасный доступ к переменной `static mut`.
 
 ``` rust
-{{#include ../../../examples/init.rs}}
+{{#include ../../../../examples/init.rs}}
 ```
 
 Запуск примера напечатает  `init` в консоли и завершит процесс QEMU.
 
 ```  console
 $ cargo run --example init
-{{#include ../../../ci/expected/init.run}}```
+{{#include ../../../../ci/expected/init.run}}```
 
 ## `idle`
 
@@ -74,12 +74,12 @@ $ cargo run --example init
 В примере ниже показан запуск `idle` после `init`.
 
 ``` rust
-{{#include ../../../examples/idle.rs}}
+{{#include ../../../../examples/idle.rs}}
 ```
 
 ``` console
 $ cargo run --example idle
-{{#include ../../../ci/expected/idle.run}}```
+{{#include ../../../../ci/expected/idle.run}}```
 
 ## `interrupt` / `exception`
 
@@ -89,12 +89,12 @@ $ cargo run --example idle
 *аппаратными* задачами.
 
 ``` rust
-{{#include ../../../examples/interrupt.rs}}
+{{#include ../../../../examples/interrupt.rs}}
 ```
 
 ``` console
 $ cargo run --example interrupt
-{{#include ../../../ci/expected/interrupt.run}}```
+{{#include ../../../../ci/expected/interrupt.run}}```
 
 До сих пор программы RTFM, которые мы видели не отличались от программ, которые
 можно написать, используя только библиотеку `cortex-m-rt`. В следующем разделе

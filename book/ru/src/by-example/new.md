@@ -64,4 +64,4 @@ $ cargo add panic-semihosting
 ``` console
 $ # ПРИМЕЧАНИЕ: Я раскомментировал опцию `runner` в `.cargo/config`
 $ cargo run
-{{#include ../../../ci/expected/init.run}}```
+{{#include ../../../../ci/expected/init.run}}```

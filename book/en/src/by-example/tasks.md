@@ -19,12 +19,12 @@ The example below showcases three software tasks that run at 2 different
 priorities. The three tasks map to 2 interrupts handlers.
 
 ``` rust
-{{#include ../../../examples/task.rs}}
+{{#include ../../../../examples/task.rs}}
 ```
 
 ``` console
 $ cargo run --example task
-{{#include ../../../ci/expected/task.run}}```
+{{#include ../../../../ci/expected/task.run}}```
 
 ## Message passing
 
@@ -35,12 +35,12 @@ the signature of the task handler.
 The example below showcases three tasks, two of them expect a message.
 
 ``` rust
-{{#include ../../../examples/message.rs}}
+{{#include ../../../../examples/message.rs}}
 ```
 
 ``` console
 $ cargo run --example message
-{{#include ../../../ci/expected/message.run}}```
+{{#include ../../../../ci/expected/message.run}}```
 
 ## Capacity
 
@@ -55,9 +55,9 @@ capacity is not specified then the second `spawn.foo` call in `UART0` would
 fail.
 
 ``` rust
-{{#include ../../../examples/capacity.rs}}
+{{#include ../../../../examples/capacity.rs}}
 ```
 
 ``` console
 $ cargo run --example capacity
-{{#include ../../../ci/expected/capacity.run}}```
+{{#include ../../../../ci/expected/capacity.run}}```

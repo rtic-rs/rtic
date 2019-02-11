@@ -19,12 +19,12 @@ RTFM также поддерживает *программные* задачи, 
 разных приоритетах. Трем задачам назначены 2 обработчика прерываний.
 
 ``` rust
-{{#include ../../../examples/task.rs}}
+{{#include ../../../../examples/task.rs}}
 ```
 
 ``` console
 $ cargo run --example task
-{{#include ../../../ci/expected/task.run}}```
+{{#include ../../../../ci/expected/task.run}}```
 
 ## Передача сообщений
 
@@ -35,12 +35,12 @@ $ cargo run --example task
 Пример ниже демонстрирует три задачи, две из которых ожидают сообщения.
 
 ``` rust
-{{#include ../../../examples/message.rs}}
+{{#include ../../../../examples/message.rs}}
 ```
 
 ``` console
 $ cargo run --example message
-{{#include ../../../ci/expected/message.run}}```
+{{#include ../../../../ci/expected/message.run}}```
 
 ## Ёмкость
 
@@ -55,9 +55,9 @@ $ cargo run --example message
 не определена, тогда второй вызов `spawn.foo` в `UART0` вызовет ошибку.
 
 ``` rust
-{{#include ../../../examples/capacity.rs}}
+{{#include ../../../../examples/capacity.rs}}
 ```
 
 ``` console
 $ cargo run --example capacity
-{{#include ../../../ci/expected/capacity.run}}```
+{{#include ../../../../ci/expected/capacity.run}}```

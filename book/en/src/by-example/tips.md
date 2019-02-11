@@ -8,12 +8,12 @@ data. This lets you easily write generic code that operates on resources and can
 be called from different tasks. Here's one such example:
 
 ``` rust
-{{#include ../../../examples/generics.rs}}
+{{#include ../../../../examples/generics.rs}}
 ```
 
 ``` console
 $ cargo run --example generics
-{{#include ../../../ci/expected/generics.run}}```
+{{#include ../../../../ci/expected/generics.run}}```
 
 This also lets you change the static priorities of tasks without having to
 rewrite code. If you consistently use `lock`s to access the data behind shared
@@ -31,7 +31,7 @@ The example below logs a message whenever the `foo` task is spawned, but only if
 the program has been compiled using the `dev` profile.
 
 ``` rust
-{{#include ../../../examples/cfg.rs}}
+{{#include ../../../../examples/cfg.rs}}
 ```
 
 ## Running tasks from RAM
@@ -56,22 +56,22 @@ improve performance in some cases.
 The example below shows how to place the higher priority task, `bar`, in RAM.
 
 ``` rust
-{{#include ../../../examples/ramfunc.rs}}
+{{#include ../../../../examples/ramfunc.rs}}
 ```
 
 Running this program produces the expected output.
 
 ``` console
 $ cargo run --example ramfunc
-{{#include ../../../ci/expected/ramfunc.run}}```
+{{#include ../../../../ci/expected/ramfunc.run}}```
 
 One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
 (`0x2000_0000`), whereas `foo` ended in Flash (`0x0000_0000`).
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' foo::'
-{{#include ../../../ci/expected/ramfunc.grep.foo}}```
+{{#include ../../../../ci/expected/ramfunc.grep.foo}}```
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
-{{#include ../../../ci/expected/ramfunc.grep.bar}}```
+{{#include ../../../../ci/expected/ramfunc.grep.bar}}```

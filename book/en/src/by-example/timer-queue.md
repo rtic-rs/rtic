@@ -38,13 +38,13 @@ was scheduled to run first.
 > counter functionality has not been implemented in `qemu-system-arm`.
 
 ``` rust
-{{#include ../../../examples/schedule.rs}}
+{{#include ../../../../examples/schedule.rs}}
 ```
 
 Running the program on real hardware produces the following output in the console:
 
 ``` text
-{{#include ../../../ci/expected/schedule.run}}
+{{#include ../../../../ci/expected/schedule.run}}
 ```
 
 ## Periodic tasks
@@ -54,7 +54,7 @@ through the `scheduled` variable. This information and the `schedule` API can be
 used to implement periodic tasks as shown in the example below.
 
 ``` rust
-{{#include ../../../examples/periodic.rs}}
+{{#include ../../../../examples/periodic.rs}}
 ```
 
 This is the output produced by the example. Note that there is zero drift /
@@ -62,7 +62,7 @@ jitter even though `schedule.foo` was invoked at the *end* of `foo`. Using
 `Instant::now` instead of `scheduled` would have resulted in drift / jitter.
 
 ``` text
-{{#include ../../../ci/expected/periodic.run}}
+{{#include ../../../../ci/expected/periodic.run}}
 ```
 
 ## Baseline
@@ -87,11 +87,11 @@ spawned from it will use `Instant::now()` as their baseline time.
 The example below showcases the different meanings of the *baseline*.
 
 ``` rust
-{{#include ../../../examples/baseline.rs}}
+{{#include ../../../../examples/baseline.rs}}
 ```
 
 Running the program on real hardware produces the following output in the console:
 
 ``` text
-{{#include ../../../ci/expected/baseline.run}}
+{{#include ../../../../ci/expected/baseline.run}}
 ```

@@ -30,13 +30,13 @@
 > тактов Cortex-M не реализована в `qemu-system-arm`.
 
 ``` rust
-{{#include ../../../examples/schedule.rs}}
+{{#include ../../../../examples/schedule.rs}}
 ```
 
 Запуск программы на реальном оборудовании производит следующий вывод в консоли:
 
 ``` text
-{{#include ../../../ci/expected/schedule.run}}
+{{#include ../../../../ci/expected/schedule.run}}
 ```
 
 ## Периодические задачи
@@ -46,7 +46,7 @@
 быть использованы для реализации периодических задач, как показано в примере ниже.
 
 ``` rust
-{{#include ../../../examples/periodic.rs}}
+{{#include ../../../../examples/periodic.rs}}
 ```
 
 Это вывод, произведенный примером. Заметьте, что есть смещение / колебание нуля
@@ -54,7 +54,7 @@
 `Instant::now` вместо `scheduled` имело бы влияние на смещение / колебание.
 
 ``` text
-{{#include ../../../ci/expected/periodic.run}}
+{{#include ../../../../ci/expected/periodic.run}}
 ```
 
 ## Базовое время
@@ -80,11 +80,11 @@
 Пример ниже демонстрирует разное значение *базового времени*.
 
 ``` rust
-{{#include ../../../examples/baseline.rs}}
+{{#include ../../../../examples/baseline.rs}}
 ```
 
 Запуск программы на реальном оборудовании произведет следующий вывод в консоли:
 
 ``` text
-{{#include ../../../ci/expected/baseline.run}}
+{{#include ../../../../ci/expected/baseline.run}}
 ```

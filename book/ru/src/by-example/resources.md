@@ -19,12 +19,12 @@
 К ресурсу `SHARED` можно получить доступ только из этих двух прерываний.
 
 ``` rust
-{{#include ../../../examples/resource.rs}}
+{{#include ../../../../examples/resource.rs}}
 ```
 
 ``` console
 $ cargo run --example resource
-{{#include ../../../ci/expected/resource.run}}
+{{#include ../../../../ci/expected/resource.run}}
 ```
 
 ## Приоритеты
@@ -64,12 +64,12 @@ API критической секции, предоставляемое фрей
 [`lock`]: ../../api/rtfm/trait.Mutex.html#method.lock
 
 ``` rust
-{{#include ../../../examples/lock.rs}}
+{{#include ../../../../examples/lock.rs}}
 ```
 
 ``` console
 $ cargo run --example lock
-{{#include ../../../ci/expected/lock.run}}```
+{{#include ../../../../ci/expected/lock.run}}```
 
 ## Поздние ресурсы
 
@@ -93,12 +93,12 @@ $ cargo run --example lock
 [`Queue`]: ../../api/heapless/spsc/struct.Queue.html
 
 ``` rust
-{{#include ../../../examples/late.rs}}
+{{#include ../../../../examples/late.rs}}
 ```
 
 ``` console
 $ cargo run --example late
-{{#include ../../../ci/expected/late.run}}```
+{{#include ../../../../ci/expected/late.run}}```
 
 ## `static`-ресурсы
 
@@ -114,9 +114,9 @@ $ cargo run --example late
 задачах, запущенных на разных приоритетах.
 
 ``` rust
-{{#include ../../../examples/static.rs}}
+{{#include ../../../../examples/static.rs}}
 ```
 
 ``` console
 $ cargo run --example static
-{{#include ../../../ci/expected/static.run}}```
+{{#include ../../../../ci/expected/static.run}}```

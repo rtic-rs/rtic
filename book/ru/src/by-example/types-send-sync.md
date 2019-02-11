@@ -13,7 +13,7 @@
 В примере ниже сгенерированы разные типы с помощью атрибута `app`.
 
 ``` rust
-{{#include ../../../examples/types.rs}}
+{{#include ../../../../examples/types.rs}}
 ```
 
 ## `Send`
@@ -35,7 +35,7 @@
 В примере ниже показано, где можно использовать типы, не реализующие `Send`.
 
 ``` rust
-{{#include ../../../examples/not-send.rs}}
+{{#include ../../../../examples/not-send.rs}}
 ```
 
 ## `Sync`
@@ -55,5 +55,5 @@
 В примере ниже показано, где можно использовать типы, не реализующие `Sync`.
 
 ``` rust
-{{#include ../../../examples/not-sync.rs}}
+{{#include ../../../../examples/not-sync.rs}}
 ```

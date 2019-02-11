@@ -1,7 +1,6 @@
 **/*.rs.bk
 .#*
 .gdb_history
-/book/book
-/ru/book
+/book/*/book
 /target
 Cargo.lock
