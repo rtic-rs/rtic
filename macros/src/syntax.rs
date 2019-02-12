@@ -596,6 +596,7 @@ impl Parse for InitArgs {
     }
 }
 
+// TODO remove in v0.5.x
 pub struct Assign {
     pub attrs: Vec<Attribute>,
     pub left: Ident,
@@ -608,32 +609,83 @@ pub struct Init {
     pub unsafety: Option<Token![unsafe]>,
     pub statics: HashMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
+    // TODO remove in v0.5.x
     pub assigns: Vec<Assign>,
+    pub returns_late_resources: bool,
 }
 
 impl Init {
     fn check(args: InitArgs, item: ItemFn) -> parse::Result<Self> {
-        let valid_signature = item.vis == Visibility::Inherited
+        let mut valid_signature = item.vis == Visibility::Inherited
             && item.constness.is_none()
             && item.asyncness.is_none()
             && item.abi.is_none()
             && item.decl.generics.params.is_empty()
             && item.decl.generics.where_clause.is_none()
             && item.decl.inputs.is_empty()
-            && item.decl.variadic.is_none()
-            && is_unit(&item.decl.output);
+            && item.decl.variadic.is_none();
+
+        let returns_late_resources = match &item.decl.output {
+            ReturnType::Default => false,
+            ReturnType::Type(_, ty) => {
+                match &**ty {
+                    Type::Tuple(t) => {
+                        if t.elems.is_empty() {
+                            // -> ()
+                            true
+                        } else {
+                            valid_signature = false;
+
+                            false // don't care
+                        }
+                    }
+
+                    Type::Path(p) => {
+                        let mut segments = p.path.segments.iter();
+                        if p.qself.is_none()
+                            && p.path.leading_colon.is_none()
+                            && p.path.segments.len() == 2
+                            && segments.next().map(|s| {
+                                s.arguments == PathArguments::None && s.ident.to_string() == "init"
+                            }) == Some(true)
+                            && segments.next().map(|s| {
+                                s.arguments == PathArguments::None
+                                    && s.ident.to_string() == "LateResources"
+                            }) == Some(true)
+                        {
+                            // -> init::LateResources
+                            true
+                        } else {
+                            valid_signature = false;
+
+                            false // don't care
+                        }
+                    }
+
+                    _ => {
+                        valid_signature = false;
+
+                        false // don't care
+                    }
+                }
+            }
+        };
 
         let span = item.span();
 
         if !valid_signature {
             return Err(parse::Error::new(
                 span,
-                "`init` must have type signature `[unsafe] fn()`",
+                "`init` must have type signature `[unsafe] fn() [-> init::LateResources]`",
             ));
         }
 
         let (statics, stmts) = extract_statics(item.block.stmts);
-        let (stmts, assigns) = extract_assignments(stmts);
+        let (stmts, assigns) = if returns_late_resources {
+            (stmts, vec![])
+        } else {
+            extract_assignments(stmts)
+        };
 
         Ok(Init {
             args,
@@ -642,6 +694,7 @@ impl Init {
             statics: Static::parse(statics)?,
             stmts,
             assigns,
+            returns_late_resources,
         })
     }
 }
@@ -1207,6 +1260,7 @@ fn extract_statics(stmts: Vec<Stmt>) -> (Statics, Vec<Stmt>) {
     (statics, stmts)
 }
 
+// TODO remove in v0.5.x
 fn extract_assignments(stmts: Vec<Stmt>) -> (Vec<Stmt>, Vec<Assign>) {
     let mut istmts = stmts.into_iter().rev();
 

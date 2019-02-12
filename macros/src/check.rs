@@ -35,17 +35,20 @@ pub fn app(app: &App) -> parse::Result<()> {
         }
     }
 
-    // Check that all late resources have been initialized in `#[init]`
-    for res in app
-        .resources
-        .iter()
-        .filter_map(|(name, res)| if res.expr.is_none() { Some(name) } else { None })
-    {
-        if app.init.assigns.iter().all(|assign| assign.left != *res) {
-            return Err(parse::Error::new(
-                res.span(),
-                "late resources MUST be initialized at the end of `init`",
-            ));
+    // Check that all late resources have been initialized in `#[init]` if `init` has signature
+    // `fn()`
+    if !app.init.returns_late_resources {
+        for res in app
+            .resources
+            .iter()
+            .filter_map(|(name, res)| if res.expr.is_none() { Some(name) } else { None })
+        {
+            if app.init.assigns.iter().all(|assign| assign.left != *res) {
+                return Err(parse::Error::new(
+                    res.span(),
+                    "late resources MUST be initialized at the end of `init`",
+                ));
+            }
         }
     }
 
@@ -112,11 +115,19 @@ pub fn app(app: &App) -> parse::Result<()> {
         }
     }
 
-    // Check that `init` contains no early returns *if* late resources exist
+    // Check that `init` contains no early returns *if* late resources exist and `init` signature is
+    // `fn()`
     if app.resources.values().any(|res| res.expr.is_none()) {
-        for stmt in &app.init.stmts {
-            noreturn_stmt(stmt)?;
+        if !app.init.returns_late_resources {
+            for stmt in &app.init.stmts {
+                noreturn_stmt(stmt)?;
+            }
         }
+    } else if app.init.returns_late_resources {
+        return Err(parse::Error::new(
+            Span::call_site(),
+            "`init` signature must be `[unsafe] fn()` if there are no late resources",
+        ));
     }
 
     Ok(())
