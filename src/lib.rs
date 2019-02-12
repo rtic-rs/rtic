@@ -14,6 +14,20 @@
 //!
 //! [`#[app]`]: ../cortex_m_rtfm_macros/attr.app.html
 //!
+//! # Minimum Supported Rust Version (MSRV)
+//!
+//! This crate is guaranteed to compile on stable Rust 1.31 (2018 edition) and up. It *might*
+//! compile on older versions but that may change in any new patch release.
+//!
+//! # Semantic Versioning
+//!
+//! Like the Rust project, this crate adheres to [SemVer]: breaking changes in the API and semantics
+//! require a *semver bump* (a new minor version release), with the exception of breaking changes
+//! that fix soundness issues -- those are considered bug fixes and can be landed in a new patch
+//! release.
+//!
+//! [SemVer]: https://semver.org/spec/v2.0.0.html
+//!
 //! # Cargo features
 //!
 //! - `timer-queue`. This opt-in feature enables the `schedule` API which can be used to schedule
