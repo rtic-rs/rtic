@@ -5,10 +5,31 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.1] - 2019-02-12
+
+### Added
+
+- The RTFM book has been translated to Russian. You can find the translation
+  online at https://japaric.github.io/cortex-m-rtfm/book/ru/
+
+- `Duration` now implements the `Default` trait.
+
+### Changed
+
+- [breaking-change][] [soundness-fix] `init` can not contain any early return as
+  that would result in late resources not being initialized and thus undefined
+  behavior.
+
 - Use an absolute link to the book so it works when landing from crates.io
   documentation page
 
-## [v0.4.0] - 2018-11-03
+### Fixed
+
+- `#[interrupt]` and `#[exception]` no longer produce warnings on recent nightlies.
+
+## [v0.4.0] - 2018-11-03 - YANKED
+
+Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0.4.1.
 
 ### Changed
 
@@ -150,7 +171,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Initial release
 
-[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.1...HEAD
+[v0.4.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.0...v0.4.1
 [v0.4.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.4...v0.4.0
 [v0.3.4]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.3...v0.3.4
 [v0.3.3]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.2...v0.3.3
