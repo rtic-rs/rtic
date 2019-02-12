@@ -23,6 +23,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Use an absolute link to the book so it works when landing from crates.io
   documentation page
 
+- The initialization function can now be written as `fn init() ->
+  init::LateResources` when late resources are used. This is preferred over the
+  old `fn init()` form.
+
 ### Fixed
 
 - `#[interrupt]` and `#[exception]` no longer produce warnings on recent nightlies.
