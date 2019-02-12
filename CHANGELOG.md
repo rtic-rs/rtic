@@ -25,7 +25,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - The initialization function can now be written as `fn init() ->
   init::LateResources` when late resources are used. This is preferred over the
-  old `fn init()` form.
+  old `fn init()` form. See the section on late resources (resources chapter) in
+  the book for more details.
 
 ### Fixed
 
