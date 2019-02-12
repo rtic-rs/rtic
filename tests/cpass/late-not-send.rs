@@ -19,10 +19,12 @@ const APP: () = {
     static mut Y: Option<NotSend> = None;
 
     #[init(resources = [Y])]
-    fn init() {
+    fn init() -> init::LateResources {
         *resources.Y = Some(NotSend { _0: PhantomData });
 
-        X = NotSend { _0: PhantomData };
+        init::LateResources {
+            X: NotSend { _0: PhantomData },
+        }
     }
 
     #[idle(resources = [X, Y])]

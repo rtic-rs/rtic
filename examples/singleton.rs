@@ -20,10 +20,12 @@ const APP: () = {
     static mut P: Pool<M> = ();
 
     #[init(resources = [M])]
-    fn init() {
+    fn init() -> init::LateResources {
         rtfm::pend(Interrupt::I2C0);
 
-        P = Pool::new(resources.M);
+        init::LateResources {
+            P: Pool::new(resources.M),
+        }
     }
 
     #[interrupt(

@@ -78,8 +78,8 @@ runtime initialized resources as *late resources*. Late resources are useful for
 interrupt and exception handlers.
 
 Late resources are declared like normal resources but that are given an initial
-value of `()` (the unit value). Late resources must be initialized at the end of
-the `init` function using plain assignments (e.g. `FOO = 1`).
+value of `()` (the unit value). `init` must return the initial values of all
+late resources packed in a `struct` of type `init::LateResources`.
 
 The example below uses late resources to stablish a lockless, one-way channel
 between the `UART0` interrupt handler and the `idle` function. A single producer

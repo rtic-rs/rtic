@@ -22,8 +22,10 @@ const APP: () = {
     static mut X: NotSend = ();
 
     #[init]
-    fn init() {
-        X = NotSend { _0: PhantomData };
+    fn init() -> init::LateResources {
+        init::LateResources {
+            X: NotSend { _0: PhantomData },
+        }
     }
 
     #[interrupt(resources = [X])]

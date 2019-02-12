@@ -7,6 +7,6 @@
 Эта книга содержит документацию уровня пользователя фреймворком Real Time For the Masses
 (RTFM). Описание API можно найти [здесь](../api/rtfm/index.html).
 
-{{#include ../..ADME_RU.md:5:54}}
+{{#include README_RU.md:5:44}}
 
-{{#include ../..ADME_RU.md:60:}}
+{{#include README_RU.md:50:}}

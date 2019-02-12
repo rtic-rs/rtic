@@ -1,3 +1,5 @@
+// TODO remove in v0.5.x
+
 #![no_main]
 #![no_std]
 

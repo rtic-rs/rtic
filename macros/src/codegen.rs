@@ -94,7 +94,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
 
     let (dispatchers_data, dispatchers) = dispatchers(&mut ctxt, &app, analysis);
 
-    let init_fn = init(&mut ctxt, &app, analysis);
+    let (init_fn, has_late_resources) = init(&mut ctxt, &app, analysis);
     let init_arg = if cfg!(feature = "timer-queue") {
         quote!(rtfm::Peripherals {
             CBP: p.CBP,
@@ -123,6 +123,30 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
         })
     };
 
+    let init = &ctxt.init;
+    let init_phase = if has_late_resources {
+        let assigns = app
+            .resources
+            .iter()
+            .filter_map(|(name, res)| {
+                if res.expr.is_none() {
+                    let alias = &ctxt.statics[name];
+
+                    Some(quote!(#alias.set(res.#name);))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        quote!(
+            let res = #init(#init_arg);
+            #(#assigns)*
+        )
+    } else {
+        quote!(#init(#init_arg);)
+    };
+
     let post_init = post_init(&ctxt, &app, analysis);
 
     let (idle_fn, idle_expr) = idle(&mut ctxt, &app, analysis);
@@ -147,7 +171,6 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
     let assertions = assertions(app, analysis);
 
     let main = mk_ident(None);
-    let init = &ctxt.init;
     quote!(
         #resources
 
@@ -185,7 +208,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
 
             #pre_init
 
-            #init(#init_arg);
+            #init_phase
 
             #post_init
 
@@ -290,10 +313,11 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
     quote!(#(#items)*)
 }
 
-fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
+fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> (proc_macro2::TokenStream, bool) {
     let attrs = &app.init.attrs;
     let locals = mk_locals(&app.init.statics, true);
     let stmts = &app.init.stmts;
+    // TODO remove in v0.5.x
     let assigns = app
         .init
         .assigns
@@ -334,12 +358,47 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
         analysis,
     );
 
+    let (late_resources, late_resources_ident, ret) = if app.init.returns_late_resources {
+        // create `LateResources` struct in the root of the crate
+        let ident = mk_ident(None);
+
+        let fields = app
+            .resources
+            .iter()
+            .filter_map(|(name, res)| {
+                if res.expr.is_none() {
+                    let ty = &res.ty;
+                    Some(quote!(pub #name: #ty))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let late_resources = quote!(
+            #[allow(non_snake_case)]
+            pub struct #ident {
+                #(#fields),*
+            }
+        );
+
+        (
+            Some(late_resources),
+            Some(ident),
+            Some(quote!(-> init::LateResources)),
+        )
+    } else {
+        (None, None, None)
+    };
+    let has_late_resources = late_resources.is_some();
+
     let module = module(
         ctxt,
         Kind::Init,
         !app.init.args.schedule.is_empty(),
         !app.init.args.spawn.is_empty(),
         app,
+        late_resources_ident,
     );
 
     #[cfg(feature = "timer-queue")]
@@ -365,25 +424,30 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
     let unsafety = &app.init.unsafety;
     let device = &app.args.device;
     let init = &ctxt.init;
-    quote!(
-        #module
+    (
+        quote!(
+            #late_resources
 
-        #(#attrs)*
-        #unsafety fn #init(mut core: rtfm::Peripherals) {
-            #(#locals)*
+            #module
 
-            #baseline_let
+            #(#attrs)*
+            #unsafety fn #init(mut core: rtfm::Peripherals) #ret {
+                #(#locals)*
 
-            #prelude
+                #baseline_let
 
-            let mut device = unsafe { #device::Peripherals::steal() };
+                #prelude
 
-            #start_let
+                let mut device = unsafe { #device::Peripherals::steal() };
 
-            #(#stmts)*
+                #start_let
 
-            #(#assigns)*
-        }
+                #(#stmts)*
+
+                #(#assigns)*
+            }
+        ),
+        has_late_resources,
     )
 }
 
@@ -440,6 +504,7 @@ fn module(
     schedule: bool,
     spawn: bool,
     app: &App,
+    late_resources: Option<Ident>,
 ) -> proc_macro2::TokenStream {
     let mut items = vec![];
     let mut fields = vec![];
@@ -571,6 +636,12 @@ fn module(
         Kind::Interrupt(_) => "Interrupt handler",
         Kind::Task(_) => "Software task",
     };
+
+    if let Some(late_resources) = late_resources {
+        items.push(quote!(
+            pub use super::#late_resources as LateResources;
+        ));
+    }
 
     quote!(
         #root
@@ -950,6 +1021,7 @@ fn idle(
             !idle.args.schedule.is_empty(),
             !idle.args.spawn.is_empty(),
             app,
+            None,
         );
 
         let unsafety = &idle.unsafety;
@@ -1004,6 +1076,7 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
                 !exception.args.schedule.is_empty(),
                 !exception.args.spawn.is_empty(),
                 app,
+                None,
             );
 
             #[cfg(feature = "timer-queue")]
@@ -1083,6 +1156,7 @@ fn interrupts(
             !interrupt.args.schedule.is_empty(),
             !interrupt.args.spawn.is_empty(),
             app,
+            None,
         ));
 
         #[cfg(feature = "timer-queue")]
@@ -1245,6 +1319,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
             !task.args.schedule.is_empty(),
             !task.args.spawn.is_empty(),
             app,
+            None,
         ));
 
         let attrs = &task.attrs;

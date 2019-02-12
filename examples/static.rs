@@ -16,11 +16,11 @@ const APP: () = {
     static KEY: u32 = ();
 
     #[init]
-    fn init() {
+    fn init() -> init::LateResources {
         rtfm::pend(Interrupt::UART0);
         rtfm::pend(Interrupt::UART1);
 
-        KEY = 0xdeadbeef;
+        init::LateResources { KEY: 0xdeadbeef }
     }
 
     #[interrupt(resources = [KEY])]

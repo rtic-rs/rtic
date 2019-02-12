@@ -14,8 +14,7 @@ const APP: () = {
     static Y: u32 = ();
 
     #[init]
-    fn init() {
-        X = 0;
-        Y = 1;
+    fn init() -> init::LateResources {
+        init::LateResources { X: 0, Y: 1 }
     }
 };
