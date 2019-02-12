@@ -11,7 +11,7 @@ use rtfm::app;
 const APP: () = {
     #[init]
     fn init() -> ! {
-        //~^ ERROR `init` must have type signature `[unsafe] fn()`
+        //~^ ERROR `init` must have type signature `[unsafe] fn() [-> init::LateResources]`
         loop {}
     }
 };

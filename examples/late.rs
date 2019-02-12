@@ -22,7 +22,7 @@ const APP: () = {
     static mut C: Consumer<'static, u32, U4> = ();
 
     #[init]
-    fn init() {
+    fn init() -> init::LateResources {
         // NOTE: we use `Option` here to work around the lack of
         // a stable `const` constructor
         static mut Q: Option<Queue<u32, U4>> = None;
@@ -31,8 +31,7 @@ const APP: () = {
         let (p, c) = Q.as_mut().unwrap().split();
 
         // Initialization of late resources
-        P = p;
-        C = c;
+        init::LateResources { P: p, C: c }
     }
 
     #[idle(resources = [C])]
