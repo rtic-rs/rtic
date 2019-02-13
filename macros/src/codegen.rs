@@ -1924,6 +1924,7 @@ fn mk_resource(
     let path = if let Some(module) = module {
         let doc = format!("`{}`", ty);
         module.push(quote!(
+            #[allow(non_camel_case_types)]
             #[doc = #doc]
             #(#cfgs)*
             pub struct #struct_<'a> {
