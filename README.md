@@ -45,7 +45,7 @@ A concurrency framework for building real time systems.
 
 - Applications must be written using the 2018 edition.
 
-## [User documentation](https://japaric.github.io/cortex-m-rtfm/book/)
+## [User documentation](https://japaric.github.io/cortex-m-rtfm/book/en)
 
 ## [API reference](https://japaric.github.io/cortex-m-rtfm/api/rtfm/index.html)
 
