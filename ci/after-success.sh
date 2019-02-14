@@ -9,6 +9,7 @@ main() {
     local td=$(mktemp -d)
     cp -r target/doc $td/api
     mkdir $td/book/
+    cp redirect.html $td/book/index.html
     for lang in ${langs[@]}; do
         ( cd book/$lang && mdbook build )
         cp -r book/$lang/book $td/book/$lang
