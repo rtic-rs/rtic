@@ -35,6 +35,11 @@
 //!
 //! [`Instant`]: struct.Instant.html
 //! [`Duration`]: struct.Duration.html
+//!
+//! - `nightly`. Enabling this opt-in feature makes RTFM internally use the unstable
+//! `core::mem::MaybeUninit` API and unstable `const_fn` language feature to reduce static memory
+//! usage, runtime overhead and initialization overhead. This feature requires a nightly compiler
+//! and may stop working at any time!
 
 #![cfg_attr(feature = "nightly", feature(maybe_uninit))]
 #![deny(missing_docs)]
