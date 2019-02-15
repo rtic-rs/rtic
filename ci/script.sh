@@ -1,7 +1,40 @@
 set -euxo pipefail
 
+arm_example() {
+    local COMMAND=$1
+    local EXAMPLE=$2
+    local BUILD_MODE=$3
+    local FEATURES=$4
+    local BUILD_NUM=$5
+
+    if [ $BUILD_MODE = "release" ]; then
+        local RELEASE_FLAG="--release"
+    else
+        local RELEASE_FLAG=""
+    fi
+
+    if [ -n "$FEATURES" ]; then
+        local FEATURES_FLAG="--features $FEATURES"
+        local FEATURES_STR=${FEATURES/,/_}_
+    else
+        local FEATURES_FLAG=""
+        local FEATURES_STR=""
+    fi
+    local CARGO_FLAGS="--example $EXAMPLE --target $TARGET $RELEASE_FLAG $FEATURES_FLAG"
+
+    if [ $COMMAND = "run" ]; then
+        cargo $COMMAND $CARGO_FLAGS | diff -u ci/expected/$EXAMPLE.run -
+    else
+        cargo $COMMAND $CARGO_FLAGS
+    fi
+    arm-none-eabi-objcopy -O ihex target/$TARGET/$BUILD_MODE/examples/$EXAMPLE ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
+}
+
+
 main() {
     local T=$TARGET
+
+    mkdir -p ci/builds
 
     if [ $T = x86_64-unknown-linux-gnu ]; then
         # compile-fail and compile-pass tests
@@ -82,19 +115,41 @@ main() {
                 fi
 
                 if [ $ex != types ]; then
-                    cargo run --example $ex --target $T | \
-                        diff -u ci/expected/$ex.run -
-
-                    cargo run --example $ex --target $T --release | \
-                        diff -u ci/expected/$ex.run -
+                    arm_example "run" $ex "debug" "" "1"
+                    arm_example "run" $ex "release" "" "1"
                 fi
 
                 if [ $TARGET != thumbv6m-none-eabi ]; then
-                    cargo run --features timer-queue --example $ex --target $T | \
-                        diff -u ci/expected/$ex.run -
+                    arm_example "run" $ex "debug" "timer-queue" "1"
+                    arm_example "run" $ex "release" "timer-queue" "1"
+                fi
+            done
 
-                    cargo run --features timer-queue --example $ex --target $T --release | \
-                        diff -u ci/expected/$ex.run -
+            cargo clean
+            for ex in ${exs[@]}; do
+                if [ $ex = ramfunc ] && [ $T = thumbv6m-none-eabi ]; then
+                    # LLD doesn't support this at the moment
+                    continue
+                fi
+
+                if [ $ex = singleton ]; then
+                    # singleton build is currently not reproducible due to
+                    # https://github.com/japaric/owned-singleton/issues/2
+                    continue
+                fi
+
+                if [ $ex != types ]; then
+                    arm_example "build" $ex "debug" "" "2"
+                    cmp ci/builds/${ex}_debug_1.hex ci/builds/${ex}_debug_2.hex
+                    arm_example "build" $ex "release" "" "2"
+                    cmp ci/builds/${ex}_release_1.hex ci/builds/${ex}_release_2.hex
+                fi
+
+                if [ $TARGET != thumbv6m-none-eabi ]; then
+                    arm_example "build" $ex "debug" "timer-queue" "2"
+                    cmp ci/builds/${ex}_timer-queue_debug_1.hex ci/builds/${ex}_timer-queue_debug_2.hex
+                    arm_example "build" $ex "release" "timer-queue" "2"
+                    cmp ci/builds/${ex}_timer-queue_release_1.hex ci/builds/${ex}_timer-queue_release_2.hex
                 fi
             done
     esac

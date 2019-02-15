@@ -38,18 +38,16 @@ fn cfail() {
         let f = f.unwrap().path();
         let name = f.file_stem().unwrap().to_str().unwrap();
 
-        assert!(
-            Command::new("rustc")
-                .args(s.split_whitespace())
-                .arg(f.display().to_string())
-                .arg("-o")
-                .arg(td.path().join(name).display().to_string())
-                .arg("-C")
-                .arg("linker=true")
-                .status()
-                .unwrap()
-                .success()
-        );
+        assert!(Command::new("rustc")
+            .args(s.split_whitespace())
+            .arg(f.display().to_string())
+            .arg("-o")
+            .arg(td.path().join(name).display().to_string())
+            .arg("-C")
+            .arg("linker=true")
+            .status()
+            .unwrap()
+            .success());
     }
 
     config.target_rustcflags = Some(s);

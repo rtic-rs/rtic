@@ -4,3 +4,4 @@
 /book/*/book
 /target
 Cargo.lock
+*.hex

@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
 };
 
 use syn::{Attribute, Ident, Type};
@@ -65,7 +65,7 @@ pub struct Dispatcher {
 }
 
 /// Priority -> Dispatcher
-pub type Dispatchers = HashMap<u8, Dispatcher>;
+pub type Dispatchers = BTreeMap<u8, Dispatcher>;
 
 pub type Capacities = HashMap<Ident, u8>;
 
