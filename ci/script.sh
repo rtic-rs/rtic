@@ -130,6 +130,7 @@ main() {
                 fi
             done
 
+            local built=()
             cargo clean
             for ex in ${exs[@]}; do
                 if [ $ex = ramfunc ] && [ $T = thumbv6m-none-eabi ]; then
@@ -148,6 +149,8 @@ main() {
                     cmp ci/builds/${ex}_debug_1.hex ci/builds/${ex}_debug_2.hex
                     arm_example "build" $ex "release" "$nightly" "2"
                     cmp ci/builds/${ex}_release_1.hex ci/builds/${ex}_release_2.hex
+
+                    built+=( $ex )
                 fi
 
                 if [ $TARGET != thumbv6m-none-eabi ]; then
@@ -157,6 +160,8 @@ main() {
                     cmp ci/builds/${ex}_timer-queue_release_1.hex ci/builds/${ex}_timer-queue_release_2.hex
                 fi
             done
+
+            ( cd target/$TARGET/release/examples/ && size ${built[@]} )
     esac
 }
 
