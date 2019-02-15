@@ -51,6 +51,7 @@ features = ["exit"]
 version = "0.5.1"
 
 [features]
+nightly = ["cortex-m-rtfm-macros/nightly", "heapless/const-fn"]
 timer-queue = ["cortex-m-rtfm-macros/timer-queue"]
 
 [target.x86_64-unknown-linux-gnu.dev-dependencies]

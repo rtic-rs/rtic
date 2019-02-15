@@ -36,6 +36,7 @@
 //! [`Instant`]: struct.Instant.html
 //! [`Duration`]: struct.Duration.html
 
+#![cfg_attr(feature = "nightly", feature(maybe_uninit))]
 #![deny(missing_docs)]
 #![deny(warnings)]
 #![no_std]

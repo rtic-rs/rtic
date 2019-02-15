@@ -283,7 +283,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
             if let Some(Ownership::Shared { ceiling }) = analysis.ownerships.get(name) {
                 if res.mutability.is_some() {
                     let ptr = if res.expr.is_none() {
-                        quote!(unsafe { #alias.get_mut() })
+                        quote!(unsafe { &mut *#alias.as_mut_ptr() })
                     } else {
                         quote!(unsafe { &mut #alias })
                     };
@@ -494,8 +494,10 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
     // Enable and start the system timer
     if !analysis.timer_queue.tasks.is_empty() {
         let tq = &ctxt.timer_queue;
-        exprs.push(quote!(#tq.get_mut().syst.set_clock_source(rtfm::export::SystClkSource::Core)));
-        exprs.push(quote!(#tq.get_mut().syst.enable_counter()));
+        exprs.push(
+            quote!((*#tq.as_mut_ptr()).syst.set_clock_source(rtfm::export::SystClkSource::Core)),
+        );
+        exprs.push(quote!((*#tq.as_mut_ptr()).syst.enable_counter()));
     }
 
     // Enable cycle counter
@@ -903,21 +905,21 @@ fn prelude(
                         ));
                     }
                 } else {
-                    let method = if mut_.is_some() {
-                        quote!(get_mut)
+                    let expr = if mut_.is_some() {
+                        quote!(&mut *#alias.as_mut_ptr())
                     } else {
-                        quote!(get_ref)
+                        quote!(&*#alias.as_ptr())
                     };
 
                     if exclusive {
                         exprs.push(quote!(
                             #(#cfgs)*
-                            #name: rtfm::Exclusive(#alias.#method())
+                            #name: rtfm::Exclusive(#expr)
                         ));
                     } else {
                         exprs.push(quote!(
                             #(#cfgs)*
-                            #name: #alias.#method()
+                            #name: #expr
                         ));
                     }
                 }
@@ -1254,8 +1256,9 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
 
         let ty = tuple_ty(inputs);
 
-        let capacity_lit = mk_capacity_literal(analysis.capacities[name]);
-        let capacity_ty = mk_typenum_capacity(analysis.capacities[name], true);
+        let capacity = analysis.capacities[name];
+        let capacity_lit = mk_capacity_literal(capacity);
+        let capacity_ty = mk_typenum_capacity(capacity, true);
 
         let resource = mk_resource(
             ctxt,
@@ -1263,7 +1266,11 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
             &free_alias,
             quote!(rtfm::export::FreeQueue<#capacity_ty>),
             *analysis.free_queues.get(name).unwrap_or(&0),
-            quote!(#free_alias.get_mut()),
+            if cfg!(feature = "nightly") {
+                quote!(&mut #free_alias)
+            } else {
+                quote!(#free_alias.get_mut())
+            },
             app,
             None,
         );
@@ -1273,12 +1280,24 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
             () => {
                 let scheduleds_symbol = format!("{}::SCHEDULED_TIMES::{}", name, scheduleds_alias);
 
-                quote!(
-                    #[doc = #scheduleds_symbol]
-                    static mut #scheduleds_alias:
-                    rtfm::export::MaybeUninit<[rtfm::Instant; #capacity_lit]> =
-                        rtfm::export::MaybeUninit::uninitialized();
-                )
+                if cfg!(feature = "nightly") {
+                    let inits =
+                        (0..capacity).map(|_| quote!(rtfm::export::MaybeUninit::uninitialized()));
+
+                    quote!(
+                        #[doc = #scheduleds_symbol]
+                        static mut #scheduleds_alias:
+                            [rtfm::export::MaybeUninit<rtfm::Instant>; #capacity_lit] =
+                                [#(#inits),*];
+                    )
+                } else {
+                    quote!(
+                        #[doc = #scheduleds_symbol]
+                        static mut #scheduleds_alias:
+                        rtfm::export::MaybeUninit<[rtfm::Instant; #capacity_lit]> =
+                            rtfm::export::MaybeUninit::uninitialized();
+                    )
+                }
             }
             #[cfg(not(feature = "timer-queue"))]
             () => quote!(),
@@ -1286,19 +1305,35 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
 
         let inputs_symbol = format!("{}::INPUTS::{}", name, inputs_alias);
         let free_symbol = format!("{}::FREE_QUEUE::{}", name, free_alias);
-        items.push(quote!(
-            // FIXME(MaybeUninit) MaybeUninit won't be necessary when core::mem::MaybeUninit
-            // stabilizes because heapless constructors will work in const context
-            #[doc = #free_symbol]
-            static mut #free_alias: rtfm::export::MaybeUninit<
+        if cfg!(feature = "nightly") {
+            let inits = (0..capacity).map(|_| quote!(rtfm::export::MaybeUninit::uninitialized()));
+
+            items.push(quote!(
+                #[doc = #free_symbol]
+                static mut #free_alias: rtfm::export::FreeQueue<#capacity_ty> = unsafe {
+                    rtfm::export::FreeQueue::new_sc()
+                };
+
+                #[doc = #inputs_symbol]
+                static mut #inputs_alias: [rtfm::export::MaybeUninit<#ty>; #capacity_lit] =
+                    [#(#inits),*];
+            ));
+        } else {
+            items.push(quote!(
+                #[doc = #free_symbol]
+                static mut #free_alias: rtfm::export::MaybeUninit<
                     rtfm::export::FreeQueue<#capacity_ty>
-                > = rtfm::export::MaybeUninit::uninitialized();
+                    > = rtfm::export::MaybeUninit::uninitialized();
 
+                #[doc = #inputs_symbol]
+                static mut #inputs_alias: rtfm::export::MaybeUninit<[#ty; #capacity_lit]> =
+                    rtfm::export::MaybeUninit::uninitialized();
+
+            ));
+        }
+
+        items.push(quote!(
             #resource
-
-            #[doc = #inputs_symbol]
-            static mut #inputs_alias: rtfm::export::MaybeUninit<[#ty; #capacity_lit]> =
-                rtfm::export::MaybeUninit::uninitialized();
 
             #scheduleds_static
         ));
@@ -1428,17 +1463,30 @@ fn dispatchers(
             &ready_alias,
             ty.clone(),
             ceiling,
-            quote!(#ready_alias.get_mut()),
+            if cfg!(feature = "nightly") {
+                quote!(&mut #ready_alias)
+            } else {
+                quote!(#ready_alias.get_mut())
+            },
             app,
             None,
         );
+
+        if cfg!(feature = "nightly") {
+            data.push(quote!(
+                #[doc = #symbol]
+                static mut #ready_alias: #ty = unsafe { #e::ReadyQueue::new_sc() };
+            ));
+        } else {
+            data.push(quote!(
+                #[doc = #symbol]
+                static mut #ready_alias: #e::MaybeUninit<#ty> = #e::MaybeUninit::uninitialized();
+            ));
+        }
         data.push(quote!(
             #[allow(dead_code)]
             #[allow(non_camel_case_types)]
             enum #enum_alias { #(#variants,)* }
-
-            #[doc = #symbol]
-            static mut #ready_alias: #e::MaybeUninit<#ty> = #e::MaybeUninit::uninitialized();
 
             #resource
         ));
@@ -1462,9 +1510,14 @@ fn dispatchers(
                     #[cfg(feature = "timer-queue")]
                     () => {
                         let scheduleds = &task_.scheduleds;
+                        let scheduled = if cfg!(feature = "nightly") {
+                            quote!(#scheduleds.get_unchecked(usize::from(index)).as_ptr())
+                        } else {
+                            quote!(#scheduleds.get_ref().get_unchecked(usize::from(index)))
+                        };
+
                         baseline_let = quote!(
-                            let baseline =
-                                ptr::read(#scheduleds.get_ref().get_unchecked(usize::from(index)));
+                            let baseline = ptr::read(#scheduled);
                         );
                         call = quote!(#alias(&baseline, #pats));
                     }
@@ -1475,12 +1528,24 @@ fn dispatchers(
                     }
                 };
 
+                let (free_, input) = if cfg!(feature = "nightly") {
+                    (
+                        quote!(#free),
+                        quote!(#inputs.get_unchecked(usize::from(index)).as_ptr()),
+                    )
+                } else {
+                    (
+                        quote!(#free.get_mut()),
+                        quote!(#inputs.get_ref().get_unchecked(usize::from(index))),
+                    )
+                };
+
                 quote!(
                     #(#cfgs)*
                     #enum_alias::#task => {
                         #baseline_let
-                        let input = ptr::read(#inputs.get_ref().get_unchecked(usize::from(index)));
-                        #free.get_mut().split().0.enqueue_unchecked(index);
+                        let input = ptr::read(#input);
+                        #free_.split().0.enqueue_unchecked(index);
                         let (#pats) = input;
                         #call
                     }
@@ -1492,6 +1557,11 @@ fn dispatchers(
         let interrupt = &dispatcher.interrupt;
         let symbol = interrupt.to_string();
         let alias = ctxt.ident_gen.mk_ident(None, false);
+        let ready_alias_ = if cfg!(feature = "nightly") {
+            quote!(#ready_alias)
+        } else {
+            quote!(#ready_alias.get_mut())
+        };
         dispatchers.push(quote!(
             #(#attrs)*
             #[export_name = #symbol]
@@ -1502,7 +1572,7 @@ fn dispatchers(
                 let _ = #device::interrupt::#interrupt;
 
                 rtfm::export::run(|| {
-                    while let Some((task, index)) = #ready_alias.get_mut().split().1.dequeue() {
+                    while let Some((task, index)) = #ready_alias_.split().1.dequeue() {
                         match task {
                             #(#arms)*
                         }
@@ -1550,12 +1620,21 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
             #[cfg(feature = "timer-queue")]
             () => {
                 let scheduleds = &ctxt.tasks[name].scheduleds;
-                quote!(
-                    ptr::write(
-                        #scheduleds.get_mut().get_unchecked_mut(usize::from(index)),
-                        #baseline,
-                    );
-                )
+                if cfg!(feature = "nightly") {
+                    quote!(
+                        ptr::write(
+                            #scheduleds.get_unchecked_mut(usize::from(index)).as_mut_ptr(),
+                            #baseline,
+                        );
+                    )
+                } else {
+                    quote!(
+                        ptr::write(
+                            #scheduleds.get_mut().get_unchecked_mut(usize::from(index)),
+                            #baseline,
+                        );
+                    )
+                }
             }
             #[cfg(not(feature = "timer-queue"))]
             () => quote!(),
@@ -1568,6 +1647,11 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
             () => quote!(),
         };
 
+        let input = if cfg!(feature = "nightly") {
+            quote!(#inputs.get_unchecked_mut(usize::from(index)).as_mut_ptr())
+        } else {
+            quote!(#inputs.get_mut().get_unchecked_mut(usize::from(index)))
+        };
         items.push(quote!(
             #[inline(always)]
             #(#cfgs)*
@@ -1581,7 +1665,7 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
                 use rtfm::Mutex;
 
                 if let Some(index) = (#free { #priority }).lock(|f| f.split().1.dequeue()) {
-                    ptr::write(#inputs.get_mut().get_unchecked_mut(usize::from(index)), (#pats));
+                    ptr::write(#input, (#pats));
                     #scheduleds_write
 
                     #ready { #priority }.lock(|rq| {
@@ -1667,6 +1751,17 @@ fn schedule(ctxt: &Context, app: &App) -> proc_macro2::TokenStream {
         let ty = tuple_ty(args);
         let pats = tuple_pat(args);
 
+        let input = if cfg!(feature = "nightly") {
+            quote!(#inputs.get_unchecked_mut(usize::from(index)).as_mut_ptr())
+        } else {
+            quote!(#inputs.get_mut().get_unchecked_mut(usize::from(index)))
+        };
+
+        let scheduled = if cfg!(feature = "nightly") {
+            quote!(#scheduleds.get_unchecked_mut(usize::from(index)).as_mut_ptr())
+        } else {
+            quote!(#scheduleds.get_mut().get_unchecked_mut(usize::from(index)))
+        };
         items.push(quote!(
             #[inline(always)]
             #(#cfgs)*
@@ -1680,11 +1775,8 @@ fn schedule(ctxt: &Context, app: &App) -> proc_macro2::TokenStream {
                 use rtfm::Mutex;
 
                 if let Some(index) = (#free { #priority }).lock(|f| f.split().1.dequeue()) {
-                    ptr::write(#inputs.get_mut().get_unchecked_mut(usize::from(index)), (#pats));
-                    ptr::write(
-                        #scheduleds.get_mut().get_unchecked_mut(usize::from(index)),
-                        instant,
-                    );
+                    ptr::write(#input, (#pats));
+                    ptr::write(#scheduled, instant);
 
                     let nr = rtfm::export::NotReady {
                         instant,
@@ -1772,12 +1864,20 @@ fn timer_queue(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro
     let cap = mk_typenum_capacity(analysis.timer_queue.capacity, false);
     let tq = &ctxt.timer_queue;
     let symbol = format!("TIMER_QUEUE::{}", tq);
-    items.push(quote!(
-        #[doc = #symbol]
-        static mut #tq:
-            rtfm::export::MaybeUninit<rtfm::export::TimerQueue<#enum_, #cap>> =
+    if cfg!(feature = "nightly") {
+        items.push(quote!(
+            #[doc = #symbol]
+            static mut #tq: rtfm::export::MaybeUninit<rtfm::export::TimerQueue<#enum_, #cap>> =
                 rtfm::export::MaybeUninit::uninitialized();
-    ));
+        ));
+    } else {
+        items.push(quote!(
+            #[doc = #symbol]
+            static mut #tq:
+                rtfm::export::MaybeUninit<rtfm::export::TimerQueue<#enum_, #cap>> =
+                    rtfm::export::MaybeUninit::uninitialized();
+        ));
+    }
 
     items.push(mk_resource(
         ctxt,
@@ -1785,7 +1885,7 @@ fn timer_queue(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro
         tq,
         quote!(rtfm::export::TimerQueue<#enum_, #cap>),
         analysis.timer_queue.ceiling,
-        quote!(#tq.get_mut()),
+        quote!(&mut *#tq.as_mut_ptr()),
         app,
         None,
     ));
@@ -1842,35 +1942,31 @@ fn timer_queue(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro
 fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
     let mut exprs = vec![];
 
-    // FIXME(MaybeUninit) Because we are using a fake MaybeUninit we need to set the Option tag to
-    // Some; otherwise the get_ref and get_mut could result in UB. Also heapless collections can't
-    // be constructed in const context; we have to initialize them at runtime (i.e. here).
+    if !cfg!(feature = "nightly") {
+        // these are `MaybeUninit` arrays
+        for task in ctxt.tasks.values() {
+            let inputs = &task.inputs;
+            exprs.push(quote!(#inputs.set(core::mem::uninitialized());))
+        }
 
-    // these are `MaybeUninit` arrays
-    for task in ctxt.tasks.values() {
-        let inputs = &task.inputs;
-        exprs.push(quote!(#inputs.set(core::mem::uninitialized());))
+        #[cfg(feature = "timer-queue")]
+        for task in ctxt.tasks.values() {
+            let scheduleds = &task.scheduleds;
+            exprs.push(quote!(#scheduleds.set(core::mem::uninitialized());))
+        }
+
+        // these are `MaybeUninit` `ReadyQueue`s
+        for dispatcher in ctxt.dispatchers.values() {
+            let rq = &dispatcher.ready_queue;
+            exprs.push(quote!(#rq.set(rtfm::export::ReadyQueue::new_sc());))
+        }
+
+        // these are `MaybeUninit` `FreeQueue`s
+        for task in ctxt.tasks.values() {
+            let fq = &task.free_queue;
+            exprs.push(quote!(#fq.set(rtfm::export::FreeQueue::new_sc());))
+        }
     }
-
-    #[cfg(feature = "timer-queue")]
-    for task in ctxt.tasks.values() {
-        let scheduleds = &task.scheduleds;
-        exprs.push(quote!(#scheduleds.set(core::mem::uninitialized());))
-    }
-
-    // these are `MaybeUninit` `ReadyQueue`s
-    for dispatcher in ctxt.dispatchers.values() {
-        let rq = &dispatcher.ready_queue;
-        exprs.push(quote!(#rq.set(rtfm::export::ReadyQueue::new_sc());))
-    }
-
-    // these are `MaybeUninit` `FreeQueue`s
-    for task in ctxt.tasks.values() {
-        let fq = &task.free_queue;
-        exprs.push(quote!(#fq.set(rtfm::export::FreeQueue::new_sc());))
-    }
-
-    // end-of-FIXME
 
     // Initialize the timer queue
     if !analysis.timer_queue.tasks.is_empty() {
@@ -1881,10 +1977,15 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
     // Populate the `FreeQueue`s
     for (name, task) in &ctxt.tasks {
         let fq = &task.free_queue;
+        let fq_ = if cfg!(feature = "nightly") {
+            quote!(#fq)
+        } else {
+            quote!(#fq.get_mut())
+        };
         let capacity = analysis.capacities[name];
         exprs.push(quote!(
             for i in 0..#capacity {
-                #fq.get_mut().enqueue_unchecked(i);
+                #fq_.enqueue_unchecked(i);
             }
         ))
     }
