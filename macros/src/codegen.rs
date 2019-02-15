@@ -364,7 +364,7 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> (proc_macro2::Tok
 
     let (late_resources, late_resources_ident, ret) = if app.init.returns_late_resources {
         // create `LateResources` struct in the root of the crate
-        let ident = mk_ident(None);
+        let ident = ctxt.ident_gen.mk_ident(None, false);
 
         let fields = app
             .resources
