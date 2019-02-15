@@ -1,7 +1,5 @@
 //! IMPLEMENTATION DETAILS. DO NOT USE ANYTHING IN THIS MODULE
 
-#[cfg(all(not(feature = "nightly"), not(debug_assertions)))]
-use core::hint;
 #[cfg(not(feature = "nightly"))]
 use core::ptr;
 use core::{cell::Cell, u8};
@@ -99,6 +97,10 @@ pub struct MaybeUninit<T> {
 }
 
 #[cfg(not(feature = "nightly"))]
+const MSG: &str =
+    "you have hit a bug (UB) in RTFM implementation; try enabling this crate 'nightly' feature";
+
+#[cfg(not(feature = "nightly"))]
 impl<T> MaybeUninit<T> {
     pub const fn uninitialized() -> Self {
         MaybeUninit { value: None }
@@ -108,13 +110,7 @@ impl<T> MaybeUninit<T> {
         if let Some(x) = self.value.as_ref() {
             x
         } else {
-            match () {
-                // Try to catch UB when compiling in release with debug assertions enabled
-                #[cfg(debug_assertions)]
-                () => unreachable!(),
-                #[cfg(not(debug_assertions))]
-                () => unsafe { hint::unreachable_unchecked() },
-            }
+            unreachable!(MSG)
         }
     }
 
@@ -122,13 +118,7 @@ impl<T> MaybeUninit<T> {
         if let Some(x) = self.value.as_mut() {
             x
         } else {
-            match () {
-                // Try to catch UB when compiling in release with debug assertions enabled
-                #[cfg(debug_assertions)]
-                () => unreachable!(),
-                #[cfg(not(debug_assertions))]
-                () => unsafe { hint::unreachable_unchecked() },
-            }
+            unreachable!(MSG)
         }
     }
 
@@ -136,13 +126,7 @@ impl<T> MaybeUninit<T> {
         if let Some(x) = self.value.as_ref() {
             x
         } else {
-            match () {
-                // Try to catch UB when compiling in release with debug assertions enabled
-                #[cfg(debug_assertions)]
-                () => unreachable!(),
-                #[cfg(not(debug_assertions))]
-                () => hint::unreachable_unchecked(),
-            }
+            unreachable!(MSG)
         }
     }
 
@@ -150,13 +134,7 @@ impl<T> MaybeUninit<T> {
         if let Some(x) = self.value.as_mut() {
             x
         } else {
-            match () {
-                // Try to catch UB when compiling in release with debug assertions enabled
-                #[cfg(debug_assertions)]
-                () => unreachable!(),
-                #[cfg(not(debug_assertions))]
-                () => hint::unreachable_unchecked(),
-            }
+            unreachable!(MSG)
         }
     }
 
