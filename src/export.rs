@@ -47,7 +47,9 @@ pub struct Priority {
 impl Priority {
     #[inline(always)]
     pub unsafe fn new(value: u8) -> Self {
-        Priority { inner: Cell::new(value)}
+        Priority {
+            inner: Cell::new(value),
+        }
     }
 
     // these two methods are used by claim (see below) but can't be used from the RTFM application
