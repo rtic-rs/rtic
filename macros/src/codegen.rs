@@ -68,17 +68,17 @@ impl Default for Context {
 
         Context {
             #[cfg(feature = "timer-queue")]
-            baseline: ident_gen.mk_ident(None),
+            baseline: ident_gen.mk_ident(None, false),
             dispatchers: BTreeMap::new(),
-            idle: ident_gen.mk_ident(Some("idle")),
-            init: ident_gen.mk_ident(Some("init")),
-            priority: ident_gen.mk_ident(None),
+            idle: ident_gen.mk_ident(Some("idle"), false),
+            init: ident_gen.mk_ident(Some("init"), false),
+            priority: ident_gen.mk_ident(None, false),
             statics: Aliases::new(),
             resources: HashMap::new(),
-            schedule_enum: ident_gen.mk_ident(None),
+            schedule_enum: ident_gen.mk_ident(None, false),
             schedule_fn: Aliases::new(),
             tasks: BTreeMap::new(),
-            timer_queue: ident_gen.mk_ident(None),
+            timer_queue: ident_gen.mk_ident(None, false),
             ident_gen,
         }
     }
@@ -174,7 +174,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
 
     let assertions = assertions(app, analysis);
 
-    let main = ctxt.ident_gen.mk_ident(None);
+    let main = ctxt.ident_gen.mk_ident(None, false);
     quote!(
         #resources
 
@@ -240,7 +240,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
                 pub static #mut_ #name: #ty = #expr;
             ));
 
-            let alias = ctxt.ident_gen.mk_ident(None);
+            let alias = ctxt.ident_gen.mk_ident(None, true); // XXX is randomness required?
             if let Some(Ownership::Shared { ceiling }) = analysis.ownerships.get(name) {
                 items.push(mk_resource(
                     ctxt,
@@ -256,7 +256,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
 
             ctxt.statics.insert(name.clone(), alias);
         } else {
-            let alias = ctxt.ident_gen.mk_ident(None);
+            let alias = ctxt.ident_gen.mk_ident(None, false);
             let symbol = format!("{}::{}", name, alias);
 
             items.push(
@@ -409,7 +409,7 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> (proc_macro2::Tok
     let baseline = &ctxt.baseline;
     let baseline_let = match () {
         #[cfg(feature = "timer-queue")]
-        () => quote!(let #baseline = rtfm::Instant::artificial(0);),
+        () => quote!(let ref #baseline = rtfm::Instant::artificial(0);),
 
         #[cfg(not(feature = "timer-queue"))]
         () => quote!(),
@@ -419,7 +419,7 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> (proc_macro2::Tok
         #[cfg(feature = "timer-queue")]
         () => quote!(
             #[allow(unused_variables)]
-            let start = #baseline;
+            let start = *#baseline;
         ),
         #[cfg(not(feature = "timer-queue"))]
         () => quote!(),
@@ -434,21 +434,27 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> (proc_macro2::Tok
 
             #module
 
+            // unsafe trampoline to deter end-users from calling this non-reentrant function
             #(#attrs)*
-            #unsafety fn #init(mut core: rtfm::Peripherals) #ret {
-                #(#locals)*
+            unsafe fn #init(core: rtfm::Peripherals) #ret {
+                #[inline(always)]
+                #unsafety fn init(mut core: rtfm::Peripherals) #ret {
+                    #(#locals)*
 
-                #baseline_let
+                    #baseline_let
 
-                #prelude
+                    #prelude
 
-                let mut device = unsafe { #device::Peripherals::steal() };
+                    let mut device = unsafe { #device::Peripherals::steal() };
 
-                #start_let
+                    #start_let
 
-                #(#stmts)*
+                    #(#stmts)*
 
-                #(#assigns)*
+                    #(#assigns)*
+                }
+
+                init(core)
             }
         ),
         has_late_resources,
@@ -567,7 +573,7 @@ fn module(
             #[derive(Clone, Copy)]
             pub struct Schedule<'a> {
                 #[doc(hidden)]
-                pub #priority: &'a core::cell::Cell<u8>,
+                pub #priority: &'a rtfm::export::Priority,
             }
         ));
     }
@@ -586,7 +592,7 @@ fn module(
                 #[derive(Clone, Copy)]
                 pub struct Spawn<'a> {
                     #[doc(hidden)]
-                    pub #priority: &'a core::cell::Cell<u8>,
+                    pub #priority: &'a rtfm::export::Priority,
                 }
             ));
         } else {
@@ -595,8 +601,10 @@ fn module(
                 () => {
                     let baseline = &ctxt.baseline;
                     quote!(
+                        // NOTE this field is visible so we use a shared reference to make it
+                        // immutable
                         #[doc(hidden)]
-                        pub #baseline: rtfm::Instant,
+                        pub #baseline: &'a rtfm::Instant,
                     )
                 }
                 #[cfg(not(feature = "timer-queue"))]
@@ -609,7 +617,7 @@ fn module(
                 pub struct Spawn<'a> {
                     #baseline_field
                     #[doc(hidden)]
-                    pub #priority: &'a core::cell::Cell<u8>,
+                    pub #priority: &'a rtfm::export::Priority,
                 }
             ));
         }
@@ -691,7 +699,7 @@ fn prelude(
         let mut exprs = vec![];
 
         // NOTE This field is just to avoid unused type parameter errors around `'a`
-        defs.push(quote!(#[allow(dead_code)] #priority: &'a core::cell::Cell<u8>));
+        defs.push(quote!(#[allow(dead_code)] pub #priority: &'a rtfm::export::Priority));
         exprs.push(parse_quote!(#priority));
 
         let mut may_call_lock = false;
@@ -830,7 +838,8 @@ fn prelude(
                                     #(#cfgs)*
                                     pub #name: &'a #mut_ #name
                                 ));
-                                let alias = ctxt.ident_gen.mk_ident(None);
+                                // XXX is randomness required?
+                                let alias = ctxt.ident_gen.mk_ident(None, true);
                                 items.push(quote!(
                                     #(#cfgs)*
                                     let #mut_ #alias = unsafe {
@@ -847,7 +856,8 @@ fn prelude(
                                     #(#cfgs)*
                                     pub #name: rtfm::Exclusive<'a, #name>
                                 ));
-                                let alias = ctxt.ident_gen.mk_ident(None);
+                                // XXX is randomness required?
+                                let alias = ctxt.ident_gen.mk_ident(None, true);
                                 items.push(quote!(
                                     #(#cfgs)*
                                     let #mut_ #alias = unsafe {
@@ -914,7 +924,7 @@ fn prelude(
             }
         }
 
-        let alias = ctxt.ident_gen.mk_ident(None);
+        let alias = ctxt.ident_gen.mk_ident(None, false);
         let unsafety = if needs_unsafe {
             Some(quote!(unsafe))
         } else {
@@ -975,7 +985,8 @@ fn prelude(
                 continue;
             }
 
-            ctxt.schedule_fn.insert(task.clone(), ctxt.ident_gen.mk_ident(None));
+            ctxt.schedule_fn
+                .insert(task.clone(), ctxt.ident_gen.mk_ident(None, false));
         }
 
         items.push(quote!(
@@ -991,7 +1002,7 @@ fn prelude(
         quote!()
     } else {
         quote!(
-            let ref #priority = core::cell::Cell::new(#logical_prio);
+            let ref #priority = unsafe { rtfm::export::Priority::new(#logical_prio) };
 
             #(#items)*
         )
@@ -1035,13 +1046,19 @@ fn idle(
             quote!(
                 #module
 
+                // unsafe trampoline to deter end-users from calling this non-reentrant function
                 #(#attrs)*
-                #unsafety fn #idle() -> ! {
-                    #(#locals)*
+                unsafe fn #idle() -> ! {
+                    #[inline(always)]
+                    #unsafety fn idle() -> ! {
+                        #(#locals)*
 
-                    #prelude
+                        #prelude
 
-                    #(#stmts)*
+                        #(#stmts)*
+                    }
+
+                    idle()
                 }
             ),
             quote!(#idle()),
@@ -1087,7 +1104,7 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
             let baseline = &ctxt.baseline;
             let baseline_let = match () {
                 #[cfg(feature = "timer-queue")]
-                () => quote!(let #baseline = rtfm::Instant::now();),
+                () => quote!(let ref #baseline = rtfm::Instant::now();),
                 #[cfg(not(feature = "timer-queue"))]
                 () => quote!(),
             };
@@ -1096,7 +1113,7 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
                 #[cfg(feature = "timer-queue")]
                 () => quote!(
                     #[allow(unused_variables)]
-                    let start = #baseline;
+                    let start = *#baseline;
                 ),
                 #[cfg(not(feature = "timer-queue"))]
                 () => quote!(),
@@ -1104,26 +1121,31 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
 
             let locals = mk_locals(&exception.statics, false);
             let symbol = ident.to_string();
-            let alias = ctxt.ident_gen.mk_ident(None);
+            let alias = ctxt.ident_gen.mk_ident(None, false);
             let unsafety = &exception.unsafety;
             quote!(
                 #module
 
-                #[doc(hidden)]
+                // unsafe trampoline to deter end-users from calling this non-reentrant function
                 #[export_name = #symbol]
                 #(#attrs)*
-                #unsafety fn #alias() {
-                    #(#locals)*
+                unsafe fn #alias() {
+                    #[inline(always)]
+                    #unsafety fn exception() {
+                        #(#locals)*
 
-                    #baseline_let
+                        #baseline_let
 
-                    #prelude
+                        #prelude
 
-                    #start_let
+                        #start_let
 
-                    rtfm::export::run(move || {
-                        #(#stmts)*
-                    })
+                        rtfm::export::run(move || {
+                            #(#stmts)*
+                        })
+                    }
+
+                    exception()
                 }
             )
         })
@@ -1167,7 +1189,7 @@ fn interrupts(
         let baseline = &ctxt.baseline;
         let baseline_let = match () {
             #[cfg(feature = "timer-queue")]
-            () => quote!(let #baseline = rtfm::Instant::now();),
+            () => quote!(let ref #baseline = rtfm::Instant::now();),
             #[cfg(not(feature = "timer-queue"))]
             () => quote!(),
         };
@@ -1176,34 +1198,40 @@ fn interrupts(
             #[cfg(feature = "timer-queue")]
             () => quote!(
                 #[allow(unused_variables)]
-                let start = #baseline;
+                let start = *#baseline;
             ),
             #[cfg(not(feature = "timer-queue"))]
             () => quote!(),
         };
 
         let locals = mk_locals(&interrupt.statics, false);
-        let alias = ctxt.ident_gen.mk_ident(None);
+        let alias = ctxt.ident_gen.mk_ident(None, false);
         let symbol = ident.to_string();
         let unsafety = &interrupt.unsafety;
         scoped.push(quote!(
+            // unsafe trampoline to deter end-users from calling this non-reentrant function
             #(#attrs)*
             #[export_name = #symbol]
-            #unsafety fn #alias() {
-                // check that this interrupt exists
-                let _ = #device::interrupt::#ident;
+            unsafe fn #alias() {
+                #[inline(always)]
+                #unsafety fn interrupt() {
+                    // check that this interrupt exists
+                    let _ = #device::interrupt::#ident;
 
-                #(#locals)*
+                    #(#locals)*
 
-                #baseline_let
+                    #baseline_let
 
-                #prelude
+                    #prelude
 
-                #start_let
+                    #start_let
 
-                rtfm::export::run(move || {
-                    #(#stmts)*
-                })
+                    rtfm::export::run(move || {
+                        #(#stmts)*
+                    })
+                }
+
+                interrupt()
             }
         ));
     }
@@ -1217,10 +1245,10 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
     // first pass to generate buffers (statics and resources) and spawn aliases
     for (name, task) in &app.tasks {
         #[cfg(feature = "timer-queue")]
-        let scheduleds_alias = ctxt.ident_gen.mk_ident(None);
-        let free_alias = ctxt.ident_gen.mk_ident(None);
-        let inputs_alias = ctxt.ident_gen.mk_ident(None);
-        let task_alias = ctxt.ident_gen.mk_ident(Some(&name.to_string()));
+        let scheduleds_alias = ctxt.ident_gen.mk_ident(None, false);
+        let free_alias = ctxt.ident_gen.mk_ident(None, false);
+        let inputs_alias = ctxt.ident_gen.mk_ident(None, false);
+        let task_alias = ctxt.ident_gen.mk_ident(Some(&name.to_string()), false);
 
         let inputs = &task.inputs;
 
@@ -1281,7 +1309,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
                 alias: task_alias,
                 free_queue: free_alias,
                 inputs: inputs_alias,
-                spawn_fn: ctxt.ident_gen.mk_ident(None),
+                spawn_fn: ctxt.ident_gen.mk_ident(None, false),
 
                 #[cfg(feature = "timer-queue")]
                 scheduleds: scheduleds_alias,
@@ -1300,7 +1328,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
             #[cfg(feature = "timer-queue")]
             () => {
                 let baseline = &ctxt.baseline;
-                quote!(let scheduled = #baseline;)
+                quote!(let scheduled = *#baseline;)
             }
             #[cfg(not(feature = "timer-queue"))]
             () => quote!(),
@@ -1329,26 +1357,33 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
         let attrs = &task.attrs;
         let cfgs = &task.cfgs;
         let task_alias = &ctxt.tasks[name].alias;
-        let baseline_arg = match () {
+        let (baseline, baseline_arg) = match () {
             #[cfg(feature = "timer-queue")]
             () => {
                 let baseline = &ctxt.baseline;
-                quote!(#baseline: rtfm::Instant,)
+                (quote!(#baseline,), quote!(#baseline: &rtfm::Instant,))
             }
             #[cfg(not(feature = "timer-queue"))]
-            () => quote!(),
+            () => (quote!(), quote!()),
         };
+        let pats = tuple_pat(inputs);
         items.push(quote!(
+            // unsafe trampoline to deter end-users from calling this non-reentrant function
             #(#attrs)*
             #(#cfgs)*
-            #unsafety fn #task_alias(#baseline_arg #(#inputs,)*) {
-                #(#locals)*
+            unsafe fn #task_alias(#baseline_arg #(#inputs,)*) {
+                #[inline(always)]
+                #unsafety fn task(#baseline_arg #(#inputs,)*) {
+                    #(#locals)*
 
-                #prelude
+                    #prelude
 
-                #scheduled_let
+                    #scheduled_let
 
-                #(#stmts)*
+                    #(#stmts)*
+                }
+
+                task(#baseline #pats)
             }
         ));
     }
@@ -1366,8 +1401,8 @@ fn dispatchers(
 
     let device = &app.args.device;
     for (level, dispatcher) in &analysis.dispatchers {
-        let ready_alias = ctxt.ident_gen.mk_ident(None);
-        let enum_alias = ctxt.ident_gen.mk_ident(None);
+        let ready_alias = ctxt.ident_gen.mk_ident(None, false);
+        let enum_alias = ctxt.ident_gen.mk_ident(None, false);
         let capacity = mk_typenum_capacity(dispatcher.capacity, true);
 
         let variants = dispatcher
@@ -1431,7 +1466,7 @@ fn dispatchers(
                             let baseline =
                                 ptr::read(#scheduleds.get_ref().get_unchecked(usize::from(index)));
                         );
-                        call = quote!(#alias(baseline, #pats));
+                        call = quote!(#alias(&baseline, #pats));
                     }
                     #[cfg(not(feature = "timer-queue"))]
                     () => {
@@ -1456,7 +1491,7 @@ fn dispatchers(
         let attrs = &dispatcher.attrs;
         let interrupt = &dispatcher.interrupt;
         let symbol = interrupt.to_string();
-        let alias = ctxt.ident_gen.mk_ident(None);
+        let alias = ctxt.ident_gen.mk_ident(None, false);
         dispatchers.push(quote!(
             #(#attrs)*
             #[export_name = #symbol]
@@ -1538,7 +1573,7 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
             #(#cfgs)*
             unsafe fn #alias(
                 #baseline_arg
-                #priority: &core::cell::Cell<u8>,
+                #priority: &rtfm::export::Priority,
                 #(#args,)*
             ) -> Result<(), #ty> {
                 use core::ptr;
@@ -1587,7 +1622,7 @@ fn spawn(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenSt
                     if is_idle {
                         quote!(rtfm::Instant::now(),)
                     } else {
-                        quote!(self.#baseline,)
+                        quote!(*self.#baseline,)
                     }
                 }
                 #[cfg(not(feature = "timer-queue"))]
@@ -1636,7 +1671,7 @@ fn schedule(ctxt: &Context, app: &App) -> proc_macro2::TokenStream {
             #[inline(always)]
             #(#cfgs)*
             unsafe fn #alias(
-                #priority: &core::cell::Cell<u8>,
+                #priority: &rtfm::export::Priority,
                 instant: rtfm::Instant,
                 #(#args,)*
             ) -> Result<(), #ty> {
@@ -1782,14 +1817,14 @@ fn timer_queue(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro
         .collect::<Vec<_>>();
 
     let logical_prio = analysis.timer_queue.priority;
-    let alias = ctxt.ident_gen.mk_ident(None);
+    let alias = ctxt.ident_gen.mk_ident(None, false);
     items.push(quote!(
         #[export_name = "SysTick"]
         #[doc(hidden)]
         unsafe fn #alias() {
             use rtfm::Mutex;
 
-            let ref #priority = core::cell::Cell::new(#logical_prio);
+            let ref #priority = rtfm::export::Priority::new(#logical_prio);
 
             rtfm::export::run(|| {
                 rtfm::export::sys_tick(#tq { #priority }, |task, index| {
@@ -1933,7 +1968,7 @@ fn mk_resource(
             #(#cfgs)*
             pub struct #struct_<'a> {
                 #[doc(hidden)]
-                pub #priority: &'a core::cell::Cell<u8>,
+                pub #priority: &'a rtfm::export::Priority,
             }
         ));
 
@@ -1942,7 +1977,7 @@ fn mk_resource(
         items.push(quote!(
             #(#cfgs)*
             struct #struct_<'a> {
-                #priority: &'a core::cell::Cell<u8>,
+                #priority: &'a rtfm::export::Priority,
             }
         ));
 
@@ -2017,34 +2052,30 @@ impl IdentGenerator {
 
         let rng = rand::rngs::SmallRng::from_seed(seed);
 
-        IdentGenerator {
-            call_count: 0,
-            rng,
-        }
+        IdentGenerator { call_count: 0, rng }
     }
 
-    fn mk_ident(&mut self, name: Option<&str>) -> Ident {
-        let n;
+    fn mk_ident(&mut self, name: Option<&str>, random: bool) -> Ident {
         let s = if let Some(name) = name {
-            n = 4;
             format!("{}_", name)
         } else {
-            let crate_name = env!("CARGO_PKG_NAME").replace("-", "_").to_lowercase();
-            n = 4;
-            format!("{}__internal__", crate_name)
+            "__rtfm_internal_".to_string()
         };
 
-        let mut s = format!("{}{}_", s, self.call_count);
+        let mut s = format!("{}{}", s, self.call_count);
+        self.call_count += 1;
 
-        for i in 0..n {
-            if i == 0 || self.rng.gen() {
-                s.push(('a' as u8 + self.rng.gen::<u8>() % 25) as char)
-            } else {
-                s.push(('0' as u8 + self.rng.gen::<u8>() % 10) as char)
+        if random {
+            s.push('_');
+
+            for i in 0..4 {
+                if i == 0 || self.rng.gen() {
+                    s.push(('a' as u8 + self.rng.gen::<u8>() % 25) as char)
+                } else {
+                    s.push(('0' as u8 + self.rng.gen::<u8>() % 10) as char)
+                }
             }
         }
-
-        self.call_count += 1;
 
         Ident::new(&s, Span::call_site())
     }

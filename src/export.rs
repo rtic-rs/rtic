@@ -39,6 +39,29 @@ where
     f();
 }
 
+// Newtype over `Cell` that forbids mutation through a shared reference
+pub struct Priority {
+    inner: Cell<u8>,
+}
+
+impl Priority {
+    #[inline(always)]
+    pub unsafe fn new(value: u8) -> Self {
+        Priority { inner: Cell::new(value)}
+    }
+
+    // these two methods are used by claim (see below) but can't be used from the RTFM application
+    #[inline(always)]
+    fn set(&self, value: u8) {
+        self.inner.set(value)
+    }
+
+    #[inline(always)]
+    fn get(&self) -> u8 {
+        self.inner.get()
+    }
+}
+
 // TODO(MaybeUninit) Until core::mem::MaybeUninit is stabilized we use our own (inefficient)
 // implementation
 pub struct MaybeUninit<T> {
@@ -102,7 +125,7 @@ where
 #[inline(always)]
 pub unsafe fn claim<T, R, F>(
     ptr: *mut T,
-    priority: &Cell<u8>,
+    priority: &Priority,
     ceiling: u8,
     nvic_prio_bits: u8,
     f: F,
@@ -135,7 +158,7 @@ where
 #[inline(always)]
 pub unsafe fn claim<T, R, F>(
     ptr: *mut T,
-    priority: &Cell<u8>,
+    priority: &Priority,
     ceiling: u8,
     _nvic_prio_bits: u8,
     f: F,
