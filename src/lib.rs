@@ -146,6 +146,10 @@ impl Instant {
         assert!(diff >= 0, "second instant is later than self");
         Duration(diff as u32)
     }
+    /// Returns the cycle count of this Instant
+    pub fn cycle_count(&self) -> i32{
+        self.0
+    } 
 }
 
 #[cfg(feature = "timer-queue")]
