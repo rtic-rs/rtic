@@ -216,6 +216,14 @@ impl PartialOrd for Instant {
 pub struct Duration(u32);
 
 #[cfg(feature = "timer-queue")]
+impl Duration {
+    /// Returns the total number of clock cycles contained by this `Duration`
+    pub fn as_cycles(&self) -> u32 {
+        self.0
+    }
+}
+
+#[cfg(feature = "timer-queue")]
 impl ops::AddAssign for Duration {
     fn add_assign(&mut self, dur: Duration) {
         self.0 += dur.0;
