@@ -93,6 +93,7 @@ main() {
                 idle
                 init
                 interrupt
+                binds
 
                 resource
                 lock

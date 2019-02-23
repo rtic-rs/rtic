@@ -1128,7 +1128,7 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
             };
 
             let locals = mk_locals(&exception.statics, false);
-            let symbol = ident.to_string();
+            let symbol = exception.args.binds.as_ref().unwrap_or(ident).to_string();
             let alias = ctxt.ident_gen.mk_ident(None, false);
             let unsafety = &exception.unsafety;
             quote!(
@@ -1214,7 +1214,7 @@ fn interrupts(
 
         let locals = mk_locals(&interrupt.statics, false);
         let alias = ctxt.ident_gen.mk_ident(None, false);
-        let symbol = ident.to_string();
+        let symbol = interrupt.args.binds.as_ref().unwrap_or(ident).to_string();
         let unsafety = &interrupt.unsafety;
         scoped.push(quote!(
             // unsafe trampoline to deter end-users from calling this non-reentrant function
