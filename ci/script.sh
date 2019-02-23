@@ -146,18 +146,22 @@ main() {
 
                 if [ $ex != types ]; then
                     arm_example "build" $ex "debug" "$nightly" "2"
-                    cmp ci/builds/${ex}_debug_1.hex ci/builds/${ex}_debug_2.hex
+                    cmp ci/builds/${ex}_${nightly/nightly/nightly_}debug_1.hex \
+                        ci/builds/${ex}_${nightly/nightly/nightly_}debug_2.hex
                     arm_example "build" $ex "release" "$nightly" "2"
-                    cmp ci/builds/${ex}_release_1.hex ci/builds/${ex}_release_2.hex
+                    cmp ci/builds/${ex}_${nightly/nightly/nightly_}release_1.hex \
+                        ci/builds/${ex}_${nightly/nightly/nightly_}release_2.hex
 
                     built+=( $ex )
                 fi
 
                 if [ $TARGET != thumbv6m-none-eabi ]; then
                     arm_example "build" $ex "debug" "$nightly,timer-queue" "2"
-                    cmp ci/builds/${ex}_timer-queue_debug_1.hex ci/builds/${ex}_timer-queue_debug_2.hex
+                    cmp ci/builds/${ex}_${nightly}_timer-queue_debug_1.hex \
+                        ci/builds/${ex}_${nightly}_timer-queue_debug_2.hex
                     arm_example "build" $ex "release" "$nightly,timer-queue" "2"
-                    cmp ci/builds/${ex}_timer-queue_release_1.hex ci/builds/${ex}_timer-queue_release_2.hex
+                    cmp ci/builds/${ex}_${nightly}_timer-queue_release_1.hex \
+                        ci/builds/${ex}_${nightly}_timer-queue_release_2.hex
                 fi
             done
 
