@@ -106,10 +106,16 @@ pub fn app(app: &App) -> parse::Result<()> {
     }
 
     // Check that free interrupts are not being used
-    for int in app.interrupts.keys() {
-        if app.free_interrupts.contains_key(int) {
+    for (name, interrupt) in &app.interrupts {
+        let name = if let Some(ref binds) = interrupt.args.binds {
+            binds
+        } else {
+            name
+        };
+
+        if app.free_interrupts.contains_key(name) {
             return Err(parse::Error::new(
-                int.span(),
+                name.span(),
                 "free interrupts (`extern { .. }`) can't be used as interrupt handlers",
             ));
         }
