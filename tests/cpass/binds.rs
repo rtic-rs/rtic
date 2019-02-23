@@ -20,6 +20,8 @@ const APP: () = {
     fn bar() {}
 };
 
+#[allow(dead_code)]
 fn foo_trampoline(_: foo::Context) {}
 
+#[allow(dead_code)]
 fn bar_trampoline(_: bar::Context) {}
