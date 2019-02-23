@@ -75,3 +75,19 @@ $ cargo nm --example ramfunc --release | grep ' foo::'
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
 {{#include ../../../../ci/expected/ramfunc.grep.bar}}```
+
+## `binds`
+
+**NOTE**: Requires RTFM ~0.4.2
+
+You can give hardware tasks more task-like names using the `binds` argument: you
+name the function as you wish and specify the name of the interrupt / exception
+in the `binds` argument. Types like `Spawn` will be placed in a module named
+after the function, not the interrupt / exception. Example below:
+
+``` rust
+{{#include ../../../../examples/binds.rs}}
+```
+``` console
+$ cargo run --example binds
+{{#include ../../../../ci/expected/binds.run}}```
