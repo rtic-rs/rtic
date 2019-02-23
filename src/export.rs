@@ -1,8 +1,8 @@
 //! IMPLEMENTATION DETAILS. DO NOT USE ANYTHING IN THIS MODULE
 
-#[cfg(not(debug_assertions))]
-use core::hint;
-use core::{cell::Cell, ptr, u8};
+#[cfg(not(feature = "nightly"))]
+use core::ptr;
+use core::{cell::Cell, u8};
 
 #[cfg(armv7m)]
 use cortex_m::register::basepri;
@@ -64,28 +64,69 @@ impl Priority {
     }
 }
 
-// TODO(MaybeUninit) Until core::mem::MaybeUninit is stabilized we use our own (inefficient)
-// implementation
+#[cfg(feature = "nightly")]
+pub struct MaybeUninit<T> {
+    // we newtype so the end-user doesn't need `#![feature(maybe_uninit)]` in their code
+    inner: core::mem::MaybeUninit<T>,
+}
+
+#[cfg(feature = "nightly")]
+impl<T> MaybeUninit<T> {
+    pub const fn uninitialized() -> Self {
+        MaybeUninit {
+            inner: core::mem::MaybeUninit::uninitialized(),
+        }
+    }
+
+    pub fn as_ptr(&self) -> *const T {
+        self.inner.as_ptr()
+    }
+
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        self.inner.as_mut_ptr()
+    }
+
+    pub fn set(&mut self, value: T) -> &mut T {
+        self.inner.set(value)
+    }
+}
+
+#[cfg(not(feature = "nightly"))]
 pub struct MaybeUninit<T> {
     value: Option<T>,
 }
 
+#[cfg(not(feature = "nightly"))]
+const MSG: &str =
+    "you have hit a bug (UB) in RTFM implementation; try enabling this crate 'nightly' feature";
+
+#[cfg(not(feature = "nightly"))]
 impl<T> MaybeUninit<T> {
     pub const fn uninitialized() -> Self {
         MaybeUninit { value: None }
+    }
+
+    pub fn as_ptr(&self) -> *const T {
+        if let Some(x) = self.value.as_ref() {
+            x
+        } else {
+            unreachable!(MSG)
+        }
+    }
+
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        if let Some(x) = self.value.as_mut() {
+            x
+        } else {
+            unreachable!(MSG)
+        }
     }
 
     pub unsafe fn get_ref(&self) -> &T {
         if let Some(x) = self.value.as_ref() {
             x
         } else {
-            match () {
-                // Try to catch UB when compiling in release with debug assertions enabled
-                #[cfg(debug_assertions)]
-                () => unreachable!(),
-                #[cfg(not(debug_assertions))]
-                () => hint::unreachable_unchecked(),
-            }
+            unreachable!(MSG)
         }
     }
 
@@ -93,13 +134,7 @@ impl<T> MaybeUninit<T> {
         if let Some(x) = self.value.as_mut() {
             x
         } else {
-            match () {
-                // Try to catch UB when compiling in release with debug assertions enabled
-                #[cfg(debug_assertions)]
-                () => unreachable!(),
-                #[cfg(not(debug_assertions))]
-                () => hint::unreachable_unchecked(),
-            }
+            unreachable!(MSG)
         }
     }
 
