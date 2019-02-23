@@ -973,6 +973,13 @@ fn parse_args(
         let ident_s = ident.to_string();
         match &*ident_s {
             "binds" if accepts_binds => {
+                if binds.is_some() {
+                    return Err(parse::Error::new(
+                        ident.span(),
+                        "argument appears more than once",
+                    ));
+                }
+
                 // #ident
                 let ident = content.parse()?;
 
