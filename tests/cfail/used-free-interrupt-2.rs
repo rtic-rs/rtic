@@ -12,8 +12,8 @@ const APP: () = {
     #[init]
     fn init() {}
 
-    #[interrupt(binds = UART0)]
-    fn foo() {} //~ ERROR free interrupts (`extern { .. }`) can't be used as interrupt handlers
+    #[interrupt(binds = UART0)] //~ ERROR free interrupts (`extern { .. }`) can't be used as interrupt handlers
+    fn foo() {}
 
     extern "C" {
         fn UART0();
