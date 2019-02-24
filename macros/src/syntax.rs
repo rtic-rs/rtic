@@ -937,6 +937,13 @@ fn parse_args(input: ParseStream<'_>, accept_capacity: bool) -> parse::Result<Ta
         let ident_s = ident.to_string();
         match &*ident_s {
             "capacity" if accept_capacity => {
+                if capacity.is_some() {
+                    return Err(parse::Error::new(
+                        ident.span(),
+                        "argument appears more than once",
+                    ));
+                }
+
                 // #lit
                 let lit: LitInt = content.parse()?;
 
@@ -958,6 +965,13 @@ fn parse_args(input: ParseStream<'_>, accept_capacity: bool) -> parse::Result<Ta
                 capacity = Some(value as u8);
             }
             "priority" => {
+                if priority.is_some() {
+                    return Err(parse::Error::new(
+                        ident.span(),
+                        "argument appears more than once",
+                    ));
+                }
+
                 // #lit
                 let lit: LitInt = content.parse()?;
 
