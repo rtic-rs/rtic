@@ -106,12 +106,8 @@ pub fn app(app: &App) -> parse::Result<()> {
     }
 
     // Check that free interrupts are not being used
-    for (name, interrupt) in &app.interrupts {
-        let name = if let Some(ref binds) = interrupt.args.binds {
-            binds
-        } else {
-            name
-        };
+    for (handler, interrupt) in &app.interrupts {
+        let name = interrupt.args.binds(handler);
 
         if app.free_interrupts.contains_key(name) {
             return Err(parse::Error::new(

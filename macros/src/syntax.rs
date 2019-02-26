@@ -731,11 +731,18 @@ pub struct Exception {
 }
 
 pub struct ExceptionArgs {
-    pub binds: Option<Ident>,
+    binds: Option<Ident>,
     pub priority: u8,
     pub resources: Idents,
     pub schedule: Idents,
     pub spawn: Idents,
+}
+
+impl ExceptionArgs {
+    /// Returns the name of the exception / interrupt this handler binds to
+    pub fn binds<'a>(&'a self, handler: &'a Ident) -> &'a Ident {
+        self.binds.as_ref().unwrap_or(handler)
+    }
 }
 
 impl Parse for ExceptionArgs {

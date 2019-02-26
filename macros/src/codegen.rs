@@ -468,12 +468,8 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
     // the device into compile errors
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
-    for (name, exception) in &app.exceptions {
-        let name = if let Some(ref binds) = exception.args.binds {
-            binds
-        } else {
-            name
-        };
+    for (handler, exception) in &app.exceptions {
+        let name = exception.args.binds(handler);
         let priority = exception.args.priority;
         exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
         exprs.push(quote!(p.SCB.set_priority(
@@ -1128,7 +1124,7 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
             };
 
             let locals = mk_locals(&exception.statics, false);
-            let symbol = exception.args.binds.as_ref().unwrap_or(ident).to_string();
+            let symbol = exception.args.binds(ident).to_string();
             let alias = ctxt.ident_gen.mk_ident(None, false);
             let unsafety = &exception.unsafety;
             quote!(
@@ -1214,7 +1210,7 @@ fn interrupts(
 
         let locals = mk_locals(&interrupt.statics, false);
         let alias = ctxt.ident_gen.mk_ident(None, false);
-        let symbol = interrupt.args.binds.as_ref().unwrap_or(ident).to_string();
+        let symbol = interrupt.args.binds(ident).to_string();
         let unsafety = &interrupt.unsafety;
         scoped.push(quote!(
             // unsafe trampoline to deter end-users from calling this non-reentrant function
@@ -1997,12 +1993,8 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
     // the device into compile errors
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
-    for (name, interrupt) in &app.interrupts {
-        let name = if let Some(ref binds) = interrupt.args.binds {
-            binds
-        } else {
-            name
-        };
+    for (handler, interrupt) in &app.interrupts {
+        let name = interrupt.args.binds(handler);
         let priority = interrupt.args.priority;
         exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
         exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits));));
