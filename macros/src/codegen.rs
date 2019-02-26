@@ -468,7 +468,8 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
     // the device into compile errors
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
-    for (name, exception) in &app.exceptions {
+    for (handler, exception) in &app.exceptions {
+        let name = exception.args.binds(handler);
         let priority = exception.args.priority;
         exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
         exprs.push(quote!(p.SCB.set_priority(
@@ -1082,9 +1083,10 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
             let attrs = &exception.attrs;
             let stmts = &exception.stmts;
 
+            let kind = Kind::Exception(ident.clone());
             let prelude = prelude(
                 ctxt,
-                Kind::Exception(ident.clone()),
+                kind.clone(),
                 &exception.args.resources,
                 &exception.args.spawn,
                 &exception.args.schedule,
@@ -1095,7 +1097,7 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
 
             let module = module(
                 ctxt,
-                Kind::Exception(ident.clone()),
+                kind,
                 !exception.args.schedule.is_empty(),
                 !exception.args.spawn.is_empty(),
                 app,
@@ -1122,7 +1124,7 @@ fn exceptions(ctxt: &mut Context, app: &App, analysis: &Analysis) -> Vec<proc_ma
             };
 
             let locals = mk_locals(&exception.statics, false);
-            let symbol = ident.to_string();
+            let symbol = exception.args.binds(ident).to_string();
             let alias = ctxt.ident_gen.mk_ident(None, false);
             let unsafety = &exception.unsafety;
             quote!(
@@ -1162,14 +1164,14 @@ fn interrupts(
     let mut root = vec![];
     let mut scoped = vec![];
 
-    let device = &app.args.device;
     for (ident, interrupt) in &app.interrupts {
         let attrs = &interrupt.attrs;
         let stmts = &interrupt.stmts;
 
+        let kind = Kind::Interrupt(ident.clone());
         let prelude = prelude(
             ctxt,
-            Kind::Interrupt(ident.clone()),
+            kind.clone(),
             &interrupt.args.resources,
             &interrupt.args.spawn,
             &interrupt.args.schedule,
@@ -1180,7 +1182,7 @@ fn interrupts(
 
         root.push(module(
             ctxt,
-            Kind::Interrupt(ident.clone()),
+            kind,
             !interrupt.args.schedule.is_empty(),
             !interrupt.args.spawn.is_empty(),
             app,
@@ -1208,7 +1210,7 @@ fn interrupts(
 
         let locals = mk_locals(&interrupt.statics, false);
         let alias = ctxt.ident_gen.mk_ident(None, false);
-        let symbol = ident.to_string();
+        let symbol = interrupt.args.binds(ident).to_string();
         let unsafety = &interrupt.unsafety;
         scoped.push(quote!(
             // unsafe trampoline to deter end-users from calling this non-reentrant function
@@ -1217,9 +1219,6 @@ fn interrupts(
             unsafe fn #alias() {
                 #[inline(always)]
                 #unsafety fn interrupt() {
-                    // check that this interrupt exists
-                    let _ = #device::interrupt::#ident;
-
                     #(#locals)*
 
                     #baseline_let
@@ -1994,7 +1993,8 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
     // the device into compile errors
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
-    for (name, interrupt) in &app.interrupts {
+    for (handler, interrupt) in &app.interrupts {
+        let name = interrupt.args.binds(handler);
         let priority = interrupt.args.priority;
         exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
         exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits));));

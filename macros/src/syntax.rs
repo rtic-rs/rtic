@@ -699,6 +699,29 @@ impl Init {
     }
 }
 
+/// Union of `TaskArgs`, `ExceptionArgs` and `InterruptArgs`
+pub struct Args {
+    pub binds: Option<Ident>,
+    pub capacity: Option<u8>,
+    pub priority: u8,
+    pub resources: Idents,
+    pub schedule: Idents,
+    pub spawn: Idents,
+}
+
+impl Default for Args {
+    fn default() -> Self {
+        Args {
+            binds: None,
+            capacity: None,
+            priority: 1,
+            resources: Idents::new(),
+            schedule: Idents::new(),
+            spawn: Idents::new(),
+        }
+    }
+}
+
 pub struct Exception {
     pub args: ExceptionArgs,
     pub attrs: Vec<Attribute>,
@@ -708,16 +731,25 @@ pub struct Exception {
 }
 
 pub struct ExceptionArgs {
+    binds: Option<Ident>,
     pub priority: u8,
     pub resources: Idents,
     pub schedule: Idents,
     pub spawn: Idents,
 }
 
+impl ExceptionArgs {
+    /// Returns the name of the exception / interrupt this handler binds to
+    pub fn binds<'a>(&'a self, handler: &'a Ident) -> &'a Ident {
+        self.binds.as_ref().unwrap_or(handler)
+    }
+}
+
 impl Parse for ExceptionArgs {
     fn parse(input: ParseStream<'_>) -> parse::Result<Self> {
-        parse_args(input, false).map(
-            |TaskArgs {
+        parse_args(input, /* binds */ true, /* capacity */ false).map(
+            |Args {
+                 binds,
                  priority,
                  resources,
                  schedule,
@@ -725,6 +757,7 @@ impl Parse for ExceptionArgs {
                  ..
              }| {
                 ExceptionArgs {
+                    binds,
                     priority,
                     resources,
                     schedule,
@@ -755,7 +788,7 @@ impl Exception {
         }
 
         let span = item.ident.span();
-        match &*item.ident.to_string() {
+        match &*args.binds.as_ref().unwrap_or(&item.ident).to_string() {
             "MemoryManagement" | "BusFault" | "UsageFault" | "SecureFault" | "SVCall"
             | "DebugMonitor" | "PendSV" => {} // OK
             "SysTick" => {
@@ -893,30 +926,40 @@ pub struct TaskArgs {
     pub schedule: Idents,
 }
 
-impl Default for TaskArgs {
-    fn default() -> Self {
-        TaskArgs {
-            capacity: None,
-            priority: 1,
-            resources: Idents::new(),
-            schedule: Idents::new(),
-            spawn: Idents::new(),
-        }
-    }
-}
-
 impl Parse for TaskArgs {
     fn parse(input: ParseStream<'_>) -> parse::Result<Self> {
-        parse_args(input, true)
+        parse_args(input, /* binds */ false, /* capacity */ true).map(
+            |Args {
+                 capacity,
+                 priority,
+                 resources,
+                 schedule,
+                 spawn,
+                 ..
+             }| {
+                TaskArgs {
+                    capacity,
+                    priority,
+                    resources,
+                    schedule,
+                    spawn,
+                }
+            },
+        )
     }
 }
 
-// Parser shared by TaskArgs and ExceptionArgs / InterruptArgs
-fn parse_args(input: ParseStream<'_>, accept_capacity: bool) -> parse::Result<TaskArgs> {
+// Parser shared by ExceptionArgs, InterruptArgs and TaskArgs
+fn parse_args(
+    input: ParseStream<'_>,
+    accepts_binds: bool,
+    accepts_capacity: bool,
+) -> parse::Result<Args> {
     if input.is_empty() {
-        return Ok(TaskArgs::default());
+        return Ok(Args::default());
     }
 
+    let mut binds = None;
     let mut capacity = None;
     let mut priority = None;
     let mut resources = None;
@@ -936,7 +979,20 @@ fn parse_args(input: ParseStream<'_>, accept_capacity: bool) -> parse::Result<Ta
 
         let ident_s = ident.to_string();
         match &*ident_s {
-            "capacity" if accept_capacity => {
+            "binds" if accepts_binds => {
+                if binds.is_some() {
+                    return Err(parse::Error::new(
+                        ident.span(),
+                        "argument appears more than once",
+                    ));
+                }
+
+                // #ident
+                let ident = content.parse()?;
+
+                binds = Some(ident);
+            }
+            "capacity" if accepts_capacity => {
                 if capacity.is_some() {
                     return Err(parse::Error::new(
                         ident.span(),
@@ -1052,7 +1108,11 @@ fn parse_args(input: ParseStream<'_>, accept_capacity: bool) -> parse::Result<Ta
             _ => {
                 return Err(parse::Error::new(
                     ident.span(),
-                    "expected one of: priority, resources, schedule or spawn",
+                    format!(
+                        "expected one of: {}{}priority, resources, schedule or spawn",
+                        if accepts_binds { "binds, " } else { "" },
+                        if accepts_capacity { "capacity, " } else { "" },
+                    ),
                 ));
             }
         }
@@ -1065,7 +1125,8 @@ fn parse_args(input: ParseStream<'_>, accept_capacity: bool) -> parse::Result<Ta
         let _: Token![,] = content.parse()?;
     }
 
-    Ok(TaskArgs {
+    Ok(Args {
+        binds,
         capacity,
         priority: priority.unwrap_or(1),
         resources: resources.unwrap_or(Idents::new()),

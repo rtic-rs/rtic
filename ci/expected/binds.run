@@ -1,0 +1,4 @@
+init
+foo called 1 time
+idle
+foo called 2 times
