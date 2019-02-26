@@ -61,3 +61,21 @@ $ cargo nm --example ramfunc --release | grep ' foo::'
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
 {{#include ../../../../ci/expected/ramfunc.grep.bar}}```
+
+## `binds`
+
+**ПРИМЕЧАНИЕ**: Требуется RTFM не ниже 0.4.2
+
+Вы можете давать аппаратным задачам имена похожие на имена обычных задач.
+Для этого нужно использовать аргумент `binds`: Вы называете функцию
+по своему желанию и назначаете ей прерывание / исключение
+через аргумент `binds`. `Spawn` и другие служебные типы будут размещены в модуле,
+названном в соответствии с названием функции, а не прерывания / исключения.
+Давайте посмотрим пример:
+
+``` rust
+{{#include ../../../../examples/binds.rs}}
+```
+``` console
+$ cargo run --example binds
+{{#include ../../../../ci/expected/binds.run}}```
