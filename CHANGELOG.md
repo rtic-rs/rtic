@@ -5,6 +5,49 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.2] - 2019-02-27
+
+### Added
+
+- `Duration` now has an `as_cycles` method to get the number of clock cycles
+  contained in it.
+
+- An opt-in "nightly" feature that reduces static memory usage, shortens
+  initialization time and reduces runtime overhead has been added. To use this
+  feature you need a nightly compiler!
+
+- [RFC 128] has been implemented. The `exception` and `interrupt` have gained a
+  `binds` argument that lets you give the handler an arbitrary name. For
+  example:
+
+[RFC 128]: https://github.com/japaric/cortex-m-rtfm/issues/128
+
+``` rust
+// on v0.4.1 you had to write
+#[interrupt]
+fn USART0() { .. }
+
+// on v0.4.2 you can write
+#[interrupt(binds = USART0)]
+fn on_new_frame() { .. }
+```
+
+### Changed
+
+- Builds are now reproducible. `cargo build; cargo clean; cargo build` will
+  produce binaries that are exactly the same (after `objcopy -O ihex`). This
+  wasn't the case before because we used randomly generated identifiers for
+  memory safety but now all the randomness is gone.
+
+### Fixed
+
+- Fixed a `non_camel_case_types` warning that showed up when using a recent
+  nightly.
+
+- Fixed a bug that allowed you to enter the `capacity` and `priority` arguments
+  in the `task` attribute more than once. Now all arguments can only be stated
+  once in the list, as it should be.
+
 ## [v0.4.1] - 2019-02-12
 
 ### Added
@@ -176,7 +219,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.2...HEAD
+[v0.4.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.1...v0.4.2
 [v0.4.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.0...v0.4.1
 [v0.4.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.4...v0.4.0
 [v0.3.4]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.3...v0.3.4
