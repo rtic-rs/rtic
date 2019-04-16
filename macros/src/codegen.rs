@@ -275,7 +275,7 @@ fn resources(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2:
                             #(#cfgs)*
                             #[doc = #symbol]
                             static mut #alias: rtfm::export::MaybeUninit<#ty> =
-                                rtfm::export::MaybeUninit::uninitialized();
+                                rtfm::export::MaybeUninit::uninit();
                         )
                     }),
             );
@@ -1281,7 +1281,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
 
                 if cfg!(feature = "nightly") {
                     let inits =
-                        (0..capacity).map(|_| quote!(rtfm::export::MaybeUninit::uninitialized()));
+                        (0..capacity).map(|_| quote!(rtfm::export::MaybeUninit::uninit()));
 
                     quote!(
                         #[doc = #scheduleds_symbol]
@@ -1294,7 +1294,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
                         #[doc = #scheduleds_symbol]
                         static mut #scheduleds_alias:
                         rtfm::export::MaybeUninit<[rtfm::Instant; #capacity_lit]> =
-                            rtfm::export::MaybeUninit::uninitialized();
+                            rtfm::export::MaybeUninit::uninit();
                     )
                 }
             }
@@ -1305,7 +1305,7 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
         let inputs_symbol = format!("{}::INPUTS::{}", name, inputs_alias);
         let free_symbol = format!("{}::FREE_QUEUE::{}", name, free_alias);
         if cfg!(feature = "nightly") {
-            let inits = (0..capacity).map(|_| quote!(rtfm::export::MaybeUninit::uninitialized()));
+            let inits = (0..capacity).map(|_| quote!(rtfm::export::MaybeUninit::uninit()));
 
             items.push(quote!(
                 #[doc = #free_symbol]
@@ -1322,11 +1322,11 @@ fn tasks(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
                 #[doc = #free_symbol]
                 static mut #free_alias: rtfm::export::MaybeUninit<
                     rtfm::export::FreeQueue<#capacity_ty>
-                    > = rtfm::export::MaybeUninit::uninitialized();
+                    > = rtfm::export::MaybeUninit::uninit();
 
                 #[doc = #inputs_symbol]
                 static mut #inputs_alias: rtfm::export::MaybeUninit<[#ty; #capacity_lit]> =
-                    rtfm::export::MaybeUninit::uninitialized();
+                    rtfm::export::MaybeUninit::uninit();
 
             ));
         }
@@ -1479,7 +1479,7 @@ fn dispatchers(
         } else {
             data.push(quote!(
                 #[doc = #symbol]
-                static mut #ready_alias: #e::MaybeUninit<#ty> = #e::MaybeUninit::uninitialized();
+                static mut #ready_alias: #e::MaybeUninit<#ty> = #e::MaybeUninit::uninit();
             ));
         }
         data.push(quote!(
@@ -1867,14 +1867,14 @@ fn timer_queue(ctxt: &mut Context, app: &App, analysis: &Analysis) -> proc_macro
         items.push(quote!(
             #[doc = #symbol]
             static mut #tq: rtfm::export::MaybeUninit<rtfm::export::TimerQueue<#enum_, #cap>> =
-                rtfm::export::MaybeUninit::uninitialized();
+                rtfm::export::MaybeUninit::uninit();
         ));
     } else {
         items.push(quote!(
             #[doc = #symbol]
             static mut #tq:
                 rtfm::export::MaybeUninit<rtfm::export::TimerQueue<#enum_, #cap>> =
-                    rtfm::export::MaybeUninit::uninitialized();
+                    rtfm::export::MaybeUninit::uninit();
         ));
     }
 
@@ -1945,13 +1945,13 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
         // these are `MaybeUninit` arrays
         for task in ctxt.tasks.values() {
             let inputs = &task.inputs;
-            exprs.push(quote!(#inputs.write(core::mem::uninitialized());))
+            exprs.push(quote!(#inputs.write(core::mem::uninit());))
         }
 
         #[cfg(feature = "timer-queue")]
         for task in ctxt.tasks.values() {
             let scheduleds = &task.scheduleds;
-            exprs.push(quote!(#scheduleds.write(core::mem::uninitialized());))
+            exprs.push(quote!(#scheduleds.write(core::mem::uninit());))
         }
 
         // these are `MaybeUninit` `ReadyQueue`s

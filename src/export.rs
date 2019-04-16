@@ -72,9 +72,9 @@ pub struct MaybeUninit<T> {
 
 #[cfg(feature = "nightly")]
 impl<T> MaybeUninit<T> {
-    pub const fn uninitialized() -> Self {
+    pub const fn uninit() -> Self {
         MaybeUninit {
-            inner: core::mem::MaybeUninit::uninitialized(),
+            inner: core::mem::MaybeUninit::uninit(),
         }
     }
 
@@ -102,7 +102,7 @@ const MSG: &str =
 
 #[cfg(not(feature = "nightly"))]
 impl<T> MaybeUninit<T> {
-    pub const fn uninitialized() -> Self {
+    pub const fn uninit() -> Self {
         MaybeUninit { value: None }
     }
 
