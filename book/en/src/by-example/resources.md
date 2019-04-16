@@ -69,6 +69,13 @@ the critical section created by the lowest priority handler.
 $ cargo run --example lock
 {{#include ../../../../ci/expected/lock.run}}```
 
+One more note about priorities: choosing a priority higher than what the device
+supports (that is `1 << NVIC_PRIO_BITS`) will result in a compile error. Due to
+limitations in the language the error is currently far from helpful: it will say
+something along the lines of "evaluation of constant value failed" and the span
+of the error will *not* point out to the problematic interrupt value -- we are
+sorry about this!
+
 ## Late resources
 
 Unlike normal `static` variables, which need to be assigned an initial value
