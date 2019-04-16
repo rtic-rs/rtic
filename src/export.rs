@@ -86,8 +86,8 @@ impl<T> MaybeUninit<T> {
         self.inner.as_mut_ptr()
     }
 
-    pub fn set(&mut self, value: T) -> &mut T {
-        self.inner.set(value)
+    pub fn write(&mut self, value: T) -> &mut T {
+        self.inner.write(value)
     }
 }
 
@@ -138,7 +138,7 @@ impl<T> MaybeUninit<T> {
         }
     }
 
-    pub fn set(&mut self, val: T) {
+    pub fn write(&mut self, val: T) {
         // NOTE(volatile) we have observed UB when this uses a plain `ptr::write`
         unsafe { ptr::write_volatile(&mut self.value, Some(val)) }
     }

@@ -136,7 +136,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream {
                 if res.expr.is_none() {
                     let alias = &ctxt.statics[name];
 
-                    Some(quote!(#alias.set(res.#name);))
+                    Some(quote!(#alias.write(res.#name);))
                 } else {
                     None
                 }
@@ -338,7 +338,7 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> (proc_macro2::Tok
                 let expr = &assign.right;
                 quote!(
                     #(#attrs)*
-                    unsafe { #alias.set(#expr); }
+                    unsafe { #alias.write(#expr); }
                 )
             } else {
                 let left = &assign.left;
@@ -1945,32 +1945,32 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
         // these are `MaybeUninit` arrays
         for task in ctxt.tasks.values() {
             let inputs = &task.inputs;
-            exprs.push(quote!(#inputs.set(core::mem::uninitialized());))
+            exprs.push(quote!(#inputs.write(core::mem::uninitialized());))
         }
 
         #[cfg(feature = "timer-queue")]
         for task in ctxt.tasks.values() {
             let scheduleds = &task.scheduleds;
-            exprs.push(quote!(#scheduleds.set(core::mem::uninitialized());))
+            exprs.push(quote!(#scheduleds.write(core::mem::uninitialized());))
         }
 
         // these are `MaybeUninit` `ReadyQueue`s
         for dispatcher in ctxt.dispatchers.values() {
             let rq = &dispatcher.ready_queue;
-            exprs.push(quote!(#rq.set(rtfm::export::ReadyQueue::new_sc());))
+            exprs.push(quote!(#rq.write(rtfm::export::ReadyQueue::new_sc());))
         }
 
         // these are `MaybeUninit` `FreeQueue`s
         for task in ctxt.tasks.values() {
             let fq = &task.free_queue;
-            exprs.push(quote!(#fq.set(rtfm::export::FreeQueue::new_sc());))
+            exprs.push(quote!(#fq.write(rtfm::export::FreeQueue::new_sc());))
         }
     }
 
     // Initialize the timer queue
     if !analysis.timer_queue.tasks.is_empty() {
         let tq = &ctxt.timer_queue;
-        exprs.push(quote!(#tq.set(rtfm::export::TimerQueue::new(p.SYST));));
+        exprs.push(quote!(#tq.write(rtfm::export::TimerQueue::new(p.SYST));));
     }
 
     // Populate the `FreeQueue`s
