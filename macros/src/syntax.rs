@@ -1039,10 +1039,10 @@ fn parse_args(
                 }
 
                 let value = lit.value();
-                if value > u64::from(u8::MAX) {
+                if value > u64::from(u8::MAX) || value == 0 {
                     return Err(parse::Error::new(
                         lit.span(),
-                        "this literal must be in the range 0...255",
+                        "this literal must be in the range 1...255",
                     ));
                 }
 

@@ -1989,15 +1989,13 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
         ))
     }
 
-    // TODO turn the assertions that check that the priority is not larger than what's supported by
-    // the device into compile errors
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
     for (handler, interrupt) in &app.interrupts {
         let name = interrupt.args.binds(handler);
         let priority = interrupt.args.priority;
         exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
-        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits));));
+        exprs.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
         exprs.push(quote!(p.NVIC.set_priority(
             #device::Interrupt::#name,
             ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
@@ -2007,7 +2005,7 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
     for (priority, dispatcher) in &analysis.dispatchers {
         let name = &dispatcher.interrupt;
         exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
-        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits));));
+        exprs.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
         exprs.push(quote!(p.NVIC.set_priority(
             #device::Interrupt::#name,
             ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
