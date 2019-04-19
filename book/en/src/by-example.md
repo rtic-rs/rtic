@@ -14,3 +14,9 @@ program. Check [the embedded Rust book] for instructions on how to set up an
 embedded development environment that includes QEMU.
 
 [the embedded Rust book]: https://rust-embedded.github.io/book/intro/install.html
+
+## Real World Examples
+
+The following are examples of RTFM being used in real world projects.
+
+- [etrombly/sandbox](https://github.com/etrombly/sandbox/tree/4f5a230920ad815c0cfbc0e0ae5e39718d3f58fa). A hardware zen garden that draws patterns in sand. Patterns are sent over serial using G-code.
