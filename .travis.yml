@@ -3,17 +3,17 @@ language: rust
 matrix:
   include:
     # NOTE used to build docs on successful merges to master
-    - env: TARGET=x86_64-unknown-linux-gnu
+    # - env: TARGET=x86_64-unknown-linux-gnu
 
-    - env: TARGET=thumbv6m-none-eabi
-      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
+    # - env: TARGET=thumbv6m-none-eabi
+    #   if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
-    - env: TARGET=thumbv7m-none-eabi
-      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
+    # - env: TARGET=thumbv7m-none-eabi
+    #   if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
     - env: TARGET=x86_64-unknown-linux-gnu
       rust: nightly
-      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
+      # if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
     - env: TARGET=thumbv6m-none-eabi
       rust: nightly
