@@ -1,4 +1,3 @@
-#![feature(extern_crate_item_prelude)] // ???
 #![no_main]
 #![no_std]
 
@@ -21,13 +20,13 @@ const APP: () = {
     static X: NotSync = NotSync { _0: PhantomData };
 
     #[init(spawn = [foo])]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[task(priority = 1, resources = [X])]
-    fn foo() {}
+    fn foo(_: foo::Context) {}
 
     #[task(priority = 2, resources = [X])]
-    fn bar() {}
+    fn bar(_: bar::Context) {}
 
     extern "C" {
         fn UART0();

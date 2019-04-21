@@ -10,10 +10,10 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[task]
-    fn idle() {
+    fn idle(_: idle::Context) {
         //~^ ERROR `task` handlers can NOT be named `idle`, `init` or `resources`
     }
 

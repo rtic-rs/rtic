@@ -10,5 +10,5 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init(resources = [X])] //~ ERROR this resource has NOT been declared
-    fn init() {}
+    fn init(_: init::Context) {}
 };

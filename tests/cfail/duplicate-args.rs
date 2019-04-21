@@ -10,13 +10,13 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[task(
         capacity = 1,
         capacity = 2, //~ ERROR argument appears more than once
     )]
-    fn foo() {}
+    fn foo(_: foo::Context) {}
 
     extern "C" {
         fn UART0();

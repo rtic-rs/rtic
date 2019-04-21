@@ -10,7 +10,7 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {
+    fn init(_: init::Context) {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 
@@ -18,7 +18,7 @@ const APP: () = {
     }
 
     #[idle]
-    fn idle() -> ! {
+    fn idle(_: idle::Context) -> ! {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 
@@ -28,7 +28,7 @@ const APP: () = {
     }
 
     #[exception]
-    fn SVCall() {
+    fn SVCall(_: SVCall::Context) {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 
@@ -36,7 +36,7 @@ const APP: () = {
     }
 
     #[interrupt]
-    fn UART0() {
+    fn UART0(_: UART0::Context) {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 
@@ -44,7 +44,7 @@ const APP: () = {
     }
 
     #[task]
-    fn foo() {
+    fn foo(_: foo::Context) {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 
