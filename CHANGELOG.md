@@ -5,6 +5,18 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.3] - 2019-04-21
+
+### Changed
+
+- Checking that the specified priorities are supported by the target device is
+  now done at compile time.
+
+### Fixed
+
+- Building this crate with the "nightly" feature and a recent compiler has been
+  fixed.
+
 ## [v0.4.2] - 2019-02-27
 
 ### Added
@@ -219,7 +231,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.3...HEAD
+[v0.4.3]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.2...v0.4.3
 [v0.4.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.1...v0.4.2
 [v0.4.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.0...v0.4.1
 [v0.4.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.4...v0.4.0
