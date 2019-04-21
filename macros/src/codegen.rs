@@ -464,14 +464,15 @@ fn init(ctxt: &mut Context, app: &App, analysis: &Analysis) -> (proc_macro2::Tok
 fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::TokenStream {
     let mut exprs = vec![];
 
-    // TODO turn the assertions that check that the priority is not larger than what's supported by
-    // the device into compile errors
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
     for (handler, exception) in &app.exceptions {
         let name = exception.args.binds(handler);
         let priority = exception.args.priority;
-        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
+
+        // compile time assert that the priority is supported by the device
+        exprs.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+
         exprs.push(quote!(p.SCB.set_priority(
             rtfm::export::SystemHandler::#name,
             ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
@@ -480,7 +481,10 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
 
     if !analysis.timer_queue.tasks.is_empty() {
         let priority = analysis.timer_queue.priority;
-        exprs.push(quote!(assert!(#priority <= (1 << #nvic_prio_bits))));
+
+        // compile time assert that the priority is supported by the device
+        exprs.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+
         exprs.push(quote!(p.SCB.set_priority(
             rtfm::export::SystemHandler::SysTick,
             ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
@@ -1995,7 +1999,10 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
         let name = interrupt.args.binds(handler);
         let priority = interrupt.args.priority;
         exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
+
+        // compile time assert that the priority is supported by the device
         exprs.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+
         exprs.push(quote!(p.NVIC.set_priority(
             #device::Interrupt::#name,
             ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
@@ -2005,7 +2012,10 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
     for (priority, dispatcher) in &analysis.dispatchers {
         let name = &dispatcher.interrupt;
         exprs.push(quote!(p.NVIC.enable(#device::Interrupt::#name);));
+
+        // compile time assert that the priority is supported by the device
         exprs.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+
         exprs.push(quote!(p.NVIC.set_priority(
             #device::Interrupt::#name,
             ((1 << #nvic_prio_bits) - #priority) << (8 - #nvic_prio_bits),
