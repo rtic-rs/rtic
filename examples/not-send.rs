@@ -21,32 +21,32 @@ const APP: () = {
     static mut SHARED: Option<NotSend> = None;
 
     #[init(spawn = [baz, quux])]
-    fn init() {
-        spawn.baz().unwrap();
-        spawn.quux().unwrap();
+    fn init(c: init::Context) {
+        c.spawn.baz().unwrap();
+        c.spawn.quux().unwrap();
     }
 
     #[task(spawn = [bar])]
-    fn foo() {
+    fn foo(c: foo::Context) {
         // scenario 1: message passed to task that runs at the same priority
-        spawn.bar(NotSend { _0: PhantomData }).ok();
+        c.spawn.bar(NotSend { _0: PhantomData }).ok();
     }
 
     #[task]
-    fn bar(_x: NotSend) {
+    fn bar(_: bar::Context, _x: NotSend) {
         // scenario 1
     }
 
     #[task(priority = 2, resources = [SHARED])]
-    fn baz() {
+    fn baz(mut c: baz::Context) {
         // scenario 2: resource shared between tasks that run at the same priority
-        *resources.SHARED = Some(NotSend { _0: PhantomData });
+        *c.resources.SHARED = Some(NotSend { _0: PhantomData });
     }
 
     #[task(priority = 2, resources = [SHARED])]
-    fn quux() {
+    fn quux(mut c: quux::Context) {
         // scenario 2
-        let _not_send = resources.SHARED.take().unwrap();
+        let _not_send = c.resources.SHARED.take().unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
     }

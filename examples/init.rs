@@ -8,19 +8,18 @@
 extern crate panic_semihosting;
 
 use cortex_m_semihosting::{debug, hprintln};
-use rtfm::app;
 
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {
+    fn init(c: init::Context) {
         static mut X: u32 = 0;
 
         // Cortex-M peripherals
-        let _core: rtfm::Peripherals = core;
+        let _core: rtfm::Peripherals = c.core;
 
         // Device specific peripherals
-        let _device: lm3s6965::Peripherals = device;
+        let _device: lm3s6965::Peripherals = c.device;
 
         // Safe access to local `static mut` variable
         let _x: &'static mut u32 = X;

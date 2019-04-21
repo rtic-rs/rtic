@@ -9,12 +9,11 @@ extern crate panic_semihosting;
 
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
-use rtfm::app;
 
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {
+    fn init(_: init::Context) {
         // Pends the UART0 interrupt but its handler won't run until *after*
         // `init` returns because interrupts are disabled
         rtfm::pend(Interrupt::UART0);
@@ -23,7 +22,7 @@ const APP: () = {
     }
 
     #[idle]
-    fn idle() -> ! {
+    fn idle(_: idle::Context) -> ! {
         // interrupts are enabled again; the `UART0` handler runs at this point
 
         hprintln!("idle").unwrap();
@@ -36,7 +35,7 @@ const APP: () = {
     }
 
     #[interrupt]
-    fn UART0() {
+    fn UART0(_: UART0::Context) {
         static mut TIMES: u32 = 0;
 
         // Safe access to local `static mut` variable
