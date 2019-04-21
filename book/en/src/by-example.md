@@ -19,4 +19,6 @@ embedded development environment that includes QEMU.
 
 The following are examples of RTFM being used in real world projects.
 
-- [etrombly/sandbox](https://github.com/etrombly/sandbox/tree/4f5a230920ad815c0cfbc0e0ae5e39718d3f58fa). A hardware zen garden that draws patterns in sand. Patterns are sent over serial using G-code.
+### RTFM V0.4.2
+
+- [etrombly/sandbox](https://github.com/etrombly/sandbox/tree/41d423bcdd0d8e42fd46b79771400a8ca349af55). A hardware zen garden that draws patterns in sand. Patterns are sent over serial using G-code.
