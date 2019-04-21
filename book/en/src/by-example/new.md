@@ -40,7 +40,7 @@ $ rm memory.x build.rs
    `timer-queue` feature.
 
 ``` console
-$ cargo add cortex-m-rtfm
+$ cargo add cortex-m-rtfm --allow-prerelease
 ```
 
 4. Write your RTFM application.
@@ -49,7 +49,7 @@ Here I'll use the `init` example from the `cortex-m-rtfm` crate.
 
 ``` console
 $ curl \
-    -L https://github.com/japaric/cortex-m-rtfm/raw/v0.4.0/examples/init.rs \
+    -L https://github.com/japaric/cortex-m-rtfm/raw/v0.5.0-alpha.1/examples/init.rs \
     > src/main.rs
 ```
 

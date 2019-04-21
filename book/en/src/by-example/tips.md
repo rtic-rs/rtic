@@ -24,8 +24,8 @@ of tasks.
 
 You can use conditional compilation (`#[cfg]`) on resources (`static [mut]`
 items) and tasks (`fn` items). The effect of using `#[cfg]` attributes is that
-the resource / task will *not* be injected into the prelude of tasks that use
-them (see `resources`, `spawn` and `schedule`) if the condition doesn't hold.
+the resource / task will *not* be available through the corresponding `Context`
+`struct` if the condition doesn't hold.
 
 The example below logs a message whenever the `foo` task is spawned, but only if
 the program has been compiled using the `dev` profile.
@@ -37,7 +37,7 @@ the program has been compiled using the `dev` profile.
 ## Running tasks from RAM
 
 The main goal of moving the specification of RTFM applications to attributes in
-RTFM v0.4.x was to allow inter-operation with other attributes. For example, the
+RTFM v0.4.0 was to allow inter-operation with other attributes. For example, the
 `link_section` attribute can be applied to tasks to place them in RAM; this can
 improve performance in some cases.
 
@@ -77,8 +77,6 @@ $ cargo nm --example ramfunc --release | grep ' bar::'
 {{#include ../../../../ci/expected/ramfunc.grep.bar}}```
 
 ## `binds`
-
-**NOTE**: Requires RTFM ~0.4.2
 
 You can give hardware tasks more task-like names using the `binds` argument: you
 name the function as you wish and specify the name of the interrupt / exception
