@@ -109,6 +109,7 @@ main() {
                 types
                 not-send
                 not-sync
+                shared-with-init
 
                 generics
                 ramfunc

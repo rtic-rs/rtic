@@ -39,6 +39,19 @@ The example below shows where a type that doesn't implement `Send` can be used.
 {{#include ../../../../examples/not-send.rs}}
 ```
 
+It's important to note that late initialization of resources is effectively a
+send operation where the initial value is sent from `idle`, which has the lowest
+priority of `0`, to a task with will run with a priority greater than or equal
+to `1`. Thus all late resources need to implement the `Send` trait.
+
+Sharing a resource with `init` can be used to implement late initialization, see
+example below. For that reason, resources shared with `init` must also implement
+the `Send` trait.
+
+``` rust
+{{#include ../../../../examples/shared-with-init.rs}}
+```
+
 ## `Sync`
 
 Similarly, [`Sync`] is a marker trait for "types for which it is safe to share
