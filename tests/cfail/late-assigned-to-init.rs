@@ -12,5 +12,5 @@ const APP: () = {
     static mut X: u32 = ();
 
     #[init(resources = [X])] //~ ERROR late resources can NOT be assigned to `init`
-    fn init() {}
+    fn init(_: init::Context) {}
 };

@@ -10,10 +10,10 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[exception]
-    fn NonMaskableInt() {
+    fn NonMaskableInt(_: NonMaskableInt::Context) {
         //~^ ERROR only exceptions with configurable priority can be used as hardware tasks
     }
 };

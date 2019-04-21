@@ -10,10 +10,10 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[idle]
-    fn idle() {
-        //~^ ERROR `idle` must have type signature `[unsafe] fn() -> !`
+    fn idle(_: idle::Context) {
+        //~^ ERROR `idle` must have type signature `fn(idle::Context) -> !`
     }
 };

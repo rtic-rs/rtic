@@ -10,8 +10,8 @@ use rtfm::app;
 #[app(device = lm3s6965)] //~ ERROR 1 free interrupt (`extern { .. }`) is required
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[task]
-    fn foo() {}
+    fn foo(_: foo::Context) {}
 };

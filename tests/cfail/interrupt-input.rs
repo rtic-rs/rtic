@@ -10,10 +10,10 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[interrupt]
-    fn UART0(undef: u32) {
-        //~^ ERROR `interrupt` handlers must have type signature `[unsafe] fn()`
+    fn UART0(_: UART0::Context, undef: u32) {
+        //~^ ERROR this `interrupt` handler must have type signature `fn(UART0::Context)`
     }
 };
