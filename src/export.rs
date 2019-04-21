@@ -1,7 +1,5 @@
 //! IMPLEMENTATION DETAILS. DO NOT USE ANYTHING IN THIS MODULE
 
-#[cfg(not(feature = "nightly"))]
-use core::ptr;
 use core::{cell::Cell, u8};
 
 #[cfg(armv7m)]
@@ -14,25 +12,31 @@ pub use heapless::consts;
 use heapless::spsc::{Queue, SingleCore};
 
 #[cfg(feature = "timer-queue")]
-pub use crate::tq::{isr as sys_tick, NotReady, TimerQueue};
+pub use crate::tq::{NotReady, TimerQueue};
 
-pub type FreeQueue<N> = Queue<u8, N, usize, SingleCore>;
-pub type ReadyQueue<T, N> = Queue<(T, u8), N, usize, SingleCore>;
+pub type FreeQueue<N> = Queue<u8, N, u8, SingleCore>;
+pub type ReadyQueue<T, N> = Queue<(T, u8), N, u8, SingleCore>;
 
 #[cfg(armv7m)]
 #[inline(always)]
-pub fn run<F>(f: F)
+pub fn run<F>(priority: u8, f: F)
 where
     F: FnOnce(),
 {
-    let initial = basepri::read();
-    f();
-    unsafe { basepri::write(initial) }
+    if priority == 1 {
+        // if the priority of this interrupt is `1` then BASEPRI can only be `0`
+        f();
+        unsafe { basepri::write(0) }
+    } else {
+        let initial = basepri::read();
+        f();
+        unsafe { basepri::write(initial) }
+    }
 }
 
 #[cfg(not(armv7m))]
 #[inline(always)]
-pub fn run<F>(f: F)
+pub fn run<F>(_priority: u8, f: F)
 where
     F: FnOnce(),
 {
@@ -52,7 +56,7 @@ impl Priority {
         }
     }
 
-    // these two methods are used by claim (see below) but can't be used from the RTFM application
+    // these two methods are used by `lock` (see below) but can't be used from the RTFM application
     #[inline(always)]
     fn set(&self, value: u8) {
         self.inner.set(value)
@@ -64,13 +68,12 @@ impl Priority {
     }
 }
 
-#[cfg(feature = "nightly")]
+// We newtype `core::mem::MaybeUninit` so the end-user doesn't need `#![feature(maybe_uninit)]` in
+// their code
 pub struct MaybeUninit<T> {
-    // we newtype so the end-user doesn't need `#![feature(maybe_uninit)]` in their code
     inner: core::mem::MaybeUninit<T>,
 }
 
-#[cfg(feature = "nightly")]
 impl<T> MaybeUninit<T> {
     pub const fn uninit() -> Self {
         MaybeUninit {
@@ -86,61 +89,12 @@ impl<T> MaybeUninit<T> {
         self.inner.as_mut_ptr()
     }
 
+    pub unsafe fn read(&self) -> T {
+        self.inner.read()
+    }
+
     pub fn write(&mut self, value: T) -> &mut T {
         self.inner.write(value)
-    }
-}
-
-#[cfg(not(feature = "nightly"))]
-pub struct MaybeUninit<T> {
-    value: Option<T>,
-}
-
-#[cfg(not(feature = "nightly"))]
-const MSG: &str =
-    "you have hit a bug (UB) in RTFM implementation; try enabling this crate 'nightly' feature";
-
-#[cfg(not(feature = "nightly"))]
-impl<T> MaybeUninit<T> {
-    pub const fn uninit() -> Self {
-        MaybeUninit { value: None }
-    }
-
-    pub fn as_ptr(&self) -> *const T {
-        if let Some(x) = self.value.as_ref() {
-            x
-        } else {
-            unreachable!(MSG)
-        }
-    }
-
-    pub fn as_mut_ptr(&mut self) -> *mut T {
-        if let Some(x) = self.value.as_mut() {
-            x
-        } else {
-            unreachable!(MSG)
-        }
-    }
-
-    pub unsafe fn get_ref(&self) -> &T {
-        if let Some(x) = self.value.as_ref() {
-            x
-        } else {
-            unreachable!(MSG)
-        }
-    }
-
-    pub unsafe fn get_mut(&mut self) -> &mut T {
-        if let Some(x) = self.value.as_mut() {
-            x
-        } else {
-            unreachable!(MSG)
-        }
-    }
-
-    pub fn write(&mut self, val: T) {
-        // NOTE(volatile) we have observed UB when this uses a plain `ptr::write`
-        unsafe { ptr::write_volatile(&mut self.value, Some(val)) }
     }
 }
 
@@ -160,19 +114,16 @@ where
 
 #[cfg(armv7m)]
 #[inline(always)]
-pub unsafe fn claim<T, R, F>(
+pub unsafe fn lock<T, R>(
     ptr: *mut T,
     priority: &Priority,
     ceiling: u8,
     nvic_prio_bits: u8,
-    f: F,
-) -> R
-where
-    F: FnOnce(&mut T) -> R,
-{
+    f: impl FnOnce(&mut T) -> R,
+) -> R {
     let current = priority.get();
 
-    if priority.get() < ceiling {
+    if current < ceiling {
         if ceiling == (1 << nvic_prio_bits) {
             priority.set(u8::MAX);
             let r = interrupt::free(|_| f(&mut *ptr));
@@ -193,19 +144,16 @@ where
 
 #[cfg(not(armv7m))]
 #[inline(always)]
-pub unsafe fn claim<T, R, F>(
+pub unsafe fn lock<T, R>(
     ptr: *mut T,
     priority: &Priority,
     ceiling: u8,
     _nvic_prio_bits: u8,
-    f: F,
-) -> R
-where
-    F: FnOnce(&mut T) -> R,
-{
+    f: impl FnOnce(&mut T) -> R,
+) -> R {
     let current = priority.get();
 
-    if priority.get() < ceiling {
+    if current < ceiling {
         priority.set(u8::MAX);
         let r = interrupt::free(|_| f(&mut *ptr));
         priority.set(current);
@@ -215,8 +163,7 @@ where
     }
 }
 
-#[cfg(armv7m)]
 #[inline]
-fn logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
+pub fn logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
 }

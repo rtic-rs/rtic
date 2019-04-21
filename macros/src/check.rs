@@ -35,21 +35,12 @@ pub fn app(app: &App) -> parse::Result<()> {
         }
     }
 
-    // Check that all late resources have been initialized in `#[init]` if `init` has signature
-    // `fn()`
-    if !app.init.returns_late_resources {
-        for res in
-            app.resources
-                .iter()
-                .filter_map(|(name, res)| if res.expr.is_none() { Some(name) } else { None })
-        {
-            if app.init.assigns.iter().all(|assign| assign.left != *res) {
-                return Err(parse::Error::new(
-                    res.span(),
-                    "late resources MUST be initialized at the end of `init`",
-                ));
-            }
-        }
+    // Check that `init` returns `LateResources` if there's any declared late resource
+    if !app.init.returns_late_resources && app.resources.iter().any(|(_, res)| res.expr.is_none()) {
+        return Err(parse::Error::new(
+            app.init.span,
+            "late resources have been specified so `init` must return `init::LateResources`",
+        ));
     }
 
     // Check that all referenced tasks have been declared
