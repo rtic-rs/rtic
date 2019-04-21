@@ -13,5 +13,5 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 };

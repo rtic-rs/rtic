@@ -18,17 +18,17 @@ const APP: () = {
     static mut SHARED: Option<MustBeSend> = None;
 
     #[init(resources = [SHARED])]
-    fn init() {
+    fn init(c: init::Context) {
         // this `message` will be sent to task `UART0`
         let message = MustBeSend;
-        *resources.SHARED = Some(message);
+        *c.resources.SHARED = Some(message);
 
         rtfm::pend(Interrupt::UART0);
     }
 
     #[interrupt(resources = [SHARED])]
-    fn UART0() {
-        if let Some(message) = resources.SHARED.take() {
+    fn UART0(c: UART0::Context) {
+        if let Some(message) = c.resources.SHARED.take() {
             // `message` has been received
             drop(message);
 
