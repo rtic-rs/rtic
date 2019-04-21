@@ -11,8 +11,8 @@ use syn::{
     spanned::Spanned,
     token::Brace,
     ArgCaptured, AttrStyle, Attribute, Expr, FnArg, ForeignItem, Ident, IntSuffix, Item, ItemFn,
-    ItemForeignMod, ItemStatic, LitInt, Path, PathArguments, PathSegment, ReturnType, Stmt, Token,
-    Type, TypeTuple, Visibility,
+    ItemForeignMod, ItemStatic, LitInt, Pat, Path, PathArguments, ReturnType, Stmt, Token, Type,
+    TypeTuple, Visibility,
 };
 
 pub struct AppArgs {
@@ -70,7 +70,7 @@ impl Parse for AppArgs {
 
 pub struct Input {
     _const_token: Token![const],
-    _ident: Ident,
+    pub ident: Ident,
     _colon_token: Token![:],
     _ty: TypeTuple,
     _eq_token: Token![=],
@@ -94,7 +94,7 @@ impl Parse for Input {
         let content;
         Ok(Input {
             _const_token: input.parse()?,
-            _ident: input.parse()?,
+            ident: input.parse()?,
             _colon_token: input.parse()?,
             _ty: input.parse()?,
             _eq_token: input.parse()?,
@@ -435,7 +435,7 @@ pub type FreeInterrupts = BTreeMap<Ident, FreeInterrupt>;
 pub struct Idle {
     pub args: IdleArgs,
     pub attrs: Vec<Attribute>,
-    pub unsafety: Option<Token![unsafe]>,
+    pub context: Pat,
     pub statics: BTreeMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
@@ -444,34 +444,29 @@ pub type IdleArgs = InitArgs;
 
 impl Idle {
     fn check(args: IdleArgs, item: ItemFn) -> parse::Result<Self> {
-        let valid_signature = item.vis == Visibility::Inherited
-            && item.constness.is_none()
-            && item.asyncness.is_none()
-            && item.abi.is_none()
-            && item.decl.generics.params.is_empty()
-            && item.decl.generics.where_clause.is_none()
-            && item.decl.inputs.is_empty()
-            && item.decl.variadic.is_none()
-            && is_bottom(&item.decl.output);
+        let valid_signature =
+            check_signature(&item) && item.decl.inputs.len() == 1 && is_bottom(&item.decl.output);
 
         let span = item.span();
 
-        if !valid_signature {
-            return Err(parse::Error::new(
-                span,
-                "`idle` must have type signature `[unsafe] fn() -> !`",
-            ));
+        if valid_signature {
+            if let Some((context, _)) = check_inputs(item.decl.inputs, "idle") {
+                let (statics, stmts) = extract_statics(item.block.stmts);
+
+                return Ok(Idle {
+                    args,
+                    attrs: item.attrs,
+                    context,
+                    statics: Static::parse(statics)?,
+                    stmts,
+                });
+            }
         }
 
-        let (statics, stmts) = extract_statics(item.block.stmts);
-
-        Ok(Idle {
-            args,
-            attrs: item.attrs,
-            unsafety: item.unsafety,
-            statics: Static::parse(statics)?,
-            stmts,
-        })
+        Err(parse::Error::new(
+            span,
+            "`idle` must have type signature `fn(idle::Context) -> !`",
+        ))
     }
 }
 
@@ -596,34 +591,21 @@ impl Parse for InitArgs {
     }
 }
 
-// TODO remove in v0.5.x
-pub struct Assign {
-    pub attrs: Vec<Attribute>,
-    pub left: Ident,
-    pub right: Box<Expr>,
-}
-
 pub struct Init {
     pub args: InitArgs,
     pub attrs: Vec<Attribute>,
-    pub unsafety: Option<Token![unsafe]>,
     pub statics: BTreeMap<Ident, Static>,
+    pub context: Pat,
     pub stmts: Vec<Stmt>,
-    // TODO remove in v0.5.x
-    pub assigns: Vec<Assign>,
     pub returns_late_resources: bool,
+    pub span: Span,
 }
 
 impl Init {
     fn check(args: InitArgs, item: ItemFn) -> parse::Result<Self> {
-        let mut valid_signature = item.vis == Visibility::Inherited
-            && item.constness.is_none()
-            && item.asyncness.is_none()
-            && item.abi.is_none()
-            && item.decl.generics.params.is_empty()
-            && item.decl.generics.where_clause.is_none()
-            && item.decl.inputs.is_empty()
-            && item.decl.variadic.is_none();
+        let mut valid_signature = check_signature(&item) && item.decl.inputs.len() == 1;
+
+        const DONT_CARE: bool = false;
 
         let returns_late_resources = match &item.decl.output {
             ReturnType::Default => false,
@@ -636,36 +618,25 @@ impl Init {
                         } else {
                             valid_signature = false;
 
-                            false // don't care
+                            DONT_CARE
                         }
                     }
 
-                    Type::Path(p) => {
-                        let mut segments = p.path.segments.iter();
-                        if p.qself.is_none()
-                            && p.path.leading_colon.is_none()
-                            && p.path.segments.len() == 2
-                            && segments.next().map(|s| {
-                                s.arguments == PathArguments::None && s.ident.to_string() == "init"
-                            }) == Some(true)
-                            && segments.next().map(|s| {
-                                s.arguments == PathArguments::None
-                                    && s.ident.to_string() == "LateResources"
-                            }) == Some(true)
-                        {
+                    Type::Path(_) => {
+                        if is_path(ty, &["init", "LateResources"]) {
                             // -> init::LateResources
                             true
                         } else {
                             valid_signature = false;
 
-                            false // don't care
+                            DONT_CARE
                         }
                     }
 
                     _ => {
                         valid_signature = false;
 
-                        false // don't care
+                        DONT_CARE
                     }
                 }
             }
@@ -673,29 +644,26 @@ impl Init {
 
         let span = item.span();
 
-        if !valid_signature {
-            return Err(parse::Error::new(
-                span,
-                "`init` must have type signature `[unsafe] fn() [-> init::LateResources]`",
-            ));
+        if valid_signature {
+            if let Some((context, _)) = check_inputs(item.decl.inputs, "init") {
+                let (statics, stmts) = extract_statics(item.block.stmts);
+
+                return Ok(Init {
+                    args,
+                    attrs: item.attrs,
+                    statics: Static::parse(statics)?,
+                    context,
+                    stmts,
+                    returns_late_resources,
+                    span,
+                });
+            }
         }
 
-        let (statics, stmts) = extract_statics(item.block.stmts);
-        let (stmts, assigns) = if returns_late_resources {
-            (stmts, vec![])
-        } else {
-            extract_assignments(stmts)
-        };
-
-        Ok(Init {
-            args,
-            attrs: item.attrs,
-            unsafety: item.unsafety,
-            statics: Static::parse(statics)?,
-            stmts,
-            assigns,
-            returns_late_resources,
-        })
+        Err(parse::Error::new(
+            span,
+            "`init` must have type signature `fn(init::Context) [-> init::LateResources]`",
+        ))
     }
 }
 
@@ -725,8 +693,8 @@ impl Default for Args {
 pub struct Exception {
     pub args: ExceptionArgs,
     pub attrs: Vec<Attribute>,
-    pub unsafety: Option<Token![unsafe]>,
     pub statics: BTreeMap<Ident, Static>,
+    pub context: Pat,
     pub stmts: Vec<Stmt>,
 }
 
@@ -770,61 +738,67 @@ impl Parse for ExceptionArgs {
 
 impl Exception {
     fn check(args: ExceptionArgs, item: ItemFn) -> parse::Result<Self> {
-        let valid_signature = item.vis == Visibility::Inherited
-            && item.constness.is_none()
-            && item.asyncness.is_none()
-            && item.abi.is_none()
-            && item.decl.generics.params.is_empty()
-            && item.decl.generics.where_clause.is_none()
-            && item.decl.inputs.is_empty()
-            && item.decl.variadic.is_none()
-            && is_unit(&item.decl.output);
+        let valid_signature =
+            check_signature(&item) && item.decl.inputs.len() == 1 && is_unit(&item.decl.output);
 
-        if !valid_signature {
-            return Err(parse::Error::new(
-                item.span(),
-                "`exception` handlers must have type signature `[unsafe] fn()`",
-            ));
-        }
+        let span = item.span();
 
-        let span = item.ident.span();
-        match &*args.binds.as_ref().unwrap_or(&item.ident).to_string() {
-            "MemoryManagement" | "BusFault" | "UsageFault" | "SecureFault" | "SVCall"
-            | "DebugMonitor" | "PendSV" => {} // OK
-            "SysTick" => {
-                if cfg!(feature = "timer-queue") {
-                    return Err(parse::Error::new(
+        let name = item.ident.to_string();
+        if valid_signature {
+            if let Some((context, _)) = check_inputs(item.decl.inputs, &name) {
+                let span = item.ident.span();
+                match &*args
+                    .binds
+                    .as_ref()
+                    .map(|ident| ident.to_string())
+                    .unwrap_or(name)
+                {
+                    "MemoryManagement" | "BusFault" | "UsageFault" | "SecureFault" | "SVCall"
+                    | "DebugMonitor" | "PendSV" => {} // OK
+                    "SysTick" => {
+                        if cfg!(feature = "timer-queue") {
+                            return Err(parse::Error::new(
+                                span,
+                                "the `SysTick` exception can't be used because it's used by \
+                                 the runtime when the `timer-queue` feature is enabled",
+                            ));
+                        }
+                    }
+                    _ => {
+                        return Err(parse::Error::new(
                         span,
-                        "the `SysTick` exception can't be used because it's used by \
-                         the runtime when the `timer-queue` feature is enabled",
+                        "only exceptions with configurable priority can be used as hardware tasks",
                     ));
+                    }
                 }
-            }
-            _ => {
-                return Err(parse::Error::new(
-                    span,
-                    "only exceptions with configurable priority can be used as hardware tasks",
-                ));
+
+                let (statics, stmts) = extract_statics(item.block.stmts);
+
+                return Ok(Exception {
+                    args,
+                    attrs: item.attrs,
+                    statics: Static::parse(statics)?,
+                    context,
+                    stmts,
+                });
             }
         }
 
-        let (statics, stmts) = extract_statics(item.block.stmts);
-
-        Ok(Exception {
-            args,
-            attrs: item.attrs,
-            unsafety: item.unsafety,
-            statics: Static::parse(statics)?,
-            stmts,
-        })
+        Err(parse::Error::new(
+            span,
+            &format!(
+                "this `exception` handler must have type signature `fn({}::Context)`",
+                name
+            ),
+        ))
     }
 }
 
 pub struct Interrupt {
     pub args: InterruptArgs,
     pub attrs: Vec<Attribute>,
-    pub unsafety: Option<Token![unsafe]>,
     pub statics: BTreeMap<Ident, Static>,
+    pub context: Pat,
     pub stmts: Vec<Stmt>,
 }
 
@@ -832,49 +806,47 @@ pub type InterruptArgs = ExceptionArgs;
 
 impl Interrupt {
     fn check(args: InterruptArgs, item: ItemFn) -> parse::Result<Self> {
-        let valid_signature = item.vis == Visibility::Inherited
-            && item.constness.is_none()
-            && item.asyncness.is_none()
-            && item.abi.is_none()
-            && item.decl.generics.params.is_empty()
-            && item.decl.generics.where_clause.is_none()
-            && item.decl.inputs.is_empty()
-            && item.decl.variadic.is_none()
-            && is_unit(&item.decl.output);
+        let valid_signature =
+            check_signature(&item) && item.decl.inputs.len() == 1 && is_unit(&item.decl.output);
 
         let span = item.span();
 
-        if !valid_signature {
-            return Err(parse::Error::new(
-                span,
-                "`interrupt` handlers must have type signature `[unsafe] fn()`",
-            ));
-        }
+        let name = item.ident.to_string();
+        if valid_signature {
+            if let Some((context, _)) = check_inputs(item.decl.inputs, &name) {
+                match &*name {
+                    "init" | "idle" | "resources" => {
+                        return Err(parse::Error::new(
+                            span,
+                            "`interrupt` handlers can NOT be named `idle`, `init` or `resources`",
+                        ));
+                    }
+                    _ => {}
+                }
 
-        match &*item.ident.to_string() {
-            "init" | "idle" | "resources" => {
-                return Err(parse::Error::new(
-                    span,
-                    "`interrupt` handlers can NOT be named `idle`, `init` or `resources`",
-                ));
+                let (statics, stmts) = extract_statics(item.block.stmts);
+
+                return Ok(Interrupt {
+                    args,
+                    attrs: item.attrs,
+                    statics: Static::parse(statics)?,
+                    context,
+                    stmts,
+                });
             }
-            _ => {}
         }
 
-        let (statics, stmts) = extract_statics(item.block.stmts);
-
-        Ok(Interrupt {
-            args,
-            attrs: item.attrs,
-            unsafety: item.unsafety,
-            statics: Static::parse(statics)?,
-            stmts,
-        })
+        Err(parse::Error::new(
+            span,
+            format!(
+                "this `interrupt` handler must have type signature `fn({}::Context)`",
+                name
+            ),
+        ))
     }
 }
 
 pub struct Resource {
-    pub singleton: bool,
     pub cfgs: Vec<Attribute>,
     pub attrs: Vec<Attribute>,
     pub mutability: Option<Token![mut]>,
@@ -883,7 +855,7 @@ pub struct Resource {
 }
 
 impl Resource {
-    fn check(mut item: ItemStatic) -> parse::Result<Resource> {
+    fn check(item: ItemStatic) -> parse::Result<Resource> {
         if item.vis != Visibility::Inherited {
             return Err(parse::Error::new(
                 item.span(),
@@ -896,19 +868,9 @@ impl Resource {
             _ => false,
         };
 
-        let pos = item.attrs.iter().position(|attr| eq(attr, "Singleton"));
-
-        if let Some(pos) = pos {
-            item.attrs[pos].path.segments.insert(
-                0,
-                PathSegment::from(Ident::new("owned_singleton", Span::call_site())),
-            );
-        }
-
         let (cfgs, attrs) = extract_cfgs(item.attrs);
 
         Ok(Resource {
-            singleton: pos.is_some(),
             cfgs,
             attrs,
             mutability: item.mutability,
@@ -1177,66 +1139,61 @@ pub struct Task {
     pub args: TaskArgs,
     pub cfgs: Vec<Attribute>,
     pub attrs: Vec<Attribute>,
-    pub unsafety: Option<Token![unsafe]>,
     pub inputs: Vec<ArgCaptured>,
+    pub context: Pat,
     pub statics: BTreeMap<Ident, Static>,
     pub stmts: Vec<Stmt>,
 }
 
 impl Task {
     fn check(args: TaskArgs, item: ItemFn) -> parse::Result<Self> {
-        let valid_signature = item.vis == Visibility::Inherited
-            && item.constness.is_none()
-            && item.asyncness.is_none()
-            && item.abi.is_none()
-            && item.decl.generics.params.is_empty()
-            && item.decl.generics.where_clause.is_none()
-            && item.decl.variadic.is_none()
-            && is_unit(&item.decl.output);
+        let valid_signature =
+            check_signature(&item) && !item.decl.inputs.is_empty() && is_unit(&item.decl.output);
 
         let span = item.span();
 
-        if !valid_signature {
-            return Err(parse::Error::new(
-                span,
-                "`task` handlers must have type signature `[unsafe] fn(..)`",
-            ));
-        }
+        let name = item.ident.to_string();
+        if valid_signature {
+            if let Some((context, rest)) = check_inputs(item.decl.inputs, &name) {
+                let (statics, stmts) = extract_statics(item.block.stmts);
 
-        let (statics, stmts) = extract_statics(item.block.stmts);
+                let inputs = rest.map_err(|arg| {
+                    parse::Error::new(
+                        arg.span(),
+                        "inputs must be named arguments (e.f. `foo: u32`) and not include `self`",
+                    )
+                })?;
 
-        let mut inputs = vec![];
-        for input in item.decl.inputs {
-            if let FnArg::Captured(capture) = input {
-                inputs.push(capture);
-            } else {
-                return Err(parse::Error::new(
-                    span,
-                    "inputs must be named arguments (e.f. `foo: u32`) and not include `self`",
-                ));
+                match &*name {
+                    "init" | "idle" | "resources" => {
+                        return Err(parse::Error::new(
+                            span,
+                            "`task` handlers can NOT be named `idle`, `init` or `resources`",
+                        ));
+                    }
+                    _ => {}
+                }
+
+                let (cfgs, attrs) = extract_cfgs(item.attrs);
+                return Ok(Task {
+                    args,
+                    cfgs,
+                    attrs,
+                    inputs,
+                    context,
+                    statics: Static::parse(statics)?,
+                    stmts,
+                });
             }
         }
 
-        match &*item.ident.to_string() {
-            "init" | "idle" | "resources" => {
-                return Err(parse::Error::new(
-                    span,
-                    "`task` handlers can NOT be named `idle`, `init` or `resources`",
-                ));
-            }
-            _ => {}
-        }
-
-        let (cfgs, attrs) = extract_cfgs(item.attrs);
-        Ok(Task {
-            args,
-            cfgs,
-            attrs,
-            unsafety: item.unsafety,
-            inputs,
-            statics: Static::parse(statics)?,
-            stmts,
-        })
+        Err(parse::Error::new(
+            span,
+            &format!(
+                "this `task` handler must have type signature `fn({}::Context, ..)`",
+                name
+            ),
+        ))
     }
 }
 
@@ -1335,38 +1292,69 @@ fn extract_statics(stmts: Vec<Stmt>) -> (Statics, Vec<Stmt>) {
     (statics, stmts)
 }
 
-// TODO remove in v0.5.x
-fn extract_assignments(stmts: Vec<Stmt>) -> (Vec<Stmt>, Vec<Assign>) {
-    let mut istmts = stmts.into_iter().rev();
+// checks that the list of arguments has the form `#pat: #name::Context, (..)`
+//
+// if the check succeeds it returns `#pat` plus the remaining arguments
+fn check_inputs(
+    inputs: Punctuated<FnArg, Token![,]>,
+    name: &str,
+) -> Option<(Pat, Result<Vec<ArgCaptured>, FnArg>)> {
+    let mut inputs = inputs.into_iter();
 
-    let mut assigns = vec![];
-    let mut stmts = vec![];
-    while let Some(stmt) = istmts.next() {
-        match stmt {
-            Stmt::Semi(Expr::Assign(assign), semi) => {
-                if let Expr::Path(ref expr) = *assign.left {
-                    if expr.path.segments.len() == 1 {
-                        assigns.push(Assign {
-                            attrs: assign.attrs,
-                            left: expr.path.segments[0].ident.clone(),
-                            right: assign.right,
-                        });
-                        continue;
-                    }
-                }
+    match inputs.next() {
+        Some(FnArg::Captured(first)) => {
+            if is_path(&first.ty, &[name, "Context"]) {
+                let rest = inputs
+                    .map(|arg| match arg {
+                        FnArg::Captured(arg) => Ok(arg),
+                        _ => Err(arg),
+                    })
+                    .collect::<Result<Vec<_>, _>>();
 
-                stmts.push(Stmt::Semi(Expr::Assign(assign), semi));
-            }
-            _ => {
-                stmts.push(stmt);
-                break;
+                Some((first.pat, rest))
+            } else {
+                None
             }
         }
+
+        _ => None,
     }
+}
 
-    stmts.extend(istmts);
+/// checks that a function signature
+///
+/// - has no bounds (like where clauses)
+/// - is not `async`
+/// - is not `const`
+/// - is not `unsafe`
+/// - is not generic (has no type parametrs)
+/// - is not variadic
+/// - uses the Rust ABI (and not e.g. "C")
+fn check_signature(item: &ItemFn) -> bool {
+    item.vis == Visibility::Inherited
+        && item.constness.is_none()
+        && item.asyncness.is_none()
+        && item.abi.is_none()
+        && item.unsafety.is_none()
+        && item.decl.generics.params.is_empty()
+        && item.decl.generics.where_clause.is_none()
+        && item.decl.variadic.is_none()
+}
 
-    (stmts.into_iter().rev().collect(), assigns)
+fn is_path(ty: &Type, segments: &[&str]) -> bool {
+    match ty {
+        Type::Path(tpath) if tpath.qself.is_none() => {
+            tpath.path.segments.len() == segments.len()
+                && tpath
+                    .path
+                    .segments
+                    .iter()
+                    .zip(segments)
+                    .all(|(lhs, rhs)| lhs.ident == **rhs)
+        }
+
+        _ => false,
+    }
 }
 
 fn is_bottom(ty: &ReturnType) -> bool {

@@ -190,19 +190,20 @@ pub fn app(app: &App) -> Analysis {
     }
 
     // Ceiling analysis of free queues (consumer end point) -- first pass
-    // Ceiling analysis of ready queues (producer end point)
+    // Ceiling analysis of ready queues (producer end point) -- first pass
     // Also compute more Send-ness requirements
-    let mut free_queues: HashMap<_, _> = app.tasks.keys().map(|task| (task.clone(), 0)).collect();
-    let mut ready_queues: HashMap<_, _> = dispatchers.keys().map(|level| (*level, 0)).collect();
+    let mut free_queues = HashMap::new();
+    let mut ready_queues = HashMap::new();
     for (priority, task) in app.spawn_calls() {
         if let Some(priority) = priority {
-            // Users of `spawn` contend for the to-be-spawned task FREE_QUEUE
-            let c = free_queues.get_mut(task).expect("BUG: free_queue.get_mut");
+            // Users of `spawn` contend for the spawnee FREE_QUEUE
+            let c = free_queues.entry(task.clone()).or_default();
             *c = cmp::max(*c, priority);
 
+            // Users of `spawn` contend for the spawnee's dispatcher READY_QUEUE
             let c = ready_queues
-                .get_mut(&app.tasks[task].args.priority)
-                .expect("BUG: ready_queues.get_mut");
+                .entry(app.tasks[task].args.priority)
+                .or_default();
             *c = cmp::max(*c, priority);
 
             // Send is required when sending messages from a task whose priority doesn't match the
@@ -215,16 +216,23 @@ pub fn app(app: &App) -> Analysis {
         }
     }
 
+    // Ceiling analysis of ready queues (producer end point) -- second pass
     // Ceiling analysis of free queues (consumer end point) -- second pass
     // Ceiling analysis of the timer queue
     let mut tq_ceiling = tq_priority;
     for (priority, task) in app.schedule_calls() {
+        // the system timer handler contends for the spawnee's dispatcher READY_QUEUE
+        let c = ready_queues
+            .entry(app.tasks[task].args.priority)
+            .or_default();
+        *c = cmp::max(*c, tq_priority);
+
         if let Some(priority) = priority {
-            // Users of `schedule` contend for the to-be-spawned task FREE_QUEUE (consumer end point)
-            let c = free_queues.get_mut(task).expect("BUG: free_queue.get_mut");
+            // Users of `schedule` contend for the spawnee task FREE_QUEUE
+            let c = free_queues.entry(task.clone()).or_default();
             *c = cmp::max(*c, priority);
 
-            // Users of `schedule` contend for the timer queu
+            // Users of `schedule` contend for the timer queue
             tq_ceiling = cmp::max(tq_ceiling, priority);
         } else {
             // spawns from `init` are excluded from the ceiling analysis

@@ -1,5 +1,8 @@
 //! Real Time For the Masses (RTFM) framework for ARM Cortex-M microcontrollers
 //!
+//! **HEADS UP** This is an **alpha** pre-release; there may be breaking changes in the API and
+//! semantics before a proper release is made.
+//!
 //! **IMPORTANT**: This crate is published as [`cortex-m-rtfm`] on crates.io but the name of the
 //! library is `rtfm`.
 //!
@@ -7,7 +10,7 @@
 //!
 //! The user level documentation can be found [here].
 //!
-//! [here]: https://japaric.github.io/cortex-m-rtfm/book/en/
+//! [here]: https://japaric.github.io/rtfm5/book/en/
 //!
 //! Don't forget to check the documentation of the [`#[app]`] attribute, which is the main component
 //! of the framework.
@@ -16,7 +19,7 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! This crate is guaranteed to compile on stable Rust 1.31 (2018 edition) and up. It *might*
+//! This crate is guaranteed to compile on stable Rust 1.36 (2018 edition) and up. It *might*
 //! compile on older versions but that may change in any new patch release.
 //!
 //! # Semantic Versioning
@@ -36,12 +39,11 @@
 //! [`Instant`]: struct.Instant.html
 //! [`Duration`]: struct.Duration.html
 //!
-//! - `nightly`. Enabling this opt-in feature makes RTFM internally use the unstable
-//! `core::mem::MaybeUninit` API and unstable `const_fn` language feature to reduce static memory
-//! usage, runtime overhead and initialization overhead. This feature requires a nightly compiler
-//! and may stop working at any time!
+//! - `nightly`. Enabling this opt-in feature makes RTFM internally use the unstable `const_fn`
+//! language feature to reduce static memory usage, runtime overhead and initialization overhead.
+//! This feature requires a nightly compiler and may stop working at any time!
 
-#![cfg_attr(feature = "nightly", feature(maybe_uninit))]
+#![feature(maybe_uninit)]
 #![deny(missing_docs)]
 #![deny(warnings)]
 #![no_std]
@@ -132,7 +134,7 @@ pub struct Instant(i32);
 impl Instant {
     /// IMPLEMENTATION DETAIL. DO NOT USE
     #[doc(hidden)]
-    pub fn artificial(timestamp: i32) -> Self {
+    pub unsafe fn artificial(timestamp: i32) -> Self {
         Instant(timestamp)
     }
 
@@ -290,9 +292,7 @@ pub trait Mutex {
     type T;
 
     /// Creates a critical section and grants temporary access to the protected data
-    fn lock<R, F>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Self::T) -> R;
+    fn lock<R>(&mut self, f: impl FnOnce(&mut Self::T) -> R) -> R;
 }
 
 impl<'a, M> Mutex for &'a mut M
@@ -301,10 +301,7 @@ where
 {
     type T = M::T;
 
-    fn lock<R, F>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Self::T) -> R,
-    {
+    fn lock<R>(&mut self, f: impl FnOnce(&mut M::T) -> R) -> R {
         (**self).lock(f)
     }
 }
@@ -317,10 +314,7 @@ pub struct Exclusive<'a, T>(pub &'a mut T);
 impl<'a, T> Mutex for Exclusive<'a, T> {
     type T = T;
 
-    fn lock<R, F>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Self::T) -> R,
-    {
+    fn lock<R>(&mut self, f: impl FnOnce(&mut T) -> R) -> R {
         f(self.0)
     }
 }
