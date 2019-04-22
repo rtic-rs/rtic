@@ -39,8 +39,8 @@ cortex-m-rt = "0.6.7"
 cortex-m-rtfm-macros = { path = "macros", version = "0.5.0-alpha.1" }
 
 [dependencies.heapless]
-features = ["smaller-atomics"]
-version = "0.4.1"
+features = ["smaller-atomics", "min-const-fn"]
+version = "0.4.3"
 
 [dev-dependencies]
 cortex-m-semihosting = "0.3.2"
