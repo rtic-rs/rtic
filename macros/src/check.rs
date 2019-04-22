@@ -119,7 +119,7 @@ pub fn app(app: &App) -> parse::Result<()> {
     } else if app.init.returns_late_resources {
         return Err(parse::Error::new(
             Span::call_site(),
-            "`init` signature must be `[unsafe] fn()` if there are no late resources",
+            "`init` signature must be `fn(init::Context)` if there are no late resources",
         ));
     }
 
