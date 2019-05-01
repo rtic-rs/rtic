@@ -1256,6 +1256,15 @@ fn pre_init(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> {
 
     // Set the cycle count to 0 and disable it while `init` executes
     if cfg!(feature = "timer-queue") {
+        stmts.push(quote!(
+            // unlock the DWT, if software locked
+            // See ARM CoreSight Architecture Specification v3.0, section B2.3.10
+            // 1 << 0 = Software lock mechanism is implemented.
+            // 1 << 1 = Writing to the other registers in the component is blocked
+            if core.DWT.lsr.read() & 0b11 == 0b11 {
+                core.DWT.lar.write(0xC5ACCE55);
+            }
+        ));
         stmts.push(quote!(core.DWT.ctrl.modify(|r| r & !1);));
         stmts.push(quote!(core.DWT.cyccnt.write(0);));
     }
