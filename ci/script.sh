@@ -110,12 +110,38 @@ main() {
                 shared-with-init
 
                 generics
+                pool
                 ramfunc
             )
 
             for ex in ${exs[@]}; do
                 if [ $ex = ramfunc ] && [ $T = thumbv6m-none-eabi ]; then
                     # LLD doesn't support this at the moment
+                    continue
+                fi
+
+                if [ $ex = pool ]; then
+                    if [ $TARGET != thumbv6m-none-eabi ]; then
+                        local td=$(mktemp -d)
+
+                        local features="$nightly,timer-queue"
+                        cargo run --example $ex --target $TARGET --features $features >\
+                              $td/pool.run
+                        grep 'foo(0x2' $td/pool.run
+                        grep 'bar(0x2' $td/pool.run
+                        arm-none-eabi-objcopy -O ihex target/$TARGET/debug/examples/$ex \
+                                              ci/builds/${ex}_${features/,/_}_debug_1.hex
+
+                        cargo run --example $ex --target $TARGET --features $features --release >\
+                              $td/pool.run
+                        grep 'foo(0x2' $td/pool.run
+                        grep 'bar(0x2' $td/pool.run
+                        arm-none-eabi-objcopy -O ihex target/$TARGET/release/examples/$ex \
+                                              ci/builds/${ex}_${features/,/_}_release_1.hex
+
+                        rm -rf $td
+                    fi
+
                     continue
                 fi
 
@@ -138,7 +164,7 @@ main() {
                     continue
                 fi
 
-                if [ $ex != types ]; then
+                if [ $ex != types ] && [ $ex != pool ]; then
                     arm_example "build" $ex "debug" "$nightly" "2"
                     cmp ci/builds/${ex}_${nightly/nightly/nightly_}debug_1.hex \
                         ci/builds/${ex}_${nightly/nightly/nightly_}debug_2.hex
