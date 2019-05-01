@@ -26,6 +26,12 @@ name = "periodic"
 required-features = ["timer-queue"]
 
 [[example]]
+name = "pool"
+# this example doesn't need this feature but only works on ARMv7-M
+# specifying the feature here avoids compiling this for ARMv6-M
+required-features = ["timer-queue"]
+
+[[example]]
 name = "schedule"
 required-features = ["timer-queue"]
 
