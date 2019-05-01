@@ -10,11 +10,11 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[exception]
-    fn SVCall() -> ! {
-        //~^ ERROR `exception` handlers must have type signature `[unsafe] fn()`
+    fn SVCall(_: SVCall::Context) -> ! {
+        //~^ ERROR this `exception` handler must have type signature `fn(SVCall::Context)`
         loop {}
     }
 };

@@ -13,16 +13,15 @@ use heapless::{
     spsc::{Consumer, Producer, Queue},
 };
 use lm3s6965::Interrupt;
-use rtfm::app;
 
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     // Late resources
     static mut P: Producer<'static, u32, U4> = ();
     static mut C: Consumer<'static, u32, U4> = ();
 
     #[init]
-    fn init() -> init::LateResources {
+    fn init(_: init::Context) -> init::LateResources {
         // NOTE: we use `Option` here to work around the lack of
         // a stable `const` constructor
         static mut Q: Option<Queue<u32, U4>> = None;
@@ -35,9 +34,9 @@ const APP: () = {
     }
 
     #[idle(resources = [C])]
-    fn idle() -> ! {
+    fn idle(c: idle::Context) -> ! {
         loop {
-            if let Some(byte) = resources.C.dequeue() {
+            if let Some(byte) = c.resources.C.dequeue() {
                 hprintln!("received message: {}", byte).unwrap();
 
                 debug::exit(debug::EXIT_SUCCESS);
@@ -48,7 +47,7 @@ const APP: () = {
     }
 
     #[interrupt(resources = [P])]
-    fn UART0() {
-        resources.P.enqueue(42).unwrap();
+    fn UART0(c: UART0::Context) {
+        c.resources.P.enqueue(42).unwrap();
     }
 };

@@ -3,7 +3,7 @@ use core::cmp::{self, Ordering};
 use cortex_m::peripheral::{SCB, SYST};
 use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 
-use crate::{Instant, Mutex};
+use crate::Instant;
 
 pub struct TimerQueue<T, N>
 where
@@ -43,10 +43,38 @@ where
             }
 
             // set SysTick pending
-            (*SCB::ptr()).icsr.write(1 << 26);
+            SCB::set_pendst();
         }
 
         self.queue.push_unchecked(nr);
+    }
+
+    #[inline]
+    pub fn dequeue(&mut self) -> Option<(T, u8)> {
+        if let Some(instant) = self.queue.peek().map(|p| p.instant) {
+            let diff = instant.0.wrapping_sub(Instant::now().0);
+
+            if diff < 0 {
+                // task became ready
+                let nr = unsafe { self.queue.pop_unchecked() };
+
+                Some((nr.task, nr.index))
+            } else {
+                // set a new timeout
+                const MAX: u32 = 0x00ffffff;
+
+                self.syst.set_reload(cmp::min(MAX, diff as u32));
+
+                // start counting down from the new reload
+                self.syst.clear_current();
+
+                None
+            }
+        } else {
+            // the queue is empty
+            self.syst.disable_interrupt();
+            None
+        }
     }
 }
 
@@ -85,51 +113,5 @@ where
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(&other))
-    }
-}
-
-#[inline(always)]
-pub fn isr<TQ, T, N, F>(mut tq: TQ, mut f: F)
-where
-    TQ: Mutex<T = TimerQueue<T, N>>,
-    T: Copy + Send,
-    N: ArrayLength<NotReady<T>>,
-    F: FnMut(T, u8),
-{
-    loop {
-        // XXX does `#[inline(always)]` improve performance or not?
-        let next = tq.lock(#[inline(always)]
-        |tq| {
-            if let Some(instant) = tq.queue.peek().map(|p| p.instant) {
-                let diff = instant.0.wrapping_sub(Instant::now().0);
-
-                if diff < 0 {
-                    // task became ready
-                    let m = unsafe { tq.queue.pop_unchecked() };
-
-                    Some((m.task, m.index))
-                } else {
-                    // set a new timeout
-                    const MAX: u32 = 0x00ffffff;
-
-                    tq.syst.set_reload(cmp::min(MAX, diff as u32));
-
-                    // start counting down from the new reload
-                    tq.syst.clear_current();
-
-                    None
-                }
-            } else {
-                // the queue is empty
-                tq.syst.disable_interrupt();
-                None
-            }
-        });
-
-        if let Some((task, index)) = next {
-            f(task, index)
-        } else {
-            return;
-        }
     }
 }

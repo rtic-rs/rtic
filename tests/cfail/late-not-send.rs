@@ -1,7 +1,6 @@
 //! `init` has a static priority of `0`. Initializing resources from it is equivalent to sending a
 //! message to the task that will own the resource
 
-#![feature(extern_crate_item_prelude)] // ???
 #![no_main]
 #![no_std]
 
@@ -22,12 +21,12 @@ const APP: () = {
     static mut X: NotSend = ();
 
     #[init]
-    fn init() -> init::LateResources {
+    fn init(_: init::Context) -> init::LateResources {
         init::LateResources {
             X: NotSend { _0: PhantomData },
         }
     }
 
     #[interrupt(resources = [X])]
-    fn UART0() {}
+    fn UART0(_: UART0::Context) {}
 };

@@ -10,8 +10,8 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() -> u32 {
-        //~^ ERROR `init` must have type signature `[unsafe] fn() [-> init::LateResources]`
+    fn init(_: init::Context) -> u32 {
+        //~^ ERROR `init` must have type signature `fn(init::Context) [-> init::LateResources]`
         0
     }
 };

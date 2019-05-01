@@ -10,29 +10,28 @@ extern crate panic_halt;
 use core::marker::PhantomData;
 
 use cortex_m_semihosting::debug;
-use rtfm::app;
 
 pub struct NotSync {
     _0: PhantomData<*const ()>,
 }
 
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     static SHARED: NotSync = NotSync { _0: PhantomData };
 
     #[init]
-    fn init() {
+    fn init(_: init::Context) {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
     #[task(resources = [SHARED])]
-    fn foo() {
-        let _: &NotSync = resources.SHARED;
+    fn foo(c: foo::Context) {
+        let _: &NotSync = c.resources.SHARED;
     }
 
     #[task(resources = [SHARED])]
-    fn bar() {
-        let _: &NotSync = resources.SHARED;
+    fn bar(c: bar::Context) {
+        let _: &NotSync = c.resources.SHARED;
     }
 
     extern "C" {

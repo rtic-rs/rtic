@@ -5,6 +5,35 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## v0.5.0 - 2019-??-?? (ALPHA pre-release)
+
+### Changed
+
+- [breaking-change][] [RFC 155] "explicit `Context` parameter" has been
+  implemented.
+
+[RFC 155]: https://github.com/japaric/cortex-m-rtfm/issues/155
+
+- [breaking-change][] [RFC 147] "all functions must be safe" has been
+  implemented.
+
+[RFC 147]: https://github.com/japaric/cortex-m-rtfm/issues/147
+
+- All the queues internally used by the framework now use `AtomicU8` indices
+  instead of `AtomicUsize`; this reduces the static memory used by the
+  framework.
+
+### Removed
+
+- [breaking-change] the integration with the `owned_singleton` crate has been
+  removed. You can use `heapless::Pool` instead of `alloc_singleton`.
+
+- [breaking-change] late resources can no longer be initialized using the assign
+  syntax. `init::LateResources` is the only method to initialize late resources.
+  See [PR #140] for more details.
+
+[PR #140]: https://github.com/japaric/cortex-m-rtfm/pull/140
+
 ## [v0.4.3] - 2019-04-21
 
 ### Changed

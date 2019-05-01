@@ -1,6 +1,5 @@
 //! This is equivalent to the `late-not-send` cfail test
 
-#![feature(extern_crate_item_prelude)] // ???
 #![no_main]
 #![no_std]
 
@@ -21,10 +20,10 @@ const APP: () = {
     static mut X: Option<NotSend> = None;
 
     #[init(resources = [X])]
-    fn init() {
-        *resources.X = Some(NotSend { _0: PhantomData })
+    fn init(c: init::Context) {
+        *c.resources.X = Some(NotSend { _0: PhantomData })
     }
 
     #[interrupt(resources = [X])]
-    fn UART0() {}
+    fn UART0(_: UART0::Context) {}
 };

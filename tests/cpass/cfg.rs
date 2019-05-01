@@ -6,24 +6,22 @@
 #![no_std]
 
 extern crate lm3s6965;
-extern crate panic_semihosting;
+extern crate panic_halt;
 extern crate rtfm;
 
-use rtfm::app;
-
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[cfg(never)]
     static mut FOO: u32 = 0;
 
     #[init]
-    fn init() {
+    fn init(_: init::Context) {
         #[cfg(never)]
         static mut BAR: u32 = 0;
     }
 
     #[idle]
-    fn idle() -> ! {
+    fn idle(_: idle::Context) -> ! {
         #[cfg(never)]
         static mut BAR: u32 = 0;
 
@@ -31,20 +29,20 @@ const APP: () = {
     }
 
     #[task(resources = [FOO], schedule = [quux], spawn = [quux])]
-    fn foo() {
+    fn foo(_: foo::Context) {
         #[cfg(never)]
         static mut BAR: u32 = 0;
     }
 
     #[task(priority = 3, resources = [FOO], schedule = [quux], spawn = [quux])]
-    fn bar() {
+    fn bar(_: bar::Context) {
         #[cfg(never)]
         static mut BAR: u32 = 0;
     }
 
     #[cfg(never)]
     #[task]
-    fn quux() {}
+    fn quux(_: quux::Context) {}
 
     extern "C" {
         fn UART0();

@@ -6,7 +6,6 @@
   - [Resources](./by-example/resources.md)
   - [Tasks](./by-example/tasks.md)
   - [Timer queue](./by-example/timer-queue.md)
-  - [Singletons](./by-example/singletons.md)
   - [Types, Send and Sync](./by-example/types-send-sync.md)
   - [Starting a new project](./by-example/new.md)
   - [Tips & tricks](./by-example/tips.md)

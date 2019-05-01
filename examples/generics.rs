@@ -9,25 +9,25 @@ extern crate panic_semihosting;
 
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
-use rtfm::{app, Mutex};
+use rtfm::Mutex;
 
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     static mut SHARED: u32 = 0;
 
     #[init]
-    fn init() {
+    fn init(_: init::Context) {
         rtfm::pend(Interrupt::UART0);
         rtfm::pend(Interrupt::UART1);
     }
 
     #[interrupt(resources = [SHARED])]
-    fn UART0() {
+    fn UART0(c: UART0::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART0(STATE = {})", *STATE).unwrap();
 
-        advance(STATE, resources.SHARED);
+        advance(STATE, c.resources.SHARED);
 
         rtfm::pend(Interrupt::UART1);
 
@@ -35,17 +35,17 @@ const APP: () = {
     }
 
     #[interrupt(priority = 2, resources = [SHARED])]
-    fn UART1() {
+    fn UART1(mut c: UART1::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART1(STATE = {})", *STATE).unwrap();
 
         // just to show that `SHARED` can be accessed directly and ..
-        *resources.SHARED += 0;
+        *c.resources.SHARED += 0;
         // .. also through a (no-op) `lock`
-        resources.SHARED.lock(|shared| *shared += 0);
+        c.resources.SHARED.lock(|shared| *shared += 0);
 
-        advance(STATE, resources.SHARED);
+        advance(STATE, c.resources.SHARED);
     }
 };
 

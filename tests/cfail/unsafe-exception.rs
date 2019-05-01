@@ -9,8 +9,10 @@ use rtfm::app;
 
 #[app(device = lm3s6965)]
 const APP: () = {
-    static mut X: u32 = ();
-
-    #[init(resources = [X])] //~ ERROR late resources can NOT be assigned to `init`
+    #[init]
     fn init(_: init::Context) {}
+
+    #[exception(binds = SVCall)]
+    unsafe fn foo(_: foo::Context) {}
+    //~^ ERROR this `exception` handler must have type signature `fn(foo::Context)`
 };

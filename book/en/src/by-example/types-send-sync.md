@@ -7,8 +7,7 @@ write plain functions that take them as arguments.
 The API reference specifies how these types are generated from the input. You
 can also generate documentation for you binary crate (`cargo doc --bin <name>`);
 in the documentation you'll find `Context` structs (e.g. `init::Context` and
-`idle::Context`) whose fields represent the variables injected into each
-function.
+`idle::Context`).
 
 The example below shows the different types generates by the `app` attribute.
 

@@ -23,7 +23,8 @@ main() {
     ./ghp-import/ghp_import.py $td
 
     set +x
-    git push -fq https://$GH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git gh-pages && echo OK
+    # NOTE push documentation to a different repository
+    git push -fq https://$GH_TOKEN@github.com/japaric/rtfm5.git gh-pages && echo OK
 
     rm -rf $td
 }

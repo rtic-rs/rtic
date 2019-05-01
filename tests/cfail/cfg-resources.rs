@@ -30,35 +30,35 @@ const APP: () = {
     static S3: u32 = 0;
 
     #[init(resources = [O1, O4, O5, O6, S3])]
-    fn init() {
-        resources.O1; //~ ERROR no field `O1`
-        resources.O4; //~ ERROR no field `O4`
-        resources.O5; //~ ERROR no field `O5`
-        resources.O6; //~ ERROR no field `O6`
-        resources.S3; //~ ERROR no field `S3`
+    fn init(c: init::Context) {
+        c.resources.O1; //~ ERROR no field `O1`
+        c.resources.O4; //~ ERROR no field `O4`
+        c.resources.O5; //~ ERROR no field `O5`
+        c.resources.O6; //~ ERROR no field `O6`
+        c.resources.S3; //~ ERROR no field `S3`
     }
 
     #[idle(resources = [O2, O4, S1, S3])]
-    fn idle() -> ! {
-        resources.O2; //~ ERROR no field `O2`
-        resources.O4; //~ ERROR no field `O4`
-        resources.S1; //~ ERROR no field `S1`
-        resources.S3; //~ ERROR no field `S3`
+    fn idle(c: idle::Context) -> ! {
+        c.resources.O2; //~ ERROR no field `O2`
+        c.resources.O4; //~ ERROR no field `O4`
+        c.resources.S1; //~ ERROR no field `S1`
+        c.resources.S3; //~ ERROR no field `S3`
 
         loop {}
     }
 
     #[interrupt(resources = [O3, S1, S2, S3])]
-    fn UART0() {
-        resources.O3; //~ ERROR no field `O3`
-        resources.S1; //~ ERROR no field `S1`
-        resources.S2; //~ ERROR no field `S2`
-        resources.S3; //~ ERROR no field `S3`
+    fn UART0(c: UART0::Context) {
+        c.resources.O3; //~ ERROR no field `O3`
+        c.resources.S1; //~ ERROR no field `S1`
+        c.resources.S2; //~ ERROR no field `S2`
+        c.resources.S3; //~ ERROR no field `S3`
     }
 
     #[interrupt(resources = [S2, O5])]
-    fn UART1() {
-        resources.S2; //~ ERROR no field `S2`
-        resources.O5; //~ ERROR no field `O5`
+    fn UART1(c: UART1::Context) {
+        c.resources.S2; //~ ERROR no field `S2`
+        c.resources.O5; //~ ERROR no field `O5`
     }
 };

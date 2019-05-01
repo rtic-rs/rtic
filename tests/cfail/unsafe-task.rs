@@ -12,9 +12,9 @@ const APP: () = {
     #[init]
     fn init(_: init::Context) {}
 
-    #[interrupt]
-    fn UART0(_: UART0::Context) {}
-    //~^ ERROR free interrupts (`extern { .. }`) can't be used as interrupt handlers
+    #[task]
+    unsafe fn foo(_: foo::Context) {}
+    //~^ ERROR this `task` handler must have type signature `fn(foo::Context, ..)`
 
     extern "C" {
         fn UART0();

@@ -10,8 +10,8 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() -> ! {
-        //~^ ERROR `init` must have type signature `[unsafe] fn() [-> init::LateResources]`
+    fn init(_: init::Context) -> ! {
+        //~^ ERROR `init` must have type signature `fn(init::Context) [-> init::LateResources]`
         loop {}
     }
 };
