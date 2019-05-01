@@ -28,15 +28,14 @@ not required to use the [`cortex_m_rt::entry`] attribute.
 
 Within the pseudo-module the `app` attribute expects to find an initialization
 function marked with the `init` attribute. This function must have signature
-`[unsafe] fn()`.
+`fn(init::Context) [-> init::LateResources]`.
 
 This initialization function will be the first part of the application to run.
 The `init` function will run *with interrupts disabled* and has exclusive access
 to Cortex-M and device specific peripherals through the `core` and `device`
-variables, which are injected in the scope of `init` by the `app` attribute. Not
-all Cortex-M peripherals are available in `core` because the RTFM runtime takes
-ownership of some of them -- for more details see the [`rtfm::Peripherals`]
-struct.
+variables fields of `init::Context`. Not all Cortex-M peripherals are available
+in `core` because the RTFM runtime takes ownership of some of them -- for more
+details see the [`rtfm::Peripherals`] struct.
 
 `static mut` variables declared at the beginning of `init` will be transformed
 into `&'static mut` references that are safe to access.
@@ -61,7 +60,7 @@ $ cargo run --example init
 
 A function marked with the `idle` attribute can optionally appear in the
 pseudo-module. This function is used as the special *idle task* and must have
-signature `[unsafe] fn() - > !`.
+signature `fn(idle::Context) - > !`.
 
 When present, the runtime will execute the `idle` task after `init`. Unlike
 `init`, `idle` will run *with interrupts enabled* and it's not allowed to return

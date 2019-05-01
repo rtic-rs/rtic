@@ -1,5 +1,3 @@
-// TODO remove in v0.5.x
-
 #![no_main]
 #![no_std]
 
@@ -11,8 +9,7 @@ use rtfm::app;
 
 #[app(device = lm3s6965)]
 const APP: () = {
-    static mut X: u32 = (); //~ ERROR late resources MUST be initialized at the end of `init`
-
     #[init]
-    fn init() {}
+    unsafe fn init(_: init::Context) {}
+    //~^ ERROR `init` must have type signature `fn(init::Context) [-> init::LateResources]`
 };

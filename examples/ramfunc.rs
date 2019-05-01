@@ -8,18 +8,17 @@
 extern crate panic_semihosting;
 
 use cortex_m_semihosting::{debug, hprintln};
-use rtfm::app;
 
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[init(spawn = [bar])]
-    fn init() {
-        spawn.bar().unwrap();
+    fn init(c: init::Context) {
+        c.spawn.bar().unwrap();
     }
 
     #[inline(never)]
     #[task]
-    fn foo() {
+    fn foo(_: foo::Context) {
         hprintln!("foo").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
@@ -29,8 +28,8 @@ const APP: () = {
     #[inline(never)]
     #[link_section = ".data.bar"]
     #[task(priority = 2, spawn = [foo])]
-    fn bar() {
-        spawn.foo().unwrap();
+    fn bar(c: bar::Context) {
+        c.spawn.foo().unwrap();
     }
 
     extern "C" {

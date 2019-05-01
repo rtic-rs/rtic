@@ -1,4 +1,3 @@
-#![feature(extern_crate_item_prelude)] // ???
 #![no_main]
 #![no_std]
 
@@ -19,10 +18,10 @@ unsafe impl Sync for NotSend {}
 #[app(device = lm3s6965)] //~ ERROR cannot be sent between threads safely
 const APP: () = {
     #[init(spawn = [foo])]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[task]
-    fn foo(_x: NotSend) {}
+    fn foo(_: foo::Context, _x: NotSend) {}
 
     extern "C" {
         fn UART0();

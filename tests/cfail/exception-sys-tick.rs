@@ -10,10 +10,10 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[exception]
-    fn SysTick() {
+    fn SysTick(_: SysTick::Context) {
         //~^ ERROR the `SysTick` exception can't be used because it's used by the runtime
     }
 };

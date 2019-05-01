@@ -13,5 +13,5 @@ const APP: () = {
     //~^ ERROR resources must have inherited / private visibility
 
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 };

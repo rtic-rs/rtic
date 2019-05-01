@@ -8,41 +8,40 @@
 extern crate panic_semihosting;
 
 use cortex_m_semihosting::{debug, hprintln};
-use rtfm::app;
 
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[init(spawn = [foo])]
-    fn init() {
-        spawn.foo(/* no message */).unwrap();
+    fn init(c: init::Context) {
+        c.spawn.foo(/* no message */).unwrap();
     }
 
     #[task(spawn = [bar])]
-    fn foo() {
+    fn foo(c: foo::Context) {
         static mut COUNT: u32 = 0;
 
         hprintln!("foo").unwrap();
 
-        spawn.bar(*COUNT).unwrap();
+        c.spawn.bar(*COUNT).unwrap();
         *COUNT += 1;
     }
 
     #[task(spawn = [baz])]
-    fn bar(x: u32) {
+    fn bar(c: bar::Context, x: u32) {
         hprintln!("bar({})", x).unwrap();
 
-        spawn.baz(x + 1, x + 2).unwrap();
+        c.spawn.baz(x + 1, x + 2).unwrap();
     }
 
     #[task(spawn = [foo])]
-    fn baz(x: u32, y: u32) {
+    fn baz(c: baz::Context, x: u32, y: u32) {
         hprintln!("baz({}, {})", x, y).unwrap();
 
         if x + y > 4 {
             debug::exit(debug::EXIT_SUCCESS);
         }
 
-        spawn.foo().unwrap();
+        c.spawn.foo().unwrap();
     }
 
     extern "C" {

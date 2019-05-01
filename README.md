@@ -41,13 +41,13 @@ A concurrency framework for building real time systems.
 
 ## Requirements
 
-- Rust 1.31.0+
+- Rust 1.36.0+
 
 - Applications must be written using the 2018 edition.
 
-## [User documentation](https://japaric.github.io/cortex-m-rtfm/book/en)
+## [User documentation](https://japaric.github.io/rtfm5/book/en)
 
-## [API reference](https://japaric.github.io/cortex-m-rtfm/api/rtfm/index.html)
+## [API reference](https://japaric.github.io/rtfm5/api/rtfm/index.html)
 
 ## Acknowledgments
 

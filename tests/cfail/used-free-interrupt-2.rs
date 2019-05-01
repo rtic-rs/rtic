@@ -10,10 +10,10 @@ use rtfm::app;
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[interrupt(binds = UART0)] //~ ERROR free interrupts (`extern { .. }`) can't be used as interrupt handlers
-    fn foo() {}
+    fn foo(_: foo::Context) {}
 
     extern "C" {
         fn UART0();

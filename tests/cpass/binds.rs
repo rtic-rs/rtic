@@ -1,4 +1,6 @@
 //! Check that `binds` works as advertised
+#![deny(unsafe_code)]
+#![deny(warnings)]
 #![no_main]
 #![no_std]
 
@@ -6,18 +8,20 @@ extern crate lm3s6965;
 extern crate panic_halt;
 extern crate rtfm;
 
-use rtfm::app;
-
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init() {}
+    fn init(_: init::Context) {}
 
     #[exception(binds = SVCall)]
-    fn foo() {}
+    fn foo(c: foo::Context) {
+        foo_trampoline(c)
+    }
 
     #[interrupt(binds = UART0)]
-    fn bar() {}
+    fn bar(c: bar::Context) {
+        bar_trampoline(c)
+    }
 };
 
 #[allow(dead_code)]

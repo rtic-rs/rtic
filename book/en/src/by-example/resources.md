@@ -10,7 +10,7 @@ have enough information to optimize the access to the shared data.
 The `app` attribute has a full view of the application thus it can optimize
 access to `static` variables. In RTFM we refer to the `static` variables
 declared inside the `app` pseudo-module as *resources*. To access a resource the
-context (`init`, `idle`, `interrupt` or `exception`) must first declare the
+context (`init`, `idle`, `interrupt` or `exception`) one must first declare the
 resource in the `resources` argument of its attribute.
 
 In the example below two interrupt handlers access the same resource. No `Mutex`
@@ -30,7 +30,7 @@ $ cargo run --example resource
 
 The priority of each handler can be declared in the `interrupt` and `exception`
 attributes. It's not possible to set the priority in any other way because the
-runtime takes ownership of the `NVIC` peripheral; it's also not possible to
+runtime takes ownership of the `NVIC` peripheral thus it's also not possible to
 change the priority of a handler / task at runtime. Thanks to this restriction
 the framework has knowledge about the *static* priorities of all interrupt and
 exception handlers.
@@ -71,10 +71,10 @@ $ cargo run --example lock
 
 One more note about priorities: choosing a priority higher than what the device
 supports (that is `1 << NVIC_PRIO_BITS`) will result in a compile error. Due to
-limitations in the language the error is currently far from helpful: it will say
-something along the lines of "evaluation of constant value failed" and the span
-of the error will *not* point out to the problematic interrupt value -- we are
-sorry about this!
+limitations in the language the error message is currently far from helpful: it
+will say something along the lines of "evaluation of constant value failed" and
+the span of the error will *not* point out to the problematic interrupt value --
+we are sorry about this!
 
 ## Late resources
 

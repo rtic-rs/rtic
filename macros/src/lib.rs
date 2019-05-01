@@ -288,9 +288,9 @@ mod syntax;
 pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     // Parse
     let args = parse_macro_input!(args as syntax::AppArgs);
-    let items = parse_macro_input!(input as syntax::Input).items;
+    let input = parse_macro_input!(input as syntax::Input);
 
-    let app = match syntax::App::parse(items, args) {
+    let app = match syntax::App::parse(input.items, args) {
         Err(e) => return e.to_compile_error().into(),
         Ok(app) => app,
     };
@@ -304,5 +304,5 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     let analysis = analyze::app(&app);
 
     // Code generation
-    codegen::app(&app, &analysis).into()
+    codegen::app(&input.ident, &app, &analysis).into()
 }

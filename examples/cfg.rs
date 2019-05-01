@@ -9,25 +9,24 @@ extern crate panic_semihosting;
 
 #[cfg(debug_assertions)]
 use cortex_m_semihosting::hprintln;
-use rtfm::app;
 
-#[app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
     static mut COUNT: u32 = 0;
 
     #[init]
-    fn init() {
+    fn init(_: init::Context) {
         // ..
     }
 
     #[task(priority = 3, resources = [COUNT], spawn = [log])]
-    fn foo() {
+    fn foo(c: foo::Context) {
         #[cfg(debug_assertions)]
         {
-            *resources.COUNT += 1;
+            *c.resources.COUNT += 1;
 
-            spawn.log(*resources.COUNT).ok();
+            c.spawn.log(*c.resources.COUNT).ok();
         }
 
         // this wouldn't compile in `release` mode
@@ -38,7 +37,7 @@ const APP: () = {
 
     #[cfg(debug_assertions)]
     #[task]
-    fn log(n: u32) {
+    fn log(_: log::Context, n: u32) {
         hprintln!(
             "foo has been called {} time{}",
             n,
