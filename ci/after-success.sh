@@ -37,6 +37,6 @@ if [ -z ${TRAVIS_PULL_REQUEST-} ]; then
     TRAVIS_PULL_REQUEST=false
 fi
 
-if [ $TRAVIS_BRANCH = master ] && [ $TRAVIS_PULL_REQUEST = false ]; then
+if { [ $TRAVIS_BRANCH = master ] || [ $TRAVIS_BRANCH = v0.4.x ]; } && [ $TRAVIS_PULL_REQUEST = false ]; then
     main
 fi
