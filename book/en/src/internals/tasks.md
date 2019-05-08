@@ -131,7 +131,7 @@ mod foo {
     }
 
     pub struct Spawn<'a> {
-        // tracks the dyanmic priority of the task
+        // tracks the dynamic priority of the task
         priority: &'a Cell<u8>,
     }
 
