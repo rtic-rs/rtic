@@ -158,6 +158,37 @@ way it will run at the right priority.
 handler; basically, `enqueue_unchecked` delegates the task of setting up a new
 timeout interrupt to the `SysTick` handler.
 
+## Resolution and range of `Instant` and `Duration`
+
+In the current implementation the `DWT`'s (Data Watchpoint and Trace) cycle
+counter is used as a monotonic timer. `Instant::now` returns a snapshot of this
+timer; these DWT snapshots (`Instant`s) are used to sort entries in the timer
+queue. The cycle counter is a 32-bit counter clocked at the core clock
+frequency. This counter wraps around every `(1 << 32)` clock cycles; there's no
+interrupt associated to this counter so nothing worth noting happens when it
+wraps around.
+
+To order `Instant`s in the queue we need to compare two 32-bit integers. To
+account for the wrap-around behavior we use the difference between two
+`Instant`s, `a - b`, and treat the result as a 32-bit signed integer. If the
+result is less than zero then `b` is a later `Instant`; if the result is greater
+than zero then `b` is an earlier `Instant`. This means that scheduling a task at
+an `Instant` that's `(1 << 31) - 1` cycles greater than the scheduled time
+(`Instant`) of the first (earliest) entry in the queue will cause the task to be
+inserted at the wrong place in the queue. There some debug assertions in place
+to prevent this user error but it can't be avoided because the user can write
+`(instant + duration_a) + duration_b` and overflow the `Instant`.
+
+The system timer, `SysTick`, is a 24-bit counter also clocked at the core clock
+frequency. When the next scheduled task is more than `1 << 24` clock cycles in
+the future an interrupt is set to go off in `1 << 24` cycles. This process may
+need to happen several times until the next scheduled task is within the range
+of the `SysTick` counter.
+
+In conclusion, both `Instant` and `Duration` have a resolution of 1 core clock
+cycle and `Duration` effectively has a (half-open) range of `0..(1 << 31)` (end
+not included) core clock cycles.
+
 ## Queue capacity
 
 The capacity of the timer queue is chosen to be the sum of the capacities of all
