@@ -126,6 +126,16 @@ pub struct Peripherals<'a> {
 /// A measurement of a monotonically nondecreasing clock. Opaque and useful only with `Duration`
 ///
 /// This data type is only available when the `timer-queue` feature is enabled
+///
+/// **NOTE:** Both `Instant` and `Duration` are only meant to be used with the `schedule` API.
+///
+/// We can't stop you from using `Instant.sub` to measure things so please be aware that you won't
+/// be able to measure events that span longer than `(1 << 31) - 1` core clock cycles.
+///
+/// Also note that adding a duration equal or greater than `(1 << 31).cycles()` to an `Instant` will
+/// effectively overflow it. There's a debug assertion in place to prevent this user error but it's
+/// not possible to catch this error with 100% success rate because one can write `(instant +
+/// duration) + duration` to bypass runtime checks.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg(feature = "timer-queue")]
 pub struct Instant(i32);
@@ -219,6 +229,17 @@ impl PartialOrd for Instant {
 /// A `Duration` type to represent a span of time.
 ///
 /// This data type is only available when the `timer-queue` feature is enabled
+///
+/// **NOTE:** Both `Instant` and `Duration` are only meant to be used with the `schedule` API.
+///
+/// `Duration` has a resolution of 1 core clock cycle and an effective (half-open) range of `0..(1
+/// << 31)` (end not included) *core clock cycles*.
+///
+/// Be aware that scheduling a (periodic) task more than `(1 << 24).cycles()` in the future will
+/// incur in additional overhead proportional to the value of the `Duration`. If you need periodic
+/// tasks with periods greater than `1 << 24` (e.g. with periods in seconds) you likely don't a
+/// resolution of one core clock cycle so we suggest you use a hardware timer with an appropriate
+/// prescaler.
 #[derive(Clone, Copy, Default, Eq, Ord, PartialEq, PartialOrd)]
 #[cfg(feature = "timer-queue")]
 pub struct Duration(u32);
