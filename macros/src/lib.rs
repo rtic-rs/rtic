@@ -4,6 +4,8 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
+use std::{fs, path::Path};
+
 use syn::parse_macro_input;
 
 mod analyze;
@@ -304,5 +306,12 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     let analysis = analyze::app(&app);
 
     // Code generation
-    codegen::app(&input.ident, &app, &analysis).into()
+    let ts = codegen::app(&input.ident, &app, &analysis);
+
+    // Try to write the expanded code to disk
+    if Path::new("target").exists() {
+        fs::write("target/rtfm-expansion.rs", ts.to_string()).ok();
+    }
+
+    ts.into()
 }
