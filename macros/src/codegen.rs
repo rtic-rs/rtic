@@ -234,40 +234,43 @@ fn resources(
             ));
         }
 
-        if let Some(Ownership::Shared { ceiling }) = analysis.ownerships.get(name) {
-            let ptr = if res.expr.is_none() {
-                quote!(#name.as_mut_ptr())
-            } else {
-                quote!(&mut #name)
-            };
+        // generate a resource proxy when needed
+        if res.mutability.is_some() {
+            if let Some(Ownership::Shared { ceiling }) = analysis.ownerships.get(name) {
+                let ptr = if res.expr.is_none() {
+                    quote!(#name.as_mut_ptr())
+                } else {
+                    quote!(&mut #name)
+                };
 
-            mod_resources.push(quote!(
-                pub struct #name<'a> {
-                    priority: &'a Priority,
-                }
-
-                impl<'a> #name<'a> {
-                    #[inline(always)]
-                    pub unsafe fn new(priority: &'a Priority) -> Self {
-                        #name { priority }
+                mod_resources.push(quote!(
+                    pub struct #name<'a> {
+                        priority: &'a Priority,
                     }
 
-                    #[inline(always)]
-                    pub unsafe fn priority(&self) -> &Priority {
-                        self.priority
-                    }
-                }
-            ));
+                    impl<'a> #name<'a> {
+                        #[inline(always)]
+                        pub unsafe fn new(priority: &'a Priority) -> Self {
+                            #name { priority }
+                        }
 
-            const_app.push(impl_mutex(
-                app,
-                cfgs,
-                true,
-                name,
-                quote!(#ty),
-                *ceiling,
-                ptr,
-            ));
+                        #[inline(always)]
+                        pub unsafe fn priority(&self) -> &Priority {
+                            self.priority
+                        }
+                    }
+                ));
+
+                const_app.push(impl_mutex(
+                    app,
+                    cfgs,
+                    true,
+                    name,
+                    quote!(#ty),
+                    *ceiling,
+                    ptr,
+                ));
+            }
         }
     }
 
