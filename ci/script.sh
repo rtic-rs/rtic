@@ -33,25 +33,18 @@ arm_example() {
 
 main() {
     local T=$TARGET
-    local nightly=""
-
-    if [ $TRAVIS_RUST_VERSION = nightly ]; then
-        nightly="nightly"
-    fi
 
     mkdir -p ci/builds
 
     if [ $T = x86_64-unknown-linux-gnu ]; then
         # compile-fail and compile-pass tests
-        case $TRAVIS_RUST_VERSION in
-            nightly*)
-                # TODO how to run a subset of these tests when timer-queue is disabled?
-                cargo test --features "$nightly,timer-queue" --test compiletest --target $T
-        esac
+
+        # TODO how to run a subset of these tests when timer-queue is disabled?
+        cargo test --features "timer-queue" --test compiletest --target $T
 
         cargo check --target $T
         if [ $TARGET != thumbv6m-none-eabi ]; then
-            cargo check --features "$nightly,timer-queue" --target $T
+            cargo check --features "timer-queue" --target $T
         fi
 
         if [ $TRAVIS_RUST_VERSION != nightly ]; then
@@ -81,9 +74,9 @@ main() {
         return
     fi
 
-    cargo check --features "$nightly" --target $T --examples
+    cargo check --target $T --examples
     if [ $TARGET != thumbv6m-none-eabi ]; then
-        cargo check --features "$nightly,timer-queue" --target $T --examples
+        cargo check --features "timer-queue" --target $T --examples
     fi
 
     # run-pass tests
@@ -124,7 +117,7 @@ main() {
                     if [ $TARGET != thumbv6m-none-eabi ]; then
                         local td=$(mktemp -d)
 
-                        local features="$nightly,timer-queue"
+                        local features="timer-queue"
                         cargo run --example $ex --target $TARGET --features $features >\
                               $td/pool.run
                         grep 'foo(0x2' $td/pool.run
@@ -146,13 +139,13 @@ main() {
                 fi
 
                 if [ $ex != types ]; then
-                    arm_example "run" $ex "debug" "$nightly" "1"
-                    arm_example "run" $ex "release" "$nightly" "1"
+                    arm_example "run" $ex "debug" "" "1"
+                    arm_example "run" $ex "release" "" "1"
                 fi
 
                 if [ $TARGET != thumbv6m-none-eabi ]; then
-                    arm_example "run" $ex "debug" "$nightly,timer-queue" "1"
-                    arm_example "run" $ex "release" "$nightly,timer-queue" "1"
+                    arm_example "run" $ex "debug" "timer-queue" "1"
+                    arm_example "run" $ex "release" "timer-queue" "1"
                 fi
             done
 
@@ -165,23 +158,23 @@ main() {
                 fi
 
                 if [ $ex != types ] && [ $ex != pool ]; then
-                    arm_example "build" $ex "debug" "$nightly" "2"
-                    cmp ci/builds/${ex}_${nightly/nightly/nightly_}debug_1.hex \
-                        ci/builds/${ex}_${nightly/nightly/nightly_}debug_2.hex
-                    arm_example "build" $ex "release" "$nightly" "2"
-                    cmp ci/builds/${ex}_${nightly/nightly/nightly_}release_1.hex \
-                        ci/builds/${ex}_${nightly/nightly/nightly_}release_2.hex
+                    arm_example "build" $ex "debug" "" "2"
+                    cmp ci/builds/${ex}_debug_1.hex \
+                        ci/builds/${ex}_debug_2.hex
+                    arm_example "build" $ex "release" "" "2"
+                    cmp ci/builds/${ex}_release_1.hex \
+                        ci/builds/${ex}_release_2.hex
 
                     built+=( $ex )
                 fi
 
                 if [ $TARGET != thumbv6m-none-eabi ]; then
-                    arm_example "build" $ex "debug" "$nightly,timer-queue" "2"
-                    cmp ci/builds/${ex}_${nightly}_timer-queue_debug_1.hex \
-                        ci/builds/${ex}_${nightly}_timer-queue_debug_2.hex
-                    arm_example "build" $ex "release" "$nightly,timer-queue" "2"
-                    cmp ci/builds/${ex}_${nightly}_timer-queue_release_1.hex \
-                        ci/builds/${ex}_${nightly}_timer-queue_release_2.hex
+                    arm_example "build" $ex "debug" "timer-queue" "2"
+                    cmp ci/builds/${ex}_timer-queue_debug_1.hex \
+                        ci/builds/${ex}_timer-queue_debug_2.hex
+                    arm_example "build" $ex "release" "timer-queue" "2"
+                    cmp ci/builds/${ex}_timer-queue_release_1.hex \
+                        ci/builds/${ex}_timer-queue_release_2.hex
                 fi
             done
 

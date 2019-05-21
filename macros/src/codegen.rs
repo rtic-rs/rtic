@@ -600,24 +600,13 @@ fn tasks(
 
         let doc = "Queue version of a free-list that keeps track of empty slots in the previous buffer(s)";
         let fq_ty = quote!(rtfm::export::FreeQueue<#cap_ty>);
-        let ptr = if cfg!(feature = "nightly") {
-            const_app.push(quote!(
-                #[doc = #doc]
-                static mut #task_fq: #fq_ty = unsafe {
-                    rtfm::export::FreeQueue::u8_sc()
-                };
-            ));
-
-            quote!(&mut #task_fq)
-        } else {
-            const_app.push(quote!(
-                #[doc = #doc]
-                static mut #task_fq: core::mem::MaybeUninit<#fq_ty> =
-                    core::mem::MaybeUninit::uninit();
-            ));
-
-            quote!(#task_fq.as_mut_ptr())
-        };
+        const_app.push(quote!(
+            #[doc = #doc]
+            static mut #task_fq: #fq_ty = unsafe {
+                rtfm::export::Queue(rtfm::export::i::Queue::u8_sc())
+            };
+        ));
+        let ptr = quote!(&mut #task_fq);
 
         if let Some(ceiling) = analysis.free_queues.get(name) {
             const_app.push(quote!(struct #task_fq<'a> {
@@ -705,24 +694,13 @@ fn dispatchers(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> 
             level
         );
         let rq_ty = quote!(rtfm::export::ReadyQueue<#t, #cap>);
-        let ptr = if cfg!(feature = "nightly") {
-            items.push(quote!(
-                #[doc = #doc]
-                static mut #rq: #rq_ty = unsafe {
-                    rtfm::export::ReadyQueue::u8_sc()
-                };
-            ));
-
-            quote!(&mut #rq)
-        } else {
-            items.push(quote!(
-                #[doc = #doc]
-                static mut #rq: core::mem::MaybeUninit<#rq_ty> =
-                    core::mem::MaybeUninit::uninit();
-            ));
-
-            quote!(#rq.as_mut_ptr())
-        };
+        items.push(quote!(
+            #[doc = #doc]
+            static mut #rq: #rq_ty = unsafe {
+                rtfm::export::Queue(rtfm::export::i::Queue::u8_sc())
+            };
+        ));
+        let ptr = quote!(&mut #rq);
 
         if let Some(ceiling) = analysis.ready_queues.get(&level) {
             items.push(quote!(
@@ -772,11 +750,7 @@ fn dispatchers(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> 
                 let fq = mk_fq_ident(name);
 
                 let input = quote!(#inputs.get_unchecked(usize::from(index)).as_ptr().read());
-                let fq = if cfg!(feature = "nightly") {
-                    quote!(#fq)
-                } else {
-                    quote!((*#fq.as_mut_ptr()))
-                };
+                let fq = quote!(#fq);
 
                 let (let_instant, _instant) = if cfg!(feature = "timer-queue") {
                     let instants = mk_instants_ident(name);
@@ -822,11 +796,7 @@ fn dispatchers(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> 
         );
         let attrs = &dispatcher.attrs;
         let interrupt = &dispatcher.interrupt;
-        let rq = if cfg!(feature = "nightly") {
-            quote!((&mut #rq))
-        } else {
-            quote!((*#rq.as_mut_ptr()))
-        };
+        let rq = quote!((&mut #rq));
         items.push(quote!(
             #[doc = #doc]
             #(#attrs)*
@@ -1174,42 +1144,16 @@ fn pre_init(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> {
 
     stmts.push(quote!(rtfm::export::interrupt::disable();));
 
-    // these won't be required once we have better `const fn` on stable (or const generics)
-    if !cfg!(feature = "nightly") {
-        // initialize `MaybeUninit` `ReadyQueue`s
-        for level in analysis.dispatchers.keys() {
-            let rq = mk_rq_ident(*level);
-            stmts.push(quote!(#rq.as_mut_ptr().write(rtfm::export::ReadyQueue::u8_sc());))
-        }
+    // populate the `FreeQueue`s
+    for name in app.tasks.keys() {
+        let fq = mk_fq_ident(name);
+        let cap = analysis.capacities[name];
 
-        // initialize `MaybeUninit` `FreeQueue`s
-        for name in app.tasks.keys() {
-            let fq = mk_fq_ident(name);
-
-            stmts.push(quote!(
-                let fq = #fq.as_mut_ptr().write(rtfm::export::FreeQueue::u8_sc());
-            ));
-
-            // populate the `FreeQueue`s
-            let cap = analysis.capacities[name];
-            stmts.push(quote!(
-                for i in 0..#cap {
-                    fq.enqueue_unchecked(i);
-                }
-            ));
-        }
-    } else {
-        // populate the `FreeQueue`s
-        for name in app.tasks.keys() {
-            let fq = mk_fq_ident(name);
-            let cap = analysis.capacities[name];
-
-            stmts.push(quote!(
-                for i in 0..#cap {
-                    #fq.enqueue_unchecked(i);
-                }
-            ));
-        }
+        stmts.push(quote!(
+            for i in 0..#cap {
+                #fq.enqueue_unchecked(i);
+            }
+        ));
     }
 
     stmts.push(quote!(
@@ -2262,17 +2206,10 @@ fn mk_spawn_body<'a>(
     let (dequeue, enqueue) = if spawner_is_init {
         // `init` has exclusive access to these queues so we can bypass the resources AND
         // the consumer / producer split
-        if cfg!(feature = "nightly") {
-            (
-                quote!(#fq.dequeue()),
-                quote!(#rq.enqueue_unchecked((#t::#name, index));),
-            )
-        } else {
-            (
-                quote!((*#fq.as_mut_ptr()).dequeue()),
-                quote!((*#rq.as_mut_ptr()).enqueue_unchecked((#t::#name, index));),
-            )
-        }
+        (
+            quote!(#fq.dequeue()),
+            quote!(#rq.enqueue_unchecked((#t::#name, index));),
+        )
     } else {
         (
             quote!((#fq { priority }).lock(|fq| fq.split().1.dequeue())),
@@ -2319,11 +2256,7 @@ fn mk_schedule_body<'a>(scheduler: &Ident, name: &Ident, app: &'a App) -> proc_m
     let (dequeue, enqueue) = if scheduler_is_init {
         // `init` has exclusive access to these queues so we can bypass the resources AND
         // the consumer / producer split
-        let dequeue = if cfg!(feature = "nightly") {
-            quote!(#fq.dequeue())
-        } else {
-            quote!((*#fq.as_mut_ptr()).dequeue())
-        };
+        let dequeue = quote!(#fq.dequeue());
 
         (dequeue, quote!((*TQ.as_mut_ptr()).enqueue_unchecked(nr);))
     } else {

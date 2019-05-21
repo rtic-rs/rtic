@@ -24,4 +24,3 @@ version = "0.15.23"
 
 [features]
 timer-queue = []
-nightly = []

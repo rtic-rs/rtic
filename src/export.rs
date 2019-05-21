@@ -8,8 +8,8 @@ pub use cortex_m::{
     asm::wfi, interrupt, peripheral::scb::SystemHandler, peripheral::syst::SystClkSource,
     peripheral::Peripherals,
 };
-pub use heapless::consts;
-use heapless::spsc::{Queue, SingleCore};
+use heapless::spsc::SingleCore;
+pub use heapless::{consts, i, spsc::Queue};
 
 #[cfg(feature = "timer-queue")]
 pub use crate::tq::{NotReady, TimerQueue};
