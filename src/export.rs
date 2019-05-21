@@ -68,36 +68,6 @@ impl Priority {
     }
 }
 
-// We newtype `core::mem::MaybeUninit` so the end-user doesn't need `#![feature(maybe_uninit)]` in
-// their code
-pub struct MaybeUninit<T> {
-    inner: core::mem::MaybeUninit<T>,
-}
-
-impl<T> MaybeUninit<T> {
-    pub const fn uninit() -> Self {
-        MaybeUninit {
-            inner: core::mem::MaybeUninit::uninit(),
-        }
-    }
-
-    pub fn as_ptr(&self) -> *const T {
-        self.inner.as_ptr()
-    }
-
-    pub fn as_mut_ptr(&mut self) -> *mut T {
-        self.inner.as_mut_ptr()
-    }
-
-    pub unsafe fn read(&self) -> T {
-        self.inner.read()
-    }
-
-    pub fn write(&mut self, value: T) -> &mut T {
-        self.inner.write(value)
-    }
-}
-
 #[inline(always)]
 pub fn assert_send<T>()
 where
