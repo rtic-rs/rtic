@@ -43,7 +43,6 @@
 //! language feature to reduce static memory usage, runtime overhead and initialization overhead.
 //! This feature requires a nightly compiler and may stop working at any time!
 
-#![feature(maybe_uninit)]
 #![deny(missing_docs)]
 #![deny(warnings)]
 #![no_std]

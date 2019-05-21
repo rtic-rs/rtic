@@ -229,8 +229,8 @@ fn resources(
             const_app.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
-                static mut #name: rtfm::export::MaybeUninit<#ty> =
-                    rtfm::export::MaybeUninit::uninit();
+                static mut #name: core::mem::MaybeUninit<#ty> =
+                    core::mem::MaybeUninit::uninit();
             ));
         }
 
@@ -580,21 +580,21 @@ fn tasks(
         let task_fq = mk_fq_ident(name);
 
         let elems = (0..cap)
-            .map(|_| quote!(rtfm::export::MaybeUninit::uninit()))
+            .map(|_| quote!(core::mem::MaybeUninit::uninit()))
             .collect::<Vec<_>>();
 
         if cfg!(feature = "timer-queue") {
             let elems = elems.clone();
             const_app.push(quote!(
                 /// Buffer that holds the instants associated to the inputs of a task
-                static mut #task_instants: [rtfm::export::MaybeUninit<rtfm::Instant>; #cap_lit] =
+                static mut #task_instants: [core::mem::MaybeUninit<rtfm::Instant>; #cap_lit] =
                     [#(#elems,)*];
             ));
         }
 
         const_app.push(quote!(
             /// Buffer that holds the inputs of a task
-            static mut #task_inputs: [rtfm::export::MaybeUninit<#ty>; #cap_lit] =
+            static mut #task_inputs: [core::mem::MaybeUninit<#ty>; #cap_lit] =
                 [#(#elems,)*];
         ));
 
@@ -612,8 +612,8 @@ fn tasks(
         } else {
             const_app.push(quote!(
                 #[doc = #doc]
-                static mut #task_fq: rtfm::export::MaybeUninit<#fq_ty> =
-                    rtfm::export::MaybeUninit::uninit();
+                static mut #task_fq: core::mem::MaybeUninit<#fq_ty> =
+                    core::mem::MaybeUninit::uninit();
             ));
 
             quote!(#task_fq.as_mut_ptr())
@@ -717,8 +717,8 @@ fn dispatchers(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> 
         } else {
             items.push(quote!(
                 #[doc = #doc]
-                static mut #rq: rtfm::export::MaybeUninit<#rq_ty> =
-                    rtfm::export::MaybeUninit::uninit();
+                static mut #rq: core::mem::MaybeUninit<#rq_ty> =
+                    core::mem::MaybeUninit::uninit();
             ));
 
             quote!(#rq.as_mut_ptr())
@@ -771,7 +771,7 @@ fn dispatchers(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> 
                 let inputs = mk_inputs_ident(name);
                 let fq = mk_fq_ident(name);
 
-                let input = quote!(#inputs.get_unchecked(usize::from(index)).read());
+                let input = quote!(#inputs.get_unchecked(usize::from(index)).as_ptr().read());
                 let fq = if cfg!(feature = "nightly") {
                     quote!(#fq)
                 } else {
@@ -780,7 +780,8 @@ fn dispatchers(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> 
 
                 let (let_instant, _instant) = if cfg!(feature = "timer-queue") {
                     let instants = mk_instants_ident(name);
-                    let instant = quote!(#instants.get_unchecked(usize::from(index)).read());
+                    let instant =
+                        quote!(#instants.get_unchecked(usize::from(index)).as_ptr().read());
 
                     (
                         Some(quote!(let instant = #instant;)),
@@ -992,7 +993,7 @@ fn timer_queue(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> 
     let ty = quote!(rtfm::export::TimerQueue<T, #cap>);
     items.push(quote!(
         /// The timer queue
-        static mut TQ: rtfm::export::MaybeUninit<#ty> = rtfm::export::MaybeUninit::uninit();
+        static mut TQ: core::mem::MaybeUninit<#ty> = core::mem::MaybeUninit::uninit();
     ));
 
     items.push(quote!(
@@ -1178,7 +1179,7 @@ fn pre_init(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> {
         // initialize `MaybeUninit` `ReadyQueue`s
         for level in analysis.dispatchers.keys() {
             let rq = mk_rq_ident(*level);
-            stmts.push(quote!(#rq.write(rtfm::export::ReadyQueue::u8_sc());))
+            stmts.push(quote!(#rq.as_mut_ptr().write(rtfm::export::ReadyQueue::u8_sc());))
         }
 
         // initialize `MaybeUninit` `FreeQueue`s
@@ -1186,7 +1187,7 @@ fn pre_init(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> {
             let fq = mk_fq_ident(name);
 
             stmts.push(quote!(
-                let fq = #fq.write(rtfm::export::FreeQueue::u8_sc());
+                let fq = #fq.as_mut_ptr().write(rtfm::export::FreeQueue::u8_sc());
             ));
 
             // populate the `FreeQueue`s
@@ -1217,7 +1218,7 @@ fn pre_init(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> {
 
     // Initialize the timer queue
     if !analysis.timer_queue.tasks.is_empty() {
-        stmts.push(quote!(TQ.write(rtfm::export::TimerQueue::new(core.SYST));));
+        stmts.push(quote!(TQ.as_mut_ptr().write(rtfm::export::TimerQueue::new(core.SYST));));
     }
 
     // set interrupts priorities
@@ -1431,7 +1432,7 @@ fn post_init(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> {
             continue;
         }
 
-        stmts.push(quote!(#name.write(late.#name);));
+        stmts.push(quote!(#name.as_mut_ptr().write(late.#name);));
     }
 
     // set exception priorities
@@ -2252,7 +2253,7 @@ fn mk_spawn_body<'a>(
         let instants = mk_instants_ident(name);
 
         Some(quote!(
-            #instants.get_unchecked_mut(usize::from(index)).write(instant);
+            #instants.get_unchecked_mut(usize::from(index)).as_mut_ptr().write(instant);
         ))
     } else {
         None
@@ -2287,7 +2288,7 @@ fn mk_spawn_body<'a>(
 
             let input = #tupled;
             if let Some(index) = #dequeue {
-                #inputs.get_unchecked_mut(usize::from(index)).write(input);
+                #inputs.get_unchecked_mut(usize::from(index)).as_mut_ptr().write(input);
 
                 #write_instant
 
@@ -2338,9 +2339,9 @@ fn mk_schedule_body<'a>(scheduler: &Ident, name: &Ident, app: &'a App) -> proc_m
 
             let input = #tupled;
             if let Some(index) = #dequeue {
-                #instants.get_unchecked_mut(usize::from(index)).write(instant);
+                #instants.get_unchecked_mut(usize::from(index)).as_mut_ptr().write(instant);
 
-                #inputs.get_unchecked_mut(usize::from(index)).write(input);
+                #inputs.get_unchecked_mut(usize::from(index)).as_mut_ptr().write(input);
 
                 let nr = rtfm::export::NotReady {
                     instant,
