@@ -43,10 +43,7 @@ required-features = ["timer-queue"]
 cortex-m = "0.5.8"
 cortex-m-rt = "0.6.7"
 cortex-m-rtfm-macros = { path = "macros", version = "0.5.0-alpha.1" }
-
-[dependencies.heapless]
-features = ["smaller-atomics", "min-const-fn"]
-version = "0.4.3"
+heapless = "0.5.0-alpha.1"
 
 [dev-dependencies]
 cortex-m-semihosting = "0.3.2"
@@ -58,7 +55,6 @@ features = ["exit"]
 version = "0.5.1"
 
 [features]
-nightly = ["cortex-m-rtfm-macros/nightly", "heapless/const-fn"]
 timer-queue = ["cortex-m-rtfm-macros/timer-queue"]
 
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
