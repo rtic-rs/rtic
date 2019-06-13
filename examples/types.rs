@@ -5,12 +5,11 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::debug;
-use rtfm::{Exclusive, Instant};
+use panic_semihosting as _;
+use rtfm::cyccnt::Instant;
 
-#[rtfm::app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965, peripherals = true, monotonic = rtfm::cyccnt::CYCCNT)]
 const APP: () = {
     static mut SHARED: u32 = 0;
 
@@ -43,7 +42,7 @@ const APP: () = {
     #[task(priority = 2, resources = [SHARED], schedule = [foo], spawn = [foo])]
     fn foo(c: foo::Context) {
         let _: Instant = c.scheduled;
-        let _: Exclusive<u32> = c.resources.SHARED;
+        let _: &mut u32 = c.resources.SHARED;
         let _: foo::Resources = c.resources;
         let _: foo::Schedule = c.schedule;
         let _: foo::Spawn = c.spawn;

@@ -5,14 +5,13 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use heapless::{
     pool,
     pool::singleton::{Box, Pool},
 };
 use lm3s6965::Interrupt;
+use panic_semihosting as _;
 use rtfm::app;
 
 // Declare a pool of 128-byte memory blocks

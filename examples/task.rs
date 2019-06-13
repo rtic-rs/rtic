@@ -5,9 +5,8 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
+use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {

@@ -5,10 +5,9 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 #[cfg(debug_assertions)]
 use cortex_m_semihosting::hprintln;
+use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
@@ -21,12 +20,12 @@ const APP: () = {
     }
 
     #[task(priority = 3, resources = [COUNT], spawn = [log])]
-    fn foo(c: foo::Context) {
+    fn foo(_c: foo::Context) {
         #[cfg(debug_assertions)]
         {
-            *c.resources.COUNT += 1;
+            *_c.resources.COUNT += 1;
 
-            c.spawn.log(*c.resources.COUNT).ok();
+            _c.spawn.log(*_c.resources.COUNT).ok();
         }
 
         // this wouldn't compile in `release` mode

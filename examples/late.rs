@@ -5,20 +5,21 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use heapless::{
     consts::*,
     spsc::{Consumer, Producer, Queue},
 };
 use lm3s6965::Interrupt;
+use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
     // Late resources
-    static mut P: Producer<'static, u32, U4> = ();
-    static mut C: Consumer<'static, u32, U4> = ();
+    extern "C" {
+        static mut P: Producer<'static, u32, U4>;
+        static mut C: Consumer<'static, u32, U4>;
+    }
 
     #[init]
     fn init(_: init::Context) -> init::LateResources {

@@ -5,11 +5,10 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_halt;
-
 use core::marker::PhantomData;
 
 use cortex_m_semihosting::debug;
+use panic_halt as _;
 
 pub struct NotSync {
     _0: PhantomData<*const ()>,

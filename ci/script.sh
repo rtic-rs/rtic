@@ -37,46 +37,58 @@ main() {
     mkdir -p ci/builds
 
     if [ $T = x86_64-unknown-linux-gnu ]; then
-        # compile-fail and compile-pass tests
+        if [ $TRAVIS_RUST_VERSION = nightly ]; then
+            # compile-fail tests
+            cargo test --test single --target $T
+            cargo test --test multi --features heterogeneous --target $T
 
-        # TODO how to run a subset of these tests when timer-queue is disabled?
-        cargo test --features "timer-queue" --test compiletest --target $T
+            # multi-core compile-pass tests
+            pushd mc
+            local exs=(
+                smallest
+                x-init-2
+                x-init
+                x-schedule
+                x-spawn
+            )
+            for ex in ${exs[@]}; do
+                cargo microamp --example $ex --target thumbv7m-none-eabi,thumbv6m-none-eabi --check
+            done
+
+            popd
+
+        else
+            if [ $TRAVIS_RUST_VERSION != nightly ]; then
+                rm -f .cargo/config
+                cargo doc
+                ( cd book/en && mdbook build )
+                ( cd book/ru && mdbook build )
+
+                local td=$(mktemp -d)
+                cp -r target/doc $td/api
+                mkdir $td/book
+                cp -r book/en/book $td/book/en
+                cp -r book/ru/book $td/book/ru
+                cp LICENSE-* $td/book/en
+                cp LICENSE-* $td/book/ru
+
+                linkchecker $td/book/en/
+                linkchecker $td/book/ru/
+                linkchecker $td/api/rtfm/
+                linkchecker $td/api/cortex_m_rtfm_macros/
+            fi
+        fi
 
         cargo check --target $T
-        if [ $TARGET != thumbv6m-none-eabi ]; then
-            cargo check --features "timer-queue" --target $T
-        fi
-
-        if [ $TRAVIS_RUST_VERSION != nightly ]; then
-            rm -f .cargo/config
-            if [ $TARGET != thumbv6m-none-eabi ]; then
-                cargo doc --features timer-queue
-            else
-                cargo doc
-            fi
-            ( cd book/en && mdbook build )
-            ( cd book/ru && mdbook build )
-
-            local td=$(mktemp -d)
-            cp -r target/doc $td/api
-            mkdir $td/book
-            cp -r book/en/book $td/book/en
-            cp -r book/ru/book $td/book/ru
-            cp LICENSE-* $td/book/en
-            cp LICENSE-* $td/book/ru
-
-            linkchecker $td/book/en/
-            linkchecker $td/book/ru/
-            linkchecker $td/api/rtfm/
-            linkchecker $td/api/cortex_m_rtfm_macros/
-        fi
+        ( cd macros && cargo test --target $T )
 
         return
     fi
 
-    cargo check --target $T --examples
-    if [ $TARGET != thumbv6m-none-eabi ]; then
-        cargo check --features "timer-queue" --target $T --examples
+    if [ $TARGET = thumbv6m-none-eabi ]; then
+        cargo check --target $T --examples
+    else
+        cargo check --target $T --examples --features __v7
     fi
 
     # run-pass tests
@@ -108,74 +120,71 @@ main() {
             )
 
             for ex in ${exs[@]}; do
-                if [ $ex = ramfunc ] && [ $T = thumbv6m-none-eabi ]; then
-                    # LLD doesn't support this at the moment
-                    continue
-                fi
-
                 if [ $ex = pool ]; then
-                    if [ $TARGET != thumbv6m-none-eabi ]; then
-                        local td=$(mktemp -d)
-
-                        local features="timer-queue"
-                        cargo run --example $ex --target $TARGET --features $features >\
-                              $td/pool.run
-                        grep 'foo(0x2' $td/pool.run
-                        grep 'bar(0x2' $td/pool.run
-                        arm-none-eabi-objcopy -O ihex target/$TARGET/debug/examples/$ex \
-                                              ci/builds/${ex}_${features/,/_}_debug_1.hex
-
-                        cargo run --example $ex --target $TARGET --features $features --release >\
-                              $td/pool.run
-                        grep 'foo(0x2' $td/pool.run
-                        grep 'bar(0x2' $td/pool.run
-                        arm-none-eabi-objcopy -O ihex target/$TARGET/release/examples/$ex \
-                                              ci/builds/${ex}_${features/,/_}_release_1.hex
-
-                        rm -rf $td
+                    if [ $TARGET = thumbv6m-none-eabi ]; then
+                        continue
                     fi
 
+                    local td=$(mktemp -d)
+
+                    cargo run --example $ex --target $TARGET --features __v7 >\
+                            $td/pool.run
+                    grep 'foo(0x2' $td/pool.run
+                    grep 'bar(0x2' $td/pool.run
+                    arm-none-eabi-objcopy -O ihex target/$TARGET/debug/examples/$ex \
+                                            ci/builds/${ex}___v7_debug_1.hex
+
+                    cargo run --example $ex --target $TARGET --features __v7 --release >\
+                            $td/pool.run
+                    grep 'foo(0x2' $td/pool.run
+                    grep 'bar(0x2' $td/pool.run
+                    arm-none-eabi-objcopy -O ihex target/$TARGET/release/examples/$ex \
+                                            ci/builds/${ex}___v7_release_1.hex
+
+                    rm -rf $td
+
                     continue
                 fi
 
-                if [ $ex != types ]; then
-                    arm_example "run" $ex "debug" "" "1"
-                    arm_example "run" $ex "release" "" "1"
+                if [ $ex = types ]; then
+                    if [ $TARGET = thumbv6m-none-eabi ]; then
+                        continue
+                    fi
+
+                    arm_example "run" $ex "debug" "__v7" "1"
+                    arm_example "run" $ex "release" "__v7" "1"
+
+                    continue
                 fi
 
-                if [ $TARGET != thumbv6m-none-eabi ]; then
-                    arm_example "run" $ex "debug" "timer-queue" "1"
-                    arm_example "run" $ex "release" "timer-queue" "1"
-                fi
+                arm_example "run" $ex "debug" "" "1"
+                arm_example "run" $ex "release" "" "1"
             done
 
             local built=()
             cargo clean
             for ex in ${exs[@]}; do
-                if [ $ex = ramfunc ] && [ $T = thumbv6m-none-eabi ]; then
-                    # LLD doesn't support this at the moment
-                    continue
-                fi
+                if [ $ex = types ] || [ $ex = pool ]; then
+                    if [ $TARGET = thumbv6m-none-eabi ]; then
+                        continue
+                    fi
 
-                if [ $ex != types ] && [ $ex != pool ]; then
+                    arm_example "build" $ex "debug" "__v7" "2"
+                    cmp ci/builds/${ex}___v7_debug_1.hex \
+                        ci/builds/${ex}___v7_debug_2.hex
+                    arm_example "build" $ex "release" "__v7" "2"
+                    cmp ci/builds/${ex}___v7_release_1.hex \
+                        ci/builds/${ex}___v7_release_2.hex
+                else
                     arm_example "build" $ex "debug" "" "2"
                     cmp ci/builds/${ex}_debug_1.hex \
                         ci/builds/${ex}_debug_2.hex
                     arm_example "build" $ex "release" "" "2"
                     cmp ci/builds/${ex}_release_1.hex \
                         ci/builds/${ex}_release_2.hex
-
-                    built+=( $ex )
                 fi
 
-                if [ $TARGET != thumbv6m-none-eabi ]; then
-                    arm_example "build" $ex "debug" "timer-queue" "2"
-                    cmp ci/builds/${ex}_timer-queue_debug_1.hex \
-                        ci/builds/${ex}_timer-queue_debug_2.hex
-                    arm_example "build" $ex "release" "timer-queue" "2"
-                    cmp ci/builds/${ex}_timer-queue_release_1.hex \
-                        ci/builds/${ex}_timer-queue_release_2.hex
-                fi
+                built+=( $ex )
             done
 
             ( cd target/$TARGET/release/examples/ && size ${built[@]} )

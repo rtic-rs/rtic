@@ -1,21 +1,27 @@
-//! IMPLEMENTATION DETAILS. DO NOT USE ANYTHING IN THIS MODULE
-
-use core::{cell::Cell, u8};
-
-#[cfg(armv7m)]
-use cortex_m::register::basepri;
-pub use cortex_m::{
-    asm::wfi, interrupt, peripheral::scb::SystemHandler, peripheral::syst::SystClkSource,
-    peripheral::Peripherals,
+use core::{
+    cell::Cell,
+    sync::atomic::{AtomicBool, Ordering},
 };
-use heapless::spsc::SingleCore;
-pub use heapless::{consts, i, spsc::Queue};
 
-#[cfg(feature = "timer-queue")]
 pub use crate::tq::{NotReady, TimerQueue};
+#[cfg(armv7m)]
+pub use cortex_m::register::basepri;
+pub use cortex_m::{
+    asm::wfi,
+    interrupt,
+    peripheral::{scb::SystemHandler, syst::SystClkSource, DWT},
+    Peripherals,
+};
+use heapless::spsc::{MultiCore, SingleCore};
+pub use heapless::{consts, i::Queue as iQueue, spsc::Queue};
+pub use heapless::{i::BinaryHeap as iBinaryHeap, BinaryHeap};
+#[cfg(feature = "heterogeneous")]
+pub use microamp::shared;
 
-pub type FreeQueue<N> = Queue<u8, N, u8, SingleCore>;
-pub type ReadyQueue<T, N> = Queue<(T, u8), N, u8, SingleCore>;
+pub type MCFQ<N> = Queue<u8, N, u8, MultiCore>;
+pub type MCRQ<T, N> = Queue<(T, u8), N, u8, MultiCore>;
+pub type SCFQ<N> = Queue<u8, N, u8, SingleCore>;
+pub type SCRQ<T, N> = Queue<(T, u8), N, u8, SingleCore>;
 
 #[cfg(armv7m)]
 #[inline(always)]
@@ -41,6 +47,26 @@ where
     F: FnOnce(),
 {
     f();
+}
+
+pub struct Barrier {
+    inner: AtomicBool,
+}
+
+impl Barrier {
+    pub const fn new() -> Self {
+        Barrier {
+            inner: AtomicBool::new(false),
+        }
+    }
+
+    pub fn release(&self) {
+        self.inner.store(true, Ordering::Release)
+    }
+
+    pub fn wait(&self) {
+        while !self.inner.load(Ordering::Acquire) {}
+    }
 }
 
 // Newtype over `Cell` that forbids mutation through a shared reference
@@ -95,7 +121,7 @@ pub unsafe fn lock<T, R>(
 
     if current < ceiling {
         if ceiling == (1 << nvic_prio_bits) {
-            priority.set(u8::MAX);
+            priority.set(u8::max_value());
             let r = interrupt::free(|_| f(&mut *ptr));
             priority.set(current);
             r
@@ -124,7 +150,7 @@ pub unsafe fn lock<T, R>(
     let current = priority.get();
 
     if current < ceiling {
-        priority.set(u8::MAX);
+        priority.set(u8::max_value());
         let r = interrupt::free(|_| f(&mut *ptr));
         priority.set(current);
         r

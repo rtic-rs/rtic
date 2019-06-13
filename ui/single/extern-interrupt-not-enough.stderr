@@ -1,0 +1,8 @@
+error: not enough `extern` interrupts to dispatch all software tasks (need: 1; given: 0)
+ --> $DIR/extern-interrupt-not-enough.rs:6:8
+  |
+6 |     fn a(_: a::Context) {}
+  |        ^
+
+error: aborting due to previous error
+

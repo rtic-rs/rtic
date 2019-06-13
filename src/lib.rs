@@ -33,68 +33,45 @@
 //!
 //! # Cargo features
 //!
-//! - `timer-queue`. This opt-in feature enables the `schedule` API which can be used to schedule
-//! tasks to run in the future. Also see [`Instant`] and [`Duration`].
-//!
-//! [`Instant`]: struct.Instant.html
-//! [`Duration`]: struct.Duration.html
-//!
-//! - `nightly`. Enabling this opt-in feature makes RTFM internally use the unstable `const_fn`
-//! language feature to reduce static memory usage, runtime overhead and initialization overhead.
-//! This feature requires a nightly compiler and may stop working at any time!
+//! - `heterogeneous`. This opt-in feature enables the *experimental* heterogeneous multi-core support.
 
 #![deny(missing_docs)]
+#![deny(rust_2018_compatibility)]
+#![deny(rust_2018_idioms)]
 #![deny(warnings)]
 #![no_std]
 
-#[cfg(feature = "timer-queue")]
-use core::cmp::Ordering;
-use core::{fmt, ops};
+use core::ops::Sub;
 
-#[cfg(not(feature = "timer-queue"))]
-use cortex_m::peripheral::SYST;
 use cortex_m::{
     interrupt::Nr,
     peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
 };
+#[cfg(not(feature = "heterogeneous"))]
+use cortex_m_rt as _; // vector table
 pub use cortex_m_rtfm_macros::app;
+pub use rtfm_core::{Exclusive, Mutex};
 
+#[cfg(armv7m)]
+pub mod cyccnt;
 #[doc(hidden)]
 pub mod export;
 #[doc(hidden)]
-#[cfg(feature = "timer-queue")]
 mod tq;
 
-#[cfg(all(feature = "timer-queue", armv6m))]
-compile_error!(
-    "The `timer-queue` feature is currently not supported on ARMv6-M (`thumbv6m-none-eabi`)"
-);
-
-/// Core peripherals
-///
-/// This is `cortex_m::Peripherals` minus the peripherals that the RTFM runtime uses
-///
-/// - The `NVIC` field is never present.
-/// - When the `timer-queue` feature is enabled the following fields are *not* present: `DWT` and
-/// `SYST`.
+/// `cortex_m::Peripherals` minus `SYST`
 #[allow(non_snake_case)]
-pub struct Peripherals<'a> {
+pub struct Peripherals {
     /// Cache and branch predictor maintenance operations (not present on Cortex-M0 variants)
     pub CBP: CBP,
 
     /// CPUID
     pub CPUID: CPUID,
 
-    /// Debug Control Block (by value if the `timer-queue` feature is disabled)
-    #[cfg(feature = "timer-queue")]
-    pub DCB: &'a mut DCB,
-
-    /// Debug Control Block (borrowed if the `timer-queue` feature is enabled)
-    #[cfg(not(feature = "timer-queue"))]
+    /// Debug Control Block
     pub DCB: DCB,
 
-    /// Data Watchpoint and Trace unit (not present if the `timer-queue` feature is enabled)
-    #[cfg(not(feature = "timer-queue"))]
+    /// Data Watchpoint and Trace unit
     pub DWT: DWT,
 
     /// Flash Patch and Breakpoint unit (not present on Cortex-M0 variants)
@@ -109,245 +86,52 @@ pub struct Peripherals<'a> {
     /// Memory Protection Unit
     pub MPU: MPU,
 
-    // Nested Vector Interrupt Controller
-    // pub NVIC: NVIC,
+    /// Nested Vector Interrupt Controller
+    pub NVIC: NVIC,
+
     /// System Control Block
-    pub SCB: &'a mut SCB,
+    pub SCB: SCB,
 
-    /// SysTick: System Timer (not present if the `timer-queue` is enabled)
-    #[cfg(not(feature = "timer-queue"))]
-    pub SYST: SYST,
-
+    // SysTick: System Timer
+    // pub SYST: SYST,
     /// Trace Port Interface Unit (not present on Cortex-M0 variants)
     pub TPIU: TPIU,
 }
 
-/// A measurement of a monotonically nondecreasing clock. Opaque and useful only with `Duration`
-///
-/// This data type is only available when the `timer-queue` feature is enabled
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[cfg(feature = "timer-queue")]
-pub struct Instant(i32);
-
-#[cfg(feature = "timer-queue")]
-impl Instant {
-    /// IMPLEMENTATION DETAIL. DO NOT USE
-    #[doc(hidden)]
-    pub unsafe fn artificial(timestamp: i32) -> Self {
-        Instant(timestamp)
-    }
-
-    /// Returns an instant corresponding to "now"
-    pub fn now() -> Self {
-        Instant(DWT::get_cycle_count() as i32)
-    }
-
-    /// Returns the amount of time elapsed since this instant was created.
-    pub fn elapsed(&self) -> Duration {
-        Instant::now() - *self
-    }
-
-    /// Returns the amount of time elapsed from another instant to this one.
-    pub fn duration_since(&self, earlier: Instant) -> Duration {
-        let diff = self.0 - earlier.0;
-        assert!(diff >= 0, "second instant is later than self");
-        Duration(diff as u32)
+impl From<cortex_m::Peripherals> for Peripherals {
+    fn from(p: cortex_m::Peripherals) -> Self {
+        Self {
+            CBP: p.CBP,
+            CPUID: p.CPUID,
+            DCB: p.DCB,
+            DWT: p.DWT,
+            FPB: p.FPB,
+            FPU: p.FPU,
+            ITM: p.ITM,
+            MPU: p.MPU,
+            NVIC: p.NVIC,
+            SCB: p.SCB,
+            TPIU: p.TPIU,
+        }
     }
 }
 
-#[cfg(feature = "timer-queue")]
-impl ops::AddAssign<Duration> for Instant {
-    fn add_assign(&mut self, dur: Duration) {
-        debug_assert!(dur.0 < (1 << 31));
-        self.0 = self.0.wrapping_add(dur.0 as i32);
-    }
-}
+/// A monotonic clock / counter
+pub unsafe trait Monotonic {
+    /// A measurement of this clock
+    type Instant: Copy + Ord + Sub;
 
-#[cfg(feature = "timer-queue")]
-impl ops::Add<Duration> for Instant {
-    type Output = Self;
+    /// The ratio between the SysTick (system timer) frequency and this clock frequency
+    fn ratio() -> u32;
 
-    fn add(mut self, dur: Duration) -> Self {
-        self += dur;
-        self
-    }
-}
+    /// Returns the current time
+    fn now() -> Self::Instant;
 
-#[cfg(feature = "timer-queue")]
-impl ops::SubAssign<Duration> for Instant {
-    fn sub_assign(&mut self, dur: Duration) {
-        // XXX should this be a non-debug assertion?
-        debug_assert!(dur.0 < (1 << 31));
-        self.0 = self.0.wrapping_sub(dur.0 as i32);
-    }
-}
+    /// Resets the counter to *zero*
+    unsafe fn reset();
 
-#[cfg(feature = "timer-queue")]
-impl ops::Sub<Duration> for Instant {
-    type Output = Self;
-
-    fn sub(mut self, dur: Duration) -> Self {
-        self -= dur;
-        self
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl ops::Sub<Instant> for Instant {
-    type Output = Duration;
-
-    fn sub(self, other: Instant) -> Duration {
-        self.duration_since(other)
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl Ord for Instant {
-    fn cmp(&self, rhs: &Self) -> Ordering {
-        self.0.wrapping_sub(rhs.0).cmp(&0)
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl PartialOrd for Instant {
-    fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
-        Some(self.cmp(rhs))
-    }
-}
-
-/// A `Duration` type to represent a span of time.
-///
-/// This data type is only available when the `timer-queue` feature is enabled
-#[derive(Clone, Copy, Default, Eq, Ord, PartialEq, PartialOrd)]
-#[cfg(feature = "timer-queue")]
-pub struct Duration(u32);
-
-#[cfg(feature = "timer-queue")]
-impl Duration {
-    /// Returns the total number of clock cycles contained by this `Duration`
-    pub fn as_cycles(&self) -> u32 {
-        self.0
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl ops::AddAssign for Duration {
-    fn add_assign(&mut self, dur: Duration) {
-        self.0 += dur.0;
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl ops::Add<Duration> for Duration {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Duration(self.0 + other.0)
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl ops::SubAssign for Duration {
-    fn sub_assign(&mut self, rhs: Duration) {
-        self.0 -= rhs.0;
-    }
-}
-
-#[cfg(feature = "timer-queue")]
-impl ops::Sub<Duration> for Duration {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self {
-        Duration(self.0 - rhs.0)
-    }
-}
-
-/// Adds the `cycles` method to the `u32` type
-///
-/// This trait is only available when the `timer-queue` feature is enabled
-#[cfg(feature = "timer-queue")]
-pub trait U32Ext {
-    /// Converts the `u32` value into clock cycles
-    fn cycles(self) -> Duration;
-}
-
-#[cfg(feature = "timer-queue")]
-impl U32Ext for u32 {
-    fn cycles(self) -> Duration {
-        Duration(self)
-    }
-}
-
-/// Memory safe access to shared resources
-///
-/// In RTFM, locks are implemented as critical sections that prevent other tasks from *starting*.
-/// These critical sections are implemented by temporarily increasing the dynamic priority (see
-/// [BASEPRI]) of the current context. Entering and leaving these critical sections is always done
-/// in constant time (a few instructions).
-///
-/// [BASEPRI]: https://developer.arm.com/products/architecture/cpu-architecture/m-profile/docs/100701/latest/special-purpose-mask-registers
-pub trait Mutex {
-    /// Data protected by the mutex
-    type T;
-
-    /// Creates a critical section and grants temporary access to the protected data
-    fn lock<R>(&mut self, f: impl FnOnce(&mut Self::T) -> R) -> R;
-}
-
-impl<'a, M> Mutex for &'a mut M
-where
-    M: Mutex,
-{
-    type T = M::T;
-
-    fn lock<R>(&mut self, f: impl FnOnce(&mut M::T) -> R) -> R {
-        (**self).lock(f)
-    }
-}
-
-/// Newtype over `&'a mut T` that implements the `Mutex` trait
-///
-/// The `Mutex` implementation for this type is a no-op, no critical section is created
-pub struct Exclusive<'a, T>(pub &'a mut T);
-
-impl<'a, T> Mutex for Exclusive<'a, T> {
-    type T = T;
-
-    fn lock<R>(&mut self, f: impl FnOnce(&mut T) -> R) -> R {
-        f(self.0)
-    }
-}
-
-impl<'a, T> fmt::Debug for Exclusive<'a, T>
-where
-    T: fmt::Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        (**self).fmt(f)
-    }
-}
-
-impl<'a, T> fmt::Display for Exclusive<'a, T>
-where
-    T: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        (**self).fmt(f)
-    }
-}
-
-impl<'a, T> ops::Deref for Exclusive<'a, T> {
-    type Target = T;
-
-    fn deref(&self) -> &T {
-        self.0
-    }
-}
-
-impl<'a, T> ops::DerefMut for Exclusive<'a, T> {
-    fn deref_mut(&mut self) -> &mut T {
-        self.0
-    }
+    /// A `Self::Instant` that represents a count of *zero*
+    fn zero() -> Self::Instant;
 }
 
 /// Sets the given `interrupt` as pending

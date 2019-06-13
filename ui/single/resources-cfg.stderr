@@ -1,0 +1,123 @@
+error[E0609]: no field `O1` on type `initResources<'_>`
+  --> $DIR/resources-cfg.rs:27:21
+   |
+27 |         c.resources.O1;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `O4` on type `initResources<'_>`
+  --> $DIR/resources-cfg.rs:28:21
+   |
+28 |         c.resources.O4;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `O5` on type `initResources<'_>`
+  --> $DIR/resources-cfg.rs:29:21
+   |
+29 |         c.resources.O5;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `O6` on type `initResources<'_>`
+  --> $DIR/resources-cfg.rs:30:21
+   |
+30 |         c.resources.O6;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `S3` on type `initResources<'_>`
+  --> $DIR/resources-cfg.rs:31:21
+   |
+31 |         c.resources.S3;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `O2` on type `idleResources<'_>`
+  --> $DIR/resources-cfg.rs:36:21
+   |
+36 |         c.resources.O2;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `O4` on type `idleResources<'_>`
+  --> $DIR/resources-cfg.rs:37:21
+   |
+37 |         c.resources.O4;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `S1` on type `idleResources<'_>`
+  --> $DIR/resources-cfg.rs:38:21
+   |
+38 |         c.resources.S1;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `S3` on type `idleResources<'_>`
+  --> $DIR/resources-cfg.rs:39:21
+   |
+39 |         c.resources.S3;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `O3` on type `UART0Resources<'_>`
+  --> $DIR/resources-cfg.rs:46:21
+   |
+46 |         c.resources.O3;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `S1` on type `UART0Resources<'_>`
+  --> $DIR/resources-cfg.rs:47:21
+   |
+47 |         c.resources.S1;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `S2` on type `UART0Resources<'_>`
+  --> $DIR/resources-cfg.rs:48:21
+   |
+48 |         c.resources.S2;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `S3` on type `UART0Resources<'_>`
+  --> $DIR/resources-cfg.rs:49:21
+   |
+49 |         c.resources.S3;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `S2` on type `UART1Resources<'_>`
+  --> $DIR/resources-cfg.rs:54:21
+   |
+54 |         c.resources.S2;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error[E0609]: no field `O5` on type `UART1Resources<'_>`
+  --> $DIR/resources-cfg.rs:55:21
+   |
+55 |         c.resources.O5;
+   |                     ^^ unknown field
+   |
+   = note: available fields are: `__marker__`
+
+error: aborting due to 15 previous errors
+
+For more information about this error, try `rustc --explain E0609`.

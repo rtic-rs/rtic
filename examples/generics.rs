@@ -5,11 +5,10 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
-use rtfm::Mutex;
+use panic_semihosting as _;
+use rtfm::{Exclusive, Mutex};
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
@@ -35,17 +34,15 @@ const APP: () = {
     }
 
     #[interrupt(priority = 2, resources = [SHARED])]
-    fn UART1(mut c: UART1::Context) {
+    fn UART1(c: UART1::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART1(STATE = {})", *STATE).unwrap();
 
-        // just to show that `SHARED` can be accessed directly and ..
+        // just to show that `SHARED` can be accessed directly
         *c.resources.SHARED += 0;
-        // .. also through a (no-op) `lock`
-        c.resources.SHARED.lock(|shared| *shared += 0);
 
-        advance(STATE, c.resources.SHARED);
+        advance(STATE, Exclusive(c.resources.SHARED));
     }
 };
 

@@ -5,10 +5,9 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
+use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
@@ -46,7 +45,7 @@ const APP: () = {
     }
 
     #[interrupt(priority = 2, resources = [SHARED])]
-    fn GPIOB(mut c: GPIOB::Context) {
+    fn GPIOB(c: GPIOB::Context) {
         // the higher priority task does *not* need a critical section
         *c.resources.SHARED += 1;
 

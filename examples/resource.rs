@@ -5,10 +5,9 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
+use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
@@ -33,7 +32,7 @@ const APP: () = {
 
     // `SHARED` can be access from this context
     #[interrupt(resources = [SHARED])]
-    fn UART0(mut c: UART0::Context) {
+    fn UART0(c: UART0::Context) {
         *c.resources.SHARED += 1;
 
         hprintln!("UART0: SHARED = {}", c.resources.SHARED).unwrap();
@@ -41,7 +40,7 @@ const APP: () = {
 
     // `SHARED` can be access from this context
     #[interrupt(resources = [SHARED])]
-    fn UART1(mut c: UART1::Context) {
+    fn UART1(c: UART1::Context) {
         *c.resources.SHARED += 1;
 
         hprintln!("UART1: SHARED = {}", c.resources.SHARED).unwrap();

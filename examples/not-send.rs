@@ -5,11 +5,10 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_halt;
-
 use core::marker::PhantomData;
 
 use cortex_m_semihosting::debug;
+use panic_halt as _;
 use rtfm::app;
 
 pub struct NotSend {
@@ -38,13 +37,13 @@ const APP: () = {
     }
 
     #[task(priority = 2, resources = [SHARED])]
-    fn baz(mut c: baz::Context) {
+    fn baz(c: baz::Context) {
         // scenario 2: resource shared between tasks that run at the same priority
         *c.resources.SHARED = Some(NotSend { _0: PhantomData });
     }
 
     #[task(priority = 2, resources = [SHARED])]
-    fn quux(mut c: quux::Context) {
+    fn quux(c: quux::Context) {
         // scenario 2
         let _not_send = c.resources.SHARED.take().unwrap();
 
