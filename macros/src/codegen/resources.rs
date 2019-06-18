@@ -33,7 +33,13 @@ pub fn codegen(
                 } => util::cfg_core(*core, app.args.cores),
 
                 // shared `static`s and cross-initialized resources need to be in `.shared` memory
-                _ => Some(quote!(#[rtfm::export::shared])),
+                _ => {
+                    if cfg!(feature = "heterogeneous") {
+                        Some(quote!(#[rtfm::export::shared]))
+                    } else {
+                        None
+                    }
+                }
             };
 
             let (ty, expr) = if let Some(expr) = expr {

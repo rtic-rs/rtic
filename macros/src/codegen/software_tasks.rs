@@ -52,8 +52,14 @@ pub fn codegen(
                         })),
                     )
                 } else {
+                    let shared = if cfg!(feature = "heterogeneous") {
+                        Some(quote!(#[rtfm::export::shared]))
+                    } else {
+                        None
+                    };
+
                     (
-                        Some(quote!(#[rtfm::export::shared])),
+                        shared,
                         quote!(rtfm::export::MCFQ<#cap_ty>),
                         quote!(rtfm::export::Queue(rtfm::export::iQueue::u8())),
                     )

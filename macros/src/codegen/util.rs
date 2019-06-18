@@ -27,9 +27,11 @@ pub fn capacity_typenum(capacity: u8, round_up_to_power_of_two: bool) -> TokenSt
 pub fn cfg_core(core: Core, cores: u8) -> Option<TokenStream2> {
     if cores == 1 {
         None
-    } else {
+    } else if cfg!(feature = "heterogeneous") {
         let core = core.to_string();
         Some(quote!(#[cfg(core = #core)]))
+    } else {
+        None
     }
 }
 
@@ -100,6 +102,15 @@ pub fn inputs_ident(task: &Ident, sender: Core) -> Ident {
 /// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
 pub fn instants_ident(task: &Ident, sender: Core) -> Ident {
     Ident::new(&format!("{}_S{}_INSTANTS", task, sender), Span::call_site())
+}
+
+pub fn interrupt_ident(core: Core, cores: u8) -> Ident {
+    let span = Span::call_site();
+    if cores == 1 {
+        Ident::new("Interrupt", span)
+    } else {
+        Ident::new(&format!("Interrupt_{}", core), span)
+    }
 }
 
 /// Generates a pre-reexport identifier for the "late resources" struct
@@ -243,6 +254,16 @@ pub fn spawn_t_ident(receiver: Core, priority: u8, sender: Core) -> Ident {
         &format!("R{}_P{}_S{}_T", receiver, priority, sender),
         Span::call_site(),
     )
+}
+
+pub fn suffixed(name: &str, core: u8) -> Ident {
+    let span = Span::call_site();
+
+    if cfg!(feature = "homogeneous") {
+        Ident::new(&format!("{}_{}", name, core), span)
+    } else {
+        Ident::new(name, span)
+    }
 }
 
 /// Generates an identifier for a timer queue

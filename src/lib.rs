@@ -47,7 +47,7 @@ use cortex_m::{
     interrupt::Nr,
     peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
 };
-#[cfg(not(feature = "heterogeneous"))]
+#[cfg(all(not(feature = "heterogeneous"), not(feature = "homogeneous")))]
 use cortex_m_rt as _; // vector table
 pub use cortex_m_rtfm_macros::app;
 pub use rtfm_core::{Exclusive, Mutex};

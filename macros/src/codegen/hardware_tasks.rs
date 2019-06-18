@@ -49,7 +49,11 @@ pub fn codegen(
             quote!(#name::Locals::new(),)
         };
 
-        let symbol = task.args.binds(name);
+        let symbol = if cfg!(feature = "homogeneous") {
+            util::suffixed(&task.args.binds(name).to_string(), core)
+        } else {
+            task.args.binds(name).clone()
+        };
         let priority = task.args.priority;
 
         const_app.push(quote!(

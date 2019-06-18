@@ -67,10 +67,11 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         ));
 
         let cfg_core = util::cfg_core(core, app.args.cores);
+        let main = util::suffixed("main", core);
         mains.push(quote!(
             #[no_mangle]
             #cfg_core
-            unsafe fn main() -> ! {
+            unsafe extern "C" fn #main() -> ! {
                 #(#assertion_stmts)*
 
                 #(#pre_init_stmts)*

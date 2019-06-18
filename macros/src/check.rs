@@ -20,6 +20,28 @@ impl<'a> Extra<'a> {
 }
 
 pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
+    if cfg!(feature = "homogeneous") {
+        // this RTFM mode uses the same namespace for all cores so we need to check that the
+        // identifiers used for each core `#[init]` and `#[idle]` functions don't collide
+        let mut seen = HashSet::new();
+
+        for name in app
+            .inits
+            .values()
+            .map(|init| &init.name)
+            .chain(app.idles.values().map(|idle| &idle.name))
+        {
+            if seen.contains(name) {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "this identifier is already being used by another core",
+                ));
+            } else {
+                seen.insert(name);
+            }
+        }
+    }
+
     // check that all exceptions are valid; only exceptions with configurable priorities are
     // accepted
     for (name, task) in app

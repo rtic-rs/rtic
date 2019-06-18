@@ -55,8 +55,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                         })),
                     )
                 } else {
+                    let shared = if cfg!(feature = "heterogeneous") {
+                        Some(quote!(#[rtfm::export::shared]))
+                    } else {
+                        None
+                    };
+
                     (
-                        Some(quote!(#[rtfm::export::shared])),
+                        shared,
                         quote!(rtfm::export::MCRQ<#t, #n>),
                         quote!(rtfm::export::Queue(rtfm::export::iQueue::u8())),
                     )
@@ -156,7 +162,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 receiver, level
             );
             let cfg_receiver = util::cfg_core(receiver, app.args.cores);
-            let interrupt = &interrupts[&level];
+            let interrupt = util::suffixed(&interrupts[&level].to_string(), receiver);
             items.push(quote!(
                 #[allow(non_snake_case)]
                 #[doc = #doc]

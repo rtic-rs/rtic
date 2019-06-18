@@ -20,7 +20,7 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         args,
         input,
         Settings {
-            parse_cores: cfg!(feature = "heterogeneous"),
+            parse_cores: cfg!(feature = "heterogeneous") || cfg!(feature = "homogeneous"),
             parse_exception: true,
             parse_extern_interrupt: true,
             parse_interrupt: true,

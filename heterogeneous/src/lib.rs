@@ -7,13 +7,14 @@ use core::{
     ops::{Add, Sub},
 };
 
-use cortex_m::interrupt::Nr;
+use bare_metal::Nr;
 use rtfm::Monotonic;
+
+// both cores have the exact same interrupts
+pub use Interrupt_0 as Interrupt_1;
 
 // Fake priority bits
 pub const NVIC_PRIO_BITS: u8 = 3;
-
-pub struct CrossPend;
 
 pub fn xpend(_core: u8, _interrupt: impl Nr) {}
 
@@ -72,28 +73,22 @@ impl PartialOrd for Instant {
 }
 
 // Fake interrupts
-pub enum Interrupt {
-    I0,
-    I1,
-    I2,
-    I3,
-    I4,
-    I5,
-    I6,
-    I7,
+#[allow(non_camel_case_types)]
+#[derive(Clone, Copy)]
+#[repr(u8)]
+pub enum Interrupt_0 {
+    I0 = 0,
+    I1 = 1,
+    I2 = 2,
+    I3 = 3,
+    I4 = 4,
+    I5 = 5,
+    I6 = 6,
+    I7 = 7,
 }
 
-unsafe impl Nr for Interrupt {
+unsafe impl Nr for Interrupt_0 {
     fn nr(&self) -> u8 {
-        match self {
-            Interrupt::I0 => 0,
-            Interrupt::I1 => 1,
-            Interrupt::I2 => 2,
-            Interrupt::I3 => 3,
-            Interrupt::I4 => 4,
-            Interrupt::I5 => 5,
-            Interrupt::I6 => 6,
-            Interrupt::I7 => 7,
-        }
+        *self as u8
     }
 }

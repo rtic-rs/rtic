@@ -7,7 +7,7 @@
 
 use panic_halt as _;
 
-#[rtfm::app(cores = 2, device = mc)]
+#[rtfm::app(cores = 2, device = heterogeneous)]
 const APP: () = {
     extern "C" {
         // owned by core #1 but initialized by core #0

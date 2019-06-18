@@ -27,9 +27,16 @@ pub fn codegen(
         // initialized
         if analysis.initialization_barriers.contains_key(&core) {
             let ib = util::init_barrier(core);
+            let shared = if cfg!(feature = "heterogeneous") {
+                Some(quote!(
+                    #[rtfm::export::shared]
+                ))
+            } else {
+                None
+            };
 
             const_app.push(quote!(
-                #[rtfm::export::shared]
+                #shared
                 static #ib: rtfm::export::Barrier = rtfm::export::Barrier::new();
             ));
 
@@ -84,9 +91,16 @@ pub fn codegen(
             if core == FIRST {
                 for &i in analysis.timer_queues.keys() {
                     let rv = util::rendezvous_ident(i);
+                    let shared = if cfg!(feature = "heterogeneous") {
+                        Some(quote!(
+                            #[rtfm::export::shared]
+                        ))
+                    } else {
+                        None
+                    };
 
                     const_app.push(quote!(
-                        #[rtfm::export::shared]
+                        #shared
                         static #rv: rtfm::export::Barrier = rtfm::export::Barrier::new();
                     ));
 

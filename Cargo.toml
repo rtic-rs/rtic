@@ -74,6 +74,7 @@ compiletest_rs = "0.3.22"
 
 [features]
 heterogeneous = ["cortex-m-rtfm-macros/heterogeneous", "microamp"]
+homogeneous = ["cortex-m-rtfm-macros/homogeneous", "microamp"]
 # used for testing this crate; do not use in applications
 __v7 =[]
 
@@ -83,6 +84,7 @@ lto = true
 
 [workspace]
 members = [
+  "heterogeneous",
+  "homogeneous",
   "macros",
-  "mc",
 ]

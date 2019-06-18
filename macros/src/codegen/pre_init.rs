@@ -39,7 +39,8 @@ pub fn codegen(
     }
 
     stmts.push(quote!(
-        let mut core = rtfm::export::Peripherals::steal();
+        // NOTE(transmute) to avoid debug_assertion in multi-core mode
+        let mut core: rtfm::export::Peripherals = core::mem::transmute(());
     ));
 
     let device = extra.device;
@@ -64,25 +65,33 @@ pub fn codegen(
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
         // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
+        let interrupt = util::interrupt_ident(core, app.args.cores);
         stmts.push(quote!(
             core.NVIC.set_priority(
-                #device::Interrupt::#name,
+                #device::#interrupt::#name,
                 rtfm::export::logical2hw(#priority, #nvic_prio_bits),
             );
         ));
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(core.NVIC.enable(#device::Interrupt::#name);));
+        stmts.push(quote!(core.NVIC.enable(#device::#interrupt::#name);));
     }
 
     // cross-spawn barriers: now that priorities have been set and the interrupts have been unmasked
     // we are ready to receive messages from *other* cores
     if analysis.spawn_barriers.contains_key(&core) {
         let sb = util::spawn_barrier(core);
+        let shared = if cfg!(feature = "heterogeneous") {
+            Some(quote!(
+                #[rtfm::export::shared]
+            ))
+        } else {
+            None
+        };
 
         const_app.push(quote!(
-            #[rtfm::export::shared]
+            #shared
             static #sb: rtfm::export::Barrier = rtfm::export::Barrier::new();
         ));
 

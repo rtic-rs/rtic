@@ -7,7 +7,7 @@
 
 use panic_halt as _;
 
-#[rtfm::app(cores = 2, device = mc)]
+#[rtfm::app(cores = 2, device = homogeneous)]
 const APP: () = {
     extern "C" {
         static mut X: u32;

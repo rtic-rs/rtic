@@ -89,15 +89,16 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     let receiver = task.args.core;
                     let rq = util::rq_ident(receiver, priority, sender);
                     let rqt = util::spawn_t_ident(receiver, priority, sender);
+                    let enum_ = util::interrupt_ident(receiver, app.args.cores);
                     let interrupt = &analysis.interrupts[&receiver][&priority];
 
                     let pend = if sender != receiver {
                         quote!(
-                            #device::xpend(#receiver, #device::Interrupt::#interrupt);
+                            #device::xpend(#receiver, #device::#enum_::#interrupt);
                         )
                     } else {
                         quote!(
-                            rtfm::pend(#device::Interrupt::#interrupt);
+                            rtfm::pend(#device::#enum_::#interrupt);
                         )
                     };
 
@@ -115,10 +116,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 .collect::<Vec<_>>();
 
             let priority = timer_queue.priority;
+            let sys_tick = util::suffixed("SysTick", sender);
             items.push(quote!(
                 #cfg_sender
                 #[no_mangle]
-                unsafe fn SysTick() {
+                unsafe fn #sys_tick() {
                     use rtfm::Mutex as _;
 
                     /// The priority of this handler

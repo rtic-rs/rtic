@@ -43,7 +43,7 @@ main() {
             cargo test --test multi --features heterogeneous --target $T
 
             # multi-core compile-pass tests
-            pushd mc
+            pushd heterogeneous
             local exs=(
                 smallest
                 x-init-2
@@ -90,6 +90,8 @@ main() {
     else
         cargo check --target $T --examples --features __v7
     fi
+
+    cargo check -p homogeneous --target $T --examples
 
     # run-pass tests
     case $T in

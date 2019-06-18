@@ -45,14 +45,15 @@ pub fn codegen(
     };
 
     let device = extra.device;
+    let enum_ = util::interrupt_ident(receiver, app.args.cores);
     let interrupt = &analysis.interrupts[&receiver][&priority];
     let pend = if sender != receiver {
         quote!(
-            #device::xpend(#receiver, #device::Interrupt::#interrupt);
+            #device::xpend(#receiver, #device::#enum_::#interrupt);
         )
     } else {
         quote!(
-            rtfm::pend(#device::Interrupt::#interrupt);
+            rtfm::pend(#device::#enum_::#interrupt);
         )
     };
 

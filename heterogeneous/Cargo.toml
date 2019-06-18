@@ -1,0 +1,18 @@
+[package]
+authors = ["Jorge Aparicio <jorge@japaric.io>"]
+edition = "2018"
+name = "heterogeneous"
+# this crate is only used for testing
+publish = false
+version = "0.0.0-alpha.0"
+
+[dependencies]
+bare-metal = "0.2.4"
+
+[dependencies.cortex-m-rtfm]
+path = ".."
+features = ["heterogeneous"]
+
+[dev-dependencies]
+panic-halt = "0.2.0"
+microamp = "0.1.0-alpha.1"
