@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use proc_macro2::Span;
 use rtfm_syntax::{
     analyze::Analysis,
-    ast::{App, CustomArg, HardwareTaskKind},
+    ast::{App, CustomArg},
 };
 use syn::{parse, Path};
 
@@ -44,18 +44,9 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
 
     // check that all exceptions are valid; only exceptions with configurable priorities are
     // accepted
-    for (name, task) in app
-        .hardware_tasks
-        .iter()
-        .filter(|(_, task)| task.kind == HardwareTaskKind::Exception)
-    {
-        let name_s = task.args.binds(name).to_string();
+    for (name, task) in &app.hardware_tasks {
+        let name_s = task.args.binds.to_string();
         match &*name_s {
-            // NOTE that some of these don't exist on ARMv6-M but we don't check that here -- the
-            // code we generate will check that the exception actually exists on ARMv6-M
-            "MemoryManagement" | "BusFault" | "UsageFault" | "SecureFault" | "SVCall"
-            | "DebugMonitor" | "PendSV" => {} // OK
-
             "SysTick" => {
                 if analysis.timer_queues.get(&task.args.core).is_some() {
                     return Err(parse::Error::new(
@@ -67,12 +58,14 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
                 }
             }
 
-            _ => {
+            "NonMaskableInt" | "HardFault" => {
                 return Err(parse::Error::new(
                     name.span(),
                     "only exceptions with configurable priority can be used as hardware tasks",
                 ));
             }
+
+            _ => {}
         }
     }
 

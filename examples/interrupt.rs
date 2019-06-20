@@ -33,8 +33,8 @@ const APP: () = {
         loop {}
     }
 
-    #[interrupt]
-    fn UART0(_: UART0::Context) {
+    #[task(binds = UART0)]
+    fn uart0(_: uart0::Context) {
         static mut TIMES: u32 = 0;
 
         // Safe access to local `static mut` variable

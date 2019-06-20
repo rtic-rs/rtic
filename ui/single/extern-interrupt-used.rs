@@ -2,7 +2,7 @@
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    #[interrupt(binds = UART0)]
+    #[task(binds = UART0)]
     fn a(_: a::Context) {}
 
     extern "C" {

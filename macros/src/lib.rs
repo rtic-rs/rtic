@@ -16,19 +16,14 @@ mod tests;
 
 #[proc_macro_attribute]
 pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
-    let (app, analysis) = match rtfm_syntax::parse(
-        args,
-        input,
-        Settings {
-            parse_cores: cfg!(feature = "heterogeneous") || cfg!(feature = "homogeneous"),
-            parse_exception: true,
-            parse_extern_interrupt: true,
-            parse_interrupt: true,
-            parse_schedule: true,
-            optimize_priorities: true,
-            ..Settings::default()
-        },
-    ) {
+    let mut settings = Settings::default();
+    settings.optimize_priorities = true;
+    settings.parse_binds = true;
+    settings.parse_cores = cfg!(feature = "heterogeneous") || cfg!(feature = "homogeneous");
+    settings.parse_extern_interrupt = true;
+    settings.parse_schedule = true;
+
+    let (app, analysis) = match rtfm_syntax::parse(args, input, settings) {
         Err(e) => return e.to_compile_error().into(),
         Ok(x) => x,
     };

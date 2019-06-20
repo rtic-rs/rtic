@@ -3,6 +3,8 @@ use rtfm_syntax::Settings;
 
 #[test]
 fn analyze() {
+    let mut settings = Settings::default();
+    settings.parse_extern_interrupt = true;
     let (app, analysis) = rtfm_syntax::parse2(
         quote!(device = pac),
         quote!(
@@ -20,10 +22,7 @@ fn analyze() {
                 }
             };
         ),
-        Settings {
-            parse_extern_interrupt: true,
-            ..Settings::default()
-        },
+        settings,
     )
     .unwrap();
 

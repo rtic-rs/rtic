@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::ast::{App, HardwareTaskKind};
+use rtfm_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
@@ -52,9 +52,9 @@ pub fn codegen(
         .get(&core)
         .iter()
         .flat_map(|interrupts| *interrupts)
-        .chain(app.hardware_tasks.iter().flat_map(|(name, task)| {
-            if task.kind == HardwareTaskKind::Interrupt {
-                Some((&task.args.priority, task.args.binds(name)))
+        .chain(app.hardware_tasks.values().flat_map(|task| {
+            if !util::is_exception(&task.args.binds) {
+                Some((&task.args.priority, &task.args.binds))
             } else {
                 // we do exceptions in another pass
                 None
@@ -102,9 +102,9 @@ pub fn codegen(
     }
 
     // set exception priorities
-    for (name, priority) in app.hardware_tasks.iter().filter_map(|(name, task)| {
-        if task.kind == HardwareTaskKind::Exception {
-            Some((task.args.binds(name), task.args.priority))
+    for (name, priority) in app.hardware_tasks.values().filter_map(|task| {
+        if util::is_exception(&task.args.binds) {
+            Some((&task.args.binds, task.args.priority))
         } else {
             None
         }

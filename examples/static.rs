@@ -23,15 +23,15 @@ const APP: () = {
         init::LateResources { KEY: 0xdeadbeef }
     }
 
-    #[interrupt(resources = [KEY])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, resources = [KEY])]
+    fn uart0(c: uart0::Context) {
         hprintln!("UART0(KEY = {:#x})", c.resources.KEY).unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[interrupt(priority = 2, resources = [KEY])]
-    fn UART1(c: UART1::Context) {
+    #[task(binds = UART1, priority = 2, resources = [KEY])]
+    fn uart1(c: uart1::Context) {
         hprintln!("UART1(KEY = {:#x})", c.resources.KEY).unwrap();
     }
 };

@@ -30,7 +30,7 @@ const APP: () = {
         loop {}
     }
 
-    #[interrupt(binds = UART0)]
+    #[task(binds = UART0)]
     fn foo(_: foo::Context) {
         static mut TIMES: u32 = 0;
 

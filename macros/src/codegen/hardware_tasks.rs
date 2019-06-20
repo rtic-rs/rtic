@@ -50,9 +50,9 @@ pub fn codegen(
         };
 
         let symbol = if cfg!(feature = "homogeneous") {
-            util::suffixed(&task.args.binds(name).to_string(), core)
+            util::suffixed(&task.args.binds.to_string(), core)
         } else {
-            task.args.binds(name).clone()
+            task.args.binds.clone()
         };
         let priority = task.args.priority;
 

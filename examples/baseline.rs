@@ -35,8 +35,8 @@ const APP: () = {
         }
     }
 
-    #[interrupt(spawn = [foo])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, spawn = [foo])]
+    fn uart0(c: uart0::Context) {
         hprintln!("UART0(baseline = {:?})", c.start).unwrap();
 
         // `foo` inherits the baseline of `UART0`: its `start` time

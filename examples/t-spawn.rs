@@ -25,15 +25,15 @@ const APP: () = {
         loop {}
     }
 
-    #[exception(spawn = [foo, bar, baz])]
-    fn SVCall(c: SVCall::Context) {
+    #[task(binds = SVCall, spawn = [foo, bar, baz])]
+    fn svcall(c: svcall::Context) {
         let _: Result<(), ()> = c.spawn.foo();
         let _: Result<(), u32> = c.spawn.bar(0);
         let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);
     }
 
-    #[interrupt(spawn = [foo, bar, baz])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, spawn = [foo, bar, baz])]
+    fn uart0(c: uart0::Context) {
         let _: Result<(), ()> = c.spawn.foo();
         let _: Result<(), u32> = c.spawn.bar(0);
         let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);

@@ -12,12 +12,14 @@ const APP: () = {
     #[init]
     fn init(_: init::Context) {}
 
-    #[exception(binds = SVCall)]
+    // Cortex-M exception
+    #[task(binds = SVCall)]
     fn foo(c: foo::Context) {
         foo_trampoline(c)
     }
 
-    #[interrupt(binds = UART0)]
+    // LM3S6965 interrupt
+    #[task(binds = UART0)]
     fn bar(c: bar::Context) {
         bar_trampoline(c)
     }

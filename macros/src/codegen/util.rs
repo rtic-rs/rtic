@@ -113,6 +113,18 @@ pub fn interrupt_ident(core: Core, cores: u8) -> Ident {
     }
 }
 
+/// Whether `name` is an exception with configurable priority
+pub fn is_exception(name: &Ident) -> bool {
+    let s = name.to_string();
+
+    match &*s {
+        "MemoryManagement" | "BusFault" | "UsageFault" | "SecureFault" | "SVCall"
+        | "DebugMonitor" | "PendSV" | "SysTick" => true,
+
+        _ => false,
+    }
+}
+
 /// Generates a pre-reexport identifier for the "late resources" struct
 pub fn late_resources_ident(init: &Ident) -> Ident {
     Ident::new(

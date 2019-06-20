@@ -2,8 +2,8 @@
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    #[exception]
-    fn SysTick(_: SysTick::Context) {}
+    #[task(binds = SysTick)]
+    fn sys_tick(_: sys_tick::Context) {}
 
     #[task(schedule = [foo])]
     fn foo(_: foo::Context) {}

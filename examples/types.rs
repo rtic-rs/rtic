@@ -24,19 +24,19 @@ const APP: () = {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[exception(schedule = [foo], spawn = [foo])]
-    fn SVCall(c: SVCall::Context) {
+    #[task(binds = SVCall, schedule = [foo], spawn = [foo])]
+    fn svcall(c: svcall::Context) {
         let _: Instant = c.start;
-        let _: SVCall::Schedule = c.schedule;
-        let _: SVCall::Spawn = c.spawn;
+        let _: svcall::Schedule = c.schedule;
+        let _: svcall::Spawn = c.spawn;
     }
 
-    #[interrupt(resources = [SHARED], schedule = [foo], spawn = [foo])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, resources = [SHARED], schedule = [foo], spawn = [foo])]
+    fn uart0(c: uart0::Context) {
         let _: Instant = c.start;
         let _: resources::SHARED = c.resources.SHARED;
-        let _: UART0::Schedule = c.schedule;
-        let _: UART0::Spawn = c.spawn;
+        let _: uart0::Schedule = c.schedule;
+        let _: uart0::Spawn = c.spawn;
     }
 
     #[task(priority = 2, resources = [SHARED], schedule = [foo], spawn = [foo])]

@@ -26,15 +26,15 @@ const APP: () = {
         loop {}
     }
 
-    #[exception(schedule = [foo, bar, baz])]
-    fn SVCall(c: SVCall::Context) {
+    #[task(binds = SVCall, schedule = [foo, bar, baz])]
+    fn svcall(c: svcall::Context) {
         let _: Result<(), ()> = c.schedule.foo(c.start + 70.cycles());
         let _: Result<(), u32> = c.schedule.bar(c.start + 80.cycles(), 0);
         let _: Result<(), (u32, u32)> = c.schedule.baz(c.start + 90.cycles(), 0, 1);
     }
 
-    #[interrupt(schedule = [foo, bar, baz])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, schedule = [foo, bar, baz])]
+    fn uart0(c: uart0::Context) {
         let _: Result<(), ()> = c.schedule.foo(c.start + 100.cycles());
         let _: Result<(), u32> = c.schedule.bar(c.start + 110.cycles(), 0);
         let _: Result<(), (u32, u32)> = c.schedule.baz(c.start + 120.cycles(), 0, 1);

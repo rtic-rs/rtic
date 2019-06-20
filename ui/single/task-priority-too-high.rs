@@ -7,32 +7,32 @@ const APP: () = {
     #[init]
     fn init(_: init::Context) {}
 
-    #[interrupt(priority = 1)]
-    fn GPIOA(_: GPIOA::Context) {}
+    #[task(binds = GPIOA, priority = 1)]
+    fn gpioa(_: gpioa::Context) {}
 
-    #[interrupt(priority = 2)]
-    fn GPIOB(_: GPIOB::Context) {}
+    #[task(binds = GPIOB, priority = 2)]
+    fn gpiob(_: gpiob::Context) {}
 
-    #[interrupt(priority = 3)]
-    fn GPIOC(_: GPIOC::Context) {}
+    #[task(binds = GPIOC, priority = 3)]
+    fn gpioc(_: gpioc::Context) {}
 
-    #[interrupt(priority = 4)]
-    fn GPIOD(_: GPIOD::Context) {}
+    #[task(binds = GPIOD, priority = 4)]
+    fn gpiod(_: gpiod::Context) {}
 
-    #[interrupt(priority = 5)]
-    fn GPIOE(_: GPIOE::Context) {}
+    #[task(binds = GPIOE, priority = 5)]
+    fn gpioe(_: gpioe::Context) {}
 
-    #[interrupt(priority = 6)]
-    fn UART0(_: UART0::Context) {}
+    #[task(binds = UART0, priority = 6)]
+    fn uart0(_: uart0::Context) {}
 
-    #[interrupt(priority = 7)]
-    fn UART1(_: UART1::Context) {}
+    #[task(binds = UART1, priority = 7)]
+    fn uart1(_: uart1::Context) {}
 
     // OK, this is the maximum priority supported by the device
-    #[interrupt(priority = 8)]
-    fn SSI0(_: SSI0::Context) {}
+    #[task(binds = SSI0, priority = 8)]
+    fn ssi0(_: ssi0::Context) {}
 
     // this value is too high!
-    #[interrupt(priority = 9)]
-    fn I2C0(_: I2C0::Context) {}
+    #[task(binds = I2C0, priority = 9)]
+    fn i2c0(_: i2c0::Context) {}
 };

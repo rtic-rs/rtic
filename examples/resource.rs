@@ -31,16 +31,16 @@ const APP: () = {
     }
 
     // `SHARED` can be access from this context
-    #[interrupt(resources = [SHARED])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, resources = [SHARED])]
+    fn uart0(c: uart0::Context) {
         *c.resources.SHARED += 1;
 
         hprintln!("UART0: SHARED = {}", c.resources.SHARED).unwrap();
     }
 
     // `SHARED` can be access from this context
-    #[interrupt(resources = [SHARED])]
-    fn UART1(c: UART1::Context) {
+    #[task(binds = UART1, resources = [SHARED])]
+    fn uart1(c: uart1::Context) {
         *c.resources.SHARED += 1;
 
         hprintln!("UART1: SHARED = {}", c.resources.SHARED).unwrap();

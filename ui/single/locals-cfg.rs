@@ -20,16 +20,16 @@ const APP: () = {
         loop {}
     }
 
-    #[exception]
-    fn SVCall(_: SVCall::Context) {
+    #[task(binds = SVCall)]
+    fn svcall(_: svcall::Context) {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 
         FOO;
     }
 
-    #[interrupt]
-    fn UART0(_: UART0::Context) {
+    #[task(binds = UART0)]
+    fn uart0(_: uart0::Context) {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 

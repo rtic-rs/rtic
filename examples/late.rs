@@ -47,8 +47,8 @@ const APP: () = {
         }
     }
 
-    #[interrupt(resources = [P])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, resources = [P])]
+    fn uart0(c: uart0::Context) {
         c.resources.P.enqueue(42).unwrap();
     }
 };

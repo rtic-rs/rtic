@@ -29,8 +29,8 @@ const APP: () = {
         rtfm::pend(Interrupt::I2C0);
     }
 
-    #[interrupt(priority = 2, spawn = [foo, bar])]
-    fn I2C0(c: I2C0::Context) {
+    #[task(binds = I2C0, priority = 2, spawn = [foo, bar])]
+    fn i2c0(c: i2c0::Context) {
         // claim a memory block, leave it uninitialized and ..
         let x = P::alloc().unwrap().freeze();
 

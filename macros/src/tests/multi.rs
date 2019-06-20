@@ -3,6 +3,10 @@ use rtfm_syntax::Settings;
 
 #[test]
 fn analyze() {
+    let mut settings = Settings::default();
+    settings.parse_cores = true;
+    settings.parse_extern_interrupt = true;
+
     let (app, analysis) = rtfm_syntax::parse2(
         quote!(device = pac, cores = 2),
         quote!(
@@ -35,13 +39,9 @@ fn analyze() {
                 }
             };
         ),
-        Settings {
-            parse_cores: true,
-            parse_extern_interrupt: true,
-            ..Settings::default()
-        },
+        settings,
     )
-        .unwrap();
+    .unwrap();
 
     let analysis = crate::analyze::app(analysis, &app);
 

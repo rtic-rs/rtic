@@ -51,8 +51,8 @@ const APP: () = {
         loop {}
     }
 
-    #[interrupt(resources = [O3, S1, S2, S3])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, resources = [O3, S1, S2, S3])]
+    fn uart0(c: uart0::Context) {
         // owned by interrupt == `&mut`
         let _: &mut u32 = c.resources.O3;
 
@@ -66,8 +66,8 @@ const APP: () = {
         let _: &u32 = c.resources.S3;
     }
 
-    #[interrupt(resources = [S2, O5])]
-    fn UART1(c: UART1::Context) {
+    #[task(binds = UART1, resources = [S2, O5])]
+    fn uart1(c: uart1::Context) {
         // owned by interrupt == `&` if read-only
         let _: &u32 = c.resources.O5;
 

@@ -16,8 +16,8 @@ const APP: () = {
         rtfm::pend(Interrupt::UART0);
     }
 
-    #[interrupt(spawn = [foo, bar])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, spawn = [foo, bar])]
+    fn uart0(c: uart0::Context) {
         c.spawn.foo(0).unwrap();
         c.spawn.foo(1).unwrap();
         c.spawn.foo(2).unwrap();

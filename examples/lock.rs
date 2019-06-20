@@ -19,8 +19,8 @@ const APP: () = {
     }
 
     // when omitted priority is assumed to be `1`
-    #[interrupt(resources = [SHARED])]
-    fn GPIOA(mut c: GPIOA::Context) {
+    #[task(binds = GPIOA, resources = [SHARED])]
+    fn gpioa(mut c: gpioa::Context) {
         hprintln!("A").unwrap();
 
         // the lower priority task requires a critical section to access the data
@@ -44,16 +44,16 @@ const APP: () = {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[interrupt(priority = 2, resources = [SHARED])]
-    fn GPIOB(c: GPIOB::Context) {
+    #[task(binds = GPIOB, priority = 2, resources = [SHARED])]
+    fn gpiob(c: gpiob::Context) {
         // the higher priority task does *not* need a critical section
         *c.resources.SHARED += 1;
 
         hprintln!("D - SHARED = {}", *c.resources.SHARED).unwrap();
     }
 
-    #[interrupt(priority = 3)]
-    fn GPIOC(_: GPIOC::Context) {
+    #[task(binds = GPIOC, priority = 3)]
+    fn gpioc(_: gpioc::Context) {
         hprintln!("C").unwrap();
     }
 };

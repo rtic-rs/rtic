@@ -25,8 +25,8 @@ const APP: () = {
         rtfm::pend(Interrupt::UART0);
     }
 
-    #[interrupt(resources = [SHARED])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, resources = [SHARED])]
+    fn uart0(c: uart0::Context) {
         if let Some(message) = c.resources.SHARED.take() {
             // `message` has been received
             drop(message);

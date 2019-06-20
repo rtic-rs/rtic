@@ -70,7 +70,7 @@ error[E0609]: no field `S3` on type `idleResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `O3` on type `UART0Resources<'_>`
+error[E0609]: no field `O3` on type `uart0Resources<'_>`
   --> $DIR/resources-cfg.rs:46:21
    |
 46 |         c.resources.O3;
@@ -78,7 +78,7 @@ error[E0609]: no field `O3` on type `UART0Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `S1` on type `UART0Resources<'_>`
+error[E0609]: no field `S1` on type `uart0Resources<'_>`
   --> $DIR/resources-cfg.rs:47:21
    |
 47 |         c.resources.S1;
@@ -86,7 +86,7 @@ error[E0609]: no field `S1` on type `UART0Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `S2` on type `UART0Resources<'_>`
+error[E0609]: no field `S2` on type `uart0Resources<'_>`
   --> $DIR/resources-cfg.rs:48:21
    |
 48 |         c.resources.S2;
@@ -94,7 +94,7 @@ error[E0609]: no field `S2` on type `UART0Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `S3` on type `UART0Resources<'_>`
+error[E0609]: no field `S3` on type `uart0Resources<'_>`
   --> $DIR/resources-cfg.rs:49:21
    |
 49 |         c.resources.S3;
@@ -102,7 +102,7 @@ error[E0609]: no field `S3` on type `UART0Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `S2` on type `UART1Resources<'_>`
+error[E0609]: no field `S2` on type `uart1Resources<'_>`
   --> $DIR/resources-cfg.rs:54:21
    |
 54 |         c.resources.S2;
@@ -110,7 +110,7 @@ error[E0609]: no field `S2` on type `UART1Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `O5` on type `UART1Resources<'_>`
+error[E0609]: no field `O5` on type `uart1Resources<'_>`
   --> $DIR/resources-cfg.rs:55:21
    |
 55 |         c.resources.O5;

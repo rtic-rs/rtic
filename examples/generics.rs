@@ -20,8 +20,8 @@ const APP: () = {
         rtfm::pend(Interrupt::UART1);
     }
 
-    #[interrupt(resources = [SHARED])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, resources = [SHARED])]
+    fn uart0(c: uart0::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART0(STATE = {})", *STATE).unwrap();
@@ -33,8 +33,8 @@ const APP: () = {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[interrupt(priority = 2, resources = [SHARED])]
-    fn UART1(c: UART1::Context) {
+    #[task(binds = UART1, priority = 2, resources = [SHARED])]
+    fn uart1(c: uart1::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART1(STATE = {})", *STATE).unwrap();
