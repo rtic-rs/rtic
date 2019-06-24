@@ -101,6 +101,18 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     let const_app_schedule = schedule::codegen(app, extra);
 
+    let cores = app.args.cores.to_string();
+    let cfg_core = quote!(#[cfg(core = #cores)]);
+    let msg = format!(
+        "specified {} core{} but tried to compile for more than {0} core{1}",
+        app.args.cores,
+        if app.args.cores > 1 { "s" } else { "" }
+    );
+    let check_excess_cores = quote!(
+        #cfg_core
+        compile_error!(#msg);
+    );
+
     let name = &app.name;
     let device = extra.device;
     quote!(
@@ -123,6 +135,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         const #name: () = {
             /// Always include the device crate which contains the vector table
             use #device as _;
+
+            #check_excess_cores
 
             #(#const_app)*
 
