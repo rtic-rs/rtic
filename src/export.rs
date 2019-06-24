@@ -108,6 +108,13 @@ where
 {
 }
 
+#[inline(always)]
+pub fn assert_multicore<T>()
+where
+    T: super::MultiCore,
+{
+}
+
 #[cfg(armv7m)]
 #[inline(always)]
 pub unsafe fn lock<T, R>(

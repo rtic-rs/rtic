@@ -8,7 +8,7 @@ use core::{
 };
 
 use bare_metal::Nr;
-use rtfm::Monotonic;
+use rtfm::{Monotonic, MultiCore};
 
 // both cores have the exact same interrupts
 pub use Interrupt_0 as Interrupt_1;
@@ -21,7 +21,7 @@ pub fn xpend(_core: u8, _interrupt: impl Nr) {}
 /// Fake monotonic timer
 pub struct MT;
 
-unsafe impl Monotonic for MT {
+impl Monotonic for MT {
     type Instant = Instant;
 
     fn ratio() -> u32 {
@@ -40,6 +40,8 @@ unsafe impl Monotonic for MT {
         Instant(0)
     }
 }
+
+impl MultiCore for MT {}
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Instant(i32);

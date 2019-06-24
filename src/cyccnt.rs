@@ -116,6 +116,11 @@ pub struct Duration {
 }
 
 impl Duration {
+    /// Creates a new `Duration` from the specified number of clock cycles
+    pub fn from_cycles(cycles: u32) -> Self {
+        Duration { inner: cycles }
+    }
+
     /// Returns the total number of clock cycles contained by this `Duration`
     pub fn as_cycles(&self) -> u32 {
         self.inner
@@ -181,7 +186,7 @@ impl U32Ext for u32 {
 pub struct CYCCNT;
 
 #[cfg(not(feature = "heterogeneous"))]
-unsafe impl crate::Monotonic for CYCCNT {
+impl crate::Monotonic for CYCCNT {
     type Instant = Instant;
 
     fn ratio() -> u32 {

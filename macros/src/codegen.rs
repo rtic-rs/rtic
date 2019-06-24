@@ -32,7 +32,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     // generate a `main` function for each core
     for core in 0..app.args.cores {
-        let assertion_stmts = assertions::codegen(core, analysis);
+        let assertion_stmts = assertions::codegen(core, analysis, extra);
 
         let (const_app_pre_init, pre_init_stmts) = pre_init::codegen(core, &app, analysis, extra);
 

@@ -117,7 +117,7 @@ impl From<cortex_m::Peripherals> for Peripherals {
 }
 
 /// A monotonic clock / counter
-pub unsafe trait Monotonic {
+pub trait Monotonic {
     /// A measurement of this clock
     type Instant: Copy + Ord + Sub;
 
@@ -133,6 +133,9 @@ pub unsafe trait Monotonic {
     /// A `Self::Instant` that represents a count of *zero*
     fn zero() -> Self::Instant;
 }
+
+/// A marker trait that indicates that it is correct to use this type in multi-core context
+pub trait MultiCore {}
 
 /// Sets the given `interrupt` as pending
 ///
