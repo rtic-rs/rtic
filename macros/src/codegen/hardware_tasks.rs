@@ -56,9 +56,11 @@ pub fn codegen(
         };
         let priority = task.args.priority;
 
+        let section = util::link_section("text", core);
         const_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
+            #section
             #cfg_core
             unsafe fn #symbol() {
                 const PRIORITY: u8 = #priority;
@@ -101,7 +103,8 @@ pub fn codegen(
         // `${task}Locals`
         let mut locals_pat = None;
         if !task.locals.is_empty() {
-            let (struct_, pat) = locals::codegen(Context::HardwareTask(name), &task.locals, app);
+            let (struct_, pat) =
+                locals::codegen(Context::HardwareTask(name), &task.locals, core, app);
 
             root.push(struct_);
             locals_pat = Some(pat);
@@ -110,9 +113,12 @@ pub fn codegen(
         let attrs = &task.attrs;
         let context = &task.context;
         let stmts = &task.stmts;
+        let section = util::link_section("text", core);
+        // XXX shouldn't this have a cfg_core?
         user_tasks.push(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
+            #section
             fn #name(#(#locals_pat,)* #context: #name::Context) {
                 use rtfm::Mutex as _;
 

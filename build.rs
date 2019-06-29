@@ -7,7 +7,10 @@ fn main() {
         println!("cargo:rustc-cfg=armv6m")
     }
 
-    if target.starts_with("thumbv7m") | target.starts_with("thumbv7em") {
+    if target.starts_with("thumbv7m")
+        | target.starts_with("thumbv7em")
+        | target.starts_with("thumbv8m")
+    {
         println!("cargo:rustc-cfg=armv7m")
     }
 

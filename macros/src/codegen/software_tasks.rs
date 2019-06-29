@@ -43,13 +43,21 @@ pub fn codegen(
                 let cfg_sender = util::cfg_core(sender, app.args.cores);
                 let fq = util::fq_ident(name, sender);
 
-                let (loc, fq_ty, fq_expr) = if receiver == sender {
+                let (loc, fq_ty, fq_expr, bss, mk_uninit): (
+                    _,
+                    _,
+                    _,
+                    _,
+                    Box<dyn Fn() -> Option<_>>,
+                ) = if receiver == sender {
                     (
                         cfg_sender.clone(),
                         quote!(rtfm::export::SCFQ<#cap_ty>),
                         quote!(rtfm::export::Queue(unsafe {
                             rtfm::export::iQueue::u8_sc()
                         })),
+                        util::link_section("bss", sender),
+                        Box::new(|| util::link_section_uninit(Some(sender))),
                     )
                 } else {
                     let shared = if cfg!(feature = "heterogeneous") {
@@ -62,6 +70,8 @@ pub fn codegen(
                         shared,
                         quote!(rtfm::export::MCFQ<#cap_ty>),
                         quote!(rtfm::export::Queue(rtfm::export::iQueue::u8())),
+                        None,
+                        Box::new(|| util::link_section_uninit(None)),
                     )
                 };
                 let loc = &loc;
@@ -70,6 +80,7 @@ pub fn codegen(
                     /// Queue version of a free-list that keeps track of empty slots in
                     /// the following buffers
                     #loc
+                    #bss
                     static mut #fq: #fq_ty = #fq_expr;
                 ));
 
@@ -102,8 +113,10 @@ pub fn codegen(
                     let m = extra.monotonic();
                     let instants = util::instants_ident(name, sender);
 
+                    let uninit = mk_uninit();
                     const_app.push(quote!(
                         #loc
+                        #uninit
                         /// Buffer that holds the instants associated to the inputs of a task
                         static mut #instants:
                             [core::mem::MaybeUninit<<#m as rtfm::Monotonic>::Instant>; #cap_lit] =
@@ -111,9 +124,11 @@ pub fn codegen(
                     ));
                 }
 
+                let uninit = mk_uninit();
                 let inputs = util::inputs_ident(name, sender);
                 const_app.push(quote!(
                     #loc
+                    #uninit
                     /// Buffer that holds the inputs of a task
                     static mut #inputs: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
                         [#(#elems,)*];
@@ -140,13 +155,15 @@ pub fn codegen(
         // `${task}Locals`
         let mut locals_pat = None;
         if !task.locals.is_empty() {
-            let (struct_, pat) = locals::codegen(Context::SoftwareTask(name), &task.locals, app);
+            let (struct_, pat) =
+                locals::codegen(Context::SoftwareTask(name), &task.locals, receiver, app);
 
             locals_pat = Some(pat);
             root.push(struct_);
         }
 
         let cfg_receiver = util::cfg_core(receiver, app.args.cores);
+        let section = util::link_section("text", receiver);
         let context = &task.context;
         let attrs = &task.attrs;
         let cfgs = &task.cfgs;
@@ -154,8 +171,9 @@ pub fn codegen(
         user_tasks.push(quote!(
             #(#attrs)*
             #(#cfgs)*
-            #cfg_receiver
             #[allow(non_snake_case)]
+            #cfg_receiver
+            #section
             fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
                 use rtfm::Mutex as _;
 

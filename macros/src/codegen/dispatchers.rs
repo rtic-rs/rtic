@@ -46,13 +46,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                 let n = util::capacity_typenum(channel.capacity, true);
                 let rq = util::rq_ident(receiver, level, sender);
-                let (rq_attr, rq_ty, rq_expr) = if sender == receiver {
+                let (rq_attr, rq_ty, rq_expr, section) = if sender == receiver {
                     (
                         cfg_sender.clone(),
                         quote!(rtfm::export::SCRQ<#t, #n>),
                         quote!(rtfm::export::Queue(unsafe {
                             rtfm::export::iQueue::u8_sc()
                         })),
+                        util::link_section("bss", sender),
                     )
                 } else {
                     let shared = if cfg!(feature = "heterogeneous") {
@@ -65,6 +66,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                         shared,
                         quote!(rtfm::export::MCRQ<#t, #n>),
                         quote!(rtfm::export::Queue(rtfm::export::iQueue::u8())),
+                        None,
                     )
                 };
 
@@ -77,6 +79,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 items.push(quote!(
                     #[doc = #doc]
                     #rq_attr
+                    #section
                     static mut #rq: #rq_ty = #rq_expr;
                 ));
 
@@ -162,12 +165,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 receiver, level
             );
             let cfg_receiver = util::cfg_core(receiver, app.args.cores);
+            let section = util::link_section("text", receiver);
             let interrupt = util::suffixed(&interrupts[&level].to_string(), receiver);
             items.push(quote!(
                 #[allow(non_snake_case)]
                 #[doc = #doc]
                 #[no_mangle]
                 #cfg_receiver
+                #section
                 unsafe fn #interrupt() {
                     /// The priority of this interrupt handler
                     const PRIORITY: u8 = #level;

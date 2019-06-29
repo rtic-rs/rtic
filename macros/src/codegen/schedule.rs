@@ -35,8 +35,10 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
 
                 let body = schedule_body::codegen(scheduler, &name, app);
 
+                let section = util::link_section("text", sender);
                 methods.push(quote!(
                     #(#cfgs)*
+                    #section
                     fn #name(&self, instant: #instant #(,#args)*) -> Result<(), #ty> {
                         #body
                     }
@@ -50,9 +52,11 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
 
                     let body = schedule_body::codegen(scheduler, &name, app);
 
+                    let section = util::link_section("text", sender);
                     items.push(quote!(
                         #cfg_sender
                         #(#cfgs)*
+                        #section
                         unsafe fn #schedule(
                             priority: &rtfm::export::Priority,
                             instant: #instant

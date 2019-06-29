@@ -2,7 +2,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtfm_syntax::{
     ast::{App, Local},
-    Context, Map,
+    Context, Core, Map,
 };
 
 use crate::codegen::util;
@@ -10,6 +10,7 @@ use crate::codegen::util;
 pub fn codegen(
     ctxt: Context,
     locals: &Map<Local>,
+    core: Core,
     app: &App,
 ) -> (
     // locals
@@ -41,6 +42,7 @@ pub fn codegen(
         let cfgs = &local.cfgs;
         has_cfgs |= !cfgs.is_empty();
 
+        let section = util::link_section("data", core);
         let expr = &local.expr;
         let ty = &local.ty;
         fields.push(quote!(
@@ -49,6 +51,7 @@ pub fn codegen(
         ));
         items.push(quote!(
             #(#cfgs)*
+            #section
             static mut #name: #ty = #expr
         ));
         values.push(quote!(

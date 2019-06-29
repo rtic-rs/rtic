@@ -48,9 +48,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             let n = util::capacity_typenum(timer_queue.capacity, false);
             let tq_ty = quote!(rtfm::export::TimerQueue<#m, #t, #n>);
 
+            let section = util::link_section("bss", sender);
             items.push(quote!(
                 #cfg_sender
                 #[doc = #doc]
+                #section
                 static mut #tq: #tq_ty = rtfm::export::TimerQueue(
                     rtfm::export::BinaryHeap(
                         rtfm::export::iBinaryHeap::new()
@@ -117,9 +119,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
             let priority = timer_queue.priority;
             let sys_tick = util::suffixed("SysTick", sender);
+            let section = util::link_section("text", sender);
             items.push(quote!(
-                #cfg_sender
                 #[no_mangle]
+                #cfg_sender
+                #section
                 unsafe fn #sys_tick() {
                     use rtfm::Mutex as _;
 

@@ -72,7 +72,7 @@ pub fn codegen(
         let mut locals_pat = None;
         let mut locals_new = None;
         if !init.locals.is_empty() {
-            let (struct_, pat) = locals::codegen(Context::Init(core), &init.locals, app);
+            let (struct_, pat) = locals::codegen(Context::Init(core), &init.locals, core, app);
 
             locals_new = Some(quote!(#name::Locals::new()));
             locals_pat = Some(pat);
@@ -82,10 +82,12 @@ pub fn codegen(
         let context = &init.context;
         let attrs = &init.attrs;
         let stmts = &init.stmts;
+        let section = util::link_section("text", core);
         let user_init = Some(quote!(
             #(#attrs)*
             #cfg_core
             #[allow(non_snake_case)]
+            #section
             fn #name(#(#locals_pat,)* #context: #name::Context) #ret {
                 #(#stmts)*
             }

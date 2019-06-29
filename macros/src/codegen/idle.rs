@@ -44,7 +44,7 @@ pub fn codegen(
 
         let name = &idle.name;
         if !idle.locals.is_empty() {
-            let (locals, pat) = locals::codegen(Context::Idle(core), &idle.locals, app);
+            let (locals, pat) = locals::codegen(Context::Idle(core), &idle.locals, core, app);
 
             locals_new = Some(quote!(#name::Locals::new()));
             locals_pat = Some(pat);
@@ -57,10 +57,12 @@ pub fn codegen(
         let attrs = &idle.attrs;
         let context = &idle.context;
         let stmts = &idle.stmts;
+        let section = util::link_section("text", core);
         let user_idle = Some(quote!(
-            #cfg_core
             #(#attrs)*
             #[allow(non_snake_case)]
+            #cfg_core
+            #section
             fn #name(#(#locals_pat,)* #context: #name::Context) -> ! {
                 use rtfm::Mutex as _;
 
@@ -73,12 +75,7 @@ pub fn codegen(
             #name::Context::new(&rtfm::export::Priority::new(0))
         ));
 
-        (
-            const_app,
-            root_idle,
-            user_idle,
-            call_idle,
-        )
+        (const_app, root_idle, user_idle, call_idle)
     } else {
         (
             None,

@@ -42,8 +42,10 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     None
                 };
 
+                let section = util::link_section("text", sender);
                 methods.push(quote!(
                     #(#cfgs)*
+                    #section
                     fn #name(&self #(,#args)*) -> Result<(), #ty> {
                         #let_instant
                         #body
@@ -66,9 +68,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                     let body = spawn_body::codegen(spawner, &name, app, analysis, extra);
 
+                    let section = util::link_section("text", sender);
                     items.push(quote!(
                         #cfg_sender
                         #(#cfgs)*
+                        #section
                         unsafe fn #spawn(
                             priority: &rtfm::export::Priority
                             #instant

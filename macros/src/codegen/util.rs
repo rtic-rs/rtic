@@ -1,3 +1,5 @@
+use core::sync::atomic::{AtomicUsize, Ordering};
+
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use rtfm_syntax::{ast::App, Context, Core};
@@ -131,6 +133,43 @@ pub fn late_resources_ident(init: &Ident) -> Ident {
         &format!("{}LateResources", init.to_string()),
         Span::call_site(),
     )
+}
+
+fn link_section_index() -> usize {
+    static INDEX: AtomicUsize = AtomicUsize::new(0);
+
+    INDEX.fetch_add(1, Ordering::Relaxed)
+}
+
+pub fn link_section(section: &str, core: Core) -> Option<TokenStream2> {
+    if cfg!(feature = "homogeneous") {
+        let section = format!(".{}_{}.rtfm{}", section, core, link_section_index());
+        Some(quote!(#[link_section = #section]))
+    } else {
+        None
+    }
+}
+
+// NOTE `None` means in shared memory
+pub fn link_section_uninit(core: Option<Core>) -> Option<TokenStream2> {
+    let section = if let Some(core) = core {
+        let index = link_section_index();
+
+        if cfg!(feature = "homogeneous") {
+            format!(".uninit_{}.rtfm{}", core, index)
+        } else {
+            format!(".uninit.rtfm{}", index)
+        }
+    } else {
+        if cfg!(feature = "heterogeneous") {
+            // `#[shared]` attribute sets the linker section
+            return None;
+        }
+
+        format!(".uninit.rtfm{}", link_section_index())
+    };
+
+    Some(quote!(#[link_section = #section]))
 }
 
 /// Generates a pre-reexport identifier for the "locals" struct

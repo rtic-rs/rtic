@@ -26,20 +26,24 @@ pub fn codegen(
         let ty = &res.ty;
 
         {
-            let loc_attr = match loc {
+            let (loc_attr, section) = match loc {
                 Location::Owned {
                     core,
                     cross_initialized: false,
-                } => util::cfg_core(*core, app.args.cores),
+                } => (
+                    util::cfg_core(*core, app.args.cores),
+                    util::link_section("data", *core),
+                ),
 
                 // shared `static`s and cross-initialized resources need to be in `.shared` memory
-                _ => {
+                _ => (
                     if cfg!(feature = "heterogeneous") {
                         Some(quote!(#[rtfm::export::shared]))
                     } else {
                         None
-                    }
-                }
+                    },
+                    None,
+                ),
             };
 
             let (ty, expr) = if let Some(expr) = expr {
@@ -53,9 +57,10 @@ pub fn codegen(
 
             let attrs = &res.attrs;
             const_app.push(quote!(
-                #loc_attr
                 #(#attrs)*
                 #(#cfgs)*
+                #loc_attr
+                #section
                 static mut #name: #ty = #expr;
             ));
         }
