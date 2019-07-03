@@ -25,8 +25,12 @@ pub fn codegen(
     if analysis.timer_queues.is_empty() {
         // cross-initialization barriers -- notify *other* cores that their resources have been
         // initialized
-        if analysis.initialization_barriers.contains_key(&core) {
-            let ib = util::init_barrier(core);
+        for (user, initializers) in &analysis.initialization_barriers {
+            if !initializers.contains(&core) {
+                continue;
+            }
+
+            let ib = util::init_barrier(*user);
             let shared = if cfg!(feature = "heterogeneous") {
                 Some(quote!(
                     #[rtfm::export::shared]
@@ -46,14 +50,12 @@ pub fn codegen(
         }
 
         // then wait until the other cores have initialized *our* resources
-        for (&initializer, users) in &analysis.initialization_barriers {
-            if users.contains(&core) {
-                let ib = util::init_barrier(initializer);
+        if analysis.initialization_barriers.contains_key(&core) {
+            let ib = util::init_barrier(core);
 
-                stmts.push(quote!(
-                    #ib.wait();
-                ));
-            }
+            stmts.push(quote!(
+                #ib.wait();
+            ));
         }
 
         // cross-spawn barriers: wait until other cores are ready to receive messages
