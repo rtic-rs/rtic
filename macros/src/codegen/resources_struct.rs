@@ -24,13 +24,17 @@ pub fn codegen(
     let mut values = vec![];
     let mut has_cfgs = false;
 
-    for name in resources {
+    for (name, access) in resources {
         let (res, expr) = app.resource(name).expect("UNREACHABLE");
 
         let cfgs = &res.cfgs;
         has_cfgs |= !cfgs.is_empty();
 
-        let mut_ = res.mutability;
+        let mut_ = if access.is_exclusive() {
+            Some(quote!(mut))
+        } else {
+            None
+        };
         let ty = &res.ty;
 
         if ctxt.is_init() {

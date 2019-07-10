@@ -11,25 +11,28 @@ use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
-    static mut COUNT: u32 = 0;
+    struct Resources {
+        #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
+        #[init(0)]
+        count: u32,
+    }
 
     #[init]
     fn init(_: init::Context) {
         // ..
     }
 
-    #[task(priority = 3, resources = [COUNT], spawn = [log])]
+    #[task(priority = 3, resources = [count], spawn = [log])]
     fn foo(_c: foo::Context) {
         #[cfg(debug_assertions)]
         {
-            *_c.resources.COUNT += 1;
+            *_c.resources.count += 1;
 
-            _c.spawn.log(*_c.resources.COUNT).ok();
+            _c.spawn.log(*_c.resources.count).ok();
         }
 
         // this wouldn't compile in `release` mode
-        // *resources.COUNT += 1;
+        // *resources.count += 1;
 
         // ..
     }

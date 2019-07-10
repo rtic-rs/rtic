@@ -12,7 +12,10 @@ use rtfm::{Exclusive, Mutex};
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    static mut SHARED: u32 = 0;
+    struct Resources {
+        #[init(0)]
+        shared: u32,
+    }
 
     #[init]
     fn init(_: init::Context) {
@@ -20,29 +23,29 @@ const APP: () = {
         rtfm::pend(Interrupt::UART1);
     }
 
-    #[task(binds = UART0, resources = [SHARED])]
+    #[task(binds = UART0, resources = [shared])]
     fn uart0(c: uart0::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART0(STATE = {})", *STATE).unwrap();
 
-        advance(STATE, c.resources.SHARED);
+        advance(STATE, c.resources.shared);
 
         rtfm::pend(Interrupt::UART1);
 
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[task(binds = UART1, priority = 2, resources = [SHARED])]
+    #[task(binds = UART1, priority = 2, resources = [shared])]
     fn uart1(c: uart1::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART1(STATE = {})", *STATE).unwrap();
 
-        // just to show that `SHARED` can be accessed directly
-        *c.resources.SHARED += 0;
+        // just to show that `shared` can be accessed directly
+        *c.resources.shared += 0;
 
-        advance(STATE, Exclusive(c.resources.SHARED));
+        advance(STATE, Exclusive(c.resources.shared));
     }
 };
 
@@ -55,5 +58,5 @@ fn advance(state: &mut u32, mut shared: impl Mutex<T = u32>) {
         (old, *shared)
     });
 
-    hprintln!("SHARED: {} -> {}", old, new).unwrap();
+    hprintln!("shared: {} -> {}", old, new).unwrap();
 }

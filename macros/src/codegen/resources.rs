@@ -57,6 +57,7 @@ pub fn codegen(
 
             let attrs = &res.attrs;
             const_app.push(quote!(
+                #[allow(non_upper_case_globals)]
                 #(#attrs)*
                 #(#cfgs)*
                 #loc_attr
@@ -65,50 +66,48 @@ pub fn codegen(
             ));
         }
 
-        // generate a resource proxy if needed
-        if res.mutability.is_some() {
-            if let Some(Ownership::Shared { ceiling }) = analysis.ownerships.get(name) {
-                let cfg_core = util::cfg_core(loc.core().expect("UNREACHABLE"), app.args.cores);
+        if let Some(Ownership::Contended { ceiling }) = analysis.ownerships.get(name) {
+            let cfg_core = util::cfg_core(loc.core().expect("UNREACHABLE"), app.args.cores);
 
-                mod_resources.push(quote!(
-                    #(#cfgs)*
-                    #cfg_core
-                    pub struct #name<'a> {
-                        priority: &'a Priority,
+            mod_resources.push(quote!(
+                #[allow(non_camel_case_types)]
+                #(#cfgs)*
+                #cfg_core
+                pub struct #name<'a> {
+                    priority: &'a Priority,
+                }
+
+                #(#cfgs)*
+                #cfg_core
+                impl<'a> #name<'a> {
+                    #[inline(always)]
+                    pub unsafe fn new(priority: &'a Priority) -> Self {
+                        #name { priority }
                     }
 
-                    #(#cfgs)*
-                    #cfg_core
-                    impl<'a> #name<'a> {
-                        #[inline(always)]
-                        pub unsafe fn new(priority: &'a Priority) -> Self {
-                            #name { priority }
-                        }
-
-                        #[inline(always)]
-                        pub unsafe fn priority(&self) -> &Priority {
-                            self.priority
-                        }
+                    #[inline(always)]
+                    pub unsafe fn priority(&self) -> &Priority {
+                        self.priority
                     }
-                ));
+                }
+            ));
 
-                let ptr = if expr.is_none() {
-                    quote!(#name.as_mut_ptr())
-                } else {
-                    quote!(&mut #name)
-                };
+            let ptr = if expr.is_none() {
+                quote!(#name.as_mut_ptr())
+            } else {
+                quote!(&mut #name)
+            };
 
-                const_app.push(util::impl_mutex(
-                    extra,
-                    cfgs,
-                    cfg_core.as_ref(),
-                    true,
-                    name,
-                    quote!(#ty),
-                    *ceiling,
-                    ptr,
-                ));
-            }
+            const_app.push(util::impl_mutex(
+                extra,
+                cfgs,
+                cfg_core.as_ref(),
+                true,
+                name,
+                quote!(#ty),
+                *ceiling,
+                ptr,
+            ));
         }
     }
 

@@ -11,7 +11,10 @@ use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    static mut SHARED: u32 = 0;
+    struct Resources {
+        #[init(0)]
+        shared: u32,
+    }
 
     #[init]
     fn init(_: init::Context) {
@@ -19,21 +22,21 @@ const APP: () = {
     }
 
     // when omitted priority is assumed to be `1`
-    #[task(binds = GPIOA, resources = [SHARED])]
+    #[task(binds = GPIOA, resources = [shared])]
     fn gpioa(mut c: gpioa::Context) {
         hprintln!("A").unwrap();
 
         // the lower priority task requires a critical section to access the data
-        c.resources.SHARED.lock(|shared| {
+        c.resources.shared.lock(|shared| {
             // data can only be modified within this critical section (closure)
             *shared += 1;
 
             // GPIOB will *not* run right now due to the critical section
             rtfm::pend(Interrupt::GPIOB);
 
-            hprintln!("B - SHARED = {}", *shared).unwrap();
+            hprintln!("B - shared = {}", *shared).unwrap();
 
-            // GPIOC does not contend for `SHARED` so it's allowed to run now
+            // GPIOC does not contend for `shared` so it's allowed to run now
             rtfm::pend(Interrupt::GPIOC);
         });
 
@@ -44,12 +47,12 @@ const APP: () = {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[task(binds = GPIOB, priority = 2, resources = [SHARED])]
+    #[task(binds = GPIOB, priority = 2, resources = [shared])]
     fn gpiob(c: gpiob::Context) {
         // the higher priority task does *not* need a critical section
-        *c.resources.SHARED += 1;
+        *c.resources.shared += 1;
 
-        hprintln!("D - SHARED = {}", *c.resources.SHARED).unwrap();
+        hprintln!("D - shared = {}", *c.resources.shared).unwrap();
     }
 
     #[task(binds = GPIOC, priority = 3)]

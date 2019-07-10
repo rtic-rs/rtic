@@ -11,8 +11,11 @@ use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    // A resource
-    static mut SHARED: u32 = 0;
+    struct Resources {
+        // A resource
+        #[init(0)]
+        shared: u32,
+    }
 
     #[init]
     fn init(_: init::Context) {
@@ -24,25 +27,25 @@ const APP: () = {
     fn idle(_: idle::Context) -> ! {
         debug::exit(debug::EXIT_SUCCESS);
 
-        // error: `SHARED` can't be accessed from this context
-        // SHARED += 1;
+        // error: `shared` can't be accessed from this context
+        // shared += 1;
 
         loop {}
     }
 
-    // `SHARED` can be access from this context
-    #[task(binds = UART0, resources = [SHARED])]
+    // `shared` can be access from this context
+    #[task(binds = UART0, resources = [shared])]
     fn uart0(c: uart0::Context) {
-        *c.resources.SHARED += 1;
+        *c.resources.shared += 1;
 
-        hprintln!("UART0: SHARED = {}", c.resources.SHARED).unwrap();
+        hprintln!("UART0: shared = {}", c.resources.shared).unwrap();
     }
 
-    // `SHARED` can be access from this context
-    #[task(binds = UART1, resources = [SHARED])]
+    // `shared` can be access from this context
+    #[task(binds = UART1, resources = [shared])]
     fn uart1(c: uart1::Context) {
-        *c.resources.SHARED += 1;
+        *c.resources.shared += 1;
 
-        hprintln!("UART1: SHARED = {}", c.resources.SHARED).unwrap();
+        hprintln!("UART1: shared = {}", c.resources.shared).unwrap();
     }
 };

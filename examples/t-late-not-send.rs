@@ -13,23 +13,23 @@ pub struct NotSend {
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    extern "C" {
-        static mut X: NotSend;
+    struct Resources {
+        x: NotSend,
+        #[init(None)]
+        y: Option<NotSend>,
     }
 
-    static mut Y: Option<NotSend> = None;
-
-    #[init(resources = [Y])]
+    #[init(resources = [y])]
     fn init(c: init::Context) -> init::LateResources {
         // equivalent to late resource initialization
-        *c.resources.Y = Some(NotSend { _0: PhantomData });
+        *c.resources.y = Some(NotSend { _0: PhantomData });
 
         init::LateResources {
-            X: NotSend { _0: PhantomData },
+            x: NotSend { _0: PhantomData },
         }
     }
 
-    #[idle(resources = [X, Y])]
+    #[idle(resources = [x, y])]
     fn idle(_: idle::Context) -> ! {
         loop {}
     }

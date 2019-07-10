@@ -1,2 +1,2 @@
-UART0: SHARED = 1
-UART1: SHARED = 2
+UART0: shared = 1
+UART1: shared = 2

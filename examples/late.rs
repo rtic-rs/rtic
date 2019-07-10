@@ -16,9 +16,9 @@ use panic_semihosting as _;
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
     // Late resources
-    extern "C" {
-        static mut P: Producer<'static, u32, U4>;
-        static mut C: Consumer<'static, u32, U4>;
+    struct Resources {
+        p: Producer<'static, u32, U4>,
+        c: Consumer<'static, u32, U4>,
     }
 
     #[init]
@@ -31,13 +31,13 @@ const APP: () = {
         let (p, c) = Q.as_mut().unwrap().split();
 
         // Initialization of late resources
-        init::LateResources { P: p, C: c }
+        init::LateResources { p, c }
     }
 
-    #[idle(resources = [C])]
+    #[idle(resources = [c])]
     fn idle(c: idle::Context) -> ! {
         loop {
-            if let Some(byte) = c.resources.C.dequeue() {
+            if let Some(byte) = c.resources.c.dequeue() {
                 hprintln!("received message: {}", byte).unwrap();
 
                 debug::exit(debug::EXIT_SUCCESS);
@@ -47,8 +47,8 @@ const APP: () = {
         }
     }
 
-    #[task(binds = UART0, resources = [P])]
+    #[task(binds = UART0, resources = [p])]
     fn uart0(c: uart0::Context) {
-        c.resources.P.enqueue(42).unwrap();
+        c.resources.p.enqueue(42).unwrap();
     }
 };

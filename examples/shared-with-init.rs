@@ -14,20 +14,23 @@ pub struct MustBeSend;
 
 #[app(device = lm3s6965)]
 const APP: () = {
-    static mut SHARED: Option<MustBeSend> = None;
+    struct Resources {
+        #[init(None)]
+        shared: Option<MustBeSend>,
+    }
 
-    #[init(resources = [SHARED])]
+    #[init(resources = [shared])]
     fn init(c: init::Context) {
         // this `message` will be sent to task `UART0`
         let message = MustBeSend;
-        *c.resources.SHARED = Some(message);
+        *c.resources.shared = Some(message);
 
         rtfm::pend(Interrupt::UART0);
     }
 
-    #[task(binds = UART0, resources = [SHARED])]
+    #[task(binds = UART0, resources = [shared])]
     fn uart0(c: uart0::Context) {
-        if let Some(message) = c.resources.SHARED.take() {
+        if let Some(message) = c.resources.shared.take() {
             // `message` has been received
             drop(message);
 

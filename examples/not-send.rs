@@ -17,7 +17,10 @@ pub struct NotSend {
 
 #[app(device = lm3s6965)]
 const APP: () = {
-    static mut SHARED: Option<NotSend> = None;
+    struct Resources {
+        #[init(None)]
+        shared: Option<NotSend>,
+    }
 
     #[init(spawn = [baz, quux])]
     fn init(c: init::Context) {
@@ -36,16 +39,16 @@ const APP: () = {
         // scenario 1
     }
 
-    #[task(priority = 2, resources = [SHARED])]
+    #[task(priority = 2, resources = [shared])]
     fn baz(c: baz::Context) {
         // scenario 2: resource shared between tasks that run at the same priority
-        *c.resources.SHARED = Some(NotSend { _0: PhantomData });
+        *c.resources.shared = Some(NotSend { _0: PhantomData });
     }
 
-    #[task(priority = 2, resources = [SHARED])]
+    #[task(priority = 2, resources = [shared])]
     fn quux(c: quux::Context) {
         // scenario 2
-        let _not_send = c.resources.SHARED.take().unwrap();
+        let _not_send = c.resources.shared.take().unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
     }

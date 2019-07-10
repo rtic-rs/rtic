@@ -9,18 +9,18 @@ use panic_halt as _;
 
 #[rtfm::app(cores = 2, device = homogeneous)]
 const APP: () = {
-    extern "C" {
-        static mut X: u32;
-        static mut Y: u32;
+    struct Resources {
+        x: u32,
+        y: u32,
     }
 
-    #[init(core = 0, late = [X])]
+    #[init(core = 0, late = [x])]
     fn a(_: a::Context) -> a::LateResources {
-        a::LateResources { X: 0 }
+        a::LateResources { x: 0 }
     }
 
     #[init(core = 1)]
     fn b(_: b::Context) -> b::LateResources {
-        b::LateResources { Y: 0 }
+        b::LateResources { y: 0 }
     }
 };

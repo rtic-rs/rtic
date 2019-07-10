@@ -11,7 +11,10 @@ use rtfm::cyccnt::Instant;
 
 #[rtfm::app(device = lm3s6965, peripherals = true, monotonic = rtfm::cyccnt::CYCCNT)]
 const APP: () = {
-    static mut SHARED: u32 = 0;
+    struct Resources {
+        #[init(0)]
+        shared: u32,
+    }
 
     #[init(schedule = [foo], spawn = [foo])]
     fn init(c: init::Context) {
@@ -31,18 +34,18 @@ const APP: () = {
         let _: svcall::Spawn = c.spawn;
     }
 
-    #[task(binds = UART0, resources = [SHARED], schedule = [foo], spawn = [foo])]
+    #[task(binds = UART0, resources = [shared], schedule = [foo], spawn = [foo])]
     fn uart0(c: uart0::Context) {
         let _: Instant = c.start;
-        let _: resources::SHARED = c.resources.SHARED;
+        let _: resources::shared = c.resources.shared;
         let _: uart0::Schedule = c.schedule;
         let _: uart0::Spawn = c.spawn;
     }
 
-    #[task(priority = 2, resources = [SHARED], schedule = [foo], spawn = [foo])]
+    #[task(priority = 2, resources = [shared], schedule = [foo], spawn = [foo])]
     fn foo(c: foo::Context) {
         let _: Instant = c.scheduled;
-        let _: &mut u32 = c.resources.SHARED;
+        let _: &mut u32 = c.resources.shared;
         let _: foo::Resources = c.resources;
         let _: foo::Schedule = c.schedule;
         let _: foo::Spawn = c.spawn;
