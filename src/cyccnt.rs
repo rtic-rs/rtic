@@ -10,9 +10,15 @@ use core::{
 
 use cortex_m::peripheral::DWT;
 
+use crate::Fraction;
+
 /// A measurement of the CYCCNT. Opaque and useful only with `Duration`
 ///
 /// This data type is only available on ARMv7-M
+///
+/// Note that this value is tied to the CYCCNT of one core and that sending it a different core
+/// makes it lose its meaning -- each Cortex-M core has its own CYCCNT counter and these are usually
+/// unsynchronized and they may even be running at different frequencies.
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Instant {
     inner: i32,
@@ -21,7 +27,6 @@ pub struct Instant {
 
 unsafe impl Sync for Instant {}
 
-#[cfg(not(feature = "heterogeneous"))]
 unsafe impl Send for Instant {}
 
 impl Instant {
@@ -182,15 +187,16 @@ impl U32Ext for u32 {
 }
 
 /// Implementation of the `Monotonic` trait based on CYCle CouNTer
-#[cfg(not(feature = "heterogeneous"))]
 pub struct CYCCNT;
 
-#[cfg(not(feature = "heterogeneous"))]
 impl crate::Monotonic for CYCCNT {
     type Instant = Instant;
 
-    fn ratio() -> u32 {
-        1
+    fn ratio() -> Fraction {
+        Fraction {
+            numerator: 1,
+            denominator: 1,
+        }
     }
 
     unsafe fn reset() {

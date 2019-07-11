@@ -62,11 +62,11 @@ where
                     // set a new timeout
                     const MAX: u32 = 0x00ffffff;
 
-                    let dur = match (instant - now)
-                        .try_into()
-                        .ok()
-                        .and_then(|x| x.checked_mul(M::ratio()))
-                    {
+                    let ratio = M::ratio();
+                    let dur = match (instant - now).try_into().ok().and_then(|x| {
+                        x.checked_mul(ratio.numerator)
+                            .map(|x| x / ratio.denominator)
+                    }) {
                         None => MAX,
                         Some(x) => cmp::min(MAX, x),
                     };

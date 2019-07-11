@@ -116,13 +116,25 @@ impl From<cortex_m::Peripherals> for Peripherals {
     }
 }
 
+/// A fraction
+pub struct Fraction {
+    /// The numerator
+    pub numerator: u32,
+
+    /// The denominator
+    pub denominator: u32,
+}
+
 /// A monotonic clock / counter
 pub trait Monotonic {
     /// A measurement of this clock
     type Instant: Copy + Ord + Sub;
 
     /// The ratio between the SysTick (system timer) frequency and this clock frequency
-    fn ratio() -> u32;
+    ///
+    /// The ratio must be expressed in *reduced* `Fraction` form to prevent overflows. That is
+    /// `2 / 3` instead of `4 / 6`
+    fn ratio() -> Fraction;
 
     /// Returns the current time
     fn now() -> Self::Instant;

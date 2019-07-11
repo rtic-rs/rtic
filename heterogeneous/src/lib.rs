@@ -8,7 +8,7 @@ use core::{
 };
 
 use bare_metal::Nr;
-use rtfm::{Monotonic, MultiCore};
+use rtfm::{Fraction, Monotonic, MultiCore};
 
 // both cores have the exact same interrupts
 pub use Interrupt_0 as Interrupt_1;
@@ -24,8 +24,11 @@ pub struct MT;
 impl Monotonic for MT {
     type Instant = Instant;
 
-    fn ratio() -> u32 {
-        1
+    fn ratio() -> Fraction {
+        Fraction {
+            numerator: 1,
+            denominator: 1,
+        }
     }
 
     unsafe fn reset() {
