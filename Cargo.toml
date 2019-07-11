@@ -53,12 +53,12 @@ required-features = ["__v7"]
 cortex-m = "0.6.0"
 cortex-m-rtfm-macros = { path = "macros" }
 rtfm-core = { git = "https://github.com/japaric/rtfm-core" }
-cortex-m-rt = "0.6.8"
+cortex-m-rt = "0.6.9"
 heapless = "0.5.0-alpha.2"
 
 [dependencies.microamp]
 optional = true
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 
 [dev-dependencies]
 lm3s6965 = "0.1.3"
