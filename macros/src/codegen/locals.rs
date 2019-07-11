@@ -42,7 +42,11 @@ pub fn codegen(
         let cfgs = &local.cfgs;
         has_cfgs |= !cfgs.is_empty();
 
-        let section = util::link_section("data", core);
+        let section = if local.shared && cfg!(feature = "heterogeneous") {
+            Some(quote!(#[rtfm::export::shared]))
+        } else {
+            util::link_section("data", core)
+        };
         let expr = &local.expr;
         let ty = &local.ty;
         fields.push(quote!(
