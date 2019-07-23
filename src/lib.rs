@@ -147,11 +147,22 @@ impl Instant {
         Instant::now() - *self
     }
 
+    /// Returns the amount of time elapsed since this instant was created.
+    pub fn wrapping_elapsed(&self) -> Duration {
+        Duration(Instant::now().0.wrapping_sub(self.0) as u32)
+    }
+
     /// Returns the amount of time elapsed from another instant to this one.
+    /// panics when earlier is later than self
     pub fn duration_since(&self, earlier: Instant) -> Duration {
         let diff = self.0 - earlier.0;
         assert!(diff >= 0, "second instant is later than self");
         Duration(diff as u32)
+    }
+
+    /// Returns the amount of time elapsed from another instant to this one.
+    pub fn wrapping_duration_since(&self, earlier: Instant) -> Duration {
+        Duration(self.0.wrapping_sub(earlier.0) as u32)
     }
 }
 
