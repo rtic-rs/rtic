@@ -1204,6 +1204,8 @@ fn pre_init(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> {
 
     // Set the cycle count to 0 and disable it while `init` executes
     if cfg!(feature = "timer-queue") {
+        // We need to explicitly enable the trace block to set CYCCNT.
+        stmts.push(quote!(core.DCB.enable_trace();));
         stmts.push(quote!(core.DWT.ctrl.modify(|r| r & !1);));
         stmts.push(quote!(core.DWT.cyccnt.write(0);));
     }
@@ -1421,7 +1423,6 @@ fn post_init(app: &App, analysis: &Analysis) -> Vec<proc_macro2::TokenStream> {
 
     // enable the cycle counter
     if cfg!(feature = "timer-queue") {
-        stmts.push(quote!(core.DCB.enable_trace();));
         stmts.push(quote!(core.DWT.enable_cycle_counter();));
     }
 
