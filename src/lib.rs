@@ -42,6 +42,7 @@
 //! and may stop working at any time!
 
 #![cfg_attr(feature = "nightly", feature(maybe_uninit))]
+#![cfg_attr(feature = "nightly", feature(maybe_uninit_extra))]
 #![deny(missing_docs)]
 #![deny(warnings)]
 #![no_std]
