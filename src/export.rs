@@ -1,7 +1,5 @@
 //! IMPLEMENTATION DETAILS. DO NOT USE ANYTHING IN THIS MODULE
 
-#[cfg(not(feature = "nightly"))]
-use core::ptr;
 use core::{cell::Cell, u8};
 
 #[cfg(armv7m)]
@@ -101,11 +99,8 @@ impl<T> MaybeUninit<T> {
 
     #[cfg(not(feature = "nightly"))]
     pub fn write(&mut self, value: T) -> &mut T {
-        let ptr = self.inner.as_mut_ptr();
-        unsafe {
-            ptr::write_volatile(ptr, value);
-            &mut *ptr
-        }
+        self.inner = core::mem::MaybeUninit::new(value);
+        unsafe { self.get_mut() }
     }
 }
 
