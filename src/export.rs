@@ -82,19 +82,17 @@ impl<T> MaybeUninit<T> {
         self.inner.as_mut_ptr()
     }
 
-    #[cfg(feature = "nightly")]
-    pub fn write(&mut self, value: T) -> &mut T {
-        self.inner.write(value)
-    }
-
-    #[cfg(not(feature = "nightly"))]
     pub unsafe fn get_ref(&self) -> &T {
         &*self.inner.as_ptr()
     }
 
-    #[cfg(not(feature = "nightly"))]
     pub unsafe fn get_mut(&mut self) -> &mut T {
         &mut *self.inner.as_mut_ptr()
+    }
+
+    #[cfg(feature = "nightly")]
+    pub fn write(&mut self, value: T) -> &mut T {
+        self.inner.write(value)
     }
 
     #[cfg(not(feature = "nightly"))]
