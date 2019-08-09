@@ -41,7 +41,6 @@
 //! usage, runtime overhead and initialization overhead. This feature requires a nightly compiler
 //! and may stop working at any time!
 
-#![cfg_attr(feature = "nightly", feature(maybe_uninit))]
 #![cfg_attr(feature = "nightly", feature(maybe_uninit_extra))]
 #![deny(missing_docs)]
 #![deny(warnings)]
