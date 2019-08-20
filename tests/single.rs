@@ -8,8 +8,10 @@ fn ui() {
 
     config.mode = Mode::Ui;
     config.src_base = PathBuf::from("ui/single");
-    config.target_rustcflags =
-        Some("--edition=2018 -L target/debug/deps -Z unstable-options --extern rtfm --extern lm3s6965".to_owned());
+    config.target_rustcflags = Some(
+        "--edition=2018 -L target/debug/deps -Z unstable-options --extern rtfm --extern lm3s6965"
+            .to_owned(),
+    );
     config.link_deps();
     config.clean_rmeta();
 

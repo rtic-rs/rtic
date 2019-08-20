@@ -169,9 +169,10 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
                     peripherals = if *x { Some(0) } else { None }
                 }
 
-                CustomArg::UInt(x) if app.args.cores != 1 => {
-                    peripherals = if *x < u64::from(app.args.cores) {
-                        Some(*x as u8)
+                CustomArg::UInt(s) if app.args.cores != 1 => {
+                    let x = s.parse::<u8>().ok();
+                    peripherals = if x.is_some() && x.unwrap() < app.args.cores {
+                        Some(x.unwrap())
                     } else {
                         return Err(parse::Error::new(
                             k.span(),

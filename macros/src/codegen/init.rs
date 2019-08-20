@@ -83,6 +83,7 @@ pub fn codegen(
         let attrs = &init.attrs;
         let stmts = &init.stmts;
         let section = util::link_section("text", core);
+        let locals_pat = locals_pat.iter();
         let user_init = Some(quote!(
             #(#attrs)*
             #cfg_core
@@ -102,6 +103,7 @@ pub fn codegen(
             const_app = Some(constructor);
         }
 
+        let locals_new = locals_new.iter();
         let call_init =
             Some(quote!(let late = #name(#(#locals_new,)* #name::Context::new(core.into()));));
 

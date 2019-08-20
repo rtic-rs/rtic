@@ -15,9 +15,9 @@ version = "0.5.0-alpha.1"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "0.4.30"
-quote = "0.6.12"
-syn = "0.15.34"
+proc-macro2 = "1"
+quote = "1"
+syn = "1"
 
 [dependencies.rtfm-syntax]
 git = "https://github.com/japaric/rtfm-syntax"

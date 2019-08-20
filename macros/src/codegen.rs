@@ -126,7 +126,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
         #(#root)*
 
-        #(#mod_resources)*
+        #mod_resources
 
         #(#root_hardware_tasks)*
 

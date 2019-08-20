@@ -115,6 +115,7 @@ pub fn codegen(
         let stmts = &task.stmts;
         let section = util::link_section("text", core);
         // XXX shouldn't this have a cfg_core?
+        let locals_pat = locals_pat.iter();
         user_tasks.push(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]

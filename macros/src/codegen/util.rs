@@ -3,13 +3,13 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use rtfm_syntax::{ast::App, Context, Core};
-use syn::{ArgCaptured, Attribute, Ident, IntSuffix, LitInt};
+use syn::{Attribute, Ident, LitInt, PatType};
 
 use crate::check::Extra;
 
 /// Turns `capacity` into an unsuffixed integer literal
 pub fn capacity_literal(capacity: u8) -> LitInt {
-    LitInt::new(u64::from(capacity), IntSuffix::None, Span::call_site())
+    LitInt::new(&capacity.to_string(), Span::call_site())
 }
 
 /// Turns `capacity` into a type-level (`typenum`) integer
@@ -194,7 +194,7 @@ pub fn rendezvous_ident(core: Core) -> Ident {
 //
 // `inputs` could be &[`input: Foo`] OR &[`mut x: i32`, `ref y: i64`]
 pub fn regroup_inputs(
-    inputs: &[ArgCaptured],
+    inputs: &[PatType],
 ) -> (
     // args e.g. &[`_0`],  &[`_0: i32`, `_1: i64`]
     Vec<TokenStream2>,

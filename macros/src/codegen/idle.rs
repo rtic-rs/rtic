@@ -58,6 +58,7 @@ pub fn codegen(
         let context = &idle.context;
         let stmts = &idle.stmts;
         let section = util::link_section("text", core);
+        let locals_pat = locals_pat.iter();
         let user_idle = Some(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
@@ -70,6 +71,7 @@ pub fn codegen(
             }
         ));
 
+        let locals_new = locals_new.iter();
         let call_idle = quote!(#name(
             #(#locals_new,)*
             #name::Context::new(&rtfm::export::Priority::new(0))

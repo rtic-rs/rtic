@@ -168,6 +168,7 @@ pub fn codegen(
         let attrs = &task.attrs;
         let cfgs = &task.cfgs;
         let stmts = &task.stmts;
+        let locals_pat = locals_pat.iter();
         user_tasks.push(quote!(
             #(#attrs)*
             #(#cfgs)*
