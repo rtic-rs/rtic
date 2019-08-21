@@ -40,7 +40,6 @@ main() {
         if [ $TRAVIS_RUST_VERSION = nightly ]; then
             # compile-fail tests
             cargo test --test single --target $T
-            cargo test --test multi --features heterogeneous --target $T
 
             # multi-core compile-pass tests
             pushd heterogeneous
