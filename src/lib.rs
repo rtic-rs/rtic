@@ -1,6 +1,6 @@
 //! Real Time For the Masses (RTFM) framework for ARM Cortex-M microcontrollers
 //!
-//! **HEADS UP** This is an **alpha** pre-release; there may be breaking changes in the API and
+//! **HEADS UP** This is an **beta** pre-release; there may be breaking changes in the API and
 //! semantics before a proper release is made.
 //!
 //! **IMPORTANT**: This crate is published as [`cortex-m-rtfm`] on crates.io but the name of the
@@ -12,10 +12,8 @@
 //!
 //! [here]: https://japaric.github.io/rtfm5/book/en/
 //!
-//! Don't forget to check the documentation of the [`#[app]`] attribute, which is the main component
-//! of the framework.
-//!
-//! [`#[app]`]: ../cortex_m_rtfm_macros/attr.app.html
+//! Don't forget to check the documentation of the `#[app]` attribute (listed under the reexports
+//! section), which is the main component of the framework.
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
