@@ -17,10 +17,6 @@ version = "0.5.0-alpha.1"
 [lib]
 name = "rtfm"
 
-[[test]]
-required-features = ["heterogeneous"]
-name = "multi"
-
 [[example]]
 name = "baseline"
 required-features = ["__v7"]
