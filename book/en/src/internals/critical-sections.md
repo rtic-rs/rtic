@@ -13,7 +13,7 @@ the task. While a task is within this critical section all the other tasks that
 may request the resource are *not allowed to start*.
 
 How high must the dynamic priority be to ensure mutual exclusion on a particular
-resource? The [ceiling analysis](ceiling-analysis.html) is in charge of
+resource? The [ceiling analysis](ceilings.html) is in charge of
 answering that question and will be discussed in the next section. This section
 will focus on the implementation of the critical section.
 
