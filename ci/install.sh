@@ -13,7 +13,7 @@ main() {
 
     # install mdbook
     curl -LSfs https://japaric.github.io/trust/install.sh | \
-        sh -s -- --git rust-lang-nursery/mdbook --tag v0.2.1
+        sh -s -- --git rust-lang-nursery/mdbook --tag v0.3.1
 
     pip install linkchecker --user
 }
