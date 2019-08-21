@@ -1,5 +1,5 @@
-UART0 - start
- UART2 - start
- UART2 - end
- UART1
-UART0 - end
+GPIOA - start
+ GPIOC - start
+ GPIOC - end
+ GPIOB
+GPIOA - end

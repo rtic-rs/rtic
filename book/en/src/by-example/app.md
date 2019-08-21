@@ -138,10 +138,10 @@ The following example showcases the priority based scheduling of tasks.
 $ cargo run --example interrupt
 {{#include ../../../../ci/expected/preempt.run}}```
 
-Note that the task `uart1` does *not* preempt task `uart2` because its priority
-is the *same* as `uart2`'s. However, once `uart2` terminates the execution of
-task `uart1` is prioritized over `uart0`'s due to its higher priority. `uart0`
-is resumed only after `uart1` terminates.
+Note that the task `gpiob` does *not* preempt task `gpioc` because its priority
+is the *same* as `gpioc`'s. However, once `gpioc` terminates the execution of
+task `gpiob` is prioritized over `gpioa`'s due to its higher priority. `gpioa`
+is resumed only after `gpiob` terminates.
 
 One more note about priorities: choosing a priority higher than what the device
 supports (that is `1 << NVIC_PRIO_BITS`) will result in a compile error. Due to

@@ -12,26 +12,26 @@ use rtfm::app;
 const APP: () = {
     #[init]
     fn init(_: init::Context) {
-        rtfm::pend(Interrupt::UART0);
+        rtfm::pend(Interrupt::GPIOA);
     }
 
-    #[task(binds = UART0, priority = 1)]
-    fn uart0(_: uart0::Context) {
-        hprintln!("UART0 - start").unwrap();
-        rtfm::pend(Interrupt::UART2);
-        hprintln!("UART0 - end").unwrap();
+    #[task(binds = GPIOA, priority = 1)]
+    fn gpioa(_: gpioa::Context) {
+        hprintln!("GPIOA - start").unwrap();
+        rtfm::pend(Interrupt::GPIOC);
+        hprintln!("GPIOA - end").unwrap();
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[task(binds = UART1, priority = 2)]
-    fn uart1(_: uart1::Context) {
-        hprintln!(" UART1").unwrap();
+    #[task(binds = GPIOB, priority = 2)]
+    fn gpiob(_: gpiob::Context) {
+        hprintln!(" GPIOB").unwrap();
     }
 
-    #[task(binds = UART2, priority = 2)]
-    fn uart2(_: uart2::Context) {
-        hprintln!(" UART2 - start").unwrap();
-        rtfm::pend(Interrupt::UART1);
-        hprintln!(" UART2 - end").unwrap();
+    #[task(binds = GPIOC, priority = 2)]
+    fn gpioc(_: gpioc::Context) {
+        hprintln!(" GPIOC - start").unwrap();
+        rtfm::pend(Interrupt::GPIOB);
+        hprintln!(" GPIOC - end").unwrap();
     }
 };
