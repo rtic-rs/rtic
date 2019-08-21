@@ -22,11 +22,11 @@ mod tests;
 /// The `app` attribute has one mandatory argument:
 ///
 /// - `device = <path>`. The path must point to a device crate generated using [`svd2rust`]
-/// **v0.14.x**.
+/// **v0.14.x** or newer.
 ///
 /// [`svd2rust`]: https://crates.io/crates/svd2rust
 ///
-/// and several optional arguments:
+/// and a few optional arguments:
 ///
 /// - `peripherals = <bool>`. Indicates whether the runtime takes the device peripherals and makes
 /// them available to the `init` context.

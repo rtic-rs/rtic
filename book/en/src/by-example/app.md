@@ -10,8 +10,8 @@ All RTFM applications use the [`app`] attribute (`#[app(..)]`). This attribute
 must be applied to a `const` item that contains items. The `app` attribute has
 a mandatory `device` argument that takes a *path* as a value. This path must
 point to a *peripheral access crate* (PAC) generated using [`svd2rust`]
-**v0.14.x**. The `app` attribute will expand into a suitable entry point so it's
-not required to use the [`cortex_m_rt::entry`] attribute.
+**v0.14.x** or newer. The `app` attribute will expand into a suitable entry
+point so it's not required to use the [`cortex_m_rt::entry`] attribute.
 
 [`app`]: ../../api/cortex_m_rtfm_macros/attr.app.html
 [`svd2rust`]: https://crates.io/crates/svd2rust

@@ -31,7 +31,10 @@
 //!
 //! # Cargo features
 //!
-//! - `heterogeneous`. This opt-in feature enables the *experimental* heterogeneous multi-core support.
+//! - `heterogeneous`. This opt-in feature enables the *experimental* heterogeneous multi-core
+//! support. This feature depends on unstable feature and requires the use of the nightly channel.
+//!
+//! - `homogeneous`. This opt-in feature enables the *experimental* homogeneous multi-core support.
 
 #![deny(missing_docs)]
 #![deny(rust_2018_compatibility)]
