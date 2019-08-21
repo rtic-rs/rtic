@@ -11,21 +11,22 @@ initialize late resources.
 ``` rust
 #[rtfm::app(device = ..)]
 const APP: () = {
-    // late resource
-    static mut X: Thing = {};
+    struct Resources {
+        x: Thing,
+    }
 
     #[init]
     fn init() -> init::LateResources {
         // ..
 
         init::LateResources {
-            X: Thing::new(..),
+            x: Thing::new(..),
         }
     }
 
-    #[task(binds = UART0, resources = [X])]
+    #[task(binds = UART0, resources = [x])]
     fn foo(c: foo::Context) {
-        let x: &mut Thing = c.resources.X;
+        let x: &mut Thing = c.resources.x;
 
         x.frob();
 
@@ -50,7 +51,7 @@ fn foo(c: foo::Context) {
 // Public API
 pub mod init {
     pub struct LateResources {
-        pub X: Thing,
+        pub x: Thing,
     }
 
     // ..
@@ -58,7 +59,7 @@ pub mod init {
 
 pub mod foo {
     pub struct Resources<'a> {
-        pub X: &'a mut Thing,
+        pub x: &'a mut Thing,
     }
 
     pub struct Context<'a> {
@@ -70,7 +71,7 @@ pub mod foo {
 /// Implementation details
 const APP: () = {
     // uninitialized static
-    static mut X: MaybeUninit<Thing> = MaybeUninit::uninit();
+    static mut x: MaybeUninit<Thing> = MaybeUninit::uninit();
 
     #[no_mangle]
     unsafe fn main() -> ! {
@@ -81,7 +82,7 @@ const APP: () = {
         let late = init(..);
 
         // initialization of late resources
-        X.write(late.X);
+        x.as_mut_ptr().write(late.x);
 
         cortex_m::interrupt::enable(); //~ compiler fence
 
@@ -94,8 +95,8 @@ const APP: () = {
     unsafe fn UART0() {
         foo(foo::Context {
             resources: foo::Resources {
-                // `X` has been initialized at this point
-                X: &mut *X.as_mut_ptr(),
+                // `x` has been initialized at this point
+                x: &mut *x.as_mut_ptr(),
             },
             // ..
         })

@@ -13,24 +13,20 @@ are discouraged from directly invoking an interrupt handler.
 ``` rust
 #[rtfm::app(device = ..)]
 const APP: () = {
-    static mut X: u64 = 0;
-
     #[init]
     fn init(c: init::Context) { .. }
 
-    #[interrupt(binds = UART0, resources = [X])]
+    #[interrupt(binds = UART0)]
     fn foo(c: foo::Context) {
-        let x: &mut u64 = c.resources.X;
+        static mut X: u64 = 0;
 
-        *x = 1;
+        let x: &mut u64 = X;
+
+        // ..
 
         //~ `bar` can preempt `foo` at this point
 
-        *x = 2;
-
-        if *x == 2 {
-            // something
-        }
+        // ..
     }
 
     #[interrupt(binds = UART1, priority = 2)]
@@ -40,15 +36,15 @@ const APP: () = {
         }
 
         // this interrupt handler will invoke task handler `foo` resulting
-        // in mutable aliasing of the static variable `X`
+        // in aliasing of the static variable `X`
         unsafe { UART0() }
     }
 };
 ```
 
 The RTFM framework must generate the interrupt handler code that calls the user
-defined task handlers. We are careful in making these handlers `unsafe` and / or
-impossible to call from user code.
+defined task handlers. We are careful in making these handlers impossible to
+call from user code.
 
 The above example expands into:
 

@@ -23,29 +23,31 @@ const APP: () = {
         rtfm::pend(Interrupt::UART1);
     }
 
+    // `shared` cannot be accessed from this context
     #[idle]
-    fn idle(_: idle::Context) -> ! {
+    fn idle(_cx: idle::Context) -> ! {
         debug::exit(debug::EXIT_SUCCESS);
 
-        // error: `shared` can't be accessed from this context
-        // shared += 1;
+        // error: no `resources` field in `idle::Context`
+        // _cx.resources.shared += 1;
 
         loop {}
     }
 
-    // `shared` can be access from this context
+    // `shared` can be accessed from this context
     #[task(binds = UART0, resources = [shared])]
-    fn uart0(c: uart0::Context) {
-        *c.resources.shared += 1;
+    fn uart0(cx: uart0::Context) {
+        let shared: &mut u32 = cx.resources.shared;
+        *shared += 1;
 
-        hprintln!("UART0: shared = {}", c.resources.shared).unwrap();
+        hprintln!("UART0: shared = {}", shared).unwrap();
     }
 
-    // `shared` can be access from this context
+    // `shared` can be accessed from this context
     #[task(binds = UART1, resources = [shared])]
-    fn uart1(c: uart1::Context) {
-        *c.resources.shared += 1;
+    fn uart1(cx: uart1::Context) {
+        *cx.resources.shared += 1;
 
-        hprintln!("UART1: shared = {}", c.resources.shared).unwrap();
+        hprintln!("UART1: shared = {}", cx.resources.shared).unwrap();
     }
 };

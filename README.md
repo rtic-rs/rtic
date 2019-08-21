@@ -31,9 +31,7 @@ A concurrency framework for building real time systems.
 - **Highly efficient memory usage**: All the tasks share a single call stack and
   there's no hard dependency on a dynamic memory allocator.
 
-- **All Cortex-M devices are supported**. The core features of RTFM are
-  supported on all Cortex-M devices. The timer queue is currently only supported
-  on ARMv7-M devices.
+- **All Cortex-M devices are fully supported**.
 
 - This task model is amenable to known WCET (Worst Case Execution Time) analysis
   and scheduling analysis techniques. (Though we haven't yet developed Rust

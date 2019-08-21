@@ -29,6 +29,7 @@ const APP: () = {
 
         hprintln!("UART0(STATE = {})", *STATE).unwrap();
 
+        // second argument has type `resources::shared`
         advance(STATE, c.resources.shared);
 
         rtfm::pend(Interrupt::UART1);
@@ -45,14 +46,16 @@ const APP: () = {
         // just to show that `shared` can be accessed directly
         *c.resources.shared += 0;
 
+        // second argument has type `Exclusive<u32>`
         advance(STATE, Exclusive(c.resources.shared));
     }
 };
 
+// the second parameter is generic: it can be any type that implements the `Mutex` trait
 fn advance(state: &mut u32, mut shared: impl Mutex<T = u32>) {
     *state += 1;
 
-    let (old, new) = shared.lock(|shared| {
+    let (old, new) = shared.lock(|shared: &mut u32| {
         let old = *shared;
         *shared += *state;
         (old, *shared)

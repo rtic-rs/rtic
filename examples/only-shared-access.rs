@@ -24,14 +24,15 @@ const APP: () = {
     }
 
     #[task(binds = UART0, resources = [&key])]
-    fn uart0(c: uart0::Context) {
-        hprintln!("UART0(key = {:#x})", c.resources.key).unwrap();
+    fn uart0(cx: uart0::Context) {
+        let key: &u32 = cx.resources.key;
+        hprintln!("UART0(key = {:#x})", key).unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
     }
 
     #[task(binds = UART1, priority = 2, resources = [&key])]
-    fn uart1(c: uart1::Context) {
-        hprintln!("UART1(key = {:#x})", c.resources.key).unwrap();
+    fn uart1(cx: uart1::Context) {
+        hprintln!("UART1(key = {:#x})", cx.resources.key).unwrap();
     }
 };

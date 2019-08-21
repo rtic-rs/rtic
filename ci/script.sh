@@ -99,13 +99,14 @@ main() {
             local exs=(
                 idle
                 init
-                interrupt
+                hardware
+                preempt
                 binds
 
                 resource
                 lock
                 late
-                static
+                only-shared-access
 
                 task
                 message
@@ -117,6 +118,7 @@ main() {
                 shared-with-init
 
                 generics
+                cfg
                 pool
                 ramfunc
             )
@@ -160,7 +162,11 @@ main() {
                 fi
 
                 arm_example "run" $ex "debug" "" "1"
-                arm_example "run" $ex "release" "" "1"
+                if [ $ex = types ]; then
+                    arm_example "run" $ex "release" "" "1"
+                else
+                    arm_example "build" $ex "release" "" "1"
+                fi
             done
 
             local built=()

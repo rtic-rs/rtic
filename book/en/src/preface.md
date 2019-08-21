@@ -14,6 +14,6 @@ There is a translation of this book in [Russian].
 **HEADS UP** This is an **alpha** pre-release; there may be breaking changes in
 the API and semantics before a proper release is made.
 
-{{#include ../../../README.md:5:46}}
+{{#include ../../../README.md:5:44}}
 
-{{#include ../../../README.md:52:}}
+{{#include ../../../README.md:50:}}

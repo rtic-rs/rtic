@@ -17,16 +17,20 @@ const APP: () = {
 
     #[task(spawn = [bar, baz])]
     fn foo(c: foo::Context) {
-        hprintln!("foo").unwrap();
+        hprintln!("foo - start").unwrap();
 
         // spawns `bar` onto the task scheduler
         // `foo` and `bar` have the same priority so `bar` will not run until
         // after `foo` terminates
         c.spawn.bar().unwrap();
 
+        hprintln!("foo - middle").unwrap();
+
         // spawns `baz` onto the task scheduler
         // `baz` has higher priority than `foo` so it immediately preempts `foo`
         c.spawn.baz().unwrap();
+
+        hprintln!("foo - end").unwrap();
     }
 
     #[task]

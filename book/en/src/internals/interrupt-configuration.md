@@ -12,7 +12,7 @@ configuration is done before the `init` function runs.
 This example gives you an idea of the code that the RTFM framework runs:
 
 ``` rust
-#[rtfm::app(device = ..)]
+#[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[init]
     fn init(c: init::Context) {
@@ -39,8 +39,7 @@ The framework generates an entry point that looks like this:
 unsafe fn main() -> ! {
     // transforms a logical priority into a hardware / NVIC priority
     fn logical2hw(priority: u8) -> u8 {
-        // this value comes from the device crate
-        const NVIC_PRIO_BITS: u8 = ..;
+        use lm3s6965::NVIC_PRIO_BITS;
 
         // the NVIC encodes priority in the higher bits of a bit
         // also a bigger numbers means lower priority

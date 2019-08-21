@@ -13,16 +13,16 @@ use rtfm::cyccnt::{Instant, U32Ext as _};
 #[rtfm::app(device = lm3s6965, monotonic = rtfm::cyccnt::CYCCNT)]
 const APP: () = {
     #[init(schedule = [foo, bar])]
-    fn init(c: init::Context) {
+    fn init(cx: init::Context) {
         let now = Instant::now();
 
         hprintln!("init @ {:?}", now).unwrap();
 
         // Schedule `foo` to run 8e6 cycles (clock cycles) in the future
-        c.schedule.foo(now + 8_000_000.cycles()).unwrap();
+        cx.schedule.foo(now + 8_000_000.cycles()).unwrap();
 
         // Schedule `bar` to run 4e6 cycles in the future
-        c.schedule.bar(now + 4_000_000.cycles()).unwrap();
+        cx.schedule.bar(now + 4_000_000.cycles()).unwrap();
     }
 
     #[task]

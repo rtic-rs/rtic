@@ -5,6 +5,7 @@
 #![no_main]
 #![no_std]
 
+use cortex_m_semihosting::debug;
 #[cfg(debug_assertions)]
 use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
@@ -17,28 +18,36 @@ const APP: () = {
         count: u32,
     }
 
-    #[init]
-    fn init(_: init::Context) {
-        // ..
+    #[init(spawn = [foo])]
+    fn init(cx: init::Context) {
+        cx.spawn.foo().unwrap();
+        cx.spawn.foo().unwrap();
     }
 
-    #[task(priority = 3, resources = [count], spawn = [log])]
-    fn foo(_c: foo::Context) {
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
+        debug::exit(debug::EXIT_SUCCESS);
+
+        loop {}
+    }
+
+    #[task(capacity = 2, resources = [count], spawn = [log])]
+    fn foo(_cx: foo::Context) {
         #[cfg(debug_assertions)]
         {
-            *_c.resources.count += 1;
+            *_cx.resources.count += 1;
 
-            _c.spawn.log(*_c.resources.count).ok();
+            _cx.spawn.log(*_cx.resources.count).unwrap();
         }
 
         // this wouldn't compile in `release` mode
-        // *resources.count += 1;
+        // *_cx.resources.count += 1;
 
         // ..
     }
 
     #[cfg(debug_assertions)]
-    #[task]
+    #[task(capacity = 2)]
     fn log(_: log::Context, n: u32) {
         hprintln!(
             "foo has been called {} time{}",

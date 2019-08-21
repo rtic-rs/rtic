@@ -19,7 +19,7 @@ task.
 
 The ready queue is a SPSC (Single Producer Single Consumer) lock-free queue. The
 task dispatcher owns the consumer endpoint of the queue; the producer endpoint
-is treated as a resource shared by the tasks that can `spawn` other tasks.
+is treated as a resource contended by the tasks that can `spawn` other tasks.
 
 ## The task dispatcher
 
@@ -244,7 +244,7 @@ const APP: () = {
                         baz_INPUTS[index as usize].write(message);
 
                         lock(self.priority(), RQ1_CEILING, || {
-                            // put the task in the ready queu
+                            // put the task in the ready queue
                             RQ1.split().1.enqueue_unchecked(Ready {
                                 task: T1::baz,
                                 index,

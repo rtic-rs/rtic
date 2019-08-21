@@ -26,12 +26,12 @@ const APP: () = {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[task(resources = [shared])]
+    #[task(resources = [&shared])]
     fn foo(c: foo::Context) {
         let _: &NotSync = c.resources.shared;
     }
 
-    #[task(resources = [shared])]
+    #[task(resources = [&shared])]
     fn bar(c: bar::Context) {
         let _: &NotSync = c.resources.shared;
     }
