@@ -2,9 +2,9 @@ set -euxo pipefail
 
 main() {
     # these are not needed for doc builds
-    if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST != false ]; then
+   if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST != false ]; then
         if [ $TARGET = x86_64-unknown-linux-gnu ]; then
-            ( cd .. && cargo install microamp-tools --version 0.1.0-alpha.3 -f )
+            ( cd .. && cargo install microamp-tools --version 0.1.0-alpha.2 -f )
             rustup target add thumbv6m-none-eabi thumbv7m-none-eabi
         fi
 
