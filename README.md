@@ -47,6 +47,16 @@ A concurrency framework for building real time systems.
 
 ## [API reference](https://japaric.github.io/rtfm5/api/rtfm/index.html)
 
+## Chat
+Join us and talk about RTFM in the [Matrix room][matrix-room].
+
+[matrix-room]: https://matrix.to/#/!yafYEipFNsXDdwiHMT:matrix.org
+
+## Contributing
+New features and big changes should go through the RFC process in the [dedicated RFC repository][rfcs]. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+[rfcs]: https://github.com/rtfm-rs/rfcs
+
 ## Acknowledgments
 
 This crate is based on [the RTFM language][rtfm-lang] created by the Embedded
