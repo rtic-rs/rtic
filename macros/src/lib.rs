@@ -89,9 +89,9 @@ mod tests;
 ///
 /// - `resources: <fn-name>::Resources`. A `struct` that contains all the resources that can be
 /// accessed from this context. Each field is a different resource; each resource may appear as a
-/// reference (`&[mut]-`) or as proxy structure that implements the [`rftm::Mutex`] trait.
+/// reference (`&[mut]-`) or as proxy structure that implements the [`rftm::Mutex`][rtfm-mutex] trait.
 ///
-/// [`rtfm::Mutex`]: ../rtfm/trait.Mutex.html
+/// [rtfm-mutex]: ../rtfm/trait.Mutex.html
 ///
 /// - `schedule: <fn-name>::Schedule`. A `struct` that can be used to schedule *software* tasks.
 ///
