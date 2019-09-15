@@ -5,7 +5,7 @@ authors = [
 ]
 categories = ["concurrency", "embedded", "no-std"]
 description = "Real Time For the Masses (RTFM): a concurrency framework for building real time systems"
-documentation = "https://rtfm-rs.github.io/cortex-m-rtfm/book/en"
+documentation = "https://rtfm.rs/"
 edition = "2018"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
