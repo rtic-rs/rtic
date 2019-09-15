@@ -11,8 +11,10 @@ main() {
 
     # build latest docs
     cp -r target/doc $td/api
+    sed 's|URL|rtfm/index.html|g' redirect.html > $td/api/index.html
+
     mkdir $td/book/
-    cp redirect.html $td/index.html
+    sed 's|URL|book/en|g' redirect.html > $td/index.html
     for lang in ${langs[@]}; do
         ( cd book/$lang && mdbook build )
         cp -r book/$lang/book $td/book/$lang
@@ -30,15 +32,20 @@ main() {
         pushd $src
         cargo doc || cargo doc --features timer-queue
         cp -r target/doc $td/$prefix/api
+        sed 's|URL|rtfm/index.html|g' redirect.html > $td/$prefix/api/index.html
         for lang in ${langs[@]}; do
             ( cd book/$lang && mdbook build )
             cp -r book/$lang/book $td/$prefix/book/$lang
             cp LICENSE-* $td/$prefix/book/$lang/
         done
+        sed 's|URL|book/en|g' redirect.html > $td/$prefix/index.html
         popd
 
         rm -rf $src
     done
+
+    # forward CNAME file
+    cp CNAME $td/
 
     mkdir ghp-import
     curl -Ls https://github.com/davisp/ghp-import/archive/master.tar.gz |
