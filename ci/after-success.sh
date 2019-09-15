@@ -2,18 +2,42 @@ set -euxo pipefail
 
 main() {
     local langs=( en ru )
+    local vers=( 0.4.3 )
 
     rm -f .cargo/config
-    cargo doc --features timer-queue
+    cargo doc
 
     local td=$(mktemp -d)
+
+    # build latest docs
     cp -r target/doc $td/api
     mkdir $td/book/
-    cp redirect.html $td/book/index.html
+    cp redirect.html $td/index.html
     for lang in ${langs[@]}; do
         ( cd book/$lang && mdbook build )
         cp -r book/$lang/book $td/book/$lang
         cp LICENSE-* $td/book/$lang/
+    done
+
+    # build older docs
+    for ver in ${vers[@]}; do
+        local prefix=${ver%.*}
+
+        mkdir -p $td/$prefix/book
+        local src=$(mktemp -d)
+        curl -L https://github.com/rtfm-rs/cortex-m-rtfm/archive/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
+
+        pushd $src
+        cargo doc || cargo doc --features timer-queue
+        cp -r target/doc $td/$prefix/api
+        for lang in ${langs[@]}; do
+            ( cd book/$lang && mdbook build )
+            cp -r book/$lang/book $td/$prefix/book/$lang
+            cp LICENSE-* $td/$prefix/book/$lang/
+        done
+        popd
+
+        rm -rf $src
     done
 
     mkdir ghp-import
@@ -23,8 +47,7 @@ main() {
     ./ghp-import/ghp_import.py $td
 
     set +x
-    # NOTE push documentation to a different repository
-    git push -fq https://$GH_TOKEN@github.com/japaric/rtfm5.git gh-pages && echo OK
+    git push -fq https://$GH_TOKEN@github.com/rtfm-rs/cortex-m-rtfm.git gh-pages && echo OK
 
     rm -rf $td
 }

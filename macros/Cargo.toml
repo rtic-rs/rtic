@@ -2,13 +2,13 @@
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 categories = ["concurrency", "embedded", "no-std"]
 description = "Procedural macros of the cortex-m-rtfm crate"
-documentation = "https://japaric.github.io/cortex-m-rtfm/api/cortex_m_rtfm"
+documentation = "https://rtfm-rs.github.io/cortex-m-rtfm/api/cortex_m_rtfm"
 edition = "2018"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm-macros"
 readme = "../README.md"
-repository = "https://github.com/japaric/cortex-m-rtfm"
+repository = "https://github.com/rtfm-rs/cortex-m-rtfm"
 version = "0.5.0-alpha.1"
 
 [lib]
@@ -20,7 +20,7 @@ quote = "1"
 syn = "1"
 
 [dependencies.rtfm-syntax]
-git = "https://github.com/japaric/rtfm-syntax"
+git = "https://github.com/rtfm-rs/rtfm-syntax"
 
 [features]
 heterogeneous = []
