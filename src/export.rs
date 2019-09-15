@@ -9,7 +9,7 @@ pub use cortex_m::register::basepri;
 pub use cortex_m::{
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, syst::SystClkSource, DWT},
+    peripheral::{scb::SystemHandler, syst::SystClkSource, DWT, NVIC},
     Peripherals,
 };
 use heapless::spsc::{MultiCore, SingleCore};

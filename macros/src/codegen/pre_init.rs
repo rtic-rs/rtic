@@ -75,7 +75,7 @@ pub fn codegen(
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(core.NVIC.enable(#device::#interrupt::#name);));
+        stmts.push(quote!(rtfm::export::NVIC::unmask(#device::#interrupt::#name);));
     }
 
     // cross-spawn barriers: now that priorities have been set and the interrupts have been unmasked
