@@ -10,7 +10,7 @@
 //!
 //! The user level documentation can be found [here].
 //!
-//! [here]: https://japaric.github.io/rtfm5/book/en/
+//! [here]: https://rtfm.rs
 //!
 //! Don't forget to check the documentation of the `#[app]` attribute (listed under the reexports
 //! section), which is the main component of the framework.
