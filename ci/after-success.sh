@@ -31,6 +31,7 @@ main() {
         curl -L https://github.com/rtfm-rs/cortex-m-rtfm/archive/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
 
         pushd $src
+        rm -f .cargo/config
         cargo doc || cargo doc --features timer-queue
         cp -r target/doc $td/$prefix/api
         sed 's|URL|rtfm/index.html|g' $root/redirect.html > $td/$prefix/api/index.html
