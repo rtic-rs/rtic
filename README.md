@@ -43,9 +43,9 @@ A concurrency framework for building real time systems.
 
 - Applications must be written using the 2018 edition.
 
-## [User documentation](https://japaric.github.io/rtfm5/book/en)
+## [User documentation](https://rtfm.rs)
 
-## [API reference](https://japaric.github.io/rtfm5/api/rtfm/index.html)
+## [API reference](https://rtfm.rs/api/rtfm/index.html)
 
 ## Acknowledgments
 
