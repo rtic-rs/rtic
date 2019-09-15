@@ -1,17 +1,17 @@
 #![deny(warnings)]
-#![recursion_limit = "128"]
 
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use std::{fs, path::Path};
 
-use syn::parse_macro_input;
+use rtfm_syntax::Settings;
 
 mod analyze;
 mod check;
 mod codegen;
-mod syntax;
+#[cfg(test)]
+mod tests;
 
 /// Attribute used to declare a RTFM application
 ///
@@ -22,104 +22,99 @@ mod syntax;
 /// The `app` attribute has one mandatory argument:
 ///
 /// - `device = <path>`. The path must point to a device crate generated using [`svd2rust`]
-/// **v0.14.x**.
+/// **v0.14.x** or newer.
 ///
 /// [`svd2rust`]: https://crates.io/crates/svd2rust
 ///
+/// and a few optional arguments:
+///
+/// - `peripherals = <bool>`. Indicates whether the runtime takes the device peripherals and makes
+/// them available to the `init` context.
+///
+/// - `monotonic = <path>`. This is a path to a zero-sized structure (e.g. `struct Foo;`) that
+/// implements the `Monotonic` trait. This argument must be provided to use the `schedule` API.
+///
 /// The items allowed in the block value of the `const` item are specified below:
 ///
-/// # 1. `static [mut]` variables
+/// # 1. `struct Resources`
 ///
-/// These variables are used as *resources*. Resources can be owned by tasks or shared between them.
-/// Tasks can get `&mut` (exclusives) references to `static mut` resources, but only `&` (shared)
-/// references to `static` resources. Lower priority tasks will need a [`lock`] to get a `&mut`
-/// reference to a `static mut` resource shared with higher priority tasks.
-///
-/// [`lock`]: ../rtfm/trait.Mutex.html#method.lock
-///
-/// `static mut` resources that are shared by tasks that run at *different* priorities need to
-/// implement the [`Send`] trait. Similarly, `static` resources that are shared by tasks that run at
-/// *different* priorities need to implement the [`Sync`] trait.
-///
-/// [`Send`]: https://doc.rust-lang.org/core/marker/trait.Send.html
-/// [`Sync`]: https://doc.rust-lang.org/core/marker/trait.Sync.html
-///
-/// Resources can be initialized at runtime by assigning them `()` (the unit value) as their initial
-/// value in their declaration. These "late" resources need to be initialized an the end of the
-/// `init` function.
-///
-/// The `app` attribute will inject a `resources` module in the root of the crate. This module
-/// contains proxy `struct`s that implement the [`Mutex`] trait. The `struct` are named after the
-/// `static mut` resources. For example, `static mut FOO: u32 = 0` will map to a `resources::FOO`
-/// `struct` that implements the `Mutex<Data = u32>` trait.
-///
-/// [`Mutex`]: ../rtfm/trait.Mutex.html
+/// This structure contains the declaration of all the resources used by the application. Each field
+/// in this structure corresponds to a different resource. Each resource may optionally be given an
+/// initial value using the `#[init(<value>)]` attribute. Resources with no compile-time initial
+/// value as referred to as *late* resources.
 ///
 /// # 2. `fn`
 ///
-/// Functions must contain *one* of the following attributes: `init`, `idle`, `interrupt`,
-/// `exception` or `task`. The attribute defines the role of the function in the application.
+/// Functions must contain *one* of the following attributes: `init`, `idle` or `task`. The
+/// attribute defines the role of the function in the application.
 ///
 /// ## a. `#[init]`
 ///
 /// This attribute indicates that the function is to be used as the *initialization function*. There
 /// must be exactly one instance of the `init` attribute inside the `app` pseudo-module. The
-/// signature of the `init` function must be `[unsafe] fn ()`.
+/// signature of the `init` function must be `fn (<fn-name>::Context) [-> <fn-name>::LateResources]`
+/// where `<fn-name>` is the name of the function adorned with the `#[init]` attribute.
 ///
 /// The `init` function runs after memory (RAM) is initialized and runs with interrupts disabled.
 /// Interrupts are re-enabled after `init` returns.
 ///
 /// The `init` attribute accepts the following optional arguments:
 ///
-/// - `resources = [RESOURCE_A, RESOURCE_B, ..]`. This is the list of resources this function has
+/// - `resources = [resource_a, resource_b, ..]`. This is the list of resources this context has
 /// access to.
 ///
-/// - `schedule = [task_a, task_b, ..]`. This is the list of *software* tasks that this function can
-/// schedule to run in the future. *IMPORTANT*: This argument is accepted only if the `timer-queue`
-/// feature has been enabled.
+/// - `schedule = [task_a, task_b, ..]`. This is the list of *software* tasks that this context can
+/// schedule to run in the future. *IMPORTANT*: This argument is accepted only if the `monotonic`
+/// argument is passed to the `#[app]` attribute.
 ///
-/// - `spawn = [task_a, task_b, ..]`. This is the list of *software* tasks that this function can
+/// - `spawn = [task_a, task_b, ..]`. This is the list of *software* tasks that this context can
 /// immediately spawn.
 ///
-/// The `app` attribute will injected a *context* into this function that comprises the following
-/// variables:
+/// The first argument of the function, `<fn-name>::Context`, is a structure that contains the
+/// following fields:
 ///
-/// - `core: rtfm::Peripherals`. Exclusive access to core peripherals. See [`rtfm::Peripherals`] for
-/// more details.
+/// - `core`. Exclusive access to core peripherals. The type of this field is [`rtfm::Peripherals`]
+/// when the `schedule` API is used and [`cortex_m::Peripherals`] when it's not.
 ///
 /// [`rtfm::Peripherals`]: ../rtfm/struct.Peripherals.html
+/// [`cortex_m::Peripherals`]: https://docs.rs/cortex-m/0.6/cortex_m/peripheral/struct.Peripherals.html
 ///
-/// - `device: <device-path>::Peripherals`. Exclusive access to device-specific peripherals.
-/// `<device-path>` is the path to the device crate declared in the top `app` attribute.
+/// - `device: <device>::Peripherals`. Exclusive access to device-specific peripherals. This
+/// field is only present when the `peripherals` argument of the `#[app]` attribute is set to
+/// `true`. `<device>` is the path to the device crate specified in the top `app` attribute.
 ///
-/// - `start: rtfm::Instant`. The `start` time of the system: `Instant(0 /* cycles */)`. **NOTE**:
-/// only present if the `timer-queue` feature is enabled.
+/// - `start: <Instant>`. The `start` time of the system: `<Instant>::zero()`. `<Instant>` is the
+/// `Instant` type associated to the `Monotonic` implementation specified in the top `#[app]`
+/// attribute. **NOTE**: this field is only present when the `schedule` is used.
 ///
-/// - `resources: _`. An opaque `struct` that contains all the resources assigned to this function.
-/// The resource maybe appear by value (`impl Singleton`), by references (`&[mut]`) or by proxy
-/// (`impl Mutex`).
+/// - `resources: <fn-name>::Resources`. A `struct` that contains all the resources that can be
+/// accessed from this context. Each field is a different resource; each resource may appear as a
+/// reference (`&[mut]-`) or as proxy structure that implements the [`rftm::Mutex`] trait.
 ///
-/// - `schedule: init::Schedule`. A `struct` that can be used to schedule *software* tasks.
-/// **NOTE**: only present if the `timer-queue` feature is enabled.
+/// [`rtfm::Mutex`]: ../rtfm/trait.Mutex.html
 ///
-/// - `spawn: init::Spawn`. A `struct` that can be used to spawn *software* tasks.
+/// - `schedule: <fn-name>::Schedule`. A `struct` that can be used to schedule *software* tasks.
 ///
-/// Other properties / constraints:
+/// - `spawn: <fn-name>::Spawn`. A `struct` that can be used to spawn *software* tasks.
 ///
-/// - The `init` function can **not** be called from software.
+/// The return type `<fn-name>::LateResources` must only be specified when late resources, resources
+/// with no initial value declared at compile time, are used. `<fn-name>::LateResources` is a
+/// structure where each field corresponds to a different late resource. The
+/// `<fn-name>::LateResources` value returned by the `#[init]` function is used to initialize the
+/// late resources before `idle` or any task can start.
+///
+/// Other properties:
 ///
 /// - The `static mut` variables declared at the beginning of this function will be transformed into
 /// `&'static mut` references that are safe to access. For example, `static mut FOO: u32 = 0` will
 /// become `FOO: &'static mut u32`.
 ///
-/// - Assignments (e.g. `FOO = 0`) at the end of this function can be used to initialize *late*
-/// resources.
-///
 /// ## b. `#[idle]`
 ///
 /// This attribute indicates that the function is to be used as the *idle task*. There can be at
 /// most once instance of the `idle` attribute inside the `app` pseudo-module. The signature of the
-/// `idle` function must be `fn() -> !`.
+/// `idle` function must be `fn(<fn-name>::Context) -> !` where `<fn-name>` is the name of the
+/// function adorned with the `#[idle]` attribute.
 ///
 /// The `idle` task is a special task that always runs in the background. The `idle` task runs at
 /// the lowest priority of `0`. If the `idle` task is not defined then the runtime sets the
@@ -135,38 +130,37 @@ mod syntax;
 ///
 /// - `spawn = (..)`. Same meaning / function as [`#[init].spawn`](#a-init).
 ///
-/// The `app` attribute will injected a *context* into this function that comprises the following
-/// variables:
+/// The first argument of the function, `idle::Context`, is a structure that contains the following
+/// fields:
 ///
-/// - `resources: _`. Same meaning / function as [`init.resources`](#a-init).
+/// - `resources: _`. Same meaning / function as [`<init>::Context.resources`](#a-init).
 ///
-/// - `schedule: idle::Schedule`. Same meaning / function as [`init.schedule`](#a-init).
+/// - `schedule: idle::Schedule`. Same meaning / function as [`<init>::Context.schedule`](#a-init).
 ///
-/// - `spawn: idle::Spawn`. Same meaning / function as [`init.spawn`](#a-init).
+/// - `spawn: idle::Spawn`. Same meaning / function as [`<init>::Context.spawn`](#a-init).
 ///
-/// Other properties / constraints:
-///
-/// - The `idle` function can **not** be called from software.
+/// Other properties:
 ///
 /// - The `static mut` variables declared at the beginning of this function will be transformed into
 /// `&'static mut` references that are safe to access. For example, `static mut FOO: u32 = 0` will
 /// become `FOO: &'static mut u32`.
 ///
-/// ## c. `#[exception]`
+/// ## c. `#[task]`
 ///
-/// This attribute indicates that the function is to be used as an *exception handler*, a type of
-/// hardware task. The signature of `exception` handlers must be `[unsafe] fn()`.
+/// This attribute indicates that the function is either a hardware task or a software task. The
+/// signature of hardware tasks must be `fn(<fn-name>::Context)` whereas the signature of software
+/// tasks must be `fn(<fn-name>::Context, <inputs>)`. `<fn-name>` refers to the name of the function
+/// adorned with the `#[task]` attribute.
 ///
-/// The name of the function must match one of the Cortex-M exceptions that has [configurable
-/// priority][system-handler].
+/// The `task` attribute accepts the following optional arguments.
 ///
-/// [system-handler]: ../cortex_m/peripheral/scb/enum.SystemHandler.html
-///
-/// The `exception` attribute accepts the following optional arguments.
+/// - `binds = <interrupt-name>`. Binds this task to a particular interrupt. When this argument is
+/// present the task is treated as a hardware task; when it's omitted the task treated is treated as
+/// a software task.
 ///
 /// - `priority = <integer>`. This is the static priority of the exception handler. The value must
 /// be in the range `1..=(1 << <device-path>::NVIC_PRIO_BITS)` where `<device-path>` is the path to
-/// the device crate declared in the top `app` attribute. If this argument is omitted the priority
+/// the device crate specified in the top `app` attribute. If this argument is omitted the priority
 /// is assumed to be 1.
 ///
 /// - `resources = (..)`. Same meaning / function as [`#[init].resources`](#a-init).
@@ -175,105 +169,26 @@ mod syntax;
 ///
 /// - `spawn = (..)`. Same meaning / function as [`#[init].spawn`](#a-init).
 ///
-/// The `app` attribute will injected a *context* into this function that comprises the following
-/// variables:
+/// The first argument of the function, `<fn-name>::Context`, is a structure that contains the
+/// following fields:
 ///
-/// - `start: rtfm::Instant`. The time at which this handler started executing. **NOTE**: only
-/// present if the `timer-queue` feature is enabled.
+/// - `start: <Instant>`. For hardware tasks this is the time at which this handler started
+/// executing. For software tasks this is the time at which the task was scheduled to run. **NOTE**:
+/// only present when the `schedule` API is used.
 ///
-/// - `resources: _`. Same meaning / function as [`init.resources`](#a-init).
+/// - `resources: _`. Same meaning / function as [`<init>::Context.resources`](#a-init).
 ///
-/// - `schedule: <exception-name>::Schedule`. Same meaning / function as [`init.schedule`](#a-init).
+/// - `schedule: <exception-name>::Schedule`. Same meaning / function as
+/// [`<init>::Context.schedule`](#a-init).
 ///
-/// - `spawn: <exception-name>::Spawn`.  Same meaning / function as [`init.spawn`](#a-init).
-///
-/// Other properties / constraints:
-///
-/// - `exception` handlers can **not** be called from software.
-///
-/// - The `static mut` variables declared at the beginning of this function will be transformed into
-/// `&mut` references that are safe to access. For example, `static mut FOO: u32 = 0` will
-/// become `FOO: &mut u32`.
-///
-/// ## d. `#[interrupt]`
-///
-/// This attribute indicates that the function is to be used as an *interrupt handler*, a type of
-/// hardware task. The signature of `interrupt` handlers must be `[unsafe] fn()`.
-///
-/// The name of the function must match one of the device specific interrupts. See your device crate
-/// documentation (`Interrupt` enum) for more details.
-///
-/// The `interrupt` attribute accepts the following optional arguments.
-///
-/// - `priority = (..)`. Same meaning / function as [`#[exception].priority`](#b-exception).
-///
-/// - `resources = (..)`. Same meaning / function as [`#[init].resources`](#a-init).
-///
-/// - `schedule = (..)`. Same meaning / function as [`#[init].schedule`](#a-init).
-///
-/// - `spawn = (..)`. Same meaning / function as [`#[init].spawn`](#a-init).
-///
-/// The `app` attribute will injected a *context* into this function that comprises the following
-/// variables:
-///
-/// - `start: rtfm::Instant`. Same meaning / function as [`exception.start`](#b-exception).
-///
-/// - `resources: _`. Same meaning / function as [`init.resources`](#a-init).
-///
-/// - `schedule: <interrupt-name>::Schedule`. Same meaning / function as [`init.schedule`](#a-init).
-///
-/// - `spawn: <interrupt-name>::Spawn`.  Same meaning / function as [`init.spawn`](#a-init).
+/// - `spawn: <exception-name>::Spawn`.  Same meaning / function as
+/// [`<init>::Context.spawn`](#a-init).
 ///
 /// Other properties / constraints:
 ///
-/// - `interrupt` handlers can **not** be called from software, but they can be [`pend`]-ed by the
-/// software from any context.
-///
-/// [`pend`]: ../rtfm/fn.pend.html
-///
 /// - The `static mut` variables declared at the beginning of this function will be transformed into
-/// `&mut` references that are safe to access. For example, `static mut FOO: u32 = 0` will
-/// become `FOO: &mut u32`.
-///
-/// ## e. `#[task]`
-///
-/// This attribute indicates that the function is to be used as a *software task*. The signature of
-/// software `task`s must be `[unsafe] fn(<inputs>)`.
-///
-/// The `task` attribute accepts the following optional arguments.
-///
-/// - `capacity = <integer>`. The maximum number of instances of this task that can be queued onto
-/// the task scheduler for execution. The value must be in the range `1..=255`. If the `capacity`
-/// argument is omitted then the capacity will be inferred.
-///
-/// - `priority = <integer>`. Same meaning / function as [`#[exception].priority`](#b-exception).
-///
-/// - `resources = (..)`. Same meaning / function as [`#[init].resources`](#a-init).
-///
-/// - `schedule = (..)`. Same meaning / function as [`#[init].schedule`](#a-init).
-///
-/// - `spawn = (..)`. Same meaning / function as [`#[init].spawn`](#a-init).
-///
-/// The `app` attribute will injected a *context* into this function that comprises the following
-/// variables:
-///
-/// - `scheduled: rtfm::Instant`. The time at which this task was scheduled to run. **NOTE**: Only
-/// present if `timer-queue` is enabled.
-///
-/// - `resources: _`. Same meaning / function as [`init.resources`](#a-init).
-///
-/// - `schedule: <interrupt-name>::Schedule`. Same meaning / function as [`init.schedule`](#a-init).
-///
-/// - `spawn: <interrupt-name>::Spawn`.  Same meaning / function as [`init.spawn`](#a-init).
-///
-/// Other properties / constraints:
-///
-/// - Software `task`s can **not** be called from software, but they can be `spawn`-ed and
-/// `schedule`-d by the software from any context.
-///
-/// - The `static mut` variables declared at the beginning of this function will be transformed into
-/// `&mut` references that are safe to access. For example, `static mut FOO: u32 = 0` will
-/// become `FOO: &mut u32`.
+/// *non*-static `&mut` references that are safe to access. For example, `static mut FOO: u32 = 0`
+/// will become `FOO: &mut u32`.
 ///
 /// # 3. `extern` block
 ///
@@ -284,29 +199,30 @@ mod syntax;
 /// This `extern` block must only contain functions with signature `fn ()`. The names of these
 /// functions must match the names of the target device interrupts.
 ///
-/// Importantly, attributes can be applied to the functions inside this block. These attributes will
-/// be forwarded to the interrupt handlers generated by the `app` attribute.
+/// Attributes can be applied to the functions inside this block. These attributes will be forwarded
+/// to the interrupt handlers generated by the `app` attribute.
 #[proc_macro_attribute]
 pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
-    // Parse
-    let args = parse_macro_input!(args as syntax::AppArgs);
-    let input = parse_macro_input!(input as syntax::Input);
+    let mut settings = Settings::default();
+    settings.optimize_priorities = true;
+    settings.parse_binds = true;
+    settings.parse_cores = cfg!(feature = "heterogeneous") || cfg!(feature = "homogeneous");
+    settings.parse_extern_interrupt = true;
+    settings.parse_schedule = true;
 
-    let app = match syntax::App::parse(input.items, args) {
+    let (app, analysis) = match rtfm_syntax::parse(args, input, settings) {
         Err(e) => return e.to_compile_error().into(),
-        Ok(app) => app,
+        Ok(x) => x,
     };
 
-    // Check the specification
-    if let Err(e) = check::app(&app) {
-        return e.to_compile_error().into();
-    }
+    let extra = match check::app(&app, &analysis) {
+        Err(e) => return e.to_compile_error().into(),
+        Ok(x) => x,
+    };
 
-    // Ceiling analysis
-    let analysis = analyze::app(&app);
+    let analysis = analyze::app(analysis, &app);
 
-    // Code generation
-    let ts = codegen::app(&input.ident, &app, &analysis);
+    let ts = codegen::app(&app, &analysis, &extra);
 
     // Try to write the expanded code to disk
     if Path::new("target").exists() {

@@ -1,0 +1,9 @@
+error[E0080]: evaluation of constant value failed
+ --> $DIR/task-priority-too-high.rs:5:1
+  |
+5 | #[rtfm::app(device = lm3s6965)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to subtract with overflow
+
+error: aborting due to previous error
+
+For more information about this error, try `rustc --explain E0080`.

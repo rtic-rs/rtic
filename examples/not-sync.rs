@@ -5,11 +5,10 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_halt;
-
 use core::marker::PhantomData;
 
 use cortex_m_semihosting::debug;
+use panic_halt as _;
 
 pub struct NotSync {
     _0: PhantomData<*const ()>,
@@ -17,21 +16,24 @@ pub struct NotSync {
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    static SHARED: NotSync = NotSync { _0: PhantomData };
+    struct Resources {
+        #[init(NotSync { _0: PhantomData })]
+        shared: NotSync,
+    }
 
     #[init]
     fn init(_: init::Context) {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[task(resources = [SHARED])]
+    #[task(resources = [&shared])]
     fn foo(c: foo::Context) {
-        let _: &NotSync = c.resources.SHARED;
+        let _: &NotSync = c.resources.shared;
     }
 
-    #[task(resources = [SHARED])]
+    #[task(resources = [&shared])]
     fn bar(c: bar::Context) {
-        let _: &NotSync = c.resources.SHARED;
+        let _: &NotSync = c.resources.shared;
     }
 
     extern "C" {

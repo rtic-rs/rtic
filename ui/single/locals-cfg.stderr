@@ -1,0 +1,33 @@
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:10:9
+   |
+10 |         FOO;
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:18:9
+   |
+18 |         FOO;
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:28:9
+   |
+28 |         FOO;
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:36:9
+   |
+36 |         FOO;
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:44:9
+   |
+44 |         FOO;
+   |         ^^^ not found in this scope
+
+error: aborting due to 5 previous errors
+
+For more information about this error, try `rustc --explain E0425`.

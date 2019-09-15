@@ -36,8 +36,7 @@ $ cargo add lm3s6965 --vers 0.1.3
 $ rm memory.x build.rs
 ```
 
-3. Add the `cortex-m-rtfm` crate as a dependency and, if you need it, enable the
-   `timer-queue` feature.
+3. Add the `cortex-m-rtfm` crate as a dependency.
 
 ``` console
 $ cargo add cortex-m-rtfm --allow-prerelease

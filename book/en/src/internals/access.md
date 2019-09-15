@@ -21,7 +21,7 @@ This makes it impossible for the user code to refer to these static variables.
 Access to the resources is then given to each task using a `Resources` struct
 whose fields correspond to the resources the task has access to. There's one
 such struct per task and the `Resources` struct is initialized with either a
-mutable reference (`&mut`) to the static variables or with a resource proxy (see
+unique reference (`&mut-`) to the static variables or with a resource proxy (see
 section on [critical sections](critical-sections.html)).
 
 The code below is an example of the kind of source level transformation that

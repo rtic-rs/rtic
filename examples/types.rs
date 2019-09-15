@@ -5,48 +5,51 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::debug;
-use rtfm::{Exclusive, Instant};
+use panic_semihosting as _;
+use rtfm::cyccnt;
 
-#[rtfm::app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965, peripherals = true, monotonic = rtfm::cyccnt::CYCCNT)]
 const APP: () = {
-    static mut SHARED: u32 = 0;
+    struct Resources {
+        #[init(0)]
+        shared: u32,
+    }
 
     #[init(schedule = [foo], spawn = [foo])]
-    fn init(c: init::Context) {
-        let _: Instant = c.start;
-        let _: rtfm::Peripherals = c.core;
-        let _: lm3s6965::Peripherals = c.device;
-        let _: init::Schedule = c.schedule;
-        let _: init::Spawn = c.spawn;
+    fn init(cx: init::Context) {
+        let _: cyccnt::Instant = cx.start;
+        let _: rtfm::Peripherals = cx.core;
+        let _: lm3s6965::Peripherals = cx.device;
+        let _: init::Schedule = cx.schedule;
+        let _: init::Spawn = cx.spawn;
 
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[exception(schedule = [foo], spawn = [foo])]
-    fn SVCall(c: SVCall::Context) {
-        let _: Instant = c.start;
-        let _: SVCall::Schedule = c.schedule;
-        let _: SVCall::Spawn = c.spawn;
+    #[idle(schedule = [foo], spawn = [foo])]
+    fn idle(cx: idle::Context) -> ! {
+        let _: idle::Schedule = cx.schedule;
+        let _: idle::Spawn = cx.spawn;
+
+        loop {}
     }
 
-    #[interrupt(resources = [SHARED], schedule = [foo], spawn = [foo])]
-    fn UART0(c: UART0::Context) {
-        let _: Instant = c.start;
-        let _: resources::SHARED = c.resources.SHARED;
-        let _: UART0::Schedule = c.schedule;
-        let _: UART0::Spawn = c.spawn;
+    #[task(binds = UART0, resources = [shared], schedule = [foo], spawn = [foo])]
+    fn uart0(cx: uart0::Context) {
+        let _: cyccnt::Instant = cx.start;
+        let _: resources::shared = cx.resources.shared;
+        let _: uart0::Schedule = cx.schedule;
+        let _: uart0::Spawn = cx.spawn;
     }
 
-    #[task(priority = 2, resources = [SHARED], schedule = [foo], spawn = [foo])]
-    fn foo(c: foo::Context) {
-        let _: Instant = c.scheduled;
-        let _: Exclusive<u32> = c.resources.SHARED;
-        let _: foo::Resources = c.resources;
-        let _: foo::Schedule = c.schedule;
-        let _: foo::Spawn = c.spawn;
+    #[task(priority = 2, resources = [shared], schedule = [foo], spawn = [foo])]
+    fn foo(cx: foo::Context) {
+        let _: cyccnt::Instant = cx.scheduled;
+        let _: &mut u32 = cx.resources.shared;
+        let _: foo::Resources = cx.resources;
+        let _: foo::Schedule = cx.schedule;
+        let _: foo::Spawn = cx.spawn;
     }
 
     extern "C" {

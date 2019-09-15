@@ -5,10 +5,9 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
+use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
@@ -17,8 +16,8 @@ const APP: () = {
         rtfm::pend(Interrupt::UART0);
     }
 
-    #[interrupt(spawn = [foo, bar])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, spawn = [foo, bar])]
+    fn uart0(c: uart0::Context) {
         c.spawn.foo(0).unwrap();
         c.spawn.foo(1).unwrap();
         c.spawn.foo(2).unwrap();

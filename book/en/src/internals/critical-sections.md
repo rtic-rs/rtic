@@ -1,19 +1,19 @@
 # Critical sections
 
 When a resource (static variable) is shared between two, or more, tasks that run
-at different priorities some form of mutual exclusion is required to access the
+at different priorities some form of mutual exclusion is required to mutate the
 memory in a data race free manner. In RTFM we use priority-based critical
-sections to guarantee mutual exclusion (see the [Immediate Priority Ceiling
-Protocol][ipcp]).
+sections to guarantee mutual exclusion (see the [Immediate Ceiling Priority
+Protocol][icpp]).
 
-[ipcp]: https://en.wikipedia.org/wiki/Priority_ceiling_protocol
+[icpp]: https://en.wikipedia.org/wiki/Priority_ceiling_protocol
 
 The critical section consists of temporarily raising the *dynamic* priority of
 the task. While a task is within this critical section all the other tasks that
 may request the resource are *not allowed to start*.
 
 How high must the dynamic priority be to ensure mutual exclusion on a particular
-resource? The [ceiling analysis](ceiling-analysis.html) is in charge of
+resource? The [ceiling analysis](ceilings.html) is in charge of
 answering that question and will be discussed in the next section. This section
 will focus on the implementation of the critical section.
 
@@ -25,7 +25,7 @@ a data race the *lower priority* task must use a critical section when it needs
 to modify the shared memory. On the other hand, the higher priority task can
 directly modify the shared memory because it can't be preempted by the lower
 priority task. To enforce the use of a critical section on the lower priority
-task we give it a *resource proxy*, whereas we give a mutable reference
+task we give it a *resource proxy*, whereas we give a unique reference
 (`&mut-`) to the higher priority task.
 
 The example below shows the different types handed out to each task:
@@ -33,12 +33,15 @@ The example below shows the different types handed out to each task:
 ``` rust
 #[rtfm::app(device = ..)]
 const APP: () = {
-    static mut X: u64 = 0;
+    struct Resources {
+        #[init(0)]
+        x: u64,
+    }
 
-    #[interrupt(binds = UART0, priority = 1, resources = [X])]
+    #[interrupt(binds = UART0, priority = 1, resources = [x])]
     fn foo(c: foo::Context) {
         // resource proxy
-        let mut x: resources::X = c.resources.X;
+        let mut x: resources::x = c.resources.x;
 
         x.lock(|x: &mut u64| {
             // critical section
@@ -46,9 +49,9 @@ const APP: () = {
         });
     }
 
-    #[interrupt(binds = UART1, priority = 2, resources = [X])]
+    #[interrupt(binds = UART1, priority = 2, resources = [x])]
     fn bar(c: foo::Context) {
-        let mut x: &mut u64 = c.resources.X;
+        let mut x: &mut u64 = c.resources.x;
 
         *x += 1;
     }
@@ -69,14 +72,14 @@ fn bar(c: bar::Context) {
 }
 
 pub mod resources {
-    pub struct X {
+    pub struct x {
         // ..
     }
 }
 
 pub mod foo {
     pub struct Resources {
-        pub X: resources::X,
+        pub x: resources::x,
     }
 
     pub struct Context {
@@ -87,7 +90,7 @@ pub mod foo {
 
 pub mod bar {
     pub struct Resources<'a> {
-        pub X: rtfm::Exclusive<'a, u64>, // newtype over `&'a mut u64`
+        pub x: &'a mut u64,
     }
 
     pub struct Context {
@@ -97,9 +100,9 @@ pub mod bar {
 }
 
 const APP: () = {
-    static mut X: u64 = 0;
+    static mut x: u64 = 0;
 
-    impl rtfm::Mutex for resources::X {
+    impl rtfm::Mutex for resources::x {
         type T = u64;
 
         fn lock<R>(&mut self, f: impl FnOnce(&mut u64) -> R) -> R {
@@ -111,7 +114,7 @@ const APP: () = {
     unsafe fn UART0() {
         foo(foo::Context {
             resources: foo::Resources {
-                X: resources::X::new(/* .. */),
+                x: resources::x::new(/* .. */),
             },
             // ..
         })
@@ -121,7 +124,7 @@ const APP: () = {
     unsafe fn UART1() {
         bar(bar::Context {
             resources: bar::Resources {
-                X: rtfm::Exclusive(&mut X),
+                x: &mut x,
             },
             // ..
         })
@@ -158,7 +161,7 @@ In this particular example we could implement the critical section as follows:
 > **NOTE:** this is a simplified implementation
 
 ``` rust
-impl rtfm::Mutex for resources::X {
+impl rtfm::Mutex for resources::x {
     type T = u64;
 
     fn lock<R, F>(&mut self, f: F) -> R
@@ -170,7 +173,7 @@ impl rtfm::Mutex for resources::X {
             asm!("msr BASEPRI, 192" : : : "memory" : "volatile");
 
             // run user code within the critical section
-            let r = f(&mut implementation_defined_name_for_X);
+            let r = f(&mut x);
 
             // end of critical section: restore dynamic priority to its static value (`1`)
             asm!("msr BASEPRI, 0" : : : "memory" : "volatile");
@@ -183,23 +186,23 @@ impl rtfm::Mutex for resources::X {
 
 Here it's important to use the `"memory"` clobber in the `asm!` block. It
 prevents the compiler from reordering memory operations across it. This is
-important because accessing the variable `X` outside the critical section would
+important because accessing the variable `x` outside the critical section would
 result in a data race.
 
 It's important to note that the signature of the `lock` method prevents nesting
 calls to it. This is required for memory safety, as nested calls would produce
-multiple mutable references (`&mut-`) to `X` breaking Rust aliasing rules. See
+multiple unique references (`&mut-`) to `x` breaking Rust aliasing rules. See
 below:
 
 ``` rust
-#[interrupt(binds = UART0, priority = 1, resources = [X])]
+#[interrupt(binds = UART0, priority = 1, resources = [x])]
 fn foo(c: foo::Context) {
     // resource proxy
-    let mut res: resources::X = c.resources.X;
+    let mut res: resources::x = c.resources.x;
 
     res.lock(|x: &mut u64| {
         res.lock(|alias: &mut u64| {
-            //~^ error: `res` has already been mutably borrowed
+            //~^ error: `res` has already been uniquely borrowed (`&mut-`)
             // ..
         });
     });
@@ -223,18 +226,22 @@ Consider this program:
 ``` rust
 #[rtfm::app(device = ..)]
 const APP: () = {
-    static mut X: u64 = 0;
-    static mut Y: u64 = 0;
+    struct Resources {
+        #[init(0)]
+        x: u64,
+        #[init(0)]
+        y: u64,
+    }
 
     #[init]
     fn init() {
         rtfm::pend(Interrupt::UART0);
     }
 
-    #[interrupt(binds = UART0, priority = 1, resources = [X, Y])]
+    #[interrupt(binds = UART0, priority = 1, resources = [x, y])]
     fn foo(c: foo::Context) {
-        let mut x = c.resources.X;
-        let mut y = c.resources.Y;
+        let mut x = c.resources.x;
+        let mut y = c.resources.y;
 
         y.lock(|y| {
             *y += 1;
@@ -259,12 +266,12 @@ const APP: () = {
         })
     }
 
-    #[interrupt(binds = UART1, priority = 2, resources = [X])]
+    #[interrupt(binds = UART1, priority = 2, resources = [x])]
     fn bar(c: foo::Context) {
         // ..
     }
 
-    #[interrupt(binds = UART2, priority = 3, resources = [Y])]
+    #[interrupt(binds = UART2, priority = 3, resources = [y])]
     fn baz(c: foo::Context) {
         // ..
     }
@@ -279,13 +286,13 @@ The code generated by the framework looks like this:
 // omitted: user code
 
 pub mod resources {
-    pub struct X<'a> {
+    pub struct x<'a> {
         priority: &'a Cell<u8>,
     }
 
-    impl<'a> X<'a> {
+    impl<'a> x<'a> {
         pub unsafe fn new(priority: &'a Cell<u8>) -> Self {
-            X { priority }
+            x { priority }
         }
 
         pub unsafe fn priority(&self) -> &Cell<u8> {
@@ -293,7 +300,7 @@ pub mod resources {
         }
     }
 
-    // repeat for `Y`
+    // repeat for `y`
 }
 
 pub mod foo {
@@ -303,34 +310,35 @@ pub mod foo {
     }
 
     pub struct Resources<'a> {
-        pub X: resources::X<'a>,
-        pub Y: resources::Y<'a>,
+        pub x: resources::x<'a>,
+        pub y: resources::y<'a>,
     }
 }
 
 const APP: () = {
+    use cortex_m::register::basepri;
+
     #[no_mangle]
-    unsafe fn UART0() {
+    unsafe fn UART1() {
         // the static priority of this interrupt (as specified by the user)
-        const PRIORITY: u8 = 1;
+        const PRIORITY: u8 = 2;
 
         // take a snashot of the BASEPRI
-        let initial: u8;
-        asm!("mrs $0, BASEPRI" : "=r"(initial) : : : "volatile");
+        let initial = basepri::read();
 
         let priority = Cell::new(PRIORITY);
-        foo(foo::Context {
-            resources: foo::Resources::new(&priority),
+        bar(bar::Context {
+            resources: bar::Resources::new(&priority),
             // ..
         });
 
         // roll back the BASEPRI to the snapshot value we took before
-        asm!("msr BASEPRI, $0" : : "r"(initial) : : "volatile");
+        basepri::write(initial); // same as the `asm!` block we saw before
     }
 
-    // similarly for `UART1`
+    // similarly for `UART0` / `foo` and `UART2` / `baz`
 
-    impl<'a> rtfm::Mutex for resources::X<'a> {
+    impl<'a> rtfm::Mutex for resources::x<'a> {
         type T = u64;
 
         fn lock<R>(&mut self, f: impl FnOnce(&mut u64) -> R) -> R {
@@ -342,26 +350,24 @@ const APP: () = {
                 if current < CEILING {
                     // raise dynamic priority
                     self.priority().set(CEILING);
-                    let hw = logical2hw(CEILING);
-                    asm!("msr BASEPRI, $0" : : "r"(hw) : "memory" : "volatile");
+                    basepri::write(logical2hw(CEILING));
 
-                    let r = f(&mut X);
+                    let r = f(&mut y);
 
                     // restore dynamic priority
-                    let hw = logical2hw(current);
-                    asm!("msr BASEPRI, $0" : : "r"(hw) : "memory" : "volatile");
+                    basepri::write(logical2hw(current));
                     self.priority().set(current);
 
                     r
                 } else {
                     // dynamic priority is high enough
-                    f(&mut X)
+                    f(&mut y)
                 }
             }
         }
     }
 
-    // repeat for `Y`
+    // repeat for resource `y`
 };
 ```
 
@@ -373,38 +379,38 @@ fn foo(c: foo::Context) {
     // NOTE: BASEPRI contains the value `0` (its reset value) at this point
 
     // raise dynamic priority to `3`
-    unsafe { asm!("msr BASEPRI, 160" : : : "memory" : "volatile") }
+    unsafe { basepri::write(160) }
 
-    // the two operations on `Y` are merged into one
-    Y += 2;
+    // the two operations on `y` are merged into one
+    y += 2;
 
-    // BASEPRI is not modified to access `X` because the dynamic priority is high enough
-    X += 1;
+    // BASEPRI is not modified to access `x` because the dynamic priority is high enough
+    x += 1;
 
     // lower (restore) the dynamic priority to `1`
-    unsafe { asm!("msr BASEPRI, 224" : : : "memory" : "volatile") }
+    unsafe { basepri::write(224) }
 
     // mid-point
 
     // raise dynamic priority to `2`
-    unsafe { asm!("msr BASEPRI, 192" : : : "memory" : "volatile") }
+    unsafe { basepri::write(192) }
 
-    X += 1;
+    x += 1;
 
     // raise dynamic priority to `3`
-    unsafe { asm!("msr BASEPRI, 160" : : : "memory" : "volatile") }
+    unsafe { basepri::write(160) }
 
-    Y += 1;
+    y += 1;
 
     // lower (restore) the dynamic priority to `2`
-    unsafe { asm!("msr BASEPRI, 192" : : : "memory" : "volatile") }
+    unsafe { basepri::write(192) }
 
-    // NOTE: it would be sound to merge this operation on X with the previous one but
+    // NOTE: it would be sound to merge this operation on `x` with the previous one but
     // compiler fences are coarse grained and prevent such optimization
-    X += 1;
+    x += 1;
 
     // lower (restore) the dynamic priority to `1`
-    unsafe { asm!("msr BASEPRI, 224" : : : "memory" : "volatile") }
+    unsafe { basepri::write(224) }
 
     // NOTE: BASEPRI contains the value `224` at this point
     // the UART0 handler will restore the value to `0` before returning
@@ -425,7 +431,10 @@ handler through preemption. This is best observed in the following example:
 ``` rust
 #[rtfm::app(device = ..)]
 const APP: () = {
-    static mut X: u64 = 0;
+    struct Resources {
+        #[init(0)]
+        x: u64,
+    }
 
     #[init]
     fn init() {
@@ -444,11 +453,11 @@ const APP: () = {
         // this function returns to `idle`
     }
 
-    #[task(binds = UART1, priority = 2, resources = [X])]
+    #[task(binds = UART1, priority = 2, resources = [x])]
     fn bar() {
         // BASEPRI is `0` (dynamic priority = 2)
 
-        X.lock(|x| {
+        x.lock(|x| {
             // BASEPRI is raised to `160` (dynamic priority = 3)
 
             // ..
@@ -470,7 +479,7 @@ const APP: () = {
         }
     }
 
-    #[task(binds = UART2, priority = 3, resources = [X])]
+    #[task(binds = UART2, priority = 3, resources = [x])]
     fn baz() {
         // ..
     }
@@ -493,8 +502,7 @@ const APP: () = {
         const PRIORITY: u8 = 2;
 
         // take a snashot of the BASEPRI
-        let initial: u8;
-        asm!("mrs $0, BASEPRI" : "=r"(initial) : : : "volatile");
+        let initial = basepri::read();
 
         let priority = Cell::new(PRIORITY);
         bar(bar::Context {
@@ -503,7 +511,7 @@ const APP: () = {
         });
 
         // BUG: FORGOT to roll back the BASEPRI to the snapshot value we took before
-        // asm!("msr BASEPRI, $0" : : "r"(initial) : : "volatile");
+        basepri::write(initial);
     }
 };
 ```

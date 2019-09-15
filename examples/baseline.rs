@@ -5,27 +5,26 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
+use panic_semihosting as _;
 
 // NOTE: does NOT properly work on QEMU
-#[rtfm::app(device = lm3s6965)]
+#[rtfm::app(device = lm3s6965, monotonic = rtfm::cyccnt::CYCCNT)]
 const APP: () = {
     #[init(spawn = [foo])]
-    fn init(c: init::Context) {
-        hprintln!("init(baseline = {:?})", c.start).unwrap();
+    fn init(cx: init::Context) {
+        hprintln!("init(baseline = {:?})", cx.start).unwrap();
 
         // `foo` inherits the baseline of `init`: `Instant(0)`
-        c.spawn.foo().unwrap();
+        cx.spawn.foo().unwrap();
     }
 
     #[task(schedule = [foo])]
-    fn foo(c: foo::Context) {
+    fn foo(cx: foo::Context) {
         static mut ONCE: bool = true;
 
-        hprintln!("foo(baseline = {:?})", c.scheduled).unwrap();
+        hprintln!("foo(baseline = {:?})", cx.scheduled).unwrap();
 
         if *ONCE {
             *ONCE = false;
@@ -36,12 +35,12 @@ const APP: () = {
         }
     }
 
-    #[interrupt(spawn = [foo])]
-    fn UART0(c: UART0::Context) {
-        hprintln!("UART0(baseline = {:?})", c.start).unwrap();
+    #[task(binds = UART0, spawn = [foo])]
+    fn uart0(cx: uart0::Context) {
+        hprintln!("UART0(baseline = {:?})", cx.start).unwrap();
 
         // `foo` inherits the baseline of `UART0`: its `start` time
-        c.spawn.foo().unwrap();
+        cx.spawn.foo().unwrap();
     }
 
     extern "C" {

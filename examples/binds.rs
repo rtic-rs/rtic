@@ -5,10 +5,9 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
+use panic_semihosting as _;
 
 // `examples/interrupt.rs` rewritten to use `binds`
 #[rtfm::app(device = lm3s6965)]
@@ -31,7 +30,7 @@ const APP: () = {
         loop {}
     }
 
-    #[interrupt(binds = UART0)]
+    #[task(binds = UART0)]
     fn foo(_: foo::Context) {
         static mut TIMES: u32 = 0;
 

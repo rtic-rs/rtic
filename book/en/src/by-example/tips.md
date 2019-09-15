@@ -2,10 +2,21 @@
 
 ## Generics
 
-Resources shared between two or more tasks implement the `Mutex` trait in *all*
-contexts, even on those where a critical section is not required to access the
-data. This lets you easily write generic code that operates on resources and can
-be called from different tasks. Here's one such example:
+Resources may appear in contexts as resource proxies or as unique references
+(`&mut-`) depending on the priority of the task. Because the same resource may
+appear as *different* types in different contexts one cannot refactor a common
+operation that uses resources into a plain function; however, such refactor is
+possible using *generics*.
+
+All resource proxies implement the `rtfm::Mutex` trait. On the other hand,
+unique references (`&mut-`) do *not* implement this trait (due to limitations in
+the trait system) but one can wrap these references in the [`rtfm::Exclusive`]
+newtype which does implement the `Mutex` trait. With the help of this newtype
+one can write a generic function that operates on generic resources and call it
+from different tasks to perform some operation on the same set of resources.
+Here's one such example:
+
+[`rtfm::Exclusive`]: ../../api/rtfm/struct.Exclusive.html
 
 ``` rust
 {{#include ../../../../examples/generics.rs}}
@@ -15,17 +26,15 @@ be called from different tasks. Here's one such example:
 $ cargo run --example generics
 {{#include ../../../../ci/expected/generics.run}}```
 
-This also lets you change the static priorities of tasks without having to
-rewrite code. If you consistently use `lock`s to access the data behind shared
-resources then your code will continue to compile when you change the priority
-of tasks.
+Using generics also lets you change the static priorities of tasks during
+development without having to rewrite a bunch code every time.
 
 ## Conditional compilation
 
-You can use conditional compilation (`#[cfg]`) on resources (`static [mut]`
-items) and tasks (`fn` items). The effect of using `#[cfg]` attributes is that
-the resource / task will *not* be available through the corresponding `Context`
-`struct` if the condition doesn't hold.
+You can use conditional compilation (`#[cfg]`) on resources (the fields of
+`struct Resources`) and tasks (the `fn` items). The effect of using `#[cfg]`
+attributes is that the resource / task will *not* be available through the
+corresponding `Context` `struct` if the condition doesn't hold.
 
 The example below logs a message whenever the `foo` task is spawned, but only if
 the program has been compiled using the `dev` profile.
@@ -33,6 +42,12 @@ the program has been compiled using the `dev` profile.
 ``` rust
 {{#include ../../../../examples/cfg.rs}}
 ```
+
+``` console
+$ cargo run --example cfg --release
+
+$ cargo run --example cfg
+{{#include ../../../../ci/expected/cfg.run}}```
 
 ## Running tasks from RAM
 
@@ -70,25 +85,13 @@ One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' foo::'
-{{#include ../../../../ci/expected/ramfunc.grep.foo}}```
+{{#include ../../../../ci/expected/ramfunc.grep.foo}}
+```
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
-{{#include ../../../../ci/expected/ramfunc.grep.bar}}```
-
-## `binds`
-
-You can give hardware tasks more task-like names using the `binds` argument: you
-name the function as you wish and specify the name of the interrupt / exception
-in the `binds` argument. Types like `Spawn` will be placed in a module named
-after the function, not the interrupt / exception. Example below:
-
-``` rust
-{{#include ../../../../examples/binds.rs}}
+{{#include ../../../../ci/expected/ramfunc.grep.bar}}
 ```
-``` console
-$ cargo run --example binds
-{{#include ../../../../ci/expected/binds.run}}```
 
 ## Indirection for faster message passing
 
@@ -100,10 +103,10 @@ instead of sending the buffer by value, one can send an owning pointer into the
 buffer.
 
 One can use a global allocator to achieve indirection (`alloc::Box`,
-`alloc::Rc`, etc.), which requires using the nightly channel as of Rust v1.34.0,
+`alloc::Rc`, etc.), which requires using the nightly channel as of Rust v1.37.0,
 or one can use a statically allocated memory pool like [`heapless::Pool`].
 
-[`heapless::Pool`]: https://docs.rs/heapless/0.4.3/heapless/pool/index.html
+[`heapless::Pool`]: https://docs.rs/heapless/0.5.0/heapless/pool/index.html
 
 Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 
@@ -111,7 +114,7 @@ Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 {{#include ../../../../examples/pool.rs}}
 ```
 ``` console
-$ cargo run --example binds
+$ cargo run --example pool
 {{#include ../../../../ci/expected/pool.run}}```
 
 ## Inspecting the expanded code
@@ -131,33 +134,18 @@ $ cargo build --example foo
 
 $ rustfmt target/rtfm-expansion.rs
 
-$ tail -n30 target/rtfm-expansion.rs
+$ tail target/rtfm-expansion.rs
 ```
 
 ``` rust
 #[doc = r" Implementation details"]
 const APP: () = {
+    #[doc = r" Always include the device crate which contains the vector table"]
     use lm3s6965 as _;
     #[no_mangle]
-    unsafe fn main() -> ! {
+    unsafe extern "C" fn main() -> ! {
         rtfm::export::interrupt::disable();
-        let mut core = rtfm::export::Peripherals::steal();
-        let late = init(
-            init::Locals::new(),
-            init::Context::new(rtfm::Peripherals {
-                CBP: core.CBP,
-                CPUID: core.CPUID,
-                DCB: core.DCB,
-                DWT: core.DWT,
-                FPB: core.FPB,
-                FPU: core.FPU,
-                ITM: core.ITM,
-                MPU: core.MPU,
-                SCB: &mut core.SCB,
-                SYST: core.SYST,
-                TPIU: core.TPIU,
-            }),
-        );
+        let mut core: rtfm::export::Peripherals = core::mem::transmute(());
         core.SCB.scr.modify(|r| r | 1 << 1);
         rtfm::export::interrupt::enable();
         loop {
@@ -175,5 +163,5 @@ crate and print the output to the console.
 
 ``` console
 $ # produces the same output as before
-$ cargo expand --example smallest | tail -n30
+$ cargo expand --example smallest | tail
 ```

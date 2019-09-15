@@ -1,36 +1,34 @@
-use core::cmp::{self, Ordering};
+use core::{
+    cmp::{self, Ordering},
+    convert::TryInto,
+    mem,
+    ops::Sub,
+};
 
 use cortex_m::peripheral::{SCB, SYST};
 use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 
-use crate::Instant;
+use crate::Monotonic;
 
-pub struct TimerQueue<T, N>
+pub struct TimerQueue<M, T, N>(pub BinaryHeap<NotReady<M, T>, N, Min>)
 where
-    N: ArrayLength<NotReady<T>>,
+    M: Monotonic,
+    <M::Instant as Sub>::Output: TryInto<u32>,
+    N: ArrayLength<NotReady<M, T>>,
+    T: Copy;
+
+impl<M, T, N> TimerQueue<M, T, N>
+where
+    M: Monotonic,
+    <M::Instant as Sub>::Output: TryInto<u32>,
+    N: ArrayLength<NotReady<M, T>>,
     T: Copy,
 {
-    pub syst: SYST,
-    pub queue: BinaryHeap<NotReady<T>, N, Min>,
-}
-
-impl<T, N> TimerQueue<T, N>
-where
-    N: ArrayLength<NotReady<T>>,
-    T: Copy,
-{
-    pub fn new(syst: SYST) -> Self {
-        TimerQueue {
-            syst,
-            queue: BinaryHeap::new(),
-        }
-    }
-
     #[inline]
-    pub unsafe fn enqueue_unchecked(&mut self, nr: NotReady<T>) {
+    pub unsafe fn enqueue_unchecked(&mut self, nr: NotReady<M, T>) {
         let mut is_empty = true;
         if self
-            .queue
+            .0
             .peek()
             .map(|head| {
                 is_empty = false;
@@ -39,77 +37,102 @@ where
             .unwrap_or(true)
         {
             if is_empty {
-                self.syst.enable_interrupt();
+                mem::transmute::<_, SYST>(()).enable_interrupt();
             }
 
             // set SysTick pending
             SCB::set_pendst();
         }
 
-        self.queue.push_unchecked(nr);
+        self.0.push_unchecked(nr);
     }
 
     #[inline]
     pub fn dequeue(&mut self) -> Option<(T, u8)> {
-        if let Some(instant) = self.queue.peek().map(|p| p.instant) {
-            let diff = instant.0.wrapping_sub(Instant::now().0);
+        unsafe {
+            if let Some(instant) = self.0.peek().map(|p| p.instant) {
+                let now = M::now();
 
-            if diff < 0 {
-                // task became ready
-                let nr = unsafe { self.queue.pop_unchecked() };
+                if instant < now {
+                    // task became ready
+                    let nr = self.0.pop_unchecked();
 
-                Some((nr.task, nr.index))
+                    Some((nr.task, nr.index))
+                } else {
+                    // set a new timeout
+                    const MAX: u32 = 0x00ffffff;
+
+                    let ratio = M::ratio();
+                    let dur = match (instant - now).try_into().ok().and_then(|x| {
+                        x.checked_mul(ratio.numerator)
+                            .map(|x| x / ratio.denominator)
+                    }) {
+                        None => MAX,
+                        Some(x) => cmp::min(MAX, x),
+                    };
+                    mem::transmute::<_, SYST>(()).set_reload(dur);
+
+                    // start counting down from the new reload
+                    mem::transmute::<_, SYST>(()).clear_current();
+
+                    None
+                }
             } else {
-                // set a new timeout
-                const MAX: u32 = 0x00ffffff;
-
-                self.syst.set_reload(cmp::min(MAX, diff as u32));
-
-                // start counting down from the new reload
-                self.syst.clear_current();
+                // the queue is empty
+                mem::transmute::<_, SYST>(()).disable_interrupt();
 
                 None
             }
-        } else {
-            // the queue is empty
-            self.syst.disable_interrupt();
-            None
         }
     }
 }
 
-pub struct NotReady<T>
+pub struct NotReady<M, T>
 where
     T: Copy,
+    M: Monotonic,
+    <M::Instant as Sub>::Output: TryInto<u32>,
 {
     pub index: u8,
-    pub instant: Instant,
+    pub instant: M::Instant,
     pub task: T,
 }
 
-impl<T> Eq for NotReady<T> where T: Copy {}
-
-impl<T> Ord for NotReady<T>
+impl<M, T> Eq for NotReady<M, T>
 where
     T: Copy,
+    M: Monotonic,
+    <M::Instant as Sub>::Output: TryInto<u32>,
+{
+}
+
+impl<M, T> Ord for NotReady<M, T>
+where
+    T: Copy,
+    M: Monotonic,
+    <M::Instant as Sub>::Output: TryInto<u32>,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.instant.cmp(&other.instant)
     }
 }
 
-impl<T> PartialEq for NotReady<T>
+impl<M, T> PartialEq for NotReady<M, T>
 where
     T: Copy,
+    M: Monotonic,
+    <M::Instant as Sub>::Output: TryInto<u32>,
 {
     fn eq(&self, other: &Self) -> bool {
         self.instant == other.instant
     }
 }
 
-impl<T> PartialOrd for NotReady<T>
+impl<M, T> PartialOrd for NotReady<M, T>
 where
     T: Copy,
+    M: Monotonic,
+    <M::Instant as Sub>::Output: TryInto<u32>,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(&other))

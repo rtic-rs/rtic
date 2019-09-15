@@ -1,37 +1,43 @@
 # Timer queue
 
-When the `timer-queue` feature is enabled the RTFM framework includes a *global
-timer queue* that applications can use to *schedule* software tasks to run at
-some time in the future.
+In contrast with the `spawn` API, which immediately spawns a software task onto
+the scheduler, the `schedule` API can be used to schedule a task to run some
+time in the future.
 
-> **NOTE**: The timer-queue feature can't be enabled when the target is
-> `thumbv6m-none-eabi` because there's no timer queue support for ARMv6-M. This
-> may change in the future.
+To use the `schedule` API a monotonic timer must be first defined using the
+`monotonic` argument of the `#[app]` attribute. This argument takes a path to a
+type that implements the [`Monotonic`] trait. The associated type, `Instant`, of
+this trait represents a timestamp in arbitrary units and it's used extensively
+in the `schedule` API -- it is suggested to model this type after [the one in
+the standard library][std-instant].
 
-> **NOTE**: When the `timer-queue` feature is enabled you will *not* be able to
-> use the `SysTick` exception as a hardware task because the runtime uses it to
-> implement the global timer queue.
+Although not shown in the trait definition (due to limitations in the trait /
+type system) the subtraction of two `Instant`s should return some `Duration`
+type (see [`core::time::Duration`]) and this `Duration` type must implement the
+`TryInto<u32>` trait. The implementation of this trait must convert the
+`Duration` value, which uses some arbitrary unit of time, into the "system timer
+(SYST) clock cycles" time unit. The result of the conversion must be a 32-bit
+integer. If the result of the conversion doesn't fit in a 32-bit number then the
+operation must return an error, any error type.
 
-To be able to schedule a software task the name of the task must appear in the
-`schedule` argument of the context attribute. When scheduling a task the
-[`Instant`] at which the task should be executed must be passed as the first
-argument of the `schedule` invocation.
+[`Monotonic`]: ../../api/rtfm/trait.Monotonic.html
+[std-instant]: https://doc.rust-lang.org/std/time/struct.Instant.html
+[`core::time::Duration`]: https://doc.rust-lang.org/core/time/struct.Duration.html
 
-[`Instant`]: ../../api/rtfm/struct.Instant.html
+For ARMv7+ targets the `rtfm` crate provides a `Monotonic` implementation based
+on the built-in CYCle CouNTer (CYCCNT). Note that this is a 32-bit timer clocked
+at the frequency of the CPU and as such it is not suitable for tracking time
+spans in the order of seconds.
 
-The RTFM runtime includes a monotonic, non-decreasing, 32-bit timer which can be
-queried using the `Instant::now` constructor. A [`Duration`] can be added to
-`Instant::now()` to obtain an `Instant` into the future. The monotonic timer is
-disabled while `init` runs so `Instant::now()` always returns the value
-`Instant(0 /* clock cycles */)`; the timer is enabled right before the
-interrupts are re-enabled and `idle` is executed.
-
-[`Duration`]: ../../api/rtfm/struct.Duration.html
+To be able to schedule a software task from a context the name of the task must
+first appear in the `schedule` argument of the context attribute. When
+scheduling a task the (user-defined) `Instant` at which the task should be
+executed must be passed as the first argument of the `schedule` invocation.
 
 The example below schedules two tasks from `init`: `foo` and `bar`. `foo` is
 scheduled to run 8 million clock cycles in the future. Next, `bar` is scheduled
-to run 4 million clock cycles in the future. `bar` runs before `foo` since it
-was scheduled to run first.
+to run 4 million clock cycles in the future. Thus `bar` runs before `foo` since
+it was scheduled to run first.
 
 > **IMPORTANT**: The examples that use the `schedule` API or the `Instant`
 > abstraction will **not** properly work on QEMU because the Cortex-M cycle
@@ -41,11 +47,18 @@ was scheduled to run first.
 {{#include ../../../../examples/schedule.rs}}
 ```
 
-Running the program on real hardware produces the following output in the console:
+Running the program on real hardware produces the following output in the
+console:
 
 ``` text
 {{#include ../../../../ci/expected/schedule.run}}
 ```
+
+When the `schedule` API is being used the runtime internally uses the `SysTick`
+interrupt handler and the system timer peripheral (`SYST`) so neither can be
+used by the application. This is accomplished by changing the type of
+`init::Context.core` from `cortex_m::Peripherals` to `rtfm::Peripherals`. The
+latter structure contains all the fields of the former minus the `SYST` one.
 
 ## Periodic tasks
 
@@ -80,9 +93,10 @@ the task. Depending on the priority of the task and the load of the system the
 What do you think will be the value of `scheduled` for software tasks that are
 *spawned* instead of scheduled? The answer is that spawned tasks inherit the
 *baseline* time of the context that spawned it. The baseline of hardware tasks
-is `start`, the baseline of software tasks is `scheduled` and the baseline of
-`init` is `start = Instant(0)`. `idle` doesn't really have a baseline but tasks
-spawned from it will use `Instant::now()` as their baseline time.
+is their `start` time, the baseline of software tasks is their `scheduled` time
+and the baseline of `init` is the system start time or time zero
+(`Instant::zero()`). `idle` doesn't really have a baseline but tasks spawned
+from it will use `Instant::now()` as their baseline time.
 
 The example below showcases the different meanings of the *baseline*.
 

@@ -5,38 +5,49 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
+use cortex_m_semihosting::debug;
 #[cfg(debug_assertions)]
 use cortex_m_semihosting::hprintln;
+use panic_semihosting as _;
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
-    static mut COUNT: u32 = 0;
-
-    #[init]
-    fn init(_: init::Context) {
-        // ..
+    struct Resources {
+        #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
+        #[init(0)]
+        count: u32,
     }
 
-    #[task(priority = 3, resources = [COUNT], spawn = [log])]
-    fn foo(c: foo::Context) {
+    #[init(spawn = [foo])]
+    fn init(cx: init::Context) {
+        cx.spawn.foo().unwrap();
+        cx.spawn.foo().unwrap();
+    }
+
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
+        debug::exit(debug::EXIT_SUCCESS);
+
+        loop {}
+    }
+
+    #[task(capacity = 2, resources = [count], spawn = [log])]
+    fn foo(_cx: foo::Context) {
         #[cfg(debug_assertions)]
         {
-            *c.resources.COUNT += 1;
+            *_cx.resources.count += 1;
 
-            c.spawn.log(*c.resources.COUNT).ok();
+            _cx.spawn.log(*_cx.resources.count).unwrap();
         }
 
         // this wouldn't compile in `release` mode
-        // *resources.COUNT += 1;
+        // *_cx.resources.count += 1;
 
         // ..
     }
 
     #[cfg(debug_assertions)]
-    #[task]
+    #[task(capacity = 2)]
     fn log(_: log::Context, n: u32) {
         hprintln!(
             "foo has been called {} time{}",

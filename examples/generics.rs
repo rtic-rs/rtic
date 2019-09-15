@@ -5,15 +5,17 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_semihosting;
-
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
-use rtfm::Mutex;
+use panic_semihosting as _;
+use rtfm::{Exclusive, Mutex};
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
-    static mut SHARED: u32 = 0;
+    struct Resources {
+        #[init(0)]
+        shared: u32,
+    }
 
     #[init]
     fn init(_: init::Context) {
@@ -21,42 +23,43 @@ const APP: () = {
         rtfm::pend(Interrupt::UART1);
     }
 
-    #[interrupt(resources = [SHARED])]
-    fn UART0(c: UART0::Context) {
+    #[task(binds = UART0, resources = [shared])]
+    fn uart0(c: uart0::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART0(STATE = {})", *STATE).unwrap();
 
-        advance(STATE, c.resources.SHARED);
+        // second argument has type `resources::shared`
+        advance(STATE, c.resources.shared);
 
         rtfm::pend(Interrupt::UART1);
 
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[interrupt(priority = 2, resources = [SHARED])]
-    fn UART1(mut c: UART1::Context) {
+    #[task(binds = UART1, priority = 2, resources = [shared])]
+    fn uart1(c: uart1::Context) {
         static mut STATE: u32 = 0;
 
         hprintln!("UART1(STATE = {})", *STATE).unwrap();
 
-        // just to show that `SHARED` can be accessed directly and ..
-        *c.resources.SHARED += 0;
-        // .. also through a (no-op) `lock`
-        c.resources.SHARED.lock(|shared| *shared += 0);
+        // just to show that `shared` can be accessed directly
+        *c.resources.shared += 0;
 
-        advance(STATE, c.resources.SHARED);
+        // second argument has type `Exclusive<u32>`
+        advance(STATE, Exclusive(c.resources.shared));
     }
 };
 
+// the second parameter is generic: it can be any type that implements the `Mutex` trait
 fn advance(state: &mut u32, mut shared: impl Mutex<T = u32>) {
     *state += 1;
 
-    let (old, new) = shared.lock(|shared| {
+    let (old, new) = shared.lock(|shared: &mut u32| {
         let old = *shared;
         *shared += *state;
         (old, *shared)
     });
 
-    hprintln!("SHARED: {} -> {}", old, new).unwrap();
+    hprintln!("shared: {} -> {}", old, new).unwrap();
 }

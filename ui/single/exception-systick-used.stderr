@@ -1,0 +1,8 @@
+error: this exception can't be used because it's being used by the runtime
+ --> $DIR/exception-systick-used.rs:6:8
+  |
+6 |     fn sys_tick(_: sys_tick::Context) {}
+  |        ^^^^^^^^
+
+error: aborting due to previous error
+

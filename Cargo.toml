@@ -12,61 +12,75 @@ license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm"
 readme = "README.md"
 repository = "https://github.com/japaric/cortex-m-rtfm"
-version = "0.5.0-alpha.1"
+version = "0.5.0-beta.1"
 
 [lib]
 name = "rtfm"
 
 [[example]]
 name = "baseline"
-required-features = ["timer-queue"]
+required-features = ["__v7"]
 
 [[example]]
 name = "periodic"
-required-features = ["timer-queue"]
+required-features = ["__v7"]
 
 [[example]]
 name = "pool"
-# this example doesn't need this feature but only works on ARMv7-M
-# specifying the feature here avoids compiling this for ARMv6-M
-required-features = ["timer-queue"]
+required-features = ["__v7"]
 
 [[example]]
 name = "schedule"
-required-features = ["timer-queue"]
+required-features = ["__v7"]
+
+[[example]]
+name = "t-cfg"
+required-features = ["__v7"]
+
+[[example]]
+name = "t-schedule"
+required-features = ["__v7"]
 
 [[example]]
 name = "types"
-required-features = ["timer-queue"]
+required-features = ["__v7"]
 
 [dependencies]
-cortex-m = "0.5.8"
-cortex-m-rt = "0.6.7"
-cortex-m-rtfm-macros = { path = "macros", version = "0.5.0-alpha.1" }
-heapless = "0.5.0-alpha.1"
+cortex-m = "0.6.0"
+cortex-m-rtfm-macros = { path = "macros" }
+rtfm-core = { git = "https://github.com/japaric/rtfm-core" }
+cortex-m-rt = "0.6.9"
+heapless = "0.5.0"
+
+[dependencies.microamp]
+optional = true
+version = "0.1.0-alpha.2"
 
 [dev-dependencies]
-cortex-m-semihosting = "0.3.2"
 lm3s6965 = "0.1.3"
 panic-halt = "0.2.0"
+cortex-m-semihosting = "0.3.3"
 
 [dev-dependencies.panic-semihosting]
 features = ["exit"]
-version = "0.5.1"
-
-[features]
-timer-queue = ["cortex-m-rtfm-macros/timer-queue"]
+version = "0.5.2"
 
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
-compiletest_rs = "0.3.21"
-tempdir = "0.3.7"
+compiletest_rs = "0.3.22"
 
-[package.metadata.docs.rs]
-features = ["timer-queue"]
+[features]
+heterogeneous = ["cortex-m-rtfm-macros/heterogeneous", "microamp"]
+homogeneous = ["cortex-m-rtfm-macros/homogeneous"]
+# used for testing this crate; do not use in applications
+__v7 =[]
 
 [profile.release]
 codegen-units = 1
 lto = true
 
 [workspace]
-members = ["macros"]
+members = [
+  "heterogeneous",
+  "homogeneous",
+  "macros",
+]

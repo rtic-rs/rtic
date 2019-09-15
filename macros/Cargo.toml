@@ -15,12 +15,13 @@ version = "0.5.0-alpha.1"
 proc-macro = true
 
 [dependencies]
-quote = "0.6.10"
-proc-macro2 = "0.4.24"
+proc-macro2 = "1"
+quote = "1"
+syn = "1"
 
-[dependencies.syn]
-features = ["extra-traits", "full"]
-version = "0.15.23"
+[dependencies.rtfm-syntax]
+git = "https://github.com/japaric/rtfm-syntax"
 
 [features]
-timer-queue = []
+heterogeneous = []
+homogeneous = []

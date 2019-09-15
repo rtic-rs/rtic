@@ -47,7 +47,7 @@ mod foo {
 }
 
 const APP: () = {
-    use rtfm::Instant;
+    type Instant = <path::to::user::monotonic::timer as rtfm::Monotonic>::Instant;
 
     // all tasks that can be `schedule`-d
     enum T {
@@ -158,15 +158,14 @@ way it will run at the right priority.
 handler; basically, `enqueue_unchecked` delegates the task of setting up a new
 timeout interrupt to the `SysTick` handler.
 
-## Resolution and range of `Instant` and `Duration`
+## Resolution and range of `cyccnt::Instant` and `cyccnt::Duration`
 
-In the current implementation the `DWT`'s (Data Watchpoint and Trace) cycle
-counter is used as a monotonic timer. `Instant::now` returns a snapshot of this
-timer; these DWT snapshots (`Instant`s) are used to sort entries in the timer
-queue. The cycle counter is a 32-bit counter clocked at the core clock
-frequency. This counter wraps around every `(1 << 32)` clock cycles; there's no
-interrupt associated to this counter so nothing worth noting happens when it
-wraps around.
+RTFM provides a `Monotonic` implementation based on the `DWT`'s (Data Watchpoint
+and Trace) cycle counter. `Instant::now` returns a snapshot of this timer; these
+DWT snapshots (`Instant`s) are used to sort entries in the timer queue. The
+cycle counter is a 32-bit counter clocked at the core clock frequency. This
+counter wraps around every `(1 << 32)` clock cycles; there's no interrupt
+associated to this counter so nothing worth noting happens when it wraps around.
 
 To order `Instant`s in the queue we need to compare two 32-bit integers. To
 account for the wrap-around behavior we use the difference between two
@@ -264,11 +263,11 @@ The ceiling analysis would go like this:
 
 ## Changes in the `spawn` implementation
 
-When the "timer-queue" feature is enabled the `spawn` implementation changes a
-bit to track the baseline of tasks. As you saw in the `schedule` implementation
-there's an `INSTANTS` buffers used to store the time at which a task was
-scheduled to run; this `Instant` is read in the task dispatcher and passed to
-the user code as part of the task context.
+When the `schedule` API is used the `spawn` implementation changes a bit to
+track the baseline of tasks. As you saw in the `schedule` implementation there's
+an `INSTANTS` buffers used to store the time at which a task was scheduled to
+run; this `Instant` is read in the task dispatcher and passed to the user code
+as part of the task context.
 
 ``` rust
 const APP: () = {
