@@ -21,6 +21,7 @@ main() {
         cp LICENSE-* $td/book/$lang/
     done
 
+    local root=$(pwd)
     # build older docs
     for ver in ${vers[@]}; do
         local prefix=${ver%.*}
@@ -32,13 +33,13 @@ main() {
         pushd $src
         cargo doc || cargo doc --features timer-queue
         cp -r target/doc $td/$prefix/api
-        sed 's|URL|rtfm/index.html|g' redirect.html > $td/$prefix/api/index.html
+        sed 's|URL|rtfm/index.html|g' $root/redirect.html > $td/$prefix/api/index.html
         for lang in ${langs[@]}; do
             ( cd book/$lang && mdbook build )
             cp -r book/$lang/book $td/$prefix/book/$lang
             cp LICENSE-* $td/$prefix/book/$lang/
         done
-        sed 's|URL|book/en|g' redirect.html > $td/$prefix/index.html
+        sed 's|URL|book/en|g' $root/redirect.html > $td/$prefix/index.html
         popd
 
         rm -rf $src
