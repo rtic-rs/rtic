@@ -2,6 +2,7 @@ set -euxo pipefail
 
 main() {
     local langs=( en ru )
+    local latest=0.5
     local vers=( 0.4.3 )
 
     rm -f .cargo/config
@@ -10,11 +11,13 @@ main() {
     local td=$(mktemp -d)
 
     # build latest docs
-    cp -r target/doc $td/api
-    sed 's|URL|rtfm/index.html|g' redirect.html > $td/api/index.html
+    mkdir $td/$latest
+    cp -r target/doc $td/$latest/api
+    sed 's|URL|rtfm/index.html|g' redirect.html > $td/$latest/api/index.html
 
     mkdir $td/book/
-    sed 's|URL|book/en|g' redirect.html > $td/index.html
+    sed 's|URL|0.5|g' redirect.html > $td/index.html
+    sed 's|URL|book/en|g' redirect.html > $td/$latest/index.html
     for lang in ${langs[@]}; do
         ( cd book/$lang && mdbook build )
         cp -r book/$lang/book $td/book/$lang
