@@ -11,17 +11,16 @@ main() {
     local td=$(mktemp -d)
 
     # build latest docs
-    mkdir $td/$latest
+    mkdir -p $td/$latest/book/
     cp -r target/doc $td/$latest/api
     sed 's|URL|rtfm/index.html|g' redirect.html > $td/$latest/api/index.html
 
-    mkdir $td/book/
     sed 's|URL|0.5|g' redirect.html > $td/index.html
     sed 's|URL|book/en|g' redirect.html > $td/$latest/index.html
     for lang in ${langs[@]}; do
         ( cd book/$lang && mdbook build )
-        cp -r book/$lang/book $td/book/$lang
-        cp LICENSE-* $td/book/$lang/
+        cp -r book/$lang/book $td/$latest/book/$lang
+        cp LICENSE-* $td/$latest/book/$lang/
     done
 
     local root=$(pwd)
