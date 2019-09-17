@@ -5,7 +5,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## v0.5.0 - 2019-??-?? (ALPHA pre-release)
+## v0.5.0 - 2019-09-?? (currently in beta pre-release)
+
+### Added
+
+- Experimental support for homogeneous and heterogeneous multi-core
+  microcontrollers has been added. Support is gated behind the `homogeneous` and
+  `heterogeneous` Cargo features.
 
 ### Changed
 
@@ -22,6 +28,35 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - All the queues internally used by the framework now use `AtomicU8` indices
   instead of `AtomicUsize`; this reduces the static memory used by the
   framework.
+
+- [breaking-change][] when the `capacity` argument is omitted, the capacity of
+  the task is assumed to be `1`. Before, a reasonable (but hard to predict)
+  capacity was computed based on the number of `spawn` references the task had.
+
+- [breaking-change][] resources that are appear as exclusive references
+  (`&mut-`) no longer appear behind the `Exclusive` newtype.
+
+- [breaking-change][] the `timer-queue` Cargo feature has been removed. The
+  `schedule` API can be used without enabling any Cargo feature.
+
+- [breaking-change][] when the `schedule` API is used the type of
+  `init::Context.core` changes from `cortex_m::Peripherals` to
+  `rtfm::Peripherals`. The fields of `rtfm::Peripherals` do not change when
+  Cargo features are enabled.
+
+- [breaking-change][] the monotonic timer used to implement the `schedule` API
+  is now user configurable via the `#[app(monotonic = ..)]` argument.
+
+- [breaking-change][] the `peripherals` field is not include in `init::Context`
+  by default. One must opt-in using the `#[app(peripherals = ..)]` argument.
+
+- [breaking-change][] the `#[exception]` and `#[interrupt]` attributes have been
+  removed. Hardware tasks are now declared using the `#[task(binds = ..)]`
+  attribute.
+
+- [breaking-change][] the syntax to declare resources has changed. Instead of
+  using a `static [mut]` variable for each resource, all resources must be
+  declared in a `Resources` structure.
 
 ### Removed
 
