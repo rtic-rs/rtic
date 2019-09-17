@@ -46,8 +46,8 @@ instead of a reference. This resource proxy is a structure that implements the
 [`Mutex`] trait. The only method on this trait, [`lock`], runs its closure
 argument in a critical section.
 
-[`Mutex`]: ../../api/rtfm/trait.Mutex.html
-[`lock`]: ../../api/rtfm/trait.Mutex.html#method.lock
+[`Mutex`]: ../../../api/rtfm/trait.Mutex.html
+[`lock`]: ../../../api/rtfm/trait.Mutex.html#method.lock
 
 The critical section created by the `lock` API is based on dynamic priorities:
 it temporarily raises the dynamic priority of the context to a *ceiling*
@@ -89,7 +89,7 @@ consumer and producer end points in `init` and then each end point is stored
 in a different resource; `UART0` owns the producer resource and `idle` owns
 the consumer resource.
 
-[`Queue`]: ../../api/heapless/spsc/struct.Queue.html
+[`Queue`]: ../../../api/heapless/spsc/struct.Queue.html
 
 ``` rust
 {{#include ../../../../examples/late.rs}}

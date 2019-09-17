@@ -16,7 +16,7 @@ one can write a generic function that operates on generic resources and call it
 from different tasks to perform some operation on the same set of resources.
 Here's one such example:
 
-[`rtfm::Exclusive`]: ../../api/rtfm/struct.Exclusive.html
+[`rtfm::Exclusive`]: ../../../api/rtfm/struct.Exclusive.html
 
 ``` rust
 {{#include ../../../../examples/generics.rs}}

@@ -13,9 +13,9 @@
 [`svd2rust`] **v0.14.x**. Атрибут `app` развернется в удобную точку входа,
 поэтому нет необходимости использовать атрибут [`cortex_m_rt::entry`].
 
-[`app`]: ../../api/cortex_m_rtfm_macros/attr.app.html
+[`app`]: ../../../api/cortex_m_rtfm_macros/attr.app.html
 [`svd2rust`]: https://crates.io/crates/svd2rust
-[`cortex_m_rt::entry`]: ../../api/cortex_m_rt_macros/attr.entry.html
+[`cortex_m_rt::entry`]: ../../../api/cortex_m_rt_macros/attr.entry.html
 
 > **ОТСТУПЛЕНИЕ**: Некоторые из вас удивятся, почему мы используем ключевое слово `const` как
 > модуль, а не правильное `mod`. Причина в том, что использование атрибутов на

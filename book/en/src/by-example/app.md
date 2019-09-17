@@ -13,9 +13,9 @@ point to a *peripheral access crate* (PAC) generated using [`svd2rust`]
 **v0.14.x** or newer. The `app` attribute will expand into a suitable entry
 point so it's not required to use the [`cortex_m_rt::entry`] attribute.
 
-[`app`]: ../../api/cortex_m_rtfm_macros/attr.app.html
+[`app`]: ../../../api/cortex_m_rtfm_macros/attr.app.html
 [`svd2rust`]: https://crates.io/crates/svd2rust
-[`cortex_m_rt::entry`]: ../../api/cortex_m_rt_macros/attr.entry.html
+[`cortex_m_rt::entry`]: ../../../api/cortex_m_rt_macros/attr.entry.html
 
 > **ASIDE**: Some of you may be wondering why we are using a `const` item as a
 > module and not a proper `mod` item. The reason is that using attributes on

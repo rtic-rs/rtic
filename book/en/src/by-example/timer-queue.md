@@ -20,7 +20,7 @@ type (see [`core::time::Duration`]) and this `Duration` type must implement the
 integer. If the result of the conversion doesn't fit in a 32-bit number then the
 operation must return an error, any error type.
 
-[`Monotonic`]: ../../api/rtfm/trait.Monotonic.html
+[`Monotonic`]: ../../../api/rtfm/trait.Monotonic.html
 [std-instant]: https://doc.rust-lang.org/std/time/struct.Instant.html
 [`core::time::Duration`]: https://doc.rust-lang.org/core/time/struct.Duration.html
 
