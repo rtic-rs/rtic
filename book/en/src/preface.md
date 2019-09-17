@@ -5,7 +5,7 @@
 # Preface
 
 This book contains user level documentation for the Real Time For the Masses
-(RTFM) framework. The API reference can be found [here](../../api).
+(RTFM) framework. The API reference can be found [here](../../api/).
 
 There is a translation of this book in [Russian].
 
