@@ -7,34 +7,18 @@
 #![no_std]
 
 use core::ops::Generator;
-// use core::mem::MaybeUninit;
-
-// // #[task(binds = EXTI0, resources = [x])]
-// // fn bar(cx: bar::Context) {
-// //     let x = cx.resources.x;
-// // }
-
-// // expansion
-// type Foo = impl Generator<Yield = (), Return = !>;
-
-// static mut X: MaybeUninit<Foo> = MaybeUninit::uninit();
-
-// fn main() {
-//     // init();
-//     unsafe {
-//         X.as_mut_ptr().write(foo());
-//     }
-//     // idle();
-// }
-
-// #![deny(unsafe_code)]
-
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
+use rtfm::{Exclusive, Mutex};
 
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
+    struct Resources {
+        #[init(0)]
+        shared: u32,
+    }
+
     #[init]
     fn init(_: init::Context) {
         hprintln!("init").unwrap();
@@ -43,28 +27,35 @@ const APP: () = {
 
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        static mut X: u32 = 0;
-
-        // Safe access to local `static mut` variable
-        let _x: &'static mut u32 = X;
 
         hprintln!("idle").unwrap();
+        rtfm::pend(Interrupt::GPIOA);
+        rtfm::pend(Interrupt::GPIOA);
 
         debug::exit(debug::EXIT_SUCCESS);
 
         loop {}
     }
 
-    //    #[task(binds = GPIOA, resources = [x])]
-    // in user code the return type will be `impl Generator<..>`
-    #[task(binds = GPIOA)]
+    #[task(binds = GPIOA, resources = [shared])]
+    // fn foo1(ctx: &'static mut foo1::Context) -> impl Generator<Yield = (), Return = !> {
     fn foo1(ctx: foo1::Context) -> impl Generator<Yield = (), Return = !> {
+        let mut local = 0;
+        //let shared_res = Exclusive(ctx.resources.shared);
+       // static shared_res : &mut u32 = ctx.resources.shared;
         move || loop {
-            // x.lock(|_| {});
-            hprintln!("foo1_1").unwrap();
+            hprintln!("foo1_1 {}", local).unwrap();
+            local += 1;
+            // shared_res.lock(|s| hprintln!("s {}", s));
+         //   *shared_res += 1;
+            // *ctx.resources.shared += 1;
             yield;
-            hprintln!("foo1_2").unwrap();
+            hprintln!("foo1_2 {}", local).unwrap();
+            local += 1;
             yield;
         }
     }
+
+    // #[task(binds = GPIOB, resources = [shared], priority = 2)]
+    // fn foo2(ctx: foo2::Context) {}
 };

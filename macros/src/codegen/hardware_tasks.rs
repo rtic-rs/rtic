@@ -74,10 +74,12 @@ pub fn codegen(
                     #let_instant
 
                     rtfm::export::run(PRIORITY, || {
-                        hprintln!("here").unwrap();
-                        // core::pin::Pin::new(crate::#gen_static.assume_init()).resume();
-                        // let stat = &mut core::mem::transmute::<_,#gen_type>(crate::#gen_static);
-                        core::pin::Pin::new(#gen_static.as_mut_ptr()).resume();
+                        // TODO: Remove trace
+                        hprintln!("interrupt dispatch").unwrap();
+                        // TODO: possible compiler bug
+                        // core::pin::Pin::new(#gen_static.as_mut_ptr()).resume();
+                        let mut g: &mut dyn Generator<Yield = (), Return = !> = &mut *#gen_static.as_mut_ptr();
+                        core::pin::Pin::new_unchecked(&mut *g).resume();
                     });
                 }
             ));
@@ -129,8 +131,12 @@ pub fn codegen(
         // `${task}Locals`
         let mut locals_pat = None;
         if !task.locals.is_empty() {
-            let (struct_, pat) =
-                locals::codegen(Context::HardwareTask(name), &task.locals, core, app);
+            let (struct_, pat) = locals::codegen(
+                Context::HardwareTask(name),
+                &task.locals,
+                core,
+                app,
+            );
 
             root.push(struct_);
             locals_pat = Some(pat);

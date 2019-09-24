@@ -4,7 +4,12 @@ use rtfm_syntax::{ast::App, Context};
 
 use crate::{check::Extra, codegen::util};
 
-pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) -> TokenStream2 {
+pub fn codegen(
+    ctxt: Context,
+    resources_tick: bool,
+    app: &App,
+    extra: &Extra,
+) -> TokenStream2 {
     let mut items = vec![];
     let mut fields = vec![];
     let mut values = vec![];
@@ -184,7 +189,9 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
                 }
             ));
 
-            values.push(quote!(spawn: Spawn { _not_send: core::marker::PhantomData }));
+            values.push(
+                quote!(spawn: Spawn { _not_send: core::marker::PhantomData }),
+            );
         } else {
             lt = Some(quote!('a));
 
@@ -319,6 +326,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
             #[doc = #doc]
             #cfg_core
             pub mod #name {
+                fn plepps() {}
                 #(#items)*
             }
         )

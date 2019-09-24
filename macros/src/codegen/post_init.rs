@@ -161,10 +161,27 @@ pub fn codegen(
             let gen_static = util::gen_static_ident(&name);
             let priority = task.args.priority;
 
+            // #[doc(inline)]
+            // pub use super::foo1Resources as Resources;
+            // #[doc = r" Execution context"]
+            // pub struct Context<'a> {
+            //     #[doc = r" Resources this task has access to"]
+            //     pub resources: Resources<'a>,
+            // }
+            // impl<'a> Context<'a> {
+            //     #[inline(always)]
+            //     pub unsafe fn new(
+            //         priority: &'a rtfm::export::Priority,
+            //     ) -> Self {
+            //         Context {
+            //             resources: Resources::new(priority),
+            //         }
+            //     }
+            // }
             stmts.push(quote!(
                 const PRIORITY: u8 = #priority;
-
                 unsafe {
+                    static CTX: #name::Context = #name::Context::new(&rtfm::export::Priority::new(PRIORITY));
                     #gen_static.as_mut_ptr().write(
                         #name(#name::Context::new(&rtfm::export::Priority::new(PRIORITY)))
                     );
