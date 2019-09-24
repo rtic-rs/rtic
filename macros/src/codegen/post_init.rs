@@ -1,11 +1,13 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use rtfm_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates code that runs after `#[init]` returns
 pub fn codegen(
     core: u8,
+    app: &App,
     analysis: &Analysis,
     extra: &Extra,
 ) -> (Vec<TokenStream2>, Vec<TokenStream2>) {
@@ -145,6 +147,29 @@ pub fn codegen(
                     #rv.wait();
                 ));
             }
+        }
+    }
+
+    // initialize generators
+    for (name, task) in &app.hardware_tasks {
+        if task.is_generator {
+            // example expansion
+            // const PRIORITY: u8 = 1;
+            // unsafe {
+            //     GeneratorFoo.as_mut_ptr().write(foo(foo::Context::new(PRIORITY)));
+            // }
+            let gen_static = util::gen_static_ident(&name);
+            let priority = task.args.priority;
+
+            stmts.push(quote!(
+                const PRIORITY: u8 = #priority;
+
+                unsafe {
+                    #gen_static.as_mut_ptr().write(
+                        #name(#name::Context::new(&rtfm::export::Priority::new(PRIORITY)))
+                    );
+                };
+            ));
         }
     }
 

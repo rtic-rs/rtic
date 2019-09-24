@@ -323,3 +323,17 @@ pub fn suffixed(name: &str, core: u8) -> Ident {
 pub fn tq_ident(core: Core) -> Ident {
     Ident::new(&format!("TQ{}", core), Span::call_site())
 }
+
+/// Generates the generator type
+/// TODO: Should be CamelCase
+pub fn gen_type_ident(name: &Ident) -> Ident {
+    Ident::new(&format!("Generator{}", name), Span::call_site())
+}
+
+/// Generates the generator type
+pub fn gen_static_ident(name: &Ident) -> Ident {
+    Ident::new(
+        &format!("GENERATOR_{}", name).to_uppercase(),
+        Span::call_site(),
+    )
+}

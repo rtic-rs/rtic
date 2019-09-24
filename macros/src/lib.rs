@@ -1,4 +1,5 @@
-#![deny(warnings)]
+// Per : remove comment
+// #![deny(warnings)]
 
 extern crate proc_macro;
 

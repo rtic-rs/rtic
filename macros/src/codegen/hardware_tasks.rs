@@ -29,6 +29,9 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
+        // per: debug
+        // println!("// -- name -- {:?}", name);
+        // println!("// -- task -- {:?}", task);
         let core = task.args.core;
         let cfg_core = util::cfg_core(core, app.args.cores);
 
@@ -57,24 +60,47 @@ pub fn codegen(
         let priority = task.args.priority;
 
         let section = util::link_section("text", core);
-        const_app.push(quote!(
-            #[allow(non_snake_case)]
-            #[no_mangle]
-            #section
-            #cfg_core
-            unsafe fn #symbol() {
-                const PRIORITY: u8 = #priority;
+        if task.is_generator {
+            let gen_static = util::gen_static_ident(&name);
+            let gen_type = util::gen_type_ident(&name);
+            const_app.push(quote!(
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                #section
+                #cfg_core
+                unsafe fn #symbol() {
+                    const PRIORITY: u8 = #priority;
 
-                #let_instant
+                    #let_instant
 
-                rtfm::export::run(PRIORITY, || {
-                    crate::#name(
-                        #locals_new
-                        #name::Context::new(&rtfm::export::Priority::new(PRIORITY) #instant)
-                    )
-                });
-            }
-        ));
+                    rtfm::export::run(PRIORITY, || {
+                        hprintln!("here").unwrap();
+                        // core::pin::Pin::new(crate::#gen_static.assume_init()).resume();
+                        // let stat = &mut core::mem::transmute::<_,#gen_type>(crate::#gen_static);
+                        core::pin::Pin::new(#gen_static.as_mut_ptr()).resume();
+                    });
+                }
+            ));
+        } else {
+            const_app.push(quote!(
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                #section
+                #cfg_core
+                unsafe fn #symbol() {
+                    const PRIORITY: u8 = #priority;
+
+                    #let_instant
+
+                    rtfm::export::run(PRIORITY, || {
+                        crate::#name(
+                            #locals_new
+                            #name::Context::new(&rtfm::export::Priority::new(PRIORITY) #instant)
+                        )
+                    });
+                }
+            ));
+        }
 
         let mut needs_lt = false;
 
@@ -116,16 +142,51 @@ pub fn codegen(
         let section = util::link_section("text", core);
         // XXX shouldn't this have a cfg_core?
         let locals_pat = locals_pat.iter();
-        user_tasks.push(quote!(
-            #(#attrs)*
-            #[allow(non_snake_case)]
-            #section
-            fn #name(#(#locals_pat,)* #context: #name::Context) {
-                use rtfm::Mutex as _;
 
-                #(#stmts)*
-            }
-        ));
+        if task.is_generator {
+            // exapmle expansion
+            // type GeneratorFoo = impl Generator<Yield = (), Return = !>;
+            // static mut GENERATOR_FOO: MaybeUninit<GeneratorFoo> = MaybeUninit::uninit();
+            // #[allow(non_snake_case)]
+            // fn foo(ctx: foo::Context) -> GeneratorFoo {
+            //     use rtfm::Mutex as _;
+            //     move || loop  { yield }
+            // }
+
+            let gen_type = util::gen_type_ident(&name);
+            let gen_static = util::gen_static_ident(&name);
+
+            user_tasks.push(quote!(
+                type #gen_type =  impl Generator<Yield = (), Return = !>;
+            ));
+
+            user_tasks.push(quote!(
+                static mut #gen_static : core::mem::MaybeUninit<#gen_type> = core::mem::MaybeUninit::uninit();
+            ));
+
+            user_tasks.push(quote!(
+                #(#attrs)*
+                #[allow(non_snake_case)]
+                #section
+                fn #name(#(#locals_pat,)* #context: #name::Context) -> #gen_type {
+                    use rtfm::Mutex as _;
+
+                    #(#stmts)*
+                }
+            ));
+        } else {
+            // generate ordinary task
+            user_tasks.push(quote!(
+                #(#attrs)*
+                #[allow(non_snake_case)]
+                #section
+                fn #name(#(#locals_pat,)* #context: #name::Context) {
+                    use rtfm::Mutex as _;
+
+                    #(#stmts)*
+                }
+            ));
+        }
     }
 
     (const_app, root, user_tasks)

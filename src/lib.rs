@@ -39,7 +39,8 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_compatibility)]
 #![deny(rust_2018_idioms)]
-#![deny(warnings)]
+// Per : remove comment
+// #![deny(warnings)]
 #![no_std]
 
 use core::ops::Sub;
