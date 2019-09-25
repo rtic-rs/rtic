@@ -72,6 +72,7 @@ fn init(_: init::Context) {
     //        hprintln!("{}", ctx.resources.shared2.lock(|v| *v)).unwrap();
 
     ::cortex_m_semihosting::export::hstdout_str("init\n").unwrap();
+    //
     rtfm::pend(Interrupt::GPIOA);
 }
 #[allow(non_snake_case)]
@@ -90,27 +91,33 @@ static mut GENERATOR_FOO1: core::mem::MaybeUninit<Generatorfoo1> =
     core::mem::MaybeUninit::uninit();
 #[allow(non_snake_case)]
 fn foo1(mut ctx: foo1::Context) -> Generatorfoo1 {
-    use rtfm::Mutex as _;
-    //    ctx.resources.shared2.lock(|v| *v);
     move || loop {
         ctx.resources.shared2.lock(|v| {
             *v += 1;
-            hprintln!("{}", v)
+            hprintln!("foo1_1 lock      {}", v);
+            rtfm::pend(Interrupt::GPIOB);
+            hprintln!("foo1_1 unloclock {}", v);
         });
-        ::cortex_m_semihosting::export::hstdout_str("foo1_1\n").unwrap();
+        ctx.resources.shared2.lock(|v| {
+            *v += 1;
+            hprintln!("foo1_1           {}", v);
+        });
+
         yield;
         ctx.resources.shared2.lock(|v| {
             *v += 1;
-            hprintln!("{}", v)
+            hprintln!("foo1_2           {}", v);
         });
-        ::cortex_m_semihosting::export::hstdout_str("foo1_2\n").unwrap();
         yield;
     }
 }
 #[allow(non_snake_case)]
 fn foo2(mut ctx: foo2::Context) {
     use rtfm::Mutex as _;
-    ctx.resources.shared2.lock(|v| *v += 1);
+    ctx.resources.shared2.lock(|v| {
+        *v += 1;
+        hprintln!("foo2             {}", v);
+    });
 }
 #[allow(non_snake_case)]
 fn foo3(mut ctx: foo3::Context) {
