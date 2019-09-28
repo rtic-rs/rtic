@@ -11,7 +11,7 @@ If you want to play around checkout the `lockopt` branch and use:
 > arm-none-eabi-objdump target/thumbv7m-none-eabi/release/examples/lockopt -d > lockopt.asm
 ```
 
-Extend `cortex-m-rtfm/src/export::Priority` with an additional fields to store `init_logic` (priority of the task) and `old_basepri_hw`. The latter field is initially `None` on creation.
+We extend `cortex-m-rtfm/src/export::Priority` with an additional fields to store `init_logic` (priority of the task) and `old_basepri_hw`. The latter field is initially `None` on creation.
 
 ``` Rust
 // Newtype over `Cell` that forbids mutation through a shared reference
