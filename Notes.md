@@ -140,7 +140,6 @@ Basically we create `Priority` (on stack) and use that to create a `Context`. Th
 
 Overall, using this approach, we don't need a trampoline (`run`). We reduce the overhead by at least two machine instructions (additional reading/writing of BASEPRI) for each interrupt. It also reduces the register pressure (as less information needs to be stored).
 
-
 ## Evaluation
 
 The `examples/lockopt.rs` shows that locks are effectively optimized out.
