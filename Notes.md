@@ -2,8 +2,11 @@
 
 ## Idea
 
-We are reading BASEPRI independently if and only if we are actually changing BASEPRI.
-On restoring BASEPRI chose to restore read value if at the outmost nesting level (initial priority of the task). In this way, we can avoid unnecessary BASEPRI accesses, and reduce register pressure.
+Current implmentation always reads and writes BASEPRI on entry/exit of an interrupt (this is done by the `cortex-m-rtfm/src/export::run` which is a trampoline to execute the actual task).
+
+Using this approch, we are reading BASEPRI if and only if we are actually changing BASEPRI.
+
+On restoring BASEPRI (in `lock`) we chose to restore the original BASEPRI value if we at the outmost nesting level (initial priority of the task). In this way, we can avoid unnecessary BASEPRI accesses, and reduce register pressure.
 
 If you want to play around checkout the `lockopt` branch and use:
 
@@ -11,7 +14,7 @@ If you want to play around checkout the `lockopt` branch and use:
 > arm-none-eabi-objdump target/thumbv7m-none-eabi/release/examples/lockopt -d > lockopt.asm
 ```
 
-We extend `cortex-m-rtfm/src/export::Priority` with an additional fields to store `init_logic` (priority of the task) and `old_basepri_hw`. The latter field is initially `None` on creation.
+We extend `cortex-m-rtfm/src/export::Priority` with additional fields to store `init_logic` (priority of the task) and `old_basepri_hw`. The latter field is initially `None` on creation.
 
 ``` Rust
 // Newtype over `Cell` that forbids mutation through a shared reference
@@ -103,15 +106,15 @@ pub unsafe fn lock<T, R>(
 }
 ```
 
-The highest priority is achieved through an `interrupt_free` and does not at all affect the `BASEPRI`.
+The highest priority is achieved through an `interrupt_free` and does not at all affect the `BASEPRI`. Thus it manipulates only the "logic" priority (used to optimize out locks).
 
-For the normal case, on enter we check if the BASEPRI register has been read, if not we read it and update `priority`. On exit we check if are to restore a logical priority (inside a nested lock) or to restore the BASEPRI (previously read).  
+For the normal case, on enter we check if the BASEPRI register has been read, if not we read it and update `old_basepri_hw`. On exit we check if we should restore a logical priority (inside a nested lock) or to restore the BASEPRI (previously stored in `old_basepri_hw`).  
 
 ## Safety
 
 We can safely `unwrap` the `get_old_basepri_hw: Option<u8>` as the path leading up to the `unwrap` passes an update to `Some` or was already `Some`. Updating `get_old_basepri_hw` is monotonic, the API offers no way of making `get_old_basepri_hw` into `None` (besides `new`).
 
-Moreover `new` is the only public function of `Priority`, thus we are exposing nothing dangerous to the user.
+Moreover `new` is the only public function of `Priority`, thus we are exposing nothing dangerous to the user. (Externally changing `old_basepri_hw` could lead to memory unsafety, as an incorrect BASEPRI value may allow starting a task that should have been blocked, and once started access to resources with the same ceiling (or lower) is directly granted under SRP).
 
 ## Implementation
 
