@@ -3,7 +3,7 @@
 ## Idea
 
 We are reading BASEPRI independently if and only if we are actually changing BASEPRI.
-On restoring BASEPRI chose to restore read value if at the outmost nesting level (initial priority of the task). In this way, unnecessary BASEPRI accesses, and reduce register pressure. 
+On restoring BASEPRI chose to restore read value if at the outmost nesting level (initial priority of the task). In this way, we can avoid unnecessary BASEPRI accesses, and reduce register pressure.
 
 If you want to play around checkout the `lockopt` branch and use:
 
