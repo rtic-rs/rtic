@@ -23,32 +23,6 @@ pub type MCRQ<T, N> = Queue<(T, u8), N, u8, MultiCore>;
 pub type SCFQ<N> = Queue<u8, N, u8, SingleCore>;
 pub type SCRQ<T, N> = Queue<(T, u8), N, u8, SingleCore>;
 
-#[cfg(armv7m)]
-#[inline(always)]
-pub fn run<F>(priority: u8, f: F)
-where
-    F: FnOnce(),
-{
-    if priority == 1 {
-        // if the priority of this interrupt is `1` then BASEPRI can only be `0`
-        f();
-        unsafe { basepri::write(0) }
-    } else {
-        let initial = basepri::read();
-        f();
-        unsafe { basepri::write(initial) }
-    }
-}
-
-#[cfg(not(armv7m))]
-#[inline(always)]
-pub fn run<F>(_priority: u8, f: F)
-where
-    F: FnOnce(),
-{
-    f();
-}
-
 pub struct Barrier {
     inner: AtomicBool,
 }
@@ -71,26 +45,47 @@ impl Barrier {
 
 // Newtype over `Cell` that forbids mutation through a shared reference
 pub struct Priority {
-    inner: Cell<u8>,
+    init_logic: u8,
+    current_logic: Cell<u8>,
+    #[cfg(armv7m)]
+    old_basepri_hw: Cell<Option<u8>>,
 }
 
 impl Priority {
     #[inline(always)]
     pub unsafe fn new(value: u8) -> Self {
         Priority {
-            inner: Cell::new(value),
+            init_logic: value,
+            current_logic: Cell::new(value),
+            old_basepri_hw: Cell::new(None),
         }
     }
 
-    // these two methods are used by `lock` (see below) but can't be used from the RTFM application
     #[inline(always)]
-    fn set(&self, value: u8) {
-        self.inner.set(value)
+    fn set_logic(&self, value: u8) {
+        self.current_logic.set(value)
     }
 
     #[inline(always)]
-    fn get(&self) -> u8 {
-        self.inner.get()
+    fn get_logic(&self) -> u8 {
+        self.current_logic.get()
+    }
+
+    #[inline(always)]
+    fn get_init_logic(&self) -> u8 {
+        self.init_logic
+    }
+
+    #[cfg(armv7m)]
+    #[inline(always)]
+    fn get_old_basepri_hw(&self) -> Option<u8> {
+        self.old_basepri_hw.get()
+    }
+
+    #[cfg(armv7m)]
+    #[inline(always)]
+    fn set_old_basepri_hw(&self, value: u8) {
+        self.old_basepri_hw.set(Some(value));
     }
 }
 
@@ -124,20 +119,28 @@ pub unsafe fn lock<T, R>(
     nvic_prio_bits: u8,
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
-    let current = priority.get();
+    let current = priority.get_logic();
 
     if current < ceiling {
         if ceiling == (1 << nvic_prio_bits) {
-            priority.set(u8::max_value());
+            priority.set_logic(u8::max_value());
             let r = interrupt::free(|_| f(&mut *ptr));
-            priority.set(current);
+            priority.set_logic(current);
             r
         } else {
-            priority.set(ceiling);
+            match priority.get_old_basepri_hw() {
+                None => priority.set_old_basepri_hw(basepri::read()),
+                _ => (),
+            };
+            priority.set_logic(ceiling);
             basepri::write(logical2hw(ceiling, nvic_prio_bits));
             let r = f(&mut *ptr);
-            basepri::write(logical2hw(current, nvic_prio_bits));
-            priority.set(current);
+            if current == priority.get_init_logic() {
+                basepri::write(priority.get_old_basepri_hw().unwrap());
+            } else {
+                basepri::write(logical2hw(priority.get_logic(), nvic_prio_bits));
+            }
+            priority.set_logic(current);
             r
         }
     } else {
@@ -157,9 +160,9 @@ pub unsafe fn lock<T, R>(
     let current = priority.get();
 
     if current < ceiling {
-        priority.set(u8::max_value());
+        priority.set_logic(u8::max_value());
         let r = interrupt::free(|_| f(&mut *ptr));
-        priority.set(current);
+        priority.set_logic(current);
         r
     } else {
         f(&mut *ptr)

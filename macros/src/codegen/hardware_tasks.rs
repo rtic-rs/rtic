@@ -64,15 +64,11 @@ pub fn codegen(
             #cfg_core
             unsafe fn #symbol() {
                 const PRIORITY: u8 = #priority;
-
                 #let_instant
-
-                rtfm::export::run(PRIORITY, || {
-                    crate::#name(
-                        #locals_new
-                        #name::Context::new(&rtfm::export::Priority::new(PRIORITY) #instant)
-                    )
-                });
+                crate::#name(
+                    #locals_new
+                    #name::Context::new(&rtfm::export::Priority::new(PRIORITY) #instant)
+                    );
             }
         ));
 
