@@ -1,10 +1,11 @@
-# Notes for lock optimizaiton
+# Notes for lock optimization
 
 ## Idea
 
-We are reading basepri independently if and only if we are actually changing basepri.
+We are reading BASEPRI independently if and only if we are actually changing BASEPRI.
+On restoring BASEPRI chose to restore read value if at the outmost nesting level (initial priority of the task). In this way, unnecessary BASEPRI accesses, and reduce register pressure. 
 
-To dump generated assembly:
+If you want to play around checkout the `lockopt` branch and use:
 
 ``` shell
 > arm-none-eabi-objdump target/thumbv7m-none-eabi/release/examples/lockopt -d > lockopt.asm
@@ -135,9 +136,9 @@ Implementation mainly regards two files, the `rtfm/src/export.rs` (discussed abo
         ...
 ```
 
-Basically we create `Priority` (on stack) and use that to create a `Context`. The beauty is that LLVM is completely optimazing out the data structure (and related code), but taking into account its implications to control flow. Thus, the locks AND initial reading of BASEPRI will be optimized at compile time at Zero cost.
+Basically we create `Priority` (on stack) and use that to create a `Context`. The beauty is that LLVM is completely optimizing out the data structure (and related code), but taking into account its implications to control flow. Thus, the locks AND initial reading of BASEPRI will be optimized at compile time at Zero cost.
 
-Overall, using this approach, we don't need a trampoline (`run`). We reduce the overhead by at least two machine instructions (additional reading/writing of BASEPRI) for each interrupt. It also reduces the register preasure (as less information needs to be stored).
+Overall, using this approach, we don't need a trampoline (`run`). We reduce the overhead by at least two machine instructions (additional reading/writing of BASEPRI) for each interrupt. It also reduces the register pressure (as less information needs to be stored).
 
 
 ## Evaluation
