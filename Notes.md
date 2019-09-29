@@ -147,6 +147,34 @@ Overall, using this approach, we don't need a trampoline (`run`). We reduce the 
 
 The `examples/lockopt.rs` shows that locks are effectively optimized out.
 
+Old Implementation
+``` asm
+00000130 <GPIOB>:
+ 130:	21a0      	movs	r1, #160	; 0xa0
+ 132:	f3ef 8011 	mrs	r0, BASEPRI
+ 136:	f381 8811 	msr	BASEPRI, r1
+ 13a:	f240 0100 	movw	r1, #0
+ 13e:	f2c2 0100 	movt	r1, #8192	; 0x2000
+ 142:	680a      	ldr	r2, [r1, #0]
+ 144:	3201      	adds	r2, #1
+ 146:	600a      	str	r2, [r1, #0]
+ 148:	21c0      	movs	r1, #192	; 0xc0
+ 14a:	f381 8811 	msr	BASEPRI, r1
+ 14e:	f380 8811 	msr	BASEPRI, r0
+ 152:	4770      	bx	lr
+
+00000154 <GPIOC>:
+ 154:	f240 0100 	movw	r1, #0
+ 158:	f3ef 8011 	mrs	r0, BASEPRI
+ 15c:	f2c2 0100 	movt	r1, #8192	; 0x2000
+ 160:	680a      	ldr	r2, [r1, #0]
+ 162:	3202      	adds	r2, #2
+ 164:	600a      	str	r2, [r1, #0]
+ 166:	f380 8811 	msr	BASEPRI, r0
+ 16a:	4770      	bx	lr
+```
+
+With lock opt. We see a 20% improvement for short/small tasks. 
 ``` asm
 00000128 <GPIOB>:
  128:	21a0      	movs	r1, #160	; 0xa0
@@ -169,7 +197,7 @@ The `examples/lockopt.rs` shows that locks are effectively optimized out.
  154:	4770      	bx	lr
 ```
 
-GPIOB/C are sharing a resource (C higher prio). Notice, there is no BASEPRI manipulation at all.
+GPIOB/C are sharing a resource (C higher prio). Notice, for GPIOC there is no BASEPRI manipulation at all.
 
 For GPIOB, there is a single read of BASEPRI (stored in `old_basepri_hw`) and just two writes, one for entering critical section, one for exiting. On exit we detect that we are indeed at the initial priority for the task, thus we restore the `old_basepri_hw` instead of a logic priority.
 

@@ -45,8 +45,11 @@ required-features = ["__v7"]
 name = "types"
 required-features = ["__v7"]
 
+[dependencies.cortex-m]
+version = "0.6.0"
+features = ["inline-asm"]
+
 [dependencies]
-cortex-m = "0.6.0"
 cortex-m-rtfm-macros = { path = "macros" }
 rtfm-core = "0.3.0-beta.1"
 cortex-m-rt = "0.6.9"
