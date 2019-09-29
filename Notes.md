@@ -148,28 +148,25 @@ Overall, using this approach, we don't need a trampoline (`run`). We reduce the 
 The `examples/lockopt.rs` shows that locks are effectively optimized out.
 
 ``` asm
-00000132 <GPIOB>:
- 132:	b510      	push	{r4, lr}
- 134:	f000 f893 	bl	25e <__basepri_r>
- 138:	4604      	mov	r4, r0
- 13a:	20a0      	movs	r0, #160	; 0xa0
- 13c:	f000 f892 	bl	264 <__basepri_w>
- 140:	f240 0000 	movw	r0, #0
- 144:	f2c2 0000 	movt	r0, #8192	; 0x2000
- 148:	6801      	ldr	r1, [r0, #0]
- 14a:	3101      	adds	r1, #1
- 14c:	6001      	str	r1, [r0, #0]
- 14e:	4620      	mov	r0, r4
- 150:	e8bd 4010 	ldmia.w	sp!, {r4, lr}
- 154:	f000 b886 	b.w	264 <__basepri_w>
+00000128 <GPIOB>:
+ 128:	21a0      	movs	r1, #160	; 0xa0
+ 12a:	f3ef 8011 	mrs	r0, BASEPRI
+ 12e:	f381 8811 	msr	BASEPRI, r1
+ 132:	f240 0100 	movw	r1, #0
+ 136:	f2c2 0100 	movt	r1, #8192	; 0x2000
+ 13a:	680a      	ldr	r2, [r1, #0]
+ 13c:	3201      	adds	r2, #1
+ 13e:	600a      	str	r2, [r1, #0]
+ 140:	f380 8811 	msr	BASEPRI, r0
+ 144:	4770      	bx	lr
 
-00000158 <GPIOC>:
- 158:	f240 0000 	movw	r0, #0
- 15c:	f2c2 0000 	movt	r0, #8192	; 0x2000
- 160:	6801      	ldr	r1, [r0, #0]
- 162:	3102      	adds	r1, #2
- 164:	6001      	str	r1, [r0, #0]
- 166:	4770      	bx	lr
+00000146 <GPIOC>:
+ 146:	f240 0000 	movw	r0, #0
+ 14a:	f2c2 0000 	movt	r0, #8192	; 0x2000
+ 14e:	6801      	ldr	r1, [r0, #0]
+ 150:	3102      	adds	r1, #2
+ 152:	6001      	str	r1, [r0, #0]
+ 154:	4770      	bx	lr
 ```
 
 GPIOB/C are sharing a resource (C higher prio). Notice, there is no BASEPRI manipulation at all.
