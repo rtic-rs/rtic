@@ -50,7 +50,7 @@ const APP: () = {
     }
 
     #[interrupt(binds = UART1, priority = 2, resources = [x])]
-    fn bar(c: foo::Context) {
+    fn bar(c: bar::Context) {
         let mut x: &mut u64 = c.resources.x;
 
         *x += 1;
