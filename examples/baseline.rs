@@ -14,6 +14,8 @@ use panic_semihosting as _;
 const APP: () = {
     #[init(spawn = [foo])]
     fn init(cx: init::Context) {
+        // omitted: initialization of `CYCCNT`
+
         hprintln!("init(baseline = {:?})", cx.start).unwrap();
 
         // `foo` inherits the baseline of `init`: `Instant(0)`

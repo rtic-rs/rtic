@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## v0.5.0 - 2019-09-?? (currently in beta pre-release)
+## v0.5.0 - 2019-??-?? (currently in beta pre-release)
 
 ### Added
 
@@ -45,7 +45,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   Cargo features are enabled.
 
 - [breaking-change][] the monotonic timer used to implement the `schedule` API
-  is now user configurable via the `#[app(monotonic = ..)]` argument.
+  is now user configurable via the `#[app(monotonic = ..)]` argument. IMPORTANT:
+  it is now the responsibility of the application author to configure and
+  initialize the chosen `monotonic` timer during the `#[init]` phase.
 
 - [breaking-change][] the `peripherals` field is not include in `init::Context`
   by default. One must opt-in using the `#[app(peripherals = ..)]` argument.
