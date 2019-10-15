@@ -1,5 +1,6 @@
 [package]
 authors = [
+  "The Real Time For the Masses developers",
   "Jorge Aparicio <jorge@japaric.io>",
   "Per Lindgren <per.lindgren@ltu.se>",
 ]
@@ -47,8 +48,8 @@ required-features = ["__v7"]
 
 [dependencies]
 cortex-m = "0.6.0"
-cortex-m-rtfm-macros = { path = "macros" }
-rtfm-core = "0.3.0-beta.1"
+cortex-m-rtfm-macros = { path = "macros", version = "0.5.0-beta.1" }
+rtfm-core = "0.3.0-beta.2"
 cortex-m-rt = "0.6.9"
 heapless = "0.5.0"
 

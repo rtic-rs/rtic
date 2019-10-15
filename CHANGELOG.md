@@ -18,12 +18,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [breaking-change][] [RFC 155] "explicit `Context` parameter" has been
   implemented.
 
-[RFC 155]: https://github.com/japaric/cortex-m-rtfm/issues/155
+[RFC 155]: https://github.com/rtfm-rs/cortex-m-rtfm/issues/155
 
 - [breaking-change][] [RFC 147] "all functions must be safe" has been
   implemented.
 
-[RFC 147]: https://github.com/japaric/cortex-m-rtfm/issues/147
+[RFC 147]: https://github.com/rtfm-rs/cortex-m-rtfm/issues/147
 
 - All the queues internally used by the framework now use `AtomicU8` indices
   instead of `AtomicUsize`; this reduces the static memory used by the
@@ -67,7 +67,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   syntax. `init::LateResources` is the only method to initialize late resources.
   See [PR #140] for more details.
 
-[PR #140]: https://github.com/japaric/cortex-m-rtfm/pull/140
+[PR #140]: https://github.com/rtfm-rs/cortex-m-rtfm/pull/140
 
 ## [v0.4.3] - 2019-04-21
 
@@ -96,7 +96,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   `binds` argument that lets you give the handler an arbitrary name. For
   example:
 
-[RFC 128]: https://github.com/japaric/cortex-m-rtfm/issues/128
+[RFC 128]: https://github.com/rtfm-rs/cortex-m-rtfm/issues/128
 
 ``` rust
 // on v0.4.1 you had to write
@@ -295,17 +295,17 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.3...HEAD
-[v0.4.3]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.2...v0.4.3
-[v0.4.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.1...v0.4.2
-[v0.4.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.0...v0.4.1
-[v0.4.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.4...v0.4.0
-[v0.3.4]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.3...v0.3.4
-[v0.3.3]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.2...v0.3.3
-[v0.3.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.1...v0.3.2
-[v0.3.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.0...v0.3.1
-[v0.3.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.2...v0.3.0
-[v0.2.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.1...v0.2.2
-[v0.2.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.2.0...v0.2.1
-[v0.2.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.1.1...v0.2.0
-[v0.1.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.3...HEAD
+[v0.4.3]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.2...v0.4.3
+[v0.4.2]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.1...v0.4.2
+[v0.4.1]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.0...v0.4.1
+[v0.4.0]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.3.4...v0.4.0
+[v0.3.4]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.3.3...v0.3.4
+[v0.3.3]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.3.2...v0.3.3
+[v0.3.2]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.3.1...v0.3.2
+[v0.3.1]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.3.0...v0.3.1
+[v0.3.0]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.2.2...v0.3.0
+[v0.2.2]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.2.1...v0.2.2
+[v0.2.1]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.2.0...v0.2.1
+[v0.2.0]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.1.1...v0.2.0
+[v0.1.1]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.1.0...v0.1.1

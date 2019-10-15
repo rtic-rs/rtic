@@ -48,7 +48,7 @@ Here I'll use the `init` example from the `cortex-m-rtfm` crate.
 
 ``` console
 $ curl \
-    -L https://github.com/japaric/cortex-m-rtfm/raw/v0.5.0-alpha.1/examples/init.rs \
+    -L https://github.com/rtfm-rs/cortex-m-rtfm/raw/v0.5.0-beta.1/examples/init.rs \
     > src/main.rs
 ```
 
