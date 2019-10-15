@@ -50,7 +50,7 @@ A concurrency framework for building real time systems.
 ## Chat
 Join us and talk about RTFM in the [Matrix room][matrix-room].
 
-[matrix-room]: https://matrix.to/#/!yafYEipFNsXDdwiHMT:matrix.org
+[matrix-room]: https://matrix.to/#/#rtfm-rs:matrix.org
 
 ## Contributing
 New features and big changes should go through the RFC process in the [dedicated RFC repository][rfcs].
