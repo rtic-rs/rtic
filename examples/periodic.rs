@@ -16,6 +16,8 @@ const PERIOD: u32 = 8_000_000;
 const APP: () = {
     #[init(schedule = [foo])]
     fn init(cx: init::Context) {
+        // omitted: initialization of `CYCCNT`
+
         cx.schedule.foo(Instant::now() + PERIOD.cycles()).unwrap();
     }
 

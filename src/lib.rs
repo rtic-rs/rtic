@@ -138,9 +138,21 @@ pub trait Monotonic {
     fn ratio() -> Fraction;
 
     /// Returns the current time
+    ///
+    /// # Correctness
+    ///
+    /// This function is *allowed* to return nonsensical values if called before `reset` is invoked
+    /// by the runtime. Therefore application authors should *not* call this function during the
+    /// `#[init]` phase.
     fn now() -> Self::Instant;
 
     /// Resets the counter to *zero*
+    ///
+    /// # Safety
+    ///
+    /// This function will be called *exactly once* by the RTFM runtime after `#[init]` returns and
+    /// before tasks can start; this is also the case in multi-core applications. User code must
+    /// *never* call this function.
     unsafe fn reset();
 
     /// A `Self::Instant` that represents a count of *zero*
