@@ -191,7 +191,7 @@ argument of the `#[rtfm::app]` attribute. To continue using the cycle counter
 the `monotonic = rtfm::cyccnt::CYCCNT` argument to the `#[rtfm::app]` attribute.
 
 Also, the `Duration` and `Instant` types and the `U32Ext` trait have been moved
-into the `rtfm::cyccnt` module. This module is only available on ARMv7-M
+into the `rtfm::cyccnt` module. This module is only available on ARMv7-M+
 devices.
 
 Change this:
