@@ -9,6 +9,7 @@
   - [Types, Send and Sync](./by-example/types-send-sync.md)
   - [Starting a new project](./by-example/new.md)
   - [Tips & tricks](./by-example/tips.md)
+- [Migrating from v0.4.x to v0.5.0](./migration.md)
 - [Under the hood](./internals.md)
   - [Interrupt configuration](./internals/interrupt-configuration.md)
   - [Non-reentrancy](./internals/non-reentrancy.md)
