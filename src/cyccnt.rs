@@ -1,4 +1,4 @@
-//! Data Watchpoint Trace (DWT) unit's CYCle CouNTer
+//! Data Watchpoint Trace (DWT) unit's CYCle CouNTer (CYCCNT)
 
 use core::{
     cmp::Ordering,
@@ -16,9 +16,15 @@ use crate::Fraction;
 ///
 /// This data type is only available on ARMv7-M
 ///
-/// Note that this value is tied to the CYCCNT of one core and that sending it a different core
-/// makes it lose its meaning -- each Cortex-M core has its own CYCCNT counter and these are usually
-/// unsynchronized and they may even be running at different frequencies.
+/// # Correctness
+///
+/// Adding or subtracting a `Duration` of more than `(1 << 31)` cycles to an `Instant` effectively
+/// makes it "wrap around" and creates an incorrect value. This is also true if the operation is
+/// done in steps, e.g. `(instant + dur) + dur` where `dur` is `(1 << 30)` ticks.
+///
+/// In multi-core contexts: this value is tied to the CYCCNT of *one* core so sending it a different
+/// core makes it lose its meaning -- each Cortex-M core has its own CYCCNT counter and these are
+/// usually unsynchronized and may even be running at different frequencies.
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Instant {
     inner: i32,
@@ -61,6 +67,8 @@ impl fmt::Debug for Instant {
 
 impl ops::AddAssign<Duration> for Instant {
     fn add_assign(&mut self, dur: Duration) {
+        // NOTE this is a debug assertion because there's no foolproof way to detect a wrap around;
+        // the user may write `(instant + dur) + dur` where `dur` is `(1<<31)-1` ticks.
         debug_assert!(dur.inner < (1 << 31));
         self.inner = self.inner.wrapping_add(dur.inner as i32);
     }
@@ -77,7 +85,7 @@ impl ops::Add<Duration> for Instant {
 
 impl ops::SubAssign<Duration> for Instant {
     fn sub_assign(&mut self, dur: Duration) {
-        // XXX should this be a non-debug assertion?
+        // NOTE see the NOTE in `<Instant as AddAssign<Duration>>::add_assign`
         debug_assert!(dur.inner < (1 << 31));
         self.inner = self.inner.wrapping_sub(dur.inner as i32);
     }
@@ -115,6 +123,12 @@ impl PartialOrd for Instant {
 /// A `Duration` type to represent a span of time.
 ///
 /// This data type is only available on ARMv7-M
+///
+/// # Correctness
+///
+/// This type is *not* appropriate for representing time spans in the order of, or larger than,
+/// seconds because it can hold a maximum of `(1 << 31)` "ticks" where each tick is the inverse of
+/// the CPU frequency, which usually is dozens of MHz.
 #[derive(Clone, Copy, Default, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Duration {
     inner: u32,
