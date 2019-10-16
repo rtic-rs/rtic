@@ -35,7 +35,7 @@ scheduling a task the (user-defined) `Instant` at which the task should be
 executed must be passed as the first argument of the `schedule` invocation.
 
 Additionally, the chosen `monotonic` timer must be configured and initialized
-during the `#[init]** phase. Note that this is *also* the case if you choose to
+during the `#[init]` phase. Note that this is *also* the case if you choose to
 use the `CYCCNT` provided by the `cortex-m-rtfm` crate.
 
 The example below schedules two tasks from `init`: `foo` and `bar`. `foo` is
