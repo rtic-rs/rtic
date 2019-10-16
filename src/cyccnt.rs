@@ -3,9 +3,7 @@
 use core::{
     cmp::Ordering,
     convert::{Infallible, TryInto},
-    fmt,
-    marker::PhantomData,
-    ops,
+    fmt, ops,
 };
 
 use cortex_m::peripheral::DWT;
@@ -28,19 +26,13 @@ use crate::Fraction;
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Instant {
     inner: i32,
-    _not_send_or_sync: PhantomData<*mut ()>,
 }
-
-unsafe impl Sync for Instant {}
-
-unsafe impl Send for Instant {}
 
 impl Instant {
     /// Returns an instant corresponding to "now"
     pub fn now() -> Self {
         Instant {
             inner: DWT::get_cycle_count() as i32,
-            _not_send_or_sync: PhantomData,
         }
     }
 
@@ -222,9 +214,6 @@ impl crate::Monotonic for CYCCNT {
     }
 
     fn zero() -> Instant {
-        Instant {
-            inner: 0,
-            _not_send_or_sync: PhantomData,
-        }
+        Instant { inner: 0 }
     }
 }
