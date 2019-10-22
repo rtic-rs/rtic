@@ -32,7 +32,11 @@ pub fn codegen(
                     cross_initialized: false,
                 } => (
                     util::cfg_core(*core, app.args.cores),
-                    util::link_section("data", *core),
+                    if expr.is_none() {
+                        util::link_section_uninit(Some(*core))
+                    } else {
+                        util::link_section("data", *core)
+                    },
                 ),
 
                 // shared `static`s and cross-initialized resources need to be in `.shared` memory
@@ -42,7 +46,11 @@ pub fn codegen(
                     } else {
                         None
                     },
-                    None,
+                    if expr.is_none() {
+                        util::link_section_uninit(None)
+                    } else {
+                        None
+                    },
                 ),
             };
 
