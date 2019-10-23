@@ -49,6 +49,8 @@ branches:
     - master
     - staging
     - trying
+    # to build docs
+    - v0.4.x
 
 notifications:
   email:

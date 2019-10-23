@@ -507,7 +507,6 @@ fn post_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Tok
 
     // Enable cycle counter
     if cfg!(feature = "timer-queue") {
-        exprs.push(quote!(p.DCB.enable_trace()));
         exprs.push(quote!(p.DWT.enable_cycle_counter()));
     }
 
@@ -2033,6 +2032,9 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
                 p.DWT.lar.write(0xC5ACCE55);
             }
         ));
+
+        // We need to explicitly enable the trace block to set CYCCNT.
+        exprs.push(quote!(p.DCB.enable_trace();));
         exprs.push(quote!(p.DWT.ctrl.modify(|r| r & !1);));
         exprs.push(quote!(p.DWT.cyccnt.write(0);));
     }

@@ -224,6 +224,6 @@ if [ -z ${TARGET-} ]; then
     TARGET=$(rustc -Vv | grep host | cut -d ' ' -f2)
 fi
 
-if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST != false ]; then
+if { [ $TRAVIS_BRANCH != master ] && [ $TRAVIS_BRANCH != v0.4.x ]; } || [ $TRAVIS_PULL_REQUEST != false ]; then
     main
 fi
