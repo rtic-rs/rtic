@@ -95,3 +95,32 @@ Running the program on real hardware produces the following output in the consol
 ``` text
 {{#include ../../../../ci/expected/baseline.run}}
 ```
+
+## Caveats
+
+The `Instant` and `Duration` APIs are meant to be exclusively used with the
+`schedule` API to schedule tasks *with a precision of a single core clock
+cycle*. These APIs are *not*, for example, meant to be used to time external
+events like a user pressing a button.
+
+The timer queue feature internally uses the system timer, `SysTick`. This timer
+is a 24-bit counter and it's clocked at the core clock frequency so tasks
+scheduled more than `(1 << 24).cycles()` in the future will incur in additional
+overhead, proportional to the size of their `Duration`, compared to task
+scheduled with `Duration`s below that threshold.
+
+If you need periodic tasks with periods greater than `(1 << 24).cycles()` you
+likely don't need a timer with a resolution of one core clock cycle so we advise
+you instead use a device timer with an appropriate prescaler.
+
+We can't stop you from using `Instant` to measure external events so please be
+aware that `Instant.sub` / `Instant.elapsed` will never return a `Duration`
+equal or greater than `(1 << 31).cycles()` so you won't be able to measure
+events that last more than `1 << 31` core clock cycles (e.g. seconds).
+
+Adding a `Duration` equal or greater than `(1 << 31).cycles()` to an `Instant`
+will effectively overflow it so it's not possible to schedule a task more than
+`(1 << 31).cycles()` in the future. There are some debug assertions in place to
+catch this kind of user error but it's not possible to prevent it with 100%
+success rate because one can always write `(instant + duration) + duration` and
+bypass the runtime checks.
