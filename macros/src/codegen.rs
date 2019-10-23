@@ -2023,6 +2023,16 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
 
     // Set the cycle count to 0 and disable it while `init` executes
     if cfg!(feature = "timer-queue") {
+        exprs.push(quote!(
+            // unlock the DWT, if software locked
+            // See ARM CoreSight Architecture Specification v3.0, section B2.3.10
+            // 1 << 0 = Software lock mechanism is implemented.
+            // 1 << 1 = Writing to the other registers in the component is blocked
+            if p.DWT.lsr.read() & 0b11 == 0b11 {
+                p.DWT.lar.write(0xC5ACCE55);
+            }
+        ));
+
         // We need to explicitly enable the trace block to set CYCCNT.
         exprs.push(quote!(p.DCB.enable_trace();));
         exprs.push(quote!(p.DWT.ctrl.modify(|r| r & !1);));
