@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Soundness issue in the `MaybeUninit` implementation
+- Warning for deprecated `mem::uninitialized`
+
 ## [v0.4.3] - 2019-04-21
 
 ### Changed
