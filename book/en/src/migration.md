@@ -112,7 +112,7 @@ Change this:
 const APP: () = {
     #[init]
     fn init() {
-        peripherals.SOME_PERIPHERAL.write(something);
+        device.SOME_PERIPHERAL.write(something);
     }
 
     // ..
@@ -128,7 +128,7 @@ const APP: () = {
     #[init]
     fn init(cx: init::Context) {
         //  ^^^^^^^^^^^^^^^^^
-        cx.peripherals.SOME_PERIPHERAL.write(something);
+        cx.device.SOME_PERIPHERAL.write(something);
     //  ^^^
     }
 
