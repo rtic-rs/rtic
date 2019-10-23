@@ -1,7 +1,5 @@
 //! IMPLEMENTATION DETAILS. DO NOT USE ANYTHING IN THIS MODULE
 
-#[cfg(not(feature = "nightly"))]
-use core::ptr;
 use core::{cell::Cell, u8};
 
 #[cfg(armv7m)]
@@ -64,13 +62,11 @@ impl Priority {
     }
 }
 
-#[cfg(feature = "nightly")]
 pub struct MaybeUninit<T> {
     // we newtype so the end-user doesn't need `#![feature(maybe_uninit)]` in their code
     inner: core::mem::MaybeUninit<T>,
 }
 
-#[cfg(feature = "nightly")]
 impl<T> MaybeUninit<T> {
     pub const fn uninit() -> Self {
         MaybeUninit {
@@ -86,61 +82,23 @@ impl<T> MaybeUninit<T> {
         self.inner.as_mut_ptr()
     }
 
-    pub fn write(&mut self, value: T) -> &mut T {
-        self.inner.write(value)
-    }
-}
-
-#[cfg(not(feature = "nightly"))]
-pub struct MaybeUninit<T> {
-    value: Option<T>,
-}
-
-#[cfg(not(feature = "nightly"))]
-const MSG: &str =
-    "you have hit a bug (UB) in RTFM implementation; try enabling this crate 'nightly' feature";
-
-#[cfg(not(feature = "nightly"))]
-impl<T> MaybeUninit<T> {
-    pub const fn uninit() -> Self {
-        MaybeUninit { value: None }
-    }
-
-    pub fn as_ptr(&self) -> *const T {
-        if let Some(x) = self.value.as_ref() {
-            x
-        } else {
-            unreachable!(MSG)
-        }
-    }
-
-    pub fn as_mut_ptr(&mut self) -> *mut T {
-        if let Some(x) = self.value.as_mut() {
-            x
-        } else {
-            unreachable!(MSG)
-        }
-    }
-
     pub unsafe fn get_ref(&self) -> &T {
-        if let Some(x) = self.value.as_ref() {
-            x
-        } else {
-            unreachable!(MSG)
-        }
+        &*self.inner.as_ptr()
     }
 
     pub unsafe fn get_mut(&mut self) -> &mut T {
-        if let Some(x) = self.value.as_mut() {
-            x
-        } else {
-            unreachable!(MSG)
-        }
+        &mut *self.inner.as_mut_ptr()
     }
 
-    pub fn write(&mut self, val: T) {
-        // NOTE(volatile) we have observed UB when this uses a plain `ptr::write`
-        unsafe { ptr::write_volatile(&mut self.value, Some(val)) }
+    #[cfg(feature = "nightly")]
+    pub fn write(&mut self, value: T) -> &mut T {
+        self.inner.write(value)
+    }
+
+    #[cfg(not(feature = "nightly"))]
+    pub fn write(&mut self, value: T) -> &mut T {
+        self.inner = core::mem::MaybeUninit::new(value);
+        unsafe { self.get_mut() }
     }
 }
 

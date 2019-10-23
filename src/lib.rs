@@ -16,7 +16,7 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! This crate is guaranteed to compile on stable Rust 1.31 (2018 edition) and up. It *might*
+//! This crate is guaranteed to compile on stable Rust 1.36 (2018 edition) and up. It *might*
 //! compile on older versions but that may change in any new patch release.
 //!
 //! # Semantic Versioning
@@ -41,7 +41,7 @@
 //! usage, runtime overhead and initialization overhead. This feature requires a nightly compiler
 //! and may stop working at any time!
 
-#![cfg_attr(feature = "nightly", feature(maybe_uninit))]
+#![cfg_attr(feature = "nightly", feature(maybe_uninit_extra))]
 #![deny(missing_docs)]
 #![deny(warnings)]
 #![no_std]

@@ -1948,13 +1948,13 @@ fn pre_init(ctxt: &Context, app: &App, analysis: &Analysis) -> proc_macro2::Toke
         // these are `MaybeUninit` arrays
         for task in ctxt.tasks.values() {
             let inputs = &task.inputs;
-            exprs.push(quote!(#inputs.write(core::mem::uninitialized());))
+            exprs.push(quote!(#inputs.write(core::mem::MaybeUninit::uninit());))
         }
 
         #[cfg(feature = "timer-queue")]
         for task in ctxt.tasks.values() {
             let scheduleds = &task.scheduleds;
-            exprs.push(quote!(#scheduleds.write(core::mem::uninitialized());))
+            exprs.push(quote!(#scheduleds.write(core::mem::MaybeUninit::uninit());))
         }
 
         // these are `MaybeUninit` `ReadyQueue`s
