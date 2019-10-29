@@ -39,7 +39,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         let (const_app_init, root_init, user_init, call_init) =
             init::codegen(core, app, analysis, extra);
 
-        let (const_app_post_init, post_init_stmts) = post_init::codegen(core, analysis, extra);
+        let (const_app_post_init, root_post_init, post_init_stmts) =
+            post_init::codegen(core, &app, analysis, extra);
 
         let (const_app_idle, root_idle, user_idle, call_idle) =
             idle::codegen(core, app, analysis, extra);
@@ -52,6 +53,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
         root.push(quote!(
             #(#root_init)*
+
+            #(#root_post_init)*
 
             #(#root_idle)*
         ));
@@ -87,7 +90,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         ));
     }
 
-    let (const_app_resources, mod_resources) = resources::codegen(app, analysis, extra);
+    let (const_app_resources, mod_resources, mod_gresources) =
+        resources::codegen(app, analysis, extra);
 
     let (const_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks) =
         hardware_tasks::codegen(app, analysis, extra);
@@ -127,6 +131,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         #(#root)*
 
         #mod_resources
+
+        #mod_gresources
 
         #(#root_hardware_tasks)*
 

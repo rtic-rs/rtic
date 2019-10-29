@@ -29,6 +29,46 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
+        // TODO split this big conditional to reuse code below
+        if task.is_generator {
+            let symbol = task.args.binds.clone();
+            let gen_i = util::generator_ident(&name.to_string());
+            const_app.push(quote!(
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                unsafe fn #symbol() {
+                    use core::ops::Generator;
+
+                    core::pin::Pin::new_unchecked(&mut *#gen_i.as_mut_ptr()).resume();
+                }
+            ));
+
+            let priority = task.args.priority;
+            // `${task}Resources`
+            if !task.args.resources.is_empty() {
+                let (item, constructor) = resources_struct::codegen(
+                    Context::HardwareTask(name),
+                    priority,
+                    &mut false,
+                    app,
+                    analysis,
+                );
+
+                root.push(item);
+
+                const_app.push(constructor);
+            }
+
+            root.push(module::codegen(
+                Context::HardwareTask(name),
+                false,
+                app,
+                extra,
+            ));
+
+            continue;
+        }
+
         let core = task.args.core;
         let cfg_core = util::cfg_core(core, app.args.cores);
 

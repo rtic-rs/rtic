@@ -20,7 +20,7 @@ pub fn codegen(
 ) {
     assert!(!locals.is_empty());
 
-    let runs_once = ctxt.runs_once();
+    let runs_once = ctxt.runs_once(app);
     let ident = util::locals_ident(ctxt, app);
 
     let mut lt = None;

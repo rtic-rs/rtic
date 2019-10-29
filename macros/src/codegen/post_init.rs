@@ -1,15 +1,29 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use rtfm_syntax::{ast::App, Context};
 
-use crate::{analyze::Analysis, check::Extra, codegen::util};
+use crate::{
+    analyze::Analysis,
+    check::Extra,
+    codegen::{locals, util},
+};
 
 /// Generates code that runs after `#[init]` returns
 pub fn codegen(
     core: u8,
+    app: &App,
     analysis: &Analysis,
     extra: &Extra,
-) -> (Vec<TokenStream2>, Vec<TokenStream2>) {
+) -> (
+    // const_app
+    Vec<TokenStream2>,
+    // root
+    Vec<TokenStream2>,
+    // stmts
+    Vec<TokenStream2>,
+) {
     let mut const_app = vec![];
+    let mut root = vec![];
     let mut stmts = vec![];
 
     // initialize late resources
@@ -19,6 +33,48 @@ pub fn codegen(
             if analysis.locations.get(name).is_some() {
                 stmts.push(quote!(#name.as_mut_ptr().write(late.#name);));
             }
+        }
+    }
+
+    // TODO WIP
+    for (name, task) in &app.hardware_tasks {
+        if task.is_generator {
+            let name_s = name.to_string();
+            let gen_i = util::generator_ident(&name_s);
+            let gen_t = util::generator_type(&name_s);
+            const_app.push(quote!(
+                static mut #gen_i: core::mem::MaybeUninit<#gen_t> =
+                    core::mem::MaybeUninit::uninit();
+            ));
+
+            let (locals_pat, locals_new) = if task.locals.is_empty() {
+                (None, quote!())
+            } else {
+                let (struct_, pat) =
+                    locals::codegen(Context::HardwareTask(name), &task.locals, core, app);
+
+                root.push(struct_);
+
+                (Some(pat), quote!(#name::Locals::new(),))
+            };
+
+            let context = &task.context;
+            let task_stmts = &task.stmts;
+            let locals_pat = locals_pat.iter();
+            root.push(quote!(
+                type #gen_t = impl core::ops::Generator<Yield = (), Return = !>;
+
+                // #[allow(non_snake_case)]
+                fn #name(#(#locals_pat,)* #context: #name::Context) -> #gen_t {
+                    use rtfm::Mutex as _;
+
+                    #(#task_stmts)*
+                }
+            ));
+
+            stmts.push(quote!(
+                #gen_i.as_mut_ptr().write(#name(#locals_new #name::Context::new()));
+            ));
         }
     }
 
@@ -151,5 +207,5 @@ pub fn codegen(
     // enable the interrupts -- this completes the `init`-ialization phase
     stmts.push(quote!(rtfm::export::interrupt::enable();));
 
-    (const_app, stmts)
+    (const_app, root, stmts)
 }

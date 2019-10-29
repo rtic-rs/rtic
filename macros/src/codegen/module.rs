@@ -111,7 +111,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
             pub resources: Resources<#lt>
         ));
 
-        let priority = if ctxt.is_init() {
+        let priority = if ctxt.is_init() || ctxt.is_generator(app) {
             None
         } else {
             Some(quote!(priority))
@@ -281,7 +281,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
         None
     };
 
-    let priority = if ctxt.is_init() {
+    let priority = if ctxt.is_init() || ctxt.is_generator(app) {
         None
     } else {
         Some(quote!(priority: &#lt rtfm::export::Priority))

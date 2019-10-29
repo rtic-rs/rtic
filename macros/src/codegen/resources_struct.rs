@@ -4,6 +4,7 @@ use rtfm_syntax::{ast::App, Context};
 
 use crate::{analyze::Analysis, codegen::util};
 
+// TODO need to do something different when generators are involved
 pub fn codegen(
     ctxt: Context,
     priority: u8,
@@ -63,6 +64,67 @@ pub fn codegen(
                     #name: &mut #name
                 ));
             }
+        } else if ctxt.is_generator(app) {
+            let ownership = &analysis.ownerships[name];
+
+            if ownership.needs_lock(priority) {
+                if mut_.is_none() {
+                    // mod gresourcesd
+                    unimplemented!()
+                } else {
+                    // resource proxy
+                    fields.push(quote!(
+                        #(#cfgs)*
+                        pub #name: gresources::#name
+                    ));
+
+                    values.push(quote!(
+                        #(#cfgs)*
+                        #name: gresources::#name::new()
+
+                    ));
+
+                    continue;
+                }
+            } else {
+                let lt = if ctxt.runs_once(app) {
+                    quote!('static)
+                } else {
+                    lt = Some(quote!('a));
+                    quote!('a)
+                };
+
+                if ownership.is_owned() || mut_.is_none() {
+                    fields.push(quote!(
+                        #(#cfgs)*
+                        pub #name: &#lt #mut_ #ty
+                    ));
+                } else {
+                    fields.push(quote!(
+                        #(#cfgs)*
+                        pub #name: &#lt mut #ty
+                    ));
+                }
+            }
+
+            let is_late = expr.is_none();
+            if is_late {
+                let expr = if mut_.is_some() {
+                    quote!(&mut *#name.as_mut_ptr())
+                } else {
+                    quote!(&*#name.as_ptr())
+                };
+
+                values.push(quote!(
+                    #(#cfgs)*
+                    #name: #expr
+                ));
+            } else {
+                values.push(quote!(
+                    #(#cfgs)*
+                    #name: &#mut_ #name
+                ));
+            }
         } else {
             let ownership = &analysis.ownerships[name];
 
@@ -92,7 +154,7 @@ pub fn codegen(
                     continue;
                 }
             } else {
-                let lt = if ctxt.runs_once() {
+                let lt = if ctxt.runs_once(app) {
                     quote!('static)
                 } else {
                     lt = Some(quote!('a));
@@ -161,7 +223,7 @@ pub fn codegen(
         }
     );
 
-    let arg = if ctxt.is_init() {
+    let arg = if ctxt.is_init() || ctxt.is_generator(app) {
         None
     } else {
         Some(quote!(priority: &#lt rtfm::export::Priority))

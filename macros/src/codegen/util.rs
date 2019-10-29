@@ -91,6 +91,43 @@ pub fn impl_mutex(
     )
 }
 
+/// Generates a `Mutex` implementation for a resource seen from a generator task
+pub fn impl_gmutex(
+    extra: &Extra,
+    cfgs: &[Attribute],
+    cfg_core: Option<&TokenStream2>,
+    name: &Ident,
+    ty: TokenStream2,
+    ceiling: u8,
+    ptr: TokenStream2,
+) -> TokenStream2 {
+    let path = quote!(gresources::#name);
+
+    let device = extra.device;
+    quote!(
+        #(#cfgs)*
+        #cfg_core
+        impl rtfm::Mutex for #path {
+            type T = #ty;
+
+            #[inline(always)]
+            fn lock<R>(&mut self, f: impl FnOnce(&mut #ty) -> R) -> R {
+                /// Priority ceiling
+                const CEILING: u8 = #ceiling;
+
+                unsafe {
+                    rtfm::export::glock(
+                        #ptr,
+                        CEILING,
+                        #device::NVIC_PRIO_BITS,
+                        f,
+                    )
+                }
+            }
+        }
+    )
+}
+
 /// Generates an identifier for a cross-initialization barrier
 pub fn init_barrier(initializer: Core) -> Ident {
     Ident::new(&format!("IB{}", initializer), Span::call_site())
@@ -322,4 +359,12 @@ pub fn suffixed(name: &str, core: u8) -> Ident {
 /// At most there's one timer queue per core
 pub fn tq_ident(core: Core) -> Ident {
     Ident::new(&format!("TQ{}", core), Span::call_site())
+}
+
+pub fn generator_ident(task: &str) -> Ident {
+    Ident::new(&format!("{}S", task), Span::call_site())
+}
+
+pub fn generator_type(task: &str) -> Ident {
+    Ident::new(&format!("{}T", task), Span::call_site())
 }

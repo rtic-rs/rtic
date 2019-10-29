@@ -21,7 +21,8 @@ proc-macro = true
 proc-macro2 = "1"
 quote = "1"
 syn = "1"
-rtfm-syntax = "0.4.0-beta.2"
+# rtfm-syntax = "0.4.0-beta.2"
+rtfm-syntax = { git = "https://github.com/rtfm-rs/rtfm-syntax", branch = "impl-generator" }
 
 [features]
 heterogeneous = []

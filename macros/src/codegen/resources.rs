@@ -17,9 +17,12 @@ pub fn codegen(
     Vec<TokenStream2>,
     // mod_resources -- the `resources` module
     TokenStream2,
+    // mod_gresources -- the `gresources` module
+    TokenStream2,
 ) {
     let mut const_app = vec![];
     let mut mod_resources = vec![];
+    let mut mod_gresources = vec![];
 
     for (name, res, expr, loc) in app.resources(analysis) {
         let cfgs = &res.cfgs;
@@ -77,6 +80,8 @@ pub fn codegen(
         if let Some(Ownership::Contended { ceiling }) = analysis.ownerships.get(name) {
             let cfg_core = util::cfg_core(loc.core().expect("UNREACHABLE"), app.args.cores);
 
+            // TODO generate less code -- we don't always need both `gresources::foo` and
+            // `resources::foo`
             mod_resources.push(quote!(
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
@@ -114,8 +119,37 @@ pub fn codegen(
                 name,
                 quote!(#ty),
                 *ceiling,
+                ptr.clone(),
+            ));
+
+            mod_gresources.push(quote!(
+                #[allow(non_camel_case_types)]
+                #(#cfgs)*
+                #cfg_core
+                pub struct #name {
+                    _not_send_or_sync: core::marker::PhantomData<*mut ()>,
+                }
+
+                #(#cfgs)*
+                #cfg_core
+                impl #name {
+                    #[inline(always)]
+                    pub unsafe fn new() -> Self {
+                        #name { _not_send_or_sync: core::marker::PhantomData }
+                    }
+                }
+            ));
+
+            const_app.push(util::impl_gmutex(
+                extra,
+                cfgs,
+                cfg_core.as_ref(),
+                name,
+                quote!(#ty),
+                *ceiling,
                 ptr,
             ));
+
         }
     }
 
@@ -129,5 +163,13 @@ pub fn codegen(
         })
     };
 
-    (const_app, mod_resources)
+    let mod_gresources = if mod_gresources.is_empty() {
+        quote!()
+    } else {
+        quote!(mod gresources {
+            #(#mod_gresources)*
+        })
+    };
+
+    (const_app, mod_resources, mod_gresources)
 }

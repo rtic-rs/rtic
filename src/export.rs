@@ -5,7 +5,7 @@ use core::{
 
 pub use crate::tq::{NotReady, TimerQueue};
 #[cfg(armv7m)]
-pub use cortex_m::register::basepri;
+pub use cortex_m::register::{basepri, basepri_max};
 pub use cortex_m::{
     asm::wfi,
     interrupt,
@@ -145,6 +145,25 @@ pub unsafe fn lock<T, R>(
     }
 }
 
+#[cfg(armv7m)]
+#[inline(always)]
+pub unsafe fn glock<T, R>(
+    ptr: *mut T,
+    ceiling: u8,
+    nvic_prio_bits: u8,
+    f: impl FnOnce(&mut T) -> R,
+) -> R {
+    if ceiling == (1 << nvic_prio_bits) {
+        interrupt::free(|_| f(&mut *ptr))
+    } else {
+        let current = basepri::read();
+        basepri_max::write(logical2hw(ceiling, nvic_prio_bits));
+        let r = f(&mut *ptr);
+        basepri::write(logical2hw(current, nvic_prio_bits));
+        r
+    }
+}
+
 #[cfg(not(armv7m))]
 #[inline(always)]
 pub unsafe fn lock<T, R>(
@@ -165,6 +184,8 @@ pub unsafe fn lock<T, R>(
         f(&mut *ptr)
     }
 }
+
+// TODO glock for ARMv6-M
 
 #[inline]
 pub fn logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {

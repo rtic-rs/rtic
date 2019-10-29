@@ -209,6 +209,7 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     settings.parse_cores = cfg!(feature = "heterogeneous") || cfg!(feature = "homogeneous");
     settings.parse_extern_interrupt = true;
     settings.parse_schedule = true;
+    settings.parse_impl_generator = true;
 
     let (app, analysis) = match rtfm_syntax::parse(args, input, settings) {
         Err(e) => return e.to_compile_error().into(),
