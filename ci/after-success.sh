@@ -3,7 +3,7 @@ set -euxo pipefail
 main() {
     local langs=( en ru )
     local latest=0.5
-    local vers=( 0.4.3 )
+    local vers=( 0.4.x )
 
     rm -f .cargo/config
     cargo doc
