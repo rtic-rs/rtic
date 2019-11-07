@@ -3,6 +3,3 @@ error: only exceptions with configurable priority can be used as hardware tasks
   |
 6 |     fn nmi(_: nmi::Context) {}
   |        ^^^
-
-error: aborting due to previous error
-

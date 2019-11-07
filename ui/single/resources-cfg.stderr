@@ -117,7 +117,3 @@ error[E0609]: no field `o5` on type `uart1Resources<'_>`
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
-
-error: aborting due to 15 previous errors
-
-For more information about this error, try `rustc --explain E0609`.

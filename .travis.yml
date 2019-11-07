@@ -18,8 +18,7 @@ matrix:
 
       # compile-fail tests
     - env: TARGET=x86_64-unknown-linux-gnu
-      # FIXME revert this -- compiletest-rs v0.3.25 is broken with recent nightly
-      rust: nightly-2019-10-31
+      rust: nightly
       if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
       # heterogeneous multi-core support

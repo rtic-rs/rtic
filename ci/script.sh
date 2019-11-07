@@ -37,10 +37,10 @@ main() {
     mkdir -p ci/builds
 
     if [ $T = x86_64-unknown-linux-gnu ]; then
-        if [ $TRAVIS_RUST_VERSION = nightly ]; then
-            # compile-fail tests
-            cargo test --test single --target $T
+        # compile-fail tests
+        cargo test --test single --target $T
 
+        if [ $TRAVIS_RUST_VERSION = nightly ]; then
             # multi-core compile-pass tests
             pushd heterogeneous
             local exs=(

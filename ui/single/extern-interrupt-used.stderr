@@ -3,6 +3,3 @@ error: `extern` interrupts can't be used as hardware tasks
   |
 5 |     #[task(binds = UART0)]
   |                    ^^^^^
-
-error: aborting due to previous error
-

@@ -67,7 +67,7 @@ features = ["exit"]
 version = "0.5.2"
 
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
-compiletest_rs = "0.3.22"
+trybuild = "1"
 
 [features]
 heterogeneous = ["cortex-m-rtfm-macros/heterogeneous", "microamp"]
