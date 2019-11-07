@@ -12,7 +12,8 @@ matrix:
 
     # NOTE used to build docs on successful merges to master
     - env: TARGET=x86_64-unknown-linux-gnu
-      rust: nightly
+      # FIXME revert this -- compiletest-rs v0.3.25 is broken with recent nightly
+      rust: nightly-2019-10-31
 
     - env: TARGET=thumbv6m-none-eabi
       rust: nightly
