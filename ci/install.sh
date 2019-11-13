@@ -1,9 +1,12 @@
 set -euxo pipefail
 
 main() {
-    if [ $TARGET != x86_64-unknown-linux-gnu ]; then
-        rustup target add $TARGET
+    if [ $TARGET = x86_64-unknown-linux-gnu ]; then
+        # needed by compiletest-rs
+        rustup component add rustc-dev
     fi
+
+    rustup target add $TARGET
 
     mkdir qemu
     curl -L https://github.com/japaric/qemu-bin/raw/master/14.04/qemu-system-arm-2.12.0 > qemu/qemu-system-arm
