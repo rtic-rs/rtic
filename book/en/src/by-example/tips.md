@@ -165,3 +165,12 @@ crate and print the output to the console.
 $ # produces the same output as before
 $ cargo expand --example smallest | tail
 ```
+
+## Resource de-structure-ing
+
+When having a task taking multiple resources it can help in readability to split
+up the resource struct. Here're two examples on how this can be done:
+
+``` rust
+{{#include ../../../../examples/destructure.rs}}
+```
