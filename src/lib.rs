@@ -128,10 +128,12 @@ pub struct Fraction {
 
 /// A monotonic clock / counter
 pub trait Monotonic {
-    /// A measurement of this clock
+    /// A measurement of this clock, use `CYCCNT` as a reference implementation for `Instant`.
+    /// Note that the Instant must be a signed value such as `i32`.
     type Instant: Copy + Ord + Sub;
 
-    /// The ratio between the SysTick (system timer) frequency and this clock frequency
+    /// The ratio between the system timer (SysTick) frequency and this clock frequency, i.e.
+    /// `Monotonic clock * Fraction = System clock`
     ///
     /// The ratio must be expressed in *reduced* `Fraction` form to prevent overflows. That is
     /// `2 / 3` instead of `4 / 6`
