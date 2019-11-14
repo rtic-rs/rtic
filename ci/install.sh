@@ -1,10 +1,16 @@
 set -euxo pipefail
 
+install_crate() {
+    local pkg=$1 vers=$2
+
+    cargo install --list | grep "$pkg v$vers" || ( cd .. && cargo install -f --vers $vers $pkg )
+}
+
 main() {
     # these are not needed for doc builds
     if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST != false ]; then
         if [ $TARGET = x86_64-unknown-linux-gnu ]; then
-            ( cd .. && cargo install microamp-tools --version 0.1.0-alpha.3 -f )
+            install_crate microamp-tools 0.1.0-alpha.3
             rustup target add thumbv6m-none-eabi thumbv7m-none-eabi
         fi
 
@@ -17,9 +23,7 @@ main() {
         pip install linkchecker --user
     fi
 
-    # install mdbook
-    curl -LSfs https://japaric.github.io/trust/install.sh | \
-        sh -s -- --git rust-lang-nursery/mdbook --tag v0.3.1
+    install_crate mdbook 0.3.1
 }
 
 main
