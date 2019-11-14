@@ -46,7 +46,7 @@ after_script: set +e
 after_success:
   - bash ci/after-success.sh
 
-cache: cache
+cache: cargo
 
 before_cache:
   - chmod -R a+r $HOME/.cargo;
