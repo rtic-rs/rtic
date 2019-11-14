@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## v0.5.0 - 2019-??-?? (currently in beta pre-release)
+## v0.5.0 - 2019-11-14
 
 ### Added
 
@@ -297,7 +297,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.3...v0.5.0
 [v0.4.3]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.2...v0.4.3
 [v0.4.2]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.1...v0.4.2
 [v0.4.1]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.0...v0.4.1
