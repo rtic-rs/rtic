@@ -14,9 +14,6 @@ There is a translation of this book in [Russian].
 This is the documentation of v0.5.x of RTFM; for the documentation of version
 v0.4.x go [here](/0.4).
 
-**HEADS UP** This is a **beta** pre-release; there may be breaking changes in
-the API and semantics before a proper release is made.
-
 {{#include ../../../README.md:5:44}}
 
 {{#include ../../../README.md:50:}}

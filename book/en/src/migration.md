@@ -15,7 +15,7 @@ First, the version of the `cortex-m-rtfm` dependency needs to be updated to
 version = "0.4.3"
 
 # into this
-version = "0.5.0-beta.1"
+version = "0.5.0"
 
 # and remove this Cargo feature
 features = ["timer-queue"]
