@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## v0.5.1 - 2019-11-18
+- Fixed arithmetic wrapping bug in src/cyccntr.rs
+  elapsed and duration could cause an internal overflow trap
+  on subtraction in debug mode.
+
 ## v0.5.0 - 2019-11-14
 
 ### Added
