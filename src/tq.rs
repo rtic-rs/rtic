@@ -68,6 +68,13 @@ where
                             .map(|x| x / ratio.denominator)
                     }) {
                         None => MAX,
+
+                        // ARM Architecture Reference Manual says:
+                        // "Setting SYST_RVR to zero has the effect of
+                        // disabling the SysTick counter independently
+                        // of the counter enable bit."
+                        Some(0) => 1,
+
                         Some(x) => cmp::min(MAX, x),
                     };
                     mem::transmute::<_, SYST>(()).set_reload(dur);
