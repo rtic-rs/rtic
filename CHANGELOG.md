@@ -5,12 +5,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## v0.5.1 - 2019-11-18
+## [v0.5.1] - 2019-11-19
 - Fixed arithmetic wrapping bug in src/cyccntr.rs
   elapsed and duration could cause an internal overflow trap
   on subtraction in debug mode.
 
-## v0.5.0 - 2019-11-14
+- Fixed bug in SysTick implementation where the SysTick could be disabled by
+  accident
+
+## [v0.5.0] - 2019-11-14
 
 ### Added
 
@@ -302,7 +305,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.5.1...HEAD
+[v0.5.1]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.5.0...v0.5.1
 [v0.5.0]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.3...v0.5.0
 [v0.4.3]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.2...v0.4.3
 [v0.4.2]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.1...v0.4.2
