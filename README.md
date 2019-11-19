@@ -45,7 +45,7 @@ A concurrency framework for building real time systems.
 
 ## [User documentation](https://rtfm.rs)
 
-## [API reference](https://rtfm.rs/api/rtfm/index.html)
+## [API reference](https://rtfm.rs/0.5/api)
 
 ## Chat
 Join us and talk about RTFM in the [Matrix room][matrix-room].
