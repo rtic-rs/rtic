@@ -192,7 +192,9 @@ the `monotonic = rtfm::cyccnt::CYCCNT` argument to the `#[rtfm::app]` attribute.
 
 Also, the `Duration` and `Instant` types and the `U32Ext` trait have been moved
 into the `rtfm::cyccnt` module. This module is only available on ARMv7-M+
-devices.
+devices. The removal of the `timer-queue` also brings back the `DWT` peripheral
+inside the core peripherals struct, this will need to be enabled by the application
+inside `init`. 
 
 Change this:
 
@@ -217,6 +219,12 @@ use rtfm::cyccnt::{Duration, Instant, U32Ext};
 #[rtfm::app(/* .. */, monotonic = rtfm::cyccnt::CYCCNT)]
 //                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 const APP: () = {
+    #[init]
+    fn init(cx: init::Context) {
+        cx.core.DWT.enable_cycle_counter();
+        // optional, configure the DWT run without a debugger connected
+        cx.core.DCB.enable_trace();
+    }
     #[task(schedule = [b])]
     fn a(cx: a::Context) {
         // ..
