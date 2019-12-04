@@ -63,7 +63,7 @@ $ cargo run --example init
 `init`, `idle` запустится *с включенными прерываниями* и не может завершиться,
 поэтому будет работать бесконечно.
 
-Когда функция `idle` определена, рантайм устанавливает бит [SLEEPONEXIT], после чего
+Когда функция `idle` не определена, рантайм устанавливает бит [SLEEPONEXIT], после чего
 отправляет микроконтроллер в состояние сна после выполнения `init`.
 
 [SLEEPONEXIT]: https://developer.arm.com/products/architecture/cpu-architecture/m-profile/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
