@@ -5,9 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.4] - 2019-12-29
+
 ### Fixed
 
-- Soundness issue in the `MaybeUninit` implementation
+- [breaking-change][] [soundness-fix] Soundness issue in the `MaybeUninit` implementation
 - Warning for deprecated `mem::uninitialized`
 
 ## [v0.4.3] - 2019-04-21
@@ -236,7 +238,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.4...HEAD
+[v0.4.4]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.3...v0.4.4
 [v0.4.3]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.2...v0.4.3
 [v0.4.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.1...v0.4.2
 [v0.4.1]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.0...v0.4.1

@@ -1,18 +1,19 @@
 [package]
 authors = [
+  "The Real Time For the Masses developers",
   "Jorge Aparicio <jorge@japaric.io>",
   "Per Lindgren <per.lindgren@ltu.se>",
 ]
 categories = ["concurrency", "embedded", "no-std"]
 description = "Real Time For the Masses (RTFM): a concurrency framework for building real time systems"
-documentation = "https://japaric.github.io/cortex-m-rtfm/book/en"
+documentation = "https://rtfm.rs/"
 edition = "2018"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtfm"
 readme = "README.md"
-repository = "https://github.com/japaric/cortex-m-rtfm"
-version = "0.4.3"
+repository = "https://github.com/rtfm-rs/cortex-m-rtfm"
+version = "0.4.4"
 
 [lib]
 name = "rtfm"
