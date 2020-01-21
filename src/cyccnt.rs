@@ -30,6 +30,10 @@ pub struct Instant {
 
 impl Instant {
     /// Returns an instant corresponding to "now"
+    ///
+    /// *HEADS UP* this function can, and will, return nonsensical values if called within `init`.
+    /// Only use it in `idle` and tasks. In `init`, use the `init::Context.start` field, or the
+    /// `CYCCNT::zero` function, instead of this function
     pub fn now() -> Self {
         Instant {
             inner: DWT::get_cycle_count() as i32,
