@@ -103,7 +103,7 @@ mut` variables are safe to use within a hardware task.
 ```
 
 ``` console
-$ cargo run --example interrupt
+$ cargo run --example hardware
 {{#include ../../../../ci/expected/hardware.run}}```
 
 So far all the RTFM applications we have seen look no different that the
@@ -135,7 +135,7 @@ The following example showcases the priority based scheduling of tasks.
 ```
 
 ``` console
-$ cargo run --example interrupt
+$ cargo run --example preempt
 {{#include ../../../../ci/expected/preempt.run}}```
 
 Note that the task `gpiob` does *not* preempt task `gpioc` because its priority
