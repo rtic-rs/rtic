@@ -20,6 +20,7 @@ const APP: () = {
         cx.core.DWT.enable_cycle_counter();
 
         // semantically, the monotonic timer is frozen at time "zero" during `init`
+        // NOTE do *not* call `Instant::now` in this context; it will return a nonsense value
         let now = cx.start; // the start time of the system
 
         hprintln!("init @ {:?}", now).unwrap();
