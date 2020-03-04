@@ -21,5 +21,10 @@ proc-macro = true
 proc-macro2 = "1"
 quote = "1"
 syn = "1"
-rtic-syntax = { git = "https://github.com/rtic-rs/rtic-syntax", branch = "master", version = "0.4.0" }
+#rtic-syntax = { git = "https://github.com/rtic-rs/rtic-syntax", branch = "master", version = "0.4.0" }
+
+[dependencies.rtic-syntax] 
+git = "https://github.com/rtic-rs/rtic-syntax.git"
+branch = "task_local_experiment"
+version = "0.4.1"
 
