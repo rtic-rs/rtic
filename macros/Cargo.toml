@@ -21,7 +21,12 @@ proc-macro = true
 proc-macro2 = "1"
 quote = "1"
 syn = "1"
-rtfm-syntax = "0.4.0"
+#rtfm-syntax = "0.4.1"
+
+[dependencies.rtfm-syntax] 
+git = "https://github.com/rtfm-rs/rtfm-syntax.git"
+branch = "task_local_experiment"
+version = "0.4.1"
 
 [features]
 heterogeneous = []

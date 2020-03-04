@@ -10,6 +10,7 @@ use rtfm_syntax::Settings;
 mod analyze;
 mod check;
 mod codegen;
+mod custom_local;
 #[cfg(test)]
 mod tests;
 
@@ -214,6 +215,8 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
         Ok(x) => x,
     };
+
+    // custom_local::app(&mut app);
 
     let extra = match check::app(&app, &analysis) {
         Err(e) => return e.to_compile_error().into(),
