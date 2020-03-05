@@ -7,6 +7,7 @@ use rtfm_syntax::{
 };
 use syn::{parse, Path};
 
+#[derive(Debug)]
 pub struct Extra<'a> {
     pub device: &'a Path,
     pub monotonic: Option<&'a Path>,

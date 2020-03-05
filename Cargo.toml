@@ -48,7 +48,7 @@ required-features = ["__v7"]
 
 [dependencies]
 cortex-m = "0.6.2"
-cortex-m-rtfm-macros = { path = "macros", version = "0.5.0" }
+cortex-m-rtfm-macros = { path = "macros", version = "0.5.1" }
 rtfm-core = "0.3.0"
 cortex-m-rt = "0.6.9"
 heapless = "0.5.0"
