@@ -43,7 +43,7 @@ const APP: () = {
     }
 
     // `shared` cannot be accessed from this context
-    #[idle(resources =[l1, e2])]
+    #[idle(resources =[l1, l2, e2])]
     fn idle(cx: idle::Context) -> ! {
         hprintln!("IDLE:l1 = {}", cx.resources.l1).unwrap();
         hprintln!("IDLE:e2 = {}", cx.resources.e2).unwrap();
@@ -63,12 +63,13 @@ const APP: () = {
     }
 
     // l2 should be rejected (not implemented)
-    #[task(priority = 1, binds = UART1, resources = [shared, e1])]
+    #[task(priority = 2, binds = UART1, resources = [shared, l2, e1])]
     fn uart1(cx: uart1::Context) {
         let shared: &mut u32 = cx.resources.shared;
         *shared += 1;
 
         hprintln!("UART1: shared = {}", shared).unwrap();
+        hprintln!("UART1:l2 = {}", cx.resources.l2).unwrap();
         hprintln!("UART1:e1 = {}", cx.resources.e1).unwrap();
     }
 
