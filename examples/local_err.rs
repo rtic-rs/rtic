@@ -1,10 +1,12 @@
-//! examples/local.rs
+//! examples/local_err.rs
 
 #![deny(unsafe_code)]
-// #![deny(warnings)]
+#![deny(warnings)]
 #![no_main]
 #![no_std]
 
+// errors here, since we cannot bail compilation or generate stubs
+// run cargo expand, then you see the root of the problem...
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
