@@ -1,0 +1,31 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "cargo run  --example local_err --target thumbv7m-none-eabi",
+            "type": "shell",
+            "command": "cargo run  --example local_err --target thumbv7m-none-eabi",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$rustc"
+            ],
+            {
+                "label": "cargo run  --example local --target thumbv7m-none-eabi",
+                "type": "shell",
+                "command": "cargo run  --example local --target thumbv7m-none-eabi",
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": [
+                    "$rustc"
+                ]
+            }
+        }
+    ]
+}
