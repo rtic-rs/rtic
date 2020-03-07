@@ -1,13 +1,11 @@
 use syn::parse;
-//use syn::Ident;
-//use proc_macro2::{Ident, Span};
+use std::collections::HashMap;
 use proc_macro2::Ident;
 use rtfm_syntax::{
-    analyze::{Analysis, Ownership},
+    analyze::Analysis,
     ast::App,
 };
 use syn::Error;
-//     ast::{App, CustomArg},
 
 type Idents<'a> = Vec<&'a Ident>;
 
@@ -42,26 +40,31 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<()> {
 
     // collect all tasks into a vector
     type Task = String;
+    type Priority = u8;
 
-    let all_tasks: Vec<(Task, Idents)> = app
+    let all_tasks: Vec<(Task, Idents, Priority)> = app
         .idles
         .iter()
         .map(|(core, ht)| {
             (
                 format!("Idle (core {})", core),
                 ht.args.resources.iter().map(|(v, _)| v).collect::<Vec<_>>(),
+                0
+
             )
         })
         .chain(app.software_tasks.iter().map(|(name, ht)| {
             (
                 name.to_string(),
                 ht.args.resources.iter().map(|(v, _)| v).collect::<Vec<_>>(),
+                ht.args.priority
             )
         }))
         .chain(app.hardware_tasks.iter().map(|(name, ht)| {
             (
                 name.to_string(),
                 ht.args.resources.iter().map(|(v, _)| v).collect::<Vec<_>>(),
+                ht.args.priority
             )
         }))
         .collect();
@@ -70,10 +73,10 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<()> {
     let mut error = vec![];
     for task_local_id in task_local.iter() {
         let mut used = vec![];
-        for (task, tr) in all_tasks.iter() {
+        for (task, tr, priority) in all_tasks.iter() {
             for r in tr {
                 if task_local_id == r {
-                    used.push((task, r));
+                    used.push((task, r, priority));
                 }
             }
         }
@@ -86,46 +89,71 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<()> {
                 ),
             ));
 
-            used.iter().for_each(|(task, resource)| {
+            used.iter().for_each(|(task, resource, priority)| {
                 error.push(Error::new(
                     resource.span(),
                     format!(
-                        "task local resource {:?} is used by task {:?}",
+                        "task local resource {:?} is used by task {:?} with priority {:?}",
                         resource.to_string(),
-                        task
+                        task,
+                        priority
                     ),
                 ))
             });
         }
     }
 
-    // filter out contended resources
-    let contended: Vec<(&Ident, &Ownership)> = _analysis
-        .ownerships
-        .iter()
-        .filter(|(_id, own)| match own {
-            Ownership::Contended { .. } => true,
-            _ => false,
-        })
-        .collect();
+    let mut lf_res_with_error = vec![];
+    let mut lf_hash = HashMap::new();
 
-    // filter out lock_free contended resources
-    let lock_free_violation: Vec<&(&Ident, &Ownership)> = contended
-        .iter()
-        .filter(|(cont_id, _)| lock_free.iter().any(|lf_id| cont_id == lf_id))
-        .collect();
+    for lf_res in lock_free.iter() {
+        for (task, tr, priority) in all_tasks.iter() {
+            for r in tr {
+                // Get all uses of resources annotated lock_free
+                if lf_res == r {
+                    // HashMap returns the previous existing object if old.key == new.key
+                    if let Some(lf_res) = lf_hash.insert(r.to_string(), (task, r, priority)) {
+                        // Check if priority differ, if it does, append to
+                        // list of resources which will be annotated with errors
+                        if priority != lf_res.2 {
+                            lf_res_with_error.push(lf_res.1);
+                            lf_res_with_error.push(r);
+                        }
+                        // If the resource already violates lock free properties
+                        if lf_res_with_error.contains(&r) {
+                            lf_res_with_error.push(lf_res.1);
+                            lf_res_with_error.push(r);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    // report contention error
-    lock_free_violation.iter().for_each(|(lf_err_id, _)| {
+    // Add error message in the resource struct
+    for r in lock_free {
+        if lf_res_with_error.contains(&&r) {
+            error.push(Error::new(
+                r.span(),
+                format!(
+                    "Lock free resource {:?} is used by tasks at different priorities",
+                    r.to_string(),
+                ),
+            ));
+        }
+    }
+
+    // Add error message for each use of the resource
+    for resource in lf_res_with_error.clone() {
         error.push(Error::new(
-            lf_err_id.span(),
+            resource.span(),
             format!(
-                "lock_free resource {:?} is contended by higher priority task",
-                lf_err_id.to_string()
+                "Resource {:?} is declared lock free but used by tasks at different priorities",
+                resource.to_string(),
             ),
-        ))
-    });
-
+        ));
+    }
+    
     // collect errors
     if error.is_empty() {
         Ok(())
@@ -134,45 +162,4 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<()> {
         error.iter().for_each(|e| err.combine(e.clone()));
         Err(err)
     }
-
-    //     for tl in task_local {
-    //         println!("tl {:?}", tl);
-    //  //       let mut first_use = None;
-    //         for i in _analysis.ownerships.iter() {
-    //             println!("\nown: {:?}", i);
-    //     }
-
-    //     // println!("analysis {:?}", _analysis.locations);
-
-    // for i in _analysis.locations.iter() {
-    //     println!("\nloc: {:?}", i);
-    // }
-
-    // ErrorMessage {
-    //     // Span is implemented as an index into a thread-local interner to keep the
-    //     // size small. It is not safe to access from a different thread. We want
-    //     // errors to be Send and Sync to play nicely with the Failure crate, so pin
-    //     // the span we're given to its original thread and assume it is
-    //     // Span::call_site if accessed from any other thread.
-    //     start_span: ThreadBound<Span>,
-    //     end_span: ThreadBound<Span>,
-    //     message: String,
-    // }
-    //        (app.name, "here");
-    // let span = app.name.span();
-    // let start = span.start();
-    //    Err(vec![ErrorMessage { start_span: app.name.}]);
-
-    // let mut task_locals = Vec::new();
-    // println!("-- app:late_resources");
-
-    // println!(
-    //     "task_locals {:?}",
-    //     app.late_resources.filter(|r| r.task_local)
-    // );
-
-    // println!("-- resources");
-    // for i in app.resources.iter() {
-    //     println!("res: {:?}", i);
-    // }
 }
