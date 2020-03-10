@@ -42,26 +42,31 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<()> {
 
     // collect all tasks into a vector
     type Task = String;
+    type Priority = u8;
 
-    let all_tasks: Vec<(Task, Idents)> = app
+    let all_tasks: Vec<(Task, Idents, Priority)> = app
         .idles
         .iter()
         .map(|(core, ht)| {
             (
                 format!("Idle (core {})", core),
                 ht.args.resources.iter().map(|(v, _)| v).collect::<Vec<_>>(),
+                0
+
             )
         })
         .chain(app.software_tasks.iter().map(|(name, ht)| {
             (
                 name.to_string(),
                 ht.args.resources.iter().map(|(v, _)| v).collect::<Vec<_>>(),
+                ht.args.priority
             )
         }))
         .chain(app.hardware_tasks.iter().map(|(name, ht)| {
             (
                 name.to_string(),
                 ht.args.resources.iter().map(|(v, _)| v).collect::<Vec<_>>(),
+                ht.args.priority
             )
         }))
         .collect();
@@ -70,10 +75,10 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<()> {
     let mut error = vec![];
     for task_local_id in task_local.iter() {
         let mut used = vec![];
-        for (task, tr) in all_tasks.iter() {
+        for (task, tr, priority) in all_tasks.iter() {
             for r in tr {
                 if task_local_id == r {
-                    used.push((task, r));
+                    used.push((task, r, priority));
                 }
             }
         }
@@ -86,13 +91,14 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<()> {
                 ),
             ));
 
-            used.iter().for_each(|(task, resource)| {
+            used.iter().for_each(|(task, resource, priority)| {
                 error.push(Error::new(
                     resource.span(),
                     format!(
-                        "task local resource {:?} is used by task {:?}",
+                        "task local resource {:?} is used by task {:?} with priority {:?}",
                         resource.to_string(),
-                        task
+                        task,
+                        priority
                     ),
                 ))
             });
@@ -116,14 +122,31 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<()> {
         .collect();
 
     // report contention error
-    lock_free_violation.iter().for_each(|(lf_err_id, _)| {
+    lock_free_violation.iter().for_each(|(lf_err_id, lf_own)| {
         error.push(Error::new(
             lf_err_id.span(),
             format!(
-                "lock_free resource {:?} is contended by higher priority task",
-                lf_err_id.to_string()
+                "lock_free resource {:?} is contended by task {}",
+                lf_err_id.to_string(),
+                if let Ownership::Contended{ceiling} = lf_own {
+                    // Match the task running at the same priority
+                    let ct_task: Vec<&(Task, Idents, Priority)> = all_tasks
+                    .iter()
+                    .filter(|(_name, _ident, ct_prio)| {
+                        ct_prio == ceiling
+                    }
+                    )
+                    .collect();
+                    format!(
+                        "{:#?} with priority {:?}",
+                        ct_task[0].0,
+                        ct_task[0].2
+                    )
+                } else {
+                    "at higher priority".to_string()
+                }
             ),
-        ))
+        ));
     });
 
     // collect errors
