@@ -10,6 +10,7 @@ use rtfm_syntax::Settings;
 mod analyze;
 mod check;
 mod codegen;
+mod lanegen;
 #[cfg(test)]
 mod tests;
 
@@ -228,6 +229,8 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     if Path::new("target").exists() {
         fs::write("target/rtfm-expansion.rs", ts.to_string()).ok();
     }
+
+    lanegen::app(&app, &analysis, &extra);
 
     ts.into()
 }
