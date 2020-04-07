@@ -70,7 +70,7 @@ pub fn impl_mutex(
         #(#cfgs)*
         #cfg_core
         impl<'a> rtfm::Mutex for #path<'a> {
-            type T = #ty;
+            type Data = #ty;
 
             #[inline(always)]
             fn lock<R>(&mut self, f: impl FnOnce(&mut #ty) -> R) -> R {

@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- [breaking-change] Now using new `mutex-trait` in `rtfm-core`
+- [breaking-change] Common parts moved to `rtfm-core`
+
 ## [v0.5.1] - 2019-11-19
 - Fixed arithmetic wrapping bug in src/cyccntr.rs
   elapsed and duration could cause an internal overflow trap

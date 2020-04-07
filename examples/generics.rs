@@ -47,12 +47,12 @@ const APP: () = {
         *c.resources.shared += 0;
 
         // second argument has type `Exclusive<u32>`
-        advance(STATE, Exclusive(c.resources.shared));
+        advance(STATE, Exclusive::new(c.resources.shared));
     }
 };
 
 // the second parameter is generic: it can be any type that implements the `Mutex` trait
-fn advance(state: &mut u32, mut shared: impl Mutex<T = u32>) {
+fn advance(state: &mut u32, mut shared: impl Mutex<Data = u32>) {
     *state += 1;
 
     let (old, new) = shared.lock(|shared: &mut u32| {
