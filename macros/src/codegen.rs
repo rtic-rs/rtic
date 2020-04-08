@@ -39,7 +39,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         let (const_app_init, root_init, user_init, call_init) =
             init::codegen(core, app, analysis, extra);
 
-        let (const_app_post_init, post_init_stmts) = post_init::codegen(core, analysis, extra);
+        let (const_app_post_init, post_init_stmts) = post_init::codegen(core, &app, analysis, extra);
 
         let (const_app_idle, root_idle, user_idle, call_idle) =
             idle::codegen(core, app, analysis, extra);

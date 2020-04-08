@@ -44,8 +44,12 @@ pub fn codegen(
                         .iter()
                         .map(|name| {
                             let ty = &app.late_resources[name].ty;
+                            let cfgs = &app.late_resources[name].cfgs;
 
-                            quote!(pub #name: #ty)
+                            quote!(
+                                #(#cfgs)*
+                                pub #name: #ty
+                                )
                         })
                         .collect::<Vec<_>>()
                 })

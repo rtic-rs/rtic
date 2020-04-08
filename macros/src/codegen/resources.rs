@@ -101,9 +101,15 @@ pub fn codegen(
             ));
 
             let ptr = if expr.is_none() {
-                quote!(#name.as_mut_ptr())
+                quote!(
+                    #(#cfgs)*
+                    #name.as_mut_ptr()
+                )
             } else {
-                quote!(&mut #name)
+                quote!(
+                    #(#cfgs)*
+                    &mut #name
+                )
             };
 
             const_app.push(util::impl_mutex(
