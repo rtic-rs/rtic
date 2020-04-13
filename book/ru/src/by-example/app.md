@@ -66,7 +66,7 @@ $ cargo run --example init
 Когда функция `idle` не определена, рантайм устанавливает бит [SLEEPONEXIT], после чего
 отправляет микроконтроллер в состояние сна после выполнения `init`.
 
-[SLEEPONEXIT]: https://developer.arm.com/products/architecture/cpu-architecture/m-profile/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
+[SLEEPONEXIT]: https://developer.arm.com/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
 
 Как и в `init`, переменные `static mut`будут преобразованы в ссылки `&'static mut`
 с безопасным доступом.
