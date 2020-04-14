@@ -70,7 +70,7 @@ so it must run forever.
 When no `idle` function is declared, the runtime sets the [SLEEPONEXIT] bit and
 then sends the microcontroller to sleep after running `init`.
 
-[SLEEPONEXIT]: https://developer.arm.com/products/architecture/cpu-architecture/m-profile/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
+[SLEEPONEXIT]: https://developer.arm.com/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
 
 Like in `init`, `static mut` variables will be transformed into `&'static mut`
 references that are safe to access.
