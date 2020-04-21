@@ -46,7 +46,6 @@ main() {
         if [ $TRAVIS_RUST_VERSION = nightly ]; then
             # Tests where required MSRV > 1.36
             local exs=(
-                t-cfg-resources
             )
             for ex in ${exs[@]}; do
                 cargo check --example $ex --target $T
