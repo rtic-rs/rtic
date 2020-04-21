@@ -44,6 +44,13 @@ main() {
         fi
 
         if [ $TRAVIS_RUST_VERSION = nightly ]; then
+            # Tests where required MSRV > 1.36
+            #local exs=(
+            #)
+            #for ex in ${exs[@]}; do
+            #    cargo check --example $ex --target $T
+            #done
+
             # multi-core compile-pass tests
             pushd heterogeneous
             local exs=(

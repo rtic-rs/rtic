@@ -1,7 +1,12 @@
 use std::env;
+use version_check;
 
 fn main() {
     let target = env::var("TARGET").unwrap();
+
+    if version_check::Channel::read().unwrap().is_nightly() {
+        println!("cargo:rustc-cfg=rustc_is_nightly")
+    }
 
     if target.starts_with("thumbv6m") {
         println!("cargo:rustc-cfg=armv6m")
