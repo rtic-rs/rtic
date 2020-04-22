@@ -15,8 +15,7 @@ mod tests;
 
 /// Attribute used to declare a RTIC application
 ///
-/// This attribute must be applied to a `const` item of type `()`. The `const` item is effectively
-/// used as a `mod` item: its value must be a block that contains items commonly found in modules,
+/// This attribute must be applied to a module block that contains items commonly found in modules,
 /// like functions and `static` variables.
 ///
 /// The `app` attribute has one mandatory argument:
@@ -34,7 +33,7 @@ mod tests;
 /// - `monotonic = <path>`. This is a path to a zero-sized structure (e.g. `struct Foo;`) that
 /// implements the `Monotonic` trait. This argument must be provided to use the `schedule` API.
 ///
-/// The items allowed in the block value of the `const` item are specified below:
+/// The items allowed in the module block are specified below:
 ///
 /// # 1. `struct Resources`
 ///
