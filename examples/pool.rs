@@ -18,7 +18,7 @@ use rtic::app;
 pool!(P: [u8; 128]);
 
 #[app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[init]
     fn init(_: init::Context) {
         static mut MEMORY: [u8; 512] = [0; 512];
@@ -66,4 +66,4 @@ const APP: () = {
         fn SSI0();
         fn QEI0();
     }
-};
+}

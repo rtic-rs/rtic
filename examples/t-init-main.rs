@@ -7,9 +7,9 @@ use cortex_m_semihosting::debug;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[init]
     fn main(_: main::Context) {
         debug::exit(debug::EXIT_SUCCESS);
     }
-};
+}

@@ -9,7 +9,7 @@ use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[init(spawn = [foo])]
     fn init(c: init::Context) {
         c.spawn.foo(/* no message */).unwrap();
@@ -49,4 +49,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

@@ -7,7 +7,7 @@ use cortex_m_semihosting::debug;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[init(spawn = [main])]
     fn init(cx: init::Context) {
         cx.spawn.main().ok();
@@ -24,4 +24,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

@@ -10,7 +10,7 @@ use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     struct Resources {
         #[init(0)]
         shared: u32,
@@ -59,4 +59,4 @@ const APP: () = {
     fn gpioc(_: gpioc::Context) {
         hprintln!("C").unwrap();
     }
-};
+}

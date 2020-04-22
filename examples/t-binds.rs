@@ -8,7 +8,7 @@
 use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[init]
     fn init(_: init::Context) {}
 
@@ -23,7 +23,7 @@ const APP: () = {
     fn bar(c: bar::Context) {
         bar_trampoline(c)
     }
-};
+}
 
 #[allow(dead_code)]
 fn foo_trampoline(_: foo::Context) {}

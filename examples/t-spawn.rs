@@ -8,7 +8,7 @@
 use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[init(spawn = [foo, bar, baz])]
     fn init(c: init::Context) {
         let _: Result<(), ()> = c.spawn.foo();
@@ -60,4 +60,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

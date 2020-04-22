@@ -10,7 +10,7 @@ use panic_semihosting as _;
 use rtic::cyccnt;
 
 #[rtic::app(device = lm3s6965, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-const APP: () = {
+mod APP {
     struct Resources {
         #[init(0)]
         shared: u32,
@@ -60,4 +60,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

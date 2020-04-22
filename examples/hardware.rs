@@ -10,7 +10,7 @@ use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[init]
     fn init(_: init::Context) {
         // Pends the UART0 interrupt but its handler won't run until *after*
@@ -49,4 +49,4 @@ const APP: () = {
         )
         .unwrap();
     }
-};
+}

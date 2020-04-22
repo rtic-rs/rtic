@@ -6,7 +6,7 @@
 use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     struct Resources {
         // A resource
         #[init(0)]
@@ -15,8 +15,7 @@ const APP: () = {
         // A conditionally compiled resource behind feature_x
         #[cfg(feature = "feature_x")]
         x: u32,
-
-        dummy: (),
+        dummy: (), // dummy such that we have at least one late resource
     }
 
     #[init]
@@ -25,7 +24,7 @@ const APP: () = {
             // The feature needs to be applied everywhere x is defined or used
             #[cfg(feature = "feature_x")]
             x: 0,
-            dummy: (), // dummy such that we have at least one late resource
+            dummy: () // dummy such that we have at least one late resource
         }
     }
 
@@ -35,4 +34,4 @@ const APP: () = {
             cortex_m::asm::nop();
         }
     }
-};
+}

@@ -12,7 +12,7 @@ use rtic::cyccnt::{Instant, U32Ext as _};
 
 // NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-const APP: () = {
+mod APP {
     #[init(schedule = [foo, bar])]
     fn init(mut cx: init::Context) {
         // Initialize (enable) the monotonic timer (CYCCNT)
@@ -50,4 +50,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}
