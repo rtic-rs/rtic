@@ -1,7 +1,7 @@
 #![no_main]
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[task(binds = NonMaskableInt)]
     fn nmi(_: nmi::Context) {}
-};
+}

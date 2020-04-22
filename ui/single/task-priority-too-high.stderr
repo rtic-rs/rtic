@@ -4,7 +4,7 @@ warning: unused import: `rtic::app`
 3 | use rtic::app;
   |     ^^^^^^^^^
   |
-  = note: #[warn(unused_imports)] on by default
+  = note: `#[warn(unused_imports)]` on by default
 
 error[E0080]: evaluation of constant value failed
  --> $DIR/task-priority-too-high.rs:5:1

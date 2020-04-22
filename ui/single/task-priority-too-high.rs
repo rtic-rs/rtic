@@ -3,7 +3,7 @@
 use rtic::app;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     #[init]
     fn init(_: init::Context) {}
 
@@ -35,4 +35,4 @@ const APP: () = {
     // this value is too high!
     #[task(binds = I2C0, priority = 9)]
     fn i2c0(_: i2c0::Context) {}
-};
+}

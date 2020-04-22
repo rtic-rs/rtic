@@ -1,7 +1,7 @@
 #![no_main]
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod APP {
     struct Resources {
         #[cfg(never)]
         #[init(0)]
@@ -72,4 +72,4 @@ const APP: () = {
         c.resources.s2;
         c.resources.o5;
     }
-};
+}
