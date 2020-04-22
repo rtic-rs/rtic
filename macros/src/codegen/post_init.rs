@@ -1,11 +1,13 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use rtfm_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates code that runs after `#[init]` returns
 pub fn codegen(
     core: u8,
+    app: &App,
     analysis: &Analysis,
     extra: &Extra,
 ) -> (Vec<TokenStream2>, Vec<TokenStream2>) {
@@ -14,10 +16,16 @@ pub fn codegen(
 
     // initialize late resources
     if let Some(late_resources) = analysis.late_resources.get(&core) {
+
         for name in late_resources {
             // if it's live
+            let cfgs = app.late_resources[name].cfgs.clone();
             if analysis.locations.get(name).is_some() {
-                stmts.push(quote!(#name.as_mut_ptr().write(late.#name);));
+                // Need to also include the cfgs
+                stmts.push(quote!(
+                        #(#cfgs)*
+                        #name.as_mut_ptr().write(late.#name);
+                        ));
             }
         }
     }
