@@ -16,7 +16,7 @@ pub struct NotSend {
 }
 
 #[app(device = lm3s6965)]
-mod APP {
+mod app {
     struct Resources {
         #[init(None)]
         shared: Option<NotSend>,

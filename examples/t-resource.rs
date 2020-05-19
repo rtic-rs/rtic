@@ -8,7 +8,7 @@
 use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-mod APP {
+mod app {
     struct Resources {
         #[init(0)]
         o1: u32, // init

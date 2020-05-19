@@ -18,7 +18,10 @@ use rtic::app;
 pool!(P: [u8; 128]);
 
 #[app(device = lm3s6965)]
-mod APP {
+mod app {
+    use crate::Box;
+    use crate::P;
+
     #[init]
     fn init(_: init::Context) {
         static mut MEMORY: [u8; 512] = [0; 512];

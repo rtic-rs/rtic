@@ -11,7 +11,7 @@ use panic_semihosting as _;
 
 // `examples/interrupt.rs` rewritten to use `binds`
 #[rtic::app(device = lm3s6965)]
-mod APP {
+mod app {
     #[init]
     fn init(_: init::Context) {
         rtic::pend(Interrupt::UART0);

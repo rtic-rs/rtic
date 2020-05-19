@@ -10,7 +10,7 @@ use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-mod APP {
+mod app {
     struct Resources {
         #[init(0)]
         shared: u32,

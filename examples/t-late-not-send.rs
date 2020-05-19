@@ -12,7 +12,7 @@ pub struct NotSend {
 }
 
 #[rtic::app(device = lm3s6965)]
-mod APP {
+mod app {
     struct Resources {
         x: NotSend,
         #[init(None)]

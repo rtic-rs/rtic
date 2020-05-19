@@ -9,7 +9,7 @@ use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965, peripherals = true)]
-mod APP {
+mod app {
     #[init]
     fn init(cx: init::Context) {
         static mut X: u32 = 0;

@@ -8,7 +8,7 @@
 use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-mod APP {
+mod app {
     #[init(spawn = [foo, bar, baz])]
     fn init(c: init::Context) {
         let _: Result<(), ()> = c.spawn.foo();

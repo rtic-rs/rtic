@@ -7,7 +7,7 @@ use cortex_m_semihosting::debug;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-mod APP {
+mod app {
     #[init]
     fn init(_: init::Context) {
         rtic::pend(lm3s6965::Interrupt::UART0)

@@ -6,12 +6,11 @@
 use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-mod APP {
+mod app {
     struct Resources {
         // A resource
         #[init(0)]
         shared: u32,
-
         // A conditionally compiled resource behind feature_x
         #[cfg(feature = "feature_x")]
         x: u32,
