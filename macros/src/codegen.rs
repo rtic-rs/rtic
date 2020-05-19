@@ -26,6 +26,7 @@ mod util;
 // TODO document the syntax here or in `rtic-syntax`
 pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut const_app = vec![];
+    let mut const_app_imports = vec![];
     let mut mains = vec![];
     let mut root = vec![];
     let mut user = vec![];
@@ -40,6 +41,17 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let post_init_stmts = post_init::codegen(&app, analysis);
 
     let (const_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis, extra);
+
+    if user_init.is_some() {
+        const_app_imports.push(quote!(
+            use super::init;
+        ))
+    }
+    if user_idle.is_some() {
+        const_app_imports.push(quote!(
+            use super::idle;
+        ))
+    }
 
     user.push(quote!(
         #user_init
@@ -111,10 +123,11 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         #(#root_software_tasks)*
 
         /// Implementation details
-        // The user can't access the items within this `const` item
-        const #name: () = {
+        // the user can't access the items within this `const` item
+        mod #name {
             /// Always include the device crate which contains the vector table
             use #device as _;
+            #(#const_app_imports)*
 
             #(#const_app)*
 
@@ -133,6 +146,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             #(#const_app_schedule)*
 
             #(#mains)*
-        };
+        }
     )
 }
