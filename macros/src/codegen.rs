@@ -89,12 +89,12 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         }
     ));
 
-    let (const_app_resources, mod_resources) = resources::codegen(app, analysis, extra);
+    let (const_app_resources, mod_resources, mod_resources_imports) = resources::codegen(app, analysis, extra);
 
-    let (const_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks) =
+    let (const_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks, user_hardware_tasks_imports) =
         hardware_tasks::codegen(app, analysis, extra);
 
-    let (const_app_software_tasks, root_software_tasks, user_software_tasks) =
+    let (const_app_software_tasks, root_software_tasks, user_software_tasks, user_software_tasks_imports) =
         software_tasks::codegen(app, analysis, extra);
 
     let const_app_dispatchers = dispatchers::codegen(app, analysis, extra);
@@ -110,16 +110,22 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     quote!(
         #(#user)*
 
+        /// USER_HW_TASKS
         #(#user_hardware_tasks)*
 
+        /// USER_SW_TASKS
         #(#user_software_tasks)*
 
+        /// ROOT
         #(#root)*
 
+        /// MOD_RESOURCES
         #mod_resources
 
+        /// root_hardware_tasks
         #(#root_hardware_tasks)*
 
+        /// root_software_tasks
         #(#root_software_tasks)*
 
         /// Implementation details
@@ -129,17 +135,33 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             use #device as _;
             #(#const_app_imports)*
 
+            /// User hardware_tasks
+            #(#user_hardware_tasks_imports)*
+
+            /// User software_tasks
+            #(#user_software_tasks_imports)*
+
+            /// Mod resources imports
+            #(#mod_resources_imports)*
+
+            /// Const app
             #(#const_app)*
 
+            /// Const app resources
             #(#const_app_resources)*
 
+            /// Const app hw tasks
             #(#const_app_hardware_tasks)*
 
+            /// Const app sw tasks
             #(#const_app_software_tasks)*
 
+            /// Const app dispatchers
             #(#const_app_dispatchers)*
 
+            /// Const app spawn
             #(#const_app_spawn)*
+            /// Const app spawn end
 
             #(#const_app_timer_queue)*
 

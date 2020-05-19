@@ -23,10 +23,13 @@ pub fn codegen(
     Vec<TokenStream2>,
     // user_hardware_tasks -- the `#[task]` functions written by the user
     Vec<TokenStream2>,
+    // user_hardware_tasks_imports -- the imports for `#[task]` functions written by the user
+    Vec<TokenStream2>,
 ) {
     let mut const_app = vec![];
     let mut root = vec![];
     let mut user_tasks = vec![];
+    let mut hardware_tasks_imports = vec![];
 
     for (name, task) in &app.hardware_tasks {
         let (let_instant, instant) = if app.uses_schedule() {
@@ -78,6 +81,13 @@ pub fn codegen(
                 analysis,
             );
 
+            // Add resources to imports
+            let name_res = format_ident!("{}Resources", name);
+            hardware_tasks_imports.push(quote!(
+                #[allow(non_snake_case)]
+                use super::#name_res;
+            ));
+
             root.push(item);
 
             const_app.push(constructor);
@@ -112,7 +122,14 @@ pub fn codegen(
                 #(#stmts)*
             }
         ));
+
+        hardware_tasks_imports.push(quote!(
+            #(#attrs)*
+            #[allow(non_snake_case)]
+            use super::#name;
+        ));
+
     }
 
-    (const_app, root, user_tasks)
+    (const_app, root, user_tasks, hardware_tasks_imports)
 }
