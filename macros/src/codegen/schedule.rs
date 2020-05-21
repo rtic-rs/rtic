@@ -16,7 +16,7 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
     let mut seen = BTreeMap::<u8, HashSet<_>>::new();
     for (scheduler, schedulees) in app.schedule_callers() {
         let m = extra.monotonic();
-        let instant = quote!(<#m as rtic::Monotonic>::Instant);
+        let instant = quote!(rtic::time::instant::Instant<#m>);
 
         let sender = scheduler.core(app);
         let cfg_sender = util::cfg_core(sender, app.args.cores);

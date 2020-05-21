@@ -8,10 +8,12 @@
 use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
 use panic_halt as _;
-use rtic::cyccnt::{Instant, U32Ext as _};
+use rtic::time::{prelude::*, time_units::*, Ratio};
+
+use rtic::cyccnt::CYCCNT as SysClock;
 
 // NOTE: does NOT work on QEMU!
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, sys_timer_freq = 64_000_000)]
 const APP: () = {
     #[init(schedule = [foo, bar])]
     fn init(mut cx: init::Context) {
@@ -25,23 +27,35 @@ const APP: () = {
         // NOTE do *not* call `Instant::now` in this context; it will return a nonsense value
         let now = cx.start; // the start time of the system
 
-        hprintln!("init @ {:?}", now).unwrap();
+        hprintln!(
+            "init @ {:?}",
+            SysClock::now().elapsed_since_epoch::<Microseconds<i32>>()
+        )
+        .unwrap();
 
         // Schedule `foo` to run 8e6 cycles (clock cycles) in the future
-        cx.schedule.foo(now + 8_000_000.cycles()).unwrap();
+        cx.schedule.foo(now + 1.seconds()).unwrap();
 
         // Schedule `bar` to run 4e6 cycles in the future
-        cx.schedule.bar(now + 4_000_000.cycles()).unwrap();
+        cx.schedule.bar(now + 2.seconds()).unwrap();
     }
 
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo  @ {:?}", Instant::now()).unwrap();
+        hprintln!(
+            "foo  @ {:?}",
+            SysClock::now().elapsed_since_epoch::<Microseconds<i32>>()
+        )
+        .unwrap();
     }
 
     #[task]
     fn bar(_: bar::Context) {
-        hprintln!("bar  @ {:?}", Instant::now()).unwrap();
+        hprintln!(
+            "bar  @ {:?}",
+            SysClock::now().elapsed_since_epoch::<Microseconds<i32>>()
+        )
+        .unwrap();
     }
 
     extern "C" {

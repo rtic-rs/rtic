@@ -1,31 +1,32 @@
 use core::{
     cmp::{self, Ordering},
-    convert::TryInto,
+    convert::TryFrom,
     mem,
-    ops::Sub,
+    marker::PhantomData,
 };
 
 use cortex_m::peripheral::{SCB, SYST};
 use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 
-use crate::Monotonic;
+use crate::time::{self, instant::Instant, time_units::*, Duration};
+use crate::{Monotonic};
 
-pub struct TimerQueue<M, T, N>(pub BinaryHeap<NotReady<M, T>, N, Min>)
-where
-    M: Monotonic,
-    <M::Instant as Sub>::Output: TryInto<u32>,
-    N: ArrayLength<NotReady<M, T>>,
-    T: Copy;
+pub struct TimerQueue<SysTimer, Clock, Task, N>(pub BinaryHeap<NotReady<Clock, Task>, N, Min>, pub PhantomData<SysTimer>)
+    where
+        SysTimer: time::Clock,
+        Clock: Monotonic,
+        N: ArrayLength<NotReady<Clock, Task>>,
+        Task: Copy;
 
-impl<M, T, N> TimerQueue<M, T, N>
-where
-    M: Monotonic,
-    <M::Instant as Sub>::Output: TryInto<u32>,
-    N: ArrayLength<NotReady<M, T>>,
-    T: Copy,
+impl<SysTimer, Clock, Task, N> TimerQueue<SysTimer, Clock, Task, N>
+    where
+        SysTimer: time::Clock,
+        Clock: Monotonic,
+        N: ArrayLength<NotReady<Clock, Task>>,
+        Task: Copy,
 {
     #[inline]
-    pub unsafe fn enqueue_unchecked(&mut self, nr: NotReady<M, T>) {
+    pub unsafe fn enqueue_unchecked(&mut self, nr: NotReady<Clock, Task>) {
         let mut is_empty = true;
         if self
             .0
@@ -48,10 +49,10 @@ where
     }
 
     #[inline]
-    pub fn dequeue(&mut self) -> Option<(T, u8)> {
+    pub fn dequeue(&mut self) -> Option<(Task, u8)> {
         unsafe {
             if let Some(instant) = self.0.peek().map(|p| p.instant) {
-                let now = M::now();
+                let now = Clock::now();
 
                 if instant < now {
                     // task became ready
@@ -62,22 +63,24 @@ where
                     // set a new timeout
                     const MAX: u32 = 0x00ffffff;
 
-                    let ratio = M::ratio();
-                    let dur = match (instant - now).try_into().ok().and_then(|x| {
-                        x.checked_mul(ratio.numerator)
-                            .map(|x| x / ratio.denominator)
-                    }) {
-                        None => MAX,
+                    let dur: Microseconds<i64> = instant.duration_since(&now).unwrap();
+                    let systick_ticks: i64 = dur
+                        .into_ticks(SysTimer::PERIOD)
+                        .expect("into_ticks failed");
 
-                        // ARM Architecture Reference Manual says:
-                        // "Setting SYST_RVR to zero has the effect of
-                        // disabling the SysTick counter independently
-                        // of the counter enable bit."
-                        Some(0) => 1,
-
-                        Some(x) => cmp::min(MAX, x),
+                    // ARM Architecture Reference Manual says:
+                    // "Setting SYST_RVR to zero has the effect of
+                    // disabling the SysTick counter independently
+                    // of the counter enable bit."
+                    let systick_ticks: u32 = match u32::try_from(systick_ticks) {
+                        Ok(ticks) if ticks < MAX => ticks,
+                        Err(_) => panic!("systick_ticks.try_into() failed"),
+                        _ => MAX,
                     };
-                    mem::transmute::<_, SYST>(()).set_reload(dur);
+
+                    let systick_ticks = cmp::max(1, systick_ticks);
+
+                    mem::transmute::<_, SYST>(()).set_reload(systick_ticks);
 
                     // start counting down from the new reload
                     mem::transmute::<_, SYST>(()).clear_current();
@@ -94,52 +97,47 @@ where
     }
 }
 
-pub struct NotReady<M, T>
+pub struct NotReady<Clock, Task>
 where
-    T: Copy,
-    M: Monotonic,
-    <M::Instant as Sub>::Output: TryInto<u32>,
+    Task: Copy,
+    Clock: Monotonic,
 {
     pub index: u8,
-    pub instant: M::Instant,
-    pub task: T,
+    pub instant: Instant<Clock>,
+    pub task: Task,
 }
 
-impl<M, T> Eq for NotReady<M, T>
+impl<Clock, Task> Eq for NotReady<Clock, Task>
 where
-    T: Copy,
-    M: Monotonic,
-    <M::Instant as Sub>::Output: TryInto<u32>,
+    Task: Copy,
+    Clock: Monotonic,
 {
 }
 
-impl<M, T> Ord for NotReady<M, T>
+impl<Clock, Task> Ord for NotReady<Clock, Task>
 where
-    T: Copy,
-    M: Monotonic,
-    <M::Instant as Sub>::Output: TryInto<u32>,
+    Task: Copy,
+    Clock: Monotonic,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.instant.cmp(&other.instant)
     }
 }
 
-impl<M, T> PartialEq for NotReady<M, T>
+impl<Clock, Task> PartialEq for NotReady<Clock, Task>
 where
-    T: Copy,
-    M: Monotonic,
-    <M::Instant as Sub>::Output: TryInto<u32>,
+    Task: Copy,
+    Clock: Monotonic,
 {
     fn eq(&self, other: &Self) -> bool {
         self.instant == other.instant
     }
 }
 
-impl<M, T> PartialOrd for NotReady<M, T>
+impl<Clock, Task> PartialOrd for NotReady<Clock, Task>
 where
-    T: Copy,
-    M: Monotonic,
-    <M::Instant as Sub>::Output: TryInto<u32>,
+    Task: Copy,
+    Clock: Monotonic,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(&other))

@@ -42,8 +42,6 @@
 #![deny(warnings)]
 #![no_std]
 
-use core::ops::Sub;
-
 use cortex_m::{
     interrupt::Nr,
     peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
@@ -52,6 +50,7 @@ use cortex_m::{
 use cortex_m_rt as _; // vector table
 pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{Exclusive, Mutex};
+pub use embedded_time as time;
 
 #[cfg(armv7m)]
 pub mod cyccnt;
@@ -117,37 +116,8 @@ impl From<cortex_m::Peripherals> for Peripherals {
     }
 }
 
-/// A fraction
-pub struct Fraction {
-    /// The numerator
-    pub numerator: u32,
-
-    /// The denominator
-    pub denominator: u32,
-}
-
 /// A monotonic clock / counter
-pub trait Monotonic {
-    /// A measurement of this clock, use `CYCCNT` as a reference implementation for `Instant`.
-    /// Note that the Instant must be a signed value such as `i32`.
-    type Instant: Copy + Ord + Sub;
-
-    /// The ratio between the system timer (SysTick) frequency and this clock frequency, i.e.
-    /// `Monotonic clock * Fraction = System clock`
-    ///
-    /// The ratio must be expressed in *reduced* `Fraction` form to prevent overflows. That is
-    /// `2 / 3` instead of `4 / 6`
-    fn ratio() -> Fraction;
-
-    /// Returns the current time
-    ///
-    /// # Correctness
-    ///
-    /// This function is *allowed* to return nonsensical values if called before `reset` is invoked
-    /// by the runtime. Therefore application authors should *not* call this function during the
-    /// `#[init]` phase.
-    fn now() -> Self::Instant;
-
+pub trait Monotonic: time::Clock {
     /// Resets the counter to *zero*
     ///
     /// # Safety
@@ -156,9 +126,6 @@ pub trait Monotonic {
     /// before tasks can start; this is also the case in multi-core applications. User code must
     /// *never* call this function.
     unsafe fn reset();
-
-    /// A `Self::Instant` that represents a count of *zero*
-    fn zero() -> Self::Instant;
 }
 
 /// A marker trait that indicates that it is correct to use this type in multi-core context
@@ -169,8 +136,8 @@ pub trait MultiCore {}
 /// This is a convenience function around
 /// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
 pub fn pend<I>(interrupt: I)
-where
-    I: Nr,
+    where
+        I: Nr,
 {
     NVIC::pend(interrupt)
 }

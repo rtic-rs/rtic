@@ -34,6 +34,20 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     for core in 0..app.args.cores {
         let assertion_stmts = assertions::codegen(core, analysis, extra);
 
+        let sys_timer_freq = extra.sys_timer_freq;
+        let sys_timer = quote!(
+        pub struct SysTimer;
+        impl rtfm::time::Clock for SysTimer {
+            type Rep = i32;
+            fn now() -> rtfm::time::instant::Instant<Self> {
+                unimplemented!()
+            }
+        }
+        impl rtfm::time::Period for SysTimer {
+            const PERIOD: Ratio<i32> = Ratio::new_raw(1, #sys_timer_freq as i32);
+        }
+        );
+
         let (const_app_pre_init, pre_init_stmts) = pre_init::codegen(core, &app, analysis, extra);
 
         let (const_app_init, root_init, user_init, call_init) =
