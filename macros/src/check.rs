@@ -11,6 +11,7 @@ pub struct Extra<'a> {
     pub device: &'a Path,
     pub monotonic: Option<&'a Path>,
     pub peripherals: Option<u8>,
+    pub sys_timer_freq: Option<u32>,
 }
 
 impl<'a> Extra<'a> {
@@ -137,6 +138,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
     let mut device = None;
     let mut monotonic = None;
     let mut peripherals = None;
+    let mut sys_timer_freq = None;
 
     for (k, v) in &app.args.custom {
         let ks = k.to_string();
@@ -197,6 +199,18 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
                 }
             },
 
+            "sys_timer_freq" => match v {
+                CustomArg::UInt(s) => {
+                    sys_timer_freq = s.parse::<u32>().ok();
+                }
+                _ => {
+                    return Err(parse::Error::new(
+                        k.span(),
+                        "unexpected argument value; this should be an integer",
+                    ));
+                }
+            },
+
             _ => {
                 return Err(parse::Error::new(k.span(), "unexpected argument"));
             }
@@ -210,11 +224,19 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         ));
     }
 
+    if !analysis.timer_queues.is_empty() && sys_timer_freq.is_none() {
+        return Err(parse::Error::new(
+            Span::call_site(),
+            "the `sys_timer_freq` must be specified to use the `schedule` API",
+        ));
+    }
+
     if let Some(device) = device {
         Ok(Extra {
             device,
             monotonic,
             peripherals,
+            sys_timer_freq,
         })
     } else {
         Err(parse::Error::new(

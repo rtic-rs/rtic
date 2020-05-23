@@ -34,6 +34,9 @@ mod tests;
 /// - `monotonic = <path>`. This is a path to a zero-sized structure (e.g. `struct Foo;`) that
 /// implements the `Monotonic` trait. This argument must be provided to use the `schedule` API.
 ///
+/// - `sys_timer_freq = <integer>`. The frequency of the SysTick/SysTimer in Hz. This argument must
+/// be provided to use the `schedule` API.
+///
 /// The items allowed in the block value of the `const` item are specified below:
 ///
 /// # 1. `struct Resources`

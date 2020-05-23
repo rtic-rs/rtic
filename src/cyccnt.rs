@@ -20,7 +20,7 @@ impl time::Clock for CYCCNT {
     {
         let ticks = DWT::get_cycle_count();
 
-        Instant::new(ticks as Self::Rep)
+        Instant::new(ticks as i32)
     }
 }
 

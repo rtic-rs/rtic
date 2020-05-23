@@ -35,6 +35,19 @@ pub fn codegen(
 
         let mut root_init = vec![];
 
+        if let Some(sys_timer_freq) = extra.sys_timer_freq {
+            root_init.push(quote!(
+            pub struct SysTimer;
+            impl rtic::time::Clock for SysTimer {
+                type Rep = i32;
+                const PERIOD: rtic::time::Period = rtic::time::Period::new_raw(1, #sys_timer_freq as i32);
+                fn now() -> rtic::time::instant::Instant<Self> {
+                    unimplemented!()
+                }
+            }
+            ));
+        };
+
         let ret = {
             let late_fields = analysis
                 .late_resources
