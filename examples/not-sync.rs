@@ -16,6 +16,9 @@ pub struct NotSync {
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use super::NotSync;
+    use core::marker::PhantomData;
+
     struct Resources {
         #[init(NotSync { _0: PhantomData })]
         shared: NotSync,

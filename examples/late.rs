@@ -16,6 +16,10 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use heapless::{
+        consts::*,
+        spsc::{Consumer, Producer},
+    };
     // Late resources
     struct Resources {
         p: Producer<'static, u32, U4>,

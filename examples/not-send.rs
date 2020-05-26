@@ -17,6 +17,8 @@ pub struct NotSend {
 
 #[app(device = lm3s6965)]
 mod app {
+    use super::NotSend;
+
     struct Resources {
         #[init(None)]
         shared: Option<NotSend>,

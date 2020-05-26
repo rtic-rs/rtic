@@ -14,6 +14,8 @@ pub struct MustBeSend;
 
 #[app(device = lm3s6965)]
 mod app {
+    use super::MustBeSend;
+
     struct Resources {
         #[init(None)]
         shared: Option<MustBeSend>,
