@@ -18,7 +18,7 @@ const APP: () = {
     fn init(cx: init::Context) {
         // omitted: initialization of `CYCCNT`
 
-        cx.schedule.foo(Instant::now() + PERIOD.cycles()).unwrap();
+        cx.schedule.foo(cx.start + PERIOD.cycles()).unwrap();
     }
 
     #[task(schedule = [foo])]
