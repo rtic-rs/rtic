@@ -74,6 +74,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             #section
             #cfg_core
             unsafe extern "C" fn #main() -> ! {
+                let _TODO: () = ();
+
                 #(#assertion_stmts)*
 
                 #(#pre_init_stmts)*
