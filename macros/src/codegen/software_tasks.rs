@@ -145,14 +145,13 @@ pub fn codegen(
             #(#attrs)*
             #(#cfgs)*
             #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
+            pub fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
                 use rtic::Mutex as _;
 
                 #(#stmts)*
             }
         ));
         software_tasks_imports.push(quote!(
-            #(#attrs)*
             #(#cfgs)*
             #[allow(non_snake_case)]
             use super::#name;

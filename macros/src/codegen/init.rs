@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{quote, format_ident};
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
@@ -24,6 +24,8 @@ pub fn codegen(
     Vec<TokenStream2>,
     // user_init -- the `#[init]` function written by the user
     Option<TokenStream2>,
+    // user_init_imports -- the imports for `#[init]` functio written by the user
+    Vec<TokenStream2>,
     // call_init -- the call to the user `#[init]` if there's one
     Option<TokenStream2>,
 ) {
@@ -33,6 +35,8 @@ pub fn codegen(
         let name = &init.name;
 
         let mut root_init = vec![];
+
+        let mut user_init_imports = vec![];
 
         let ret = {
             let late_fields = analysis
@@ -62,6 +66,12 @@ pub fn codegen(
                     }
                 ));
 
+                let name_late = format_ident!("{}LateResources", name);
+                user_init_imports.push(quote!(
+                        #[allow(non_snake_case)]
+                        use super::#name_late;
+                ));
+
                 Some(quote!(-> #name::LateResources))
             } else {
                 None
@@ -89,6 +99,12 @@ pub fn codegen(
                 #(#stmts)*
             }
         ));
+        user_init_imports.push(quote!(
+                #(#attrs)*
+                #cfg_core
+                #[allow(non_snake_case)]
+                use super::#name;
+        ));
 
         let mut const_app = None;
         if !init.args.resources.is_empty() {
@@ -97,6 +113,12 @@ pub fn codegen(
 
             root_init.push(item);
             const_app = Some(constructor);
+
+            let name_late = format_ident!("{}Resources", name);
+            user_init_imports.push(quote!(
+                    #[allow(non_snake_case)]
+                    use super::#name_late;
+            ));
         }
 
         let locals_new = locals_new.iter();
@@ -106,8 +128,8 @@ pub fn codegen(
 
         root_init.push(module::codegen(Context::Init, needs_lt, app, extra));
 
-        (const_app, root_init, user_init, call_init)
+        (const_app, root_init, user_init, user_init_imports, call_init)
     } else {
-        (None, vec![], None, None)
+        (None, vec![], None, vec![], None)
     }
 }

@@ -89,7 +89,7 @@ pub fn codegen(
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
                 #cfg_core
-                use super::#name;
+                use super::resources::#name;
             ));
 
             const_app.push(util::impl_mutex(
@@ -107,6 +107,11 @@ pub fn codegen(
     let mod_resources = if mod_resources.is_empty() {
         quote!()
     } else {
+        // Also import the resource module
+        mod_resources_imports.push(quote!(
+            use super::resources;
+        ));
+
         quote!(mod resources {
             use rtic::export::Priority;
 
