@@ -8,7 +8,7 @@ fn analyze() {
     let (app, analysis) = rtic_syntax::parse2(
         quote!(device = pac),
         quote!(
-            const APP: () = {
+            mod app {
                 #[task(priority = 1)]
                 fn a(_: a::Context) {}
 
@@ -20,7 +20,7 @@ fn analyze() {
                     fn B();
                     fn A();
                 }
-            };
+            }
         ),
         settings,
     )
