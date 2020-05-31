@@ -1,0 +1,94 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+        # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: mdBook Action
+        uses: peaceiris/actions-mdbook@v1.1.11
+        with:
+          mdbook-version: '0.3.1'
+          # mdbook-version: 'latest'
+
+      - name: Remove cargo-config
+        run: rm -f .cargo/config
+
+      - name: Build docs
+        run: cargo doc
+
+      - name: Build books
+        run: |
+          langs=( en ru )
+          latest=0.5
+          vers=( 0.4.x )
+
+          # Create directories
+          td=$(mktemp -d)
+          mkdir -p $td/$latest/book/
+          cp -r target/doc $td/$latest/api
+
+          # sed fixes
+          sed 's|URL|rtfm/index.html|g' redirect.html > $td/$latest/api/index.html
+          sed 's|URL|0.5|g' redirect.html > $td/index.html
+          sed 's|URL|book/en|g' redirect.html > $td/$latest/index.html
+
+          # Build books
+          for lang in ${langs[@]}; do
+              ( cd book/$lang && mdbook build )
+              cp -r book/$lang/book $td/$latest/book/$lang
+              cp LICENSE-* $td/$latest/book/$lang/
+          done
+
+          # Build older versions
+          root=$(pwd)
+          for ver in ${vers[@]}; do
+              prefix=${ver%.*}
+
+              mkdir -p $td/$prefix/book
+              src=$(mktemp -d)
+              curl -L https://github.com/rtfm-rs/cortex-m-rtfm/archive/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
+
+              pushd $src
+              rm -f .cargo/config
+              cargo doc || cargo doc --features timer-queue
+              cp -r target/doc $td/$prefix/api
+              sed 's|URL|rtfm/index.html|g' $root/redirect.html > $td/$prefix/api/index.html
+              for lang in ${langs[@]}; do
+                  ( cd book/$lang && mdbook build )
+                  cp -r book/$lang/book $td/$prefix/book/$lang
+                  cp LICENSE-* $td/$prefix/book/$lang/
+              done
+              sed 's|URL|book/en|g' $root/redirect.html > $td/$prefix/index.html
+              popd
+
+              rm -rf $src
+          done
+
+          # Forward CNAME file
+          cp CNAME $td/
+          mv $td/ bookstodeploy
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./bookstodeploy
