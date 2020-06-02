@@ -37,6 +37,7 @@ before_install:
 install:
   - bash ci/install.sh
   - export PATH="$PATH:$PWD/qemu"
+  - export PATH="$PATH:$PWD/mdbook-bin"
 
 script:
   - bash ci/script.sh
