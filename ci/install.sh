@@ -27,8 +27,6 @@ main() {
     tar -xf mdbook.tar.gz
     mkdir -p mdbook-bin
     mv mdbook mdbook-bin/
-    PATH=$(pwd)/mdbook-bin:$PATH
-    which mdbook
 
     #install_crate mdbook 0.3.1
 }
