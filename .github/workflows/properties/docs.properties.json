@@ -1,0 +1,6 @@
+{
+    "name": "Docs",
+    "description": "Build the books.",
+    "iconName": "rust",
+    "categories": ["Rust"]
+}

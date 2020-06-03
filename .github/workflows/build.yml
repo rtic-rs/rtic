@@ -1,0 +1,362 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+      - ghatest
+  pull_request:
+    branches:
+      - master
+      - ghatest
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Run cargo fmt --check, includes macros/
+  style:
+    name: Check Style with cargo fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: cargo fmt --check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  # Compilation check
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+          - thumbv6m-none-eabi
+          - x86_64-unknown-linux-gnu
+        toolchain:
+          - stable
+          - 1.36.0
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: false
+          command: check
+          args: --target=${{ matrix.target }}
+
+  # Verify all examples
+  checkexamples:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+          - thumbv6m-none-eabi
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: false
+          command: check
+          args: --examples --target=${{ matrix.target }}
+
+      - name: cargo check -p homogeneous
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: false
+          command: check
+          args: -p homogeneous --examples --target=${{ matrix.target }}
+
+      - name: Install QEMU
+        run: |
+          mkdir qemu
+          curl -L https://github.com/japaric/qemu-bin/raw/master/14.04/qemu-system-arm-2.12.0 > qemu/qemu-system-arm
+          chmod +x qemu/qemu-system-arm
+
+      - name: Setup arm-none-eabi-gcc
+        uses: fiam/arm-none-eabi-gcc@v1
+        with:
+          release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
+
+      - name: Run-pass tests
+        run: |
+          # Add QEMU to the path
+          echo $PATH
+          PATH=$(pwd)/qemu:$PATH
+          arm_example() {
+              local COMMAND=$1
+              local EXAMPLE=$2
+              local BUILD_MODE=$3
+              local FEATURES=$4
+              local BUILD_NUM=$5
+
+              if [ $BUILD_MODE = "release" ]; then
+                  local RELEASE_FLAG="--release"
+              else
+                  local RELEASE_FLAG=""
+              fi
+
+              if [ -n "$FEATURES" ]; then
+                  local FEATURES_FLAG="--features $FEATURES"
+                  local FEATURES_STR=${FEATURES/,/_}_
+              else
+                  local FEATURES_FLAG=""
+                  local FEATURES_STR=""
+              fi
+              local CARGO_FLAGS="--example $EXAMPLE --target ${{ matrix.target }} $RELEASE_FLAG $FEATURES_FLAG"
+
+              if [ $COMMAND = "run" ]; then
+                  cargo $COMMAND $CARGO_FLAGS | diff -u ci/expected/$EXAMPLE.run -
+              else
+                  cargo $COMMAND $CARGO_FLAGS
+              fi
+              arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/$BUILD_MODE/examples/$EXAMPLE ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
+          }
+
+          mkdir -p ci/builds
+          exs=(
+              idle
+              init
+              hardware
+              preempt
+              binds
+
+              resource
+              lock
+              late
+              only-shared-access
+
+              task
+              message
+              capacity
+
+              types
+              not-send
+              not-sync
+              shared-with-init
+
+              generics
+              cfg
+              pool
+              ramfunc
+          )
+
+          for ex in ${exs[@]}; do
+              if [ $ex = pool ]; then
+                  if [ ${{ matrix.target }} = thumbv6m-none-eabi ]; then
+                      continue
+                  fi
+
+                  td=$(mktemp -d)
+
+                  cargo run --example $ex --target ${{ matrix.target }} --features __v7 >\
+                          $td/pool.run
+                  grep 'foo(0x2' $td/pool.run
+                  grep 'bar(0x2' $td/pool.run
+                  arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/debug/examples/$ex \
+                                          ci/builds/${ex}___v7_debug_1.hex
+
+                  cargo run --example $ex --target ${{ matrix.target }} --features __v7 --release >\
+                          $td/pool.run
+                  grep 'foo(0x2' $td/pool.run
+                  grep 'bar(0x2' $td/pool.run
+                  arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/release/examples/$ex \
+                                          ci/builds/${ex}___v7_release_1.hex
+
+                  rm -rf $td
+
+                  continue
+              fi
+
+              if [ $ex = types ]; then
+                  if [ ${{ matrix.target }} = thumbv6m-none-eabi ]; then
+                      continue
+                  fi
+
+                  arm_example "run" $ex "debug" "__v7" "1"
+                  arm_example "run" $ex "release" "__v7" "1"
+
+                  continue
+              fi
+
+              arm_example "run" $ex "debug" "" "1"
+              if [ $ex = types ]; then
+                  arm_example "run" $ex "release" "" "1"
+              else
+                  arm_example "build" $ex "release" "" "1"
+              fi
+          done
+
+          built=()
+          cargo clean
+          for ex in ${exs[@]}; do
+              if [ $ex = types ] || [ $ex = pool ]; then
+                  if [ ${{ matrix.target }} = thumbv6m-none-eabi ]; then
+                      continue
+                  fi
+
+                  arm_example "build" $ex "debug" "__v7" "2"
+                  cmp ci/builds/${ex}___v7_debug_1.hex \
+                      ci/builds/${ex}___v7_debug_2.hex
+                  arm_example "build" $ex "release" "__v7" "2"
+                  cmp ci/builds/${ex}___v7_release_1.hex \
+                      ci/builds/${ex}___v7_release_2.hex
+              else
+                  arm_example "build" $ex "debug" "" "2"
+                  cmp ci/builds/${ex}_debug_1.hex \
+                      ci/builds/${ex}_debug_2.hex
+                  arm_example "build" $ex "release" "" "2"
+                  cmp ci/builds/${ex}_release_1.hex \
+                      ci/builds/${ex}_release_2.hex
+              fi
+
+              built+=( $ex )
+          done
+
+          ( cd target/${{ matrix.target }}/release/examples/ && size ${built[@]} )
+
+
+  # Check the correctness of macros/ crate
+  checkmacros:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+        toolchain:
+          - stable
+          - 1.36.0
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+      - name: cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: false
+          command: check
+          args: --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
+
+  # Run test suite for thumbv7m
+  testv7:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.36.0
+          target: thumbv7m-none-eabi
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: false
+          command: test
+          args: --test single --features __v7
+
+  # Run test suite for thumbv6m
+  testv6:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.36.0
+          target: thumbv6m-none-eabi
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: false
+          command: test
+          args: --test single
+
+  # Verify all multicore examples
+  checkmulticore:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+        toolchain:
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust ${{ matrix.toolchain }} with x86_64-unknown-linux-gnu
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: x86_64-unknown-linux-gnu
+          override: true
+      - name: Install Rust ${{ matrix.toolchain }} with thumbv7m-none-eabi
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: thumbv7m-none-eabi
+          override: true
+      - name: Install Rust ${{ matrix.toolchain }} with thumbv6m-none-eabi
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: thumbv6m-none-eabi
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: microamp-tools --version 0.1.0-alpha.3
+
+      - name: Check multi-core examples
+        run: |
+          cd heterogeneous
+          exs=(
+              smallest
+              x-init-2
+              x-init
+              x-schedule
+              x-spawn
+          )
+          for ex in ${exs[@]}; do
+              cargo-microamp --example=$ex --target thumbv7m-none-eabi,thumbv6m-none-eabi --check
+          done

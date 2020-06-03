@@ -1,0 +1,93 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - master
+      - ghatest
+  pull_request:
+    branches:
+      - master
+      - ghatest
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+        # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install dependencies
+        run: pip install git+https://github.com/linkchecker/linkchecker.git
+
+      - name: Remove cargo-config
+        run: rm -f .cargo/config
+
+      - name: Build docs
+        run: cargo doc
+
+      - name: Check links
+        run: |
+          td=$(mktemp -d)
+          cp -r target/doc $td/api
+          linkchecker $td/api/rtfm/
+          linkchecker $td/api/cortex_m_rtfm_macros/
+
+  mdbook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+        # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install dependencies
+        run: pip install git+https://github.com/linkchecker/linkchecker.git
+
+      - name: mdBook Action
+        uses: peaceiris/actions-mdbook@v1.1.11
+        with:
+          mdbook-version: '0.3.1'
+
+      - name: Build book in English
+        run: cd book/en && mdbook build
+
+      - name: Build book in Russian
+        run: cd book/ru && mdbook build
+
+      - name: Check links
+        run: |
+          td=$(mktemp -d)
+          mkdir $td/book
+          cp -r book/en/book $td/book/en
+          cp -r book/ru/book $td/book/ru
+          cp LICENSE-* $td/book/en
+          cp LICENSE-* $td/book/ru
+
+          linkchecker $td/book/en/
+          linkchecker $td/book/ru/

@@ -1,0 +1,6 @@
+{
+    "name": "Publish",
+    "description": "Publish the books and docs.",
+    "iconName": "rust",
+    "categories": ["Rust"]
+}
