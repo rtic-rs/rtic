@@ -19,6 +19,7 @@ mod app {
     }
 
     // Should not collide with the struct above
+    #[allow(dead_code)]
     struct Resources2 {
         // A resource
         shared: u32,
