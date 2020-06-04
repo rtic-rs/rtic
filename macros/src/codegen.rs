@@ -142,7 +142,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         #(#root_software_tasks)*
 
         /// Implementation details
-        // the user can't access the items within this `const` item
         mod #name {
             /// Always include the device crate which contains the vector table
             use #device as _;
