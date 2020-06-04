@@ -31,11 +31,11 @@ error[E0425]: cannot find value `FOO` in this scope
 error: duplicate lang item in crate `panic_halt`: `panic_impl`.
   |
   = note: the lang item is first defined in crate `std` (which `$CRATE` depends on)
-  = note: first definition in `std` loaded from /usr/share/rust/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-cf0f33af3a901778.rlib
-  = note: second definition in `panic_halt` loaded from $DIR/target/tests/target/x86_64-unknown-linux-gnu/debug/deps/libpanic_halt-ba6f0ab3439cbc7e.rmeta
+  = note: first definition in `std` loaded from /home/henrik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-cf0f33af3a901778.rlib
+  = note: second definition in `panic_halt` loaded from $DIR/target/tests/target/debug/deps/libpanic_halt-b597cb793434f3ed.rmeta
 
 error: duplicate lang item in crate `panic_semihosting`: `panic_impl`.
   |
   = note: the lang item is first defined in crate `panic_halt`.
-  = note: first definition in `panic_halt` loaded from $DIR/target/tests/target/x86_64-unknown-linux-gnu/debug/deps/libpanic_halt-ba6f0ab3439cbc7e.rmeta
-  = note: second definition in `panic_semihosting` loaded from $DIR/target/tests/target/x86_64-unknown-linux-gnu/debug/deps/libpanic_semihosting-805015f4a2d05965.rmeta
+  = note: first definition in `panic_halt` loaded from $DIR/target/tests/target/debug/deps/libpanic_halt-b597cb793434f3ed.rmeta
+  = note: second definition in `panic_semihosting` loaded from $DIR/target/tests/target/debug/deps/libpanic_semihosting-2c8f1ababc34800c.rmeta
