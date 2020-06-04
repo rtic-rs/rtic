@@ -35,7 +35,8 @@ mod tests;
 ///
 /// The items allowed in the module block are specified below:
 ///
-/// # 1. `struct Resources`
+/// # 1. `#[resources]
+///       struct <resource-name>`
 ///
 /// This structure contains the declaration of all the resources used by the application. Each field
 /// in this structure corresponds to a different resource. Each resource may optionally be given an

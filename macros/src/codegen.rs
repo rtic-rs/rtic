@@ -123,6 +123,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let const_app_schedule = schedule::codegen(app, extra);
 
     let user_imports = app.user_imports.clone();
+    let user_code = app.user_code.clone();
     let name = &app.name;
     let device = extra.device;
     quote!(
@@ -147,6 +148,11 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             use #device as _;
             #(#imports)*
             #(#user_imports)*
+
+            /// User code from within the module
+            #(#user_code)*
+            /// User code end
+
 
             #(#user_hardware_tasks_imports)*
 
