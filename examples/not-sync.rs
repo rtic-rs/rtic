@@ -19,6 +19,7 @@ mod app {
     use super::NotSync;
     use core::marker::PhantomData;
 
+    #[resources]
     struct Resources {
         #[init(NotSync { _0: PhantomData })]
         shared: NotSync,

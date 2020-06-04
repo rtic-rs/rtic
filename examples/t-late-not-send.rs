@@ -15,6 +15,7 @@ pub struct NotSend {
 mod app {
     use super::NotSend;
 
+    #[resources]
     struct Resources {
         x: NotSend,
         #[init(None)]

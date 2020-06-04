@@ -7,6 +7,7 @@ use panic_halt as _;
 
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
+    #[resources]
     struct Resources {
         #[cfg(never)]
         #[init(0)]

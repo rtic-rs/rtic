@@ -11,6 +11,7 @@ use rtic::cyccnt;
 
 #[rtic::app(device = lm3s6965, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
+    #[resources]
     struct Resources {
         #[init(0)]
         shared: u32,

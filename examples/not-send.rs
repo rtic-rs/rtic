@@ -19,6 +19,7 @@ pub struct NotSend {
 mod app {
     use super::NotSend;
 
+    #[resources]
     struct Resources {
         #[init(None)]
         shared: Option<NotSend>,

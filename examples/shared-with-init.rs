@@ -16,6 +16,7 @@ pub struct MustBeSend;
 mod app {
     use super::MustBeSend;
 
+    #[resources]
     struct Resources {
         #[init(None)]
         shared: Option<MustBeSend>,

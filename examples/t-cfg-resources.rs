@@ -7,6 +7,7 @@ use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    #[resources]
     struct Resources {
         // A resource
         #[init(0)]
@@ -16,7 +17,6 @@ mod app {
         x: u32,
         dummy: (), // dummy such that we have at least one late resource
     }
-
     #[init]
     fn init(_: init::Context) -> init::LateResources {
         init::LateResources {

@@ -21,6 +21,7 @@ mod app {
         spsc::{Consumer, Producer},
     };
     // Late resources
+    #[resources]
     struct Resources {
         p: Producer<'static, u32, U4>,
         c: Consumer<'static, u32, U4>,

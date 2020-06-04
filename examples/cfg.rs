@@ -12,6 +12,7 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    #[resources]
     struct Resources {
         #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
         #[init(0)]

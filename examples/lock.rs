@@ -11,6 +11,7 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    #[resources]
     struct Resources {
         #[init(0)]
         shared: u32,
