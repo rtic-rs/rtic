@@ -1,6 +1,5 @@
 //! examples/baseline.rs
 
-#![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
 #![no_std]
@@ -8,9 +7,11 @@
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
+use cortex_m::peripheral::DWT;
+use rtic::time::{self, instant::Instant};
 
 // NOTE: does NOT properly work on QEMU
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = crate::CYCCNT, sys_timer_freq = 64_000_000)]
 const APP: () = {
     #[init(spawn = [foo])]
     fn init(cx: init::Context) {
@@ -49,3 +50,27 @@ const APP: () = {
         fn UART1();
     }
 };
+
+
+/// Implementation of the `Monotonic` trait based on CYCle CouNTer
+#[derive(Debug)]
+pub struct CYCCNT;
+
+impl rtic::Monotonic for CYCCNT {
+    unsafe fn reset() {
+        (0xE0001004 as *mut u32).write_volatile(0)
+    }
+}
+
+impl time::Clock for CYCCNT {
+    type Rep = i32;
+
+    // the period of 64 MHz
+    const PERIOD: time::Period = time::Period::new_raw(1, 64_000_000);
+
+    fn now() -> Instant<Self> {
+        let ticks = DWT::get_cycle_count();
+
+        Instant::new(ticks as i32)
+    }
+}

@@ -36,7 +36,7 @@ pub fn codegen(
             let m = extra.monotonic();
 
             (
-                Some(quote!(let instant = <#m as rtic::Monotonic>::now();)),
+                Some(quote!(let instant = <#m as rtic::time::Clock>::now();)),
                 Some(quote!(, instant)),
             )
         } else {

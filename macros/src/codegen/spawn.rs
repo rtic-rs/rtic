@@ -88,7 +88,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                     (
                         Some(if spawner.is_idle() {
-                            quote!(let instant = <#m as rtic::Monotonic>::now();)
+                            quote!(let instant = <#m as rtic::time::Clock>::now();)
                         } else {
                             quote!(let instant = self.instant();)
                         }),
