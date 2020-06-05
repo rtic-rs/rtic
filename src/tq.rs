@@ -72,13 +72,9 @@ impl<SysTimer, Clock, Task, N> TimerQueue<SysTimer, Clock, Task, N>
                     // "Setting SYST_RVR to zero has the effect of
                     // disabling the SysTick counter independently
                     // of the counter enable bit."
-                    let systick_ticks: u32 = match u32::try_from(systick_ticks) {
-                        Ok(ticks) if ticks < MAX => ticks,
-                        Err(_) => panic!("systick_ticks.try_into() failed"),
-                        _ => MAX,
-                    };
+                    let systick_ticks = u32::try_from(systick_ticks).ok()?;
 
-                    let systick_ticks = cmp::max(1, systick_ticks);
+                    let systick_ticks = cmp::min(cmp::max(systick_ticks, 1), MAX);
 
                     mem::transmute::<_, SYST>(()).set_reload(systick_ticks);
 

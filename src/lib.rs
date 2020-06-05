@@ -52,8 +52,6 @@ pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{Exclusive, Mutex};
 pub use embedded_time as time;
 
-#[cfg(armv7m)]
-pub mod cyccnt;
 #[doc(hidden)]
 pub mod export;
 #[doc(hidden)]

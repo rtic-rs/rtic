@@ -1,19 +1,16 @@
 //! examples/schedule.rs
 
-#![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
 #![no_std]
 
-use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
 use panic_halt as _;
-use rtic::time::{prelude::*, time_units::*, Ratio};
-
-use rtic::cyccnt::CYCCNT as SysClock;
+use cortex_m::peripheral::DWT;
+use rtic::time::{self, instant::Instant, prelude::*, time_units::*};
 
 // NOTE: does NOT work on QEMU!
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, sys_timer_freq = 64_000_000)]
+#[rtic::app(device = lm3s6965, monotonic = crate::CYCCNT, sys_timer_freq = 64_000_000)]
 const APP: () = {
     #[init(schedule = [foo, bar])]
     fn init(mut cx: init::Context) {
@@ -29,14 +26,14 @@ const APP: () = {
 
         hprintln!(
             "init @ {:?}",
-            SysClock::now().elapsed_since_epoch::<Microseconds<i32>>()
+            CYCCNT::now().elapsed_since_epoch::<Microseconds<i32>>()
         )
         .unwrap();
 
-        // Schedule `foo` to run 8e6 cycles (clock cycles) in the future
+        // Schedule `foo` to run 1 second in the future
         cx.schedule.foo(now + 1.seconds()).unwrap();
 
-        // Schedule `bar` to run 4e6 cycles in the future
+        // Schedule `bar` to run 2 seconds in the future
         cx.schedule.bar(now + 2.seconds()).unwrap();
     }
 
@@ -44,7 +41,7 @@ const APP: () = {
     fn foo(_: foo::Context) {
         hprintln!(
             "foo  @ {:?}",
-            SysClock::now().elapsed_since_epoch::<Microseconds<i32>>()
+            CYCCNT::now().elapsed_since_epoch::<Microseconds<i32>>()
         )
         .unwrap();
     }
@@ -53,12 +50,35 @@ const APP: () = {
     fn bar(_: bar::Context) {
         hprintln!(
             "bar  @ {:?}",
-            SysClock::now().elapsed_since_epoch::<Microseconds<i32>>()
+            CYCCNT::now().elapsed_since_epoch::<Microseconds<i32>>()
         )
-        .unwrap();
+            .unwrap();
     }
 
     extern "C" {
         fn UART0();
     }
 };
+
+
+/// Implementation of the `Monotonic` trait based on CYCle CouNTer
+pub struct CYCCNT;
+
+impl rtic::Monotonic for CYCCNT {
+    unsafe fn reset() {
+        (0xE0001004 as *mut u32).write_volatile(0)
+    }
+}
+
+impl time::Clock for CYCCNT {
+    type Rep = i32;
+
+    // the period of 64 MHz
+    const PERIOD: time::Period = time::Period::new_raw(1, 64_000_000);
+
+    fn now() -> Instant<Self> {
+        let ticks = DWT::get_cycle_count();
+
+        Instant::new(ticks as i32)
+    }
+}
