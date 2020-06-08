@@ -1,34 +1,34 @@
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:10:9
+  --> $DIR/locals-cfg.rs:11:9
    |
-10 |         FOO;
+11 |         FOO;
    |         ^^^ not found in this scope
 
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:18:9
+  --> $DIR/locals-cfg.rs:19:9
    |
-18 |         FOO;
+19 |         FOO;
    |         ^^^ not found in this scope
 
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:28:9
+  --> $DIR/locals-cfg.rs:29:9
    |
-28 |         FOO;
+29 |         FOO;
    |         ^^^ not found in this scope
 
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:36:9
+  --> $DIR/locals-cfg.rs:37:9
    |
-36 |         FOO;
+37 |         FOO;
    |         ^^^ not found in this scope
 
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:44:9
+  --> $DIR/locals-cfg.rs:45:9
    |
-44 |         FOO;
+45 |         FOO;
    |         ^^^ not found in this scope
 
-error: duplicate lang item in crate `panic_halt`: `panic_impl`.
+error: duplicate lang item in crate `panic_halt` (which `$CRATE` depends on): `panic_impl`.
   |
   = note: the lang item is first defined in crate `std` (which `$CRATE` depends on)
   = note: first definition in `std` loaded from /home/henrik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-cf0f33af3a901778.rlib
@@ -36,6 +36,6 @@ error: duplicate lang item in crate `panic_halt`: `panic_impl`.
 
 error: duplicate lang item in crate `panic_semihosting`: `panic_impl`.
   |
-  = note: the lang item is first defined in crate `panic_halt`.
+  = note: the lang item is first defined in crate `panic_halt` (which `$CRATE` depends on)
   = note: first definition in `panic_halt` loaded from $DIR/target/tests/target/debug/deps/libpanic_halt-b597cb793434f3ed.rmeta
   = note: second definition in `panic_semihosting` loaded from $DIR/target/tests/target/debug/deps/libpanic_semihosting-2c8f1ababc34800c.rmeta

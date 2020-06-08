@@ -1,119 +1,125 @@
+error: duplicate lang item in crate `panic_halt` (which `$CRATE` depends on): `panic_impl`.
+  |
+  = note: the lang item is first defined in crate `std` (which `$CRATE` depends on)
+  = note: first definition in `std` loaded from /home/henrik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-cf0f33af3a901778.rlib
+  = note: second definition in `panic_halt` loaded from $DIR/target/tests/target/debug/deps/libpanic_halt-b597cb793434f3ed.rmeta
+
 error[E0609]: no field `o1` on type `initResources<'_>`
-  --> $DIR/resources-cfg.rs:46:21
+  --> $DIR/resources-cfg.rs:47:21
    |
-46 |         c.resources.o1;
+47 |         c.resources.o1;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `o4` on type `initResources<'_>`
-  --> $DIR/resources-cfg.rs:47:21
+  --> $DIR/resources-cfg.rs:48:21
    |
-47 |         c.resources.o4;
+48 |         c.resources.o4;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `o5` on type `initResources<'_>`
-  --> $DIR/resources-cfg.rs:48:21
+  --> $DIR/resources-cfg.rs:49:21
    |
-48 |         c.resources.o5;
+49 |         c.resources.o5;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `o6` on type `initResources<'_>`
-  --> $DIR/resources-cfg.rs:49:21
+  --> $DIR/resources-cfg.rs:50:21
    |
-49 |         c.resources.o6;
+50 |         c.resources.o6;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `s3` on type `initResources<'_>`
-  --> $DIR/resources-cfg.rs:50:21
+  --> $DIR/resources-cfg.rs:51:21
    |
-50 |         c.resources.s3;
+51 |         c.resources.s3;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `o2` on type `idleResources<'_>`
-  --> $DIR/resources-cfg.rs:55:21
+  --> $DIR/resources-cfg.rs:56:21
    |
-55 |         c.resources.o2;
+56 |         c.resources.o2;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `o4` on type `idleResources<'_>`
-  --> $DIR/resources-cfg.rs:56:21
+  --> $DIR/resources-cfg.rs:57:21
    |
-56 |         c.resources.o4;
+57 |         c.resources.o4;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `s1` on type `idleResources<'_>`
-  --> $DIR/resources-cfg.rs:57:21
+  --> $DIR/resources-cfg.rs:58:21
    |
-57 |         c.resources.s1;
+58 |         c.resources.s1;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `s3` on type `idleResources<'_>`
-  --> $DIR/resources-cfg.rs:58:21
+  --> $DIR/resources-cfg.rs:59:21
    |
-58 |         c.resources.s3;
+59 |         c.resources.s3;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `o3` on type `uart0Resources<'_>`
-  --> $DIR/resources-cfg.rs:65:21
+  --> $DIR/resources-cfg.rs:66:21
    |
-65 |         c.resources.o3;
+66 |         c.resources.o3;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `s1` on type `uart0Resources<'_>`
-  --> $DIR/resources-cfg.rs:66:21
+  --> $DIR/resources-cfg.rs:67:21
    |
-66 |         c.resources.s1;
+67 |         c.resources.s1;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `s2` on type `uart0Resources<'_>`
-  --> $DIR/resources-cfg.rs:67:21
+  --> $DIR/resources-cfg.rs:68:21
    |
-67 |         c.resources.s2;
+68 |         c.resources.s2;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `s3` on type `uart0Resources<'_>`
-  --> $DIR/resources-cfg.rs:68:21
+  --> $DIR/resources-cfg.rs:69:21
    |
-68 |         c.resources.s3;
+69 |         c.resources.s3;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `s2` on type `uart1Resources<'_>`
-  --> $DIR/resources-cfg.rs:73:21
+  --> $DIR/resources-cfg.rs:74:21
    |
-73 |         c.resources.s2;
+74 |         c.resources.s2;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
 
 error[E0609]: no field `o5` on type `uart1Resources<'_>`
-  --> $DIR/resources-cfg.rs:74:21
+  --> $DIR/resources-cfg.rs:75:21
    |
-74 |         c.resources.o5;
+75 |         c.resources.o5;
    |                     ^^ unknown field
    |
    = note: available fields are: `__marker__`
