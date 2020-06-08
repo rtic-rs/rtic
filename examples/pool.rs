@@ -20,7 +20,9 @@ pool!(P: [u8; 128]);
 #[app(device = lm3s6965)]
 mod app {
     use crate::Box;
-    use crate::P;
+
+    // Import the memory pool into scope
+    use super::P;
 
     #[init]
     fn init(_: init::Context) {
