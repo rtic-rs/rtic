@@ -16,16 +16,15 @@ pub fn codegen(
 
     // initialize late resources
     if let Some(late_resources) = analysis.late_resources.get(&core) {
-
         for name in late_resources {
             // if it's live
             let cfgs = app.late_resources[name].cfgs.clone();
             if analysis.locations.get(name).is_some() {
                 // Need to also include the cfgs
                 stmts.push(quote!(
-                        #(#cfgs)*
-                        #name.as_mut_ptr().write(late.#name);
-                        ));
+                #(#cfgs)*
+                #name.as_mut_ptr().write(late.#name);
+                ));
             }
         }
     }

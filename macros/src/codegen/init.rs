@@ -47,9 +47,9 @@ pub fn codegen(
                             let cfgs = &app.late_resources[name].cfgs;
 
                             quote!(
-                                #(#cfgs)*
-                                pub #name: #ty
-                                )
+                            #(#cfgs)*
+                            pub #name: #ty
+                            )
                         })
                         .collect::<Vec<_>>()
                 })

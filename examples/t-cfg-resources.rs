@@ -28,7 +28,7 @@ mod example {
                 // The feature needs to be applied everywhere x is defined or used
                 #[cfg(feature = "feature_x")]
                 x: 0,
-                dummy: () // dummy such that we have at least one late resource
+                dummy: (), // dummy such that we have at least one late resource
             }
         }
 
