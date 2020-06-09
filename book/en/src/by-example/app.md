@@ -106,7 +106,7 @@ mut` variables are safe to use within a hardware task.
 $ cargo run --example hardware
 {{#include ../../../../ci/expected/hardware.run}}```
 
-So far all the RTFM applications we have seen look no different that the
+So far all the RTFM applications we have seen look no different than the
 applications one can write using only the `cortex-m-rt` crate. From this point
 we start introducing features unique to RTFM.
 
@@ -115,7 +115,7 @@ we start introducing features unique to RTFM.
 The static priority of each handler can be declared in the `task` attribute
 using the `priority` argument. Tasks can have priorities in the range `1..=(1 <<
 NVIC_PRIO_BITS)` where `NVIC_PRIO_BITS` is a constant defined in the `device`
-crate. When the `priority` argument is omitted the priority is assumed to be
+crate. When the `priority` argument is omitted, the priority is assumed to be
 `1`. The `idle` task has a non-configurable static priority of `0`, the lowest
 priority.
 
@@ -140,12 +140,12 @@ $ cargo run --example preempt
 
 Note that the task `gpiob` does *not* preempt task `gpioc` because its priority
 is the *same* as `gpioc`'s. However, once `gpioc` terminates the execution of
-task `gpiob` is prioritized over `gpioa`'s due to its higher priority. `gpioa`
+task, `gpiob` is prioritized over `gpioa` due to its higher priority. `gpioa`
 is resumed only after `gpiob` terminates.
 
 One more note about priorities: choosing a priority higher than what the device
 supports (that is `1 << NVIC_PRIO_BITS`) will result in a compile error. Due to
-limitations in the language the error message is currently far from helpful: it
+limitations in the language, the error message is currently far from helpful: it
 will say something along the lines of "evaluation of constant value failed" and
 the span of the error will *not* point out to the problematic interrupt value --
 we are sorry about this!
