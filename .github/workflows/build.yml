@@ -90,7 +90,7 @@ jobs:
         with:
           use-cross: false
           command: check
-          args: --examples --target=${{ matrix.target }}
+          args: --examples --target=${{ matrix.target }} --features __min_r1_43
 
       - name: cargo check -p homogeneous
         uses: actions-rs/cargo@v1
