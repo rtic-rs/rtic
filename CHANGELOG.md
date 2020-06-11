@@ -5,6 +5,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.5.2] - 2020-06-11
+
+- Using safe `DWT` interface
+- Using GitHub Actions now
+- Improved CI speed
+- Now `main` can be used as function name
+- Fixed so one can `cfg`-out resources when using a newer compiler
+
 ## [v0.5.1] - 2019-11-19
 - Fixed arithmetic wrapping bug in src/cyccntr.rs
   elapsed and duration could cause an internal overflow trap
@@ -305,7 +313,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.5.2...HEAD
+[v0.5.2]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.5.1...v0.5.2
 [v0.5.1]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.5.0...v0.5.1
 [v0.5.0]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.3...v0.5.0
 [v0.4.3]: https://github.com/rtfm-rs/cortex-m-rtfm/compare/v0.4.2...v0.4.3
