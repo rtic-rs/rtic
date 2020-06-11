@@ -2,6 +2,8 @@
 
 A concurrency framework for building real time systems.
 
+Formerly known as Real-Time For the Masses.
+
 ## Features
 
 - **Tasks** as the unit of concurrency [^1]. Tasks can be *event triggered*
@@ -45,12 +47,12 @@ A concurrency framework for building real time systems.
 
 ## [User documentation](https://rtic.rs)
 
-## [API reference](https://rtic.rs/0.5/api)
+## [API reference](https://rtic.rs/0.5/api/)
 
 ## Chat
 Join us and talk about RTIC in the [Matrix room][matrix-room].
 
-[matrix-room]: https://matrix.to/#/#rtic-rs:matrix.org
+[matrix-room]: https://matrix.to/#/#rtic:matrix.org
 
 ## Contributing
 New features and big changes should go through the RFC process in the [dedicated RFC repository][rfcs].
@@ -59,11 +61,11 @@ New features and big changes should go through the RFC process in the [dedicated
 
 ## Acknowledgments
 
-This crate is based on [the RTIC language][rtic-lang] created by the Embedded
+This crate is based on [the Real-Time For the Masses language][rtfm-lang] created by the Embedded
 Systems group at [Luleå University of Technology][ltu], led by [Prof. Per
 Lindgren][per].
 
-[rtic-lang]: http://www.rtic-lang.org/
+[rtfm-lang]: http://www.rtfm-lang.org/
 [ltu]: https://www.ltu.se/?l=en
 [per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 
