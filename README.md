@@ -59,11 +59,11 @@ New features and big changes should go through the RFC process in the [dedicated
 
 ## Acknowledgments
 
-This crate is based on [the RTIC language][rtic-lang] created by the Embedded
+This crate is based on [the RTFM language][rtfm-lang] created by the Embedded
 Systems group at [Luleå University of Technology][ltu], led by [Prof. Per
 Lindgren][per].
 
-[rtic-lang]: http://www.rtic-lang.org/
+[rtfm-lang]: http://www.rtfm-lang.org/
 [ltu]: https://www.ltu.se/?l=en
 [per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 
