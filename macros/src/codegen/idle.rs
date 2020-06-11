@@ -72,7 +72,7 @@ pub fn codegen(
         ));
 
         let locals_new = locals_new.iter();
-        let call_idle = quote!(#name(
+        let call_idle = quote!(crate::#name(
             #(#locals_new,)*
             #name::Context::new(&rtfm::export::Priority::new(0))
         ));

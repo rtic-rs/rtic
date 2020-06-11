@@ -141,7 +141,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                                 #let_instant
                                 #fq.split().0.enqueue_unchecked(index);
                                 let priority = &rtfm::export::Priority::new(PRIORITY);
-                                #name(
+                                crate::#name(
                                     #locals_new
                                     #name::Context::new(priority #instant)
                                     #(,#pats)*
