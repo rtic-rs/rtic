@@ -102,8 +102,18 @@ main() {
 
     if [ $TARGET = thumbv6m-none-eabi ]; then
         cargo check --target $T --examples
+
+        # Check examples with specific features not compatible with MSRV
+        if [[ $TRAVIS_RUST_VERSION != 1.*.* ]]; then
+            cargo check --target $T --examples --features __min_r1_43
+        fi
     else
         cargo check --target $T --examples --features __v7
+
+        # Check examples with specific features not compatible with MSRV
+        if [[ $TRAVIS_RUST_VERSION != 1.*.* ]]; then
+            cargo check --target $T --examples --features __v7,__min_r1_43
+        fi
     fi
 
     cargo check -p homogeneous --target $T --examples
