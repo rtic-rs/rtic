@@ -5,7 +5,7 @@ on:
     branches:
       - master
       - staging
-      - trying`
+      - trying
 
 env:
   CARGO_TERM_COLOR: always
