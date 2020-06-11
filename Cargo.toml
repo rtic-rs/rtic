@@ -93,3 +93,19 @@ members = [
   "homogeneous",
   "macros",
 ]
+
+# do not optimize proc-macro deps or build scripts
+[profile.dev.build-override]
+codegen-units = 16
+debug = false
+debug-assertions = false
+opt-level = 0
+overflow-checks = false
+
+
+[profile.release.build-override]
+codegen-units = 16
+debug = false
+debug-assertions = false
+opt-level = 0
+overflow-checks = false
