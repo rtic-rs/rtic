@@ -1,13 +1,11 @@
 name: Build
 on:
+  pull_request:
   push:
     branches:
       - master
-      - ghatest
-  pull_request:
-    branches:
-      - master
-      - ghatest
+      - staging
+      - trying`
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,7 +13,7 @@ env:
 jobs:
   # Run cargo fmt --check, includes macros/
   style:
-    name: Check Style with cargo fmt
+    name: style
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,6 +35,7 @@ jobs:
 
   # Compilation check
   check:
+    name: check
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -72,6 +71,7 @@ jobs:
 
   # Verify all examples
   checkexamples:
+    name: checkexamples
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -254,6 +254,7 @@ jobs:
 
   # Check the correctness of macros/ crate
   checkmacros:
+    name: checkmacros
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -286,6 +287,7 @@ jobs:
 
   # Run test suite for thumbv7m
   testv7:
+    name: testv7
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -308,6 +310,7 @@ jobs:
 
   # Run test suite for thumbv6m
   testv6:
+    name: testv6
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -330,6 +333,7 @@ jobs:
 
   # Verify all multicore examples
   checkmulticore:
+    name: checkmulticore
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -377,3 +381,38 @@ jobs:
           for ex in ${exs[@]}; do
               cargo-microamp --example=$ex --target thumbv7m-none-eabi,thumbv6m-none-eabi --check
           done
+
+  # Refs: https://github.com/rust-lang/crater/blob/9ab6f9697c901c4a44025cf0a39b73ad5b37d198/.github/workflows/bors.yml#L125-L149
+  #
+  # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
+
+  ci-success:
+    name: ci
+    if: github.event_name == 'push' && success()
+    needs:
+      - style
+      - check
+      - checkexamples
+      - checkmacros
+      - testv7
+      - testv6
+      - checkmulticore
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark the job as a success
+        run: exit 0
+  ci-failure:
+    name: ci
+    if: github.event_name == 'push' && !success()
+    needs:
+      - style
+      - check
+      - checkexamples
+      - checkmacros
+      - testv7
+      - testv6
+      - checkmulticore
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark the job as a failure
+        run: exit 1
