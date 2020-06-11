@@ -3,3 +3,7 @@ authors = ["Jorge Aparicio"]
 multilingual = false
 src = "src"
 title = "Real-Time Interrupt-driven Concurrency"
+
+[output.html]
+git-repository-url = "https://github.com/rtic-rs/cortex-m-rtic"
+git-repository-icon = "fa-github"
