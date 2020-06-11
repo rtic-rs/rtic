@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::ast::App;
+use rtic_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
@@ -46,22 +46,22 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             let doc = format!("Core #{} timer queue", sender);
             let m = extra.monotonic();
             let n = util::capacity_typenum(timer_queue.capacity, false);
-            let tq_ty = quote!(rtfm::export::TimerQueue<#m, #t, #n>);
+            let tq_ty = quote!(rtic::export::TimerQueue<#m, #t, #n>);
 
             let section = util::link_section("bss", sender);
             items.push(quote!(
                 #cfg_sender
                 #[doc = #doc]
                 #section
-                static mut #tq: #tq_ty = rtfm::export::TimerQueue(
-                    rtfm::export::BinaryHeap(
-                        rtfm::export::iBinaryHeap::new()
+                static mut #tq: #tq_ty = rtic::export::TimerQueue(
+                    rtic::export::BinaryHeap(
+                        rtic::export::iBinaryHeap::new()
                     )
                 );
 
                 #cfg_sender
                 struct #tq<'a> {
-                    priority: &'a rtfm::export::Priority,
+                    priority: &'a rtic::export::Priority,
                 }
             ));
 
@@ -100,14 +100,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                         )
                     } else {
                         quote!(
-                            rtfm::pend(#device::#enum_::#interrupt);
+                            rtic::pend(#device::#enum_::#interrupt);
                         )
                     };
 
                     quote!(
                         #(#cfgs)*
                         #t::#name => {
-                            (#rq { priority: &rtfm::export::Priority::new(PRIORITY) }).lock(|rq| {
+                            (#rq { priority: &rtic::export::Priority::new(PRIORITY) }).lock(|rq| {
                                 rq.split().0.enqueue_unchecked((#rqt::#name, index))
                             });
 
@@ -125,15 +125,15 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 #cfg_sender
                 #section
                 unsafe fn #sys_tick() {
-                    use rtfm::Mutex as _;
+                    use rtic::Mutex as _;
 
                     /// The priority of this handler
                     const PRIORITY: u8 = #priority;
 
-                    rtfm::export::run(PRIORITY, || {
+                    rtic::export::run(PRIORITY, || {
                         while let Some((task, index)) = (#tq {
                             // NOTE dynamic priority is always the static priority at this point
-                            priority: &rtfm::export::Priority::new(PRIORITY),
+                            priority: &rtic::export::Priority::new(PRIORITY),
                         })
                         // NOTE `inline(always)` produces faster and smaller code
                             .lock(#[inline(always)]

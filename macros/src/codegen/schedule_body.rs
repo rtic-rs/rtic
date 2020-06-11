@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{ast::App, Context};
+use rtic_syntax::{ast::App, Context};
 use syn::Ident;
 
 use crate::codegen::util;
@@ -36,7 +36,7 @@ pub fn codegen(scheduler: Context, name: &Ident, app: &App) -> TokenStream2 {
     let t = util::schedule_t_ident(sender);
     quote!(
         unsafe {
-            use rtfm::Mutex as _;
+            use rtic::Mutex as _;
 
             let input = #tupled;
             if let Some(index) = #dequeue {
@@ -44,7 +44,7 @@ pub fn codegen(scheduler: Context, name: &Ident, app: &App) -> TokenStream2 {
 
                 #write_instant
 
-                let nr = rtfm::export::NotReady {
+                let nr = rtic::export::NotReady {
                     instant,
                     index,
                     task: #t::#name,

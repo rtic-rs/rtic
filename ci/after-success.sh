@@ -13,7 +13,7 @@ main() {
     # build latest docs
     mkdir -p $td/$latest/book/
     cp -r target/doc $td/$latest/api
-    sed 's|URL|rtfm/index.html|g' redirect.html > $td/$latest/api/index.html
+    sed 's|URL|rtic/index.html|g' redirect.html > $td/$latest/api/index.html
 
     sed 's|URL|0.5|g' redirect.html > $td/index.html
     sed 's|URL|book/en|g' redirect.html > $td/$latest/index.html
@@ -30,13 +30,13 @@ main() {
 
         mkdir -p $td/$prefix/book
         local src=$(mktemp -d)
-        curl -L https://github.com/rtfm-rs/cortex-m-rtfm/archive/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
+        curl -L https://github.com/rtic-rs/cortex-m-rtic/archive/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
 
         pushd $src
         rm -f .cargo/config
         cargo doc || cargo doc --features timer-queue
         cp -r target/doc $td/$prefix/api
-        sed 's|URL|rtfm/index.html|g' $root/redirect.html > $td/$prefix/api/index.html
+        sed 's|URL|rtic/index.html|g' $root/redirect.html > $td/$prefix/api/index.html
         for lang in ${langs[@]}; do
             ( cd book/$lang && mdbook build )
             cp -r book/$lang/book $td/$prefix/book/$lang
@@ -58,7 +58,7 @@ main() {
     ./ghp-import/ghp_import.py $td
 
     set +x
-    git push -fq https://$GH_TOKEN@github.com/rtfm-rs/cortex-m-rtfm.git gh-pages && echo OK
+    git push -fq https://$GH_TOKEN@github.com/rtic-rs/cortex-m-rtic.git gh-pages && echo OK
 
     rm -rf $td
 }

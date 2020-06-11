@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use proc_macro2::Span;
-use rtfm_syntax::{
+use rtic_syntax::{
     analyze::Analysis,
     ast::{App, CustomArg},
 };
@@ -21,7 +21,7 @@ impl<'a> Extra<'a> {
 
 pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
     if cfg!(feature = "homogeneous") {
-        // this RTFM mode uses the same namespace for all cores so we need to check that the
+        // this RTIC mode uses the same namespace for all cores so we need to check that the
         // identifiers used for each core `#[init]` and `#[idle]` functions don't collide
         let mut seen = HashSet::new();
 
@@ -219,7 +219,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
     } else {
         Err(parse::Error::new(
             Span::call_site(),
-            "a `device` argument must be specified in `#[rtfm::app]`",
+            "a `device` argument must be specified in `#[rtic::app]`",
         ))
     }
 }

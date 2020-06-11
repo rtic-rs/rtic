@@ -14,7 +14,7 @@ use heapless::{
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
-#[rtfm::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965)]
 const APP: () = {
     // Late resources
     struct Resources {
@@ -40,7 +40,7 @@ const APP: () = {
 
                 debug::exit(debug::EXIT_SUCCESS);
             } else {
-                rtfm::pend(Interrupt::UART0);
+                rtic::pend(Interrupt::UART0);
             }
         }
     }

@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::ast::App;
+use rtic_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
@@ -20,7 +20,7 @@ pub fn codegen(
     let mut stmts = vec![];
 
     // disable interrupts -- `init` must run with interrupts disabled
-    stmts.push(quote!(rtfm::export::interrupt::disable();));
+    stmts.push(quote!(rtic::export::interrupt::disable();));
 
     // populate this core `FreeQueue`s
     for (name, senders) in &analysis.free_queues {
@@ -40,7 +40,7 @@ pub fn codegen(
 
     stmts.push(quote!(
         // NOTE(transmute) to avoid debug_assertion in multi-core mode
-        let mut core: rtfm::export::Peripherals = core::mem::transmute(());
+        let mut core: rtic::export::Peripherals = core::mem::transmute(());
     ));
 
     let device = extra.device;
@@ -69,13 +69,13 @@ pub fn codegen(
         stmts.push(quote!(
             core.NVIC.set_priority(
                 #device::#interrupt::#name,
-                rtfm::export::logical2hw(#priority, #nvic_prio_bits),
+                rtic::export::logical2hw(#priority, #nvic_prio_bits),
             );
         ));
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(rtfm::export::NVIC::unmask(#device::#interrupt::#name);));
+        stmts.push(quote!(rtic::export::NVIC::unmask(#device::#interrupt::#name);));
     }
 
     // cross-spawn barriers: now that priorities have been set and the interrupts have been unmasked
@@ -84,7 +84,7 @@ pub fn codegen(
         let sb = util::spawn_barrier(core);
         let shared = if cfg!(feature = "heterogeneous") {
             Some(quote!(
-                #[rtfm::export::shared]
+                #[rtic::export::shared]
             ))
         } else {
             None
@@ -92,7 +92,7 @@ pub fn codegen(
 
         const_app.push(quote!(
             #shared
-            static #sb: rtfm::export::Barrier = rtfm::export::Barrier::new();
+            static #sb: rtic::export::Barrier = rtic::export::Barrier::new();
         ));
 
         // unblock cores that may send us a message
@@ -113,8 +113,8 @@ pub fn codegen(
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
         stmts.push(quote!(core.SCB.set_priority(
-            rtfm::export::SystemHandler::#name,
-            rtfm::export::logical2hw(#priority, #nvic_prio_bits),
+            rtic::export::SystemHandler::#name,
+            rtic::export::logical2hw(#priority, #nvic_prio_bits),
         );));
     }
 
@@ -126,12 +126,12 @@ pub fn codegen(
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
         stmts.push(quote!(core.SCB.set_priority(
-            rtfm::export::SystemHandler::SysTick,
-            rtfm::export::logical2hw(#priority, #nvic_prio_bits),
+            rtic::export::SystemHandler::SysTick,
+            rtic::export::logical2hw(#priority, #nvic_prio_bits),
         );));
 
         stmts.push(quote!(
-            core.SYST.set_clock_source(rtfm::export::SystClkSource::Core);
+            core.SYST.set_clock_source(rtic::export::SystClkSource::Core);
             core.SYST.enable_counter();
             core.DCB.enable_trace();
         ));

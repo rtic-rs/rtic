@@ -14,7 +14,7 @@ pub struct NotSync {
     _0: PhantomData<*const ()>,
 }
 
-#[rtfm::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965)]
 const APP: () = {
     struct Resources {
         #[init(NotSync { _0: PhantomData })]

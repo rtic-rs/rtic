@@ -10,7 +10,7 @@ use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 // NOTE: does NOT properly work on QEMU
-#[rtfm::app(device = lm3s6965, monotonic = rtfm::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
     #[init(spawn = [foo])]
     fn init(cx: init::Context) {
@@ -31,7 +31,7 @@ const APP: () = {
         if *ONCE {
             *ONCE = false;
 
-            rtfm::pend(Interrupt::UART0);
+            rtic::pend(Interrupt::UART0);
         } else {
             debug::exit(debug::EXIT_SUCCESS);
         }

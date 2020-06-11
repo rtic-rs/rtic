@@ -46,8 +46,8 @@ instead of a reference. This resource proxy is a structure that implements the
 [`Mutex`] trait. The only method on this trait, [`lock`], runs its closure
 argument in a critical section.
 
-[`Mutex`]: ../../../api/rtfm/trait.Mutex.html
-[`lock`]: ../../../api/rtfm/trait.Mutex.html#method.lock
+[`Mutex`]: ../../../api/rtic/trait.Mutex.html
+[`lock`]: ../../../api/rtic/trait.Mutex.html#method.lock
 
 The critical section created by the `lock` API is based on dynamic priorities:
 it temporarily raises the dynamic priority of the context to a *ceiling*
@@ -113,7 +113,7 @@ shared reference (`&-`) to the resource, limiting the operations it can perform
 on it, but where a shared reference is enough this approach reduces the number
 of required locks.
 
-Note that in this release of RTFM it is not possible to request both exclusive
+Note that in this release of RTIC it is not possible to request both exclusive
 access (`&mut-`) and shared access (`&-`) to the *same* resource from different
 tasks. Attempting to do so will result in a compile error.
 

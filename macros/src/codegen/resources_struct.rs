@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{ast::App, Context};
+use rtic_syntax::{ast::App, Context};
 
 use crate::{analyze::Analysis, codegen::util};
 
@@ -164,7 +164,7 @@ pub fn codegen(
     let arg = if ctxt.is_init() {
         None
     } else {
-        Some(quote!(priority: &#lt rtfm::export::Priority))
+        Some(quote!(priority: &#lt rtic::export::Priority))
     };
     let constructor = quote!(
         #cfg_core

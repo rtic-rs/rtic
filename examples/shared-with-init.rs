@@ -8,7 +8,7 @@
 use cortex_m_semihosting::debug;
 use lm3s6965::Interrupt;
 use panic_halt as _;
-use rtfm::app;
+use rtic::app;
 
 pub struct MustBeSend;
 
@@ -25,7 +25,7 @@ const APP: () = {
         let message = MustBeSend;
         *c.resources.shared = Some(message);
 
-        rtfm::pend(Interrupt::UART0);
+        rtic::pend(Interrupt::UART0);
     }
 
     #[task(binds = UART0, resources = [shared])]

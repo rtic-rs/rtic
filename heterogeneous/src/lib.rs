@@ -8,7 +8,7 @@ use core::{
 };
 
 use bare_metal::Nr;
-use rtfm::{Fraction, Monotonic, MultiCore};
+use rtic::{Fraction, Monotonic, MultiCore};
 
 // both cores have the exact same interrupts
 pub use Interrupt_0 as Interrupt_1;

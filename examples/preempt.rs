@@ -6,19 +6,19 @@
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
-use rtfm::app;
+use rtic::app;
 
 #[app(device = lm3s6965)]
 const APP: () = {
     #[init]
     fn init(_: init::Context) {
-        rtfm::pend(Interrupt::GPIOA);
+        rtic::pend(Interrupt::GPIOA);
     }
 
     #[task(binds = GPIOA, priority = 1)]
     fn gpioa(_: gpioa::Context) {
         hprintln!("GPIOA - start").unwrap();
-        rtfm::pend(Interrupt::GPIOC);
+        rtic::pend(Interrupt::GPIOC);
         hprintln!("GPIOA - end").unwrap();
         debug::exit(debug::EXIT_SUCCESS);
     }
@@ -31,7 +31,7 @@ const APP: () = {
     #[task(binds = GPIOC, priority = 2)]
     fn gpioc(_: gpioc::Context) {
         hprintln!(" GPIOC - start").unwrap();
-        rtfm::pend(Interrupt::GPIOB);
+        rtic::pend(Interrupt::GPIOB);
         hprintln!(" GPIOC - end").unwrap();
     }
 };

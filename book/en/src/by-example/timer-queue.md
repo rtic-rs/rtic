@@ -20,11 +20,11 @@ type (see [`core::time::Duration`]) and this `Duration` type must implement the
 integer. If the result of the conversion doesn't fit in a 32-bit number then the
 operation must return an error, any error type.
 
-[`Monotonic`]: ../../../api/rtfm/trait.Monotonic.html
+[`Monotonic`]: ../../../api/rtic/trait.Monotonic.html
 [std-instant]: https://doc.rust-lang.org/std/time/struct.Instant.html
 [`core::time::Duration`]: https://doc.rust-lang.org/core/time/struct.Duration.html
 
-For ARMv7+ targets the `rtfm` crate provides a `Monotonic` implementation based
+For ARMv7+ targets the `rtic` crate provides a `Monotonic` implementation based
 on the built-in CYCle CouNTer (CYCCNT). Note that this is a 32-bit timer clocked
 at the frequency of the CPU and as such it is not suitable for tracking time
 spans in the order of seconds.
@@ -36,7 +36,7 @@ executed must be passed as the first argument of the `schedule` invocation.
 
 Additionally, the chosen `monotonic` timer must be configured and initialized
 during the `#[init]` phase. Note that this is *also* the case if you choose to
-use the `CYCCNT` provided by the `cortex-m-rtfm` crate.
+use the `CYCCNT` provided by the `cortex-m-rtic` crate.
 
 The example below schedules two tasks from `init`: `foo` and `bar`. `foo` is
 scheduled to run 8 million clock cycles in the future. Next, `bar` is scheduled
@@ -61,7 +61,7 @@ console:
 When the `schedule` API is being used the runtime internally uses the `SysTick`
 interrupt handler and the system timer peripheral (`SYST`) so neither can be
 used by the application. This is accomplished by changing the type of
-`init::Context.core` from `cortex_m::Peripherals` to `rtfm::Peripherals`. The
+`init::Context.core` from `cortex_m::Peripherals` to `rtic::Peripherals`. The
 latter structure contains all the fields of the former minus the `SYST` one.
 
 ## Periodic tasks

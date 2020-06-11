@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{ast::App, Context};
+use rtic_syntax::{ast::App, Context};
 
 use crate::{check::Extra, codegen::util};
 
@@ -21,19 +21,19 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                 fields.push(quote!(
                     /// System start time = `Instant(0 /* cycles */)`
-                    pub start: <#m as rtfm::Monotonic>::Instant
+                    pub start: <#m as rtic::Monotonic>::Instant
                 ));
 
-                values.push(quote!(start: <#m as rtfm::Monotonic>::zero()));
+                values.push(quote!(start: <#m as rtic::Monotonic>::zero()));
 
                 fields.push(quote!(
                     /// Core (Cortex-M) peripherals minus the SysTick
-                    pub core: rtfm::Peripherals
+                    pub core: rtic::Peripherals
                 ));
             } else {
                 fields.push(quote!(
                     /// Core (Cortex-M) peripherals
-                    pub core: rtfm::export::Peripherals
+                    pub core: rtic::export::Peripherals
                 ));
             }
 
@@ -59,7 +59,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                 fields.push(quote!(
                     /// Time at which this handler started executing
-                    pub start: <#m as rtfm::Monotonic>::Instant
+                    pub start: <#m as rtic::Monotonic>::Instant
                 ));
 
                 values.push(quote!(start: instant));
@@ -74,7 +74,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                 fields.push(quote!(
                     /// The time at which this task was scheduled to run
-                    pub scheduled: <#m as rtfm::Monotonic>::Instant
+                    pub scheduled: <#m as rtic::Monotonic>::Instant
                 ));
 
                 values.push(quote!(scheduled: instant));
@@ -145,13 +145,13 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
                 #[doc = #doc]
                 #[derive(Clone, Copy)]
                 pub struct Schedule<'a> {
-                    priority: &'a rtfm::export::Priority,
+                    priority: &'a rtic::export::Priority,
                 }
 
                 impl<'a> Schedule<'a> {
                     #[doc(hidden)]
                     #[inline(always)]
-                    pub unsafe fn priority(&self) -> &rtfm::export::Priority {
+                    pub unsafe fn priority(&self) -> &rtic::export::Priority {
                         &self.priority
                     }
                 }
@@ -199,7 +199,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
                     #[doc = #doc]
                     #[derive(Clone, Copy)]
                     pub struct Spawn<'a> {
-                        priority: &'a rtfm::export::Priority,
+                        priority: &'a rtic::export::Priority,
                     }
                 ));
 
@@ -210,11 +210,11 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                     needs_instant = true;
                     instant_method = Some(quote!(
-                        pub unsafe fn instant(&self) -> <#m as rtfm::Monotonic>::Instant {
+                        pub unsafe fn instant(&self) -> <#m as rtic::Monotonic>::Instant {
                             self.instant
                         }
                     ));
-                    Some(quote!(instant: <#m as rtfm::Monotonic>::Instant,))
+                    Some(quote!(instant: <#m as rtic::Monotonic>::Instant,))
                 } else {
                     None
                 };
@@ -224,7 +224,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
                     #[derive(Clone, Copy)]
                     pub struct Spawn<'a> {
                         #instant_field
-                        priority: &'a rtfm::export::Priority,
+                        priority: &'a rtic::export::Priority,
                     }
                 ));
 
@@ -242,7 +242,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
                 impl<'a> Spawn<'a> {
                     #[doc(hidden)]
                     #[inline(always)]
-                    pub unsafe fn priority(&self) -> &rtfm::export::Priority {
+                    pub unsafe fn priority(&self) -> &rtic::export::Priority {
                         self.priority
                     }
 
@@ -273,9 +273,9 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
     let core = if ctxt.is_init() {
         if app.uses_schedule(core) {
-            Some(quote!(core: rtfm::Peripherals,))
+            Some(quote!(core: rtic::Peripherals,))
         } else {
-            Some(quote!(core: rtfm::export::Peripherals,))
+            Some(quote!(core: rtic::export::Peripherals,))
         }
     } else {
         None
@@ -284,13 +284,13 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
     let priority = if ctxt.is_init() {
         None
     } else {
-        Some(quote!(priority: &#lt rtfm::export::Priority))
+        Some(quote!(priority: &#lt rtic::export::Priority))
     };
 
     let instant = if needs_instant {
         let m = extra.monotonic();
 
-        Some(quote!(, instant: <#m as rtfm::Monotonic>::Instant))
+        Some(quote!(, instant: <#m as rtic::Monotonic>::Instant))
     } else {
         None
     };

@@ -10,11 +10,11 @@ use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 // `examples/interrupt.rs` rewritten to use `binds`
-#[rtfm::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]
     fn init(_: init::Context) {
-        rtfm::pend(Interrupt::UART0);
+        rtic::pend(Interrupt::UART0);
 
         hprintln!("init").unwrap();
     }
@@ -23,7 +23,7 @@ const APP: () = {
     fn idle(_: idle::Context) -> ! {
         hprintln!("idle").unwrap();
 
-        rtfm::pend(Interrupt::UART0);
+        rtic::pend(Interrupt::UART0);
 
         debug::exit(debug::EXIT_SUCCESS);
 

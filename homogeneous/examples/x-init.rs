@@ -7,7 +7,7 @@
 
 use panic_halt as _;
 
-#[rtfm::app(cores = 2, device = homogeneous)]
+#[rtic::app(cores = 2, device = homogeneous)]
 const APP: () = {
     struct Resources {
         x: u32,

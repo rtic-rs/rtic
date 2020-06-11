@@ -2,7 +2,7 @@
 ## New features
 New features should go through the [RFC process][rfcs] before a Pull Request is made to this repository.
 
-[rfcs](https://github.com/rtfm-rs/rfcs)
+[rfcs](https://github.com/rtic-rs/rfcs)
 
 ## Bugs
 Report bugs by creating an issue in this repository.

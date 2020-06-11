@@ -1,16 +1,16 @@
 # Migrating from v0.4.x to v0.5.0
 
-This section covers how to upgrade an application written against RTFM v0.4.x to
+This section covers how to upgrade an application written against RTIC v0.4.x to
 the version v0.5.0 of the framework.
 
 ## `Cargo.toml`
 
-First, the version of the `cortex-m-rtfm` dependency needs to be updated to
+First, the version of the `cortex-m-rtic` dependency needs to be updated to
 `"0.5.0"`. The `timer-queue` feature needs to be removed.
 
 
 ``` toml
-[dependencies.cortex-m-rtfm]
+[dependencies.cortex-m-rtic]
 # change this
 version = "0.4.3"
 
@@ -24,15 +24,15 @@ features = ["timer-queue"]
 
 ## `Context` argument
 
-All functions inside the `#[rtfm::app]` item need to take as first argument a
+All functions inside the `#[rtic::app]` item need to take as first argument a
 `Context` structure. This `Context` type will contain the variables that were
 magically injected into the scope of the function by version v0.4.x of the
 framework: `resources`, `spawn`, `schedule` -- these variables will become
-fields of the `Context` structure. Each function within the `#[rtfm::app]` item
+fields of the `Context` structure. Each function within the `#[rtic::app]` item
 gets a different `Context` type.
 
 ``` rust
-#[rtfm::app(/* .. */)]
+#[rtic::app(/* .. */)]
 const APP: () = {
     // change this
     #[task(resources = [x], spawn = [a], schedule = [b])]
@@ -80,7 +80,7 @@ The syntax used to declare resources has been changed from `static mut`
 variables to a `struct Resources`.
 
 ``` rust
-#[rtfm::app(/* .. */)]
+#[rtic::app(/* .. */)]
 const APP: () = {
     // change this
     static mut X: u32 = 0;
@@ -102,13 +102,13 @@ const APP: () = {
 
 If your application was accessing the device peripherals in `#[init]` through
 the `device` variable then you'll need to add `peripherals = true` to the
-`#[rtfm::app]` attribute to continue to access the device peripherals through
+`#[rtic::app]` attribute to continue to access the device peripherals through
 the `device` field of the `init::Context` structure.
 
 Change this:
 
 ``` rust
-#[rtfm::app(/* .. */)]
+#[rtic::app(/* .. */)]
 const APP: () = {
     #[init]
     fn init() {
@@ -122,7 +122,7 @@ const APP: () = {
 Into this:
 
 ``` rust
-#[rtfm::app(/* .. */, peripherals = true)]
+#[rtic::app(/* .. */, peripherals = true)]
 //                    ^^^^^^^^^^^^^^^^^^
 const APP: () = {
     #[init]
@@ -144,7 +144,7 @@ hardware tasks in v0.5.x use the `#[task]` attribute with the `binds` argument.
 Change this:
 
 ``` rust
-#[rtfm::app(/* .. */)]
+#[rtic::app(/* .. */)]
 const APP: () = {
     // hardware tasks
     #[exception]
@@ -164,7 +164,7 @@ const APP: () = {
 Into this:
 
 ``` rust
-#[rtfm::app(/* .. */)]
+#[rtic::app(/* .. */)]
 const APP: () = {
     #[task(binds = SVCall)]
     //     ^^^^^^^^^^^^^^
@@ -186,12 +186,12 @@ const APP: () = {
 
 The `timer-queue` feature has been removed. To use the `schedule` API one must
 first define the monotonic timer the runtime will use using the `monotonic`
-argument of the `#[rtfm::app]` attribute. To continue using the cycle counter
+argument of the `#[rtic::app]` attribute. To continue using the cycle counter
 (CYCCNT) as the monotonic timer, and match the behavior of version v0.4.x, add
-the `monotonic = rtfm::cyccnt::CYCCNT` argument to the `#[rtfm::app]` attribute.
+the `monotonic = rtic::cyccnt::CYCCNT` argument to the `#[rtic::app]` attribute.
 
 Also, the `Duration` and `Instant` types and the `U32Ext` trait have been moved
-into the `rtfm::cyccnt` module. This module is only available on ARMv7-M+
+into the `rtic::cyccnt` module. This module is only available on ARMv7-M+
 devices. The removal of the `timer-queue` also brings back the `DWT` peripheral
 inside the core peripherals struct, this will need to be enabled by the application
 inside `init`. 
@@ -199,9 +199,9 @@ inside `init`.
 Change this:
 
 ``` rust
-use rtfm::{Duration, Instant, U32Ext};
+use rtic::{Duration, Instant, U32Ext};
 
-#[rtfm::app(/* .. */)]
+#[rtic::app(/* .. */)]
 const APP: () = {
     #[task(schedule = [b])]
     fn a() {
@@ -213,10 +213,10 @@ const APP: () = {
 Into this:
 
 ``` rust
-use rtfm::cyccnt::{Duration, Instant, U32Ext};
+use rtic::cyccnt::{Duration, Instant, U32Ext};
 //        ^^^^^^^^
 
-#[rtfm::app(/* .. */, monotonic = rtfm::cyccnt::CYCCNT)]
+#[rtic::app(/* .. */, monotonic = rtic::cyccnt::CYCCNT)]
 //                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 const APP: () = {
     #[init]

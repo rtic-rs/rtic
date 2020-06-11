@@ -1,7 +1,7 @@
 use core::ops;
 use std::collections::{BTreeMap, BTreeSet};
 
-use rtfm_syntax::{
+use rtic_syntax::{
     analyze::{self, Priority},
     ast::App,
     Core, P,

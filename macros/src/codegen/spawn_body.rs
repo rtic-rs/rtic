@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{ast::App, Context};
+use rtic_syntax::{ast::App, Context};
 use syn::Ident;
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
@@ -53,7 +53,7 @@ pub fn codegen(
         )
     } else {
         quote!(
-            rtfm::pend(#device::#enum_::#interrupt);
+            rtic::pend(#device::#enum_::#interrupt);
         )
     };
 
@@ -61,7 +61,7 @@ pub fn codegen(
     let inputs = util::inputs_ident(name, sender);
     quote!(
         unsafe {
-            use rtfm::Mutex as _;
+            use rtic::Mutex as _;
 
             let input = #tupled;
             if let Some(index) = #dequeue {

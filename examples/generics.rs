@@ -8,9 +8,9 @@
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
-use rtfm::{Exclusive, Mutex};
+use rtic::{Exclusive, Mutex};
 
-#[rtfm::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965)]
 const APP: () = {
     struct Resources {
         #[init(0)]
@@ -19,8 +19,8 @@ const APP: () = {
 
     #[init]
     fn init(_: init::Context) {
-        rtfm::pend(Interrupt::UART0);
-        rtfm::pend(Interrupt::UART1);
+        rtic::pend(Interrupt::UART0);
+        rtic::pend(Interrupt::UART1);
     }
 
     #[task(binds = UART0, resources = [shared])]
@@ -32,7 +32,7 @@ const APP: () = {
         // second argument has type `resources::shared`
         advance(STATE, c.resources.shared);
 
-        rtfm::pend(Interrupt::UART1);
+        rtic::pend(Interrupt::UART1);
 
         debug::exit(debug::EXIT_SUCCESS);
     }

@@ -1,11 +1,11 @@
 use quote::quote;
-use rtfm_syntax::Settings;
+use rtic_syntax::Settings;
 
 #[test]
 fn analyze() {
     let mut settings = Settings::default();
     settings.parse_extern_interrupt = true;
-    let (app, analysis) = rtfm_syntax::parse2(
+    let (app, analysis) = rtic_syntax::parse2(
         quote!(device = pac),
         quote!(
             const APP: () = {

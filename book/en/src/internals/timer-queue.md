@@ -11,7 +11,7 @@ appropriate ready queue.
 Let's see how this in implemented in code. Consider the following program:
 
 ``` rust
-#[rtfm::app(device = ..)]
+#[rtic::app(device = ..)]
 const APP: () = {
     // ..
 
@@ -47,7 +47,7 @@ mod foo {
 }
 
 const APP: () = {
-    type Instant = <path::to::user::monotonic::timer as rtfm::Monotonic>::Instant;
+    type Instant = <path::to::user::monotonic::timer as rtic::Monotonic>::Instant;
 
     // all tasks that can be `schedule`-d
     enum T {
@@ -141,7 +141,7 @@ const APP: () = {
                     });
 
                     // pend the task dispatcher
-                    rtfm::pend(Interrupt::UART0);
+                    rtic::pend(Interrupt::UART0);
                 }
             }
         }
@@ -160,7 +160,7 @@ timeout interrupt to the `SysTick` handler.
 
 ## Resolution and range of `cyccnt::Instant` and `cyccnt::Duration`
 
-RTFM provides a `Monotonic` implementation based on the `DWT`'s (Data Watchpoint
+RTIC provides a `Monotonic` implementation based on the `DWT`'s (Data Watchpoint
 and Trace) cycle counter. `Instant::now` returns a snapshot of this timer; these
 DWT snapshots (`Instant`s) are used to sort entries in the timer queue. The
 cycle counter is a 32-bit counter clocked at the core clock frequency. This
@@ -221,7 +221,7 @@ analysis.
 To illustrate, consider the following example:
 
 ``` rust
-#[rtfm::app(device = ..)]
+#[rtic::app(device = ..)]
 const APP: () = {
     #[task(priority = 3, spawn = [baz])]
     fn foo(c: foo::Context) {
@@ -353,7 +353,7 @@ const APP: () = {
                             });
                         });
 
-                        rtfm::pend(Interrupt::UART0);
+                        rtic::pend(Interrupt::UART0);
                     }
 
                     None => {

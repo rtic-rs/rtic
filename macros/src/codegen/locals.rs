@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{
+use rtic_syntax::{
     ast::{App, Local},
     Context, Core, Map,
 };
@@ -43,7 +43,7 @@ pub fn codegen(
         has_cfgs |= !cfgs.is_empty();
 
         let section = if local.shared && cfg!(feature = "heterogeneous") {
-            Some(quote!(#[rtfm::export::shared]))
+            Some(quote!(#[rtic::export::shared]))
         } else {
             util::link_section("data", core)
         };

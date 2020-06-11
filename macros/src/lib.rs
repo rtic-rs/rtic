@@ -5,7 +5,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use std::{fs, path::Path};
 
-use rtfm_syntax::Settings;
+use rtic_syntax::Settings;
 
 mod analyze;
 mod check;
@@ -13,7 +13,7 @@ mod codegen;
 #[cfg(test)]
 mod tests;
 
-/// Attribute used to declare a RTFM application
+/// Attribute used to declare a RTIC application
 ///
 /// This attribute must be applied to a `const` item of type `()`. The `const` item is effectively
 /// used as a `mod` item: its value must be a block that contains items commonly found in modules,
@@ -73,10 +73,10 @@ mod tests;
 /// The first argument of the function, `<fn-name>::Context`, is a structure that contains the
 /// following fields:
 ///
-/// - `core`. Exclusive access to core peripherals. The type of this field is [`rtfm::Peripherals`]
+/// - `core`. Exclusive access to core peripherals. The type of this field is [`rtic::Peripherals`]
 /// when the `schedule` API is used and [`cortex_m::Peripherals`] when it's not.
 ///
-/// [`rtfm::Peripherals`]: ../rtfm/struct.Peripherals.html
+/// [`rtic::Peripherals`]: ../rtic/struct.Peripherals.html
 /// [`cortex_m::Peripherals`]: https://docs.rs/cortex-m/0.6/cortex_m/peripheral/struct.Peripherals.html
 ///
 /// - `device: <device>::Peripherals`. Exclusive access to device-specific peripherals. This
@@ -89,9 +89,9 @@ mod tests;
 ///
 /// - `resources: <fn-name>::Resources`. A `struct` that contains all the resources that can be
 /// accessed from this context. Each field is a different resource; each resource may appear as a
-/// reference (`&[mut]-`) or as proxy structure that implements the [`rftm::Mutex`][rtfm-mutex] trait.
+/// reference (`&[mut]-`) or as proxy structure that implements the [`rftm::Mutex`][rtic-mutex] trait.
 ///
-/// [rtfm-mutex]: ../rtfm/trait.Mutex.html
+/// [rtic-mutex]: ../rtic/trait.Mutex.html
 ///
 /// - `schedule: <fn-name>::Schedule`. A `struct` that can be used to schedule *software* tasks.
 ///
@@ -210,7 +210,7 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     settings.parse_extern_interrupt = true;
     settings.parse_schedule = true;
 
-    let (app, analysis) = match rtfm_syntax::parse(args, input, settings) {
+    let (app, analysis) = match rtic_syntax::parse(args, input, settings) {
         Err(e) => return e.to_compile_error().into(),
         Ok(x) => x,
     };
@@ -226,7 +226,7 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
 
     // Try to write the expanded code to disk
     if Path::new("target").exists() {
-        fs::write("target/rtfm-expansion.rs", ts.to_string()).ok();
+        fs::write("target/rtic-expansion.rs", ts.to_string()).ok();
     }
 
     ts.into()

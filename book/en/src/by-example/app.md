@@ -1,26 +1,26 @@
 # The `app` attribute
 
-This is the smallest possible RTFM application:
+This is the smallest possible RTIC application:
 
 ``` rust
 {{#include ../../../../examples/smallest.rs}}
 ```
 
-All RTFM applications use the [`app`] attribute (`#[app(..)]`). This attribute
+All RTIC applications use the [`app`] attribute (`#[app(..)]`). This attribute
 must be applied to a `const` item that contains items. The `app` attribute has
 a mandatory `device` argument that takes a *path* as a value. This path must
 point to a *peripheral access crate* (PAC) generated using [`svd2rust`]
 **v0.14.x** or newer. The `app` attribute will expand into a suitable entry
 point so it's not required to use the [`cortex_m_rt::entry`] attribute.
 
-[`app`]: ../../../api/cortex_m_rtfm_macros/attr.app.html
+[`app`]: ../../../api/cortex_m_rtic_macros/attr.app.html
 [`svd2rust`]: https://crates.io/crates/svd2rust
 [`cortex_m_rt::entry`]: ../../../api/cortex_m_rt_macros/attr.entry.html
 
 > **ASIDE**: Some of you may be wondering why we are using a `const` item as a
 > module and not a proper `mod` item. The reason is that using attributes on
 > modules requires a feature gate, which requires a nightly toolchain. To make
-> RTFM work on stable we use the `const` item instead. When more parts of macros
+> RTIC work on stable we use the `const` item instead. When more parts of macros
 > 1.2 are stabilized we'll move from a `const` item to a `mod` item and
 > eventually to a crate level attribute (`#![app]`).
 
@@ -39,7 +39,7 @@ to Cortex-M and, optionally, device specific peripherals through the `core` and
 `static mut` variables declared at the beginning of `init` will be transformed
 into `&'static mut` references that are safe to access.
 
-[`rtfm::Peripherals`]: ../../api/rtfm/struct.Peripherals.html
+[`rtic::Peripherals`]: ../../api/rtic/struct.Peripherals.html
 
 The example below shows the types of the `core` and `device` fields and
 showcases safe access to a `static mut` variable. The `device` field is only
@@ -106,9 +106,9 @@ mut` variables are safe to use within a hardware task.
 $ cargo run --example hardware
 {{#include ../../../../ci/expected/hardware.run}}```
 
-So far all the RTFM applications we have seen look no different than the
+So far all the RTIC applications we have seen look no different than the
 applications one can write using only the `cortex-m-rt` crate. From this point
-we start introducing features unique to RTFM.
+we start introducing features unique to RTIC.
 
 ## Priorities
 

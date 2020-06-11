@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::ast::App;
+use rtic_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra};
 
@@ -23,7 +23,7 @@ mod spawn_body;
 mod timer_queue;
 mod util;
 
-// TODO document the syntax here or in `rtfm-syntax`
+// TODO document the syntax here or in `rtic-syntax`
 pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut const_app = vec![];
     let mut mains = vec![];

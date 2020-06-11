@@ -10,7 +10,7 @@ use cortex_m_semihosting::debug;
 use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
 
-#[rtfm::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965)]
 const APP: () = {
     struct Resources {
         #[cfg(debug_assertions)] // <- `true` when using the `dev` profile

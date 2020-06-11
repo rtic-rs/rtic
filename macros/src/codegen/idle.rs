@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{ast::App, Context};
+use rtic_syntax::{ast::App, Context};
 
 use crate::{
     analyze::Analysis,
@@ -65,7 +65,7 @@ pub fn codegen(
             #cfg_core
             #section
             fn #name(#(#locals_pat,)* #context: #name::Context) -> ! {
-                use rtfm::Mutex as _;
+                use rtic::Mutex as _;
 
                 #(#stmts)*
             }
@@ -74,7 +74,7 @@ pub fn codegen(
         let locals_new = locals_new.iter();
         let call_idle = quote!(crate::#name(
             #(#locals_new,)*
-            #name::Context::new(&rtfm::export::Priority::new(0))
+            #name::Context::new(&rtic::export::Priority::new(0))
         ));
 
         (const_app, root_idle, user_idle, call_idle)
@@ -84,7 +84,7 @@ pub fn codegen(
             vec![],
             None,
             quote!(loop {
-                rtfm::export::wfi()
+                rtic::export::wfi()
             }),
         )
     }

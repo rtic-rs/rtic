@@ -89,8 +89,8 @@ main() {
 
                 linkchecker $td/book/en/
                 linkchecker $td/book/ru/
-                linkchecker $td/api/rtfm/
-                linkchecker $td/api/cortex_m_rtfm_macros/
+                linkchecker $td/api/rtic/
+                linkchecker $td/api/cortex_m_rtic_macros/
             fi
         fi
 

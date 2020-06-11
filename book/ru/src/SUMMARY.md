@@ -1,7 +1,7 @@
 # Summary
 
 [Введение](./preface.md)
-- [RTFM в примерах](./by-example.md)
+- [RTIC в примерах](./by-example.md)
   - [Атрибут `app`](./by-example/app.md)
   - [Ресурсы](./by-example/resources.md)
   - [Задачи](./by-example/tasks.md)

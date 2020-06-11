@@ -2,10 +2,10 @@
 
 A resource *priority ceiling*, or just *ceiling*, is the dynamic priority that
 any task must have to safely access the resource memory. Ceiling analysis is
-relatively simple but critical to the memory safety of RTFM applications.
+relatively simple but critical to the memory safety of RTIC applications.
 
 To compute the ceiling of a resource we must first collect a list of tasks that
-have access to the resource -- as the RTFM framework enforces access control to
+have access to the resource -- as the RTIC framework enforces access control to
 resources at compile time it also has access to this information at compile
 time. The ceiling of the resource is simply the highest logical priority among
 those tasks.
@@ -27,7 +27,7 @@ gets a unique reference (`&mut-`) to resources.
 An example to illustrate the ceiling analysis:
 
 ``` rust
-#[rtfm::app(device = ..)]
+#[rtic::app(device = ..)]
 const APP: () = {
     struct Resources {
         // accessed by `foo` (prio = 1) and `bar` (prio = 2)

@@ -2,7 +2,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use rtfm_syntax::{ast::App, Context, Core};
+use rtic_syntax::{ast::App, Context, Core};
 use syn::{Attribute, Ident, LitInt, PatType};
 
 use crate::check::Extra;
@@ -22,7 +22,7 @@ pub fn capacity_typenum(capacity: u8, round_up_to_power_of_two: bool) -> TokenSt
 
     let ident = Ident::new(&format!("U{}", capacity), Span::call_site());
 
-    quote!(rtfm::export::consts::#ident)
+    quote!(rtic::export::consts::#ident)
 }
 
 /// Generates a `#[cfg(core = "0")]` attribute if we are in multi-core mode
@@ -69,7 +69,7 @@ pub fn impl_mutex(
     quote!(
         #(#cfgs)*
         #cfg_core
-        impl<'a> rtfm::Mutex for #path<'a> {
+        impl<'a> rtic::Mutex for #path<'a> {
             type T = #ty;
 
             #[inline(always)]
@@ -78,7 +78,7 @@ pub fn impl_mutex(
                 const CEILING: u8 = #ceiling;
 
                 unsafe {
-                    rtfm::export::lock(
+                    rtic::export::lock(
                         #ptr,
                         #priority,
                         CEILING,
@@ -143,7 +143,7 @@ fn link_section_index() -> usize {
 
 pub fn link_section(section: &str, core: Core) -> Option<TokenStream2> {
     if cfg!(feature = "homogeneous") {
-        let section = format!(".{}_{}.rtfm{}", section, core, link_section_index());
+        let section = format!(".{}_{}.rtic{}", section, core, link_section_index());
         Some(quote!(#[link_section = #section]))
     } else {
         None
@@ -156,9 +156,9 @@ pub fn link_section_uninit(core: Option<Core>) -> Option<TokenStream2> {
         let index = link_section_index();
 
         if cfg!(feature = "homogeneous") {
-            format!(".uninit_{}.rtfm{}", core, index)
+            format!(".uninit_{}.rtic{}", core, index)
         } else {
-            format!(".uninit.rtfm{}", index)
+            format!(".uninit.rtic{}", index)
         }
     } else {
         if cfg!(feature = "heterogeneous") {
@@ -166,7 +166,7 @@ pub fn link_section_uninit(core: Option<Core>) -> Option<TokenStream2> {
             return None;
         }
 
-        format!(".uninit.rtfm{}", link_section_index())
+        format!(".uninit.rtic{}", link_section_index())
     };
 
     Some(quote!(#[link_section = #section]))

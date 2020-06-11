@@ -1,6 +1,6 @@
 # Создание нового проекта
 
-Теперь, когда Вы изучили основные возможности фреймворка RTFM, Вы можете
+Теперь, когда Вы изучили основные возможности фреймворка RTIC, Вы можете
 попробовать его использовать на Вашем оборудовании следуя этим инструкциям.
 
 1. Создайте экземпляр из шаблона [`cortex-m-quickstart`].
@@ -36,20 +36,20 @@ $ cargo add lm3s6965 --vers 0.1.3
 $ rm memory.x build.rs
 ```
 
-3. Добавьте библиотеку `cortex-m-rtfm` как зависимость, и если необходимо,
+3. Добавьте библиотеку `cortex-m-rtic` как зависимость, и если необходимо,
 включите опцию `timer-queue`.
 
 ``` console
-$ cargo add cortex-m-rtfm --allow-prerelease --upgrade=none
+$ cargo add cortex-m-rtic --allow-prerelease --upgrade=none
 ```
 
-4. Напишите программу RTFM.
+4. Напишите программу RTIC.
 
-Здесь я буду использовать пример `init` из библиотеки `cortex-m-rtfm`.
+Здесь я буду использовать пример `init` из библиотеки `cortex-m-rtic`.
 
 ``` console
 $ curl \
-    -L https://github.com/japaric/cortex-m-rtfm/raw/v0.4.0-beta.1/examples/init.rs \
+    -L https://github.com/japaric/cortex-m-rtic/raw/v0.4.0-beta.1/examples/init.rs \
     > src/main.rs
 ```
 

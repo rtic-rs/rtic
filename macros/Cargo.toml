@@ -1,17 +1,17 @@
 [package]
 authors = [
-  "The Real Time For the Masses developers",
+  "The Real-Time Interrupt-driven Concurrency developers",
   "Jorge Aparicio <jorge@japaric.io>",
 ]
 categories = ["concurrency", "embedded", "no-std"]
-description = "Procedural macros of the cortex-m-rtfm crate"
-documentation = "https://rtfm-rs.github.io/cortex-m-rtfm/api/cortex_m_rtfm"
+description = "Procedural macros of the cortex-m-rtic crate"
+documentation = "https://rtic-rs.github.io/cortex-m-rtic/api/cortex_m_rtic"
 edition = "2018"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
-name = "cortex-m-rtfm-macros"
+name = "cortex-m-rtic-macros"
 readme = "../README.md"
-repository = "https://github.com/rtfm-rs/cortex-m-rtfm"
+repository = "https://github.com/rtic-rs/cortex-m-rtic"
 version = "0.5.0"
 
 [lib]
@@ -21,7 +21,7 @@ proc-macro = true
 proc-macro2 = "1"
 quote = "1"
 syn = "1"
-rtfm-syntax = "0.4.0"
+rtic-syntax = "0.4.0"
 
 [features]
 heterogeneous = []

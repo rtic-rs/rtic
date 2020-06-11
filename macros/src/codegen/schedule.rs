@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::ast::App;
+use rtic_syntax::ast::App;
 
 use crate::{
     check::Extra,
@@ -16,7 +16,7 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
     let mut seen = BTreeMap::<u8, HashSet<_>>::new();
     for (scheduler, schedulees) in app.schedule_callers() {
         let m = extra.monotonic();
-        let instant = quote!(<#m as rtfm::Monotonic>::Instant);
+        let instant = quote!(<#m as rtic::Monotonic>::Instant);
 
         let sender = scheduler.core(app);
         let cfg_sender = util::cfg_core(sender, app.args.cores);
@@ -58,7 +58,7 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
                         #(#cfgs)*
                         #section
                         unsafe fn #schedule(
-                            priority: &rtfm::export::Priority,
+                            priority: &rtic::export::Priority,
                             instant: #instant
                             #(,#args)*
                         ) -> Result<(), #ty> {

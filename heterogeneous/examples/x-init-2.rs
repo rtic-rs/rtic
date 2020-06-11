@@ -7,7 +7,7 @@
 
 use panic_halt as _;
 
-#[rtfm::app(cores = 2, device = heterogeneous)]
+#[rtic::app(cores = 2, device = heterogeneous)]
 const APP: () = {
     struct Resources {
         // owned by core #1 but initialized by core #0
