@@ -9,8 +9,7 @@ use panic_semihosting as _;
 #[rtfm::app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init(_: init::Context) {
-    }
+    fn init(_: init::Context) {}
 
     #[idle]
     fn main(_: main::Context) -> ! {

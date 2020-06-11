@@ -108,8 +108,9 @@ pub fn codegen(
         }
 
         let locals_new = locals_new.iter();
-        let call_init =
-            Some(quote!(let late = crate::#name(#(#locals_new,)* #name::Context::new(core.into()));));
+        let call_init = Some(
+            quote!(let late = crate::#name(#(#locals_new,)* #name::Context::new(core.into()));),
+        );
 
         root_init.push(module::codegen(Context::Init(core), needs_lt, app, extra));
 

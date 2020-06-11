@@ -164,7 +164,6 @@ pub trait Monotonic {
 /// A marker trait that indicates that it is correct to use this type in multi-core context
 pub trait MultiCore {}
 
-
 /// Sets the given `interrupt` as pending
 ///
 /// This is a convenience function around
