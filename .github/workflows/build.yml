@@ -59,6 +59,10 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
+      - name: Disable optimisation profiles
+        if: matrix.toolchain == '1.36.0'
+        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
+
       - name: cargo check
         uses: actions-rs/cargo@v1
         with:
@@ -268,6 +272,11 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
           override: true
+
+      - name: Disable optimisation profiles
+        if: matrix.toolchain == '1.36.0'
+        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
+
       - name: cargo check
         uses: actions-rs/cargo@v1
         with:
@@ -287,6 +296,10 @@ jobs:
           toolchain: 1.36.0
           target: thumbv7m-none-eabi
           override: true
+
+      - name: Disable optimisation profiles
+        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
+
       - uses: actions-rs/cargo@v1
         with:
           use-cross: false
@@ -305,6 +318,10 @@ jobs:
           toolchain: 1.36.0
           target: thumbv6m-none-eabi
           override: true
+
+      - name: Disable optimisation profiles
+        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
+
       - uses: actions-rs/cargo@v1
         with:
           use-cross: false

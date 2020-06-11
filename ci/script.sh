@@ -36,6 +36,12 @@ main() {
 
     mkdir -p ci/builds
 
+    # Current MSRV cannot handle profiles, remove compilation optimisations
+    if [[ $TRAVIS_RUST_VERSION == 1.*.* ]]; then
+        echo "Removing optimisation profiles"
+        sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
+    fi
+
     if [ $T = x86_64-unknown-linux-gnu ]; then
         if [[ $TRAVIS_RUST_VERSION == 1.*.* ]]; then
             # test on a fixed version (MSRV) to avoid problems with changes in rustc diagnostics

@@ -11,7 +11,7 @@ All resources are declared as a single `struct` within the `#[app]`
 pseudo-module. Each field in the structure corresponds to a different resource.
 Resources can optionally be given an initial value using the `#[init]`
 attribute. Resources that are not given an initial value are referred to as
-*late* resources and are covered in more detail in a follow up section in this
+*late* resources and are covered in more detail in a follow-up section in this
 page.
 
 Each context (task handler, `init` or `idle`) must declare the resources it
@@ -31,7 +31,7 @@ access to a resource named `shared`.
 $ cargo run --example resource
 {{#include ../../../../ci/expected/resource.run}}```
 
-Note that the `shared` resource cannot accessed from `idle`. Attempting to do
+Note that the `shared` resource cannot be accessed from `idle`. Attempting to do
 so results in a compile error.
 
 ## `lock`
@@ -75,14 +75,14 @@ $ cargo run --example lock
 
 ## Late resources
 
-Late resources are resources that are not given an initial value at compile
-using the `#[init]` attribute but instead are initialized are runtime using the
+Late resources are resources that are not given an initial value at compile time
+using the `#[init]` attribute but instead are initialized at runtime using the
 `init::LateResources` values returned by the `init` function.
 
 Late resources are useful for *moving* (as in transferring the ownership of)
 peripherals initialized in `init` into interrupt handlers.
 
-The example below uses late resources to stablish a lockless, one-way channel
+The example below uses late resources to establish a lockless, one-way channel
 between the `UART0` interrupt handler and the `idle` task. A single producer
 single consumer [`Queue`] is used as the channel. The queue is split into
 consumer and producer end points in `init` and then each end point is stored
