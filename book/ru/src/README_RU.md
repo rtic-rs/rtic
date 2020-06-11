@@ -1,4 +1,4 @@
-# Real Time For the Masses
+# Real-Time Interrupt-driven Concurrency
 
 Конкурентный фреймворк для создания систем реального времени.
 
@@ -43,17 +43,17 @@
 
 - Программы нужно писать используя 2018 edition.
 
-## [User documentation](https://japaric.github.io/cortex-m-rtfm/book)
+## [User documentation](https://japaric.github.io/cortex-m-rtic/book)
 
-## [API reference](https://japaric.github.io/cortex-m-rtfm/api/rtfm/index.html)
+## [API reference](https://japaric.github.io/cortex-m-rtic/api/rtic/index.html)
 
 ## Благодарности
 
-Эта библиотека основана на [языке RTFM][rtfm-lang], созданном Embedded
+Эта библиотека основана на [языке RTIC][rtic-lang], созданном Embedded
 Systems group в [Техническом Университете Luleå][ltu], под рук.
 [Prof. Per Lindgren][per].
 
-[rtfm-lang]: http://www.rtfm-lang.org/
+[rtic-lang]: http://www.rtic-lang.org/
 [ltu]: https://www.ltu.se/?l=en
 [per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 

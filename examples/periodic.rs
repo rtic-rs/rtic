@@ -7,12 +7,12 @@
 
 use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
-use rtfm::cyccnt::{Instant, U32Ext};
+use rtic::cyccnt::{Instant, U32Ext};
 
 const PERIOD: u32 = 8_000_000;
 
 // NOTE: does NOT work on QEMU!
-#[rtfm::app(device = lm3s6965, monotonic = rtfm::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
     #[init(schedule = [foo])]
     fn init(cx: init::Context) {

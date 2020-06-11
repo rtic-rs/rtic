@@ -7,9 +7,9 @@
 
 use cortex_m_semihosting::debug;
 use panic_semihosting as _;
-use rtfm::cyccnt;
+use rtic::cyccnt;
 
-#[rtfm::app(device = lm3s6965, peripherals = true, monotonic = rtfm::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
     struct Resources {
         #[init(0)]
@@ -19,7 +19,7 @@ const APP: () = {
     #[init(schedule = [foo], spawn = [foo])]
     fn init(cx: init::Context) {
         let _: cyccnt::Instant = cx.start;
-        let _: rtfm::Peripherals = cx.core;
+        let _: rtic::Peripherals = cx.core;
         let _: lm3s6965::Peripherals = cx.device;
         let _: init::Schedule = cx.schedule;
         let _: init::Spawn = cx.spawn;

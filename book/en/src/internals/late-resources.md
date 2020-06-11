@@ -9,7 +9,7 @@ The example below shows the kind of code that the framework generates to
 initialize late resources.
 
 ``` rust
-#[rtfm::app(device = ..)]
+#[rtic::app(device = ..)]
 const APP: () = {
     struct Resources {
         x: Thing,

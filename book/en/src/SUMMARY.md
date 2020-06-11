@@ -1,7 +1,7 @@
 # Summary
 
 [Preface](./preface.md)
-- [RTFM by example](./by-example.md)
+- [RTIC by example](./by-example.md)
   - [The `app` attribute](./by-example/app.md)
   - [Resources](./by-example/resources.md)
   - [Software tasks](./by-example/tasks.md)

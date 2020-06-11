@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::ast::App;
+use rtic_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
@@ -49,23 +49,23 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 let (rq_attr, rq_ty, rq_expr, section) = if sender == receiver {
                     (
                         cfg_sender.clone(),
-                        quote!(rtfm::export::SCRQ<#t, #n>),
-                        quote!(rtfm::export::Queue(unsafe {
-                            rtfm::export::iQueue::u8_sc()
+                        quote!(rtic::export::SCRQ<#t, #n>),
+                        quote!(rtic::export::Queue(unsafe {
+                            rtic::export::iQueue::u8_sc()
                         })),
                         util::link_section("bss", sender),
                     )
                 } else {
                     let shared = if cfg!(feature = "heterogeneous") {
-                        Some(quote!(#[rtfm::export::shared]))
+                        Some(quote!(#[rtic::export::shared]))
                     } else {
                         None
                     };
 
                     (
                         shared,
-                        quote!(rtfm::export::MCRQ<#t, #n>),
-                        quote!(rtfm::export::Queue(rtfm::export::iQueue::u8())),
+                        quote!(rtic::export::MCRQ<#t, #n>),
+                        quote!(rtic::export::Queue(rtic::export::iQueue::u8())),
                         None,
                     )
                 };
@@ -87,7 +87,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     items.push(quote!(
                         #cfg_sender
                         struct #rq<'a> {
-                            priority: &'a rtfm::export::Priority,
+                            priority: &'a rtic::export::Priority,
                         }
                     ));
 
@@ -140,7 +140,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                                     #inputs.get_unchecked(usize::from(index)).as_ptr().read();
                                 #let_instant
                                 #fq.split().0.enqueue_unchecked(index);
-                                let priority = &rtfm::export::Priority::new(PRIORITY);
+                                let priority = &rtic::export::Priority::new(PRIORITY);
                                 crate::#name(
                                     #locals_new
                                     #name::Context::new(priority #instant)
@@ -177,7 +177,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     /// The priority of this interrupt handler
                     const PRIORITY: u8 = #level;
 
-                    rtfm::export::run(PRIORITY, || {
+                    rtic::export::run(PRIORITY, || {
                         #(#stmts)*
                     });
                 }

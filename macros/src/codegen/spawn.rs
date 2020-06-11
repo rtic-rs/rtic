@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::ast::App;
+use rtic_syntax::ast::App;
 
 use crate::{
     analyze::Analysis,
@@ -37,7 +37,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 let let_instant = if app.uses_schedule(receiver) {
                     let m = extra.monotonic();
 
-                    Some(quote!(let instant = unsafe { <#m as rtfm::Monotonic>::zero() };))
+                    Some(quote!(let instant = unsafe { <#m as rtic::Monotonic>::zero() };))
                 } else {
                     None
                 };
@@ -61,7 +61,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     let instant = if app.uses_schedule(receiver) {
                         let m = extra.monotonic();
 
-                        Some(quote!(, instant: <#m as rtfm::Monotonic>::Instant))
+                        Some(quote!(, instant: <#m as rtic::Monotonic>::Instant))
                     } else {
                         None
                     };
@@ -74,7 +74,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                         #(#cfgs)*
                         #section
                         unsafe fn #spawn(
-                            priority: &rtfm::export::Priority
+                            priority: &rtic::export::Priority
                             #instant
                             #(,#args)*
                         ) -> Result<(), #ty> {
@@ -88,7 +88,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                     (
                         Some(if spawner.is_idle() {
-                            quote!(let instant = <#m as rtfm::Monotonic>::now();)
+                            quote!(let instant = <#m as rtic::Monotonic>::now();)
                         } else {
                             quote!(let instant = self.instant();)
                         }),

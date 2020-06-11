@@ -9,7 +9,7 @@ use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
-#[rtfm::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965)]
 const APP: () = {
     struct Resources {
         #[init(0)]
@@ -18,7 +18,7 @@ const APP: () = {
 
     #[init]
     fn init(_: init::Context) {
-        rtfm::pend(Interrupt::GPIOA);
+        rtic::pend(Interrupt::GPIOA);
     }
 
     // when omitted priority is assumed to be `1`
@@ -32,12 +32,12 @@ const APP: () = {
             *shared += 1;
 
             // GPIOB will *not* run right now due to the critical section
-            rtfm::pend(Interrupt::GPIOB);
+            rtic::pend(Interrupt::GPIOB);
 
             hprintln!("B - shared = {}", *shared).unwrap();
 
             // GPIOC does not contend for `shared` so it's allowed to run now
-            rtfm::pend(Interrupt::GPIOC);
+            rtic::pend(Interrupt::GPIOC);
         });
 
         // critical section is over: GPIOB can now start

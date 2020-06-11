@@ -1,5 +1,5 @@
 use quote::quote;
-use rtfm_syntax::Settings;
+use rtic_syntax::Settings;
 
 #[test]
 fn analyze() {
@@ -7,7 +7,7 @@ fn analyze() {
     settings.parse_cores = true;
     settings.parse_extern_interrupt = true;
 
-    let (app, analysis) = rtfm_syntax::parse2(
+    let (app, analysis) = rtic_syntax::parse2(
         quote!(device = pac, cores = 2),
         quote!(
             const APP: () = {

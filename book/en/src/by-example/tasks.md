@@ -1,11 +1,11 @@
 # Software tasks
 
 In addition to hardware tasks, which are invoked by the hardware in response to
-hardware events, RTFM also supports *software* tasks which can be spawned by the
+hardware events, RTIC also supports *software* tasks which can be spawned by the
 application from any execution context.
 
 Software tasks can also be assigned priorities and, under the hood, are
-dispatched from interrupt handlers. RTFM requires that free interrupts are
+dispatched from interrupt handlers. RTIC requires that free interrupts are
 declared in an `extern` block when using software tasks; some of these free
 interrupts will be used to dispatch the software tasks. An advantage of software
 tasks over hardware tasks is that many tasks can be mapped to a single interrupt
@@ -45,7 +45,7 @@ $ cargo run --example message
 
 ## Capacity
 
-RTFM does *not* perform any form of heap-based memory allocation. The memory
+RTIC does *not* perform any form of heap-based memory allocation. The memory
 required to store messages is statically reserved. By default the framework
 minimizes the memory footprint of the application so each task has a message
 "capacity" of 1: meaning that at most one message can be posted to the task
@@ -91,7 +91,7 @@ its message buffer will never be emptied. This situation is depicted in the
 following snippet:
 
 ``` rust
-#[rtfm::app(..)]
+#[rtic::app(..)]
 const APP: () = {
     #[init(spawn = [foo, bar])]
     fn init(cx: init::Context) {

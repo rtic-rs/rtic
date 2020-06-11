@@ -8,10 +8,10 @@
 use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
 use panic_halt as _;
-use rtfm::cyccnt::{Instant, U32Ext as _};
+use rtic::cyccnt::{Instant, U32Ext as _};
 
 // NOTE: does NOT work on QEMU!
-#[rtfm::app(device = lm3s6965, monotonic = rtfm::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
     #[init(schedule = [foo, bar])]
     fn init(mut cx: init::Context) {

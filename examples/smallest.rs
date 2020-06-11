@@ -4,7 +4,7 @@
 #![no_std]
 
 use panic_semihosting as _; // panic handler
-use rtfm::app;
+use rtic::app;
 
 #[app(device = lm3s6965)]
 const APP: () = {};

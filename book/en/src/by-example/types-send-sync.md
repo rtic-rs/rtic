@@ -18,7 +18,7 @@ The example below shows the different types generates by the `app` attribute.
 ## `Send`
 
 [`Send`] is a marker trait for "types that can be transferred across thread
-boundaries", according to its definition in `core`. In the context of RTFM the
+boundaries", according to its definition in `core`. In the context of RTIC the
 `Send` trait is only required where it's possible to transfer a value between
 tasks that run at *different* priorities. This occurs in a few places: in
 message passing, in shared resources and in the initialization of late
@@ -57,7 +57,7 @@ the `Send` trait.
 
 Similarly, [`Sync`] is a marker trait for "types for which it is safe to share
 references between threads", according to its definition in `core`. In the
-context of RTFM the `Sync` trait is only required where it's possible for two,
+context of RTIC the `Sync` trait is only required where it's possible for two,
 or more, tasks that run at different priorities and may get a shared reference
 (`&-`) to a resource. This only occurs with shared access (`&-`) resources.
 

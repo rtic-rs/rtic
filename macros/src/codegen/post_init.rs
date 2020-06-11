@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::ast::App;
+use rtic_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
@@ -40,7 +40,7 @@ pub fn codegen(
             let ib = util::init_barrier(*user);
             let shared = if cfg!(feature = "heterogeneous") {
                 Some(quote!(
-                    #[rtfm::export::shared]
+                    #[rtic::export::shared]
                 ))
             } else {
                 None
@@ -48,7 +48,7 @@ pub fn codegen(
 
             const_app.push(quote!(
                 #shared
-                static #ib: rtfm::export::Barrier = rtfm::export::Barrier::new();
+                static #ib: rtic::export::Barrier = rtic::export::Barrier::new();
             ));
 
             stmts.push(quote!(
@@ -85,7 +85,7 @@ pub fn codegen(
         if analysis.timer_queues.len() == 1 {
             // reset the monotonic timer / counter
             stmts.push(quote!(
-                <#m as rtfm::Monotonic>::reset();
+                <#m as rtic::Monotonic>::reset();
             ));
         } else {
             // in the multi-core case we need a rendezvous (RV) barrier between *all* the cores that
@@ -102,7 +102,7 @@ pub fn codegen(
                     let rv = util::rendezvous_ident(i);
                     let shared = if cfg!(feature = "heterogeneous") {
                         Some(quote!(
-                            #[rtfm::export::shared]
+                            #[rtic::export::shared]
                         ))
                     } else {
                         None
@@ -110,7 +110,7 @@ pub fn codegen(
 
                     const_app.push(quote!(
                         #shared
-                        static #rv: rtfm::export::Barrier = rtfm::export::Barrier::new();
+                        static #rv: rtic::export::Barrier = rtic::export::Barrier::new();
                     ));
 
                     // wait until all the other cores have reached the RV point
@@ -130,7 +130,7 @@ pub fn codegen(
                     core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
 
                     // reset the counter
-                    <#m as rtfm::Monotonic>::reset();
+                    <#m as rtic::Monotonic>::reset();
 
                     core::sync::atomic::compiler_fence(core::sync::atomic::Ordering::SeqCst);
 
@@ -156,7 +156,7 @@ pub fn codegen(
     }
 
     // enable the interrupts -- this completes the `init`-ialization phase
-    stmts.push(quote!(rtfm::export::interrupt::enable();));
+    stmts.push(quote!(rtic::export::interrupt::enable();));
 
     (const_app, stmts)
 }

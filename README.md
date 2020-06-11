@@ -1,4 +1,4 @@
-# Real Time For the Masses
+# Real-Time Interrupt-driven Concurrency
 
 A concurrency framework for building real time systems.
 
@@ -43,27 +43,27 @@ A concurrency framework for building real time systems.
 
 - Applications must be written using the 2018 edition.
 
-## [User documentation](https://rtfm.rs)
+## [User documentation](https://rtic.rs)
 
-## [API reference](https://rtfm.rs/0.5/api)
+## [API reference](https://rtic.rs/0.5/api)
 
 ## Chat
-Join us and talk about RTFM in the [Matrix room][matrix-room].
+Join us and talk about RTIC in the [Matrix room][matrix-room].
 
-[matrix-room]: https://matrix.to/#/#rtfm-rs:matrix.org
+[matrix-room]: https://matrix.to/#/#rtic-rs:matrix.org
 
 ## Contributing
 New features and big changes should go through the RFC process in the [dedicated RFC repository][rfcs].
 
-[rfcs]: https://github.com/rtfm-rs/rfcs
+[rfcs]: https://github.com/rtic-rs/rfcs
 
 ## Acknowledgments
 
-This crate is based on [the RTFM language][rtfm-lang] created by the Embedded
+This crate is based on [the RTIC language][rtic-lang] created by the Embedded
 Systems group at [Luleå University of Technology][ltu], led by [Prof. Per
 Lindgren][per].
 
-[rtfm-lang]: http://www.rtfm-lang.org/
+[rtic-lang]: http://www.rtic-lang.org/
 [ltu]: https://www.ltu.se/?l=en
 [per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 

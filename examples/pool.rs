@@ -12,7 +12,7 @@ use heapless::{
 };
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
-use rtfm::app;
+use rtic::app;
 
 // Declare a pool of 128-byte memory blocks
 pool!(P: [u8; 128]);
@@ -26,7 +26,7 @@ const APP: () = {
         // Increase the capacity of the memory pool by ~4
         P::grow(MEMORY);
 
-        rtfm::pend(Interrupt::I2C0);
+        rtic::pend(Interrupt::I2C0);
     }
 
     #[task(binds = I2C0, priority = 2, spawn = [foo, bar])]

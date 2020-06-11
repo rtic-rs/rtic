@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{ast::App, Context};
+use rtic_syntax::{ast::App, Context};
 
 use crate::{
     analyze::Analysis,
@@ -36,7 +36,7 @@ pub fn codegen(
             let m = extra.monotonic();
 
             (
-                Some(quote!(let instant = <#m as rtfm::Monotonic>::now();)),
+                Some(quote!(let instant = <#m as rtic::Monotonic>::now();)),
                 Some(quote!(, instant)),
             )
         } else {
@@ -67,10 +67,10 @@ pub fn codegen(
 
                 #let_instant
 
-                rtfm::export::run(PRIORITY, || {
+                rtic::export::run(PRIORITY, || {
                     crate::#name(
                         #locals_new
-                        #name::Context::new(&rtfm::export::Priority::new(PRIORITY) #instant)
+                        #name::Context::new(&rtic::export::Priority::new(PRIORITY) #instant)
                     )
                 });
             }
@@ -121,7 +121,7 @@ pub fn codegen(
             #[allow(non_snake_case)]
             #section
             fn #name(#(#locals_pat,)* #context: #name::Context) {
-                use rtfm::Mutex as _;
+                use rtic::Mutex as _;
 
                 #(#stmts)*
             }

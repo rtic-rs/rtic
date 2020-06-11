@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{ast::App, Context};
+use rtic_syntax::{ast::App, Context};
 
 use crate::{
     analyze::Analysis,
@@ -52,24 +52,24 @@ pub fn codegen(
                 ) = if receiver == sender {
                     (
                         cfg_sender.clone(),
-                        quote!(rtfm::export::SCFQ<#cap_ty>),
-                        quote!(rtfm::export::Queue(unsafe {
-                            rtfm::export::iQueue::u8_sc()
+                        quote!(rtic::export::SCFQ<#cap_ty>),
+                        quote!(rtic::export::Queue(unsafe {
+                            rtic::export::iQueue::u8_sc()
                         })),
                         util::link_section("bss", sender),
                         Box::new(|| util::link_section_uninit(Some(sender))),
                     )
                 } else {
                     let shared = if cfg!(feature = "heterogeneous") {
-                        Some(quote!(#[rtfm::export::shared]))
+                        Some(quote!(#[rtic::export::shared]))
                     } else {
                         None
                     };
 
                     (
                         shared,
-                        quote!(rtfm::export::MCFQ<#cap_ty>),
-                        quote!(rtfm::export::Queue(rtfm::export::iQueue::u8())),
+                        quote!(rtic::export::MCFQ<#cap_ty>),
+                        quote!(rtic::export::Queue(rtic::export::iQueue::u8())),
                         None,
                         Box::new(|| util::link_section_uninit(None)),
                     )
@@ -89,7 +89,7 @@ pub fn codegen(
                     const_app.push(quote!(
                         #cfg_sender
                         struct #fq<'a> {
-                            priority: &'a rtfm::export::Priority,
+                            priority: &'a rtic::export::Priority,
                         }
                     ));
 
@@ -119,7 +119,7 @@ pub fn codegen(
                         #uninit
                         /// Buffer that holds the instants associated to the inputs of a task
                         static mut #instants:
-                            [core::mem::MaybeUninit<<#m as rtfm::Monotonic>::Instant>; #cap_lit] =
+                            [core::mem::MaybeUninit<<#m as rtic::Monotonic>::Instant>; #cap_lit] =
                             [#(#elems,)*];
                     ));
                 }
@@ -176,7 +176,7 @@ pub fn codegen(
             #cfg_receiver
             #section
             fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
-                use rtfm::Mutex as _;
+                use rtic::Mutex as _;
 
                 #(#stmts)*
             }

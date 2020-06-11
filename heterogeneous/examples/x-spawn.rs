@@ -3,7 +3,7 @@
 
 use panic_halt as _;
 
-#[rtfm::app(cores = 2, device = heterogeneous)]
+#[rtic::app(cores = 2, device = heterogeneous)]
 const APP: () = {
     #[init(core = 0, spawn = [foo])]
     fn init(c: init::Context) {

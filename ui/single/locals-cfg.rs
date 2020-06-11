@@ -1,6 +1,6 @@
 #![no_main]
 
-#[rtfm::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]
     fn init(_: init::Context) {

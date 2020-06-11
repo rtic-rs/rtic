@@ -1,6 +1,6 @@
 # Starting a new project
 
-Now that you have learned about the main features of the RTFM framework you can
+Now that you have learned about the main features of the RTIC framework you can
 try it out on your hardware by following these instructions.
 
 1. Instantiate the [`cortex-m-quickstart`] template.
@@ -36,19 +36,19 @@ $ cargo add lm3s6965 --vers 0.1.3
 $ rm memory.x build.rs
 ```
 
-3. Add the `cortex-m-rtfm` crate as a dependency.
+3. Add the `cortex-m-rtic` crate as a dependency.
 
 ``` console
-$ cargo add cortex-m-rtfm --allow-prerelease
+$ cargo add cortex-m-rtic --allow-prerelease
 ```
 
-4. Write your RTFM application.
+4. Write your RTIC application.
 
-Here I'll use the `init` example from the `cortex-m-rtfm` crate.
+Here I'll use the `init` example from the `cortex-m-rtic` crate.
 
 ``` console
 $ curl \
-    -L https://github.com/rtfm-rs/cortex-m-rtfm/raw/v0.5.0/examples/init.rs \
+    -L https://github.com/rtic-rs/cortex-m-rtic/raw/v0.5.0/examples/init.rs \
     > src/main.rs
 ```
 

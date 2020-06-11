@@ -12,13 +12,13 @@ pub fn codegen(core: u8, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2
 
     if let Some(types) = analysis.send_types.get(&core) {
         for ty in types {
-            stmts.push(quote!(rtfm::export::assert_send::<#ty>();));
+            stmts.push(quote!(rtic::export::assert_send::<#ty>();));
         }
     }
 
     if let Some(types) = analysis.sync_types.get(&core) {
         for ty in types {
-            stmts.push(quote!(rtfm::export::assert_sync::<#ty>();));
+            stmts.push(quote!(rtic::export::assert_sync::<#ty>();));
         }
     }
 
@@ -26,7 +26,7 @@ pub fn codegen(core: u8, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2
     // `monotonic` timer can be used in multi-core context
     if analysis.timer_queues.len() > 1 && analysis.timer_queues.contains_key(&core) {
         let monotonic = extra.monotonic();
-        stmts.push(quote!(rtfm::export::assert_multicore::<#monotonic>();));
+        stmts.push(quote!(rtic::export::assert_multicore::<#monotonic>();));
     }
 
     stmts

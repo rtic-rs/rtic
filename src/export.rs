@@ -82,7 +82,7 @@ impl Priority {
         }
     }
 
-    // these two methods are used by `lock` (see below) but can't be used from the RTFM application
+    // these two methods are used by `lock` (see below) but can't be used from the RTIC application
     #[inline(always)]
     fn set(&self, value: u8) {
         self.inner.set(value)

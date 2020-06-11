@@ -1,16 +1,16 @@
-//! Real Time For the Masses (RTFM) framework for ARM Cortex-M microcontrollers
+//! Real-Time Interrupt-driven Concurrency (RTIC) framework for ARM Cortex-M microcontrollers
 //!
 //! **HEADS UP** This is an **beta** pre-release; there may be breaking changes in the API and
 //! semantics before a proper release is made.
 //!
-//! **IMPORTANT**: This crate is published as [`cortex-m-rtfm`] on crates.io but the name of the
-//! library is `rtfm`.
+//! **IMPORTANT**: This crate is published as [`cortex-m-rtic`] on crates.io but the name of the
+//! library is `rtic`.
 //!
-//! [`cortex-m-rtfm`]: https://crates.io/crates/cortex-m-rtfm
+//! [`cortex-m-rtic`]: https://crates.io/crates/cortex-m-rtic
 //!
 //! The user level documentation can be found [here].
 //!
-//! [here]: https://rtfm.rs
+//! [here]: https://rtic.rs
 //!
 //! Don't forget to check the documentation of the `#[app]` attribute (listed under the reexports
 //! section), which is the main component of the framework.
@@ -50,8 +50,8 @@ use cortex_m::{
 };
 #[cfg(all(not(feature = "heterogeneous"), not(feature = "homogeneous")))]
 use cortex_m_rt as _; // vector table
-pub use cortex_m_rtfm_macros::app;
-pub use rtfm_core::{Exclusive, Mutex};
+pub use cortex_m_rtic_macros::app;
+pub use rtic_core::{Exclusive, Mutex};
 
 #[cfg(armv7m)]
 pub mod cyccnt;
@@ -152,7 +152,7 @@ pub trait Monotonic {
     ///
     /// # Safety
     ///
-    /// This function will be called *exactly once* by the RTFM runtime after `#[init]` returns and
+    /// This function will be called *exactly once* by the RTIC runtime after `#[init]` returns and
     /// before tasks can start; this is also the case in multi-core applications. User code must
     /// *never* call this function.
     unsafe fn reset();

@@ -1,18 +1,18 @@
 # Interrupt configuration
 
-Interrupts are core to the operation of RTFM applications. Correctly setting
+Interrupts are core to the operation of RTIC applications. Correctly setting
 interrupt priorities and ensuring they remain fixed at runtime is a requisite
 for the memory safety of the application.
 
-The RTFM framework exposes interrupt priorities as something that is declared at
+The RTIC framework exposes interrupt priorities as something that is declared at
 compile time. However, this static configuration must be programmed into the
 relevant registers during the initialization of the application. The interrupt
 configuration is done before the `init` function runs.
 
-This example gives you an idea of the code that the RTFM framework runs:
+This example gives you an idea of the code that the RTIC framework runs:
 
 ``` rust
-#[rtfm::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]
     fn init(c: init::Context) {

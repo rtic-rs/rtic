@@ -1,22 +1,22 @@
 [package]
 authors = [
-  "The Real Time For the Masses developers",
+  "The Real-Time Interrupt-driven Concurrency developers",
   "Jorge Aparicio <jorge@japaric.io>",
   "Per Lindgren <per.lindgren@ltu.se>",
 ]
 categories = ["concurrency", "embedded", "no-std"]
-description = "Real Time For the Masses (RTFM): a concurrency framework for building real time systems"
-documentation = "https://rtfm.rs/"
+description = "Real-Time Interrupt-driven Concurrency (RTIC): a concurrency framework for building real time systems"
+documentation = "https://rtic.rs/"
 edition = "2018"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
-name = "cortex-m-rtfm"
+name = "cortex-m-rtic"
 readme = "README.md"
-repository = "https://github.com/rtfm-rs/cortex-m-rtfm"
+repository = "https://github.com/rtic-rs/cortex-m-rtic"
 version = "0.5.2"
 
 [lib]
-name = "rtfm"
+name = "rtic"
 
 [[example]]
 name = "baseline"
@@ -52,8 +52,8 @@ required-features = ["__v7"]
 
 [dependencies]
 cortex-m = "0.6.2"
-cortex-m-rtfm-macros = { path = "macros", version = "0.5.0" }
-rtfm-core = "0.3.0"
+cortex-m-rtic-macros = { path = "macros", version = "0.5.0" }
+rtic-core = "0.3.0"
 cortex-m-rt = "0.6.9"
 heapless = "0.5.0"
 
@@ -77,8 +77,8 @@ version = "0.5.2"
 trybuild = "1"
 
 [features]
-heterogeneous = ["cortex-m-rtfm-macros/heterogeneous", "microamp"]
-homogeneous = ["cortex-m-rtfm-macros/homogeneous"]
+heterogeneous = ["cortex-m-rtic-macros/heterogeneous", "microamp"]
+homogeneous = ["cortex-m-rtic-macros/homogeneous"]
 # used for testing this crate; do not use in applications
 __v7 =[]
 __min_r1_43 =[]

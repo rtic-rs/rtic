@@ -9,7 +9,7 @@ use core::marker::PhantomData;
 
 use cortex_m_semihosting::debug;
 use panic_halt as _;
-use rtfm::app;
+use rtic::app;
 
 pub struct NotSend {
     _0: PhantomData<*const ()>,

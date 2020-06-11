@@ -1,6 +1,6 @@
 # Non-reentrancy
 
-In RTFM, tasks handlers are *not* reentrant. Reentering a task handler can break
+In RTIC, tasks handlers are *not* reentrant. Reentering a task handler can break
 Rust aliasing rules and lead to *undefined behavior*. A task handler can be
 reentered in one of two ways: in software or by hardware.
 
@@ -11,7 +11,7 @@ invoked using FFI (see example below). FFI requires `unsafe` code so end users
 are discouraged from directly invoking an interrupt handler.
 
 ``` rust
-#[rtfm::app(device = ..)]
+#[rtic::app(device = ..)]
 const APP: () = {
     #[init]
     fn init(c: init::Context) { .. }
@@ -42,7 +42,7 @@ const APP: () = {
 };
 ```
 
-The RTFM framework must generate the interrupt handler code that calls the user
+The RTIC framework must generate the interrupt handler code that calls the user
 defined task handlers. We are careful in making these handlers impossible to
 call from user code.
 
@@ -76,5 +76,5 @@ const APP: () = {
 
 A task handler can also be reentered without software intervention. This can
 occur if the same handler is assigned to two or more interrupts in the vector
-table but there's no syntax for this kind of configuration in the RTFM
+table but there's no syntax for this kind of configuration in the RTIC
 framework.

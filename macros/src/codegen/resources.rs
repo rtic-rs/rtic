@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtfm_syntax::{
+use rtic_syntax::{
     analyze::{Location, Ownership},
     ast::App,
 };
@@ -42,7 +42,7 @@ pub fn codegen(
                 // shared `static`s and cross-initialized resources need to be in `.shared` memory
                 _ => (
                     if cfg!(feature = "heterogeneous") {
-                        Some(quote!(#[rtfm::export::shared]))
+                        Some(quote!(#[rtic::export::shared]))
                     } else {
                         None
                     },
@@ -129,7 +129,7 @@ pub fn codegen(
         quote!()
     } else {
         quote!(mod resources {
-            use rtfm::export::Priority;
+            use rtic::export::Priority;
 
             #(#mod_resources)*
         })
