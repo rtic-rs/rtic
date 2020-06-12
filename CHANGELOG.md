@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v0.5.3] - 2020-06-12
 
+- Added migration guide from `cortex-m-rtfm` to `cortex-m-rtic`
 - No code changes, only a version compatibility release with `cortex-m-rtfm` to ease the transition
 for users.
 
