@@ -7,6 +7,7 @@
 
 use cortex_m_semihosting::debug;
 use lm3s6965::Interrupt;
+use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 const APP: () = {

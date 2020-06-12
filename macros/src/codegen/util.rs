@@ -71,13 +71,17 @@ pub fn impl_mutex(
         #cfg_core
         impl<'a> rtic::Mutex for #path<'a> {
             type T = #ty;
-
             #[inline(always)]
             fn lock<R>(&mut self, f: impl FnOnce(&mut #ty) -> R) -> R {
                 /// Priority ceiling
                 const CEILING: u8 = #ceiling;
 
-                unsafe {
+                if unsafe { self.get_locked() } {
+                    panic!("Resource locked in sequential context");
+                };
+                unsafe { self.set_locked(true); }
+
+                let r = unsafe {
                     rtic::export::lock(
                         #ptr,
                         #priority,
@@ -85,7 +89,9 @@ pub fn impl_mutex(
                         #device::NVIC_PRIO_BITS,
                         f,
                     )
-                }
+                };
+                unsafe { self.set_locked(false); }
+                r
             }
         }
     )

@@ -103,12 +103,12 @@ pub fn codegen(
                     }
 
                     #[inline(always)]
-                    pub unsafe fn is_locked(&self) -> bool {
+                    pub unsafe fn get_locked(&self) -> bool {
                         self.locked.get()
                     }
 
-                    pub unsafe fn lock(&self) {
-                        self.locked.set(true);
+                    pub unsafe fn set_locked(&self, b: bool) {
+                        self.locked.set(b);
                     }
                 }
             ));

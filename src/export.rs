@@ -124,6 +124,7 @@ pub unsafe fn lock<T, R>(
     nvic_prio_bits: u8,
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
+    
     let current = priority.get();
 
     if current < ceiling {
