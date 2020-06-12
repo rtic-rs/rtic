@@ -83,6 +83,7 @@ pub fn codegen(
                 #cfg_core
                 pub struct #name<'a> {
                     priority: &'a Priority,
+                    locked: Cell<bool>,
                 }
 
                 #(#cfgs)*
@@ -90,12 +91,24 @@ pub fn codegen(
                 impl<'a> #name<'a> {
                     #[inline(always)]
                     pub unsafe fn new(priority: &'a Priority) -> Self {
-                        #name { priority }
+                        #name {
+                            priority,
+                            locked: Cell::new(false),
+                        }
                     }
 
                     #[inline(always)]
                     pub unsafe fn priority(&self) -> &Priority {
                         self.priority
+                    }
+
+                    #[inline(always)]
+                    pub unsafe fn is_locked(&self) -> bool {
+                        self.locked.get()
+                    }
+
+                    pub unsafe fn lock(&self) {
+                        self.locked.set(true);
                     }
                 }
             ));
@@ -130,7 +143,7 @@ pub fn codegen(
     } else {
         quote!(mod resources {
             use rtic::export::Priority;
-
+            use core::cell::Cell;
             #(#mod_resources)*
         })
     };
