@@ -13,7 +13,7 @@ license = "MIT OR Apache-2.0"
 name = "cortex-m-rtic"
 readme = "README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
-version = "0.5.2"
+version = "0.5.3"
 
 [lib]
 name = "rtic"
