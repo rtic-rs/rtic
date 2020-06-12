@@ -1,107 +1,104 @@
+[[example]]
+name = 'baseline'
+required-features = ['__v7']
+
+[[example]]
+name = 'periodic'
+required-features = ['__v7']
+
+[[example]]
+name = 'pool'
+required-features = ['__v7']
+
+[[example]]
+name = 'schedule'
+required-features = ['__v7']
+
+[[example]]
+name = 't-cfg'
+required-features = ['__v7']
+
+[[example]]
+name = 't-cfg-resources'
+required-features = ['__min_r1_43']
+
+[[example]]
+name = 't-schedule'
+required-features = ['__v7']
+
+[[example]]
+name = 'types'
+required-features = ['__v7']
+
 [package]
 authors = [
-  "The Real-Time Interrupt-driven Concurrency developers",
-  "Jorge Aparicio <jorge@japaric.io>",
-  "Per Lindgren <per.lindgren@ltu.se>",
+    'The Real-Time Interrupt-driven Concurrency developers',
+    'Jorge Aparicio <jorge@japaric.io>',
+    'Per Lindgren <per.lindgren@ltu.se>',
 ]
-categories = ["concurrency", "embedded", "no-std"]
-description = "Real-Time Interrupt-driven Concurrency (RTIC): a concurrency framework for building real time systems"
-documentation = "https://rtic.rs/"
-edition = "2018"
-keywords = ["arm", "cortex-m"]
-license = "MIT OR Apache-2.0"
-name = "cortex-m-rtic"
-readme = "README.md"
-repository = "https://github.com/rtic-rs/cortex-m-rtic"
-version = "0.5.3"
+categories = [
+    'concurrency',
+    'embedded',
+    'no-std',
+]
+description = 'Real-Time Interrupt-driven Concurrency (RTIC): a concurrency framework for building real time systems'
+documentation = 'https://rtic.rs/'
+edition = '2018'
+keywords = [
+    'arm',
+    'cortex-m',
+]
+license = 'MIT OR Apache-2.0'
+name = 'cortex-m-rtic'
+readme = 'README.md'
+repository = 'https://github.com/rtic-rs/cortex-m-rtic'
+version = '0.5.3'
 
 [lib]
-name = "rtic"
-
-[[example]]
-name = "baseline"
-required-features = ["__v7"]
-
-[[example]]
-name = "periodic"
-required-features = ["__v7"]
-
-[[example]]
-name = "pool"
-required-features = ["__v7"]
-
-[[example]]
-name = "schedule"
-required-features = ["__v7"]
-
-[[example]]
-name = "t-cfg"
-required-features = ["__v7"]
-
-[[example]]
-name = "t-cfg-resources"
-required-features = ["__min_r1_43"]
-
-[[example]]
-name = "t-schedule"
-required-features = ["__v7"]
-
-[[example]]
-name = "types"
-required-features = ["__v7"]
+name = 'rtic'
+[patch.crates-io.rtic-core]
+git = 'https://github.com/rtic-rs/rtic-core.git'
+branch = 'immutable_resource_proxies'
 
 [dependencies]
-cortex-m = "0.6.2"
-cortex-m-rtic-macros = { path = "macros", version = "0.5.0" }
-rtic-core = "0.3.0"
-cortex-m-rt = "0.6.9"
-heapless = "0.5.0"
+cortex-m = '0.6.2'
+rtic-core = '0.3.0'
+cortex-m-rt = '0.6.9'
+heapless = '0.5.0'
 
-[build-dependencies]
-version_check = "0.9"
+[dependencies.cortex-m-rtic-macros]
+path = 'macros'
+version = '0.5.0'
 
 [dependencies.microamp]
 optional = true
-version = "0.1.0-alpha.2"
+version = '0.1.0-alpha.2'
+
+[build-dependencies]
+version_check = '0.9'
 
 [dev-dependencies]
-lm3s6965 = "0.1.3"
-panic-halt = "0.2.0"
-cortex-m-semihosting = "0.3.3"
+lm3s6965 = '0.1.3'
+panic-halt = '0.2.0'
+cortex-m-semihosting = '0.3.3'
 
 [dev-dependencies.panic-semihosting]
-features = ["exit"]
-version = "0.5.2"
-
+features = ['exit']
+version = '0.5.2'
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
-trybuild = "1"
+trybuild = '1'
 
 [features]
-heterogeneous = ["cortex-m-rtic-macros/heterogeneous", "microamp"]
-homogeneous = ["cortex-m-rtic-macros/homogeneous"]
-# used for testing this crate; do not use in applications
-__v7 =[]
-__min_r1_43 =[]
-
+heterogeneous = [
+    'cortex-m-rtic-macros/heterogeneous',
+    'microamp',
+]
+homogeneous = ['cortex-m-rtic-macros/homogeneous']
+__v7 = []
+__min_r1_43 = []
 [profile.release]
 codegen-units = 1
 lto = true
-
-[workspace]
-members = [
-  "heterogeneous",
-  "homogeneous",
-  "macros",
-]
-
-# do not optimize proc-macro deps or build scripts
-[profile.dev.build-override]
-codegen-units = 16
-debug = false
-debug-assertions = false
-opt-level = 0
-overflow-checks = false
-
 
 [profile.release.build-override]
 codegen-units = 16
@@ -109,3 +106,16 @@ debug = false
 debug-assertions = false
 opt-level = 0
 overflow-checks = false
+[profile.dev.build-override]
+codegen-units = 16
+debug = false
+debug-assertions = false
+opt-level = 0
+overflow-checks = false
+
+[workspace]
+members = [
+    'heterogeneous',
+    'homogeneous',
+    'macros',
+]

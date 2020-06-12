@@ -75,8 +75,8 @@ pub mod init {
     }
 }
 mod resources {
-    use rtic::export::Priority;
     use core::cell::Cell;
+    use rtic::export::Priority;
     #[allow(non_camel_case_types)]
     pub struct shared<'a> {
         priority: &'a Priority,
@@ -163,5 +163,108 @@ pub mod gpioc {
         }
     }
 }
+
 /// Implementation details
-const APP: () = { # [ doc = r" Always include the device crate which contains the vector table" ] use lm3s6965 as _ ; # [ allow ( non_upper_case_globals ) ] static mut shared : u32 = 0 ; impl < 'a > rtic :: Mutex for resources :: shared < 'a > { type T = u32 ; # [ inline ( always ) ] fn lock < R > ( & mut self , f : impl FnOnce ( & mut u32 ) -> R ) -> R { # [ doc = r" Priority ceiling" ] const CEILING : u8 = 2u8 ; if self . get_locked ( ) { :: core :: panicking :: panic ( "Resource locked in sequential context" ) ; } ; self . set_locked ( true ) ; let r = unsafe { rtic :: export :: lock ( & mut shared , self . priority ( ) , CEILING , lm3s6965 :: NVIC_PRIO_BITS , f ) } ; self . set_locked ( false ) ; r } } # [ allow ( non_snake_case ) ] # [ no_mangle ] unsafe fn GPIOA ( ) { const PRIORITY : u8 = 1u8 ; rtic :: export :: run ( PRIORITY , | | { crate :: gpioa ( gpioa :: Context :: new ( & rtic :: export :: Priority :: new ( PRIORITY ) ) ) } ) ; } impl < 'a > gpioaResources < 'a > { # [ inline ( always ) ] unsafe fn new ( priority : & 'a rtic :: export :: Priority ) -> Self { gpioaResources { shared : resources :: shared :: new ( priority ) , } } } # [ allow ( non_snake_case ) ] # [ no_mangle ] unsafe fn GPIOB ( ) { const PRIORITY : u8 = 2u8 ; rtic :: export :: run ( PRIORITY , | | { crate :: gpiob ( gpiob :: Context :: new ( & rtic :: export :: Priority :: new ( PRIORITY ) ) ) } ) ; } impl < 'a > gpiobResources < 'a > { # [ inline ( always ) ] unsafe fn new ( priority : & 'a rtic :: export :: Priority ) -> Self { gpiobResources { shared : & mut shared , } } } # [ allow ( non_snake_case ) ] # [ no_mangle ] unsafe fn GPIOC ( ) { const PRIORITY : u8 = 3u8 ; rtic :: export :: run ( PRIORITY , | | { crate :: gpioc ( gpioc :: Context :: new ( & rtic :: export :: Priority :: new ( PRIORITY ) ) ) } ) ; } # [ no_mangle ] unsafe extern "C" fn main ( ) -> ! { let _TODO : ( ) = ( ) ; rtic :: export :: interrupt :: disable ( ) ; let mut core : rtic :: export :: Peripherals = core :: mem :: transmute ( ( ) ) ; let _ = [ ( ) ; ( ( 1 << lm3s6965 :: NVIC_PRIO_BITS ) - 1u8 as usize ) ] ; core . NVIC . set_priority ( lm3s6965 :: Interrupt :: GPIOA , rtic :: export :: logical2hw ( 1u8 , lm3s6965 :: NVIC_PRIO_BITS ) ) ; rtic :: export :: NVIC :: unmask ( lm3s6965 :: Interrupt :: GPIOA ) ; let _ = [ ( ) ; ( ( 1 << lm3s6965 :: NVIC_PRIO_BITS ) - 2u8 as usize ) ] ; core . NVIC . set_priority ( lm3s6965 :: Interrupt :: GPIOB , rtic :: export :: logical2hw ( 2u8 , lm3s6965 :: NVIC_PRIO_BITS ) ) ; rtic :: export :: NVIC :: unmask ( lm3s6965 :: Interrupt :: GPIOB ) ; let _ = [ ( ) ; ( ( 1 << lm3s6965 :: NVIC_PRIO_BITS ) - 3u8 as usize ) ] ; core . NVIC . set_priority ( lm3s6965 :: Interrupt :: GPIOC , rtic :: export :: logical2hw ( 3u8 , lm3s6965 :: NVIC_PRIO_BITS ) ) ; rtic :: export :: NVIC :: unmask ( lm3s6965 :: Interrupt :: GPIOC ) ; core . SCB . scr . modify ( | r | r | 1 << 1 ) ; let late = crate :: init ( init :: Context :: new ( core . into ( ) ) ) ; rtic :: export :: interrupt :: enable ( ) ; loop { rtic :: export :: wfi ( ) } } };
+const APP: () = {
+    #[doc = r" Always include the device crate which contains the vector table"]
+    use lm3s6965 as _;
+    #[allow(non_upper_case_globals)]
+    static mut shared: u32 = 0;
+    impl<'a> rtic::Mutex for resources::shared<'a> {
+        type T = u32;
+        #[inline(always)]
+        fn lock<R>(&self, f: impl FnOnce(&mut u32) -> R) -> R {
+            #[doc = r" Priority ceiling"]
+            const CEILING: u8 = 2u8;
+            if unsafe { self.get_locked() } {
+                ::core::panicking::panic("Resource locked in sequential context");
+            };
+            unsafe {
+                self.set_locked(true);
+            }
+            let r = unsafe {
+                rtic::export::lock(
+                    &mut shared,
+                    self.priority(),
+                    CEILING,
+                    lm3s6965::NVIC_PRIO_BITS,
+                    f,
+                )
+            };
+            unsafe {
+                self.set_locked(false);
+            }
+            r
+        }
+    }
+    #[allow(non_snake_case)]
+    #[no_mangle]
+    unsafe fn GPIOA() {
+        const PRIORITY: u8 = 1u8;
+        rtic::export::run(PRIORITY, || {
+            crate::gpioa(gpioa::Context::new(&rtic::export::Priority::new(PRIORITY)))
+        });
+    }
+    impl<'a> gpioaResources<'a> {
+        #[inline(always)]
+        unsafe fn new(priority: &'a rtic::export::Priority) -> Self {
+            gpioaResources {
+                shared: resources::shared::new(priority),
+            }
+        }
+    }
+    #[allow(non_snake_case)]
+    #[no_mangle]
+    unsafe fn GPIOB() {
+        const PRIORITY: u8 = 2u8;
+        rtic::export::run(PRIORITY, || {
+            crate::gpiob(gpiob::Context::new(&rtic::export::Priority::new(PRIORITY)))
+        });
+    }
+    impl<'a> gpiobResources<'a> {
+        #[inline(always)]
+        unsafe fn new(priority: &'a rtic::export::Priority) -> Self {
+            gpiobResources {
+                shared: &mut shared,
+            }
+        }
+    }
+    #[allow(non_snake_case)]
+    #[no_mangle]
+    unsafe fn GPIOC() {
+        const PRIORITY: u8 = 3u8;
+        rtic::export::run(PRIORITY, || {
+            crate::gpioc(gpioc::Context::new(&rtic::export::Priority::new(PRIORITY)))
+        });
+    }
+    #[no_mangle]
+    unsafe extern "C" fn main() -> ! {
+        let _TODO: () = ();
+        rtic::export::interrupt::disable();
+        let mut core: rtic::export::Peripherals = core::mem::transmute(());
+        let _ = [(); ((1 << lm3s6965::NVIC_PRIO_BITS) - 1u8 as usize)];
+        core.NVIC.set_priority(
+            lm3s6965::Interrupt::GPIOA,
+            rtic::export::logical2hw(1u8, lm3s6965::NVIC_PRIO_BITS),
+        );
+        rtic::export::NVIC::unmask(lm3s6965::Interrupt::GPIOA);
+        let _ = [(); ((1 << lm3s6965::NVIC_PRIO_BITS) - 2u8 as usize)];
+        core.NVIC.set_priority(
+            lm3s6965::Interrupt::GPIOB,
+            rtic::export::logical2hw(2u8, lm3s6965::NVIC_PRIO_BITS),
+        );
+        rtic::export::NVIC::unmask(lm3s6965::Interrupt::GPIOB);
+        let _ = [(); ((1 << lm3s6965::NVIC_PRIO_BITS) - 3u8 as usize)];
+        core.NVIC.set_priority(
+            lm3s6965::Interrupt::GPIOC,
+            rtic::export::logical2hw(3u8, lm3s6965::NVIC_PRIO_BITS),
+        );
+        rtic::export::NVIC::unmask(lm3s6965::Interrupt::GPIOC);
+        core.SCB.scr.modify(|r| r | 1 << 1);
+        let late = crate::init(init::Context::new(core.into()));
+        rtic::export::interrupt::enable();
+        loop {
+            rtic::export::wfi()
+        }
+    }
+};

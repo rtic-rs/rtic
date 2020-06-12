@@ -51,7 +51,7 @@ use cortex_m::{
 #[cfg(all(not(feature = "heterogeneous"), not(feature = "homogeneous")))]
 use cortex_m_rt as _; // vector table
 pub use cortex_m_rtic_macros::app;
-pub use rtic_core::{Exclusive, Mutex};
+pub use rtic_core::Mutex;
 
 #[cfg(armv7m)]
 pub mod cyccnt;
