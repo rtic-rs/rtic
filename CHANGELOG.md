@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.5.3] - 2020-06-12
+
+- Added migration guide from `cortex-m-rtfm` to `cortex-m-rtic`
+- No code changes, only a version compatibility release with `cortex-m-rtfm` to ease the transition
+for users.
+
 ## [v0.5.2] - 2020-06-11
 
 - Using safe `DWT` interface
@@ -313,7 +319,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.3...HEAD
+[v0.5.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.2...v0.5.3
 [v0.5.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.1...v0.5.2
 [v0.5.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.0...v0.5.1
 [v0.5.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.4.3...v0.5.0
