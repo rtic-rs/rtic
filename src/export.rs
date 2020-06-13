@@ -1,6 +1,6 @@
 use core::{
     cell::Cell,
-    sync::atomic::{AtomicBool, Ordering},
+    sync::atomic::{compiler_fence, AtomicBool, Ordering},
 };
 
 pub use crate::tq::{NotReady, TimerQueue};
@@ -129,13 +129,20 @@ pub unsafe fn lock<T, R>(
     if current < ceiling {
         if ceiling == (1 << nvic_prio_bits) {
             priority.set(u8::max_value());
-            let r = interrupt::free(|_| f(&mut *ptr));
+            let r = interrupt::free(|_| {
+                compiler_fence(Ordering::SeqCst);
+                let r = f(&mut *ptr);
+                compiler_fence(Ordering::SeqCst);
+                r
+            });
             priority.set(current);
             r
         } else {
             priority.set(ceiling);
             basepri::write(logical2hw(ceiling, nvic_prio_bits));
+            compiler_fence(Ordering::SeqCst);
             let r = f(&mut *ptr);
+            compiler_fence(Ordering::SeqCst);
             basepri::write(logical2hw(current, nvic_prio_bits));
             priority.set(current);
             r
@@ -158,7 +165,12 @@ pub unsafe fn lock<T, R>(
 
     if current < ceiling {
         priority.set(u8::max_value());
-        let r = interrupt::free(|_| f(&mut *ptr));
+        let r = interrupt::free(|_| {
+            compiler_fence(Ordering::SeqCst);
+            let r = f(&mut *ptr);
+            compiler_fence(Ordering::SeqCst);
+            r
+        });
         priority.set(current);
         r
     } else {
