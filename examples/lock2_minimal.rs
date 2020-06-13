@@ -21,6 +21,7 @@ const APP: () = {
     #[init]
     fn init(_: init::Context) {
         rtic::pend(Interrupt::GPIOA);
+        debug::exit(debug::EXIT_SUCCESS);
     }
 
     // when omitted priority is assumed to be `1`
@@ -28,10 +29,7 @@ const APP: () = {
     fn gpioa(c: gpioa::Context) {
         c.resources.shared.lock(|shared| {
             *shared += 1;
-            rtic::pend(Interrupt::GPIOB);
         });
-
-        debug::exit(debug::EXIT_SUCCESS);
     }
 
     #[task(binds = GPIOB, priority = 2, resources = [shared, shared2])]
