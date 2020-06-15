@@ -8,8 +8,7 @@
 use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
-use rtic::Mutex;
-use rtic_core::Exclusive;
+use rtic::Exclusive;
 
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
@@ -59,27 +58,13 @@ const APP: () = {
 
     #[task(binds = GPIOC, priority = 3, resources = [shared])]
     fn gpioc(c: gpioc::Context) {
-        static mut STATE: u32 = 0;
-        hprintln!("GPIOC(STATE = {})", *STATE).unwrap();
-        *c.resources.shared += 2;
-        let mut ex_shared = Exclusive::new(c.resources.shared);
-        // a mutable exclusive is still possible to DerefMut
-        *ex_shared += 1;
-        *c.resources.shared += 3; // will fail
-        advance(STATE, ex_shared); // try swap order of (1)
-        hprintln!("GPIOC(STATE = {})", *STATE).unwrap();
+        let se1 = Exclusive::new(c.resources.shared);
+        let se2 = Exclusive::new(c.resources.shared);
+        se1.lock(|s1| {
+            se2.lock(|s2| {
+                *s1 = 2;
+                *s2 = 3;
+            });
+        });
     }
 };
-
-// the second parameter is generic: it can be any type that implements the `Mutex` trait
-fn advance(state: &mut u32, shared: impl Mutex<T = u32>) {
-    *state += 1;
-
-    let (old, new) = shared.lock(|shared: &mut u32| {
-        let old = *shared;
-        *shared += *state;
-        (old, *shared)
-    });
-
-    hprintln!("shared: {} -> {}", old, new).unwrap();
-}

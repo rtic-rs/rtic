@@ -62,7 +62,7 @@ const APP: () = {
         static mut STATE: u32 = 0;
         hprintln!("GPIOC(STATE = {})", *STATE).unwrap();
         *c.resources.shared += 2;
-        advance(STATE, *c.resources.shared); // try swap order of (1)
+        advance(STATE, Exclusive::new(c.resources.shared)); // try swap order of (1)
         *c.resources.shared += 3; // and (2), will fail
         hprintln!("GPIOC(STATE = {})", *STATE).unwrap();
     }
