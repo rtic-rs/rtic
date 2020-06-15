@@ -57,11 +57,11 @@ version = '0.5.3'
 [lib]
 name = 'rtic'
 
-# path = "../rtic-core"
-
+# path = '../rtic-core'
 [patch.crates-io.rtic-core]
 git = 'https://github.com/rtic-rs/rtic-core.git'
 branch = 'immutable_resource_proxies'
+             
 
 [dependencies]
 cortex-m = '0.6.2'
@@ -99,6 +99,8 @@ heterogeneous = [
 homogeneous = ['cortex-m-rtic-macros/homogeneous']
 __v7 = []
 __min_r1_43 = []
+link_fail = ['rtic-core/link_fail']
+
 [profile.release]
 codegen-units = 1
 lto = true
