@@ -46,7 +46,6 @@ jobs:
         toolchain:
           - stable
           - 1.36.0
-          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -263,7 +262,6 @@ jobs:
         toolchain:
           - stable
           - 1.36.0
-          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -382,6 +380,189 @@ jobs:
               cargo-microamp --example=$ex --target thumbv7m-none-eabi,thumbv6m-none-eabi --check
           done
 
+  # Build documentation, check links
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+        # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install dependencies
+        run: pip install git+https://github.com/linkchecker/linkchecker.git
+
+      - name: Remove cargo-config
+        run: rm -f .cargo/config
+
+      - name: Build docs
+        run: cargo doc
+
+      - name: Check links
+        run: |
+          td=$(mktemp -d)
+          cp -r target/doc $td/api
+          linkchecker $td/api/rtic/
+          linkchecker $td/api/cortex_m_rtic_macros/
+
+  # Build the books
+  mdbook:
+    name: mdbook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+        # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install dependencies
+        run: pip install git+https://github.com/linkchecker/linkchecker.git
+
+      - name: mdBook Action
+        uses: peaceiris/actions-mdbook@v1.1.11
+        with:
+          mdbook-version: '0.3.1'
+
+      - name: Build book in English
+        run: cd book/en && mdbook build
+
+      - name: Build book in Russian
+        run: cd book/ru && mdbook build
+
+      - name: Check links
+        run: |
+          td=$(mktemp -d)
+          mkdir $td/book
+          cp -r book/en/book $td/book/en
+          cp -r book/ru/book $td/book/ru
+          cp LICENSE-* $td/book/en
+          cp LICENSE-* $td/book/ru
+
+          linkchecker $td/book/en/
+          linkchecker $td/book/ru/
+
+  # Only runs when pushing to master branch
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs:
+      - style
+      - check
+      - checkexamples
+      - checkmacros
+      - testv7
+      - testv6
+      - checkmulticore
+      - docs
+      - mdbook
+    # Only run this when pushing to master branch
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+        # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: mdBook Action
+        uses: peaceiris/actions-mdbook@v1.1.11
+        with:
+          mdbook-version: '0.3.1'
+          # mdbook-version: 'latest'
+
+      - name: Remove cargo-config
+        run: rm -f .cargo/config
+
+      - name: Build docs
+        run: cargo doc
+
+      - name: Build books
+        run: |
+          langs=( en ru )
+          latest=0.5
+          vers=( 0.4.x )
+
+          # Create directories
+          td=$(mktemp -d)
+          mkdir -p $td/$latest/book/
+          cp -r target/doc $td/$latest/api
+
+          # sed fixes
+          sed 's|URL|rtic/index.html|g' redirect.html > $td/$latest/api/index.html
+          sed 's|URL|0.5|g' redirect.html > $td/index.html
+          sed 's|URL|book/en|g' redirect.html > $td/$latest/index.html
+
+          # Build books
+          for lang in ${langs[@]}; do
+              ( cd book/$lang && mdbook build )
+              cp -r book/$lang/book $td/$latest/book/$lang
+              cp LICENSE-* $td/$latest/book/$lang/
+          done
+
+          # Build older versions
+          root=$(pwd)
+          for ver in ${vers[@]}; do
+              prefix=${ver%.*}
+
+              mkdir -p $td/$prefix/book
+              src=$(mktemp -d)
+              curl -L https://github.com/rtic-rs/cortex-m-rtic/archive/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
+
+              pushd $src
+              rm -f .cargo/config
+              cargo doc || cargo doc --features timer-queue
+              cp -r target/doc $td/$prefix/api
+              sed 's|URL|rtic/index.html|g' $root/redirect.html > $td/$prefix/api/index.html
+              for lang in ${langs[@]}; do
+                  ( cd book/$lang && mdbook build )
+                  cp -r book/$lang/book $td/$prefix/book/$lang
+                  cp LICENSE-* $td/$prefix/book/$lang/
+              done
+              sed 's|URL|book/en|g' $root/redirect.html > $td/$prefix/index.html
+              popd
+
+              rm -rf $src
+          done
+
+          # Forward CNAME file
+          cp CNAME $td/
+          mv $td/ bookstodeploy
+
+      - name: Deploy to GH-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./bookstodeploy
+
   # Refs: https://github.com/rust-lang/crater/blob/9ab6f9697c901c4a44025cf0a39b73ad5b37d198/.github/workflows/bors.yml#L125-L149
   #
   # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
@@ -397,6 +578,8 @@ jobs:
       - testv7
       - testv6
       - checkmulticore
+      - docs
+      - mdbook
     runs-on: ubuntu-latest
     steps:
       - name: Mark the job as a success
@@ -412,6 +595,8 @@ jobs:
       - testv7
       - testv6
       - checkmulticore
+      - docs
+      - mdbook
     runs-on: ubuntu-latest
     steps:
       - name: Mark the job as a failure
