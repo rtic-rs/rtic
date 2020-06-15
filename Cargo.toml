@@ -56,6 +56,8 @@ version = '0.5.3'
 
 [lib]
 name = 'rtic'
+
+# path = "../rtic-core"
 [patch.crates-io.rtic-core]
 git = 'https://github.com/rtic-rs/rtic-core.git'
 branch = 'immutable_resource_proxies'
