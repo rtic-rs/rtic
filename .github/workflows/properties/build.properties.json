@@ -1,6 +1,6 @@
 {
     "name": "Build",
-    "description": "Build and test a Rust project with Cargo.",
+    "description": "RTIC Test Suite",
     "iconName": "rust",
     "categories": ["Rust"]
 }
