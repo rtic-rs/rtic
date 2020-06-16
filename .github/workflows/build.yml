@@ -50,6 +50,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
         with:
@@ -83,6 +113,54 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
+      - name: Cache QEMU binary
+        id: cache-qemu-binary
+        uses: actions/cache@v2
+        with:
+          path: qemu
+          key: ${{ runner.OS }}-qemu
+          restore-keys: |
+            ${{ runner.OS }}-qemu
+
+      - name: Cache arm-none-eabi-gcc
+        id: cache-arm-none-eabi-gcc
+        uses: actions/cache@v2
+        with:
+          path: arm-none-eabi-gcc
+          key: ${{ runner.OS }}-gcc
+          restore-keys: |
+            ${{ runner.OS }}-gcc
+
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
         with:
@@ -103,21 +181,35 @@ jobs:
           args: -p homogeneous --examples --target=${{ matrix.target }}
 
       - name: Install QEMU
+        if: steps.cache-qemu-binary.outputs.cache-hit != 'true'
         run: |
-          mkdir qemu
-          curl -L https://github.com/japaric/qemu-bin/raw/master/14.04/qemu-system-arm-2.12.0 > qemu/qemu-system-arm
+          mkdir -p qemu
+          curl -C - -L https://github.com/japaric/qemu-bin/raw/master/14.04/qemu-system-arm-2.12.0 > qemu/qemu-system-arm
           chmod +x qemu/qemu-system-arm
 
+      - name: Setup add QEMU to PATH
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: echo "::add-path::${GITHUB_WORKSPACE}/qemu"
+
       - name: Setup arm-none-eabi-gcc
+        if: steps.cache-arm-none-eabi-gcc.outputs.cache-hit != 'true'
         uses: fiam/arm-none-eabi-gcc@v1
         with:
+          directory: 'arm-none-eabi-gcc' # Place it locally so it is possible to cache
           release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
+
+      - name: Setup add arm-none-eabi-gcc to PATH
+        if: steps.cache-arm-none-eabi-gcc.outputs.cache-hit == 'true'
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: echo "::add-path::${GITHUB_WORKSPACE}/arm-none-eabi-gcc/bin"
 
       - name: Run-pass tests
         run: |
-          # Add QEMU to the path
+          # Print the path
           echo $PATH
-          PATH=$(pwd)/qemu:$PATH
+          #PATH=$(pwd)/qemu:$PATH
           arm_example() {
               local COMMAND=$1
               local EXAMPLE=$2
@@ -267,6 +359,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
         with:
@@ -292,6 +415,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -315,6 +467,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -390,6 +571,42 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
+      - name: Cache pip installed linkchecker
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Set up Python 3.x
         uses: actions/setup-python@v2
