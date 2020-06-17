@@ -4,10 +4,10 @@
 #![no_main]
 #![no_std]
 
+use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
 use panic_halt as _;
-use cortex_m::peripheral::DWT;
-use rtic::time::{self, instant::Instant, prelude::*, time_units::*};
+use rtic::time::{self, prelude::*, units::*, Instant};
 
 // NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, monotonic = crate::CYCCNT, sys_timer_freq = 64_000_000)]
@@ -26,7 +26,7 @@ const APP: () = {
 
         hprintln!(
             "init @ {:?}",
-            CYCCNT::now().elapsed_since_epoch::<Microseconds<i32>>()
+            CYCCNT::now().duration_since_epoch::<Microseconds<i32>>()
         )
         .unwrap();
 
@@ -41,7 +41,7 @@ const APP: () = {
     fn foo(_: foo::Context) {
         hprintln!(
             "foo  @ {:?}",
-            CYCCNT::now().elapsed_since_epoch::<Microseconds<i32>>()
+            CYCCNT::now().duration_since_epoch::<Microseconds<i32>>()
         )
         .unwrap();
     }
@@ -50,16 +50,15 @@ const APP: () = {
     fn bar(_: bar::Context) {
         hprintln!(
             "bar  @ {:?}",
-            CYCCNT::now().elapsed_since_epoch::<Microseconds<i32>>()
+            CYCCNT::now().duration_since_epoch::<Microseconds<i32>>()
         )
-            .unwrap();
+        .unwrap();
     }
 
     extern "C" {
         fn UART0();
     }
 };
-
 
 /// Implementation of the `Monotonic` trait based on CYCle CouNTer
 pub struct CYCCNT;
@@ -74,7 +73,7 @@ impl time::Clock for CYCCNT {
     type Rep = i32;
 
     // the period of 64 MHz
-    const PERIOD: time::Period = time::Period::new_raw(1, 64_000_000);
+    const PERIOD: time::Period = time::Period::new(1, 64_000_000);
 
     fn now() -> Instant<Self> {
         let ticks = DWT::get_cycle_count();

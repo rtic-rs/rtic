@@ -40,8 +40,8 @@ pub fn codegen(
             pub struct SysTimer;
             impl rtic::time::Clock for SysTimer {
                 type Rep = i32;
-                const PERIOD: rtic::time::Period = rtic::time::Period::new_raw(1, #sys_timer_freq as i32);
-                fn now() -> rtic::time::instant::Instant<Self> {
+                const PERIOD: rtic::time::Period = rtic::time::Period::new(1, #sys_timer_freq as i32);
+                fn now() -> rtic::time::Instant<Self> {
                     unimplemented!()
                 }
             }

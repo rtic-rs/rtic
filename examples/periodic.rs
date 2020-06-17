@@ -7,7 +7,7 @@
 use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
-use rtic::time::{self, instant::Instant, prelude::*, time_units::*};
+use rtic::time::{self, prelude::*, units::*, Instant};
 
 const PERIOD: Milliseconds<i32> = Milliseconds(125);
 
@@ -48,7 +48,7 @@ impl time::Clock for CYCCNT {
     type Rep = i32;
 
     // the period of 64 MHz
-    const PERIOD: time::Period = time::Period::new_raw(1, 64_000_000);
+    const PERIOD: time::Period = time::Period::new(1, 64_000_000);
 
     fn now() -> Instant<Self> {
         let ticks = DWT::get_cycle_count();

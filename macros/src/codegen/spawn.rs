@@ -37,7 +37,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 let let_instant = if app.uses_schedule(receiver) {
                     let m = extra.monotonic();
 
-                    Some(quote!(let instant = rtic::time::instant::Instant::<#m>::new(0); ))
+                    Some(quote!(let instant = rtic::time::Instant::<#m>::new(0); ))
                 } else {
                     None
                 };
@@ -61,7 +61,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     let instant = if app.uses_schedule(receiver) {
                         let m = extra.monotonic();
 
-                        Some(quote!(, instant: rtic::time::instant::Instant<#m>))
+                        Some(quote!(, instant: rtic::time::Instant<#m>))
                     } else {
                         None
                     };

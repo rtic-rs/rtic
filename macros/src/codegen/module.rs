@@ -21,10 +21,10 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                 fields.push(quote!(
                     /// System start time = `Instant(0 /* cycles */)`
-                    pub start: rtic::time::instant::Instant<#m>
+                    pub start: rtic::time::Instant<#m>
                 ));
 
-                values.push(quote!(start: rtic::time::instant::Instant::<#m>::new(0)));
+                values.push(quote!(start: rtic::time::Instant::<#m>::new(0)));
 
                 fields.push(quote!(
                     /// Core (Cortex-M) peripherals minus the SysTick
@@ -59,7 +59,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                 fields.push(quote!(
                     /// Time at which this handler started executing
-                    pub start: rtic::time::instant::Instant<#m>
+                    pub start: rtic::time::Instant<#m>
                 ));
 
                 values.push(quote!(start: instant));
@@ -74,7 +74,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                 fields.push(quote!(
                     /// The time at which this task was scheduled to run
-                    pub scheduled: rtic::time::instant::Instant<#m>
+                    pub scheduled: rtic::time::Instant<#m>
                 ));
 
                 values.push(quote!(scheduled: instant));
@@ -210,11 +210,11 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                     needs_instant = true;
                     instant_method = Some(quote!(
-                        pub unsafe fn instant(&self) -> rtic::time::instant::Instant<#m> {
+                        pub unsafe fn instant(&self) -> rtic::time::Instant<#m> {
                             self.instant
                         }
                     ));
-                    Some(quote!(instant: rtic::time::instant::Instant<#m>,))
+                    Some(quote!(instant: rtic::time::Instant<#m>,))
                 } else {
                     None
                 };
@@ -290,7 +290,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
     let instant = if needs_instant {
         let m = extra.monotonic();
 
-        Some(quote!(, instant: rtic::time::instant::Instant<#m>))
+        Some(quote!(, instant: rtic::time::Instant<#m>))
     } else {
         None
     };

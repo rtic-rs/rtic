@@ -1,29 +1,32 @@
 use core::{
     cmp::{self, Ordering},
     convert::TryFrom,
-    mem,
     marker::PhantomData,
+    mem,
 };
 
 use cortex_m::peripheral::{SCB, SYST};
 use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 
-use crate::time::{self, instant::Instant, time_units::*, Duration};
-use crate::{Monotonic};
+use crate::time::{self, units::*, Duration, Instant};
+use crate::Monotonic;
 
-pub struct TimerQueue<SysTimer, Clock, Task, N>(pub BinaryHeap<NotReady<Clock, Task>, N, Min>, pub PhantomData<SysTimer>)
-    where
-        SysTimer: time::Clock,
-        Clock: Monotonic,
-        N: ArrayLength<NotReady<Clock, Task>>,
-        Task: Copy;
+pub struct TimerQueue<SysTimer, Clock, Task, N>(
+    pub BinaryHeap<NotReady<Clock, Task>, N, Min>,
+    pub PhantomData<SysTimer>,
+)
+where
+    SysTimer: time::Clock,
+    Clock: Monotonic,
+    N: ArrayLength<NotReady<Clock, Task>>,
+    Task: Copy;
 
 impl<SysTimer, Clock, Task, N> TimerQueue<SysTimer, Clock, Task, N>
-    where
-        SysTimer: time::Clock,
-        Clock: Monotonic,
-        N: ArrayLength<NotReady<Clock, Task>>,
-        Task: Copy,
+where
+    SysTimer: time::Clock,
+    Clock: Monotonic,
+    N: ArrayLength<NotReady<Clock, Task>>,
+    Task: Copy,
 {
     #[inline]
     pub unsafe fn enqueue_unchecked(&mut self, nr: NotReady<Clock, Task>) {
@@ -64,9 +67,8 @@ impl<SysTimer, Clock, Task, N> TimerQueue<SysTimer, Clock, Task, N>
                     const MAX: u32 = 0x00ffffff;
 
                     let dur: Microseconds<i64> = instant.duration_since(&now).unwrap();
-                    let systick_ticks: i64 = dur
-                        .into_ticks(SysTimer::PERIOD)
-                        .expect("into_ticks failed");
+                    let systick_ticks: i64 =
+                        dur.into_ticks(SysTimer::PERIOD).expect("into_ticks failed");
 
                     // ARM Architecture Reference Manual says:
                     // "Setting SYST_RVR to zero has the effect of
