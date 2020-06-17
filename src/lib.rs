@@ -49,8 +49,8 @@ use cortex_m::{
 #[cfg(all(not(feature = "heterogeneous"), not(feature = "homogeneous")))]
 use cortex_m_rt as _; // vector table
 pub use cortex_m_rtic_macros::app;
-pub use rtic_core::{Exclusive, Mutex};
 pub use embedded_time as time;
+pub use rtic_core::{Exclusive, Mutex};
 
 #[doc(hidden)]
 pub mod export;
@@ -134,8 +134,8 @@ pub trait MultiCore {}
 /// This is a convenience function around
 /// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
 pub fn pend<I>(interrupt: I)
-    where
-        I: Nr,
+where
+    I: Nr,
 {
     NVIC::pend(interrupt)
 }
