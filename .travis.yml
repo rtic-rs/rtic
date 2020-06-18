@@ -7,7 +7,7 @@ matrix:
 
       # MSRV
     - env: TARGET=thumbv7m-none-eabi
-      rust: 1.36.0
+      rust: 1.41.0
       if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
     - env: TARGET=thumbv6m-none-eabi

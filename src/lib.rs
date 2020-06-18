@@ -17,7 +17,7 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! This crate is guaranteed to compile on stable Rust 1.36 (2018 edition) and up. It *might*
+//! This crate is guaranteed to compile on stable Rust 1.41 (2018 edition) and up. It *might*
 //! compile on older versions but that may change in any new patch release.
 //!
 //! # Semantic Versioning

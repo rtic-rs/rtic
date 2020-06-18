@@ -41,7 +41,7 @@ Formerly known as Real-Time For the Masses.
 
 ## Requirements
 
-- Rust 1.36.0+
+- Rust 1.41.0+
 
 - Applications must be written using the 2018 edition.
 
