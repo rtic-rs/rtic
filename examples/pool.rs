@@ -59,8 +59,11 @@ const APP: () = {
         // drop(x);
     }
 
+    // RTIC requires that unused interrupts are declared in an extern block when
+    // using software tasks; these free interrupts will be used to dispatch the
+    // software tasks.
     extern "C" {
-        fn UART0();
-        fn UART1();
+        fn SSI0();
+        fn QEI0();
     }
 };
