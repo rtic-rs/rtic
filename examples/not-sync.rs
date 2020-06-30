@@ -36,7 +36,10 @@ const APP: () = {
         let _: &NotSync = c.resources.shared;
     }
 
+    // RTIC requires that unused interrupts are declared in an extern block when
+    // using software tasks; these free interrupts will be used to dispatch the
+    // software tasks.
     extern "C" {
-        fn UART0();
+        fn SSI0();
     }
 };
