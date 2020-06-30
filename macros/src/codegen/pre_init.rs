@@ -43,6 +43,13 @@ pub fn codegen(
         let mut core: rtic::export::Peripherals = core::mem::transmute(());
     ));
 
+    if app.args.cores == 1 {
+        stmts.push(quote!(
+            // To set the variable in cortex_m so the peripherals cannot be taken multiple times
+            let _ = cortex_m::Peripherals::steal();
+        ));
+    }
+
     let device = extra.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
 
