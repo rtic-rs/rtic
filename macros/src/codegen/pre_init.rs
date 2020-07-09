@@ -38,15 +38,17 @@ pub fn codegen(
         }
     }
 
-    stmts.push(quote!(
-        // NOTE(transmute) to avoid debug_assertion in multi-core mode
-        let mut core: rtic::export::Peripherals = core::mem::transmute(());
-    ));
-
     if app.args.cores == 1 {
         stmts.push(quote!(
             // To set the variable in cortex_m so the peripherals cannot be taken multiple times
-            let _ = cortex_m::Peripherals::steal();
+            let peripherals = cortex_m::Peripherals::steal();
+            let mut core: rtic::export::Peripherals = peripherals.into();
+        ));
+    } else {
+        stmts.push(quote!(
+            // NOTE(transmute) to avoid debug_assertion in multi-core mode
+            // (This code will go away when we drop multi-core mode)
+            let mut core: rtic::export::Peripherals = core::mem::transmute(());
         ));
     }
 
