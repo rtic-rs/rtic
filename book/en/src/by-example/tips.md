@@ -155,7 +155,7 @@ const APP: () = {
 };
 ```
 
-Or, you can use the [`cargo-expand`] subcommand. This subcommand will expand
+Or, you can use the [`cargo-expand`] sub-command. This sub-command will expand
 *all* the macros, including the `#[rtic::app]` attribute, and modules in your
 crate and print the output to the console.
 
@@ -169,7 +169,7 @@ $ cargo expand --example smallest | tail
 ## Resource de-structure-ing
 
 When having a task taking multiple resources it can help in readability to split
-up the resource struct. Here're two examples on how this can be done:
+up the resource struct. Here are two examples on how this can be done:
 
 ``` rust
 {{#include ../../../../examples/destructure.rs}}
