@@ -209,7 +209,7 @@ jobs:
         run: |
           # Print the path
           echo $PATH
-          #PATH=$(pwd)/qemu:$PATH
+
           arm_example() {
               local COMMAND=$1
               local EXAMPLE=$2
