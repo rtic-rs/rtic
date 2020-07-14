@@ -78,7 +78,7 @@ message. In most scenarios spawning errors are handled in one of two ways:
   platform can deal with peak payload or if the processor needs to be replaced
   with a faster one.
 
-- Ignoring the result. In soft real time and non real time applications it may
+- Ignoring the result. In soft real-time and non real-time applications it may
   be OK to occasionally lose data or fail to respond to some events during event
   bursts. In those scenarios silently letting a `spawn` call fail may be
   acceptable.
