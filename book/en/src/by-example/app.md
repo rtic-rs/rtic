@@ -90,7 +90,7 @@ $ cargo run --example idle
 To declare interrupt handlers the framework provides a `#[task]` attribute that
 can be attached to functions. This attribute takes a `binds` argument whose
 value is the name of the interrupt to which the handler will be bound to; the
-function adornated with this attribute becomes the interrupt handler. Within the
+function adorned with this attribute becomes the interrupt handler. Within the
 framework these type of tasks are referred to as *hardware* tasks, because they
 start executing in reaction to a hardware event.
 

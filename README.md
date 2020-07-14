@@ -1,6 +1,6 @@
 # Real-Time Interrupt-driven Concurrency
 
-A concurrency framework for building real time systems.
+A concurrency framework for building real-time systems.
 
 Formerly known as Real-Time For the Masses.
 
