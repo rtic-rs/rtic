@@ -48,7 +48,7 @@ Here I'll use the `init` example from the `cortex-m-rtic` crate.
 
 ``` console
 $ curl \
-    -L https://github.com/rtic-rs/cortex-m-rtic/raw/v0.5.0/examples/init.rs \
+    -L https://github.com/rtic-rs/cortex-m-rtic/raw/v0.5.3/examples/init.rs \
     > src/main.rs
 ```
 
