@@ -4,6 +4,11 @@ A concurrency framework for building real-time systems.
 
 Formerly known as Real-Time For the Masses.
 
+![crates.io](https://img.shields.io/crates/v/cortex-m-rtic)
+![docs.rs](https://docs.rs/cortex-m-rtic/badge.svg)
+![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)
+![rustc](https://img.shields.io/badge/rustc-1.36+-lightgray.svg)
+
 ## Features
 
 - **Tasks** as the unit of concurrency [^1]. Tasks can be *event triggered*
