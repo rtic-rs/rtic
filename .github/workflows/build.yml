@@ -167,6 +167,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
           override: true
+          components: llvm-tools-preview
       - uses: actions-rs/cargo@v1
         with:
           use-cross: false
@@ -180,6 +181,13 @@ jobs:
           command: check
           args: -p homogeneous --examples --target=${{ matrix.target }}
 
+      - name: cargo install cargo-binutils
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-binutils
+          version: latest
+          use-tool-cache: true
+
       - name: Install QEMU
         if: steps.cache-qemu-binary.outputs.cache-hit != 'true'
         run: |
@@ -192,18 +200,18 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: echo "::add-path::${GITHUB_WORKSPACE}/qemu"
 
-      - name: Setup arm-none-eabi-gcc
-        if: steps.cache-arm-none-eabi-gcc.outputs.cache-hit != 'true'
-        uses: fiam/arm-none-eabi-gcc@v1
-        with:
-          directory: 'arm-none-eabi-gcc' # Place it locally so it is possible to cache
-          release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
+      #- name: Setup arm-none-eabi-gcc
+        #if: steps.cache-arm-none-eabi-gcc.outputs.cache-hit != 'true'
+        #uses: fiam/arm-none-eabi-gcc@v1
+        #with:
+          #directory: 'arm-none-eabi-gcc' # Place it locally so it is possible to cache
+          #release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
 
-      - name: Setup add arm-none-eabi-gcc to PATH
-        if: steps.cache-arm-none-eabi-gcc.outputs.cache-hit == 'true'
-        env:
-          GITHUB_WORKSPACE: ${{ github.workspace }}
-        run: echo "::add-path::${GITHUB_WORKSPACE}/arm-none-eabi-gcc/bin"
+      #- name: Setup add arm-none-eabi-gcc to PATH
+        #if: steps.cache-arm-none-eabi-gcc.outputs.cache-hit == 'true'
+        #env:
+          #GITHUB_WORKSPACE: ${{ github.workspace }}
+        #run: echo "::add-path::${GITHUB_WORKSPACE}/arm-none-eabi-gcc/bin"
 
       - name: Run-pass tests
         run: |
@@ -237,7 +245,8 @@ jobs:
               else
                   cargo $COMMAND $CARGO_FLAGS
               fi
-              arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/$BUILD_MODE/examples/$EXAMPLE ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
+              #arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/$BUILD_MODE/examples/$EXAMPLE ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
+              cargo objcopy $CARGO_FLAGS  -- -O ihex ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
           }
 
           mkdir -p ci/builds
@@ -282,15 +291,13 @@ jobs:
                           $td/pool.run
                   grep 'foo(0x2' $td/pool.run
                   grep 'bar(0x2' $td/pool.run
-                  arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/debug/examples/$ex \
-                                          ci/builds/${ex}___v7_debug_1.hex
+                  cargo objcopy --example $ex --target ${{ matrix.target }} --features __v7 -- -O ihex ci/builds/${ex}___v7_debug_1.hex
 
                   cargo run --example $ex --target ${{ matrix.target }} --features __v7 --release >\
                           $td/pool.run
                   grep 'foo(0x2' $td/pool.run
                   grep 'bar(0x2' $td/pool.run
-                  arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/release/examples/$ex \
-                                          ci/builds/${ex}___v7_release_1.hex
+                  cargo objcopy --example $ex --target ${{ matrix.target }} --features __v7 --release -- -O ihex ci/builds/${ex}___v7_release_1.hex
 
                   rm -rf $td
 
