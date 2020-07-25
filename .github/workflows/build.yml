@@ -152,15 +152,6 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-qemu
 
-      - name: Cache arm-none-eabi-gcc
-        id: cache-arm-none-eabi-gcc
-        uses: actions/cache@v2
-        with:
-          path: arm-none-eabi-gcc
-          key: ${{ runner.OS }}-gcc
-          restore-keys: |
-            ${{ runner.OS }}-gcc
-
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
         with:
@@ -200,19 +191,6 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: echo "::add-path::${GITHUB_WORKSPACE}/qemu"
 
-      #- name: Setup arm-none-eabi-gcc
-        #if: steps.cache-arm-none-eabi-gcc.outputs.cache-hit != 'true'
-        #uses: fiam/arm-none-eabi-gcc@v1
-        #with:
-          #directory: 'arm-none-eabi-gcc' # Place it locally so it is possible to cache
-          #release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
-
-      #- name: Setup add arm-none-eabi-gcc to PATH
-        #if: steps.cache-arm-none-eabi-gcc.outputs.cache-hit == 'true'
-        #env:
-          #GITHUB_WORKSPACE: ${{ github.workspace }}
-        #run: echo "::add-path::${GITHUB_WORKSPACE}/arm-none-eabi-gcc/bin"
-
       - name: Run-pass tests
         run: |
           # Print the path
@@ -245,7 +223,6 @@ jobs:
               else
                   cargo $COMMAND $CARGO_FLAGS
               fi
-              #arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/$BUILD_MODE/examples/$EXAMPLE ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
               cargo objcopy $CARGO_FLAGS  -- -O ihex ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
           }
 
