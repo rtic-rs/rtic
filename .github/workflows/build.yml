@@ -172,6 +172,7 @@ jobs:
           command: check
           args: -p homogeneous --examples --target=${{ matrix.target }}
 
+      # Use precompiled binutils
       - name: cargo install cargo-binutils
         uses: actions-rs/install@v0.1
         with:
