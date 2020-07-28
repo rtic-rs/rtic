@@ -4,9 +4,9 @@ A concurrency framework for building real-time systems.
 
 Formerly known as Real-Time For the Masses.
 
-![crates.io](https://img.shields.io/crates/v/cortex-m-rtic)
-![docs.rs](https://docs.rs/cortex-m-rtic/badge.svg)
-![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)
+[![crates.io](https://img.shields.io/crates/v/cortex-m-rtic)](https://crates.io/crates/cortex-m-rtic)
+[![docs.rs](https://docs.rs/cortex-m-rtic/badge.svg)](https://docs.rs/cortex-m-rtic)
+[![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)](https://rtic.rs/)
 ![rustc](https://img.shields.io/badge/rustc-1.36+-lightgray.svg)
 
 ## Features
@@ -49,10 +49,6 @@ Formerly known as Real-Time For the Masses.
 - Rust 1.36.0+
 
 - Applications must be written using the 2018 edition.
-
-## [User documentation](https://rtic.rs)
-
-## [API reference](https://rtic.rs/0.5/api/)
 
 ## Chat
 Join us and talk about RTIC in the [Matrix room][matrix-room].
