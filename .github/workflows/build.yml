@@ -14,7 +14,7 @@ jobs:
   # Run cargo fmt --check, includes macros/
   style:
     name: style
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -36,7 +36,7 @@ jobs:
   # Compilation check
   check:
     name: check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
@@ -101,7 +101,7 @@ jobs:
   # Verify all examples
   checkexamples:
     name: checkexamples
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
@@ -333,7 +333,7 @@ jobs:
   # Check the correctness of macros/ crate
   checkmacros:
     name: checkmacros
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
@@ -396,7 +396,7 @@ jobs:
   # Run test suite for thumbv7m
   testv7:
     name: testv7
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -448,7 +448,7 @@ jobs:
   # Run test suite for thumbv6m
   testv6:
     name: testv6
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -500,7 +500,7 @@ jobs:
   # Verify all multicore examples
   checkmulticore:
     name: checkmulticore
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
@@ -551,7 +551,7 @@ jobs:
   # Build documentation, check links
   docs:
     name: docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -624,7 +624,7 @@ jobs:
   # Build the books
   mdbook:
     name: mdbook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -669,7 +669,7 @@ jobs:
   # Only runs when pushing to master branch
   deploy:
     name: deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs:
       - style
       - check
@@ -784,7 +784,7 @@ jobs:
       - checkmulticore
       - docs
       - mdbook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Mark the job as a success
         run: exit 0
@@ -801,7 +801,7 @@ jobs:
       - checkmulticore
       - docs
       - mdbook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Mark the job as a failure
         run: exit 1
