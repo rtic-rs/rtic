@@ -14,7 +14,7 @@ jobs:
   # Run cargo fmt --check, includes macros/
   style:
     name: style
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -36,7 +36,7 @@ jobs:
   # Compilation check
   check:
     name: check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
@@ -49,6 +49,36 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
 
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
@@ -71,7 +101,7 @@ jobs:
   # Verify all examples
   checkexamples:
     name: checkexamples
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
@@ -83,12 +113,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
           override: true
+          components: llvm-tools-preview
       - uses: actions-rs/cargo@v1
         with:
           use-cross: false
@@ -102,22 +163,24 @@ jobs:
           command: check
           args: -p homogeneous --examples --target=${{ matrix.target }}
 
+      # Use precompiled binutils
+      - name: cargo install cargo-binutils
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-binutils
+          version: latest
+          use-tool-cache: true
+
       - name: Install QEMU
         run: |
-          mkdir qemu
-          curl -L https://github.com/japaric/qemu-bin/raw/master/14.04/qemu-system-arm-2.12.0 > qemu/qemu-system-arm
-          chmod +x qemu/qemu-system-arm
-
-      - name: Setup arm-none-eabi-gcc
-        uses: fiam/arm-none-eabi-gcc@v1
-        with:
-          release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
+          sudo apt update
+          sudo apt install -y qemu-system-arm
 
       - name: Run-pass tests
         run: |
-          # Add QEMU to the path
+          # Print the path
           echo $PATH
-          PATH=$(pwd)/qemu:$PATH
+
           arm_example() {
               local COMMAND=$1
               local EXAMPLE=$2
@@ -145,7 +208,7 @@ jobs:
               else
                   cargo $COMMAND $CARGO_FLAGS
               fi
-              arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/$BUILD_MODE/examples/$EXAMPLE ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
+              cargo objcopy $CARGO_FLAGS  -- -O ihex ci/builds/${EXAMPLE}_${FEATURES_STR}${BUILD_MODE}_${BUILD_NUM}.hex
           }
 
           mkdir -p ci/builds
@@ -190,15 +253,13 @@ jobs:
                           $td/pool.run
                   grep 'foo(0x2' $td/pool.run
                   grep 'bar(0x2' $td/pool.run
-                  arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/debug/examples/$ex \
-                                          ci/builds/${ex}___v7_debug_1.hex
+                  cargo objcopy --example $ex --target ${{ matrix.target }} --features __v7 -- -O ihex ci/builds/${ex}___v7_debug_1.hex
 
                   cargo run --example $ex --target ${{ matrix.target }} --features __v7 --release >\
                           $td/pool.run
                   grep 'foo(0x2' $td/pool.run
                   grep 'bar(0x2' $td/pool.run
-                  arm-none-eabi-objcopy -O ihex target/${{ matrix.target }}/release/examples/$ex \
-                                          ci/builds/${ex}___v7_release_1.hex
+                  cargo objcopy --example $ex --target ${{ matrix.target }} --features __v7 --release -- -O ihex ci/builds/${ex}___v7_release_1.hex
 
                   rm -rf $td
 
@@ -256,7 +317,7 @@ jobs:
   # Check the correctness of macros/ crate
   checkmacros:
     name: checkmacros
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
@@ -267,6 +328,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
         with:
@@ -288,10 +380,39 @@ jobs:
   # Run test suite for thumbv7m
   testv7:
     name: testv7
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -311,10 +432,39 @@ jobs:
   # Run test suite for thumbv6m
   testv6:
     name: testv6
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -334,7 +484,7 @@ jobs:
   # Verify all multicore examples
   checkmulticore:
     name: checkmulticore
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
@@ -385,11 +535,47 @@ jobs:
   # Build documentation, check links
   docs:
     name: docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v2
+        with:
+          path: /usr/share/rust/
+          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+          restore-keys: |
+            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
+
+      - name: Cache pip installed linkchecker
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Set up Python 3.x
         uses: actions/setup-python@v2
@@ -422,7 +608,7 @@ jobs:
   # Build the books
   mdbook:
     name: mdbook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -467,7 +653,7 @@ jobs:
   # Only runs when pushing to master branch
   deploy:
     name: deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs:
       - style
       - check
@@ -582,7 +768,7 @@ jobs:
       - checkmulticore
       - docs
       - mdbook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Mark the job as a success
         run: exit 0
@@ -599,7 +785,7 @@ jobs:
       - checkmulticore
       - docs
       - mdbook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Mark the job as a failure
         run: exit 1
