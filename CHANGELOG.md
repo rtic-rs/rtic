@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.5.4] - 2020-08-26
+
+- **Soundness fix in RTIC**, it was previously possible to get the `cortex_m::Peripherals` more than once, causing UB.
+
 ## [v0.5.3] - 2020-06-12
 
 - Added migration guide from `cortex-m-rtfm` to `cortex-m-rtic`
@@ -319,7 +323,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.4...HEAD
+[v0.5.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.3...v0.5.4
 [v0.5.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.2...v0.5.3
 [v0.5.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.1...v0.5.2
 [v0.5.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.0...v0.5.1
