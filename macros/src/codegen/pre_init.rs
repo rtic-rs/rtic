@@ -41,8 +41,7 @@ pub fn codegen(
     if app.args.cores == 1 {
         stmts.push(quote!(
             // To set the variable in cortex_m so the peripherals cannot be taken multiple times
-            let peripherals = cortex_m::Peripherals::steal();
-            let mut core: rtic::export::Peripherals = peripherals.into();
+            let mut core: rtic::export::Peripherals = rtic::export::Peripherals::steal().into();
         ));
     } else {
         stmts.push(quote!(
