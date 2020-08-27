@@ -14,8 +14,8 @@ pub fn codegen(
     let mut lt = None;
 
     let resources = match ctxt {
-        Context::Init(core) => &app.inits[&core].args.resources,
-        Context::Idle(core) => &app.idles[&core].args.resources,
+        Context::Init => &app.inits[0].args.resources,
+        Context::Idle => &app.idles[0].args.resources,
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.resources,
     };
@@ -147,13 +147,9 @@ pub fn codegen(
         }
     }
 
-    let core = ctxt.core(app);
-    let cores = app.args.cores;
-    let cfg_core = util::cfg_core(core, cores);
     let doc = format!("Resources `{}` has access to", ctxt.ident(app));
     let ident = util::resources_ident(ctxt, app);
     let item = quote!(
-        #cfg_core
         #[allow(non_snake_case)]
         #[doc = #doc]
         pub struct #ident<#lt> {
@@ -167,7 +163,6 @@ pub fn codegen(
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
     let constructor = quote!(
-        #cfg_core
         impl<#lt> #ident<#lt> {
             #[inline(always)]
             unsafe fn new(#arg) -> Self {

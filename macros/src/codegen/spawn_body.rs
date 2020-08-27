@@ -12,13 +12,11 @@ pub fn codegen(
     analysis: &Analysis,
     extra: &Extra,
 ) -> TokenStream2 {
-    let sender = spawner.core(app);
     let spawnee = &app.software_tasks[name];
     let priority = spawnee.args.priority;
-    let receiver = spawnee.args.core;
 
-    let write_instant = if app.uses_schedule(receiver) {
-        let instants = util::instants_ident(name, sender);
+    let write_instant = if app.uses_schedule() {
+        let instants = util::instants_ident(name);
 
         Some(quote!(
             #instants.get_unchecked_mut(usize::from(index)).as_mut_ptr().write(instant);
@@ -27,9 +25,9 @@ pub fn codegen(
         None
     };
 
-    let t = util::spawn_t_ident(receiver, priority, sender);
-    let fq = util::fq_ident(name, sender);
-    let rq = util::rq_ident(receiver, priority, sender);
+    let t = util::spawn_t_ident(priority);
+    let fq = util::fq_ident(name);
+    let rq = util::rq_ident(priority);
     let (dequeue, enqueue) = if spawner.is_init() {
         (
             quote!(#fq.dequeue()),
@@ -45,20 +43,15 @@ pub fn codegen(
     };
 
     let device = extra.device;
-    let enum_ = util::interrupt_ident(receiver, app.args.cores);
-    let interrupt = &analysis.interrupts[&receiver][&priority];
-    let pend = if sender != receiver {
-        quote!(
-            #device::xpend(#receiver, #device::#enum_::#interrupt);
-        )
-    } else {
-        quote!(
+    let enum_ = util::interrupt_ident();
+    let interrupt = &analysis.interrupts.get(&priority);
+    let pend = {quote!(
             rtic::pend(#device::#enum_::#interrupt);
         )
     };
 
     let (_, tupled, _, _) = util::regroup_inputs(&spawnee.inputs);
-    let inputs = util::inputs_ident(name, sender);
+    let inputs = util::inputs_ident(name);
     quote!(
         unsafe {
             use rtic::Mutex as _;

@@ -6,12 +6,10 @@ use syn::Ident;
 use crate::codegen::util;
 
 pub fn codegen(scheduler: Context, name: &Ident, app: &App) -> TokenStream2 {
-    let sender = scheduler.core(app);
     let schedulee = &app.software_tasks[name];
-    let receiver = schedulee.args.core;
 
-    let fq = util::fq_ident(name, sender);
-    let tq = util::tq_ident(sender);
+    let fq = util::fq_ident(name);
+    let tq = util::tq_ident();
     let (dequeue, enqueue) = if scheduler.is_init() {
         (quote!(#fq.dequeue()), quote!(#tq.enqueue_unchecked(nr);))
     } else {
@@ -21,8 +19,8 @@ pub fn codegen(scheduler: Context, name: &Ident, app: &App) -> TokenStream2 {
         )
     };
 
-    let write_instant = if app.uses_schedule(receiver) {
-        let instants = util::instants_ident(name, sender);
+    let write_instant = if app.uses_schedule() {
+        let instants = util::instants_ident(name);
 
         Some(quote!(
             #instants.get_unchecked_mut(usize::from(index)).as_mut_ptr().write(instant);
@@ -32,8 +30,8 @@ pub fn codegen(scheduler: Context, name: &Ident, app: &App) -> TokenStream2 {
     };
 
     let (_, tupled, _, _) = util::regroup_inputs(&schedulee.inputs);
-    let inputs = util::inputs_ident(name, sender);
-    let t = util::schedule_t_ident(sender);
+    let inputs = util::inputs_ident(name);
+    let t = util::schedule_t_ident();
     quote!(
         unsafe {
             use rtic::Mutex as _;

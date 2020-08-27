@@ -11,12 +11,12 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
     let name = ctxt.ident(app);
 
-    let core = ctxt.core(app);
+    //let core = ctxt.core(app);
     let mut needs_instant = false;
     let mut lt = None;
     match ctxt {
-        Context::Init(core) => {
-            if app.uses_schedule(core) {
+        Context::Init => {
+            if app.uses_schedule() {
                 let m = extra.monotonic();
 
                 fields.push(quote!(
@@ -37,7 +37,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
                 ));
             }
 
-            if extra.peripherals == Some(core) {
+            if extra.peripherals {
                 let device = extra.device;
 
                 fields.push(quote!(
@@ -51,10 +51,10 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
             values.push(quote!(core));
         }
 
-        Context::Idle(..) => {}
+        Context::Idle => {}
 
         Context::HardwareTask(..) => {
-            if app.uses_schedule(core) {
+            if app.uses_schedule() {
                 let m = extra.monotonic();
 
                 fields.push(quote!(
@@ -69,7 +69,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
         }
 
         Context::SoftwareTask(..) => {
-            if app.uses_schedule(core) {
+            if app.uses_schedule() {
                 let m = extra.monotonic();
 
                 fields.push(quote!(
@@ -205,7 +205,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
                 values.push(quote!(spawn: Spawn { priority }));
             } else {
-                let instant_field = if app.uses_schedule(core) {
+                let instant_field = if app.uses_schedule() {
                     let m = extra.monotonic();
 
                     needs_instant = true;
@@ -252,8 +252,8 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
         }
     }
 
-    if let Context::Init(core) = ctxt {
-        let init = &app.inits[&core];
+    if let Context::Init = ctxt {
+        let init = &app.inits[0];
         if init.returns_late_resources {
             let late_resources = util::late_resources_ident(&init.name);
 
@@ -265,14 +265,14 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
     }
 
     let doc = match ctxt {
-        Context::Idle(_) => "Idle loop",
-        Context::Init(_) => "Initialization function",
+        Context::Idle => "Idle loop",
+        Context::Init => "Initialization function",
         Context::HardwareTask(_) => "Hardware task",
         Context::SoftwareTask(_) => "Software task",
     };
 
     let core = if ctxt.is_init() {
-        if app.uses_schedule(core) {
+        if app.uses_schedule() {
             Some(quote!(core: rtic::Peripherals,))
         } else {
             Some(quote!(core: rtic::export::Peripherals,))
@@ -312,12 +312,12 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
     ));
 
     if !items.is_empty() {
-        let cfg_core = util::cfg_core(ctxt.core(app), app.args.cores);
+        //let cfg_core = util::cfg_core(ctxt.core(app), app.args.cores);
 
         quote!(
             #[allow(non_snake_case)]
             #[doc = #doc]
-            #cfg_core
+            //#cfg_core
             pub mod #name {
                 #(#items)*
             }

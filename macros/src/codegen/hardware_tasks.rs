@@ -29,10 +29,8 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        let core = task.args.core;
-        let cfg_core = util::cfg_core(core, app.args.cores);
 
-        let (let_instant, instant) = if app.uses_schedule(core) {
+        let (let_instant, instant) = if app.uses_schedule() {
             let m = extra.monotonic();
 
             (
@@ -49,19 +47,14 @@ pub fn codegen(
             quote!(#name::Locals::new(),)
         };
 
-        let symbol = if cfg!(feature = "homogeneous") {
-            util::suffixed(&task.args.binds.to_string(), core)
-        } else {
-            task.args.binds.clone()
-        };
+        let symbol = task.args.binds.clone();
         let priority = task.args.priority;
 
-        let section = util::link_section("text", core);
+        let section = util::link_section("text");
         const_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
             #section
-            #cfg_core
             unsafe fn #symbol() {
                 const PRIORITY: u8 = #priority;
 
@@ -104,7 +97,7 @@ pub fn codegen(
         let mut locals_pat = None;
         if !task.locals.is_empty() {
             let (struct_, pat) =
-                locals::codegen(Context::HardwareTask(name), &task.locals, core, app);
+                locals::codegen(Context::HardwareTask(name), &task.locals, app);
 
             root.push(struct_);
             locals_pat = Some(pat);
@@ -113,8 +106,7 @@ pub fn codegen(
         let attrs = &task.attrs;
         let context = &task.context;
         let stmts = &task.stmts;
-        let section = util::link_section("text", core);
-        // XXX shouldn't this have a cfg_core?
+        let section = util::link_section("text");
         let locals_pat = locals_pat.iter();
         user_tasks.push(quote!(
             #(#attrs)*

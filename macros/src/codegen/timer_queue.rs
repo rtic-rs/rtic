@@ -8,9 +8,9 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
-    for (&sender, timer_queue) in &analysis.timer_queues {
-        let cfg_sender = util::cfg_core(sender, app.args.cores);
-        let t = util::schedule_t_ident(sender);
+    if let Some(timer_queue) = &analysis.timer_queues.first() {
+        //let cfg_sender = util::cfg_core(sender, app.args.cores);
+        let t = util::schedule_t_ident();
 
         // Enumeration of `schedule`-able tasks
         {
@@ -27,9 +27,9 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 })
                 .collect::<Vec<_>>();
 
-            let doc = format!("Tasks that can be scheduled from core #{}", sender);
+            let doc = format!("Tasks that can be scheduled");
             items.push(quote!(
-                #cfg_sender
+                //#cfg_sender
                 #[doc = #doc]
                 #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
@@ -39,18 +39,18 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             ));
         }
 
-        let tq = util::tq_ident(sender);
+        let tq = util::tq_ident();
 
         // Static variable and resource proxy
         {
-            let doc = format!("Core #{} timer queue", sender);
+            let doc = format!("Timer queue");
             let m = extra.monotonic();
             let n = util::capacity_typenum(timer_queue.capacity, false);
             let tq_ty = quote!(rtic::export::TimerQueue<#m, #t, #n>);
 
-            let section = util::link_section("bss", sender);
+            let section = util::link_section("bss");
             items.push(quote!(
-                #cfg_sender
+                //#cfg_sender
                 #[doc = #doc]
                 #section
                 static mut #tq: #tq_ty = rtic::export::TimerQueue(
@@ -59,7 +59,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     )
                 );
 
-                #cfg_sender
+                //#cfg_sender
                 struct #tq<'a> {
                     priority: &'a rtic::export::Priority,
                 }
@@ -68,7 +68,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             items.push(util::impl_mutex(
                 extra,
                 &[],
-                cfg_sender.as_ref(),
+                //cfg_sender.as_ref(),
                 false,
                 &tq,
                 tq_ty,
@@ -88,17 +88,12 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                     let cfgs = &task.cfgs;
                     let priority = task.args.priority;
-                    let receiver = task.args.core;
-                    let rq = util::rq_ident(receiver, priority, sender);
-                    let rqt = util::spawn_t_ident(receiver, priority, sender);
-                    let enum_ = util::interrupt_ident(receiver, app.args.cores);
-                    let interrupt = &analysis.interrupts[&receiver][&priority];
+                    let rq = util::rq_ident(priority);
+                    let rqt = util::spawn_t_ident(priority);
+                    let enum_ = util::interrupt_ident();
+                    let interrupt = &analysis.interrupts.get(&priority);
 
-                    let pend = if sender != receiver {
-                        quote!(
-                            #device::xpend(#receiver, #device::#enum_::#interrupt);
-                        )
-                    } else {
+                    let pend = {
                         quote!(
                             rtic::pend(#device::#enum_::#interrupt);
                         )
@@ -118,11 +113,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 .collect::<Vec<_>>();
 
             let priority = timer_queue.priority;
-            let sys_tick = util::suffixed("SysTick", sender);
-            let section = util::link_section("text", sender);
+            let sys_tick = util::suffixed("SysTick");
+            let section = util::link_section("text");
             items.push(quote!(
                 #[no_mangle]
-                #cfg_sender
+                //#cfg_sender
                 #section
                 unsafe fn #sys_tick() {
                     use rtic::Mutex as _;
@@ -137,7 +132,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                         })
                         // NOTE `inline(always)` produces faster and smaller code
                             .lock(#[inline(always)]
-                                  |tq| tq.dequeue())
+                                |tq| tq.dequeue())
                         {
                             match task {
                                 #(#arms)*
@@ -148,6 +143,5 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             ));
         }
     }
-
     items
 }

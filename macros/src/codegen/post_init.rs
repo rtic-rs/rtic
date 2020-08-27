@@ -2,21 +2,24 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::ast::App;
 
-use crate::{analyze::Analysis, check::Extra, codegen::util};
+use crate::analyze::Analysis;
 
 /// Generates code that runs after `#[init]` returns
 pub fn codegen(
-    core: u8,
     app: &App,
     analysis: &Analysis,
-    extra: &Extra,
 ) -> (Vec<TokenStream2>, Vec<TokenStream2>) {
-    let mut const_app = vec![];
+    //#TODO remove
+    let const_app = vec![];
     let mut stmts = vec![];
 
     // initialize late resources
-    if let Some(late_resources) = analysis.late_resources.get(&core) {
-        for name in late_resources {
+    //if let Some(late_resources) = analysis.late_resources {
+        //for name in late_resources {
+    if analysis.late_resources.len() > 0 {
+        // #TODO, check soundness of this, why the wrapping
+        // BTreeSet wrapped in a vector
+        for name in &analysis.late_resources[0] {
             // if it's live
             let cfgs = app.late_resources[name].cfgs.clone();
             if analysis.locations.get(name).is_some() {
@@ -29,7 +32,9 @@ pub fn codegen(
         }
     }
 
+    /*
     if analysis.timer_queues.is_empty() {
+        /*
         // cross-initialization barriers -- notify *other* cores that their resources have been
         // initialized
         for (user, initializers) in &analysis.initialization_barriers {
@@ -55,7 +60,9 @@ pub fn codegen(
                 #ib.release();
             ));
         }
+        */
 
+        /*
         // then wait until the other cores have initialized *our* resources
         if analysis.initialization_barriers.contains_key(&core) {
             let ib = util::init_barrier(core);
@@ -75,6 +82,7 @@ pub fn codegen(
                 ));
             }
         }
+        */
     } else {
         // if the `schedule` API is used then we'll synchronize all cores to leave the
         // `init`-ialization phase at the same time. In this case the rendezvous barrier makes the
@@ -154,6 +162,7 @@ pub fn codegen(
             }
         }
     }
+    */
 
     // enable the interrupts -- this completes the `init`-ialization phase
     stmts.push(quote!(rtic::export::interrupt::enable();));

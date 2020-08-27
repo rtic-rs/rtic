@@ -2,7 +2,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use rtic_syntax::{ast::App, Context, Core};
+use rtic_syntax::{ast::App, Context};
 use syn::{Attribute, Ident, LitInt, PatType};
 
 use crate::check::Extra;
@@ -25,6 +25,7 @@ pub fn capacity_typenum(capacity: u8, round_up_to_power_of_two: bool) -> TokenSt
     quote!(rtic::export::consts::#ident)
 }
 
+/*
 /// Generates a `#[cfg(core = "0")]` attribute if we are in multi-core mode
 pub fn cfg_core(core: Core, cores: u8) -> Option<TokenStream2> {
     if cores == 1 {
@@ -36,14 +37,15 @@ pub fn cfg_core(core: Core, cores: u8) -> Option<TokenStream2> {
         None
     }
 }
+*/
 
 /// Identifier for the free queue
 ///
 /// There may be more than one free queue per task because we need one for each sender core so we
 /// include the sender (e.g. `S0`) in the name
-pub fn fq_ident(task: &Ident, sender: Core) -> Ident {
+pub fn fq_ident(task: &Ident) -> Ident {
     Ident::new(
-        &format!("{}_S{}_FQ", task.to_string(), sender),
+        &format!("{}_FQ", task.to_string()),
         Span::call_site(),
     )
 }
@@ -52,7 +54,7 @@ pub fn fq_ident(task: &Ident, sender: Core) -> Ident {
 pub fn impl_mutex(
     extra: &Extra,
     cfgs: &[Attribute],
-    cfg_core: Option<&TokenStream2>,
+    //cfg_core: Option<&TokenStream2>,
     resources_prefix: bool,
     name: &Ident,
     ty: TokenStream2,
@@ -68,7 +70,7 @@ pub fn impl_mutex(
     let device = extra.device;
     quote!(
         #(#cfgs)*
-        #cfg_core
+        //#cfg_core
         impl<'a> rtic::Mutex for #path<'a> {
             type T = #ty;
 
@@ -91,28 +93,26 @@ pub fn impl_mutex(
     )
 }
 
+/*
 /// Generates an identifier for a cross-initialization barrier
 pub fn init_barrier(initializer: Core) -> Ident {
     Ident::new(&format!("IB{}", initializer), Span::call_site())
 }
+*/
 
 /// Generates an identifier for the `INPUTS` buffer (`spawn` & `schedule` API)
-pub fn inputs_ident(task: &Ident, sender: Core) -> Ident {
-    Ident::new(&format!("{}_S{}_INPUTS", task, sender), Span::call_site())
+pub fn inputs_ident(task: &Ident) -> Ident {
+    Ident::new(&format!("{}_INPUTS", task), Span::call_site())
 }
 
 /// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
-pub fn instants_ident(task: &Ident, sender: Core) -> Ident {
-    Ident::new(&format!("{}_S{}_INSTANTS", task, sender), Span::call_site())
+pub fn instants_ident(task: &Ident) -> Ident {
+    Ident::new(&format!("{}_INSTANTS", task), Span::call_site())
 }
 
-pub fn interrupt_ident(core: Core, cores: u8) -> Ident {
+pub fn interrupt_ident() -> Ident {
     let span = Span::call_site();
-    if cores == 1 {
         Ident::new("Interrupt", span)
-    } else {
-        Ident::new(&format!("Interrupt_{}", core), span)
-    }
 }
 
 /// Whether `name` is an exception with configurable priority
@@ -141,31 +141,24 @@ fn link_section_index() -> usize {
     INDEX.fetch_add(1, Ordering::Relaxed)
 }
 
-pub fn link_section(section: &str, core: Core) -> Option<TokenStream2> {
+pub fn link_section(_section: &str) -> Option<TokenStream2> {
+    /*
     if cfg!(feature = "homogeneous") {
         let section = format!(".{}_{}.rtic{}", section, core, link_section_index());
         Some(quote!(#[link_section = #section]))
     } else {
         None
     }
+    */
+    None
 }
 
 // NOTE `None` means in shared memory
-pub fn link_section_uninit(core: Option<Core>) -> Option<TokenStream2> {
-    let section = if let Some(core) = core {
+pub fn link_section_uninit(empty_expr: bool) -> Option<TokenStream2> {
+    let section = if empty_expr {
         let index = link_section_index();
-
-        if cfg!(feature = "homogeneous") {
-            format!(".uninit_{}.rtic{}", core, index)
-        } else {
-            format!(".uninit.rtic{}", index)
-        }
+        format!(".uninit.rtic{}", index)
     } else {
-        if cfg!(feature = "heterogeneous") {
-            // `#[shared]` attribute sets the linker section
-            return None;
-        }
-
         format!(".uninit.rtic{}", link_section_index())
     };
 
@@ -175,8 +168,8 @@ pub fn link_section_uninit(core: Option<Core>) -> Option<TokenStream2> {
 /// Generates a pre-reexport identifier for the "locals" struct
 pub fn locals_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
-        Context::Init(core) => app.inits[&core].name.to_string(),
-        Context::Idle(core) => app.idles[&core].name.to_string(),
+        Context::Init => app.inits[0].name.to_string(),
+        Context::Idle => app.idles[0].name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -185,10 +178,12 @@ pub fn locals_ident(ctxt: Context, app: &App) -> Ident {
     Ident::new(&s, Span::call_site())
 }
 
+/*
 /// Generates an identifier for a rendezvous barrier
-pub fn rendezvous_ident(core: Core) -> Ident {
-    Ident::new(&format!("RV{}", core), Span::call_site())
+pub fn rendezvous_ident() -> Ident {
+    Ident::new(&format!("RV"), Span::call_site())
 }
+*/
 
 // Regroups the inputs of a task
 //
@@ -242,8 +237,8 @@ pub fn regroup_inputs(
 /// Generates a pre-reexport identifier for the "resources" struct
 pub fn resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
-        Context::Init(core) => app.inits[&core].name.to_string(),
-        Context::Idle(core) => app.idles[&core].name.to_string(),
+        Context::Init => app.inits[0].name.to_string(),
+        Context::Idle => app.idles[0].name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -257,9 +252,9 @@ pub fn resources_ident(ctxt: Context, app: &App) -> Ident {
 /// Each core may have several task dispatchers, one for each priority level. Each task dispatcher
 /// in turn may use more than one ready queue because the queues are SPSC queues so one is needed
 /// per sender core.
-pub fn rq_ident(receiver: Core, priority: u8, sender: Core) -> Ident {
+pub fn rq_ident(priority: u8) -> Ident {
     Ident::new(
-        &format!("R{}_P{}_S{}_RQ", receiver, priority, sender),
+        &format!("P{}_RQ", priority),
         Span::call_site(),
     )
 }
@@ -268,30 +263,32 @@ pub fn rq_ident(receiver: Core, priority: u8, sender: Core) -> Ident {
 ///
 /// The methods of the `Schedule` structs invoke these functions. As one task may be `schedule`-ed
 /// by different cores we need one "schedule" function per possible task-sender pair
-pub fn schedule_ident(name: &Ident, sender: Core) -> Ident {
+pub fn schedule_ident(name: &Ident) -> Ident {
     Ident::new(
-        &format!("schedule_{}_S{}", name.to_string(), sender),
+        &format!("schedule_{}", name.to_string()),
         Span::call_site(),
     )
 }
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks
-pub fn schedule_t_ident(core: Core) -> Ident {
-    Ident::new(&format!("T{}", core), Span::call_site())
+pub fn schedule_t_ident() -> Ident {
+    Ident::new(&format!("T"), Span::call_site())
 }
 
+/*
 /// Generates an identifier for a cross-spawn barrier
-pub fn spawn_barrier(receiver: Core) -> Ident {
-    Ident::new(&format!("SB{}", receiver), Span::call_site())
+pub fn spawn_barrier() -> Ident {
+    Ident::new(&format!("SB"), Span::call_site())
 }
+*/
 
 /// Generates an identifier for a "spawn" function
 ///
 /// The methods of the `Spawn` structs invoke these functions. As one task may be `spawn`-ed by
 /// different cores we need one "spawn" function per possible task-sender pair
-pub fn spawn_ident(name: &Ident, sender: Core) -> Ident {
+pub fn spawn_ident(name: &Ident) -> Ident {
     Ident::new(
-        &format!("spawn_{}_S{}", name.to_string(), sender),
+        &format!("spawn_{}", name.to_string()),
         Span::call_site(),
     )
 }
@@ -300,26 +297,21 @@ pub fn spawn_ident(name: &Ident, sender: Core) -> Ident {
 ///
 /// This identifier needs the same structure as the `RQ` identifier because there's one ready queue
 /// for each of these `T` enums
-pub fn spawn_t_ident(receiver: Core, priority: u8, sender: Core) -> Ident {
+pub fn spawn_t_ident(priority: u8) -> Ident {
     Ident::new(
-        &format!("R{}_P{}_S{}_T", receiver, priority, sender),
+        &format!("P{}_T", priority),
         Span::call_site(),
     )
 }
 
-pub fn suffixed(name: &str, core: u8) -> Ident {
+pub fn suffixed(name: &str) -> Ident {
     let span = Span::call_site();
-
-    if cfg!(feature = "homogeneous") {
-        Ident::new(&format!("{}_{}", name, core), span)
-    } else {
-        Ident::new(name, span)
-    }
+    Ident::new(name, span)
 }
 
 /// Generates an identifier for a timer queue
 ///
 /// At most there's one timer queue per core
-pub fn tq_ident(core: Core) -> Ident {
-    Ident::new(&format!("TQ{}", core), Span::call_site())
+pub fn tq_ident() -> Ident {
+    Ident::new(&format!("TQ"), Span::call_site())
 }
