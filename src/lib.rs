@@ -28,13 +28,6 @@
 //! release.
 //!
 //! [SemVer]: https://semver.org/spec/v2.0.0.html
-//!
-//! # Cargo features
-//!
-//! - `heterogeneous`. This opt-in feature enables the *experimental* heterogeneous multi-core
-//! support. This feature depends on unstable feature and requires the use of the nightly channel.
-//!
-//! - `homogeneous`. This opt-in feature enables the *experimental* homogeneous multi-core support.
 
 #![deny(missing_docs)]
 #![deny(rust_2018_compatibility)]
@@ -48,7 +41,6 @@ use cortex_m::{
     interrupt::Nr,
     peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
 };
-#[cfg(all(not(feature = "heterogeneous"), not(feature = "homogeneous")))]
 use cortex_m_rt as _; // vector table
 pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{Exclusive, Mutex};

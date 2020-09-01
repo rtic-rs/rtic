@@ -81,12 +81,10 @@ pub fn codegen(
         let context = &init.context;
         let attrs = &init.attrs;
         let stmts = &init.stmts;
-        let section = util::link_section("text");
         let locals_pat = locals_pat.iter();
         let user_init = Some(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            #section
             fn #name(#(#locals_pat,)* #context: #name::Context) #ret {
                 #(#stmts)*
             }

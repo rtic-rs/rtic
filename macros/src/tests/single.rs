@@ -15,7 +15,7 @@ fn analyze() {
                 #[task(priority = 2)]
                 fn b(_: b::Context) {}
 
-                // first interrupt is assigned to the highest priority dispatcher
+                // First interrupt is assigned to the highest priority dispatcher
                 extern "C" {
                     fn B();
                     fn A();

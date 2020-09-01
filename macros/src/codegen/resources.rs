@@ -23,24 +23,11 @@ pub fn codegen(
         let ty = &res.ty;
 
         {
-            //let loc_attr = None;
             let section = if expr.is_none() {
                 util::link_section_uninit(true)
             } else {
                 None
             };
-            /*
-            let (loc_attr, section) = match loc {
-                Location::Owned => (
-                    None,
-                    if expr.is_none() {
-                        util::link_section_uninit(true)
-                    } else {
-                        None
-                    },
-                ),
-            };
-            */
 
             let (ty, expr) = if let Some(expr) = expr {
                 (quote!(#ty), quote!(#expr))
@@ -56,7 +43,6 @@ pub fn codegen(
                 #[allow(non_upper_case_globals)]
                 #(#attrs)*
                 #(#cfgs)*
-                //#loc_attr
                 #section
                 static mut #name: #ty = #expr;
             ));

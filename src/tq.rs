@@ -40,7 +40,7 @@ where
                 mem::transmute::<_, SYST>(()).enable_interrupt();
             }
 
-            // set SysTick pending
+            // Set SysTick pending
             SCB::set_pendst();
         }
 
@@ -79,13 +79,13 @@ where
                     };
                     mem::transmute::<_, SYST>(()).set_reload(dur);
 
-                    // start counting down from the new reload
+                    // Start counting down from the new reload
                     mem::transmute::<_, SYST>(()).clear_current();
 
                     None
                 }
             } else {
-                // the queue is empty
+                // The queue is empty
                 mem::transmute::<_, SYST>(()).disable_interrupt();
 
                 None

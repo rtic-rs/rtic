@@ -5,7 +5,7 @@ use rtic_syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
     check::Extra,
-    codegen::{locals, module, resources_struct, util},
+    codegen::{locals, module, resources_struct},
 };
 
 /// Generate support code for hardware tasks (`#[exception]`s and `#[interrupt]`s)
@@ -49,11 +49,9 @@ pub fn codegen(
         let symbol = task.args.binds.clone();
         let priority = task.args.priority;
 
-        let section = util::link_section("text");
         const_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
-            #section
             unsafe fn #symbol() {
                 const PRIORITY: u8 = #priority;
 
@@ -104,12 +102,10 @@ pub fn codegen(
         let attrs = &task.attrs;
         let context = &task.context;
         let stmts = &task.stmts;
-        let section = util::link_section("text");
         let locals_pat = locals_pat.iter();
         user_tasks.push(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            #section
             fn #name(#(#locals_pat,)* #context: #name::Context) {
                 use rtic::Mutex as _;
 

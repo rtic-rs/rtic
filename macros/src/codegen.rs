@@ -30,14 +30,14 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut root = vec![];
     let mut user = vec![];
 
-    // generate the `main` function
+    // Generate the `main` function
     let assertion_stmts = assertions::codegen(analysis);
 
     let pre_init_stmts = pre_init::codegen(&app, analysis, extra);
 
     let (const_app_init, root_init, user_init, call_init) = init::codegen(app, analysis, extra);
 
-    let (const_app_post_init, post_init_stmts) = post_init::codegen(&app, analysis);
+    let post_init_stmts = post_init::codegen(&app, analysis);
 
     let (const_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis, extra);
 
@@ -56,16 +56,12 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     const_app.push(quote!(
         #const_app_init
 
-        #(#const_app_post_init)*
-
         #const_app_idle
     ));
 
     let main = util::suffixed("main");
-    let section = util::link_section("text");
     mains.push(quote!(
         #[no_mangle]
-        #section
         unsafe extern "C" fn #main() -> ! {
             let _TODO: () = ();
 
@@ -115,7 +111,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         #(#root_software_tasks)*
 
         /// Implementation details
-        // the user can't access the items within this `const` item
+        // The user can't access the items within this `const` item
         const #name: () = {
             /// Always include the device crate which contains the vector table
             use #device as _;

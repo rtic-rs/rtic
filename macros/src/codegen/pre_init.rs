@@ -8,10 +8,10 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
-    // disable interrupts -- `init` must run with interrupts disabled
+    // Disable interrupts -- `init` must run with interrupts disabled
     stmts.push(quote!(rtic::export::interrupt::disable();));
 
-    // populate the FreeQueue
+    // Populate the FreeQueue
     for fq in &analysis.free_queues {
         // Get the task name
         let name = fq.0;
@@ -33,7 +33,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     let device = extra.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
 
-    // unmask interrupts and set their priorities
+    // Unmask interrupts and set their priorities
     for (&priority, name) in analysis
         .interrupts
         .iter()
@@ -41,12 +41,12 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             if !util::is_exception(&task.args.binds) {
                 Some((&task.args.priority, &task.args.binds))
             } else {
-                // we do exceptions in another pass
+                // We do exceptions in another pass
                 None
             }
         }))
     {
-        // compile time assert that this priority is supported by the device
+        // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
         // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
@@ -63,32 +63,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         stmts.push(quote!(rtic::export::NVIC::unmask(#device::#interrupt::#name);));
     }
 
-    // cross-spawn barriers: now that priorities have been set and the interrupts have been unmasked
-    // we are ready to receive messages from *other* cores
-    /*
-    if analysis.spawn_barriers.contains_key(&core) {
-        let sb = util::spawn_barrier(core);
-        let shared = if cfg!(feature = "heterogeneous") {
-            Some(quote!(
-                #[rtic::export::shared]
-            ))
-        } else {
-            None
-        };
-
-        const_app.push(quote!(
-            #shared
-            static #sb: rtic::export::Barrier = rtic::export::Barrier::new();
-        ));
-
-        // unblock cores that may send us a message
-        stmts.push(quote!(
-            #sb.release();
-        ));
-    }
-    */
-
-    // set exception priorities
+    // Set exception priorities
     for (name, priority) in app.hardware_tasks.values().filter_map(|task| {
         if util::is_exception(&task.args.binds) {
             Some((&task.args.binds, task.args.priority))
@@ -96,7 +71,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             None
         }
     }) {
-        // compile time assert that this priority is supported by the device
+        // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
         stmts.push(quote!(core.SCB.set_priority(
@@ -105,11 +80,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );));
     }
 
-    // initialize the SysTick if there exist a TimerQueue
+    // Initialize the SysTick if there exist a TimerQueue
     if let Some(tq) = analysis.timer_queues.first() {
         let priority = tq.priority;
 
-        // compile time assert that this priority is supported by the device
+        // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
         stmts.push(quote!(core.SCB.set_priority(
@@ -124,25 +99,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         ));
     }
 
-    // if there's no user `#[idle]` then optimize returning from interrupt handlers
+    // If there's no user `#[idle]` then optimize returning from interrupt handlers
     if app.idles.is_empty() {
         // Set SLEEPONEXIT bit to enter sleep mode when returning from ISR
         stmts.push(quote!(core.SCB.scr.modify(|r| r | 1 << 1);));
     }
-
-    /*
-    // cross-spawn barriers: wait until other cores are ready to receive messages
-    for (&receiver, senders) in &analysis.spawn_barriers {
-        // only block here if `init` can send messages to `receiver`
-        if senders.get(&core) == Some(&true) {
-            let sb = util::spawn_barrier(receiver);
-
-            stmts.push(quote!(
-                #sb.wait();
-            ));
-        }
-    }
-    */
 
     stmts
 }

@@ -5,7 +5,7 @@ use rtic_syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
     check::Extra,
-    codegen::{locals, module, resources_struct, util},
+    codegen::{locals, module, resources_struct},
 };
 
 /// Generates support code for `#[idle]` functions
@@ -56,12 +56,10 @@ pub fn codegen(
         let attrs = &idle.attrs;
         let context = &idle.context;
         let stmts = &idle.stmts;
-        let section = util::link_section("text");
         let locals_pat = locals_pat.iter();
         let user_idle = Some(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            #section
             fn #name(#(#locals_pat,)* #context: #name::Context) -> ! {
                 use rtic::Mutex as _;
 

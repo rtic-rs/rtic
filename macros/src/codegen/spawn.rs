@@ -20,7 +20,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
         for name in spawnees {
             let spawnee = &app.software_tasks[name];
-            //let receiver = spawnee.args.core;
             let cfgs = &spawnee.cfgs;
             let (args, _, untupled, ty) = util::regroup_inputs(&spawnee.inputs);
             let args = &args;
@@ -39,10 +38,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     None
                 };
 
-                let section = util::link_section("text");
                 methods.push(quote!(
                     #(#cfgs)*
-                    #section
                     fn #name(&self #(,#args)*) -> Result<(), #ty> {
                         #let_instant
                         #body
@@ -52,7 +49,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 let spawn = util::spawn_ident(name);
 
                 if !seen.contains(name) {
-                    // generate a `spawn_${name}_S${sender}` function
+                    // Generate a `spawn_${name}_S${sender}` function
                     seen.insert(name);
 
                     let instant = if app.uses_schedule() {
@@ -65,11 +62,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                     let body = spawn_body::codegen(spawner, &name, app, analysis, extra);
 
-                    let section = util::link_section("text");
                     items.push(quote!(
-                        //#cfg_sender
                         #(#cfgs)*
-                        #section
                         unsafe fn #spawn(
                             priority: &rtic::export::Priority
                             #instant
@@ -117,7 +111,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let spawner = spawner.ident(app);
         debug_assert!(!methods.is_empty());
         items.push(quote!(
-            //#cfg_sender
             impl<#lt> #spawner::Spawn<#lt> {
                 #(#methods)*
             }

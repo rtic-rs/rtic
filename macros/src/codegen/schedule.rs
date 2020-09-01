@@ -32,10 +32,8 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
 
                 let body = schedule_body::codegen(scheduler, &name, app);
 
-                let section = util::link_section("text");
                 methods.push(quote!(
                     #(#cfgs)*
-                    #section
                     fn #name(&self, instant: #instant #(,#args)*) -> Result<(), #ty> {
                         #body
                     }
@@ -44,15 +42,13 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
                 let schedule = util::schedule_ident(name);
 
                 if !seen.contains(name) {
-                    // generate a `schedule_${name}_S${sender}` function
+                    // Generate a `schedule_${name}_S${sender}` function
                     seen.insert(name);
 
                     let body = schedule_body::codegen(scheduler, &name, app);
 
-                    let section = util::link_section("text");
                     items.push(quote!(
                         #(#cfgs)*
-                        #section
                         unsafe fn #schedule(
                             priority: &rtic::export::Priority,
                             instant: #instant

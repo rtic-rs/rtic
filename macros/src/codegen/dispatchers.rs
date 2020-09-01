@@ -42,13 +42,12 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
         let n = util::capacity_typenum(channel.capacity, true);
         let rq = util::rq_ident(level);
-        let (rq_ty, rq_expr, section) = {
+        let (rq_ty, rq_expr) = {
             (
                 quote!(rtic::export::SCRQ<#t, #n>),
                 quote!(rtic::export::Queue(unsafe {
                     rtic::export::iQueue::u8_sc()
                 })),
-                util::link_section("bss"),
             )
         };
 
@@ -58,7 +57,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         items.push(quote!(
             #[doc = #doc]
-            #section
             static mut #rq: #rq_ty = #rq_expr;
         ));
 
@@ -137,13 +135,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         ));
 
         let doc = format!("Interrupt handler to dispatch tasks at priority {}", level);
-        let section = util::link_section("text");
         let interrupt = util::suffixed(&interrupts[&level].to_string());
         items.push(quote!(
             #[allow(non_snake_case)]
             #[doc = #doc]
             #[no_mangle]
-            #section
             unsafe fn #interrupt() {
                 /// The priority of this interrupt handler
                 const PRIORITY: u8 = #level;

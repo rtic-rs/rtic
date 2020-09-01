@@ -28,7 +28,7 @@ where
     F: FnOnce(),
 {
     if priority == 1 {
-        // if the priority of this interrupt is `1` then BASEPRI can only be `0`
+        // If the priority of this interrupt is `1` then BASEPRI can only be `0`
         f();
         unsafe { basepri::write(0) }
     } else {
@@ -80,7 +80,7 @@ impl Priority {
         }
     }
 
-    // these two methods are used by `lock` (see below) but can't be used from the RTIC application
+    // These two methods are used by `lock` (see below) but can't be used from the RTIC application
     #[inline(always)]
     fn set(&self, value: u8) {
         self.inner.set(value)

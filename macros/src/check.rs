@@ -20,7 +20,7 @@ impl<'a> Extra<'a> {
 }
 
 pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
-    // check that all exceptions are valid; only exceptions with configurable priorities are
+    // Check that all exceptions are valid; only exceptions with configurable priorities are
     // accepted
     for (name, task) in &app.hardware_tasks {
         let name_s = task.args.binds.to_string();
@@ -48,7 +48,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         }
     }
 
-    // check that external (device-specific) interrupts are not named after known (Cortex-M)
+    // Check that external (device-specific) interrupts are not named after known (Cortex-M)
     // exceptions
     for name in app.extern_interrupts.keys() {
         let name_s = name.to_string();
@@ -66,7 +66,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         }
     }
 
-    // check that there are enough external interrupts to dispatch the software tasks and the timer
+    // Check that there are enough external interrupts to dispatch the software tasks and the timer
     // queue handler
     let mut first = None;
     let priorities = app
@@ -91,8 +91,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         };
 
         // If not enough tasks and first still is None, may cause
-        // "custom attribute panicked"
-        // unwrap on None
+        // "custom attribute panicked" due to unwrap on None
         return Err(parse::Error::new(first.unwrap().span(), &s));
     }
 
@@ -128,34 +127,10 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
 
             "peripherals" => match v {
                 CustomArg::Bool(x) => peripherals = if *x { true } else { false },
-
-                /*
-                CustomArg::UInt(s) if app.args.cores != 1 => {
-                    let x = s.parse::<u8>().ok();
-                    peripherals = if x.is_some() && x.unwrap() < app.args.cores {
-                        Some(x.unwrap())
-                    } else {
-                        return Err(parse::Error::new(
-                            k.span(),
-                            &format!(
-                                "unexpected argument value; \
-                                 this should be an integer in the range 0..={}",
-                                app.args.cores
-                            ),
-                        ));
-                    }
-                }
-                */
                 _ => {
                     return Err(parse::Error::new(
                         k.span(),
-                        //if app.args.cores == 1 {
                         "unexpected argument value; this should be a boolean",
-                        /*
-                        } else {
-                            "unexpected argument value; this should be an integer"
-                        },
-                            */
                     ));
                 }
             },

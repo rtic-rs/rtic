@@ -35,26 +35,22 @@ pub fn codegen(
         let cap_lit = util::capacity_literal(cap);
         let cap_ty = util::capacity_typenum(cap, true);
 
-        // create free queues and inputs / instants buffers
-        //if let Some(free_queues) = analysis.free_queues.get(name) {
-        //for (&sender, &ceiling) in free_queues {
+        // Create free queues and inputs / instants buffers
         if let Some(&ceiling) = analysis.free_queues.get(name) {
             let fq = util::fq_ident(name);
 
-            let (fq_ty, fq_expr, bss, mk_uninit): (_, _, _, Box<dyn Fn() -> Option<_>>) = {
+            let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
                 (
                     quote!(rtic::export::SCFQ<#cap_ty>),
                     quote!(rtic::export::Queue(unsafe {
                         rtic::export::iQueue::u8_sc()
                     })),
-                    util::link_section("bss"),
                     Box::new(|| util::link_section_uninit(true)),
                 )
             };
             const_app.push(quote!(
                 /// Queue version of a free-list that keeps track of empty slots in
                 /// the following buffers
-                #bss
                 static mut #fq: #fq_ty = #fq_expr;
             ));
 
@@ -130,7 +126,6 @@ pub fn codegen(
             root.push(struct_);
         }
 
-        let section = util::link_section("text");
         let context = &task.context;
         let attrs = &task.attrs;
         let cfgs = &task.cfgs;
@@ -140,7 +135,6 @@ pub fn codegen(
             #(#attrs)*
             #(#cfgs)*
             #[allow(non_snake_case)]
-            #section
             fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
                 use rtic::Mutex as _;
 

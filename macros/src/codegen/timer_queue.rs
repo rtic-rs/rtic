@@ -9,7 +9,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     let mut items = vec![];
 
     if let Some(timer_queue) = &analysis.timer_queues.first() {
-        //let cfg_sender = util::cfg_core(sender, app.args.cores);
         let t = util::schedule_t_ident();
 
         // Enumeration of `schedule`-able tasks
@@ -29,7 +28,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
             let doc = format!("Tasks that can be scheduled");
             items.push(quote!(
-                //#cfg_sender
                 #[doc = #doc]
                 #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
@@ -48,18 +46,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             let n = util::capacity_typenum(timer_queue.capacity, false);
             let tq_ty = quote!(rtic::export::TimerQueue<#m, #t, #n>);
 
-            let section = util::link_section("bss");
             items.push(quote!(
-                //#cfg_sender
                 #[doc = #doc]
-                #section
                 static mut #tq: #tq_ty = rtic::export::TimerQueue(
                     rtic::export::BinaryHeap(
                         rtic::export::iBinaryHeap::new()
                     )
                 );
 
-                //#cfg_sender
                 struct #tq<'a> {
                     priority: &'a rtic::export::Priority,
                 }
@@ -68,7 +62,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             items.push(util::impl_mutex(
                 extra,
                 &[],
-                //cfg_sender.as_ref(),
                 false,
                 &tq,
                 tq_ty,
@@ -114,11 +107,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
             let priority = timer_queue.priority;
             let sys_tick = util::suffixed("SysTick");
-            let section = util::link_section("text");
             items.push(quote!(
                 #[no_mangle]
-                //#cfg_sender
-                #section
                 unsafe fn #sys_tick() {
                     use rtic::Mutex as _;
 

@@ -39,7 +39,7 @@ pub fn codegen(
 
         if ctxt.is_init() {
             if !analysis.ownerships.contains_key(name) {
-                // owned by `init`
+                // Owned by `init`
                 fields.push(quote!(
                     #(#cfgs)*
                     pub #name: &'static #mut_ #ty
@@ -50,7 +50,7 @@ pub fn codegen(
                     #name: &#mut_ #name
                 ));
             } else {
-                // owned by someone else
+                // Owned by someone else
                 lt = Some(quote!('a));
 
                 fields.push(quote!(
@@ -75,7 +75,7 @@ pub fn codegen(
                         pub #name: &'a #ty
                     ));
                 } else {
-                    // resource proxy
+                    // Resource proxy
                     lt = Some(quote!('a));
 
                     fields.push(quote!(
@@ -136,7 +136,7 @@ pub fn codegen(
     if lt.is_some() {
         *needs_lt = true;
 
-        // the struct could end up empty due to `cfg`s leading to an error due to `'a` being unused
+        // The struct could end up empty due to `cfg`s leading to an error due to `'a` being unused
         if has_cfgs {
             fields.push(quote!(
                 #[doc(hidden)]

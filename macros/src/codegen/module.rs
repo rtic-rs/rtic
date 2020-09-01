@@ -11,7 +11,6 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
     let name = ctxt.ident(app);
 
-    //let core = ctxt.core(app);
     let mut needs_instant = false;
     let mut lt = None;
     match ctxt {
@@ -312,12 +311,9 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
     ));
 
     if !items.is_empty() {
-        //let cfg_core = util::cfg_core(ctxt.core(app), app.args.cores);
-
         quote!(
             #[allow(non_snake_case)]
             #[doc = #doc]
-            //#cfg_core
             pub mod #name {
                 #(#items)*
             }
