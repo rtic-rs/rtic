@@ -474,57 +474,6 @@ jobs:
           command: test
           args: --test single
 
-  # Verify all multicore examples
-  checkmulticore:
-    name: checkmulticore
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - nightly
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Install Rust ${{ matrix.toolchain }} with x86_64-unknown-linux-gnu
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          target: x86_64-unknown-linux-gnu
-          override: true
-      - name: Install Rust ${{ matrix.toolchain }} with thumbv7m-none-eabi
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          target: thumbv7m-none-eabi
-          override: true
-      - name: Install Rust ${{ matrix.toolchain }} with thumbv6m-none-eabi
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          target: thumbv6m-none-eabi
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: microamp-tools --version 0.1.0-alpha.3
-
-      - name: Check multi-core examples
-        run: |
-          cd heterogeneous
-          exs=(
-              smallest
-              x-init-2
-              x-init
-              x-schedule
-              x-spawn
-          )
-          for ex in ${exs[@]}; do
-              cargo-microamp --example=$ex --target thumbv7m-none-eabi,thumbv6m-none-eabi --check
-          done
-
   # Build documentation, check links
   docs:
     name: docs
@@ -654,7 +603,6 @@ jobs:
       - checkmacros
       - testv7
       - testv6
-      - checkmulticore
       - docs
       - mdbook
     # Only run this when pushing to master branch
@@ -758,7 +706,6 @@ jobs:
       - checkmacros
       - testv7
       - testv6
-      - checkmulticore
       - docs
       - mdbook
     runs-on: ubuntu-20.04
@@ -775,7 +722,6 @@ jobs:
       - checkmacros
       - testv7
       - testv6
-      - checkmulticore
       - docs
       - mdbook
     runs-on: ubuntu-20.04
