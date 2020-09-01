@@ -5,14 +5,7 @@ use rtic_syntax::ast::App;
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates code that runs before `#[init]`
-pub fn codegen(
-    app: &App,
-    analysis: &Analysis,
-    extra: &Extra,
-) ->
-    // `pre_init_stmts`
-    Vec<TokenStream2>
-{
+pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
     // disable interrupts -- `init` must run with interrupts disabled

@@ -45,7 +45,8 @@ pub fn codegen(
     let device = extra.device;
     let enum_ = util::interrupt_ident();
     let interrupt = &analysis.interrupts.get(&priority);
-    let pend = {quote!(
+    let pend = {
+        quote!(
             rtic::pend(#device::#enum_::#interrupt);
         )
     };

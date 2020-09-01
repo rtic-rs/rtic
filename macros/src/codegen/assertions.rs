@@ -11,15 +11,15 @@ pub fn codegen(analysis: &Analysis) -> Vec<TokenStream2> {
     // type only on some core (e.g. `#[cfg(core = "0")] use some::Type;`)
 
     //if let Some(types) = analysis.send_types {
-        for ty in &analysis.send_types {
-            stmts.push(quote!(rtic::export::assert_send::<#ty>();));
-        }
+    for ty in &analysis.send_types {
+        stmts.push(quote!(rtic::export::assert_send::<#ty>();));
+    }
     //}
 
     //if let Some(types) = analysis.sync_types {
-        for ty in &analysis.sync_types {
-            stmts.push(quote!(rtic::export::assert_sync::<#ty>();));
-        }
+    for ty in &analysis.sync_types {
+        stmts.push(quote!(rtic::export::assert_sync::<#ty>();));
+    }
     //}
 
     // if the `schedule` API is used in more than one core then we need to check that the

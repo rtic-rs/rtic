@@ -35,14 +35,11 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     let pre_init_stmts = pre_init::codegen(&app, analysis, extra);
 
-    let (const_app_init, root_init, user_init, call_init) =
-        init::codegen(app, analysis, extra);
+    let (const_app_init, root_init, user_init, call_init) = init::codegen(app, analysis, extra);
 
-    let (const_app_post_init, post_init_stmts) =
-        post_init::codegen(&app, analysis);
+    let (const_app_post_init, post_init_stmts) = post_init::codegen(&app, analysis);
 
-    let (const_app_idle, root_idle, user_idle, call_idle) =
-        idle::codegen(app, analysis, extra);
+    let (const_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis, extra);
 
     user.push(quote!(
         #user_init
@@ -83,7 +80,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             #call_idle
         }
     ));
-
 
     let (const_app_resources, mod_resources) = resources::codegen(app, analysis, extra);
 

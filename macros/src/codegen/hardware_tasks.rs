@@ -29,7 +29,6 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
-
         let (let_instant, instant) = if app.uses_schedule() {
             let m = extra.monotonic();
 
@@ -96,8 +95,7 @@ pub fn codegen(
         // `${task}Locals`
         let mut locals_pat = None;
         if !task.locals.is_empty() {
-            let (struct_, pat) =
-                locals::codegen(Context::HardwareTask(name), &task.locals, app);
+            let (struct_, pat) = locals::codegen(Context::HardwareTask(name), &task.locals, app);
 
             root.push(struct_);
             locals_pat = Some(pat);

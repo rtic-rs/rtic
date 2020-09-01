@@ -44,10 +44,7 @@ pub fn cfg_core(core: Core, cores: u8) -> Option<TokenStream2> {
 /// There may be more than one free queue per task because we need one for each sender core so we
 /// include the sender (e.g. `S0`) in the name
 pub fn fq_ident(task: &Ident) -> Ident {
-    Ident::new(
-        &format!("{}_FQ", task.to_string()),
-        Span::call_site(),
-    )
+    Ident::new(&format!("{}_FQ", task.to_string()), Span::call_site())
 }
 
 /// Generates a `Mutex` implementation
@@ -112,7 +109,7 @@ pub fn instants_ident(task: &Ident) -> Ident {
 
 pub fn interrupt_ident() -> Ident {
     let span = Span::call_site();
-        Ident::new("Interrupt", span)
+    Ident::new("Interrupt", span)
 }
 
 /// Whether `name` is an exception with configurable priority
@@ -253,10 +250,7 @@ pub fn resources_ident(ctxt: Context, app: &App) -> Ident {
 /// in turn may use more than one ready queue because the queues are SPSC queues so one is needed
 /// per sender core.
 pub fn rq_ident(priority: u8) -> Ident {
-    Ident::new(
-        &format!("P{}_RQ", priority),
-        Span::call_site(),
-    )
+    Ident::new(&format!("P{}_RQ", priority), Span::call_site())
 }
 
 /// Generates an identifier for a "schedule" function
@@ -264,10 +258,7 @@ pub fn rq_ident(priority: u8) -> Ident {
 /// The methods of the `Schedule` structs invoke these functions. As one task may be `schedule`-ed
 /// by different cores we need one "schedule" function per possible task-sender pair
 pub fn schedule_ident(name: &Ident) -> Ident {
-    Ident::new(
-        &format!("schedule_{}", name.to_string()),
-        Span::call_site(),
-    )
+    Ident::new(&format!("schedule_{}", name.to_string()), Span::call_site())
 }
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks
@@ -287,10 +278,7 @@ pub fn spawn_barrier() -> Ident {
 /// The methods of the `Spawn` structs invoke these functions. As one task may be `spawn`-ed by
 /// different cores we need one "spawn" function per possible task-sender pair
 pub fn spawn_ident(name: &Ident) -> Ident {
-    Ident::new(
-        &format!("spawn_{}", name.to_string()),
-        Span::call_site(),
-    )
+    Ident::new(&format!("spawn_{}", name.to_string()), Span::call_site())
 }
 
 /// Generates an identifier for the `enum` of `spawn`-able tasks
@@ -298,10 +286,7 @@ pub fn spawn_ident(name: &Ident) -> Ident {
 /// This identifier needs the same structure as the `RQ` identifier because there's one ready queue
 /// for each of these `T` enums
 pub fn spawn_t_ident(priority: u8) -> Ident {
-    Ident::new(
-        &format!("P{}_T", priority),
-        Span::call_site(),
-    )
+    Ident::new(&format!("P{}_T", priority), Span::call_site())
 }
 
 pub fn suffixed(name: &str) -> Ident {

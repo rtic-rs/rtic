@@ -40,17 +40,15 @@ pub fn codegen(
                 .late_resources
                 .iter()
                 .flat_map(|resources| {
-                    resources
-                        .iter()
-                        .map(|name| {
-                            let ty = &app.late_resources[name].ty;
-                            let cfgs = &app.late_resources[name].cfgs;
+                    resources.iter().map(|name| {
+                        let ty = &app.late_resources[name].ty;
+                        let cfgs = &app.late_resources[name].cfgs;
 
-                            quote!(
-                            #(#cfgs)*
-                            pub #name: #ty
-                            )
-                        })
+                        quote!(
+                        #(#cfgs)*
+                        pub #name: #ty
+                        )
+                    })
                 })
                 .collect::<Vec<_>>();
 

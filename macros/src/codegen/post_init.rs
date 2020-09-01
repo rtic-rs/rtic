@@ -5,17 +5,14 @@ use rtic_syntax::ast::App;
 use crate::analyze::Analysis;
 
 /// Generates code that runs after `#[init]` returns
-pub fn codegen(
-    app: &App,
-    analysis: &Analysis,
-) -> (Vec<TokenStream2>, Vec<TokenStream2>) {
+pub fn codegen(app: &App, analysis: &Analysis) -> (Vec<TokenStream2>, Vec<TokenStream2>) {
     //#TODO remove
     let const_app = vec![];
     let mut stmts = vec![];
 
     // initialize late resources
     //if let Some(late_resources) = analysis.late_resources {
-        //for name in late_resources {
+    //for name in late_resources {
     if analysis.late_resources.len() > 0 {
         // #TODO, check soundness of this, why the wrapping
         // BTreeSet wrapped in a vector

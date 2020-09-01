@@ -1,9 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{
-    analyze::Ownership,
-    ast::App,
-};
+use rtic_syntax::{analyze::Ownership, ast::App};
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
@@ -28,10 +25,10 @@ pub fn codegen(
         {
             //let loc_attr = None;
             let section = if expr.is_none() {
-                        util::link_section_uninit(true)
-                    } else {
-                        None
-                    };
+                util::link_section_uninit(true)
+            } else {
+                None
+            };
             /*
             let (loc_attr, section) = match loc {
                 Location::Owned => (
@@ -66,7 +63,6 @@ pub fn codegen(
         }
 
         if let Some(Ownership::Contended { ceiling }) = analysis.ownerships.get(name) {
-
             mod_resources.push(quote!(
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*

@@ -4,7 +4,6 @@ use proc_macro2::Span;
 use rtic_syntax::{
     analyze::Analysis,
     ast::{App, CustomArg},
-
 };
 use syn::{parse, Path};
 
@@ -51,9 +50,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
 
     // check that external (device-specific) interrupts are not named after known (Cortex-M)
     // exceptions
-    for name in app
-        .extern_interrupts.keys()
-    {
+    for name in app.extern_interrupts.keys() {
         let name_s = name.to_string();
 
         match &*name_s {
@@ -83,8 +80,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         .collect::<HashSet<_>>();
 
     let need = priorities.len();
-    let given = app
-        .extern_interrupts.len();
+    let given = app.extern_interrupts.len();
     if need > given {
         let s = {
             format!(
@@ -131,9 +127,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
             },
 
             "peripherals" => match v {
-                CustomArg::Bool(x) => {
-                    peripherals = if *x { true } else { false }
-                }
+                CustomArg::Bool(x) => peripherals = if *x { true } else { false },
 
                 /*
                 CustomArg::UInt(s) if app.args.cores != 1 => {
@@ -152,13 +146,12 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
                     }
                 }
                 */
-
                 _ => {
                     return Err(parse::Error::new(
                         k.span(),
                         //if app.args.cores == 1 {
-                            "unexpected argument value; this should be a boolean",
-                            /*
+                        "unexpected argument value; this should be a boolean",
+                        /*
                         } else {
                             "unexpected argument value; this should be an integer"
                         },
