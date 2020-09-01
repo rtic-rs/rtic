@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{quote, format_ident};
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
