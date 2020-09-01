@@ -165,8 +165,8 @@ pub fn link_section_uninit(empty_expr: bool) -> Option<TokenStream2> {
 /// Generates a pre-reexport identifier for the "locals" struct
 pub fn locals_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
-        Context::Init => app.inits[0].name.to_string(),
-        Context::Idle => app.idles[0].name.to_string(),
+        Context::Init => app.inits.first().unwrap().name.to_string(),
+        Context::Idle => app.idles.first().unwrap().name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -234,8 +234,8 @@ pub fn regroup_inputs(
 /// Generates a pre-reexport identifier for the "resources" struct
 pub fn resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
-        Context::Init => app.inits[0].name.to_string(),
-        Context::Idle => app.idles[0].name.to_string(),
+        Context::Init => app.inits.first().unwrap().name.to_string(),
+        Context::Idle => app.idles.first().unwrap().name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -265,13 +265,6 @@ pub fn schedule_ident(name: &Ident) -> Ident {
 pub fn schedule_t_ident() -> Ident {
     Ident::new(&format!("T"), Span::call_site())
 }
-
-/*
-/// Generates an identifier for a cross-spawn barrier
-pub fn spawn_barrier() -> Ident {
-    Ident::new(&format!("SB"), Span::call_site())
-}
-*/
 
 /// Generates an identifier for a "spawn" function
 ///

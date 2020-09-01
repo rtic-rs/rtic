@@ -14,8 +14,8 @@ pub fn codegen(
     let mut lt = None;
 
     let resources = match ctxt {
-        Context::Init => &app.inits[0].args.resources,
-        Context::Idle => &app.idles[0].args.resources,
+        Context::Init => &app.inits.first().unwrap().args.resources,
+        Context::Idle => &app.idles.first().unwrap().args.resources,
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.resources,
     };

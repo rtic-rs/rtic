@@ -27,9 +27,8 @@ pub fn codegen(
     // call_init -- the call to the user `#[init]` if there's one
     Option<TokenStream2>,
 ) {
-    //if let Some(init) = app.inits.get(&core) {
     if app.inits.len() > 0 {
-        let init = &app.inits[0];
+        let init = &app.inits.first().unwrap();
         let mut needs_lt = false;
         let name = &init.name;
 

@@ -26,9 +26,8 @@ pub fn codegen(
     // call_idle
     TokenStream2,
 ) {
-    //if let Some(idle) = app.idles.get(&core) {
     if app.idles.len() > 0 {
-        let idle = &app.idles[0];
+        let idle = &app.idles.first().unwrap();
         let mut needs_lt = false;
         let mut const_app = None;
         let mut root_idle = vec![];
