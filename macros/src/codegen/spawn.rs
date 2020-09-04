@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -14,16 +14,12 @@ use crate::{
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
-    let mut seen = BTreeMap::<u8, HashSet<_>>::new();
+    let mut seen = HashSet::<_>::new();
     for (spawner, spawnees) in app.spawn_callers() {
-        let sender = spawner.core(app);
-        let cfg_sender = util::cfg_core(sender, app.args.cores);
-        let seen = seen.entry(sender).or_default();
         let mut methods = vec![];
 
         for name in spawnees {
             let spawnee = &app.software_tasks[name];
-            let receiver = spawnee.args.core;
             let cfgs = &spawnee.cfgs;
             let (args, _, untupled, ty) = util::regroup_inputs(&spawnee.inputs);
             let args = &args;
@@ -34,7 +30,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                 let body = spawn_body::codegen(spawner, &name, app, analysis, extra);
 
-                let let_instant = if app.uses_schedule(receiver) {
+                let let_instant = if app.uses_schedule() {
                     let m = extra.monotonic();
 
                     Some(quote!(let instant = unsafe { <#m as rtic::Monotonic>::zero() };))
@@ -42,23 +38,21 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     None
                 };
 
-                let section = util::link_section("text", sender);
                 methods.push(quote!(
                     #(#cfgs)*
-                    #section
                     fn #name(&self #(,#args)*) -> Result<(), #ty> {
                         #let_instant
                         #body
                     }
                 ));
             } else {
-                let spawn = util::spawn_ident(name, sender);
+                let spawn = util::spawn_ident(name);
 
                 if !seen.contains(name) {
-                    // generate a `spawn_${name}_S${sender}` function
+                    // Generate a `spawn_${name}_S${sender}` function
                     seen.insert(name);
 
-                    let instant = if app.uses_schedule(receiver) {
+                    let instant = if app.uses_schedule() {
                         let m = extra.monotonic();
 
                         Some(quote!(, instant: <#m as rtic::Monotonic>::Instant))
@@ -68,11 +62,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                     let body = spawn_body::codegen(spawner, &name, app, analysis, extra);
 
-                    let section = util::link_section("text", sender);
                     items.push(quote!(
-                        #cfg_sender
                         #(#cfgs)*
-                        #section
                         unsafe fn #spawn(
                             priority: &rtic::export::Priority
                             #instant
@@ -83,7 +74,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     ));
                 }
 
-                let (let_instant, instant) = if app.uses_schedule(receiver) {
+                let (let_instant, instant) = if app.uses_schedule() {
                     let m = extra.monotonic();
 
                     (
@@ -120,7 +111,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let spawner = spawner.ident(app);
         debug_assert!(!methods.is_empty());
         items.push(quote!(
-            #cfg_sender
             impl<#lt> #spawner::Spawn<#lt> {
                 #(#methods)*
             }

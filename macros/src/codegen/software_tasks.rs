@@ -28,8 +28,6 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.software_tasks {
-        let receiver = task.args.core;
-
         let inputs = &task.inputs;
         let (_, _, _, input_ty) = util::regroup_inputs(inputs);
 
@@ -37,103 +35,70 @@ pub fn codegen(
         let cap_lit = util::capacity_literal(cap);
         let cap_ty = util::capacity_typenum(cap, true);
 
-        // create free queues and inputs / instants buffers
-        if let Some(free_queues) = analysis.free_queues.get(name) {
-            for (&sender, &ceiling) in free_queues {
-                let cfg_sender = util::cfg_core(sender, app.args.cores);
-                let fq = util::fq_ident(name, sender);
+        // Create free queues and inputs / instants buffers
+        if let Some(&ceiling) = analysis.free_queues.get(name) {
+            let fq = util::fq_ident(name);
 
-                let (loc, fq_ty, fq_expr, bss, mk_uninit): (
-                    _,
-                    _,
-                    _,
-                    _,
-                    Box<dyn Fn() -> Option<_>>,
-                ) = if receiver == sender {
-                    (
-                        cfg_sender.clone(),
-                        quote!(rtic::export::SCFQ<#cap_ty>),
-                        quote!(rtic::export::Queue(unsafe {
-                            rtic::export::iQueue::u8_sc()
-                        })),
-                        util::link_section("bss", sender),
-                        Box::new(|| util::link_section_uninit(Some(sender))),
-                    )
-                } else {
-                    let shared = if cfg!(feature = "heterogeneous") {
-                        Some(quote!(#[rtic::export::shared]))
-                    } else {
-                        None
-                    };
+            let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
+                (
+                    quote!(rtic::export::SCFQ<#cap_ty>),
+                    quote!(rtic::export::Queue(unsafe {
+                        rtic::export::iQueue::u8_sc()
+                    })),
+                    Box::new(|| util::link_section_uninit(true)),
+                )
+            };
+            const_app.push(quote!(
+                /// Queue version of a free-list that keeps track of empty slots in
+                /// the following buffers
+                static mut #fq: #fq_ty = #fq_expr;
+            ));
 
-                    (
-                        shared,
-                        quote!(rtic::export::MCFQ<#cap_ty>),
-                        quote!(rtic::export::Queue(rtic::export::iQueue::u8())),
-                        None,
-                        Box::new(|| util::link_section_uninit(None)),
-                    )
-                };
-                let loc = &loc;
-
+            // Generate a resource proxy if needed
+            if let Some(ceiling) = ceiling {
                 const_app.push(quote!(
-                    /// Queue version of a free-list that keeps track of empty slots in
-                    /// the following buffers
-                    #loc
-                    #bss
-                    static mut #fq: #fq_ty = #fq_expr;
+                    struct #fq<'a> {
+                        priority: &'a rtic::export::Priority,
+                    }
                 ));
 
-                // Generate a resource proxy if needed
-                if let Some(ceiling) = ceiling {
-                    const_app.push(quote!(
-                        #cfg_sender
-                        struct #fq<'a> {
-                            priority: &'a rtic::export::Priority,
-                        }
-                    ));
+                const_app.push(util::impl_mutex(
+                    extra,
+                    &[],
+                    false,
+                    &fq,
+                    fq_ty,
+                    ceiling,
+                    quote!(&mut #fq),
+                ));
+            }
 
-                    const_app.push(util::impl_mutex(
-                        extra,
-                        &[],
-                        cfg_sender.as_ref(),
-                        false,
-                        &fq,
-                        fq_ty,
-                        ceiling,
-                        quote!(&mut #fq),
-                    ));
-                }
+            let ref elems = (0..cap)
+                .map(|_| quote!(core::mem::MaybeUninit::uninit()))
+                .collect::<Vec<_>>();
 
-                let ref elems = (0..cap)
-                    .map(|_| quote!(core::mem::MaybeUninit::uninit()))
-                    .collect::<Vec<_>>();
-
-                if app.uses_schedule(receiver) {
-                    let m = extra.monotonic();
-                    let instants = util::instants_ident(name, sender);
-
-                    let uninit = mk_uninit();
-                    const_app.push(quote!(
-                        #loc
-                        #uninit
-                        /// Buffer that holds the instants associated to the inputs of a task
-                        static mut #instants:
-                            [core::mem::MaybeUninit<<#m as rtic::Monotonic>::Instant>; #cap_lit] =
-                            [#(#elems,)*];
-                    ));
-                }
+            if app.uses_schedule() {
+                let m = extra.monotonic();
+                let instants = util::instants_ident(name);
 
                 let uninit = mk_uninit();
-                let inputs = util::inputs_ident(name, sender);
                 const_app.push(quote!(
-                    #loc
                     #uninit
-                    /// Buffer that holds the inputs of a task
-                    static mut #inputs: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
+                    /// Buffer that holds the instants associated to the inputs of a task
+                    static mut #instants:
+                        [core::mem::MaybeUninit<<#m as rtic::Monotonic>::Instant>; #cap_lit] =
                         [#(#elems,)*];
                 ));
             }
+
+            let uninit = mk_uninit();
+            let inputs = util::inputs_ident(name);
+            const_app.push(quote!(
+                #uninit
+                /// Buffer that holds the inputs of a task
+                static mut #inputs: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
+                    [#(#elems,)*];
+            ));
         }
 
         // `${task}Resources`
@@ -155,15 +120,12 @@ pub fn codegen(
         // `${task}Locals`
         let mut locals_pat = None;
         if !task.locals.is_empty() {
-            let (struct_, pat) =
-                locals::codegen(Context::SoftwareTask(name), &task.locals, receiver, app);
+            let (struct_, pat) = locals::codegen(Context::SoftwareTask(name), &task.locals, app);
 
             locals_pat = Some(pat);
             root.push(struct_);
         }
 
-        let cfg_receiver = util::cfg_core(receiver, app.args.cores);
-        let section = util::link_section("text", receiver);
         let context = &task.context;
         let attrs = &task.attrs;
         let cfgs = &task.cfgs;
@@ -173,8 +135,6 @@ pub fn codegen(
             #(#attrs)*
             #(#cfgs)*
             #[allow(non_snake_case)]
-            #cfg_receiver
-            #section
             fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
                 use rtic::Mutex as _;
 

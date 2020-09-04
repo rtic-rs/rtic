@@ -12,14 +12,12 @@ pub use cortex_m::{
     peripheral::{scb::SystemHandler, syst::SystClkSource, DWT, NVIC},
     Peripherals,
 };
-use heapless::spsc::{MultiCore, SingleCore};
+use heapless::spsc::SingleCore;
 pub use heapless::{consts, i::Queue as iQueue, spsc::Queue};
 pub use heapless::{i::BinaryHeap as iBinaryHeap, BinaryHeap};
 #[cfg(feature = "heterogeneous")]
 pub use microamp::shared;
 
-pub type MCFQ<N> = Queue<u8, N, u8, MultiCore>;
-pub type MCRQ<T, N> = Queue<(T, u8), N, u8, MultiCore>;
 pub type SCFQ<N> = Queue<u8, N, u8, SingleCore>;
 pub type SCRQ<T, N> = Queue<(T, u8), N, u8, SingleCore>;
 
@@ -30,7 +28,7 @@ where
     F: FnOnce(),
 {
     if priority == 1 {
-        // if the priority of this interrupt is `1` then BASEPRI can only be `0`
+        // If the priority of this interrupt is `1` then BASEPRI can only be `0`
         f();
         unsafe { basepri::write(0) }
     } else {
@@ -82,7 +80,7 @@ impl Priority {
         }
     }
 
-    // these two methods are used by `lock` (see below) but can't be used from the RTIC application
+    // These two methods are used by `lock` (see below) but can't be used from the RTIC application
     #[inline(always)]
     fn set(&self, value: u8) {
         self.inner.set(value)
@@ -105,13 +103,6 @@ where
 pub fn assert_sync<T>()
 where
     T: Sync,
-{
-}
-
-#[inline(always)]
-pub fn assert_multicore<T>()
-where
-    T: super::MultiCore,
 {
 }
 

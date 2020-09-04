@@ -19,10 +19,6 @@ use crate::Fraction;
 /// Adding or subtracting a `Duration` of more than `(1 << 31)` cycles to an `Instant` effectively
 /// makes it "wrap around" and creates an incorrect value. This is also true if the operation is
 /// done in steps, e.g. `(instant + dur) + dur` where `dur` is `(1 << 30)` ticks.
-///
-/// In multi-core contexts: this value is tied to the CYCCNT of *one* core so sending it a different
-/// core makes it lose its meaning -- each Cortex-M core has its own CYCCNT counter and these are
-/// usually unsynchronized and may even be running at different frequencies.
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Instant {
     inner: i32,

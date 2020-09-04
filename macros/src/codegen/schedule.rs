@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -13,14 +13,11 @@ use crate::{
 pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
-    let mut seen = BTreeMap::<u8, HashSet<_>>::new();
+    let mut seen = HashSet::<_>::new();
     for (scheduler, schedulees) in app.schedule_callers() {
         let m = extra.monotonic();
         let instant = quote!(<#m as rtic::Monotonic>::Instant);
 
-        let sender = scheduler.core(app);
-        let cfg_sender = util::cfg_core(sender, app.args.cores);
-        let seen = seen.entry(sender).or_default();
         let mut methods = vec![];
 
         for name in schedulees {
@@ -35,28 +32,23 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
 
                 let body = schedule_body::codegen(scheduler, &name, app);
 
-                let section = util::link_section("text", sender);
                 methods.push(quote!(
                     #(#cfgs)*
-                    #section
                     fn #name(&self, instant: #instant #(,#args)*) -> Result<(), #ty> {
                         #body
                     }
                 ));
             } else {
-                let schedule = util::schedule_ident(name, sender);
+                let schedule = util::schedule_ident(name);
 
                 if !seen.contains(name) {
-                    // generate a `schedule_${name}_S${sender}` function
+                    // Generate a `schedule_${name}_S${sender}` function
                     seen.insert(name);
 
                     let body = schedule_body::codegen(scheduler, &name, app);
 
-                    let section = util::link_section("text", sender);
                     items.push(quote!(
-                        #cfg_sender
                         #(#cfgs)*
-                        #section
                         unsafe fn #schedule(
                             priority: &rtic::export::Priority,
                             instant: #instant
@@ -88,7 +80,6 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
         let scheduler = scheduler.ident(app);
         debug_assert!(!methods.is_empty());
         items.push(quote!(
-            #cfg_sender
             impl<#lt> #scheduler::Schedule<#lt> {
                 #(#methods)*
             }

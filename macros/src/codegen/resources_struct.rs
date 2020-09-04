@@ -14,8 +14,8 @@ pub fn codegen(
     let mut lt = None;
 
     let resources = match ctxt {
-        Context::Init(core) => &app.inits[&core].args.resources,
-        Context::Idle(core) => &app.idles[&core].args.resources,
+        Context::Init => &app.inits.first().unwrap().args.resources,
+        Context::Idle => &app.idles.first().unwrap().args.resources,
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.resources,
     };
@@ -39,7 +39,7 @@ pub fn codegen(
 
         if ctxt.is_init() {
             if !analysis.ownerships.contains_key(name) {
-                // owned by `init`
+                // Owned by `init`
                 fields.push(quote!(
                     #(#cfgs)*
                     pub #name: &'static #mut_ #ty
@@ -50,7 +50,7 @@ pub fn codegen(
                     #name: &#mut_ #name
                 ));
             } else {
-                // owned by someone else
+                // Owned by someone else
                 lt = Some(quote!('a));
 
                 fields.push(quote!(
@@ -75,7 +75,7 @@ pub fn codegen(
                         pub #name: &'a #ty
                     ));
                 } else {
-                    // resource proxy
+                    // Resource proxy
                     lt = Some(quote!('a));
 
                     fields.push(quote!(
@@ -136,7 +136,7 @@ pub fn codegen(
     if lt.is_some() {
         *needs_lt = true;
 
-        // the struct could end up empty due to `cfg`s leading to an error due to `'a` being unused
+        // The struct could end up empty due to `cfg`s leading to an error due to `'a` being unused
         if has_cfgs {
             fields.push(quote!(
                 #[doc(hidden)]
@@ -147,13 +147,9 @@ pub fn codegen(
         }
     }
 
-    let core = ctxt.core(app);
-    let cores = app.args.cores;
-    let cfg_core = util::cfg_core(core, cores);
     let doc = format!("Resources `{}` has access to", ctxt.ident(app));
     let ident = util::resources_ident(ctxt, app);
     let item = quote!(
-        #cfg_core
         #[allow(non_snake_case)]
         #[doc = #doc]
         pub struct #ident<#lt> {
@@ -167,7 +163,6 @@ pub fn codegen(
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
     let constructor = quote!(
-        #cfg_core
         impl<#lt> #ident<#lt> {
             #[inline(always)]
             unsafe fn new(#arg) -> Self {

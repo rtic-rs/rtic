@@ -10,7 +10,7 @@ use syn::{parse, Path};
 pub struct Extra<'a> {
     pub device: &'a Path,
     pub monotonic: Option<&'a Path>,
-    pub peripherals: Option<u8>,
+    pub peripherals: bool,
 }
 
 impl<'a> Extra<'a> {
@@ -20,35 +20,14 @@ impl<'a> Extra<'a> {
 }
 
 pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
-    if cfg!(feature = "homogeneous") {
-        // this RTIC mode uses the same namespace for all cores so we need to check that the
-        // identifiers used for each core `#[init]` and `#[idle]` functions don't collide
-        let mut seen = HashSet::new();
-
-        for name in app
-            .inits
-            .values()
-            .map(|init| &init.name)
-            .chain(app.idles.values().map(|idle| &idle.name))
-        {
-            if seen.contains(name) {
-                return Err(parse::Error::new(
-                    name.span(),
-                    "this identifier is already being used by another core",
-                ));
-            } else {
-                seen.insert(name);
-            }
-        }
-    }
-
-    // check that all exceptions are valid; only exceptions with configurable priorities are
+    // Check that all exceptions are valid; only exceptions with configurable priorities are
     // accepted
     for (name, task) in &app.hardware_tasks {
         let name_s = task.args.binds.to_string();
         match &*name_s {
             "SysTick" => {
-                if analysis.timer_queues.get(&task.args.core).is_some() {
+                // If the timer queue is used, then SysTick is unavailable
+                if !analysis.timer_queues.is_empty() {
                     return Err(parse::Error::new(
                         name.span(),
                         "this exception can't be used because it's being used by the runtime",
@@ -69,13 +48,9 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         }
     }
 
-    // check that external (device-specific) interrupts are not named after known (Cortex-M)
+    // Check that external (device-specific) interrupts are not named after known (Cortex-M)
     // exceptions
-    for name in app
-        .extern_interrupts
-        .iter()
-        .flat_map(|(_, interrupts)| interrupts.keys())
-    {
+    for name in app.extern_interrupts.keys() {
         let name_s = name.to_string();
 
         match &*name_s {
@@ -91,52 +66,38 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         }
     }
 
-    // check that there are enough external interrupts to dispatch the software tasks and the timer
+    // Check that there are enough external interrupts to dispatch the software tasks and the timer
     // queue handler
-    for core in 0..app.args.cores {
-        let mut first = None;
-        let priorities = app
-            .software_tasks
-            .iter()
-            .filter_map(|(name, task)| {
-                if task.args.core == core {
-                    first = Some(name);
-                    Some(task.args.priority)
-                } else {
-                    None
-                }
-            })
-            .chain(analysis.timer_queues.get(&core).map(|tq| tq.priority))
-            .collect::<HashSet<_>>();
+    let mut first = None;
+    let priorities = app
+        .software_tasks
+        .iter()
+        .filter_map(|(name, task)| {
+            first = Some(name);
+            Some(task.args.priority)
+        })
+        .chain(analysis.timer_queues.first().map(|tq| tq.priority))
+        .collect::<HashSet<_>>();
 
-        let need = priorities.len();
-        let given = app
-            .extern_interrupts
-            .get(&core)
-            .map(|ei| ei.len())
-            .unwrap_or(0);
-        if need > given {
-            let s = if app.args.cores == 1 {
-                format!(
-                    "not enough `extern` interrupts to dispatch \
-                     all software tasks (need: {}; given: {})",
-                    need, given
-                )
-            } else {
-                format!(
-                    "not enough `extern` interrupts to dispatch \
-                     all software tasks on this core (need: {}; given: {})",
-                    need, given
-                )
-            };
+    let need = priorities.len();
+    let given = app.extern_interrupts.len();
+    if need > given {
+        let s = {
+            format!(
+                "not enough `extern` interrupts to dispatch \
+                    all software tasks (need: {}; given: {})",
+                need, given
+            )
+        };
 
-            return Err(parse::Error::new(first.unwrap().span(), &s));
-        }
+        // If not enough tasks and first still is None, may cause
+        // "custom attribute panicked" due to unwrap on None
+        return Err(parse::Error::new(first.unwrap().span(), &s));
     }
 
     let mut device = None;
     let mut monotonic = None;
-    let mut peripherals = None;
+    let mut peripherals = false;
 
     for (k, v) in &app.args.custom {
         let ks = k.to_string();
@@ -165,34 +126,11 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
             },
 
             "peripherals" => match v {
-                CustomArg::Bool(x) if app.args.cores == 1 => {
-                    peripherals = if *x { Some(0) } else { None }
-                }
-
-                CustomArg::UInt(s) if app.args.cores != 1 => {
-                    let x = s.parse::<u8>().ok();
-                    peripherals = if x.is_some() && x.unwrap() < app.args.cores {
-                        Some(x.unwrap())
-                    } else {
-                        return Err(parse::Error::new(
-                            k.span(),
-                            &format!(
-                                "unexpected argument value; \
-                                 this should be an integer in the range 0..={}",
-                                app.args.cores
-                            ),
-                        ));
-                    }
-                }
-
+                CustomArg::Bool(x) => peripherals = if *x { true } else { false },
                 _ => {
                     return Err(parse::Error::new(
                         k.span(),
-                        if app.args.cores == 1 {
-                            "unexpected argument value; this should be a boolean"
-                        } else {
-                            "unexpected argument value; this should be an integer"
-                        },
+                        "unexpected argument value; this should be a boolean",
                     ));
                 }
             },
@@ -203,7 +141,7 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         }
     }
 
-    if !analysis.timer_queues.is_empty() && monotonic.is_none() {
+    if !&analysis.timer_queues.is_empty() && monotonic.is_none() {
         return Err(parse::Error::new(
             Span::call_site(),
             "a `monotonic` timer must be specified to use the `schedule` API",

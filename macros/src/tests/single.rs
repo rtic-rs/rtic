@@ -15,7 +15,7 @@ fn analyze() {
                 #[task(priority = 2)]
                 fn b(_: b::Context) {}
 
-                // first interrupt is assigned to the highest priority dispatcher
+                // First interrupt is assigned to the highest priority dispatcher
                 extern "C" {
                     fn B();
                     fn A();
@@ -27,7 +27,7 @@ fn analyze() {
     .unwrap();
 
     let analysis = crate::analyze::app(analysis, &app);
-    let interrupts = &analysis.interrupts[&0];
+    let interrupts = &analysis.interrupts;
     assert_eq!(interrupts.len(), 2);
     assert_eq!(interrupts[&2].to_string(), "B");
     assert_eq!(interrupts[&1].to_string(), "A");

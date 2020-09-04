@@ -10,7 +10,6 @@ use crate::{
 
 /// Generates support code for `#[init]` functions
 pub fn codegen(
-    core: u8,
     app: &App,
     analysis: &Analysis,
     extra: &Extra,
@@ -28,8 +27,8 @@ pub fn codegen(
     // call_init -- the call to the user `#[init]` if there's one
     Option<TokenStream2>,
 ) {
-    if let Some(init) = app.inits.get(&core) {
-        let cfg_core = util::cfg_core(core, app.args.cores);
+    if app.inits.len() > 0 {
+        let init = &app.inits.first().unwrap();
         let mut needs_lt = false;
         let name = &init.name;
 
@@ -38,29 +37,25 @@ pub fn codegen(
         let ret = {
             let late_fields = analysis
                 .late_resources
-                .get(&core)
-                .map(|resources| {
-                    resources
-                        .iter()
-                        .map(|name| {
-                            let ty = &app.late_resources[name].ty;
-                            let cfgs = &app.late_resources[name].cfgs;
+                .iter()
+                .flat_map(|resources| {
+                    resources.iter().map(|name| {
+                        let ty = &app.late_resources[name].ty;
+                        let cfgs = &app.late_resources[name].cfgs;
 
-                            quote!(
-                            #(#cfgs)*
-                            pub #name: #ty
-                            )
-                        })
-                        .collect::<Vec<_>>()
+                        quote!(
+                        #(#cfgs)*
+                        pub #name: #ty
+                        )
+                    })
                 })
-                .unwrap_or(vec![]);
+                .collect::<Vec<_>>();
 
             if !late_fields.is_empty() {
                 let late_resources = util::late_resources_ident(&name);
 
                 root_init.push(quote!(
                     /// Resources initialized at runtime
-                    #cfg_core
                     #[allow(non_snake_case)]
                     pub struct #late_resources {
                         #(#late_fields),*
@@ -76,7 +71,7 @@ pub fn codegen(
         let mut locals_pat = None;
         let mut locals_new = None;
         if !init.locals.is_empty() {
-            let (struct_, pat) = locals::codegen(Context::Init(core), &init.locals, core, app);
+            let (struct_, pat) = locals::codegen(Context::Init, &init.locals, app);
 
             locals_new = Some(quote!(#name::Locals::new()));
             locals_pat = Some(pat);
@@ -86,13 +81,10 @@ pub fn codegen(
         let context = &init.context;
         let attrs = &init.attrs;
         let stmts = &init.stmts;
-        let section = util::link_section("text", core);
         let locals_pat = locals_pat.iter();
         let user_init = Some(quote!(
             #(#attrs)*
-            #cfg_core
             #[allow(non_snake_case)]
-            #section
             fn #name(#(#locals_pat,)* #context: #name::Context) #ret {
                 #(#stmts)*
             }
@@ -101,7 +93,7 @@ pub fn codegen(
         let mut const_app = None;
         if !init.args.resources.is_empty() {
             let (item, constructor) =
-                resources_struct::codegen(Context::Init(core), 0, &mut needs_lt, app, analysis);
+                resources_struct::codegen(Context::Init, 0, &mut needs_lt, app, analysis);
 
             root_init.push(item);
             const_app = Some(constructor);
@@ -112,7 +104,7 @@ pub fn codegen(
             quote!(let late = crate::#name(#(#locals_new,)* #name::Context::new(core.into()));),
         );
 
-        root_init.push(module::codegen(Context::Init(core), needs_lt, app, extra));
+        root_init.push(module::codegen(Context::Init, needs_lt, app, extra));
 
         (const_app, root_init, user_init, call_init)
     } else {
