@@ -72,14 +72,6 @@ jobs:
             ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
             ${{ runner.OS }}-build-
 
-      - name: Cache Rust toolchain
-        uses: actions/cache@v2
-        with:
-          path: /usr/share/rust/
-          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-          restore-keys: |
-            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
         with:
@@ -134,14 +126,6 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
             ${{ runner.OS }}-build-
-
-      - name: Cache Rust toolchain
-        uses: actions/cache@v2
-        with:
-          path: /usr/share/rust/
-          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-          restore-keys: |
-            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
 
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
@@ -344,14 +328,6 @@ jobs:
             ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
             ${{ runner.OS }}-build-
 
-      - name: Cache Rust toolchain
-        uses: actions/cache@v2
-        with:
-          path: /usr/share/rust/
-          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-          restore-keys: |
-            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-
       - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
         uses: actions-rs/toolchain@v1
         with:
@@ -398,14 +374,6 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-build-
 
-      - name: Cache Rust toolchain
-        uses: actions/cache@v2
-        with:
-          path: /usr/share/rust/
-          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-          restore-keys: |
-            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -449,14 +417,6 @@ jobs:
           key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.OS }}-build-
-
-      - name: Cache Rust toolchain
-        uses: actions/cache@v2
-        with:
-          path: /usr/share/rust/
-          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-          restore-keys: |
-            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -502,14 +462,6 @@ jobs:
           key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.OS }}-build-
-
-      - name: Cache Rust toolchain
-        uses: actions/cache@v2
-        with:
-          path: /usr/share/rust/
-          key: ${{ runner.OS }}-rust-${{ env.rustc_hash }}
-          restore-keys: |
-            ${{ runner.OS }}-rust-${{ env.rustc_hash }}
 
       - name: Cache pip installed linkchecker
         uses: actions/cache@v2
