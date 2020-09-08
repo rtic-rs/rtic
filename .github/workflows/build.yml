@@ -72,6 +72,7 @@ jobs:
             ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
             ${{ runner.OS }}-build-
 
+      # Causes failure when new rustc
       - name: Cache Rust toolchain
         uses: actions/cache@v2
         with:
@@ -135,6 +136,7 @@ jobs:
             ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
             ${{ runner.OS }}-build-
 
+      # Causes failure when new rustc
       - name: Cache Rust toolchain
         uses: actions/cache@v2
         with:
@@ -344,6 +346,7 @@ jobs:
             ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
             ${{ runner.OS }}-build-
 
+      # Causes failure when new rustc
       - name: Cache Rust toolchain
         uses: actions/cache@v2
         with:
@@ -398,6 +401,7 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-build-
 
+      # Causes failure when new rustc
       - name: Cache Rust toolchain
         uses: actions/cache@v2
         with:
@@ -450,6 +454,7 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-build-
 
+      # Causes failure when new rustc
       - name: Cache Rust toolchain
         uses: actions/cache@v2
         with:
@@ -503,6 +508,7 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-build-
 
+      # Causes failure when new rustc
       - name: Cache Rust toolchain
         uses: actions/cache@v2
         with:
