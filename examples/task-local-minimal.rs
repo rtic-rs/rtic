@@ -1,4 +1,4 @@
-//! examples/local_minimal.rs
+//! examples/task-local_minimal.rs
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
@@ -7,8 +7,9 @@
 use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
-#[rtfm::app(device = lm3s6965)]
-const APP: () = {
+#[rtic::app(device = lm3s6965)]
+mod app {
+    #[resources]
     struct Resources {
         // A local (move), late resource
         #[task_local]
@@ -25,6 +26,8 @@ const APP: () = {
     fn idle(cx: idle::Context) -> ! {
         hprintln!("IDLE:l = {}", cx.resources.l).unwrap();
         debug::exit(debug::EXIT_SUCCESS);
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
-};
+}

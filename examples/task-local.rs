@@ -1,4 +1,4 @@
-//! examples/local.rs
+//! examples/task-local.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
@@ -9,8 +9,9 @@ use cortex_m_semihosting::{debug, hprintln};
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
-#[rtfm::app(device = lm3s6965)]
-const APP: () = {
+#[rtic::app(device = lm3s6965)]
+mod app {
+    #[resources]
     struct Resources {
         // An early resource
         #[init(0)]
@@ -37,8 +38,8 @@ const APP: () = {
 
     #[init]
     fn init(_: init::Context) -> init::LateResources {
-        rtfm::pend(Interrupt::UART0);
-        rtfm::pend(Interrupt::UART1);
+        rtic::pend(Interrupt::UART0);
+        rtic::pend(Interrupt::UART1);
         init::LateResources { e2: 2, l2: 2 }
     }
 
@@ -50,7 +51,9 @@ const APP: () = {
         hprintln!("IDLE:l1 = {}", cx.resources.l1).unwrap();
         hprintln!("IDLE:e2 = {}", cx.resources.e2).unwrap();
         debug::exit(debug::EXIT_SUCCESS);
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 
     // `shared` can be accessed from this context
@@ -76,4 +79,4 @@ const APP: () = {
         hprintln!("UART1: shared = {}", shared).unwrap();
         hprintln!("UART1:e1 = {}", cx.resources.e1).unwrap();
     }
-};
+}

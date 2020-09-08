@@ -10,7 +10,6 @@ use rtic_syntax::Settings;
 mod analyze;
 mod check;
 mod codegen;
-mod custom_local;
 #[cfg(test)]
 mod tests;
 
@@ -215,26 +214,12 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         Ok(x) => x,
     };
 
-    match custom_local::app(&app, &analysis) {
-        Err(e) => return e.to_compile_error().into(),
-        Ok(_) => {}
-    }
-
     let extra = match check::app(&app, &analysis) {
         Err(e) => return e.to_compile_error().into(),
         Ok(x) => x,
     };
 
-    // println!("extra {:?}", extra);
-
     let analysis = analyze::app(analysis, &app);
-
-    // println!("after analysis, extra {:?}", extra);
-
-    // match custom_local::app(&app, &analysis) {
-    //     Err(e) => return e.to_compile_error().into(),
-    //     Ok(_) => {}
-    // }
 
     let ts = codegen::app(&app, &analysis, &extra);
 

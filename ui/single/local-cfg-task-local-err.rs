@@ -5,13 +5,14 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::hprintln;
 use cortex_m_semihosting::debug;
+use cortex_m_semihosting::hprintln;
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
-#[rtfm::app(device = lm3s6965)]
-const APP: () = {
+#[rtic::app(device = lm3s6965)]
+mod app {
+    #[resources]
     struct Resources {
         // A local (move), early resource
         #[cfg(feature = "feature_l1")]
@@ -26,13 +27,13 @@ const APP: () = {
 
     #[init]
     fn init(_: init::Context) -> init::LateResources {
-        rtfm::pend(Interrupt::UART0);
-        rtfm::pend(Interrupt::UART1);
+        rtic::pend(Interrupt::UART0);
+        rtic::pend(Interrupt::UART1);
         init::LateResources {
             #[cfg(feature = "feature_l2")]
             l2: 2,
             #[cfg(not(feature = "feature_l2"))]
-            l2: 5
+            l2: 5,
         }
     }
 
@@ -62,4 +63,4 @@ const APP: () = {
         #[cfg(not(feature = "feature_l2"))]
         hprintln!("UART0:l2 = {}", _cx.resources.l2).unwrap();
     }
-};
+}

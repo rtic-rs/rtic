@@ -1,4 +1,4 @@
-//! examples/late.rs
+//! examples/static.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
@@ -14,9 +14,14 @@ use heapless::{
 use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
-#[rtfm::app(device = lm3s6965)]
-const APP: () = {
+#[rtic::app(device = lm3s6965)]
+mod app {
+
+    use crate::U4;
+    use crate::{Consumer, Producer};
+
     // Late resources
+    #[resources]
     struct Resources {
         p: Producer<'static, u32, U4>,
         c: Consumer<'static, u32, U4>,
@@ -40,7 +45,7 @@ const APP: () = {
 
                 debug::exit(debug::EXIT_SUCCESS);
             } else {
-                rtfm::pend(Interrupt::UART0);
+                rtic::pend(Interrupt::UART0);
             }
         }
     }
@@ -51,4 +56,4 @@ const APP: () = {
         *KALLE += 1;
         c.resources.p.enqueue(42).unwrap();
     }
-};
+}
