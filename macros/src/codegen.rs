@@ -37,11 +37,13 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     let pre_init_stmts = pre_init::codegen(&app, analysis, extra);
 
-    let (const_app_init, root_init, user_init, user_init_imports, call_init) = init::codegen(app, analysis, extra);
+    let (const_app_init, root_init, user_init, user_init_imports, call_init) =
+        init::codegen(app, analysis, extra);
 
     let post_init_stmts = post_init::codegen(&app, analysis);
 
-    let (const_app_idle, root_idle, user_idle, user_idle_imports, call_idle) = idle::codegen(app, analysis, extra);
+    let (const_app_idle, root_idle, user_idle, user_idle_imports, call_idle) =
+        idle::codegen(app, analysis, extra);
 
     if user_init.is_some() {
         const_app_imports.push(quote!(
@@ -95,13 +97,22 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         }
     ));
 
-    let (const_app_resources, mod_resources, mod_resources_imports) = resources::codegen(app, analysis, extra);
+    let (const_app_resources, mod_resources, mod_resources_imports) =
+        resources::codegen(app, analysis, extra);
 
-    let (const_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks, user_hardware_tasks_imports) =
-        hardware_tasks::codegen(app, analysis, extra);
+    let (
+        const_app_hardware_tasks,
+        root_hardware_tasks,
+        user_hardware_tasks,
+        user_hardware_tasks_imports,
+    ) = hardware_tasks::codegen(app, analysis, extra);
 
-    let (const_app_software_tasks, root_software_tasks, user_software_tasks, user_software_tasks_imports) =
-        software_tasks::codegen(app, analysis, extra);
+    let (
+        const_app_software_tasks,
+        root_software_tasks,
+        user_software_tasks,
+        user_software_tasks_imports,
+    ) = software_tasks::codegen(app, analysis, extra);
 
     let const_app_dispatchers = dispatchers::codegen(app, analysis, extra);
 
@@ -110,7 +121,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let const_app_timer_queue = timer_queue::codegen(app, analysis, extra);
 
     let const_app_schedule = schedule::codegen(app, extra);
-
 
     let user_imports = app.user_imports.clone();
     let name = &app.name;

@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, format_ident};
+use quote::{format_ident, quote};
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
@@ -52,7 +52,6 @@ pub fn codegen(
                     #[allow(non_snake_case)]
                     use super::#name_resource;
             ));
-
         }
 
         if !idle.locals.is_empty() {
@@ -81,7 +80,6 @@ pub fn codegen(
         user_idle_imports.push(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            #cfg_core
             use super::#name;
         ));
 
@@ -91,7 +89,13 @@ pub fn codegen(
             #name::Context::new(&rtic::export::Priority::new(0))
         ));
 
-        (const_app, root_idle, user_idle, user_idle_imports, call_idle)
+        (
+            const_app,
+            root_idle,
+            user_idle,
+            user_idle_imports,
+            call_idle,
+        )
     } else {
         (
             None,

@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, format_ident};
+use quote::{format_ident, quote};
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
@@ -128,7 +128,6 @@ pub fn codegen(
             #[allow(non_snake_case)]
             use super::#name;
         ));
-
     }
 
     (const_app, root, user_tasks, hardware_tasks_imports)

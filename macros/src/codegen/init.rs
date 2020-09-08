@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, format_ident};
+use quote::{format_ident, quote};
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
@@ -101,7 +101,6 @@ pub fn codegen(
         ));
         user_init_imports.push(quote!(
                 #(#attrs)*
-                #cfg_core
                 #[allow(non_snake_case)]
                 use super::#name;
         ));
@@ -128,7 +127,13 @@ pub fn codegen(
 
         root_init.push(module::codegen(Context::Init, needs_lt, app, extra));
 
-        (const_app, root_init, user_init, user_init_imports, call_init)
+        (
+            const_app,
+            root_init,
+            user_init,
+            user_init_imports,
+            call_init,
+        )
     } else {
         (None, vec![], None, vec![], None)
     }

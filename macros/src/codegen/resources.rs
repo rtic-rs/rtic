@@ -88,7 +88,6 @@ pub fn codegen(
             mod_resources_imports.push(quote!(
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
-                #cfg_core
                 use super::resources::#name;
             ));
 
