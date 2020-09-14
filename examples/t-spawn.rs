@@ -22,7 +22,9 @@ const APP: () = {
         let _: Result<(), u32> = c.spawn.bar(0);
         let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);
 
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 
     #[task(binds = SVCall, spawn = [foo, bar, baz])]

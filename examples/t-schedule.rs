@@ -23,7 +23,9 @@ const APP: () = {
         let _: Result<(), u32> = c.schedule.bar(Instant::now() + 50.cycles(), 0);
         let _: Result<(), (u32, u32)> = c.schedule.baz(Instant::now() + 60.cycles(), 0, 1);
 
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 
     #[task(binds = SVCall, schedule = [foo, bar, baz])]

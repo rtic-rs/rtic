@@ -24,7 +24,9 @@ const APP: () = {
         #[cfg(never)]
         static mut BAR: u32 = 0;
 
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 
     #[task(resources = [foo], schedule = [quux], spawn = [quux])]

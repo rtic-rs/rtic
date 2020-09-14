@@ -14,6 +14,8 @@ const APP: () = {
     #[idle]
     fn main(_: main::Context) -> ! {
         debug::exit(debug::EXIT_SUCCESS);
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 };
