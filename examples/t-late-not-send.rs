@@ -31,6 +31,8 @@ const APP: () = {
 
     #[idle(resources = [x, y])]
     fn idle(_: idle::Context) -> ! {
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 };

@@ -32,7 +32,9 @@ const APP: () = {
         let _: idle::Schedule = cx.schedule;
         let _: idle::Spawn = cx.spawn;
 
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 
     #[task(binds = UART0, resources = [shared], schedule = [foo], spawn = [foo])]

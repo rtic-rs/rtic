@@ -28,7 +28,9 @@ const APP: () = {
     fn idle(_: idle::Context) -> ! {
         debug::exit(debug::EXIT_SUCCESS);
 
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 
     #[task(capacity = 2, resources = [count], spawn = [log])]

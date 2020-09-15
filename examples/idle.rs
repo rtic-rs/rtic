@@ -26,6 +26,8 @@ const APP: () = {
 
         debug::exit(debug::EXIT_SUCCESS);
 
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 };

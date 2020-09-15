@@ -58,7 +58,9 @@ const APP: () = {
         // `&` if read-only
         let _: &u32 = c.resources.s3;
 
-        loop {}
+        loop {
+            cortex_m::asm::nop();
+        }
     }
 
     #[task(binds = UART0, resources = [o3, s1, s2, &s3])]
