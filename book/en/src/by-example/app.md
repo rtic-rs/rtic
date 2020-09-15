@@ -77,6 +77,9 @@ references that are safe to access.
 
 The example below shows that `idle` runs after `init`.
 
+**Note:** The `loop {}` in idle cannot be empty as this will crash the microcontroller due to a bug
+in LLVM which miss-optimizes empty loops to a `UDF` instruction in release mode.
+
 ``` rust
 {{#include ../../../../examples/idle.rs}}
 ```
