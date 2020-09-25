@@ -12,7 +12,7 @@ mod app {
     fn init(_: init::Context) {}
 
     #[idle]
-    fn main(_: main::Context) -> ! {
+    fn taskmain(_: taskmain::Context) -> ! {
         debug::exit(debug::EXIT_SUCCESS);
         loop {
             cortex_m::asm::nop();

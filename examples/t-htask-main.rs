@@ -14,7 +14,7 @@ mod app {
     }
 
     #[task(binds = UART0)]
-    fn main(_: main::Context) {
+    fn taskmain(_: taskmain::Context) {
         debug::exit(debug::EXIT_SUCCESS);
     }
 }
