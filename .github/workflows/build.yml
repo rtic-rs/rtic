@@ -134,11 +134,16 @@ jobs:
           target: ${{ matrix.target }}
           override: true
           components: llvm-tools-preview
-      - uses: actions-rs/cargo@v1
+
+      - name: Check the examples
+        if: matrix.target == 'thumbv7m-none-eabi'
+        env:
+          V7: __v7
+        uses: actions-rs/cargo@v1
         with:
           use-cross: false
           command: check
-          args: --examples --target=${{ matrix.target }} --features __min_r1_43
+          args: --examples --target=${{ matrix.target }} --features __min_r1_43,${{ env.V7 }}
 
       # Use precompiled binutils
       - name: cargo install cargo-binutils
