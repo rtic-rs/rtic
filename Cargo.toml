@@ -50,6 +50,10 @@ required-features = ["__v7"]
 name = "types"
 required-features = ["__v7"]
 
+[[example]]
+name = "double_schedule"
+required-features = ["__v7"]
+
 [dependencies]
 cortex-m = "0.6.2"
 cortex-m-rtic-macros = { path = "macros", version = "0.5.2" }

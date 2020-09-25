@@ -16,7 +16,7 @@ const APP: () = {
 
     #[init(spawn = [task1])]
     fn init(cx: init::Context) -> init::LateResources {
-        // cx.spawn.task1().ok();
+        cx.spawn.task1().ok();
 
         init::LateResources { nothing: () }
     }
