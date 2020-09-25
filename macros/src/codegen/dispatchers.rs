@@ -60,23 +60,29 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             static mut #rq: #rq_ty = #rq_expr;
         ));
 
-        if let Some(ceiling) = channel.ceiling {
-            items.push(quote!(
-                struct #rq<'a> {
-                    priority: &'a rtic::export::Priority,
-                }
-            ));
+        items.push(quote!(
+            struct #rq<'a> {
+                priority: &'a rtic::export::Priority,
+            }
+        ));
 
-            items.push(util::impl_mutex(
-                extra,
-                &[],
-                false,
-                &rq,
-                rq_ty,
-                ceiling,
-                quote!(&mut #rq),
-            ));
+        // Default ceiling is 1
+        let mut channel_ceiling = 1;
+
+        // If the channel ceiling is defined, use that instead
+        if let Some(ceiling) = channel.ceiling {
+            channel_ceiling = ceiling;
         }
+
+        items.push(util::impl_mutex(
+            extra,
+            &[],
+            false,
+            &rq,
+            rq_ty,
+            channel_ceiling,
+            quote!(&mut #rq),
+        ));
 
         let arms = channel
             .tasks
