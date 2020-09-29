@@ -11,6 +11,7 @@ use rtic::cyccnt::U32Ext;
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
 
+    #[resources]
     struct Resources {
         nothing: (),
     }
