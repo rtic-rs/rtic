@@ -14,7 +14,7 @@ const APP: () = {
     #[init]
     fn init(cx: init::Context) {
         let mut syst = cx.core.SYST;
-        syst.set_reload(10000);
+        syst.set_reload(100000);
         syst.enable_interrupt();
         syst.enable_counter();
 
