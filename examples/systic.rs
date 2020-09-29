@@ -6,7 +6,7 @@
 #![no_std]
 
 use cortex_m_semihosting::{debug, hprintln};
-use lm3s6965::Interrupt;
+// use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
@@ -34,7 +34,7 @@ const APP: () = {
         static mut COUNTER: i32 = 0;
         *COUNTER += 1;
         hprintln!("SysTick #{}", COUNTER).unwrap();
-        if *C == 10 {
+        if *COUNTER == 10 {
             debug::exit(debug::EXIT_SUCCESS);
         }
     }
