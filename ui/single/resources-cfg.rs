@@ -41,12 +41,14 @@ const APP: () = {
     }
 
     #[init(resources = [o1, o4, o5, o6, s3])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         c.resources.o1;
         c.resources.o4;
         c.resources.o5;
         c.resources.o6;
         c.resources.s3;
+
+        init::LateResources {}
     }
 
     #[idle(resources = [o2, &o4, s1, &s3])]

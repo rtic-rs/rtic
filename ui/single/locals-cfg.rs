@@ -3,11 +3,13 @@
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 
         FOO;
+
+        init::LateResources {}
     }
 
     #[idle]
