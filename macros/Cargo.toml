@@ -19,8 +19,8 @@ proc-macro = true
 
 [dependencies]
 proc-macro2 = "1"
+proc-macro-error = "1"
 quote = "1"
 syn = "1"
-#rtic-syntax = { git = "https://github.com/rtic-rs/rtic-syntax", branch = "task_local_experiment", version = "0.4.1" }
-rtic-syntax = { git = "https://github.com/AfoHT/rtic-syntax", branch = "task_local_experiment", version = "0.4.1" }
+rtic-syntax = { git = "https://github.com/rtic-rs/rtic-syntax", branch = "master", version = "0.5.0-alpha.0" }
 
