@@ -17,8 +17,10 @@ const APP: () = {
     }
 
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         rtic::pend(Interrupt::GPIOA);
+
+        init::LateResources {}
     }
 
     // when omitted priority is assumed to be `1`

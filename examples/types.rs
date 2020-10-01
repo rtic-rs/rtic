@@ -17,7 +17,7 @@ const APP: () = {
     }
 
     #[init(schedule = [foo], spawn = [foo])]
-    fn init(cx: init::Context) {
+    fn init(cx: init::Context) -> init::LateResources {
         let _: cyccnt::Instant = cx.start;
         let _: rtic::Peripherals = cx.core;
         let _: lm3s6965::Peripherals = cx.device;
@@ -25,6 +25,8 @@ const APP: () = {
         let _: init::Spawn = cx.spawn;
 
         debug::exit(debug::EXIT_SUCCESS);
+
+        init::LateResources {}
     }
 
     #[idle(schedule = [foo], spawn = [foo])]

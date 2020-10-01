@@ -9,8 +9,10 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn main(_: main::Context) {
+    fn main(_: main::Context) -> main::LateResources {
         assert!(cortex_m::Peripherals::take().is_none());
         debug::exit(debug::EXIT_SUCCESS);
+
+        main::LateResources {}
     }
 };

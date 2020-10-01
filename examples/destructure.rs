@@ -22,9 +22,11 @@ const APP: () = {
     }
 
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         rtic::pend(Interrupt::UART0);
         rtic::pend(Interrupt::UART1);
+
+        init::LateResources {}
     }
 
     // Direct destructure

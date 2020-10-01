@@ -10,10 +10,12 @@ use panic_halt as _;
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init(spawn = [foo, bar, baz])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         let _: Result<(), ()> = c.spawn.foo();
         let _: Result<(), u32> = c.spawn.bar(0);
         let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);
+
+        init::LateResources {}
     }
 
     #[idle(spawn = [foo, bar, baz])]

@@ -14,7 +14,7 @@ use rtic::cyccnt::{Instant, U32Ext as _};
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
     #[init(schedule = [foo, bar])]
-    fn init(mut cx: init::Context) {
+    fn init(mut cx: init::Context) -> init::LateResources {
         // Initialize (enable) the monotonic timer (CYCCNT)
         cx.core.DCB.enable_trace();
         // required on Cortex-M7 devices that software lock the DWT (e.g. STM32F7)
@@ -32,6 +32,8 @@ const APP: () = {
 
         // Schedule `bar` to run 4e6 cycles in the future
         cx.schedule.bar(now + 4_000_000.cycles()).unwrap();
+
+        init::LateResources {}
     }
 
     #[task]

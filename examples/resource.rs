@@ -18,9 +18,11 @@ const APP: () = {
     }
 
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         rtic::pend(Interrupt::UART0);
         rtic::pend(Interrupt::UART1);
+
+        init::LateResources {}
     }
 
     // `shared` cannot be accessed from this context

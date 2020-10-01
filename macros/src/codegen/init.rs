@@ -34,39 +34,31 @@ pub fn codegen(
 
         let mut root_init = vec![];
 
-        let ret = {
-            let late_fields = analysis
-                .late_resources
-                .iter()
-                .flat_map(|resources| {
-                    resources.iter().map(|name| {
-                        let ty = &app.late_resources[name].ty;
-                        let cfgs = &app.late_resources[name].cfgs;
+        let late_fields = analysis
+            .late_resources
+            .iter()
+            .flat_map(|resources| {
+                resources.iter().map(|name| {
+                    let ty = &app.late_resources[name].ty;
+                    let cfgs = &app.late_resources[name].cfgs;
 
-                        quote!(
-                        #(#cfgs)*
-                        pub #name: #ty
-                        )
-                    })
+                    quote!(
+                    #(#cfgs)*
+                    pub #name: #ty
+                    )
                 })
-                .collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
 
-            if !late_fields.is_empty() {
-                let late_resources = util::late_resources_ident(&name);
+        let late_resources = util::late_resources_ident(&name);
 
-                root_init.push(quote!(
-                    /// Resources initialized at runtime
-                    #[allow(non_snake_case)]
-                    pub struct #late_resources {
-                        #(#late_fields),*
-                    }
-                ));
-
-                Some(quote!(-> #name::LateResources))
-            } else {
-                None
+        root_init.push(quote!(
+            /// Resources initialized at runtime
+            #[allow(non_snake_case)]
+            pub struct #late_resources {
+                #(#late_fields),*
             }
-        };
+        ));
 
         let mut locals_pat = None;
         let mut locals_new = None;
@@ -85,7 +77,7 @@ pub fn codegen(
         let user_init = Some(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context) #ret {
+            fn #name(#(#locals_pat,)* #context: #name::Context) -> #name::LateResources {
                 #(#stmts)*
             }
         ));

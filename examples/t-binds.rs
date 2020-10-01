@@ -10,7 +10,9 @@ use panic_halt as _;
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init(_: init::Context) {}
+    fn init(_: init::Context) -> init::LateResources {
+        init::LateResources {}
+    }
 
     // Cortex-M exception
     #[task(binds = SVCall)]

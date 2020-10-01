@@ -11,8 +11,10 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init(spawn = [foo])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         c.spawn.foo(/* no message */).unwrap();
+
+        init::LateResources {}
     }
 
     #[task(spawn = [bar])]

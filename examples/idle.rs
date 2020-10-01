@@ -11,8 +11,10 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         hprintln!("init").unwrap();
+
+        init::LateResources {}
     }
 
     #[idle]

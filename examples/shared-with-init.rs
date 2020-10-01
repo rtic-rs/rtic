@@ -20,12 +20,14 @@ const APP: () = {
     }
 
     #[init(resources = [shared])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         // this `message` will be sent to task `UART0`
         let message = MustBeSend;
         *c.resources.shared = Some(message);
 
         rtic::pend(Interrupt::UART0);
+
+        init::LateResources {}
     }
 
     #[task(binds = UART0, resources = [shared])]

@@ -31,7 +31,7 @@ const APP: () = {
     }
 
     #[init(resources = [o1, o4, o5, o6, s3])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         // owned by `init` == `&'static mut`
         let _: &'static mut u32 = c.resources.o1;
 
@@ -42,6 +42,8 @@ const APP: () = {
         let _: &mut u32 = c.resources.o4;
         let _: &mut u32 = c.resources.o5;
         let _: &mut u32 = c.resources.s3;
+
+        init::LateResources {}
     }
 
     #[idle(resources = [o2, &o4, s1, &s3])]
