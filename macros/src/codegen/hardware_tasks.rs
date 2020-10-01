@@ -14,7 +14,7 @@ pub fn codegen(
     analysis: &Analysis,
     extra: &Extra,
 ) -> (
-    // const_app_hardware_tasks -- interrupt handlers and `${task}Resources` constructors
+    // mod_app_hardware_tasks -- interrupt handlers and `${task}Resources` constructors
     Vec<TokenStream2>,
     // root_hardware_tasks -- items that must be placed in the root of the crate:
     // - `${task}Locals` structs
@@ -26,7 +26,7 @@ pub fn codegen(
     // user_hardware_tasks_imports -- the imports for `#[task]` functions written by the user
     Vec<TokenStream2>,
 ) {
-    let mut const_app = vec![];
+    let mut mod_app = vec![];
     let mut root = vec![];
     let mut user_tasks = vec![];
     let mut hardware_tasks_imports = vec![];
@@ -52,7 +52,7 @@ pub fn codegen(
         let symbol = task.args.binds.clone();
         let priority = task.args.priority;
 
-        const_app.push(quote!(
+        mod_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
             unsafe fn #symbol() {
@@ -90,7 +90,7 @@ pub fn codegen(
 
             root.push(item);
 
-            const_app.push(constructor);
+            mod_app.push(constructor);
         }
 
         root.push(module::codegen(
@@ -130,5 +130,5 @@ pub fn codegen(
         ));
     }
 
-    (const_app, root, user_tasks, hardware_tasks_imports)
+    (mod_app, root, user_tasks, hardware_tasks_imports)
 }

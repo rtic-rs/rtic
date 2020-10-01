@@ -10,14 +10,14 @@ pub fn codegen(
     analysis: &Analysis,
     extra: &Extra,
 ) -> (
-    // const_app -- the `static [mut]` variables behind the proxies
+    // mod_app -- the `static [mut]` variables behind the proxies
     Vec<TokenStream2>,
     // mod_resources -- the `resources` module
     TokenStream2,
     // mod_resources_imports -- the `resources` module imports
     Vec<TokenStream2>,
 ) {
-    let mut const_app = vec![];
+    let mut mod_app = vec![];
     let mut mod_resources = vec![];
     let mut mod_resources_imports = vec![];
 
@@ -42,7 +42,7 @@ pub fn codegen(
             };
 
             let attrs = &res.attrs;
-            const_app.push(quote!(
+            mod_app.push(quote!(
                 #[allow(non_upper_case_globals)]
                 #(#attrs)*
                 #(#cfgs)*
@@ -91,7 +91,7 @@ pub fn codegen(
                 use super::resources::#name;
             ));
 
-            const_app.push(util::impl_mutex(
+            mod_app.push(util::impl_mutex(
                 extra,
                 cfgs,
                 true,
@@ -118,5 +118,5 @@ pub fn codegen(
         })
     };
 
-    (const_app, mod_resources, mod_resources_imports)
+    (mod_app, mod_resources, mod_resources_imports)
 }

@@ -13,7 +13,7 @@ pub fn codegen(
     analysis: &Analysis,
     extra: &Extra,
 ) -> (
-    // const_app_software_tasks -- free queues, buffers and `${task}Resources` constructors
+    // mod_app_software_tasks -- free queues, buffers and `${task}Resources` constructors
     Vec<TokenStream2>,
     // root_software_tasks -- items that must be placed in the root of the crate:
     // - `${task}Locals` structs
@@ -25,7 +25,7 @@ pub fn codegen(
     // user_software_tasks_imports -- the imports for `#[task]` functions written by the user
     Vec<TokenStream2>,
 ) {
-    let mut const_app = vec![];
+    let mut mod_app = vec![];
     let mut root = vec![];
     let mut user_tasks = vec![];
     let mut software_tasks_imports = vec![];
@@ -51,7 +51,7 @@ pub fn codegen(
                     Box::new(|| util::link_section_uninit(true)),
                 )
             };
-            const_app.push(quote!(
+            mod_app.push(quote!(
                 /// Queue version of a free-list that keeps track of empty slots in
                 /// the following buffers
                 static mut #fq: #fq_ty = #fq_expr;
@@ -59,13 +59,13 @@ pub fn codegen(
 
             // Generate a resource proxy if needed
             if let Some(ceiling) = ceiling {
-                const_app.push(quote!(
+                mod_app.push(quote!(
                     struct #fq<'a> {
                         priority: &'a rtic::export::Priority,
                     }
                 ));
 
-                const_app.push(util::impl_mutex(
+                mod_app.push(util::impl_mutex(
                     extra,
                     &[],
                     false,
@@ -85,7 +85,7 @@ pub fn codegen(
                 let instants = util::instants_ident(name);
 
                 let uninit = mk_uninit();
-                const_app.push(quote!(
+                mod_app.push(quote!(
                     #uninit
                     /// Buffer that holds the instants associated to the inputs of a task
                     static mut #instants:
@@ -96,7 +96,7 @@ pub fn codegen(
 
             let uninit = mk_uninit();
             let inputs = util::inputs_ident(name);
-            const_app.push(quote!(
+            mod_app.push(quote!(
                 #uninit
                 /// Buffer that holds the inputs of a task
                 static mut #inputs: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
@@ -124,7 +124,7 @@ pub fn codegen(
 
             root.push(item);
 
-            const_app.push(constructor);
+            mod_app.push(constructor);
         }
 
         // `${task}Locals`
@@ -165,5 +165,5 @@ pub fn codegen(
         ));
     }
 
-    (const_app, root, user_tasks, software_tasks_imports)
+    (mod_app, root, user_tasks, software_tasks_imports)
 }

@@ -14,7 +14,7 @@ pub fn codegen(
     analysis: &Analysis,
     extra: &Extra,
 ) -> (
-    // const_app_idle -- the `${idle}Resources` constructor
+    // mod_app_idle -- the `${idle}Resources` constructor
     Option<TokenStream2>,
     // root_idle -- items that must be placed in the root of the crate:
     // - the `${idle}Locals` struct
@@ -31,7 +31,7 @@ pub fn codegen(
     if app.idles.len() > 0 {
         let idle = &app.idles.first().unwrap();
         let mut needs_lt = false;
-        let mut const_app = None;
+        let mut mod_app = None;
         let mut root_idle = vec![];
         let mut locals_pat = None;
         let mut locals_new = None;
@@ -45,7 +45,7 @@ pub fn codegen(
                 resources_struct::codegen(Context::Idle, 0, &mut needs_lt, app, analysis);
 
             root_idle.push(item);
-            const_app = Some(constructor);
+            mod_app = Some(constructor);
 
             let name_resource = format_ident!("{}Resources", name);
             user_idle_imports.push(quote!(
@@ -89,13 +89,7 @@ pub fn codegen(
             #name::Context::new(&rtic::export::Priority::new(0))
         ));
 
-        (
-            const_app,
-            root_idle,
-            user_idle,
-            user_idle_imports,
-            call_idle,
-        )
+        (mod_app, root_idle, user_idle, user_idle_imports, call_idle)
     } else {
         (
             None,

@@ -14,7 +14,7 @@ pub fn codegen(
     analysis: &Analysis,
     extra: &Extra,
 ) -> (
-    // const_app_idle -- the `${init}Resources` constructor
+    // mod_app_idle -- the `${init}Resources` constructor
     Option<TokenStream2>,
     // root_init -- items that must be placed in the root of the crate:
     // - the `${init}Locals` struct
@@ -105,13 +105,13 @@ pub fn codegen(
                 use super::#name;
         ));
 
-        let mut const_app = None;
+        let mut mod_app = None;
         if !init.args.resources.is_empty() {
             let (item, constructor) =
                 resources_struct::codegen(Context::Init, 0, &mut needs_lt, app, analysis);
 
             root_init.push(item);
-            const_app = Some(constructor);
+            mod_app = Some(constructor);
 
             let name_late = format_ident!("{}Resources", name);
             user_init_imports.push(quote!(
@@ -127,13 +127,7 @@ pub fn codegen(
 
         root_init.push(module::codegen(Context::Init, needs_lt, app, extra));
 
-        (
-            const_app,
-            root_init,
-            user_init,
-            user_init_imports,
-            call_init,
-        )
+        (mod_app, root_init, user_init, user_init_imports, call_init)
     } else {
         (None, vec![], None, vec![], None)
     }
