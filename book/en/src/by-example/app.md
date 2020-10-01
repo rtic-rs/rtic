@@ -7,7 +7,7 @@ This is the smallest possible RTIC application:
 ```
 
 All RTIC applications use the [`app`] attribute (`#[app(..)]`). This attribute
-must be applied to a `const` item that contains items. The `app` attribute has
+must be applied to a `mod`-item. The `app` attribute has
 a mandatory `device` argument that takes a *path* as a value. This path must
 point to a *peripheral access crate* (PAC) generated using [`svd2rust`]
 **v0.14.x** or newer. The `app` attribute will expand into a suitable entry
@@ -17,16 +17,9 @@ point so it's not required to use the [`cortex_m_rt::entry`] attribute.
 [`svd2rust`]: https://crates.io/crates/svd2rust
 [`cortex_m_rt::entry`]: ../../../api/cortex_m_rt_macros/attr.entry.html
 
-> **ASIDE**: Some of you may be wondering why we are using a `const` item as a
-> module and not a proper `mod` item. The reason is that using attributes on
-> modules requires a feature gate, which requires a nightly toolchain. To make
-> RTIC work on stable we use the `const` item instead. When more parts of macros
-> 1.2 are stabilized we'll move from a `const` item to a `mod` item and
-> eventually to a crate level attribute (`#![app]`).
-
 ## `init`
 
-Within the pseudo-module the `app` attribute expects to find an initialization
+Within the `app` module the attribute expects to find an initialization
 function marked with the `init` attribute. This function must have signature
 `fn(init::Context) [-> init::LateResources]` (the return type is not always
 required).
@@ -60,7 +53,7 @@ $ cargo run --example init
 ## `idle`
 
 A function marked with the `idle` attribute can optionally appear in the
-pseudo-module. This function is used as the special *idle task* and must have
+module. This function is used as the special *idle task* and must have
 signature `fn(idle::Context) - > !`.
 
 When present, the runtime will execute the `idle` task after `init`. Unlike
