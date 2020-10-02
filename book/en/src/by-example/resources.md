@@ -4,11 +4,11 @@ The framework provides an abstraction to share data between any of the contexts
 we saw in the previous section (task handlers, `init` and `idle`): resources.
 
 Resources are data visible only to functions declared within the `#[app]`
-pseudo-module. The framework gives the user complete control over which context
+module. The framework gives the user complete control over which context
 can access which resource.
 
 All resources are declared as a single `struct` within the `#[app]`
-pseudo-module. Each field in the structure corresponds to a different resource.
+module. Each field in the structure corresponds to a different resource.
 Resources can optionally be given an initial value using the `#[init]`
 attribute. Resources that are not given an initial value are referred to as
 *late* resources and are covered in more detail in a follow-up section in this

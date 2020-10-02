@@ -92,7 +92,7 @@ following snippet:
 
 ``` rust
 #[rtic::app(..)]
-const APP: () = {
+mod app {
     #[init(spawn = [foo, bar])]
     fn init(cx: init::Context) {
         cx.spawn.foo().unwrap();
@@ -113,5 +113,5 @@ const APP: () = {
     fn bar(cx: bar::Context, payload: i32) {
         // ..
     }
-};
+}
 ```

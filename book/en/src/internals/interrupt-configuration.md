@@ -13,7 +13,7 @@ This example gives you an idea of the code that the RTIC framework runs:
 
 ``` rust
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
     fn init(c: init::Context) {
         // .. user code ..
@@ -28,7 +28,7 @@ const APP: () = {
     fn foo(c: foo::Context) {
         // .. user code ..
     }
-};
+}
 ```
 
 The framework generates an entry point that looks like this:

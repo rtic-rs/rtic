@@ -9,7 +9,7 @@ is required to follow along.
 
 [repository]: https://github.com/rtic-rs/cortex-m-rtic
 
-To run the examples on your laptop / PC you'll need the `qemu-system-arm`
+To run the examples on your computer you'll need the `qemu-system-arm`
 program. Check [the embedded Rust book] for instructions on how to set up an
 embedded development environment that includes QEMU.
 
