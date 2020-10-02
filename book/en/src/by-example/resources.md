@@ -114,7 +114,9 @@ are required to access the resource even if the resource is contended by several
 tasks running at different priorities. The downside is that the task only gets a
 shared reference (`&-`) to the resource, limiting the operations it can perform
 on it, but where a shared reference is enough this approach reduces the number
-of required locks.
+of required locks. In addition to simple immutable data, this shared access can
+be useful where the resource type safely implements interior mutability, with
+appropriate locking or atomic operations of its own.
 
 Note that in this release of RTIC it is not possible to request both exclusive
 access (`&mut-`) and shared access (`&-`) to the *same* resource from different
