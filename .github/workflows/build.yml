@@ -376,9 +376,6 @@ jobs:
           target: thumbv7m-none-eabi
           override: true
 
-      - name: Disable optimisation profiles
-        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
-
       - uses: actions-rs/cargo@v1
         with:
           use-cross: false
@@ -419,9 +416,6 @@ jobs:
           toolchain: stable
           target: thumbv6m-none-eabi
           override: true
-
-      - name: Disable optimisation profiles
-        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
 
       - uses: actions-rs/cargo@v1
         with:
