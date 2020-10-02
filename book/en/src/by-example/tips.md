@@ -24,7 +24,8 @@ Here's one such example:
 
 ``` console
 $ cargo run --example generics
-{{#include ../../../../ci/expected/generics.run}}```
+{{#include ../../../../ci/expected/generics.run}}
+```
 
 Using generics also lets you change the static priorities of tasks during
 development without having to rewrite a bunch code every time.
@@ -47,7 +48,8 @@ the program has been compiled using the `dev` profile.
 $ cargo run --example cfg --release
 
 $ cargo run --example cfg
-{{#include ../../../../ci/expected/cfg.run}}```
+{{#include ../../../../ci/expected/cfg.run}}
+```
 
 ## Running tasks from RAM
 
@@ -78,7 +80,8 @@ Running this program produces the expected output.
 
 ``` console
 $ cargo run --example ramfunc
-{{#include ../../../../ci/expected/ramfunc.run}}```
+{{#include ../../../../ci/expected/ramfunc.run}}
+```
 
 One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
 (`0x2000_0000`), whereas `foo` ended in Flash (`0x0000_0000`).
@@ -115,7 +118,8 @@ Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 ```
 ``` console
 $ cargo run --example pool
-{{#include ../../../../ci/expected/pool.run}}```
+{{#include ../../../../ci/expected/pool.run}}
+```
 
 ## Inspecting the expanded code
 
