@@ -55,7 +55,8 @@ process.
 
 ```  console
 $ cargo run --example init
-{{#include ../../../../ci/expected/init.run}}```
+{{#include ../../../../ci/expected/init.run}}
+```
 
 ## `idle`
 
@@ -83,7 +84,8 @@ The example below shows that `idle` runs after `init`.
 
 ``` console
 $ cargo run --example idle
-{{#include ../../../../ci/expected/idle.run}}```
+{{#include ../../../../ci/expected/idle.run}}
+```
 
 ## Hardware tasks
 
@@ -104,7 +106,8 @@ mut` variables are safe to use within a hardware task.
 
 ``` console
 $ cargo run --example hardware
-{{#include ../../../../ci/expected/hardware.run}}```
+{{#include ../../../../ci/expected/hardware.run}}
+```
 
 So far all the RTIC applications we have seen look no different than the
 applications one can write using only the `cortex-m-rt` crate. From this point
@@ -136,7 +139,8 @@ The following example showcases the priority based scheduling of tasks.
 
 ``` console
 $ cargo run --example preempt
-{{#include ../../../../ci/expected/preempt.run}}```
+{{#include ../../../../ci/expected/preempt.run}}
+```
 
 Note that the task `gpiob` does *not* preempt task `gpioc` because its priority
 is the *same* as `gpioc`'s. However, once `gpioc` terminates the execution of

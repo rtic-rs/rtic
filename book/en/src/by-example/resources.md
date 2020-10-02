@@ -29,7 +29,8 @@ access to a resource named `shared`.
 
 ``` console
 $ cargo run --example resource
-{{#include ../../../../ci/expected/resource.run}}```
+{{#include ../../../../ci/expected/resource.run}}
+```
 
 Note that the `shared` resource cannot be accessed from `idle`. Attempting to do
 so results in a compile error.
@@ -71,7 +72,8 @@ lowest priority handler.
 
 ``` console
 $ cargo run --example lock
-{{#include ../../../../ci/expected/lock.run}}```
+{{#include ../../../../ci/expected/lock.run}}
+```
 
 ## Late resources
 
@@ -97,7 +99,8 @@ the consumer resource.
 
 ``` console
 $ cargo run --example late
-{{#include ../../../../ci/expected/late.run}}```
+{{#include ../../../../ci/expected/late.run}}
+```
 
 ## Only shared access
 
@@ -127,4 +130,5 @@ any kind of lock.
 
 ``` console
 $ cargo run --example only-shared-access
-{{#include ../../../../ci/expected/only-shared-access.run}}```
+{{#include ../../../../ci/expected/only-shared-access.run}}
+```
