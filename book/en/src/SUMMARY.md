@@ -21,5 +21,3 @@
   - [Ceiling analysis](./internals/ceilings.md)
   - [Software tasks](./internals/tasks.md)
   - [Timer queue](./internals/timer-queue.md)
-- [Homogeneous multi-core support](./homogeneous.md)
-- [Heterogeneous multi-core support](./heterogeneous.md)
