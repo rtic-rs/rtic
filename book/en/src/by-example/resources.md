@@ -1,4 +1,4 @@
-## Resources
+# Resources
 
 The framework provides an abstraction to share data between any of the contexts
 we saw in the previous section (task handlers, `init` and `idle`): resources.

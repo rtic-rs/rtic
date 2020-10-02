@@ -8,7 +8,6 @@ the version v0.5.0 of the framework.
 First, the version of the `cortex-m-rtic` dependency needs to be updated to
 `"0.5.0"`. The `timer-queue` feature needs to be removed.
 
-
 ``` toml
 [dependencies.cortex-m-rtic]
 # change this
@@ -194,7 +193,7 @@ Also, the `Duration` and `Instant` types and the `U32Ext` trait have been moved
 into the `rtic::cyccnt` module. This module is only available on ARMv7-M+
 devices. The removal of the `timer-queue` also brings back the `DWT` peripheral
 inside the core peripherals struct, this will need to be enabled by the application
-inside `init`. 
+inside `init`.
 
 Change this:
 
