@@ -9,6 +9,8 @@ can access which resource.
 
 All resources are declared as a single `struct` within the `#[app]`
 module. Each field in the structure corresponds to a different resource.
+The `struct` must be annotated with the following attribute: `#[resources]`.
+
 Resources can optionally be given an initial value using the `#[init]`
 attribute. Resources that are not given an initial value are referred to as
 *late* resources and are covered in more detail in a follow-up section in this
