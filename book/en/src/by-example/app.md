@@ -33,15 +33,16 @@ required).
 
 This initialization function will be the first part of the application to run.
 The `init` function will run *with interrupts disabled* and has exclusive access
-to Cortex-M and, optionally, device specific peripherals through the `core` and
-`device` fields of `init::Context`.
+to Cortex-M where the `bare_metal::CriticalSection` token is available as `cs`.
+And optionally, device specific peripherals through the `core` and `device` fields
+of `init::Context`.
 
 `static mut` variables declared at the beginning of `init` will be transformed
 into `&'static mut` references that are safe to access.
 
 [`rtic::Peripherals`]: ../../api/rtic/struct.Peripherals.html
 
-The example below shows the types of the `core` and `device` fields and
+The example below shows the types of the `core`, `device` and `cs` fields, and
 showcases safe access to a `static mut` variable. The `device` field is only
 available when the `peripherals` argument is set to `true` (it defaults to
 `false`).
