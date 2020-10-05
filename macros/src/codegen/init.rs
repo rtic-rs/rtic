@@ -125,7 +125,13 @@ pub fn codegen(
             quote!(let late = crate::#name(#(#locals_new,)* #name::Context::new(core.into()));),
         );
 
-        root_init.push(module::codegen(Context::Init, needs_lt, app, extra));
+        root_init.push(module::codegen(
+            Context::Init,
+            needs_lt,
+            app,
+            analysis,
+            extra,
+        ));
 
         (mod_app, root_init, user_init, user_init_imports, call_init)
     } else {

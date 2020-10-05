@@ -35,7 +35,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             #[allow(non_camel_case_types)]
             #[derive(Clone, Copy)]
             #[doc = #doc]
-            enum #t {
+            pub enum #t {
                 #(#variants,)*
             }
         ));
@@ -57,7 +57,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         items.push(quote!(
             #[doc = #doc]
-            static mut #rq: #rq_ty = #rq_expr;
+            pub static mut #rq: #rq_ty = #rq_expr;
         ));
 
         if let Some(ceiling) = channel.ceiling {

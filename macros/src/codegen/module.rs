@@ -2,9 +2,16 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::{ast::App, Context};
 
-use crate::{check::Extra, codegen::util};
+// use crate::{analyze::Analysis, check::Extra, codegen::spawn_module, codegen::util};
+use crate::{analyze::Analysis, check::Extra, codegen::util};
 
-pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) -> TokenStream2 {
+pub fn codegen(
+    ctxt: Context,
+    resources_tick: bool,
+    app: &App,
+    analysis: &Analysis,
+    extra: &Extra,
+) -> TokenStream2 {
     let mut items = vec![];
     let mut fields = vec![];
     let mut values = vec![];
@@ -317,6 +324,69 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
             }
         }
     ));
+
+    // not sure if this is the right way, maybe its backwards,
+    // that spawn_module should put in in root
+
+    if let Context::SoftwareTask(..) = ctxt {
+        let spawnee = &app.software_tasks[name];
+        let priority = spawnee.args.priority;
+        let t = util::spawn_t_ident(priority);
+        let cfgs = &spawnee.cfgs;
+        let (args, tupled, _untupled, ty) = util::regroup_inputs(&spawnee.inputs);
+        let args = &args;
+        let tupled = &tupled;
+        let fq = util::fq_ident(name);
+        let rq = util::rq_ident(priority);
+        let inputs = util::inputs_ident(name);
+
+        eprintln!("app name: {}", app.name);
+        eprintln!("inputs {}", &inputs);
+        eprintln!("task name: {}", name);
+        eprintln!("fq {}", fq);
+        eprintln!("rq {}", rq);
+        let app_name = &app.name;
+        let app_path = quote! {crate::#app_name};
+
+        let device = extra.device;
+        let enum_ = util::interrupt_ident();
+        let interrupt = &analysis.interrupts.get(&priority);
+        let pend = {
+            quote!(
+                rtic::pend(#device::#enum_::#interrupt);
+            )
+        };
+
+        eprintln!("pend {}", &pend);
+
+        items.push(quote!(
+        #(#cfgs)*
+        pub fn spawn(#(#args,)*) -> Result<(), #ty> {
+            // #let_instant // do we need it?
+            use rtic::Mutex as _;
+
+            let input = #tupled;
+            // TODO: use critical section, now we are unsafe
+            unsafe {
+                if let Some(index) = #app_path::#fq.dequeue() {
+                    #app_path::#inputs
+                        .get_unchecked_mut(usize::from(index))
+                        .as_mut_ptr()
+                        .write(input);
+
+                    // #write_instant, do we need?
+
+                    #app_path::#rq.enqueue_unchecked((#app_path::#t::#name, index));
+
+                    #pend
+
+                    Ok(())
+                } else {
+                    Err(input)
+                }
+            }
+        }));
+    }
 
     if !items.is_empty() {
         quote!(

@@ -97,6 +97,7 @@ pub fn codegen(
             Context::HardwareTask(name),
             needs_lt,
             app,
+            analysis,
             extra,
         ));
 

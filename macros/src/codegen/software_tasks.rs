@@ -54,7 +54,7 @@ pub fn codegen(
             mod_app.push(quote!(
                 /// Queue version of a free-list that keeps track of empty slots in
                 /// the following buffers
-                static mut #fq: #fq_ty = #fq_expr;
+                pub static mut #fq: #fq_ty = #fq_expr;
             ));
 
             // Generate a resource proxy if needed
@@ -88,7 +88,7 @@ pub fn codegen(
                 mod_app.push(quote!(
                     #uninit
                     /// Buffer that holds the instants associated to the inputs of a task
-                    static mut #instants:
+                    pub static mut #instants:
                         [core::mem::MaybeUninit<<#m as rtic::Monotonic>::Instant>; #cap_lit] =
                         [#(#elems,)*];
                 ));
@@ -99,7 +99,7 @@ pub fn codegen(
             mod_app.push(quote!(
                 #uninit
                 /// Buffer that holds the inputs of a task
-                static mut #inputs: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
+                pub static mut #inputs: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
                     [#(#elems,)*];
             ));
         }
@@ -161,6 +161,7 @@ pub fn codegen(
             Context::SoftwareTask(name),
             needs_lt,
             app,
+            analysis,
             extra,
         ));
     }
