@@ -10,7 +10,7 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
-    #[init(spawn = [foo])]
+    #[init(spawn = [foo, foo2])]
     fn init(_c: init::Context) {
         foo::spawn(1, 2).unwrap();
     }
@@ -21,7 +21,13 @@ mod app {
         if x == 2 {
             debug::exit(debug::EXIT_SUCCESS);
         }
-        foo::spawn(2, 3).unwrap();
+        foo2::spawn(2).unwrap();
+    }
+
+    #[task()]
+    fn foo2(_c: foo2::Context, x: i32) {
+        hprintln!("foo2 {}", x).unwrap();
+        foo::spawn(x, 0).unwrap();
     }
 
     // RTIC requires that unused interrupts are declared in an extern block when
