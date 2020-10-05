@@ -595,7 +595,11 @@ jobs:
         run: |
           langs=( en ru )
           devver=dev
-          stable=$(git tag | grep v | grep -v "-" | tail -n 1 | cut -c2-4)
+          # Query git for tagged releases, all releases start with "v"
+          # followed by MAJOR.MINOR.PATCH, see semver.org
+          # Then remove all pre-releases/tags with hyphens (-).
+          # The latest release is last, finally trim "v" and PATCH
+          stable=$(git tag | grep "^v" | grep -v "-" | tail -n 1 | cut -c2-4)
           vers=( 0.5.x 0.4.x  )
 
           # Create directories
