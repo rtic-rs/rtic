@@ -582,8 +582,7 @@ jobs:
       - name: mdBook Action
         uses: peaceiris/actions-mdbook@v1.1.11
         with:
-          mdbook-version: '0.3.1'
-          # mdbook-version: 'latest'
+          mdbook-version: 'latest'
 
       - name: Remove cargo-config
         run: rm -f .cargo/config
