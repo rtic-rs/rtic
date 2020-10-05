@@ -13,7 +13,8 @@ const PERIOD: u32 = 8_000_000;
 
 // NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-const APP: () = {
+mod app {
+
     #[init(schedule = [foo])]
     fn init(cx: init::Context) -> init::LateResources {
         // omitted: initialization of `CYCCNT`
@@ -37,4 +38,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

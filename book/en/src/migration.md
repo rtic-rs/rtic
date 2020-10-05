@@ -1,13 +1,111 @@
-# Migrating from v0.4.x to v0.5.0
+# Migration of RTIC
+
+## Migrating from v0.5.x to v0.6.0
+
+This section describes how to upgrade from v0.5.x to v0.6.0 of the RTIC framework.
+
+### `Cargo.toml` - version bump
+
+Change the version of `cortex-m-rtic` to `"0.6.0"`.
+
+### Module instead of Const
+
+With the support of attributes on modules the `const APP` workaround is not needed.
+
+Change
+
+``` rust
+#[rtic::app(/* .. */)]
+const APP: () = {
+  [code here]
+};
+```
+
+into
+
+``` rust
+#[rtic::app(/* .. */)]
+mod app {
+  [code here]
+}
+```
+
+Now that a regular Rust module is used it means it is possible to have custom
+user code within that module.
+Additionally, it means that `use`-statements for resources etc may be required.
+
+### Init always returns late resources
+
+In order to make the API more symmetric the #[init]-task always returns a late resource.
+
+From this:
+
+``` rust
+#[rtic::app(device = lm3s6965)]
+mod app {
+    #[init]
+    fn init(_: init::Context) {
+        rtic::pend(Interrupt::UART0);
+    }
+    [more code]
+}
+```
+
+to this:
+
+``` rust
+#[rtic::app(device = lm3s6965)]
+mod app {
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
+        rtic::pend(Interrupt::UART0);
+
+        init::LateResources {}
+    }
+    [more code]
+}
+```
+
+### Resources struct - #[resources]
+
+Previously the RTIC resources had to be in in a struct named exactly "Resources":
+
+``` rust
+struct Resources {
+    // Resources defined in here
+}
+```
+
+With RTIC v0.6.0 the resources struct is annotated similarly like
+`#[task]`, `#[init]`, `#[idle]`: with an attribute `#[resources]`
+
+``` rust
+#[resources]
+struct Resources {
+    // Resources defined in here
+}
+```
+
+In fact, the name of the struct is now up to the developer:
+
+``` rust
+#[resources]
+struct whateveryouwant {
+    // Resources defined in here
+}
+```
+
+would work equally well.
+
+## Migrating from v0.4.x to v0.5.0
 
 This section covers how to upgrade an application written against RTIC v0.4.x to
 the version v0.5.0 of the framework.
 
-## `Cargo.toml`
+### `Cargo.toml`
 
 First, the version of the `cortex-m-rtic` dependency needs to be updated to
 `"0.5.0"`. The `timer-queue` feature needs to be removed.
-
 
 ``` toml
 [dependencies.cortex-m-rtic]
@@ -22,7 +120,7 @@ features = ["timer-queue"]
 #           ^^^^^^^^^^^^^
 ```
 
-## `Context` argument
+### `Context` argument
 
 All functions inside the `#[rtic::app]` item need to take as first argument a
 `Context` structure. This `Context` type will contain the variables that were
@@ -74,7 +172,7 @@ const APP: () = {
 };
 ```
 
-## Resources
+### Resources
 
 The syntax used to declare resources has been changed from `static mut`
 variables to a `struct Resources`.
@@ -98,7 +196,7 @@ const APP: () = {
 };
 ```
 
-## Device peripherals
+### Device peripherals
 
 If your application was accessing the device peripherals in `#[init]` through
 the `device` variable then you'll need to add `peripherals = true` to the
@@ -136,7 +234,7 @@ const APP: () = {
 };
 ```
 
-## `#[interrupt]` and `#[exception]`
+### `#[interrupt]` and `#[exception]`
 
 The `#[interrupt]` and `#[exception]` attributes have been removed. To declare
 hardware tasks in v0.5.x use the `#[task]` attribute with the `binds` argument.
@@ -182,7 +280,7 @@ const APP: () = {
 };
 ```
 
-## `schedule`
+### `schedule`
 
 The `timer-queue` feature has been removed. To use the `schedule` API one must
 first define the monotonic timer the runtime will use using the `monotonic`
@@ -194,7 +292,7 @@ Also, the `Duration` and `Instant` types and the `U32Ext` trait have been moved
 into the `rtic::cyccnt` module. This module is only available on ARMv7-M+
 devices. The removal of the `timer-queue` also brings back the `DWT` peripheral
 inside the core peripherals struct, this will need to be enabled by the application
-inside `init`. 
+inside `init`.
 
 Change this:
 

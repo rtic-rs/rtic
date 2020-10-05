@@ -25,7 +25,8 @@ priorities. The three software tasks are mapped to 2 interrupts handlers.
 
 ``` console
 $ cargo run --example task
-{{#include ../../../../ci/expected/task.run}}```
+{{#include ../../../../ci/expected/task.run}}
+```
 
 ## Message passing
 
@@ -41,7 +42,8 @@ The example below showcases three tasks, two of them expect a message.
 
 ``` console
 $ cargo run --example message
-{{#include ../../../../ci/expected/message.run}}```
+{{#include ../../../../ci/expected/message.run}}
+```
 
 ## Capacity
 
@@ -63,7 +65,8 @@ fail (panic).
 
 ``` console
 $ cargo run --example capacity
-{{#include ../../../../ci/expected/capacity.run}}```
+{{#include ../../../../ci/expected/capacity.run}}
+```
 
 ## Error handling
 
@@ -92,7 +95,7 @@ following snippet:
 
 ``` rust
 #[rtic::app(..)]
-const APP: () = {
+mod app {
     #[init(spawn = [foo, bar])]
     fn init(cx: init::Context) {
         cx.spawn.foo().unwrap();
@@ -113,5 +116,5 @@ const APP: () = {
     fn bar(cx: bar::Context, payload: i32) {
         // ..
     }
-};
+}
 ```

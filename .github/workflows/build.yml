@@ -45,7 +45,6 @@ jobs:
           - x86_64-unknown-linux-gnu
         toolchain:
           - stable
-          - 1.36.0
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -79,10 +78,6 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
-      - name: Disable optimisation profiles
-        if: matrix.toolchain == '1.36.0'
-        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
-
       - name: cargo check
         uses: actions-rs/cargo@v1
         with:
@@ -90,7 +85,7 @@ jobs:
           command: check
           args: --target=${{ matrix.target }}
 
-  # Verify all examples
+  # Verify all examples, checks
   checkexamples:
     name: checkexamples
     runs-on: ubuntu-20.04
@@ -144,6 +139,51 @@ jobs:
           use-cross: false
           command: check
           args: --examples --target=${{ matrix.target }} --features __min_r1_43,${{ env.V7 }}
+
+  # Verify the example output with run-pass tests
+  testexamples:
+    name: testexamples
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+          - thumbv6m-none-eabi
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+          components: llvm-tools-preview
 
       # Use precompiled binutils
       - name: cargo install cargo-binutils
@@ -306,7 +346,6 @@ jobs:
           - x86_64-unknown-linux-gnu
         toolchain:
           - stable
-          - 1.36.0
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -339,10 +378,6 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
           override: true
-
-      - name: Disable optimisation profiles
-        if: matrix.toolchain == '1.36.0'
-        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
 
       - name: cargo check
         uses: actions-rs/cargo@v1
@@ -382,12 +417,9 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.36.0
+          toolchain: stable
           target: thumbv7m-none-eabi
           override: true
-
-      - name: Disable optimisation profiles
-        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
 
       - uses: actions-rs/cargo@v1
         with:
@@ -426,12 +458,9 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.36.0
+          toolchain: stable
           target: thumbv6m-none-eabi
           override: true
-
-      - name: Disable optimisation profiles
-        run: sed -i '/^\[profile.*build-override]$/,/^$/{/^#/!{/^$/!d}}' Cargo.toml
 
       - uses: actions-rs/cargo@v1
         with:
@@ -594,27 +623,37 @@ jobs:
       - name: Build books
         run: |
           langs=( en ru )
-          latest=0.5
-          vers=( 0.4.x )
+          devver=( dev )
+          # The latest stable must be the first element in the array
+          vers=( 0.5.x 0.4.x  )
+
+          # All releases start with "v"
+          # followed by MAJOR.MINOR.PATCH, see semver.org
+          # Retain MAJOR.MINOR as $stable
+          stable=${vers%.*}
+
+          echo "Stable version: $stable"
 
           # Create directories
           td=$(mktemp -d)
-          mkdir -p $td/$latest/book/
-          cp -r target/doc $td/$latest/api
+          mkdir -p $td/$devver/book/
+          cp -r target/doc $td/$devver/api
 
-          # sed fixes
-          sed 's|URL|rtic/index.html|g' redirect.html > $td/$latest/api/index.html
-          sed 's|URL|0.5|g' redirect.html > $td/index.html
-          sed 's|URL|book/en|g' redirect.html > $td/$latest/index.html
+          # Redirect the main site to the stable release
+          sed "s|URL|$stable|g" redirect.html > $td/index.html
+
+          # Create the redirects for dev-version
+          sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
+          sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html
 
           # Build books
           for lang in ${langs[@]}; do
               ( cd book/$lang && mdbook build )
-              cp -r book/$lang/book $td/$latest/book/$lang
-              cp LICENSE-* $td/$latest/book/$lang/
+              cp -r book/$lang/book $td/$devver/book/$lang
+              cp LICENSE-* $td/$devver/book/$lang/
           done
 
-          # Build older versions
+          # Build older versions, including stable
           root=$(pwd)
           for ver in ${vers[@]}; do
               prefix=${ver%.*}
@@ -639,6 +678,9 @@ jobs:
               rm -rf $src
           done
 
+          # Copy the stable book to the stable alias
+          cp -r $td/$stable $td/stable
+
           # Forward CNAME file
           cp CNAME $td/
           mv $td/ bookstodeploy
@@ -660,6 +702,7 @@ jobs:
       - style
       - check
       - checkexamples
+      - testexamples
       - checkmacros
       - testv7
       - testv6
@@ -676,6 +719,7 @@ jobs:
       - style
       - check
       - checkexamples
+      - testexamples
       - checkmacros
       - testv7
       - testv6

@@ -15,8 +15,13 @@ use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use heapless::{
+        consts::*,
+        spsc::{Consumer, Producer},
+    };
     // Late resources
+    #[resources]
     struct Resources {
         p: Producer<'static, u32, U4>,
         c: Consumer<'static, u32, U4>,
@@ -49,4 +54,4 @@ const APP: () = {
     fn uart0(c: uart0::Context) {
         c.resources.p.enqueue(42).unwrap();
     }
-};
+}

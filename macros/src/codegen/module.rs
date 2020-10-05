@@ -47,6 +47,14 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
                 values.push(quote!(device: #device::Peripherals::steal()));
             }
 
+            lt = Some(quote!('a));
+            fields.push(quote!(
+                /// Critical section token for init
+                pub cs: rtic::export::CriticalSection<#lt>
+            ));
+
+            values.push(quote!(cs: rtic::export::CriticalSection::new()));
+
             values.push(quote!(core));
         }
 

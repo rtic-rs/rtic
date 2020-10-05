@@ -1,6 +1,6 @@
 # Types, Send and Sync
 
-Every function within the `APP` pseudo-module has a `Context` structure as its
+Every function within the `app` module has a `Context` structure as its
 first parameter. All the fields of these structures have predictable,
 non-anonymous types so you can write plain functions that take them as arguments.
 

@@ -7,7 +7,7 @@ This is the smallest possible RTIC application:
 ```
 
 All RTIC applications use the [`app`] attribute (`#[app(..)]`). This attribute
-must be applied to a `const` item that contains items. The `app` attribute has
+must be applied to a `mod`-item. The `app` attribute has
 a mandatory `device` argument that takes a *path* as a value. This path must
 point to a *peripheral access crate* (PAC) generated using [`svd2rust`]
 **v0.14.x** or newer. The `app` attribute will expand into a suitable entry
@@ -17,31 +17,25 @@ point so it's not required to use the [`cortex_m_rt::entry`] attribute.
 [`svd2rust`]: https://crates.io/crates/svd2rust
 [`cortex_m_rt::entry`]: ../../../api/cortex_m_rt_macros/attr.entry.html
 
-> **ASIDE**: Some of you may be wondering why we are using a `const` item as a
-> module and not a proper `mod` item. The reason is that using attributes on
-> modules requires a feature gate, which requires a nightly toolchain. To make
-> RTIC work on stable we use the `const` item instead. When more parts of macros
-> 1.2 are stabilized we'll move from a `const` item to a `mod` item and
-> eventually to a crate level attribute (`#![app]`).
-
 ## `init`
 
-Within the pseudo-module the `app` attribute expects to find an initialization
+Within the `app` module the attribute expects to find an initialization
 function marked with the `init` attribute. This function must have signature
 `fn(init::Context) [-> init::LateResources]` (the return type is not always
 required).
 
 This initialization function will be the first part of the application to run.
 The `init` function will run *with interrupts disabled* and has exclusive access
-to Cortex-M and, optionally, device specific peripherals through the `core` and
-`device` fields of `init::Context`.
+to Cortex-M where the `bare_metal::CriticalSection` token is available as `cs`.
+And optionally, device specific peripherals through the `core` and `device` fields
+of `init::Context`.
 
 `static mut` variables declared at the beginning of `init` will be transformed
 into `&'static mut` references that are safe to access.
 
 [`rtic::Peripherals`]: ../../api/rtic/struct.Peripherals.html
 
-The example below shows the types of the `core` and `device` fields and
+The example below shows the types of the `core`, `device` and `cs` fields, and
 showcases safe access to a `static mut` variable. The `device` field is only
 available when the `peripherals` argument is set to `true` (it defaults to
 `false`).
@@ -55,12 +49,13 @@ process.
 
 ```  console
 $ cargo run --example init
-{{#include ../../../../ci/expected/init.run}}```
+{{#include ../../../../ci/expected/init.run}}
+```
 
 ## `idle`
 
 A function marked with the `idle` attribute can optionally appear in the
-pseudo-module. This function is used as the special *idle task* and must have
+module. This function is used as the special *idle task* and must have
 signature `fn(idle::Context) - > !`.
 
 When present, the runtime will execute the `idle` task after `init`. Unlike
@@ -86,7 +81,8 @@ in LLVM which miss-optimizes empty loops to a `UDF` instruction in release mode.
 
 ``` console
 $ cargo run --example idle
-{{#include ../../../../ci/expected/idle.run}}```
+{{#include ../../../../ci/expected/idle.run}}
+```
 
 ## Hardware tasks
 
@@ -107,7 +103,8 @@ mut` variables are safe to use within a hardware task.
 
 ``` console
 $ cargo run --example hardware
-{{#include ../../../../ci/expected/hardware.run}}```
+{{#include ../../../../ci/expected/hardware.run}}
+```
 
 So far all the RTIC applications we have seen look no different than the
 applications one can write using only the `cortex-m-rt` crate. From this point
@@ -139,7 +136,8 @@ The following example showcases the priority based scheduling of tasks.
 
 ``` console
 $ cargo run --example preempt
-{{#include ../../../../ci/expected/preempt.run}}```
+{{#include ../../../../ci/expected/preempt.run}}
+```
 
 Note that the task `gpiob` does *not* preempt task `gpioc` because its priority
 is the *same* as `gpioc`'s. However, once `gpioc` terminates the execution of

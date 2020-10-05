@@ -1,7 +1,9 @@
 #![no_main]
+use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    #[resources]
     struct Resources {
         #[cfg(never)]
         #[init(0)]
@@ -74,4 +76,4 @@ const APP: () = {
         c.resources.s2;
         c.resources.o5;
     }
-};
+}

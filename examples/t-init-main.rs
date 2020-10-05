@@ -7,11 +7,11 @@ use cortex_m_semihosting::debug;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
-    fn main(_: main::Context) -> main::LateResources {
+    fn init(_: init::Context) -> init::LateResources {
         debug::exit(debug::EXIT_SUCCESS);
 
-        main::LateResources {}
+        init::LateResources {}
     }
-};
+}

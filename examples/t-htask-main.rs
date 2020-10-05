@@ -7,7 +7,7 @@ use cortex_m_semihosting::debug;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
     fn init(_: init::Context) -> init::LateResources {
         rtic::pend(lm3s6965::Interrupt::UART0);
@@ -16,7 +16,7 @@ const APP: () = {
     }
 
     #[task(binds = UART0)]
-    fn main(_: main::Context) {
+    fn taskmain(_: taskmain::Context) {
         debug::exit(debug::EXIT_SUCCESS);
     }
-};
+}

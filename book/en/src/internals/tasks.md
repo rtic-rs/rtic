@@ -28,7 +28,7 @@ Consider this example:
 
 ``` rust
 #[rtic::app(device = ..)]
-const APP: () = {
+mod app {
     // ..
 
     #[interrupt(binds = UART0, priority = 2, spawn = [bar, baz])]
@@ -51,7 +51,7 @@ const APP: () = {
     extern "C" {
         fn UART1();
     }
-};
+}
 ```
 
 The framework produces the following task dispatcher which consists of an
@@ -62,7 +62,7 @@ fn bar(c: bar::Context) {
     // .. user code ..
 }
 
-const APP: () = {
+mod app {
     use heapless::spsc::Queue;
     use cortex_m::register::basepri;
 
@@ -110,7 +110,7 @@ const APP: () = {
         // BASEPRI invariant
         basepri::write(snapshot);
     }
-};
+}
 ```
 
 ## Spawning a task
@@ -144,7 +144,7 @@ mod foo {
     }
 }
 
-const APP: () = {
+mod app {
     // ..
 
     // Priority ceiling for the producer endpoint of the `RQ1`
@@ -194,7 +194,7 @@ const APP: () = {
             }
         }
     }
-};
+}
 ```
 
 Using `bar_FQ` to limit the number of `bar` tasks that can be spawned may seem
@@ -211,7 +211,7 @@ fn baz(c: baz::Context, input: u64) {
     // .. user code ..
 }
 
-const APP: () = {
+mod app {
     // ..
 
     // Now we show the full contents of the `Ready` struct
@@ -263,13 +263,13 @@ const APP: () = {
             }
         }
     }
-};
+}
 ```
 
 And now let's look at the real implementation of the task dispatcher:
 
 ``` rust
-const APP: () = {
+mod app {
     // ..
 
     #[no_mangle]
@@ -304,7 +304,7 @@ const APP: () = {
         // BASEPRI invariant
         basepri::write(snapshot);
     }
-};
+}
 ```
 
 `INPUTS` plus `FQ`, the free queue, is effectively a memory pool. However,
@@ -357,7 +357,7 @@ Consider the following example:
 
 ``` rust
 #[rtic::app(device = ..)]
-const APP: () = {
+mod app {
     #[idle(spawn = [foo, bar])]
     fn idle(c: idle::Context) -> ! {
         // ..
@@ -382,7 +382,7 @@ const APP: () = {
     fn quux(c: quux::Context) {
         // ..
     }
-};
+}
 ```
 
 This is how the ceiling analysis would go:

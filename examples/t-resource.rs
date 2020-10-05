@@ -8,7 +8,8 @@
 use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    #[resources]
     struct Resources {
         #[init(0)]
         o1: u32, // init
@@ -88,4 +89,4 @@ const APP: () = {
         // no `Mutex` proxy when co-owned by cooperative (same priority) tasks
         let _: &mut u32 = c.resources.s2;
     }
-};
+}
