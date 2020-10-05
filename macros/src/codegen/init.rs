@@ -63,6 +63,12 @@ pub fn codegen(
             }
         ));
 
+        let name_late = format_ident!("{}LateResources", name);
+        user_init_imports.push(quote!(
+                #[allow(non_snake_case)]
+                use super::#name_late;
+        ));
+
         let mut locals_pat = None;
         let mut locals_new = None;
         if !init.locals.is_empty() {
