@@ -15,9 +15,11 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         #[cfg(never)]
         static mut BAR: u32 = 0;
+
+        init::LateResources {}
     }
 
     #[idle]

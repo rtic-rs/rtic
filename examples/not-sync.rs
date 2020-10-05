@@ -26,8 +26,10 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         debug::exit(debug::EXIT_SUCCESS);
+
+        init::LateResources {}
     }
 
     #[task(resources = [&shared])]

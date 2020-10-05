@@ -26,9 +26,11 @@ mod app {
     }
 
     #[init(spawn = [baz, quux])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         c.spawn.baz().unwrap();
         c.spawn.quux().unwrap();
+
+        init::LateResources {}
     }
 
     #[task(spawn = [bar])]

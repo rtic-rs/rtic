@@ -261,14 +261,12 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
 
     if let Context::Init = ctxt {
         let init = &app.inits.first().unwrap();
-        if init.returns_late_resources {
-            let late_resources = util::late_resources_ident(&init.name);
+        let late_resources = util::late_resources_ident(&init.name);
 
-            items.push(quote!(
-                #[doc(inline)]
-                pub use super::#late_resources as LateResources;
-            ));
-        }
+        items.push(quote!(
+            #[doc(inline)]
+            pub use super::#late_resources as LateResources;
+        ));
     }
 
     let doc = match ctxt {

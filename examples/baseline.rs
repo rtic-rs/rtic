@@ -13,13 +13,15 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
     #[init(spawn = [foo])]
-    fn init(cx: init::Context) {
+    fn init(cx: init::Context) -> init::LateResources {
         // omitted: initialization of `CYCCNT`
 
         hprintln!("init(baseline = {:?})", cx.start).unwrap();
 
         // `foo` inherits the baseline of `init`: `Instant(0)`
         cx.spawn.foo().unwrap();
+
+        init::LateResources {}
     }
 
     #[task(schedule = [foo])]

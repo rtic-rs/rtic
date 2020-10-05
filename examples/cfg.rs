@@ -20,9 +20,11 @@ mod app {
     }
 
     #[init(spawn = [foo])]
-    fn init(cx: init::Context) {
+    fn init(cx: init::Context) -> init::LateResources {
         cx.spawn.foo().unwrap();
         cx.spawn.foo().unwrap();
+
+        init::LateResources {}
     }
 
     #[idle]

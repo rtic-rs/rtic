@@ -5,27 +5,27 @@ error[E0425]: cannot find value `FOO` in this scope
    |         ^^^ not found in this scope
 
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:19:9
+  --> $DIR/locals-cfg.rs:21:9
    |
-19 |         FOO;
+21 |         FOO;
    |         ^^^ not found in this scope
 
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:29:9
+  --> $DIR/locals-cfg.rs:31:9
    |
-29 |         FOO;
+31 |         FOO;
    |         ^^^ not found in this scope
 
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:37:9
+  --> $DIR/locals-cfg.rs:39:9
    |
-37 |         FOO;
+39 |         FOO;
    |         ^^^ not found in this scope
 
 error[E0425]: cannot find value `FOO` in this scope
-  --> $DIR/locals-cfg.rs:45:9
+  --> $DIR/locals-cfg.rs:47:9
    |
-45 |         FOO;
+47 |         FOO;
    |         ^^^ not found in this scope
 
 error: duplicate lang item in crate `panic_halt` (which `$CRATE` depends on): `panic_impl`.
