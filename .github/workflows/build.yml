@@ -594,27 +594,30 @@ jobs:
       - name: Build books
         run: |
           langs=( en ru )
-          latest=0.5
-          vers=( 0.4.x )
+          devver=dev
+          stable=$(git tag | grep v | tail -n 1 | cut -c2-4)
+          vers=( 0.5.x 0.4.x  )
 
           # Create directories
           td=$(mktemp -d)
-          mkdir -p $td/$latest/book/
-          cp -r target/doc $td/$latest/api
+          mkdir -p $td/$devver/book/
+          cp -r target/doc $td/$devver/api
 
-          # sed fixes
-          sed 's|URL|rtic/index.html|g' redirect.html > $td/$latest/api/index.html
-          sed 's|URL|0.5|g' redirect.html > $td/index.html
-          sed 's|URL|book/en|g' redirect.html > $td/$latest/index.html
+          # Redirect the main site to the stable release
+          sed "s|URL|$stable|g" redirect.html > $td/index.html
+
+          # Create the redirects for dev-version
+          sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
+          sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html
 
           # Build books
           for lang in ${langs[@]}; do
               ( cd book/$lang && mdbook build )
-              cp -r book/$lang/book $td/$latest/book/$lang
-              cp LICENSE-* $td/$latest/book/$lang/
+              cp -r book/$lang/book $td/$devver/book/$lang
+              cp LICENSE-* $td/$devver/book/$lang/
           done
 
-          # Build older versions
+          # Build older versions, including stable
           root=$(pwd)
           for ver in ${vers[@]}; do
               prefix=${ver%.*}
@@ -638,6 +641,9 @@ jobs:
 
               rm -rf $src
           done
+
+          # Create alias for the stable release
+          ln -s $td/$stable $td/stable
 
           # Forward CNAME file
           cp CNAME $td/
