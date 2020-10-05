@@ -20,7 +20,6 @@ mod schedule_body;
 mod software_tasks;
 mod spawn;
 mod spawn_body;
-mod spawn_module;
 mod timer_queue;
 mod util;
 
