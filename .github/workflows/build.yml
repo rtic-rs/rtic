@@ -578,7 +578,7 @@ jobs:
       - name: Build books
         run: |
           langs=( en ru )
-          devver=dev
+          devver=( dev )
           # Query git for tagged releases, all releases start with "v"
           # followed by MAJOR.MINOR.PATCH, see semver.org
           # Then remove all pre-releases/tags with hyphens (-).
@@ -631,7 +631,7 @@ jobs:
           done
 
           # Create alias for the stable release
-          ln -s $td/$stable $td/stable
+          ln -s $stable $td/stable
 
           # Forward CNAME file
           cp CNAME $td/
