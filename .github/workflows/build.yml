@@ -85,7 +85,7 @@ jobs:
           command: check
           args: --target=${{ matrix.target }}
 
-  # Verify all examples
+  # Verify all examples, checks
   checkexamples:
     name: checkexamples
     runs-on: ubuntu-20.04
@@ -139,6 +139,51 @@ jobs:
           use-cross: false
           command: check
           args: --examples --target=${{ matrix.target }} --features __min_r1_43,${{ env.V7 }}
+
+  # Verify the example output with run-pass tests
+  testexamples:
+    name: testexamples
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+          - thumbv6m-none-eabi
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+          components: llvm-tools-preview
 
       # Use precompiled binutils
       - name: cargo install cargo-binutils
@@ -657,6 +702,7 @@ jobs:
       - style
       - check
       - checkexamples
+      - testexamples
       - checkmacros
       - testv7
       - testv6
@@ -673,6 +719,7 @@ jobs:
       - style
       - check
       - checkexamples
+      - testexamples
       - checkmacros
       - testv7
       - testv6
