@@ -10,7 +10,8 @@ use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    #[resources]
     struct Resources {
         // Some resources to work with
         #[init(0)]
@@ -44,4 +45,4 @@ const APP: () = {
 
         hprintln!("UART0: a = {}, b = {}, c = {}", a, b, c).unwrap();
     }
-};
+}

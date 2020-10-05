@@ -13,7 +13,10 @@ use rtic::app;
 pub struct MustBeSend;
 
 #[app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use super::MustBeSend;
+
+    #[resources]
     struct Resources {
         #[init(None)]
         shared: Option<MustBeSend>,
@@ -37,4 +40,4 @@ const APP: () = {
             debug::exit(debug::EXIT_SUCCESS);
         }
     }
-};
+}

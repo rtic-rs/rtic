@@ -1,7 +1,8 @@
 #![no_main]
+use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
     fn init(_: init::Context) {
         #[cfg(never)]
@@ -47,4 +48,4 @@ const APP: () = {
     extern "C" {
         fn UART1();
     }
-};
+}

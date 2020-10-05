@@ -18,7 +18,12 @@ use rtic::app;
 pool!(P: [u8; 128]);
 
 #[app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use crate::Box;
+
+    // Import the memory pool into scope
+    use super::P;
+
     #[init]
     fn init(_: init::Context) {
         static mut MEMORY: [u8; 512] = [0; 512];
@@ -66,4 +71,4 @@ const APP: () = {
         fn SSI0();
         fn QEI0();
     }
-};
+}

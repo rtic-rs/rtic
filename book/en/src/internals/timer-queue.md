@@ -12,7 +12,7 @@ Let's see how this in implemented in code. Consider the following program:
 
 ``` rust
 #[rtic::app(device = ..)]
-const APP: () = {
+mod app {
     // ..
 
     #[task(capacity = 2, schedule = [foo])]
@@ -24,7 +24,7 @@ const APP: () = {
     extern "C" {
         fn UART0();
     }
-};
+}
 ```
 
 ## `schedule`
@@ -46,7 +46,7 @@ mod foo {
     }
 }
 
-const APP: () = {
+mod app {
     type Instant = <path::to::user::monotonic::timer as rtic::Monotonic>::Instant;
 
     // all tasks that can be `schedule`-d
@@ -100,7 +100,7 @@ const APP: () = {
             }
         }
     }
-};
+}
 ```
 
 This looks very similar to the `Spawn` implementation. In fact, the same
@@ -123,7 +123,7 @@ is up.
 Let's see the associated code.
 
 ``` rust
-const APP: () = {
+mod app {
     #[no_mangle]
     fn SysTick() {
         const PRIORITY: u8 = 1;
@@ -146,7 +146,7 @@ const APP: () = {
             }
         }
     }
-};
+}
 ```
 
 This looks similar to a task dispatcher except that instead of running the
@@ -197,7 +197,7 @@ able to insert the task in the timer queue; this lets us omit runtime checks.
 
 ## System timer priority
 
-The priority of the system timer can't set by the user; it is chosen by the
+The priority of the system timer can't be set by the user; it is chosen by the
 framework. To ensure that lower priority tasks don't prevent higher priority
 tasks from running we choose the priority of the system timer to be the maximum
 of all the `schedule`-able tasks.
@@ -222,7 +222,7 @@ To illustrate, consider the following example:
 
 ``` rust
 #[rtic::app(device = ..)]
-const APP: () = {
+mod app {
     #[task(priority = 3, spawn = [baz])]
     fn foo(c: foo::Context) {
         // ..
@@ -237,7 +237,7 @@ const APP: () = {
     fn baz(c: baz::Context) {
         // ..
     }
-};
+}
 ```
 
 The ceiling analysis would go like this:
@@ -246,7 +246,7 @@ The ceiling analysis would go like this:
   `SysTick` must run at the highest priority between these two, that is `3`.
 
 - `foo::Spawn` (prio = 3) and `bar::Schedule` (prio = 2) contend over the
-  consumer endpoind of `baz_FQ`; this leads to a priority ceiling of `3`.
+  consumer endpoint of `baz_FQ`; this leads to a priority ceiling of `3`.
 
 - `bar::Schedule` (prio = 2) has exclusive access over the consumer endpoint of
 `foo_FQ`; thus the priority ceiling of `foo_FQ` is effectively `2`.
@@ -270,7 +270,7 @@ run; this `Instant` is read in the task dispatcher and passed to the user code
 as part of the task context.
 
 ``` rust
-const APP: () = {
+mod app {
     // ..
 
     #[no_mangle]
@@ -303,7 +303,7 @@ const APP: () = {
         // BASEPRI invariant
         basepri::write(snapshot);
     }
-};
+}
 ```
 
 Conversely, the `spawn` implementation needs to write a value to the `INSTANTS`
@@ -333,7 +333,7 @@ mod foo {
     }
 }
 
-const APP: () = {
+mod app {
     impl<'a> foo::Spawn<'a> {
         /// Spawns the `baz` task
         pub fn baz(&self, message: u64) -> Result<(), u64> {
@@ -364,5 +364,5 @@ const APP: () = {
             }
         }
     }
-};
+}
 ```

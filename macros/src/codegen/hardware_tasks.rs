@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{format_ident, quote};
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
@@ -14,7 +14,7 @@ pub fn codegen(
     analysis: &Analysis,
     extra: &Extra,
 ) -> (
-    // const_app_hardware_tasks -- interrupt handlers and `${task}Resources` constructors
+    // mod_app_hardware_tasks -- interrupt handlers and `${task}Resources` constructors
     Vec<TokenStream2>,
     // root_hardware_tasks -- items that must be placed in the root of the crate:
     // - `${task}Locals` structs
@@ -23,10 +23,13 @@ pub fn codegen(
     Vec<TokenStream2>,
     // user_hardware_tasks -- the `#[task]` functions written by the user
     Vec<TokenStream2>,
+    // user_hardware_tasks_imports -- the imports for `#[task]` functions written by the user
+    Vec<TokenStream2>,
 ) {
-    let mut const_app = vec![];
+    let mut mod_app = vec![];
     let mut root = vec![];
     let mut user_tasks = vec![];
+    let mut hardware_tasks_imports = vec![];
 
     for (name, task) in &app.hardware_tasks {
         let (let_instant, instant) = if app.uses_schedule() {
@@ -49,7 +52,7 @@ pub fn codegen(
         let symbol = task.args.binds.clone();
         let priority = task.args.priority;
 
-        const_app.push(quote!(
+        mod_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
             unsafe fn #symbol() {
@@ -78,9 +81,16 @@ pub fn codegen(
                 analysis,
             );
 
+            // Add resources to imports
+            let name_res = format_ident!("{}Resources", name);
+            hardware_tasks_imports.push(quote!(
+                #[allow(non_snake_case)]
+                use super::#name_res;
+            ));
+
             root.push(item);
 
-            const_app.push(constructor);
+            mod_app.push(constructor);
         }
 
         root.push(module::codegen(
@@ -112,7 +122,13 @@ pub fn codegen(
                 #(#stmts)*
             }
         ));
+
+        hardware_tasks_imports.push(quote!(
+            #(#attrs)*
+            #[allow(non_snake_case)]
+            use super::#name;
+        ));
     }
 
-    (const_app, root, user_tasks)
+    (mod_app, root, user_tasks, hardware_tasks_imports)
 }

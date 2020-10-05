@@ -13,8 +13,10 @@ There is a translation of this book in [Russian].
 
 [Russian]: ../ru/index.html
 
-This is the documentation of v0.5.x of RTIC; for the documentation of version
-v0.4.x go [here](/0.4).
+This is the documentation of v0.6.x of RTIC; for the documentation of version
+
+* v0.5.x go [here](/0.5).
+* v0.4.x go [here](/0.4).
 
 {{#include ../../../README.md:7:46}}
 

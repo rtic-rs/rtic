@@ -40,7 +40,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                 methods.push(quote!(
                     #(#cfgs)*
-                    fn #name(&self #(,#args)*) -> Result<(), #ty> {
+                    pub fn #name(&self #(,#args)*) -> Result<(), #ty> {
                         #let_instant
                         #body
                     }
@@ -92,7 +92,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 methods.push(quote!(
                     #(#cfgs)*
                     #[inline(always)]
-                    fn #name(&self #(,#args)*) -> Result<(), #ty> {
+                    pub fn #name(&self #(,#args)*) -> Result<(), #ty> {
                         unsafe {
                             #let_instant
                             #spawn(self.priority() #instant #(,#untupled)*)

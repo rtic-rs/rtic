@@ -11,7 +11,8 @@ use panic_semihosting as _;
 use rtic::{Exclusive, Mutex};
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    #[resources]
     struct Resources {
         #[init(0)]
         shared: u32,
@@ -49,7 +50,7 @@ const APP: () = {
         // second argument has type `Exclusive<u32>`
         advance(STATE, Exclusive(c.resources.shared));
     }
-};
+}
 
 // the second parameter is generic: it can be any type that implements the `Mutex` trait
 fn advance(state: &mut u32, mut shared: impl Mutex<T = u32>) {

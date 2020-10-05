@@ -16,7 +16,10 @@ pub struct NotSend {
 }
 
 #[app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use super::NotSend;
+
+    #[resources]
     struct Resources {
         #[init(None)]
         shared: Option<NotSend>,
@@ -60,4 +63,4 @@ const APP: () = {
         fn SSI0();
         fn QEI0();
     }
-};
+}

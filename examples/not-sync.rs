@@ -15,7 +15,11 @@ pub struct NotSync {
 }
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use super::NotSync;
+    use core::marker::PhantomData;
+
+    #[resources]
     struct Resources {
         #[init(NotSync { _0: PhantomData })]
         shared: NotSync,
@@ -42,4 +46,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

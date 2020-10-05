@@ -9,7 +9,7 @@ use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init(spawn = [bar])]
     fn init(c: init::Context) {
         c.spawn.bar().unwrap();
@@ -38,4 +38,4 @@ const APP: () = {
         #[link_section = ".data.UART1"]
         fn UART1();
     }
-};
+}

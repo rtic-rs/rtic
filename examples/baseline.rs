@@ -11,7 +11,7 @@ use panic_semihosting as _;
 
 // NOTE: does NOT properly work on QEMU
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-const APP: () = {
+mod app {
     #[init(spawn = [foo])]
     fn init(cx: init::Context) {
         // omitted: initialization of `CYCCNT`
@@ -51,4 +51,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

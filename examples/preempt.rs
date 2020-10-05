@@ -9,7 +9,7 @@ use panic_semihosting as _;
 use rtic::app;
 
 #[app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
     fn init(_: init::Context) {
         rtic::pend(Interrupt::GPIOA);
@@ -34,4 +34,4 @@ const APP: () = {
         rtic::pend(Interrupt::GPIOB);
         hprintln!(" GPIOC - end").unwrap();
     }
-};
+}

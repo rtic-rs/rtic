@@ -12,7 +12,10 @@ pub struct NotSend {
 }
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use super::NotSend;
+
+    #[resources]
     struct Resources {
         x: NotSend,
         #[init(None)]
@@ -35,4 +38,4 @@ const APP: () = {
             cortex_m::asm::nop();
         }
     }
-};
+}

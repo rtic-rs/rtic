@@ -6,7 +6,8 @@
 use panic_halt as _;
 
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-const APP: () = {
+mod app {
+    #[resources]
     struct Resources {
         #[cfg(never)]
         #[init(0)]
@@ -52,4 +53,4 @@ const APP: () = {
         fn SSI0();
         fn QEI0();
     }
-};
+}

@@ -11,7 +11,8 @@ use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    #[resources]
     struct Resources {
         #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
         #[init(0)]
@@ -66,4 +67,4 @@ const APP: () = {
         fn SSI0();
         fn QEI0();
     }
-};
+}

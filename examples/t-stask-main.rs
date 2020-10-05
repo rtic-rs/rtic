@@ -7,14 +7,14 @@ use cortex_m_semihosting::debug;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
-    #[init(spawn = [main])]
+mod app {
+    #[init(spawn = [taskmain])]
     fn init(cx: init::Context) {
-        cx.spawn.main().ok();
+        cx.spawn.taskmain().ok();
     }
 
     #[task]
-    fn main(_: main::Context) {
+    fn taskmain(_: taskmain::Context) {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
@@ -24,4 +24,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}
