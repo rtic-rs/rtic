@@ -595,7 +595,7 @@ jobs:
         run: |
           langs=( en ru )
           devver=dev
-          stable=$(git tag | grep v | tail -n 1 | cut -c2-4)
+          stable=$(git tag | grep v | grep -v "-" | tail -n 1 | cut -c2-4)
           vers=( 0.5.x 0.4.x  )
 
           # Create directories
