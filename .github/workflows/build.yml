@@ -579,12 +579,15 @@ jobs:
         run: |
           langs=( en ru )
           devver=( dev )
-          # Query git for tagged releases, all releases start with "v"
-          # followed by MAJOR.MINOR.PATCH, see semver.org
-          # Then remove all pre-releases/tags with hyphens (-).
-          # The latest release is last, finally trim "v" and PATCH
-          stable=$(git tag | grep "^v" | grep -v "-" | tail -n 1 | cut -c2-4)
+          # The latest stable must be the first element in the array
           vers=( 0.5.x 0.4.x  )
+
+          # All releases start with "v"
+          # followed by MAJOR.MINOR.PATCH, see semver.org
+          # Retain MAJOR.MINOR as $stable
+          stable=${vers%.*}
+
+          echo "Stable version: $stable"
 
           # Create directories
           td=$(mktemp -d)
@@ -630,8 +633,8 @@ jobs:
               rm -rf $src
           done
 
-          # Create alias for the stable release
-          ln -s $stable $td/stable
+          # Copy the stable book to the stable alias
+          cp -r $td/$stable $td/stable
 
           # Forward CNAME file
           cp CNAME $td/
