@@ -9,10 +9,12 @@ use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         hprintln!("init").unwrap();
+
+        init::LateResources {}
     }
 
     #[idle]
@@ -30,4 +32,4 @@ const APP: () = {
             cortex_m::asm::nop();
         }
     }
-};
+}

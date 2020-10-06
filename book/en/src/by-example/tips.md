@@ -144,7 +144,7 @@ $ tail target/rtic-expansion.rs
 
 ``` rust
 #[doc = r" Implementation details"]
-const APP: () = {
+mod app {
     #[doc = r" Always include the device crate which contains the vector table"]
     use lm3s6965 as _;
     #[no_mangle]
@@ -157,7 +157,7 @@ const APP: () = {
             rtic::export::wfi()
         }
     }
-};
+}
 ```
 
 Or, you can use the [`cargo-expand`] sub-command. This sub-command will expand

@@ -28,7 +28,7 @@ An example to illustrate the ceiling analysis:
 
 ``` rust
 #[rtic::app(device = ..)]
-const APP: () = {
+mod app {
     struct Resources {
         // accessed by `foo` (prio = 1) and `bar` (prio = 2)
         // -> CEILING = 2
@@ -80,5 +80,5 @@ const APP: () = {
     }
 
     // ..
-};
+}
 ```

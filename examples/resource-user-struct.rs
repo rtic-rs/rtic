@@ -18,6 +18,13 @@ mod app {
         shared: u32,
     }
 
+    // Should not collide with the struct above
+    #[allow(dead_code)]
+    struct Resources2 {
+        // A resource
+        shared: u32,
+    }
+
     #[init]
     fn init(_: init::Context) -> init::LateResources {
         rtic::pend(Interrupt::UART0);
@@ -34,9 +41,7 @@ mod app {
         // error: no `resources` field in `idle::Context`
         // _cx.resources.shared += 1;
 
-        loop {
-            cortex_m::asm::nop();
-        }
+        loop {}
     }
 
     // `shared` can be accessed from this context

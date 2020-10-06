@@ -16,16 +16,21 @@ pub struct NotSend {
 }
 
 #[app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use super::NotSend;
+
+    #[resources]
     struct Resources {
         #[init(None)]
         shared: Option<NotSend>,
     }
 
     #[init(spawn = [baz, quux])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         c.spawn.baz().unwrap();
         c.spawn.quux().unwrap();
+
+        init::LateResources {}
     }
 
     #[task(spawn = [bar])]
@@ -60,4 +65,4 @@ const APP: () = {
         fn SSI0();
         fn QEI0();
     }
-};
+}

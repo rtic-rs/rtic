@@ -34,7 +34,7 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
 
                 methods.push(quote!(
                     #(#cfgs)*
-                    fn #name(&self, instant: #instant #(,#args)*) -> Result<(), #ty> {
+                    pub fn #name(&self, instant: #instant #(,#args)*) -> Result<(), #ty> {
                         #body
                     }
                 ));
@@ -49,7 +49,7 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
 
                     items.push(quote!(
                         #(#cfgs)*
-                        unsafe fn #schedule(
+                        pub unsafe fn #schedule(
                             priority: &rtic::export::Priority,
                             instant: #instant
                             #(,#args)*
@@ -62,7 +62,7 @@ pub fn codegen(app: &App, extra: &Extra) -> Vec<TokenStream2> {
                 methods.push(quote!(
                     #(#cfgs)*
                     #[inline(always)]
-                    fn #name(&self, instant: #instant #(,#args)*) -> Result<(), #ty> {
+                    pub fn #name(&self, instant: #instant #(,#args)*) -> Result<(), #ty> {
                         unsafe {
                             #schedule(self.priority(), instant #(,#untupled)*)
                         }

@@ -9,7 +9,9 @@ use panic_semihosting as _;
 use rtic::cyccnt::U32Ext;
 
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-const APP: () = {
+mod app {
+
+    #[resources]
     struct Resources {
         nothing: (),
     }
@@ -34,4 +36,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

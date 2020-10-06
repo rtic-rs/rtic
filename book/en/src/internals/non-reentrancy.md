@@ -12,7 +12,7 @@ are discouraged from directly invoking an interrupt handler.
 
 ``` rust
 #[rtic::app(device = ..)]
-const APP: () = {
+mod app {
     #[init]
     fn init(c: init::Context) { .. }
 
@@ -39,7 +39,7 @@ const APP: () = {
         // in aliasing of the static variable `X`
         unsafe { UART0() }
     }
-};
+}
 ```
 
 The RTIC framework must generate the interrupt handler code that calls the user
@@ -57,7 +57,7 @@ fn bar(c: bar::Context) {
     // .. user code ..
 }
 
-const APP: () = {
+mod app {
     // everything in this block is not visible to user code
 
     #[no_mangle]
@@ -69,7 +69,7 @@ const APP: () = {
     unsafe fn USART1() {
         bar(..);
     }
-};
+}
 ```
 
 ## By hardware

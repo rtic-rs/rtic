@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{format_ident, quote};
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
@@ -13,7 +13,7 @@ pub fn codegen(
     analysis: &Analysis,
     extra: &Extra,
 ) -> (
-    // const_app_software_tasks -- free queues, buffers and `${task}Resources` constructors
+    // mod_app_software_tasks -- free queues, buffers and `${task}Resources` constructors
     Vec<TokenStream2>,
     // root_software_tasks -- items that must be placed in the root of the crate:
     // - `${task}Locals` structs
@@ -22,10 +22,13 @@ pub fn codegen(
     Vec<TokenStream2>,
     // user_software_tasks -- the `#[task]` functions written by the user
     Vec<TokenStream2>,
+    // user_software_tasks_imports -- the imports for `#[task]` functions written by the user
+    Vec<TokenStream2>,
 ) {
-    let mut const_app = vec![];
+    let mut mod_app = vec![];
     let mut root = vec![];
     let mut user_tasks = vec![];
+    let mut software_tasks_imports = vec![];
 
     for (name, task) in &app.software_tasks {
         let inputs = &task.inputs;
@@ -48,7 +51,7 @@ pub fn codegen(
                     Box::new(|| util::link_section_uninit(true)),
                 )
             };
-            const_app.push(quote!(
+            mod_app.push(quote!(
                 /// Queue version of a free-list that keeps track of empty slots in
                 /// the following buffers
                 static mut #fq: #fq_ty = #fq_expr;
@@ -56,13 +59,13 @@ pub fn codegen(
 
             // Generate a resource proxy if needed
             if let Some(ceiling) = ceiling {
-                const_app.push(quote!(
+                mod_app.push(quote!(
                     struct #fq<'a> {
                         priority: &'a rtic::export::Priority,
                     }
                 ));
 
-                const_app.push(util::impl_mutex(
+                mod_app.push(util::impl_mutex(
                     extra,
                     &[],
                     false,
@@ -82,7 +85,7 @@ pub fn codegen(
                 let instants = util::instants_ident(name);
 
                 let uninit = mk_uninit();
-                const_app.push(quote!(
+                mod_app.push(quote!(
                     #uninit
                     /// Buffer that holds the instants associated to the inputs of a task
                     static mut #instants:
@@ -93,7 +96,7 @@ pub fn codegen(
 
             let uninit = mk_uninit();
             let inputs = util::inputs_ident(name);
-            const_app.push(quote!(
+            mod_app.push(quote!(
                 #uninit
                 /// Buffer that holds the inputs of a task
                 static mut #inputs: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
@@ -112,9 +115,16 @@ pub fn codegen(
                 analysis,
             );
 
+            // Add resources to imports
+            let name_res = format_ident!("{}Resources", name);
+            software_tasks_imports.push(quote!(
+                #[allow(non_snake_case)]
+                use super::#name_res;
+            ));
+
             root.push(item);
 
-            const_app.push(constructor);
+            mod_app.push(constructor);
         }
 
         // `${task}Locals`
@@ -135,11 +145,16 @@ pub fn codegen(
             #(#attrs)*
             #(#cfgs)*
             #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
+            pub fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
                 use rtic::Mutex as _;
 
                 #(#stmts)*
             }
+        ));
+        software_tasks_imports.push(quote!(
+            #(#cfgs)*
+            #[allow(non_snake_case)]
+            use super::#name;
         ));
 
         root.push(module::codegen(
@@ -150,5 +165,5 @@ pub fn codegen(
         ));
     }
 
-    (const_app, root, user_tasks)
+    (mod_app, root, user_tasks, software_tasks_imports)
 }

@@ -11,12 +11,14 @@ use panic_semihosting as _;
 
 // `examples/interrupt.rs` rewritten to use `binds`
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         rtic::pend(Interrupt::UART0);
 
         hprintln!("init").unwrap();
+
+        init::LateResources {}
     }
 
     #[idle]
@@ -45,4 +47,4 @@ const APP: () = {
         )
         .unwrap();
     }
-};
+}

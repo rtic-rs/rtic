@@ -10,10 +10,12 @@ use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         rtic::pend(Interrupt::UART0);
+
+        init::LateResources {}
     }
 
     #[task(binds = UART0, spawn = [foo, bar])]
@@ -44,4 +46,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

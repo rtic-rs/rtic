@@ -9,9 +9,9 @@ use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965, peripherals = true)]
-const APP: () = {
+mod app {
     #[init]
-    fn init(cx: init::Context) {
+    fn init(cx: init::Context) -> init::LateResources {
         static mut X: u32 = 0;
 
         // Cortex-M peripherals
@@ -23,8 +23,14 @@ const APP: () = {
         // Safe access to local `static mut` variable
         let _x: &'static mut u32 = X;
 
+        // Access to the critical section token,
+        // to indicate that this is a critical seciton
+        let _cs_token: bare_metal::CriticalSection = cx.cs;
+
         hprintln!("init").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
+
+        init::LateResources {}
     }
-};
+}

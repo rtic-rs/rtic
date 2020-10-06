@@ -1,11 +1,11 @@
 #![no_main]
 
-use rtic::app;
-
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init]
-    fn init(_: init::Context) {}
+    fn init(_: init::Context) -> init::LateResources {
+        init::LateResources {}
+    }
 
     #[task(binds = GPIOA, priority = 1)]
     fn gpioa(_: gpioa::Context) {}
@@ -35,4 +35,4 @@ const APP: () = {
     // this value is too high!
     #[task(binds = I2C0, priority = 9)]
     fn i2c0(_: i2c0::Context) {}
-};
+}

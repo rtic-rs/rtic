@@ -9,12 +9,14 @@ use panic_halt as _;
 use rtic::cyccnt::{Instant, U32Ext as _};
 
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-const APP: () = {
+mod app {
     #[init(schedule = [foo, bar, baz])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         let _: Result<(), ()> = c.schedule.foo(c.start + 10.cycles());
         let _: Result<(), u32> = c.schedule.bar(c.start + 20.cycles(), 0);
         let _: Result<(), (u32, u32)> = c.schedule.baz(c.start + 30.cycles(), 0, 1);
+
+        init::LateResources {}
     }
 
     #[idle(schedule = [foo, bar, baz])]
@@ -61,4 +63,4 @@ const APP: () = {
     extern "C" {
         fn SSI0();
     }
-};
+}

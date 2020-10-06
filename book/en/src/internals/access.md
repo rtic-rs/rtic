@@ -15,7 +15,7 @@ To achieve the fine-grained access control where tasks can only access the
 static variables (resources) that they have specified in their RTIC attribute
 the RTIC framework performs a source code level transformation. This
 transformation consists of placing the resources (static variables) specified by
-the user *inside* a `const` item and the user code *outside* the `const` item.
+the user *inside* a module and the user code *outside* the module.
 This makes it impossible for the user code to refer to these static variables.
 
 Access to the resources is then given to each task using a `Resources` struct
@@ -29,7 +29,7 @@ happens behind the scenes:
 
 ``` rust
 #[rtic::app(device = ..)]
-const APP: () = {
+mod app {
     static mut X: u64: 0;
     static mut Y: bool: 0;
 
@@ -49,7 +49,7 @@ const APP: () = {
     }
 
     // ..
-};
+}
 ```
 
 The framework produces codes like this:
@@ -103,8 +103,8 @@ pub mod bar {
 }
 
 /// Implementation details
-const APP: () = {
-    // everything inside this `const` item is hidden from user code
+mod app {
+    // everything inside this module is hidden from user code
 
     static mut X: u64 = 0;
     static mut Y: bool = 0;
@@ -154,5 +154,5 @@ const APP: () = {
             // ..
         });
     }
-};
+}
 ```

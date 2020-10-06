@@ -9,10 +9,12 @@ use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
     #[init(spawn = [foo])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         c.spawn.foo().unwrap();
+
+        init::LateResources {}
     }
 
     #[task(spawn = [bar, baz])]
@@ -52,4 +54,4 @@ const APP: () = {
         fn SSI0();
         fn QEI0();
     }
-};
+}

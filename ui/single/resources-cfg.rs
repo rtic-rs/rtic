@@ -1,7 +1,9 @@
 #![no_main]
+use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    #[resources]
     struct Resources {
         #[cfg(never)]
         #[init(0)]
@@ -41,12 +43,14 @@ const APP: () = {
     }
 
     #[init(resources = [o1, o4, o5, o6, s3])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         c.resources.o1;
         c.resources.o4;
         c.resources.o5;
         c.resources.o6;
         c.resources.s3;
+
+        init::LateResources {}
     }
 
     #[idle(resources = [o2, &o4, s1, &s3])]
@@ -72,4 +76,4 @@ const APP: () = {
         c.resources.s2;
         c.resources.o5;
     }
-};
+}

@@ -13,19 +13,24 @@ use rtic::app;
 pub struct MustBeSend;
 
 #[app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use super::MustBeSend;
+
+    #[resources]
     struct Resources {
         #[init(None)]
         shared: Option<MustBeSend>,
     }
 
     #[init(resources = [shared])]
-    fn init(c: init::Context) {
+    fn init(c: init::Context) -> init::LateResources {
         // this `message` will be sent to task `UART0`
         let message = MustBeSend;
         *c.resources.shared = Some(message);
 
         rtic::pend(Interrupt::UART0);
+
+        init::LateResources {}
     }
 
     #[task(binds = UART0, resources = [shared])]
@@ -37,4 +42,4 @@ const APP: () = {
             debug::exit(debug::EXIT_SUCCESS);
         }
     }
-};
+}

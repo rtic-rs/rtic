@@ -18,15 +18,22 @@ use rtic::app;
 pool!(P: [u8; 128]);
 
 #[app(device = lm3s6965)]
-const APP: () = {
+mod app {
+    use crate::Box;
+
+    // Import the memory pool into scope
+    use super::P;
+
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         static mut MEMORY: [u8; 512] = [0; 512];
 
         // Increase the capacity of the memory pool by ~4
         P::grow(MEMORY);
 
         rtic::pend(Interrupt::I2C0);
+
+        init::LateResources {}
     }
 
     #[task(binds = I2C0, priority = 2, spawn = [foo, bar])]
@@ -66,4 +73,4 @@ const APP: () = {
         fn SSI0();
         fn QEI0();
     }
-};
+}
