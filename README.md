@@ -50,6 +50,10 @@ Formerly known as Real-Time For the Masses.
 
 - Applications must be written using the 2018 edition.
 
+## [User documentation](https://rtic.rs)
+
+## [API reference](https://rtic.rs/0.5/api/)
+
 ## Chat
 Join us and talk about RTIC in the [Matrix room][matrix-room].
 
