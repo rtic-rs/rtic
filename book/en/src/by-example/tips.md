@@ -116,6 +116,7 @@ Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 ``` rust
 {{#include ../../../../examples/pool.rs}}
 ```
+
 ``` console
 $ cargo run --example pool
 {{#include ../../../../ci/expected/pool.run}}

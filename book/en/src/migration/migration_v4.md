@@ -3,7 +3,7 @@
 This section covers how to upgrade an application written against RTIC v0.4.x to
 the version v0.5.0 of the framework.
 
-### `Cargo.toml`
+## `Cargo.toml`
 
 First, the version of the `cortex-m-rtic` dependency needs to be updated to
 `"0.5.0"`. The `timer-queue` feature needs to be removed.
@@ -21,7 +21,7 @@ features = ["timer-queue"]
 #           ^^^^^^^^^^^^^
 ```
 
-### `Context` argument
+## `Context` argument
 
 All functions inside the `#[rtic::app]` item need to take as first argument a
 `Context` structure. This `Context` type will contain the variables that were
@@ -73,7 +73,7 @@ const APP: () = {
 };
 ```
 
-### Resources
+## Resources
 
 The syntax used to declare resources has been changed from `static mut`
 variables to a `struct Resources`.
@@ -97,7 +97,7 @@ const APP: () = {
 };
 ```
 
-### Device peripherals
+## Device peripherals
 
 If your application was accessing the device peripherals in `#[init]` through
 the `device` variable then you'll need to add `peripherals = true` to the
@@ -135,7 +135,7 @@ const APP: () = {
 };
 ```
 
-### `#[interrupt]` and `#[exception]`
+## `#[interrupt]` and `#[exception]`
 
 The `#[interrupt]` and `#[exception]` attributes have been removed. To declare
 hardware tasks in v0.5.x use the `#[task]` attribute with the `binds` argument.
@@ -181,9 +181,10 @@ const APP: () = {
 };
 ```
 
-### `schedule`
+## `schedule`
 
-The `timer-queue` feature has been removed. To use the `schedule` API one must
+The `schedule` API no longer requires the `timer-queue` cargo feature, which has
+been removed. To use the `schedule` API one must
 first define the monotonic timer the runtime will use using the `monotonic`
 argument of the `#[rtic::app]` attribute. To continue using the cycle counter
 (CYCCNT) as the monotonic timer, and match the behavior of version v0.4.x, add
