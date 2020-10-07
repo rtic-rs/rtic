@@ -24,7 +24,7 @@ const APP: () = {
         // .. user code ..
     }
 
-    #[interrupt(binds = UART0, priority = 2)]
+    #[task(binds = UART0, priority = 2)]
     fn foo(c: foo::Context) {
         // .. user code ..
     }
