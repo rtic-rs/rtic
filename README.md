@@ -7,7 +7,9 @@ Formerly known as Real-Time For the Masses.
 [![crates.io](https://img.shields.io/crates/v/cortex-m-rtic)](https://crates.io/crates/cortex-m-rtic)
 [![docs.rs](https://docs.rs/cortex-m-rtic/badge.svg)](https://docs.rs/cortex-m-rtic)
 [![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)](https://rtic.rs/)
-![rustc](https://img.shields.io/badge/rustc-1.36+-lightgray.svg)
+[![rustc](https://img.shields.io/badge/rustc-1.36+-lightgray.svg)](https://github.com/rust-lang/rust/releases/tag/1.36.0)
+[![matrix](https://img.shields.io/matrix/rtic:matrix.org)](https://matrix.to/#/#rtic:matrix.org)
+[![Meeting notes](https://hackmd.io/badge.svg)](https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH)
 
 ## Features
 
@@ -52,23 +54,29 @@ Formerly known as Real-Time For the Masses.
 
 ## [User documentation](https://rtic.rs)
 
-## [API reference](https://rtic.rs/0.5/api/)
+## [API reference](https://rtic.rs/stable/api/)
 
 ## Chat
+
 Join us and talk about RTIC in the [Matrix room][matrix-room].
 
+Weekly meeting notes can be found over at [HackMD][hackmd]
+
 [matrix-room]: https://matrix.to/#/#rtic:matrix.org
+[hackmd]: https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH
 
 ## Contributing
-New features and big changes should go through the RFC process in the [dedicated RFC repository][rfcs].
+
+New features and big changes should go through the RFC process in the
+[dedicated RFC repository][rfcs].
 
 [rfcs]: https://github.com/rtic-rs/rfcs
 
 ## Acknowledgments
 
-This crate is based on [the Real-Time For the Masses language][rtfm-lang] created by the Embedded
-Systems group at [Luleå University of Technology][ltu], led by [Prof. Per
-Lindgren][per].
+This crate is based on [the Real-Time For the Masses language][rtfm-lang]
+created by the Embedded Systems group at [Luleå University of Technology][ltu],
+led by [Prof. Per Lindgren][per].
 
 [rtfm-lang]: http://www.rtfm-lang.org/
 [ltu]: https://www.ltu.se/?l=en
