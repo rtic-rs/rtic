@@ -350,13 +350,6 @@ pub fn codegen(
         let device = extra.device;
         let enum_ = util::interrupt_ident();
         let interrupt = &analysis.interrupts.get(&priority);
-        let pend = {
-            quote!(
-                rtic::pend(#device::#enum_::#interrupt);
-            )
-        };
-
-        eprintln!("pend {}", &pend);
 
         items.push(quote!(
         #(#cfgs)*
@@ -365,25 +358,26 @@ pub fn codegen(
             use rtic::Mutex as _;
 
             let input = #tupled;
-            // TODO: use critical section, now we are unsafe
-            unsafe {
-                if let Some(index) = #app_path::#fq.dequeue() {
+
+            if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                unsafe {
                     #app_path::#inputs
                         .get_unchecked_mut(usize::from(index))
                         .as_mut_ptr()
                         .write(input);
-
-                    // #write_instant, do we need?
-
-                    #app_path::#rq.enqueue_unchecked((#app_path::#t::#name, index));
-
-                    #pend
-
-                    Ok(())
-                } else {
-                    Err(input)
                 }
+
+                rtic::export::interrupt::free(|_| {
+                    #app_path::#rq.enqueue_unchecked((#app_path::#t::#name, index));
+                });
+
+                rtic::pend(#device::#enum_::#interrupt);
+
+                Ok(())
+            } else {
+                Err(input)
             }
+
         }));
     }
 
