@@ -12,12 +12,14 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965)]
 mod app {
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         // Pends the UART0 interrupt but its handler won't run until *after*
         // `init` returns because interrupts are disabled
         rtic::pend(Interrupt::UART0); // equivalent to NVIC::pend
 
         hprintln!("init").unwrap();
+
+        init::LateResources {}
     }
 
     #[idle]

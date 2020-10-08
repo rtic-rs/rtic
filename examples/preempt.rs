@@ -11,8 +11,10 @@ use rtic::app;
 #[app(device = lm3s6965)]
 mod app {
     #[init]
-    fn init(_: init::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         rtic::pend(Interrupt::GPIOA);
+
+        init::LateResources {}
     }
 
     #[task(binds = GPIOA, priority = 1)]

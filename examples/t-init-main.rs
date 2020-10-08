@@ -9,7 +9,9 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965)]
 mod app {
     #[init]
-    fn taskmain(_: taskmain::Context) {
+    fn init(_: init::Context) -> init::LateResources {
         debug::exit(debug::EXIT_SUCCESS);
+
+        init::LateResources {}
     }
 }

@@ -85,7 +85,7 @@ jobs:
           command: check
           args: --target=${{ matrix.target }}
 
-  # Verify all examples
+  # Verify all examples, checks
   checkexamples:
     name: checkexamples
     runs-on: ubuntu-20.04
@@ -139,6 +139,51 @@ jobs:
           use-cross: false
           command: check
           args: --examples --target=${{ matrix.target }} --features __min_r1_43,${{ env.V7 }}
+
+  # Verify the example output with run-pass tests
+  testexamples:
+    name: testexamples
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+          - thumbv6m-none-eabi
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+          components: llvm-tools-preview
 
       # Use precompiled binutils
       - name: cargo install cargo-binutils
@@ -341,6 +386,56 @@ jobs:
           command: check
           args: --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
 
+  # Run the  macros test-suite
+  testmacros:
+    name: testmacros
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            - ~/.cargo/bin/
+            - ~/.cargo/registry/index/
+            - ~/.cargo/registry/cache/
+            - ~/.cargo/git/db/
+          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-cargo-
+
+      - name: Cache build output dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.OS }}-build-
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: false
+          command: test
+          args: --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
+
   # Run test suite for thumbv7m
   testv7:
     name: testv7
@@ -513,7 +608,7 @@ jobs:
       - name: mdBook Action
         uses: peaceiris/actions-mdbook@v1.1.11
         with:
-          mdbook-version: '0.3.1'
+          mdbook-version: 'latest'
 
       - name: Build book in English
         run: cd book/en && mdbook build
@@ -541,7 +636,9 @@ jobs:
       - style
       - check
       - checkexamples
+      - testexamples
       - checkmacros
+      - testmacros
       - testv7
       - testv6
       - docs
@@ -566,8 +663,7 @@ jobs:
       - name: mdBook Action
         uses: peaceiris/actions-mdbook@v1.1.11
         with:
-          mdbook-version: '0.3.1'
-          # mdbook-version: 'latest'
+          mdbook-version: 'latest'
 
       - name: Remove cargo-config
         run: rm -f .cargo/config
@@ -579,12 +675,15 @@ jobs:
         run: |
           langs=( en ru )
           devver=( dev )
-          # Query git for tagged releases, all releases start with "v"
-          # followed by MAJOR.MINOR.PATCH, see semver.org
-          # Then remove all pre-releases/tags with hyphens (-).
-          # The latest release is last, finally trim "v" and PATCH
-          stable=$(git tag | grep "^v" | grep -v "-" | tail -n 1 | cut -c2-4)
+          # The latest stable must be the first element in the array
           vers=( 0.5.x 0.4.x  )
+
+          # All releases start with "v"
+          # followed by MAJOR.MINOR.PATCH, see semver.org
+          # Retain MAJOR.MINOR as $stable
+          stable=${vers%.*}
+
+          echo "Stable version: $stable"
 
           # Create directories
           td=$(mktemp -d)
@@ -630,8 +729,8 @@ jobs:
               rm -rf $src
           done
 
-          # Create alias for the stable release
-          ln -s $stable $td/stable
+          # Copy the stable book to the stable alias
+          cp -r $td/$stable $td/stable
 
           # Forward CNAME file
           cp CNAME $td/
@@ -654,7 +753,9 @@ jobs:
       - style
       - check
       - checkexamples
+      - testexamples
       - checkmacros
+      - testmacros
       - testv7
       - testv6
       - docs
@@ -670,7 +771,9 @@ jobs:
       - style
       - check
       - checkexamples
+      - testexamples
       - checkmacros
+      - testmacros
       - testv7
       - testv6
       - docs

@@ -8,13 +8,10 @@ change.
 
 [RFC #33]: https://github.com/rtic-rs/rfcs/pull/33
 
-
-
 ## `Cargo.toml`
 
 First, the `cortex-m-rtfm` dependency needs to be updated to
 `cortex-m-rtic`.
-
 
 ``` toml
 [dependencies]
@@ -51,4 +48,3 @@ const APP: () = {
 
 };
 ```
-
