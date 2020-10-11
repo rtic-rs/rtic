@@ -39,70 +39,49 @@ pub fn codegen(
         let cap_ty = util::capacity_typenum(cap, true);
 
         // Create free queues and inputs / instants buffers
-        if let Some(&ceiling) = analysis.free_queues.get(name) {
-            let fq = util::fq_ident(name);
+        let fq = util::fq_ident(name);
 
-            let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
-                (
-                    quote!(rtic::export::SCFQ<#cap_ty>),
-                    quote!(rtic::export::Queue(unsafe {
-                        rtic::export::iQueue::u8_sc()
-                    })),
-                    Box::new(|| util::link_section_uninit(true)),
-                )
-            };
-            mod_app.push(quote!(
-                /// Queue version of a free-list that keeps track of empty slots in
-                /// the following buffers
-                pub static mut #fq: #fq_ty = #fq_expr;
-            ));
+        let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
+            (
+                quote!(rtic::export::SCFQ<#cap_ty>),
+                quote!(rtic::export::Queue(unsafe {
+                    rtic::export::iQueue::u8_sc()
+                })),
+                Box::new(|| util::link_section_uninit(true)),
+            )
+        };
+        mod_app.push(quote!(
+            /// Queue version of a free-list that keeps track of empty slots in
+            /// the following buffers
+            pub static mut #fq: #fq_ty = #fq_expr;
+        ));
 
-            // Generate a resource proxy if needed
-            if let Some(ceiling) = ceiling {
-                mod_app.push(quote!(
-                    struct #fq<'a> {
-                        priority: &'a rtic::export::Priority,
-                    }
-                ));
+        let ref elems = (0..cap)
+            .map(|_| quote!(core::mem::MaybeUninit::uninit()))
+            .collect::<Vec<_>>();
 
-                mod_app.push(util::impl_mutex(
-                    extra,
-                    &[],
-                    false,
-                    &fq,
-                    fq_ty,
-                    ceiling,
-                    quote!(&mut #fq),
-                ));
-            }
-
-            let ref elems = (0..cap)
-                .map(|_| quote!(core::mem::MaybeUninit::uninit()))
-                .collect::<Vec<_>>();
-
-            if app.uses_schedule() {
-                let m = extra.monotonic();
-                let instants = util::instants_ident(name);
-
-                let uninit = mk_uninit();
-                mod_app.push(quote!(
-                    #uninit
-                    /// Buffer that holds the instants associated to the inputs of a task
-                    pub static mut #instants:
-                        [core::mem::MaybeUninit<<#m as rtic::Monotonic>::Instant>; #cap_lit] =
-                        [#(#elems,)*];
-                ));
-            }
+        if extra.monotonic.is_some() {
+            let m = extra.monotonic();
+            let instants = util::instants_ident(name);
 
             let uninit = mk_uninit();
-            let inputs = util::inputs_ident(name);
             mod_app.push(quote!(
                 #uninit
-                /// Buffer that holds the inputs of a task
-                pub static mut #inputs: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
+                /// Buffer that holds the instants associated to the inputs of a task
+                pub static mut #instants:
+                    [core::mem::MaybeUninit<<#m as rtic::Monotonic>::Instant>; #cap_lit] =
                     [#(#elems,)*];
             ));
         }
+
+        let uninit = mk_uninit();
+        let inputs_ident = util::inputs_ident(name);
+        mod_app.push(quote!(
+            #uninit
+            /// Buffer that holds the inputs of a task
+            pub static mut #inputs_ident: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
+                [#(#elems,)*];
+        ));
 
         // `${task}Resources`
         let mut needs_lt = false;

@@ -32,7 +32,7 @@ pub fn codegen(
     let mut hardware_tasks_imports = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        let (let_instant, instant) = if app.uses_schedule() {
+        let (let_instant, instant) = if extra.monotonic.is_some() {
             let m = extra.monotonic();
 
             (

@@ -21,7 +21,7 @@ pub fn codegen(
     let mut lt = None;
     match ctxt {
         Context::Init => {
-            if app.uses_schedule() {
+            if extra.monotonic.is_some() {
                 let m = extra.monotonic();
 
                 fields.push(quote!(
@@ -67,7 +67,7 @@ pub fn codegen(
         Context::Idle => {}
 
         Context::HardwareTask(..) => {
-            if app.uses_schedule() {
+            if extra.monotonic.is_some() {
                 let m = extra.monotonic();
 
                 fields.push(quote!(
@@ -82,7 +82,7 @@ pub fn codegen(
         }
 
         Context::SoftwareTask(..) => {
-            if app.uses_schedule() {
+            if extra.monotonic.is_some() {
                 let m = extra.monotonic();
 
                 fields.push(quote!(
@@ -132,139 +132,6 @@ pub fn codegen(
         values.push(quote!(resources: Resources::new(#priority)));
     }
 
-    if ctxt.uses_schedule(app) {
-        let doc = "Tasks that can be `schedule`-d from this context";
-        if ctxt.is_init() {
-            items.push(quote!(
-                #[doc = #doc]
-                #[derive(Clone, Copy)]
-                pub struct Schedule {
-                    _not_send: core::marker::PhantomData<*mut ()>,
-                }
-            ));
-
-            fields.push(quote!(
-                #[doc = #doc]
-                pub schedule: Schedule
-            ));
-
-            values.push(quote!(
-                schedule: Schedule { _not_send: core::marker::PhantomData }
-            ));
-        } else {
-            lt = Some(quote!('a));
-
-            items.push(quote!(
-                #[doc = #doc]
-                #[derive(Clone, Copy)]
-                pub struct Schedule<'a> {
-                    priority: &'a rtic::export::Priority,
-                }
-
-                impl<'a> Schedule<'a> {
-                    #[doc(hidden)]
-                    #[inline(always)]
-                    pub unsafe fn priority(&self) -> &rtic::export::Priority {
-                        &self.priority
-                    }
-                }
-            ));
-
-            fields.push(quote!(
-                #[doc = #doc]
-                pub schedule: Schedule<'a>
-            ));
-
-            values.push(quote!(
-                schedule: Schedule { priority }
-            ));
-        }
-    }
-
-    if ctxt.uses_spawn(app) {
-        let doc = "Tasks that can be `spawn`-ed from this context";
-        if ctxt.is_init() {
-            fields.push(quote!(
-                #[doc = #doc]
-                pub spawn: Spawn
-            ));
-
-            items.push(quote!(
-                #[doc = #doc]
-                #[derive(Clone, Copy)]
-                pub struct Spawn {
-                    _not_send: core::marker::PhantomData<*mut ()>,
-                }
-            ));
-
-            values.push(quote!(spawn: Spawn { _not_send: core::marker::PhantomData }));
-        } else {
-            lt = Some(quote!('a));
-
-            fields.push(quote!(
-                #[doc = #doc]
-                pub spawn: Spawn<'a>
-            ));
-
-            let mut instant_method = None;
-            if ctxt.is_idle() {
-                items.push(quote!(
-                    #[doc = #doc]
-                    #[derive(Clone, Copy)]
-                    pub struct Spawn<'a> {
-                        priority: &'a rtic::export::Priority,
-                    }
-                ));
-
-                values.push(quote!(spawn: Spawn { priority }));
-            } else {
-                let instant_field = if app.uses_schedule() {
-                    let m = extra.monotonic();
-
-                    needs_instant = true;
-                    instant_method = Some(quote!(
-                        pub unsafe fn instant(&self) -> <#m as rtic::Monotonic>::Instant {
-                            self.instant
-                        }
-                    ));
-                    Some(quote!(instant: <#m as rtic::Monotonic>::Instant,))
-                } else {
-                    None
-                };
-
-                items.push(quote!(
-                    /// Tasks that can be spawned from this context
-                    #[derive(Clone, Copy)]
-                    pub struct Spawn<'a> {
-                        #instant_field
-                        priority: &'a rtic::export::Priority,
-                    }
-                ));
-
-                let _instant = if needs_instant {
-                    Some(quote!(, instant))
-                } else {
-                    None
-                };
-                values.push(quote!(
-                    spawn: Spawn { priority #_instant }
-                ));
-            }
-
-            items.push(quote!(
-                impl<'a> Spawn<'a> {
-                    #[doc(hidden)]
-                    #[inline(always)]
-                    pub unsafe fn priority(&self) -> &rtic::export::Priority {
-                        self.priority
-                    }
-
-                    #instant_method
-                }
-            ));
-        }
-    }
-
     if let Context::Init = ctxt {
         let init = &app.inits.first().unwrap();
         let late_resources = util::late_resources_ident(&init.name);
@@ -283,7 +150,7 @@ pub fn codegen(
     };
 
     let core = if ctxt.is_init() {
-        if app.uses_schedule() {
+        if extra.monotonic.is_some() {
             Some(quote!(core: rtic::Peripherals,))
         } else {
             Some(quote!(core: rtic::export::Peripherals,))
@@ -337,11 +204,6 @@ pub fn codegen(
         let rq = util::rq_ident(priority);
         let inputs = util::inputs_ident(name);
 
-        eprintln!("app name: {}", app.name);
-        eprintln!("inputs {}", &inputs);
-        eprintln!("task name: {}", name);
-        eprintln!("fq {}", fq);
-        eprintln!("rq {}", rq);
         let app_name = &app.name;
         let app_path = quote! {crate::#app_name};
 
@@ -349,6 +211,7 @@ pub fn codegen(
         let enum_ = util::interrupt_ident();
         let interrupt = &analysis.interrupts.get(&priority);
 
+        // Spawn caller
         items.push(quote!(
         #(#cfgs)*
         pub fn spawn(#(#args,)*) -> Result<(), #ty> {
@@ -357,26 +220,71 @@ pub fn codegen(
 
             let input = #tupled;
 
-            if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
-                unsafe {
+            unsafe {
+                if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
                     #app_path::#inputs
                         .get_unchecked_mut(usize::from(index))
                         .as_mut_ptr()
                         .write(input);
+
+                    rtic::export::interrupt::free(|_| {
+                        #app_path::#rq.enqueue_unchecked((#app_path::#t::#name, index));
+                    });
+
+                    rtic::pend(#device::#enum_::#interrupt);
+
+                    Ok(())
+                } else {
+                    Err(input)
                 }
-
-                rtic::export::interrupt::free(|_| {
-                    #app_path::#rq.enqueue_unchecked((#app_path::#t::#name, index));
-                });
-
-                rtic::pend(#device::#enum_::#interrupt);
-
-                Ok(())
-            } else {
-                Err(input)
             }
 
         }));
+
+        // Schedule caller
+        if extra.monotonic.is_some() {
+            let instants = util::instants_ident(name);
+
+            let tq = util::tq_ident();
+            let m = extra.monotonic();
+            let t = util::schedule_t_ident();
+
+            items.push(quote!(
+            #(#cfgs)*
+            pub fn schedule(
+                instant: <#m as rtic::Monotonic>::Instant
+                #(,#args)*
+            ) -> Result<(), #ty> {
+                unsafe {
+                    use rtic::Mutex as _;
+
+                    let input = #tupled;
+                    if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                        #app_path::#inputs
+                            .get_unchecked_mut(usize::from(index))
+                            .as_mut_ptr()
+                            .write(input);
+
+                        #app_path::#instants
+                            .get_unchecked_mut(usize::from(index))
+                            .as_mut_ptr()
+                            .write(instant);
+
+                        let nr = rtic::export::NotReady {
+                            instant,
+                            index,
+                            task: #app_path::#t::#name,
+                        };
+
+                        rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(nr));
+
+                        Ok(())
+                    } else {
+                        Err(input)
+                    }
+                }
+            }));
+        }
     }
 
     if !items.is_empty() {
