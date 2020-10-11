@@ -10,27 +10,27 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
-    #[init(spawn = [foo])]
-    fn init(c: init::Context) -> init::LateResources {
-        c.spawn.foo().unwrap();
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
+        foo::spawn().unwrap();
 
         init::LateResources {}
     }
 
-    #[task(spawn = [bar, baz])]
-    fn foo(c: foo::Context) {
+    #[task]
+    fn foo(_: foo::Context) {
         hprintln!("foo - start").unwrap();
 
         // spawns `bar` onto the task scheduler
         // `foo` and `bar` have the same priority so `bar` will not run until
         // after `foo` terminates
-        c.spawn.bar().unwrap();
+        bar::spawn().unwrap();
 
         hprintln!("foo - middle").unwrap();
 
         // spawns `baz` onto the task scheduler
         // `baz` has higher priority than `foo` so it immediately preempts `foo`
-        c.spawn.baz().unwrap();
+        baz::spawn().unwrap();
 
         hprintln!("foo - end").unwrap();
     }

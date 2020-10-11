@@ -60,8 +60,7 @@ pub fn codegen(
             .map(|_| quote!(core::mem::MaybeUninit::uninit()))
             .collect::<Vec<_>>();
 
-        if extra.monotonic.is_some() {
-            let m = extra.monotonic();
+        if let Some(m) = extra.monotonic {
             let instants = util::instants_ident(name);
 
             let uninit = mk_uninit();

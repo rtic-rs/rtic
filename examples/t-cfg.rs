@@ -32,13 +32,13 @@ mod app {
         }
     }
 
-    #[task(resources = [foo], schedule = [quux], spawn = [quux])]
+    #[task(resources = [foo])]
     fn foo(_: foo::Context) {
         #[cfg(never)]
         static mut BAR: u32 = 0;
     }
 
-    #[task(priority = 3, resources = [foo], schedule = [quux], spawn = [quux])]
+    #[task(priority = 3, resources = [foo])]
     fn bar(_: bar::Context) {
         #[cfg(never)]
         static mut BAR: u32 = 0;

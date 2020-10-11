@@ -10,9 +10,9 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
-    #[init(spawn = [bar])]
-    fn init(c: init::Context) -> init::LateResources {
-        c.spawn.bar().unwrap();
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
+        foo::spawn().unwrap();
 
         init::LateResources {}
     }
@@ -28,9 +28,9 @@ mod app {
     // run this task from RAM
     #[inline(never)]
     #[link_section = ".data.bar"]
-    #[task(priority = 2, spawn = [foo])]
-    fn bar(c: bar::Context) {
-        c.spawn.foo().unwrap();
+    #[task(priority = 2)]
+    fn bar(_: bar::Context) {
+        foo::spawn().unwrap();
     }
 
     extern "C" {

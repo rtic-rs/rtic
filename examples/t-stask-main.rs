@@ -8,9 +8,9 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
-    #[init(spawn = [taskmain])]
-    fn init(cx: init::Context) -> init::LateResources {
-        cx.spawn.taskmain().ok();
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
+        taskmain::spawn().ok();
 
         init::LateResources {}
     }

@@ -10,39 +10,39 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
-    #[init(spawn = [foo])]
-    fn init(c: init::Context) -> init::LateResources {
-        c.spawn.foo(/* no message */).unwrap();
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
+        foo::spawn(/* no message */).unwrap();
 
         init::LateResources {}
     }
 
-    #[task(spawn = [bar])]
-    fn foo(c: foo::Context) {
+    #[task]
+    fn foo(_: foo::Context) {
         static mut COUNT: u32 = 0;
 
         hprintln!("foo").unwrap();
 
-        c.spawn.bar(*COUNT).unwrap();
+        bar::spawn(*COUNT).unwrap();
         *COUNT += 1;
     }
 
-    #[task(spawn = [baz])]
-    fn bar(c: bar::Context, x: u32) {
+    #[task]
+    fn bar(_: bar::Context, x: u32) {
         hprintln!("bar({})", x).unwrap();
 
-        c.spawn.baz(x + 1, x + 2).unwrap();
+        baz::spawn(x + 1, x + 2).unwrap();
     }
 
-    #[task(spawn = [foo])]
-    fn baz(c: baz::Context, x: u32, y: u32) {
+    #[task]
+    fn baz(_: baz::Context, x: u32, y: u32) {
         hprintln!("baz({}, {})", x, y).unwrap();
 
         if x + y > 4 {
             debug::exit(debug::EXIT_SUCCESS);
         }
 
-        c.spawn.foo().unwrap();
+        foo::spawn().unwrap();
     }
 
     // RTIC requires that unused interrupts are declared in an extern block when

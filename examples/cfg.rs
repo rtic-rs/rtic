@@ -19,10 +19,10 @@ mod app {
         count: u32,
     }
 
-    #[init(spawn = [foo])]
-    fn init(cx: init::Context) -> init::LateResources {
-        cx.spawn.foo().unwrap();
-        cx.spawn.foo().unwrap();
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
+        foo::spawn().unwrap();
+        foo::spawn().unwrap();
 
         init::LateResources {}
     }
@@ -36,13 +36,13 @@ mod app {
         }
     }
 
-    #[task(capacity = 2, resources = [count], spawn = [log])]
+    #[task(capacity = 2, resources = [count])]
     fn foo(_cx: foo::Context) {
         #[cfg(debug_assertions)]
         {
             *_cx.resources.count += 1;
 
-            _cx.spawn.log(*_cx.resources.count).unwrap();
+            log::spawn(*_cx.resources.count).unwrap();
         }
 
         // this wouldn't compile in `release` mode

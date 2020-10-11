@@ -21,9 +21,7 @@ pub fn codegen(
     let mut lt = None;
     match ctxt {
         Context::Init => {
-            if extra.monotonic.is_some() {
-                let m = extra.monotonic();
-
+            if let Some(m) = extra.monotonic {
                 fields.push(quote!(
                     /// System start time = `Instant(0 /* cycles */)`
                     pub start: <#m as rtic::Monotonic>::Instant
@@ -67,9 +65,7 @@ pub fn codegen(
         Context::Idle => {}
 
         Context::HardwareTask(..) => {
-            if extra.monotonic.is_some() {
-                let m = extra.monotonic();
-
+            if let Some(m) = extra.monotonic {
                 fields.push(quote!(
                     /// Time at which this handler started executing
                     pub start: <#m as rtic::Monotonic>::Instant
@@ -82,9 +78,7 @@ pub fn codegen(
         }
 
         Context::SoftwareTask(..) => {
-            if extra.monotonic.is_some() {
-                let m = extra.monotonic();
-
+            if let Some(m) = extra.monotonic {
                 fields.push(quote!(
                     /// The time at which this task was scheduled to run
                     pub scheduled: <#m as rtic::Monotonic>::Instant
@@ -242,11 +236,10 @@ pub fn codegen(
         }));
 
         // Schedule caller
-        if extra.monotonic.is_some() {
+        if let Some(m) = extra.monotonic {
             let instants = util::instants_ident(name);
 
             let tq = util::tq_ident();
-            let m = extra.monotonic();
             let t = util::schedule_t_ident();
 
             items.push(quote!(
@@ -288,10 +281,16 @@ pub fn codegen(
     }
 
     if !items.is_empty() {
+        let user_imports = &app.user_imports;
+
         quote!(
             #[allow(non_snake_case)]
             #[doc = #doc]
             pub mod #name {
+                #(
+                    #[allow(unused_imports)]
+                    #user_imports
+                )*
                 #(#items)*
             }
         )

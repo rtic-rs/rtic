@@ -10,45 +10,45 @@ use rtic::cyccnt::{Instant, U32Ext as _};
 
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
-    #[init(schedule = [foo, bar, baz])]
+    #[init]
     fn init(c: init::Context) -> init::LateResources {
-        let _: Result<(), ()> = c.schedule.foo(c.start + 10.cycles());
-        let _: Result<(), u32> = c.schedule.bar(c.start + 20.cycles(), 0);
-        let _: Result<(), (u32, u32)> = c.schedule.baz(c.start + 30.cycles(), 0, 1);
+        let _: Result<(), ()> = foo::schedule(c.start + 10.cycles());
+        let _: Result<(), u32> = bar::schedule(c.start + 20.cycles(), 0);
+        let _: Result<(), (u32, u32)> = baz::schedule(c.start + 30.cycles(), 0, 1);
 
         init::LateResources {}
     }
 
-    #[idle(schedule = [foo, bar, baz])]
-    fn idle(c: idle::Context) -> ! {
-        let _: Result<(), ()> = c.schedule.foo(Instant::now() + 40.cycles());
-        let _: Result<(), u32> = c.schedule.bar(Instant::now() + 50.cycles(), 0);
-        let _: Result<(), (u32, u32)> = c.schedule.baz(Instant::now() + 60.cycles(), 0, 1);
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
+        let _: Result<(), ()> = foo::schedule(Instant::now() + 40.cycles());
+        let _: Result<(), u32> = bar::schedule(Instant::now() + 50.cycles(), 0);
+        let _: Result<(), (u32, u32)> = baz::schedule(Instant::now() + 60.cycles(), 0, 1);
 
         loop {
             cortex_m::asm::nop();
         }
     }
 
-    #[task(binds = SVCall, schedule = [foo, bar, baz])]
+    #[task(binds = SVCall)]
     fn svcall(c: svcall::Context) {
-        let _: Result<(), ()> = c.schedule.foo(c.start + 70.cycles());
-        let _: Result<(), u32> = c.schedule.bar(c.start + 80.cycles(), 0);
-        let _: Result<(), (u32, u32)> = c.schedule.baz(c.start + 90.cycles(), 0, 1);
+        let _: Result<(), ()> = foo::schedule(c.start + 70.cycles());
+        let _: Result<(), u32> = bar::schedule(c.start + 80.cycles(), 0);
+        let _: Result<(), (u32, u32)> = baz::schedule(c.start + 90.cycles(), 0, 1);
     }
 
-    #[task(binds = UART0, schedule = [foo, bar, baz])]
+    #[task(binds = UART0)]
     fn uart0(c: uart0::Context) {
-        let _: Result<(), ()> = c.schedule.foo(c.start + 100.cycles());
-        let _: Result<(), u32> = c.schedule.bar(c.start + 110.cycles(), 0);
-        let _: Result<(), (u32, u32)> = c.schedule.baz(c.start + 120.cycles(), 0, 1);
+        let _: Result<(), ()> = foo::schedule(c.start + 100.cycles());
+        let _: Result<(), u32> = bar::schedule(c.start + 110.cycles(), 0);
+        let _: Result<(), (u32, u32)> = baz::schedule(c.start + 120.cycles(), 0, 1);
     }
 
-    #[task(schedule = [foo, bar, baz])]
+    #[task]
     fn foo(c: foo::Context) {
-        let _: Result<(), ()> = c.schedule.foo(c.scheduled + 130.cycles());
-        let _: Result<(), u32> = c.schedule.bar(c.scheduled + 140.cycles(), 0);
-        let _: Result<(), (u32, u32)> = c.schedule.baz(c.scheduled + 150.cycles(), 0, 1);
+        let _: Result<(), ()> = foo::schedule(c.scheduled + 130.cycles());
+        let _: Result<(), u32> = bar::schedule(c.scheduled + 140.cycles(), 0);
+        let _: Result<(), (u32, u32)> = baz::schedule(c.scheduled + 150.cycles(), 0, 1);
     }
 
     #[task]

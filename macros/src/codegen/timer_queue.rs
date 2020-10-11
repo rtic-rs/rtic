@@ -8,7 +8,7 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
-    if extra.monotonic.is_some() {
+    if let Some(m) = extra.monotonic {
         let t = util::schedule_t_ident();
 
         // Enumeration of `schedule`-able tasks
@@ -42,7 +42,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         // Static variable and resource proxy
         {
             let doc = format!("Timer queue");
-            let m = extra.monotonic();
             let cap = app
                 .software_tasks
                 .iter()

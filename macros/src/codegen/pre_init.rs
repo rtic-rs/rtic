@@ -12,12 +12,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     stmts.push(quote!(rtic::export::interrupt::disable();));
 
     // Populate the FreeQueue
-    for fq in &app.software_tasks {
-        // Get the task name
-        let name = fq.0;
-        let task = fq.1;
+    for (name, task) in &app.software_tasks {
         let cap = task.args.capacity;
-
         let fq_ident = util::fq_ident(name);
 
         stmts.push(quote!(

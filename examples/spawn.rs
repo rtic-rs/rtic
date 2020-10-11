@@ -10,7 +10,7 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
-    #[init(spawn = [foo])]
+    #[init]
     fn init(_c: init::Context) -> init::LateResources {
         foo::spawn(1, 2).unwrap();
 
