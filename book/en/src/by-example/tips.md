@@ -13,7 +13,8 @@ be called from different tasks. Here's one such example:
 
 ``` console
 $ cargo run --example generics
-{{#include ../../../../ci/expected/generics.run}}```
+{{#include ../../../../ci/expected/generics.run}}
+```
 
 This also lets you change the static priorities of tasks without having to
 rewrite code. If you consistently use `lock`s to access the data behind shared
@@ -63,18 +64,21 @@ Running this program produces the expected output.
 
 ``` console
 $ cargo run --example ramfunc
-{{#include ../../../../ci/expected/ramfunc.run}}```
+{{#include ../../../../ci/expected/ramfunc.run}}
+```
 
 One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
 (`0x2000_0000`), whereas `foo` ended in Flash (`0x0000_0000`).
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' foo::'
-{{#include ../../../../ci/expected/ramfunc.grep.foo}}```
+{{#include ../../../../ci/expected/ramfunc.grep.foo}}
+```
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
-{{#include ../../../../ci/expected/ramfunc.grep.bar}}```
+{{#include ../../../../ci/expected/ramfunc.grep.bar}}
+```
 
 ## `binds`
 
@@ -90,7 +94,8 @@ after the function, not the interrupt / exception. Example below:
 ```
 ``` console
 $ cargo run --example binds
-{{#include ../../../../ci/expected/binds.run}}```
+{{#include ../../../../ci/expected/binds.run}}
+```
 
 ## Indirection for faster message passing
 
@@ -114,4 +119,5 @@ Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 ```
 ``` console
 $ cargo run --example binds
-{{#include ../../../../ci/expected/pool.run}}```
+{{#include ../../../../ci/expected/pool.run}}
+```

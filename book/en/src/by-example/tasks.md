@@ -24,7 +24,8 @@ priorities. The three tasks map to 2 interrupts handlers.
 
 ``` console
 $ cargo run --example task
-{{#include ../../../../ci/expected/task.run}}```
+{{#include ../../../../ci/expected/task.run}}
+```
 
 ## Message passing
 
@@ -40,7 +41,8 @@ The example below showcases three tasks, two of them expect a message.
 
 ``` console
 $ cargo run --example message
-{{#include ../../../../ci/expected/message.run}}```
+{{#include ../../../../ci/expected/message.run}}
+```
 
 ## Capacity
 
@@ -60,4 +62,5 @@ fail.
 
 ``` console
 $ cargo run --example capacity
-{{#include ../../../../ci/expected/capacity.run}}```
+{{#include ../../../../ci/expected/capacity.run}}
+```

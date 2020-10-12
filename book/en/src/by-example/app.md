@@ -55,7 +55,8 @@ process.
 
 ```  console
 $ cargo run --example init
-{{#include ../../../../ci/expected/init.run}}```
+{{#include ../../../../ci/expected/init.run}}
+```
 
 ## `idle`
 
@@ -83,7 +84,8 @@ The example below shows that `idle` runs after `init`.
 
 ``` console
 $ cargo run --example idle
-{{#include ../../../../ci/expected/idle.run}}```
+{{#include ../../../../ci/expected/idle.run}}
+```
 
 ## `interrupt` / `exception`
 
@@ -98,7 +100,8 @@ and exception handlers. In RTFM, we refer to interrupt and exception handlers as
 
 ``` console
 $ cargo run --example interrupt
-{{#include ../../../../ci/expected/interrupt.run}}```
+{{#include ../../../../ci/expected/interrupt.run}}
+```
 
 So far all the RTFM applications we have seen look no different that the
 applications one can write using only the `cortex-m-rt` crate. In the next

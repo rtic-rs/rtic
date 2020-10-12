@@ -24,7 +24,8 @@ two handlers.
 
 ``` console
 $ cargo run --example resource
-{{#include ../../../../ci/expected/resource.run}}```
+{{#include ../../../../ci/expected/resource.run}}
+```
 
 ## Priorities
 
@@ -67,7 +68,8 @@ the critical section created by the lowest priority handler.
 
 ``` console
 $ cargo run --example lock
-{{#include ../../../../ci/expected/lock.run}}```
+{{#include ../../../../ci/expected/lock.run}}
+```
 
 One more note about priorities: choosing a priority higher than what the device
 supports (that is `1 << NVIC_PRIO_BITS`) will result in a compile error. Due to
@@ -103,7 +105,8 @@ the consumer resource.
 
 ``` console
 $ cargo run --example late
-{{#include ../../../../ci/expected/late.run}}```
+{{#include ../../../../ci/expected/late.run}}
+```
 
 ## `static` resources
 
@@ -123,4 +126,5 @@ two tasks that run at different priorities.
 
 ``` console
 $ cargo run --example static
-{{#include ../../../../ci/expected/static.run}}```
+{{#include ../../../../ci/expected/static.run}}
+```

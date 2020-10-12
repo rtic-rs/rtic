@@ -23,4 +23,5 @@ the [`alloc-singleton`] abstractions.
 
 ``` console
 $ cargo run --example singleton
-{{#include ../../../../ci/expected/singleton.run}}```
+{{#include ../../../../ci/expected/singleton.run}}
+```
