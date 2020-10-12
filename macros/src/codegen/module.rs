@@ -15,7 +15,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
     let mut lt = None;
     match ctxt {
         Context::Init => {
-            if app.uses_schedule() {
+            if extra.monotonic.is_some() {
                 let m = extra.monotonic();
 
                 fields.push(quote!(
@@ -277,7 +277,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
     };
 
     let core = if ctxt.is_init() {
-        if app.uses_schedule() {
+        if extra.monotonic.is_some() {
             Some(quote!(core: rtic::Peripherals,))
         } else {
             Some(quote!(core: rtic::export::Peripherals,))
