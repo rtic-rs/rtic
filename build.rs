@@ -1,5 +1,4 @@
 use std::env;
-use version_check;
 
 fn main() {
     let target = env::var("TARGET").unwrap();

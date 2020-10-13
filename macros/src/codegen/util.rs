@@ -90,12 +90,17 @@ pub fn interrupt_ident() -> Ident {
 pub fn is_exception(name: &Ident) -> bool {
     let s = name.to_string();
 
-    match &*s {
-        "MemoryManagement" | "BusFault" | "UsageFault" | "SecureFault" | "SVCall"
-        | "DebugMonitor" | "PendSV" | "SysTick" => true,
-
-        _ => false,
-    }
+    matches!(
+        &*s,
+        "MemoryManagement"
+            | "BusFault"
+            | "UsageFault"
+            | "SecureFault"
+            | "SVCall"
+            | "DebugMonitor"
+            | "PendSV"
+            | "SysTick"
+    )
 }
 
 /// Generates a pre-reexport identifier for the "late resources" struct
@@ -209,7 +214,7 @@ pub fn rq_ident(priority: u8) -> Ident {
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks
 pub fn schedule_t_ident() -> Ident {
-    Ident::new(&format!("SCHED_T"), Span::call_site())
+    Ident::new(&"SCHED_T".to_string(), Span::call_site())
 }
 
 /// Generates an identifier for the `enum` of `spawn`-able tasks
@@ -229,5 +234,5 @@ pub fn suffixed(name: &str) -> Ident {
 ///
 /// At most there is one timer queue
 pub fn tq_ident() -> Ident {
-    Ident::new(&format!("TQ"), Span::call_site())
+    Ident::new(&"TQ".to_string(), Span::call_site())
 }

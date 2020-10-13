@@ -28,7 +28,7 @@ pub fn codegen(
     // call_idle
     TokenStream2,
 ) {
-    if app.idles.len() > 0 {
+    if !app.idles.is_empty() {
         let idle = &app.idles.first().unwrap();
         let mut needs_lt = false;
         let mut mod_app = None;

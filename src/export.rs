@@ -72,6 +72,11 @@ pub struct Priority {
 }
 
 impl Priority {
+    /// Create a new Priority
+    ///
+    /// # Safety
+    ///
+    /// Will overwrite the current Priority
     #[inline(always)]
     pub unsafe fn new(value: u8) -> Self {
         Priority {
@@ -79,12 +84,14 @@ impl Priority {
         }
     }
 
+    /// Change the current priority to `value`
     // These two methods are used by `lock` (see below) but can't be used from the RTIC application
     #[inline(always)]
     fn set(&self, value: u8) {
         self.inner.set(value)
     }
 
+    /// Get the current priority
     #[inline(always)]
     fn get(&self) -> u8 {
         self.inner.get()
@@ -105,6 +112,13 @@ where
 {
 }
 
+/// Lock the resource proxy by setting the BASEPRI
+/// and running the closure with interrupt::free
+///
+/// # Safety
+///
+/// Writing to the BASEPRI
+/// Dereferencing a raw pointer
 #[cfg(armv7m)]
 #[inline(always)]
 pub unsafe fn lock<T, R>(
@@ -135,6 +149,13 @@ pub unsafe fn lock<T, R>(
     }
 }
 
+/// Lock the resource proxy by setting the PRIMASK
+/// and running the closure with interrupt::free
+///
+/// # Safety
+///
+/// Writing to the PRIMASK
+/// Dereferencing a raw pointer
 #[cfg(not(armv7m))]
 #[inline(always)]
 pub unsafe fn lock<T, R>(

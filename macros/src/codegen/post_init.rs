@@ -9,7 +9,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
     // Initialize late resources
-    if analysis.late_resources.len() > 0 {
+    if !analysis.late_resources.is_empty() {
         // BTreeSet wrapped in a vector
         for name in analysis.late_resources.first().unwrap() {
             // If it's live

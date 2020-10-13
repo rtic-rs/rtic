@@ -24,18 +24,26 @@ where
     N: ArrayLength<NotReady<M, T>>,
     T: Copy,
 {
+    /// # Safety
+    ///
+    /// Writing to memory with a transmute in order to enable
+    /// interrupts of the SysTick timer
+    ///
+    /// Enqueue a task without checking if it is full
     #[inline]
     pub unsafe fn enqueue_unchecked(&mut self, nr: NotReady<M, T>) {
         let mut is_empty = true;
-        if self
+        // Check if the top contains a non-empty element and if that element is
+        // greater than nr
+        let if_heap_max_greater_than_nr = self
             .0
             .peek()
             .map(|head| {
                 is_empty = false;
                 nr.instant < head.instant
             })
-            .unwrap_or(true)
-        {
+            .unwrap_or(true);
+        if if_heap_max_greater_than_nr {
             if is_empty {
                 mem::transmute::<_, SYST>(()).enable_interrupt();
             }
@@ -47,6 +55,7 @@ where
         self.0.push_unchecked(nr);
     }
 
+    /// Dequeue a task from the TimerQueue
     #[inline]
     pub fn dequeue(&mut self) -> Option<(T, u8)> {
         unsafe {
