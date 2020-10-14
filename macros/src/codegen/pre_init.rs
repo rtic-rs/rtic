@@ -53,14 +53,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let interrupt = util::interrupt_ident();
         stmts.push(quote!(
             core.NVIC.set_priority(
-                #device::#interrupt::#name,
+                you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#interrupt::#name,
                 rtic::export::logical2hw(#priority, #nvic_prio_bits),
             );
         ));
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(rtic::export::NVIC::unmask(#device::#interrupt::#name);));
+        stmts.push(quote!(rtic::export::NVIC::unmask(you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#interrupt::#name);));
     }
 
     // Set exception priorities

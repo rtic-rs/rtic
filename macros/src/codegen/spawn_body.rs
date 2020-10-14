@@ -10,7 +10,7 @@ pub fn codegen(
     name: &Ident,
     app: &App,
     analysis: &Analysis,
-    extra: &Extra,
+    _extra: &Extra,
 ) -> TokenStream2 {
     let spawnee = &app.software_tasks[name];
     let priority = spawnee.args.priority;
@@ -42,12 +42,11 @@ pub fn codegen(
         )
     };
 
-    let device = extra.device;
     let enum_ = util::interrupt_ident();
     let interrupt = &analysis.interrupts.get(&priority);
     let pend = {
         quote!(
-            rtic::pend(#device::#enum_::#interrupt);
+            rtic::pend(you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#interrupt);
         )
     };
 
