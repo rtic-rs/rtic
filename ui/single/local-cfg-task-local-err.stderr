@@ -1,0 +1,37 @@
+error: task local resource "l2" is used by multiple tasks
+  --> $DIR/local-cfg-task-local-err.rs:25:9
+   |
+25 |         l2: u32,
+   |         ^^
+
+error: task local resource "l2" is used by task "uart0" with priority 1
+  --> $DIR/local-cfg-task-local-err.rs:51:39
+   |
+51 |         #[cfg(feature = "feature_l2")]l2,
+   |                                       ^^
+
+error: task local resource "l2" is used by task "uart1" with priority 1
+  --> $DIR/local-cfg-task-local-err.rs:60:44
+   |
+60 |         #[cfg(not(feature = "feature_l2"))]l2
+   |                                            ^^
+
+warning: unused import: `cortex_m_semihosting::debug`
+ --> $DIR/local-cfg-task-local-err.rs:8:5
+  |
+8 | use cortex_m_semihosting::debug;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `cortex_m_semihosting::hprintln`
+ --> $DIR/local-cfg-task-local-err.rs:9:5
+  |
+9 | use cortex_m_semihosting::hprintln;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `lm3s6965::Interrupt`
+  --> $DIR/local-cfg-task-local-err.rs:10:5
+   |
+10 | use lm3s6965::Interrupt;
+   |     ^^^^^^^^^^^^^^^^^^^
