@@ -119,10 +119,13 @@ The static priority of each handler can be declared in the `task` attribute
 using the `priority` argument. Tasks can have priorities in the range `1..=(1 <<
 NVIC_PRIO_BITS)` where `NVIC_PRIO_BITS` is a constant defined in the `device`
 crate. When the `priority` argument is omitted, the priority is assumed to be
-`1`. The `idle` task has a non-configurable static priority of `0`, the lowest
-priority.
+`1`. The `idle` task has a non-configurable static priority of `0`, the lowest priority.
 
-When several tasks are ready to be executed the one with *highest* static
+> A higher number means a higher priority in RTIC, which is the opposite from what
+> Cortex-M does in the NVIC peripheral.  
+> Explicitly, this means that number `10` has a **higher** priority than number `9`.
+
+When several tasks are ready to be executed the one with highest static
 priority will be executed first. Task prioritization can be observed in the
 following scenario: an interrupt signal arrives during the execution of a low
 priority task; the signal puts the higher priority task in the pending state.
