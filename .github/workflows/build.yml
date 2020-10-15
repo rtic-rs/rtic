@@ -605,7 +605,7 @@ jobs:
         run: pip install git+https://github.com/linkchecker/linkchecker.git
 
       - name: mdBook Action
-        uses: peaceiris/actions-mdbook@v1.1.11
+        uses: peaceiris/actions-mdbook@v1.1.13
         with:
           mdbook-version: 'latest'
 
@@ -660,7 +660,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: mdBook Action
-        uses: peaceiris/actions-mdbook@v1.1.11
+        uses: peaceiris/actions-mdbook@v1.1.13
         with:
           mdbook-version: 'latest'
 
