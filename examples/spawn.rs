@@ -1,4 +1,4 @@
-//! examples/message.rs
+//! examples/spawn.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
