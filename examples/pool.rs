@@ -36,16 +36,16 @@ mod app {
         init::LateResources {}
     }
 
-    #[task(binds = I2C0, priority = 2, spawn = [foo, bar])]
-    fn i2c0(c: i2c0::Context) {
+    #[task(binds = I2C0, priority = 2)]
+    fn i2c0(_: i2c0::Context) {
         // claim a memory block, leave it uninitialized and ..
         let x = P::alloc().unwrap().freeze();
 
         // .. send it to the `foo` task
-        c.spawn.foo(x).ok().unwrap();
+        foo::spawn(x).ok().unwrap();
 
         // send another block to the task `bar`
-        c.spawn.bar(P::alloc().unwrap().freeze()).ok().unwrap();
+        bar::spawn(P::alloc().unwrap().freeze()).ok().unwrap();
     }
 
     #[task]

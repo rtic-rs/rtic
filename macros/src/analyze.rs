@@ -29,7 +29,6 @@ pub fn app(analysis: P<analyze::Analysis>, app: &App) -> P<Analysis> {
         .software_tasks
         .values()
         .filter_map(|task| Some(task.args.priority))
-        .chain(analysis.timer_queues.first().map(|tq| tq.priority))
         .collect::<BTreeSet<_>>();
 
     if !priorities.is_empty() {

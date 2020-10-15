@@ -18,14 +18,14 @@ mod app {
         init::LateResources {}
     }
 
-    #[task(binds = UART0, spawn = [foo, bar])]
-    fn uart0(c: uart0::Context) {
-        c.spawn.foo(0).unwrap();
-        c.spawn.foo(1).unwrap();
-        c.spawn.foo(2).unwrap();
-        c.spawn.foo(3).unwrap();
+    #[task(binds = UART0)]
+    fn uart0(_: uart0::Context) {
+        foo::spawn(0).unwrap();
+        foo::spawn(1).unwrap();
+        foo::spawn(2).unwrap();
+        foo::spawn(3).unwrap();
 
-        c.spawn.bar().unwrap();
+        bar::spawn().unwrap();
     }
 
     #[task(capacity = 4)]

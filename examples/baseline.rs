@@ -12,19 +12,19 @@ use panic_semihosting as _;
 // NOTE: does NOT properly work on QEMU
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
-    #[init(spawn = [foo])]
+    #[init]
     fn init(cx: init::Context) -> init::LateResources {
         // omitted: initialization of `CYCCNT`
 
         hprintln!("init(baseline = {:?})", cx.start).unwrap();
 
         // `foo` inherits the baseline of `init`: `Instant(0)`
-        cx.spawn.foo().unwrap();
+        foo::spawn().unwrap();
 
         init::LateResources {}
     }
 
-    #[task(schedule = [foo])]
+    #[task]
     fn foo(cx: foo::Context) {
         static mut ONCE: bool = true;
 
@@ -39,12 +39,12 @@ mod app {
         }
     }
 
-    #[task(binds = UART0, spawn = [foo])]
+    #[task(binds = UART0)]
     fn uart0(cx: uart0::Context) {
         hprintln!("UART0(baseline = {:?})", cx.start).unwrap();
 
         // `foo` inherits the baseline of `UART0`: its `start` time
-        cx.spawn.foo().unwrap();
+        foo::spawn().unwrap();
     }
 
     // RTIC requires that unused interrupts are declared in an extern block when

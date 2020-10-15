@@ -207,7 +207,6 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     settings.optimize_priorities = true;
     settings.parse_binds = true;
     settings.parse_extern_interrupt = true;
-    settings.parse_schedule = true;
 
     let (app, analysis) = match rtic_syntax::parse(args, input, settings) {
         Err(e) => return e.to_compile_error().into(),

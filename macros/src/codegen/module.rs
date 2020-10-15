@@ -2,9 +2,15 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::{ast::App, Context};
 
-use crate::{check::Extra, codegen::util};
+use crate::{analyze::Analysis, check::Extra, codegen::util};
 
-pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) -> TokenStream2 {
+pub fn codegen(
+    ctxt: Context,
+    resources_tick: bool,
+    app: &App,
+    analysis: &Analysis,
+    extra: &Extra,
+) -> TokenStream2 {
     let mut items = vec![];
     let mut fields = vec![];
     let mut values = vec![];
@@ -15,9 +21,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
     let mut lt = None;
     match ctxt {
         Context::Init => {
-            if extra.monotonic.is_some() {
-                let m = extra.monotonic();
-
+            if let Some(m) = extra.monotonic {
                 fields.push(quote!(
                     /// System start time = `Instant(0 /* cycles */)`
                     pub start: <#m as rtic::Monotonic>::Instant
@@ -61,9 +65,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
         Context::Idle => {}
 
         Context::HardwareTask(..) => {
-            if app.uses_schedule() {
-                let m = extra.monotonic();
-
+            if let Some(m) = extra.monotonic {
                 fields.push(quote!(
                     /// Time at which this handler started executing
                     pub start: <#m as rtic::Monotonic>::Instant
@@ -76,9 +78,7 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
         }
 
         Context::SoftwareTask(..) => {
-            if app.uses_schedule() {
-                let m = extra.monotonic();
-
+            if let Some(m) = extra.monotonic {
                 fields.push(quote!(
                     /// The time at which this task was scheduled to run
                     pub scheduled: <#m as rtic::Monotonic>::Instant
@@ -124,139 +124,6 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
             Some(quote!(priority))
         };
         values.push(quote!(resources: Resources::new(#priority)));
-    }
-
-    if ctxt.uses_schedule(app) {
-        let doc = "Tasks that can be `schedule`-d from this context";
-        if ctxt.is_init() {
-            items.push(quote!(
-                #[doc = #doc]
-                #[derive(Clone, Copy)]
-                pub struct Schedule {
-                    _not_send: core::marker::PhantomData<*mut ()>,
-                }
-            ));
-
-            fields.push(quote!(
-                #[doc = #doc]
-                pub schedule: Schedule
-            ));
-
-            values.push(quote!(
-                schedule: Schedule { _not_send: core::marker::PhantomData }
-            ));
-        } else {
-            lt = Some(quote!('a));
-
-            items.push(quote!(
-                #[doc = #doc]
-                #[derive(Clone, Copy)]
-                pub struct Schedule<'a> {
-                    priority: &'a rtic::export::Priority,
-                }
-
-                impl<'a> Schedule<'a> {
-                    #[doc(hidden)]
-                    #[inline(always)]
-                    pub unsafe fn priority(&self) -> &rtic::export::Priority {
-                        &self.priority
-                    }
-                }
-            ));
-
-            fields.push(quote!(
-                #[doc = #doc]
-                pub schedule: Schedule<'a>
-            ));
-
-            values.push(quote!(
-                schedule: Schedule { priority }
-            ));
-        }
-    }
-
-    if ctxt.uses_spawn(app) {
-        let doc = "Tasks that can be `spawn`-ed from this context";
-        if ctxt.is_init() {
-            fields.push(quote!(
-                #[doc = #doc]
-                pub spawn: Spawn
-            ));
-
-            items.push(quote!(
-                #[doc = #doc]
-                #[derive(Clone, Copy)]
-                pub struct Spawn {
-                    _not_send: core::marker::PhantomData<*mut ()>,
-                }
-            ));
-
-            values.push(quote!(spawn: Spawn { _not_send: core::marker::PhantomData }));
-        } else {
-            lt = Some(quote!('a));
-
-            fields.push(quote!(
-                #[doc = #doc]
-                pub spawn: Spawn<'a>
-            ));
-
-            let mut instant_method = None;
-            if ctxt.is_idle() {
-                items.push(quote!(
-                    #[doc = #doc]
-                    #[derive(Clone, Copy)]
-                    pub struct Spawn<'a> {
-                        priority: &'a rtic::export::Priority,
-                    }
-                ));
-
-                values.push(quote!(spawn: Spawn { priority }));
-            } else {
-                let instant_field = if app.uses_schedule() {
-                    let m = extra.monotonic();
-
-                    needs_instant = true;
-                    instant_method = Some(quote!(
-                        pub unsafe fn instant(&self) -> <#m as rtic::Monotonic>::Instant {
-                            self.instant
-                        }
-                    ));
-                    Some(quote!(instant: <#m as rtic::Monotonic>::Instant,))
-                } else {
-                    None
-                };
-
-                items.push(quote!(
-                    /// Tasks that can be spawned from this context
-                    #[derive(Clone, Copy)]
-                    pub struct Spawn<'a> {
-                        #instant_field
-                        priority: &'a rtic::export::Priority,
-                    }
-                ));
-
-                let _instant = if needs_instant {
-                    Some(quote!(, instant))
-                } else {
-                    None
-                };
-                values.push(quote!(
-                    spawn: Spawn { priority #_instant }
-                ));
-            }
-
-            items.push(quote!(
-                impl<'a> Spawn<'a> {
-                    #[doc(hidden)]
-                    #[inline(always)]
-                    pub unsafe fn priority(&self) -> &rtic::export::Priority {
-                        self.priority
-                    }
-
-                    #instant_method
-                }
-            ));
-        }
     }
 
     if let Context::Init = ctxt {
@@ -316,11 +183,114 @@ pub fn codegen(ctxt: Context, resources_tick: bool, app: &App, extra: &Extra) ->
         }
     ));
 
+    // not sure if this is the right way, maybe its backwards,
+    // that spawn_module should put in in root
+
+    if let Context::SoftwareTask(..) = ctxt {
+        let spawnee = &app.software_tasks[name];
+        let priority = spawnee.args.priority;
+        let t = util::spawn_t_ident(priority);
+        let cfgs = &spawnee.cfgs;
+        let (args, tupled, _untupled, ty) = util::regroup_inputs(&spawnee.inputs);
+        let args = &args;
+        let tupled = &tupled;
+        let fq = util::fq_ident(name);
+        let rq = util::rq_ident(priority);
+        let inputs = util::inputs_ident(name);
+
+        let app_name = &app.name;
+        let app_path = quote! {crate::#app_name};
+
+        let device = extra.device;
+        let enum_ = util::interrupt_ident();
+        let interrupt = &analysis.interrupts.get(&priority);
+
+        // Spawn caller
+        items.push(quote!(
+        #(#cfgs)*
+        pub fn spawn(#(#args,)*) -> Result<(), #ty> {
+            // #let_instant // do we need it?
+            use rtic::Mutex as _;
+
+            let input = #tupled;
+
+            unsafe {
+                if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                    #app_path::#inputs
+                        .get_unchecked_mut(usize::from(index))
+                        .as_mut_ptr()
+                        .write(input);
+
+                    rtic::export::interrupt::free(|_| {
+                        #app_path::#rq.enqueue_unchecked((#app_path::#t::#name, index));
+                    });
+
+                    rtic::pend(#device::#enum_::#interrupt);
+
+                    Ok(())
+                } else {
+                    Err(input)
+                }
+            }
+
+        }));
+
+        // Schedule caller
+        if let Some(m) = extra.monotonic {
+            let instants = util::instants_ident(name);
+
+            let tq = util::tq_ident();
+            let t = util::schedule_t_ident();
+
+            items.push(quote!(
+            #(#cfgs)*
+            pub fn schedule(
+                instant: <#m as rtic::Monotonic>::Instant
+                #(,#args)*
+            ) -> Result<(), #ty> {
+                unsafe {
+                    use rtic::Mutex as _;
+
+                    let input = #tupled;
+                    if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                        #app_path::#inputs
+                            .get_unchecked_mut(usize::from(index))
+                            .as_mut_ptr()
+                            .write(input);
+
+                        #app_path::#instants
+                            .get_unchecked_mut(usize::from(index))
+                            .as_mut_ptr()
+                            .write(instant);
+
+                        let nr = rtic::export::NotReady {
+                            instant,
+                            index,
+                            task: #app_path::#t::#name,
+                        };
+
+                        rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(nr));
+
+                        Ok(())
+                    } else {
+                        Err(input)
+                    }
+                }
+            }));
+        }
+    }
+
     if !items.is_empty() {
+        let user_imports = &app.user_imports;
+
         quote!(
             #[allow(non_snake_case)]
             #[doc = #doc]
             pub mod #name {
+                #(
+                    #[allow(unused_imports)]
+                    #user_imports
+                )*
                 #(#items)*
             }
         )

@@ -15,11 +15,7 @@ mod post_init;
 mod pre_init;
 mod resources;
 mod resources_struct;
-mod schedule;
-mod schedule_body;
 mod software_tasks;
-mod spawn;
-mod spawn_body;
 mod timer_queue;
 mod util;
 
@@ -115,15 +111,9 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     ) = software_tasks::codegen(app, analysis, extra);
 
     let mod_app_dispatchers = dispatchers::codegen(app, analysis, extra);
-
-    let mod_app_spawn = spawn::codegen(app, analysis, extra);
-
     let mod_app_timer_queue = timer_queue::codegen(app, analysis, extra);
-
-    let mod_app_schedule = schedule::codegen(app, extra);
-
-    let user_imports = app.user_imports.clone();
-    let user_code = app.user_code.clone();
+    let user_imports = &app.user_imports;
+    let user_code = &app.user_code;
     let name = &app.name;
     let device = extra.device;
 
@@ -187,11 +177,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
             #(#mod_app_dispatchers)*
 
-            #(#mod_app_spawn)*
-
             #(#mod_app_timer_queue)*
-
-            #(#mod_app_schedule)*
 
             #(#mains)*
         }

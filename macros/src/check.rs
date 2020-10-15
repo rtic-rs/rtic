@@ -19,35 +19,7 @@ impl<'a> Extra<'a> {
     }
 }
 
-pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
-    // Check that all exceptions are valid; only exceptions with configurable priorities are
-    // accepted
-    for (name, task) in &app.hardware_tasks {
-        let name_s = task.args.binds.to_string();
-        match &*name_s {
-            "SysTick" => {
-                // If the timer queue is used, then SysTick is unavailable
-                if !analysis.timer_queues.is_empty() {
-                    return Err(parse::Error::new(
-                        name.span(),
-                        "this exception can't be used because it's being used by the runtime",
-                    ));
-                } else {
-                    // OK
-                }
-            }
-
-            "NonMaskableInt" | "HardFault" => {
-                return Err(parse::Error::new(
-                    name.span(),
-                    "only exceptions with configurable priority can be used as hardware tasks",
-                ));
-            }
-
-            _ => {}
-        }
-    }
-
+pub fn app<'a>(app: &'a App, _analysis: &Analysis) -> parse::Result<Extra<'a>> {
     // Check that external (device-specific) interrupts are not named after known (Cortex-M)
     // exceptions
     for name in app.extern_interrupts.keys() {
@@ -76,7 +48,6 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
             first = Some(name);
             Some(task.args.priority)
         })
-        .chain(analysis.timer_queues.first().map(|tq| tq.priority))
         .collect::<HashSet<_>>();
 
     let need = priorities.len();
@@ -141,11 +112,32 @@ pub fn app<'a>(app: &'a App, analysis: &Analysis) -> parse::Result<Extra<'a>> {
         }
     }
 
-    if !&analysis.timer_queues.is_empty() && monotonic.is_none() {
-        return Err(parse::Error::new(
-            Span::call_site(),
-            "a `monotonic` timer must be specified to use the `schedule` API",
-        ));
+    // Check that all exceptions are valid; only exceptions with configurable priorities are
+    // accepted
+    for (name, task) in &app.hardware_tasks {
+        let name_s = task.args.binds.to_string();
+        match &*name_s {
+            "SysTick" => {
+                // If the timer queue is used, then SysTick is unavailable
+                if monotonic.is_some() {
+                    return Err(parse::Error::new(
+                        name.span(),
+                        "this exception can't be used because it's being used by the runtime",
+                    ));
+                } else {
+                    // OK
+                }
+            }
+
+            "NonMaskableInt" | "HardFault" => {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "only exceptions with configurable priority can be used as hardware tasks",
+                ));
+            }
+
+            _ => {}
+        }
     }
 
     if let Some(device) = device {

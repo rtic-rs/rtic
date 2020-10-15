@@ -32,9 +32,7 @@ pub fn codegen(
     let mut hardware_tasks_imports = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        let (let_instant, instant) = if app.uses_schedule() {
-            let m = extra.monotonic();
-
+        let (let_instant, instant) = if let Some(m) = extra.monotonic {
             (
                 Some(quote!(let instant = <#m as rtic::Monotonic>::now();)),
                 Some(quote!(, instant)),
@@ -97,6 +95,7 @@ pub fn codegen(
             Context::HardwareTask(name),
             needs_lt,
             app,
+            analysis,
             extra,
         ));
 

@@ -8,16 +8,16 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
-    if let Some(timer_queue) = &analysis.timer_queues.first() {
+    if let Some(m) = extra.monotonic {
         let t = util::schedule_t_ident();
 
         // Enumeration of `schedule`-able tasks
         {
-            let variants = timer_queue
-                .tasks
+            let variants = app
+                .software_tasks
                 .iter()
-                .map(|name| {
-                    let cfgs = &app.software_tasks[name].cfgs;
+                .map(|(name, task)| {
+                    let cfgs = &task.cfgs;
 
                     quote!(
                         #(#cfgs)*
@@ -31,7 +31,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 #[doc = #doc]
                 #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
-                enum #t {
+                pub enum #t {
                     #(#variants,)*
                 }
             ));
@@ -42,42 +42,30 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         // Static variable and resource proxy
         {
             let doc = format!("Timer queue");
-            let m = extra.monotonic();
-            let n = util::capacity_typenum(timer_queue.capacity, false);
+            let cap = app
+                .software_tasks
+                .iter()
+                .map(|(_name, task)| task.args.capacity)
+                .sum();
+            let n = util::capacity_typenum(cap, false);
             let tq_ty = quote!(rtic::export::TimerQueue<#m, #t, #n>);
 
             items.push(quote!(
                 #[doc = #doc]
-                static mut #tq: #tq_ty = rtic::export::TimerQueue(
+                pub static mut #tq: #tq_ty = rtic::export::TimerQueue(
                     rtic::export::BinaryHeap(
                         rtic::export::iBinaryHeap::new()
                     )
                 );
-
-                struct #tq<'a> {
-                    priority: &'a rtic::export::Priority,
-                }
-            ));
-
-            items.push(util::impl_mutex(
-                extra,
-                &[],
-                false,
-                &tq,
-                tq_ty,
-                timer_queue.ceiling,
-                quote!(&mut #tq),
             ));
         }
 
         // Timer queue handler
         {
-            let arms = timer_queue
-                .tasks
+            let arms = app
+                .software_tasks
                 .iter()
-                .map(|name| {
-                    let task = &app.software_tasks[name];
-
+                .map(|(name, task)| {
                     let cfgs = &task.cfgs;
                     let priority = task.args.priority;
                     let rq = util::rq_ident(priority);
@@ -94,9 +82,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     quote!(
                         #(#cfgs)*
                         #t::#name => {
-                            (#rq { priority: &rtic::export::Priority::new(PRIORITY) }).lock(|rq| {
-                                rq.split().0.enqueue_unchecked((#rqt::#name, index))
-                            });
+                            rtic::export::interrupt::free(|_| #rq.split().0.enqueue_unchecked((#rqt::#name, index)));
 
                             #pend
                         }
@@ -104,30 +90,18 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 })
                 .collect::<Vec<_>>();
 
-            let priority = timer_queue.priority;
             let sys_tick = util::suffixed("SysTick");
             items.push(quote!(
                 #[no_mangle]
                 unsafe fn #sys_tick() {
                     use rtic::Mutex as _;
 
-                    /// The priority of this handler
-                    const PRIORITY: u8 = #priority;
-
-                    rtic::export::run(PRIORITY, || {
-                        while let Some((task, index)) = (#tq {
-                            // NOTE dynamic priority is always the static priority at this point
-                            priority: &rtic::export::Priority::new(PRIORITY),
-                        })
-                        // NOTE `inline(always)` produces faster and smaller code
-                            .lock(#[inline(always)]
-                                |tq| tq.dequeue())
-                        {
-                            match task {
-                                #(#arms)*
-                            }
+                    while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue())
+                    {
+                        match task {
+                            #(#arms)*
                         }
-                    });
+                    }
                 }
             ));
         }

@@ -12,12 +12,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     stmts.push(quote!(rtic::export::interrupt::disable();));
 
     // Populate the FreeQueue
-    for fq in &analysis.free_queues {
-        // Get the task name
-        let name = fq.0;
-        let task = &app.software_tasks[name];
+    for (name, task) in &app.software_tasks {
         let cap = task.args.capacity;
-
         let fq_ident = util::fq_ident(name);
 
         stmts.push(quote!(
@@ -81,8 +77,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     }
 
     // Initialize the SysTick if there exist a TimerQueue
-    if let Some(tq) = analysis.timer_queues.first() {
-        let priority = tq.priority;
+    if extra.monotonic.is_some() {
+        let priority = analysis.channels.keys().max().unwrap();
 
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));

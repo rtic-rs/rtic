@@ -13,7 +13,7 @@ use rtic::cyccnt::{Instant, U32Ext as _};
 // NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
-    #[init(schedule = [foo, bar])]
+    #[init()]
     fn init(mut cx: init::Context) -> init::LateResources {
         // Initialize (enable) the monotonic timer (CYCCNT)
         cx.core.DCB.enable_trace();
@@ -28,10 +28,10 @@ mod app {
         hprintln!("init @ {:?}", now).unwrap();
 
         // Schedule `foo` to run 8e6 cycles (clock cycles) in the future
-        cx.schedule.foo(now + 8_000_000.cycles()).unwrap();
+        foo::schedule(now + 8_000_000.cycles()).unwrap();
 
         // Schedule `bar` to run 4e6 cycles in the future
-        cx.schedule.bar(now + 4_000_000.cycles()).unwrap();
+        bar::schedule(now + 4_000_000.cycles()).unwrap();
 
         init::LateResources {}
     }

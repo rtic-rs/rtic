@@ -207,23 +207,9 @@ pub fn rq_ident(priority: u8) -> Ident {
     Ident::new(&format!("P{}_RQ", priority), Span::call_site())
 }
 
-/// Generates an identifier for a "schedule" function
-///
-/// The methods of the `Schedule` structs invoke these functions.
-pub fn schedule_ident(name: &Ident) -> Ident {
-    Ident::new(&format!("schedule_{}", name.to_string()), Span::call_site())
-}
-
 /// Generates an identifier for the `enum` of `schedule`-able tasks
 pub fn schedule_t_ident() -> Ident {
-    Ident::new(&format!("T"), Span::call_site())
-}
-
-/// Generates an identifier for a "spawn" function
-///
-/// The methods of the `Spawn` structs invoke these functions.
-pub fn spawn_ident(name: &Ident) -> Ident {
-    Ident::new(&format!("spawn_{}", name.to_string()), Span::call_site())
+    Ident::new(&format!("SCHED_T"), Span::call_site())
 }
 
 /// Generates an identifier for the `enum` of `spawn`-able tasks

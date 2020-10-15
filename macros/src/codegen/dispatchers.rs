@@ -35,7 +35,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             #[allow(non_camel_case_types)]
             #[derive(Clone, Copy)]
             #[doc = #doc]
-            enum #t {
+            pub enum #t {
                 #(#variants,)*
             }
         ));
@@ -57,26 +57,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         items.push(quote!(
             #[doc = #doc]
-            static mut #rq: #rq_ty = #rq_expr;
+            pub static mut #rq: #rq_ty = #rq_expr;
         ));
-
-        if let Some(ceiling) = channel.ceiling {
-            items.push(quote!(
-                struct #rq<'a> {
-                    priority: &'a rtic::export::Priority,
-                }
-            ));
-
-            items.push(util::impl_mutex(
-                extra,
-                &[],
-                false,
-                &rq,
-                rq_ty,
-                ceiling,
-                quote!(&mut #rq),
-            ));
-        }
 
         let arms = channel
             .tasks
@@ -88,7 +70,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 let inputs = util::inputs_ident(name);
                 let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
 
-                let (let_instant, instant) = if app.uses_schedule() {
+                let (let_instant, instant) = if extra.monotonic.is_some() {
                     let instants = util::instants_ident(name);
 
                     (

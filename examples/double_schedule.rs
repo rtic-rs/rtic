@@ -16,21 +16,21 @@ mod app {
         nothing: (),
     }
 
-    #[init(spawn = [task1])]
-    fn init(cx: init::Context) -> init::LateResources {
-        cx.spawn.task1().ok();
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
+        task1::spawn().ok();
 
         init::LateResources { nothing: () }
     }
 
-    #[task(schedule = [task2])]
+    #[task]
     fn task1(_cx: task1::Context) {
-        _cx.schedule.task2(_cx.scheduled + 100.cycles()).ok();
+        task2::schedule(_cx.scheduled + 100.cycles()).ok();
     }
 
-    #[task(schedule = [task1])]
+    #[task]
     fn task2(_cx: task2::Context) {
-        _cx.schedule.task1(_cx.scheduled + 100.cycles()).ok();
+        task1::schedule(_cx.scheduled + 100.cycles()).ok();
     }
 
     extern "C" {

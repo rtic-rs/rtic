@@ -15,21 +15,21 @@ const PERIOD: u32 = 8_000_000;
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
 
-    #[init(schedule = [foo])]
+    #[init]
     fn init(cx: init::Context) -> init::LateResources {
         // omitted: initialization of `CYCCNT`
 
-        cx.schedule.foo(cx.start + PERIOD.cycles()).unwrap();
+        foo::schedule(cx.start + PERIOD.cycles()).unwrap();
 
         init::LateResources {}
     }
 
-    #[task(schedule = [foo])]
+    #[task]
     fn foo(cx: foo::Context) {
         let now = Instant::now();
         hprintln!("foo(scheduled = {:?}, now = {:?})", cx.scheduled, now).unwrap();
 
-        cx.schedule.foo(cx.scheduled + PERIOD.cycles()).unwrap();
+        foo::schedule(cx.scheduled + PERIOD.cycles()).unwrap();
     }
 
     // RTIC requires that unused interrupts are declared in an extern block when

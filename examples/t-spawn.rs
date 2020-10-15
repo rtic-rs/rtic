@@ -9,45 +9,45 @@ use panic_halt as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
-    #[init(spawn = [foo, bar, baz])]
-    fn init(c: init::Context) -> init::LateResources {
-        let _: Result<(), ()> = c.spawn.foo();
-        let _: Result<(), u32> = c.spawn.bar(0);
-        let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
+        let _: Result<(), ()> = foo::spawn();
+        let _: Result<(), u32> = bar::spawn(0);
+        let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
 
         init::LateResources {}
     }
 
-    #[idle(spawn = [foo, bar, baz])]
-    fn idle(c: idle::Context) -> ! {
-        let _: Result<(), ()> = c.spawn.foo();
-        let _: Result<(), u32> = c.spawn.bar(0);
-        let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
+        let _: Result<(), ()> = foo::spawn();
+        let _: Result<(), u32> = bar::spawn(0);
+        let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
 
         loop {
             cortex_m::asm::nop();
         }
     }
 
-    #[task(binds = SVCall, spawn = [foo, bar, baz])]
-    fn svcall(c: svcall::Context) {
-        let _: Result<(), ()> = c.spawn.foo();
-        let _: Result<(), u32> = c.spawn.bar(0);
-        let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);
+    #[task(binds = SVCall)]
+    fn svcall(_: svcall::Context) {
+        let _: Result<(), ()> = foo::spawn();
+        let _: Result<(), u32> = bar::spawn(0);
+        let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
     }
 
-    #[task(binds = UART0, spawn = [foo, bar, baz])]
-    fn uart0(c: uart0::Context) {
-        let _: Result<(), ()> = c.spawn.foo();
-        let _: Result<(), u32> = c.spawn.bar(0);
-        let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);
+    #[task(binds = UART0)]
+    fn uart0(_: uart0::Context) {
+        let _: Result<(), ()> = foo::spawn();
+        let _: Result<(), u32> = bar::spawn(0);
+        let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
     }
 
-    #[task(spawn = [foo, bar, baz])]
-    fn foo(c: foo::Context) {
-        let _: Result<(), ()> = c.spawn.foo();
-        let _: Result<(), u32> = c.spawn.bar(0);
-        let _: Result<(), (u32, u32)> = c.spawn.baz(0, 1);
+    #[task]
+    fn foo(_: foo::Context) {
+        let _: Result<(), ()> = foo::spawn();
+        let _: Result<(), u32> = bar::spawn(0);
+        let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
     }
 
     #[task]

@@ -62,7 +62,13 @@ pub fn codegen(
             root_idle.push(locals);
         }
 
-        root_idle.push(module::codegen(Context::Idle, needs_lt, app, extra));
+        root_idle.push(module::codegen(
+            Context::Idle,
+            needs_lt,
+            app,
+            analysis,
+            extra,
+        ));
 
         let attrs = &idle.attrs;
         let context = &idle.context;

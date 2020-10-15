@@ -17,44 +17,35 @@ mod app {
         shared: u32,
     }
 
-    #[init(schedule = [foo], spawn = [foo])]
+    #[init]
     fn init(cx: init::Context) -> init::LateResources {
         let _: cyccnt::Instant = cx.start;
         let _: rtic::Peripherals = cx.core;
         let _: lm3s6965::Peripherals = cx.device;
-        let _: init::Schedule = cx.schedule;
-        let _: init::Spawn = cx.spawn;
 
         debug::exit(debug::EXIT_SUCCESS);
 
         init::LateResources {}
     }
 
-    #[idle(schedule = [foo], spawn = [foo])]
-    fn idle(cx: idle::Context) -> ! {
-        let _: idle::Schedule = cx.schedule;
-        let _: idle::Spawn = cx.spawn;
-
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
         loop {
             cortex_m::asm::nop();
         }
     }
 
-    #[task(binds = UART0, resources = [shared], schedule = [foo], spawn = [foo])]
+    #[task(binds = UART0, resources = [shared])]
     fn uart0(cx: uart0::Context) {
         let _: cyccnt::Instant = cx.start;
         let _: resources::shared = cx.resources.shared;
-        let _: uart0::Schedule = cx.schedule;
-        let _: uart0::Spawn = cx.spawn;
     }
 
-    #[task(priority = 2, resources = [shared], schedule = [foo], spawn = [foo])]
+    #[task(priority = 2, resources = [shared])]
     fn foo(cx: foo::Context) {
         let _: cyccnt::Instant = cx.scheduled;
         let _: &mut u32 = cx.resources.shared;
         let _: foo::Resources = cx.resources;
-        let _: foo::Schedule = cx.schedule;
-        let _: foo::Spawn = cx.spawn;
     }
 
     // RTIC requires that unused interrupts are declared in an extern block when
