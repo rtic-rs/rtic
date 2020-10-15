@@ -8,12 +8,7 @@ use crate::{
     codegen::{locals, module, resources_struct, util},
 };
 
-/// Generates support code for `#[init]` functions
-pub fn codegen(
-    app: &App,
-    analysis: &Analysis,
-    extra: &Extra,
-) -> (
+type CodegenResult = (
     // mod_app_idle -- the `${init}Resources` constructor
     Option<TokenStream2>,
     // root_init -- items that must be placed in the root of the crate:
@@ -28,8 +23,11 @@ pub fn codegen(
     Vec<TokenStream2>,
     // call_init -- the call to the user `#[init]` if there's one
     Option<TokenStream2>,
-) {
-    if app.inits.len() > 0 {
+);
+
+/// Generates support code for `#[init]` functions
+pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
+    if !app.inits.is_empty() {
         let init = &app.inits.first().unwrap();
         let mut needs_lt = false;
         let name = &init.name;

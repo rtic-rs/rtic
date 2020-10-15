@@ -28,7 +28,7 @@ pub fn app(analysis: P<analyze::Analysis>, app: &App) -> P<Analysis> {
     let priorities = app
         .software_tasks
         .values()
-        .filter_map(|task| Some(task.args.priority))
+        .map(|task| task.args.priority)
         .collect::<BTreeSet<_>>();
 
     if !priorities.is_empty() {

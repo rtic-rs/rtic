@@ -56,7 +56,7 @@ pub fn codegen(
             pub static mut #fq: #fq_ty = #fq_expr;
         ));
 
-        let ref elems = (0..cap)
+        let elems = &(0..cap)
             .map(|_| quote!(core::mem::MaybeUninit::uninit()))
             .collect::<Vec<_>>();
 

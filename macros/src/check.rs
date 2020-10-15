@@ -44,9 +44,9 @@ pub fn app<'a>(app: &'a App, _analysis: &Analysis) -> parse::Result<Extra<'a>> {
     let priorities = app
         .software_tasks
         .iter()
-        .filter_map(|(name, task)| {
+        .map(|(name, task)| {
             first = Some(name);
-            Some(task.args.priority)
+            task.args.priority
         })
         .collect::<HashSet<_>>();
 
@@ -97,7 +97,7 @@ pub fn app<'a>(app: &'a App, _analysis: &Analysis) -> parse::Result<Extra<'a>> {
             },
 
             "peripherals" => match v {
-                CustomArg::Bool(x) => peripherals = if *x { true } else { false },
+                CustomArg::Bool(x) => peripherals = *x,
                 _ => {
                     return Err(parse::Error::new(
                         k.span(),

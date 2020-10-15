@@ -26,7 +26,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 })
                 .collect::<Vec<_>>();
 
-            let doc = format!("Tasks that can be scheduled");
+            let doc = "Tasks that can be scheduled".to_string();
             items.push(quote!(
                 #[doc = #doc]
                 #[allow(non_camel_case_types)]
@@ -41,7 +41,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
         // Static variable and resource proxy
         {
-            let doc = format!("Timer queue");
+            let doc = "Timer queue".to_string();
             let cap = app
                 .software_tasks
                 .iter()
