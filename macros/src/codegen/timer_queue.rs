@@ -72,7 +72,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
         // Timer queue handler
         {
-            let device = extra.device;
             let arms = timer_queue
                 .tasks
                 .iter()
@@ -88,7 +87,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                     let pend = {
                         quote!(
-                            rtic::pend(#device::#enum_::#interrupt);
+                            rtic::pend(you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#interrupt);
                         )
                     };
 
