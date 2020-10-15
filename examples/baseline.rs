@@ -5,13 +5,14 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::{debug, hprintln};
-use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 // NOTE: does NOT properly work on QEMU
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use lm3s6965::Interrupt;
+
     #[init]
     fn init(cx: init::Context) -> init::LateResources {
         // omitted: initialization of `CYCCNT`

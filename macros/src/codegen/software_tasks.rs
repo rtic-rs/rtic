@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote};
+use quote::quote;
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
@@ -22,13 +22,10 @@ pub fn codegen(
     Vec<TokenStream2>,
     // user_software_tasks -- the `#[task]` functions written by the user
     Vec<TokenStream2>,
-    // user_software_tasks_imports -- the imports for `#[task]` functions written by the user
-    Vec<TokenStream2>,
 ) {
     let mut mod_app = vec![];
     let mut root = vec![];
     let mut user_tasks = vec![];
-    let mut software_tasks_imports = vec![];
 
     for (name, task) in &app.software_tasks {
         let inputs = &task.inputs;
@@ -93,13 +90,6 @@ pub fn codegen(
                 analysis,
             );
 
-            // Add resources to imports
-            let name_res = format_ident!("{}Resources", name);
-            software_tasks_imports.push(quote!(
-                #[allow(non_snake_case)]
-                use super::#name_res;
-            ));
-
             root.push(item);
 
             mod_app.push(constructor);
@@ -129,11 +119,6 @@ pub fn codegen(
                 #(#stmts)*
             }
         ));
-        software_tasks_imports.push(quote!(
-            #(#cfgs)*
-            #[allow(non_snake_case)]
-            use super::#name;
-        ));
 
         root.push(module::codegen(
             Context::SoftwareTask(name),
@@ -144,5 +129,5 @@ pub fn codegen(
         ));
     }
 
-    (mod_app, root, user_tasks, software_tasks_imports)
+    (mod_app, root, user_tasks)
 }

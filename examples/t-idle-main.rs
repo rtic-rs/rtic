@@ -3,11 +3,12 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::debug;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use cortex_m_semihosting::debug;
+
     #[init]
     fn init(_: init::Context) -> init::LateResources {
         init::LateResources {}

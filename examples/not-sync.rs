@@ -6,8 +6,6 @@
 #![no_std]
 
 use core::marker::PhantomData;
-
-use cortex_m_semihosting::debug;
 use panic_halt as _;
 
 pub struct NotSync {
@@ -18,6 +16,7 @@ pub struct NotSync {
 mod app {
     use super::NotSync;
     use core::marker::PhantomData;
+    use cortex_m_semihosting::debug;
 
     #[resources]
     struct Resources {

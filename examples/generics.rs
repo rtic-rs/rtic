@@ -5,13 +5,16 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::{debug, hprintln};
-use lm3s6965::Interrupt;
+use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
-use rtic::{Exclusive, Mutex};
+use rtic::Mutex;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use lm3s6965::Interrupt;
+    use rtic::Exclusive;
+
     #[resources]
     struct Resources {
         #[init(0)]

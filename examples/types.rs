@@ -5,12 +5,13 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::debug;
 use panic_semihosting as _;
-use rtic::cyccnt;
 
 #[rtic::app(device = lm3s6965, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
+    use cortex_m_semihosting::debug;
+    use rtic::cyccnt;
+
     #[resources]
     struct Resources {
         #[init(0)]

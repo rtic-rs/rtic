@@ -22,45 +22,25 @@ mod util;
 // TODO document the syntax here or in `rtic-syntax`
 pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut mod_app = vec![];
-    let mut mod_app_imports = vec![];
     let mut mains = vec![];
     let mut root = vec![];
     let mut user = vec![];
-    let mut imports = vec![];
 
     // Generate the `main` function
     let assertion_stmts = assertions::codegen(analysis);
 
     let pre_init_stmts = pre_init::codegen(&app, analysis, extra);
 
-    let (mod_app_init, root_init, user_init, user_init_imports, call_init) =
-        init::codegen(app, analysis, extra);
+    let (mod_app_init, root_init, user_init, call_init) = init::codegen(app, analysis, extra);
 
     let post_init_stmts = post_init::codegen(&app, analysis);
 
-    let (mod_app_idle, root_idle, user_idle, user_idle_imports, call_idle) =
-        idle::codegen(app, analysis, extra);
-
-    if user_init.is_some() {
-        mod_app_imports.push(quote!(
-            use super::init;
-        ))
-    }
-    if user_idle.is_some() {
-        mod_app_imports.push(quote!(
-            use super::idle;
-        ))
-    }
+    let (mod_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis, extra);
 
     user.push(quote!(
         #user_init
 
         #user_idle
-    ));
-
-    imports.push(quote!(
-        #(#user_init_imports)*
-        #(#user_idle_imports)*
     ));
 
     root.push(quote!(
@@ -100,15 +80,10 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         mod_app_hardware_tasks,
         root_hardware_tasks,
         user_hardware_tasks,
-        user_hardware_tasks_imports,
     ) = hardware_tasks::codegen(app, analysis, extra);
 
-    let (
-        mod_app_software_tasks,
-        root_software_tasks,
-        user_software_tasks,
-        user_software_tasks_imports,
-    ) = software_tasks::codegen(app, analysis, extra);
+    let (mod_app_software_tasks, root_software_tasks, user_software_tasks) =
+        software_tasks::codegen(app, analysis, extra);
 
     let mod_app_dispatchers = dispatchers::codegen(app, analysis, extra);
     let mod_app_timer_queue = timer_queue::codegen(app, analysis, extra);
@@ -131,54 +106,66 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     }
 
     quote!(
-        #(#user)*
-
-        #(#user_hardware_tasks)*
-
-        #(#user_software_tasks)*
-
-        #(#root)*
-
-        #mod_resources
-
-        #(#root_hardware_tasks)*
-
-        #(#root_software_tasks)*
-
-        /// Unused
-        #(#tasks)*
-
         /// Implementation details
         mod #name {
             /// Always include the device crate which contains the vector table
             use #device as you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml;
-            #(#imports)*
+
+            /// 2
             #(#user_imports)*
 
             /// User code from within the module
             #(#user_code)*
             /// User code end
 
+            /// 3
+            #(#user)*
 
-            #(#user_hardware_tasks_imports)*
+            /// 4
+            #(#user_hardware_tasks)*
 
-            #(#user_software_tasks_imports)*
+            /// 5
+            #(#user_software_tasks)*
 
+            /// 6
+            #(#root)*
+
+            /// 7
+            #mod_resources
+
+            /// 8
+            #(#root_hardware_tasks)*
+
+            /// 9
+            #(#root_software_tasks)*
+
+            /// 10
+            /// Unused
+            #(#tasks)*
+
+            /// 13
             #(#mod_resources_imports)*
 
+            /// 14
             /// app module
             #(#mod_app)*
 
+            /// 15
             #(#mod_app_resources)*
 
+            /// 16
             #(#mod_app_hardware_tasks)*
 
+            /// 17
             #(#mod_app_software_tasks)*
 
+            /// 18
             #(#mod_app_dispatchers)*
 
+            /// 19
             #(#mod_app_timer_queue)*
 
+            /// 20
             #(#mains)*
         }
     )

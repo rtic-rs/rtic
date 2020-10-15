@@ -24,6 +24,7 @@ pub fn codegen(
     for (name, res, expr, _) in app.resources(analysis) {
         let cfgs = &res.cfgs;
         let ty = &res.ty;
+        let mangled_name = util::mangle_ident(&name);
 
         {
             let section = if expr.is_none() {
@@ -47,7 +48,7 @@ pub fn codegen(
                 #(#attrs)*
                 #(#cfgs)*
                 #section
-                static mut #name: #ty = #expr;
+                static mut #mangled_name: #ty = #expr;
             ));
         }
 
@@ -76,12 +77,12 @@ pub fn codegen(
             let ptr = if expr.is_none() {
                 quote!(
                     #(#cfgs)*
-                    #name.as_mut_ptr()
+                    #mangled_name.as_mut_ptr()
                 )
             } else {
                 quote!(
                     #(#cfgs)*
-                    &mut #name
+                    &mut #mangled_name
                 )
             };
 

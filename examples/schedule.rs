@@ -5,14 +5,15 @@
 #![no_main]
 #![no_std]
 
-use cortex_m::peripheral::DWT;
-use cortex_m_semihosting::hprintln;
 use panic_halt as _;
-use rtic::cyccnt::{Instant, U32Ext as _};
 
 // NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
+    use cortex_m::peripheral::DWT;
+    use cortex_m_semihosting::hprintln;
+    use rtic::cyccnt::{Instant, U32Ext as _};
+
     #[init()]
     fn init(mut cx: init::Context) -> init::LateResources {
         // Initialize (enable) the monotonic timer (CYCCNT)

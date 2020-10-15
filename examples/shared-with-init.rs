@@ -5,8 +5,6 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::debug;
-use lm3s6965::Interrupt;
 use panic_halt as _;
 use rtic::app;
 
@@ -14,6 +12,8 @@ pub struct MustBeSend;
 
 #[app(device = lm3s6965)]
 mod app {
+    use cortex_m_semihosting::debug;
+    use lm3s6965::Interrupt;
     use super::MustBeSend;
 
     #[resources]

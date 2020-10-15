@@ -106,6 +106,14 @@ pub fn late_resources_ident(init: &Ident) -> Ident {
     )
 }
 
+/// Mangle an ident
+pub fn mangle_ident(ident: &Ident) -> Ident {
+    Ident::new(
+        &format!("__rtic_internal_{}", ident.to_string()),
+        Span::call_site(),
+    )
+}
+
 fn link_section_index() -> usize {
     static INDEX: AtomicUsize = AtomicUsize::new(0);
 

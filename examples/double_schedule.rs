@@ -6,10 +6,10 @@
 #![no_std]
 
 use panic_semihosting as _;
-use rtic::cyccnt::U32Ext;
 
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
+    use rtic::cyccnt::U32Ext;
 
     #[resources]
     struct Resources {
