@@ -83,7 +83,7 @@ pub fn instants_ident(task: &Ident) -> Ident {
 
 pub fn interrupt_ident() -> Ident {
     let span = Span::call_site();
-    Ident::new("Interrupt", span)
+    Ident::new("interrupt", span)
 }
 
 /// Whether `name` is an exception with configurable priority

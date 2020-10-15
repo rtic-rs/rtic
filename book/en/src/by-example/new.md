@@ -52,7 +52,23 @@ $ curl \
     > src/main.rs
 ```
 
-That example depends on the `panic-semihosting` crate:
+The `init` example uses the `lm3s6965` device. Remember to adjust the `device`
+argument in the app macro attribute to match the path of your PAC crate, if
+different, and add peripherals or other arguments if needed. Although aliases
+can be used, this needs to be a full path (from the crate root). For many
+devices, it is common for the HAL implementation crate (aliased as `hal`) or
+Board Support crate to re-export the PAC as `pac`, leading to a pattern similar
+to the below:
+
+```rust
+use abcd123_hal as hal;
+//...
+
+#[rtic::app(device = crate::hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+mod app { /*...*/ }
+```
+
+The `init` example also depends on the `panic-semihosting` crate:
 
 ``` console
 $ cargo add panic-semihosting

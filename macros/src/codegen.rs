@@ -135,7 +135,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         /// Implementation details
         mod #name {
             /// Always include the device crate which contains the vector table
-            use #device as _;
+            use #device as you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml;
             #(#imports)*
             #(#user_imports)*
 
