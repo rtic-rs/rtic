@@ -56,7 +56,8 @@ pub fn codegen(
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
                 pub struct #name<'a> {
-                    priority: &'a Priority,
+                    // PER: this is unsound
+                    pub priority: &'a Priority,
                 }
 
                 #(#cfgs)*

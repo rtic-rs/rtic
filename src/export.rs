@@ -78,7 +78,7 @@ impl Priority {
     ///
     /// Will overwrite the current Priority
     #[inline(always)]
-    pub unsafe fn new(value: u8) -> Self {
+    pub const unsafe fn new(value: u8) -> Self {
         Priority {
             inner: Cell::new(value),
         }
@@ -97,6 +97,9 @@ impl Priority {
         self.inner.get()
     }
 }
+
+// PER: not sure if this is a problem
+unsafe impl Sync for Priority {}
 
 #[inline(always)]
 pub fn assert_send<T>()

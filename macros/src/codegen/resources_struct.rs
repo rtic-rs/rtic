@@ -165,6 +165,7 @@ pub fn codegen(
     let constructor = quote!(
         impl<#lt> #ident<#lt> {
             #[inline(always)]
+            // pub const unsafe fn new(#arg) -> Self {
             pub unsafe fn new(#arg) -> Self {
                 #ident {
                     #(#values,)*
