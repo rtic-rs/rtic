@@ -31,7 +31,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 #[doc = #doc]
                 #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
-                pub enum #t {
+                enum #t {
                     #(#variants,)*
                 }
             ));
@@ -52,7 +52,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
             items.push(quote!(
                 #[doc = #doc]
-                pub static mut #tq: #tq_ty = rtic::export::TimerQueue(
+                static mut #tq: #tq_ty = rtic::export::TimerQueue(
                     rtic::export::BinaryHeap(
                         rtic::export::iBinaryHeap::new()
                     )

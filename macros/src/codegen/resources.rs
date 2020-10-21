@@ -14,12 +14,9 @@ pub fn codegen(
     Vec<TokenStream2>,
     // mod_resources -- the `resources` module
     TokenStream2,
-    // mod_resources_imports -- the `resources` module imports
-    Vec<TokenStream2>,
 ) {
     let mut mod_app = vec![];
     let mut mod_resources = vec![];
-    let mut mod_resources_imports = vec![];
 
     for (name, res, expr, _) in app.resources(analysis) {
         let cfgs = &res.cfgs;
@@ -86,12 +83,6 @@ pub fn codegen(
                 )
             };
 
-            mod_resources_imports.push(quote!(
-                #[allow(non_camel_case_types)]
-                #(#cfgs)*
-                use super::resources::#name;
-            ));
-
             mod_app.push(util::impl_mutex(
                 extra,
                 cfgs,
@@ -107,11 +98,6 @@ pub fn codegen(
     let mod_resources = if mod_resources.is_empty() {
         quote!()
     } else {
-        // Also import the resource module
-        mod_resources_imports.push(quote!(
-            use super::resources;
-        ));
-
         quote!(mod resources {
             use rtic::export::Priority;
 
@@ -119,5 +105,5 @@ pub fn codegen(
         })
     };
 
-    (mod_app, mod_resources, mod_resources_imports)
+    (mod_app, mod_resources)
 }

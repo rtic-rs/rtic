@@ -21,7 +21,7 @@ mod app {
     // Late resources
     #[resources]
     struct Resources {
-        p: Producer<'static, u32, U4>,
+        ppppp: Producer<'static, u32, U4>,
         c: Consumer<'static, u32, U4>,
     }
 
@@ -29,10 +29,10 @@ mod app {
     fn init(_: init::Context) -> init::LateResources {
         static mut Q: Queue<u32, U4> = Queue(i::Queue::new());
 
-        let (p, c) = Q.split();
+        let (ppppp, c) = Q.split();
 
         // Initialization of late resources
-        init::LateResources { p, c }
+        init::LateResources { ppppp, c }
     }
 
     #[idle(resources = [c])]
@@ -48,10 +48,10 @@ mod app {
         }
     }
 
-    #[task(binds = UART0, resources = [p])]
+    #[task(binds = UART0, resources = [ppppp])]
     fn uart0(c: uart0::Context) {
         static mut KALLE: u32 = 0;
         *KALLE += 1;
-        c.resources.p.enqueue(42).unwrap();
+        c.resources.ppppp.enqueue(42).unwrap();
     }
 }

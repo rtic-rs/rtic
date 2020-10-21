@@ -36,7 +36,7 @@ mod app {
         hprintln!("UART0(STATE = {})", *STATE).unwrap();
 
         // second argument has type `resources::shared`
-        advance(STATE, c.resources.shared);
+        super::advance(STATE, c.resources.shared);
 
         rtic::pend(Interrupt::UART1);
 
@@ -53,7 +53,7 @@ mod app {
         *c.resources.shared += 0;
 
         // second argument has type `Exclusive<u32>`
-        advance(STATE, Exclusive(c.resources.shared));
+        super::advance(STATE, Exclusive(c.resources.shared));
     }
 }
 

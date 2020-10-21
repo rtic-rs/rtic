@@ -12,9 +12,9 @@ pub struct MustBeSend;
 
 #[app(device = lm3s6965)]
 mod app {
+    use super::MustBeSend;
     use cortex_m_semihosting::debug;
     use lm3s6965::Interrupt;
-    use super::MustBeSend;
 
     #[resources]
     struct Resources {

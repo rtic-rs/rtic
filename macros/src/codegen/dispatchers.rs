@@ -57,7 +57,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         items.push(quote!(
             #[doc = #doc]
-            pub static mut #rq: #rq_ty = #rq_expr;
+            static mut #rq: #rq_ty = #rq_expr;
         ));
 
         let arms = channel

@@ -50,7 +50,7 @@ pub fn codegen(
         mod_app.push(quote!(
             /// Queue version of a free-list that keeps track of empty slots in
             /// the following buffers
-            pub static mut #fq: #fq_ty = #fq_expr;
+            static mut #fq: #fq_ty = #fq_expr;
         ));
 
         let ref elems = (0..cap)
@@ -64,7 +64,7 @@ pub fn codegen(
             mod_app.push(quote!(
                 #uninit
                 /// Buffer that holds the instants associated to the inputs of a task
-                pub static mut #instants:
+                static mut #instants:
                     [core::mem::MaybeUninit<<#m as rtic::Monotonic>::Instant>; #cap_lit] =
                     [#(#elems,)*];
             ));
@@ -75,7 +75,7 @@ pub fn codegen(
         mod_app.push(quote!(
             #uninit
             /// Buffer that holds the inputs of a task
-            pub static mut #inputs_ident: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
+            static mut #inputs_ident: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
                 [#(#elems,)*];
         ));
 
@@ -113,7 +113,7 @@ pub fn codegen(
             #(#attrs)*
             #(#cfgs)*
             #[allow(non_snake_case)]
-            pub fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
+            fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
                 use rtic::Mutex as _;
 
                 #(#stmts)*

@@ -73,14 +73,10 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         }
     ));
 
-    let (mod_app_resources, mod_resources, mod_resources_imports) =
-        resources::codegen(app, analysis, extra);
+    let (mod_app_resources, mod_resources) = resources::codegen(app, analysis, extra);
 
-    let (
-        mod_app_hardware_tasks,
-        root_hardware_tasks,
-        user_hardware_tasks,
-    ) = hardware_tasks::codegen(app, analysis, extra);
+    let (mod_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks) =
+        hardware_tasks::codegen(app, analysis, extra);
 
     let (mod_app_software_tasks, root_software_tasks, user_software_tasks) =
         software_tasks::codegen(app, analysis, extra);
@@ -97,9 +93,11 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let task_list = analysis.tasks.clone();
 
     let mut tasks = vec![];
+
     if !task_list.is_empty() {
         tasks.push(quote!(
-            enum Tasks {
+            #[allow(non_camel_case_types)]
+            pub enum Tasks {
                 #(#task_list),*
             }
         ));
@@ -107,65 +105,46 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     quote!(
         /// Implementation details
-        mod #name {
+        pub mod #name {
             /// Always include the device crate which contains the vector table
             use #device as you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml;
 
-            /// 2
             #(#user_imports)*
 
             /// User code from within the module
             #(#user_code)*
             /// User code end
 
-            /// 3
             #(#user)*
 
-            /// 4
             #(#user_hardware_tasks)*
 
-            /// 5
             #(#user_software_tasks)*
 
-            /// 6
             #(#root)*
 
-            /// 7
             #mod_resources
 
-            /// 8
             #(#root_hardware_tasks)*
 
-            /// 9
             #(#root_software_tasks)*
 
-            /// 10
             /// Unused
             #(#tasks)*
 
-            /// 13
-            #(#mod_resources_imports)*
-
-            /// 14
             /// app module
             #(#mod_app)*
 
-            /// 15
             #(#mod_app_resources)*
 
-            /// 16
             #(#mod_app_hardware_tasks)*
 
-            /// 17
             #(#mod_app_software_tasks)*
 
-            /// 18
             #(#mod_app_dispatchers)*
 
-            /// 19
             #(#mod_app_timer_queue)*
 
-            /// 20
             #(#mains)*
         }
     )
