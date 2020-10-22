@@ -5,7 +5,36 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-- Move dispatchers from extern block to app argument.
+### Added
+
+- Allow annotating resources to activate special resource locking behaviour.
+  - `#[lock_free]`, there might be several tasks with the same priority accessing
+    the resource without critical section.
+  - `#[task_local]`, there must be only one task, similar to a task local
+    resource, but (optionally) set-up by init. This is similar to move.
+
+### Changed
+
+- [breaking-change] [PR 400] Move dispatchers from extern block to app argument.
+
+[PR 400]: https://github.com/rtic-rs/cortex-m-rtic/pull/400
+
+- [breaking-change] [PR 390]  Rework whole spawn/schedule, support `foo::spawn( ... )`,
+  `foo::schedule( ... )`.
+
+[PR 390]: https://github.com/rtic-rs/cortex-m-rtic/pull/390
+
+- [breaking-change] [PR 368] `struct Resources` changed to attribute `#[resources]` on a struct.
+
+- [breaking-change] [PR 368] Mod over const, instead of `const APP: () = {` use `mod app {`.
+
+- [breaking-change] [PR 372] Init function always return `LateResources` for a symmetric API.
+
+- [PR 355] Multi-core support was removed to reduce overall complexity.
+
+[PR 368]: https://github.com/rtic-rs/cortex-m-rtic/pull/368
+[PR 372]: https://github.com/rtic-rs/cortex-m-rtic/pull/372
+[PR 355]: https://github.com/rtic-rs/cortex-m-rtic/pull/355
 
 ## [v0.5.5] - 2020-08-27
 
@@ -31,6 +60,7 @@ for users.
 - Fixed so one can `cfg`-out resources when using a newer compiler
 
 ## [v0.5.1] - 2019-11-19
+
 - Fixed arithmetic wrapping bug in src/cyccntr.rs
   elapsed and duration could cause an internal overflow trap
   on subtraction in debug mode.
@@ -48,12 +78,12 @@ for users.
 
 ### Changed
 
-- [breaking-change][] [RFC 155] "explicit `Context` parameter" has been
+- [breaking-change] [RFC 155] "explicit `Context` parameter" has been
   implemented.
 
 [RFC 155]: https://github.com/rtic-rs/cortex-m-rtic/issues/155
 
-- [breaking-change][] [RFC 147] "all functions must be safe" has been
+- [breaking-change] [RFC 147] "all functions must be safe" has been
   implemented.
 
 [RFC 147]: https://github.com/rtic-rs/cortex-m-rtic/issues/147
@@ -62,34 +92,34 @@ for users.
   instead of `AtomicUsize`; this reduces the static memory used by the
   framework.
 
-- [breaking-change][] when the `capacity` argument is omitted, the capacity of
+- [breaking-change] when the `capacity` argument is omitted, the capacity of
   the task is assumed to be `1`. Before, a reasonable (but hard to predict)
   capacity was computed based on the number of `spawn` references the task had.
 
-- [breaking-change][] resources that are appear as exclusive references
+- [breaking-change] resources that are appear as exclusive references
   (`&mut-`) no longer appear behind the `Exclusive` newtype.
 
-- [breaking-change][] the `timer-queue` Cargo feature has been removed. The
+- [breaking-change] the `timer-queue` Cargo feature has been removed. The
   `schedule` API can be used without enabling any Cargo feature.
 
-- [breaking-change][] when the `schedule` API is used the type of
+- [breaking-change] when the `schedule` API is used the type of
   `init::Context.core` changes from `cortex_m::Peripherals` to
   `rtic::Peripherals`. The fields of `rtic::Peripherals` do not change when
   Cargo features are enabled.
 
-- [breaking-change][] the monotonic timer used to implement the `schedule` API
+- [breaking-change] the monotonic timer used to implement the `schedule` API
   is now user configurable via the `#[app(monotonic = ..)]` argument. IMPORTANT:
   it is now the responsibility of the application author to configure and
   initialize the chosen `monotonic` timer during the `#[init]` phase.
 
-- [breaking-change][] the `peripherals` field is not include in `init::Context`
+- [breaking-change] the `peripherals` field is not include in `init::Context`
   by default. One must opt-in using the `#[app(peripherals = ..)]` argument.
 
-- [breaking-change][] the `#[exception]` and `#[interrupt]` attributes have been
+- [breaking-change] the `#[exception]` and `#[interrupt]` attributes have been
   removed. Hardware tasks are now declared using the `#[task(binds = ..)]`
   attribute.
 
-- [breaking-change][] the syntax to declare resources has changed. Instead of
+- [breaking-change] the syntax to declare resources has changed. Instead of
   using a `static [mut]` variable for each resource, all resources must be
   declared in a `Resources` structure.
 
@@ -170,7 +200,7 @@ fn on_new_frame() { .. }
 
 ### Changed
 
-- [breaking-change][] [soundness-fix] `init` can not contain any early return as
+- [breaking-change] [soundness-fix] `init` can not contain any early return as
   that would result in late resources not being initialized and thus undefined
   behavior.
 
