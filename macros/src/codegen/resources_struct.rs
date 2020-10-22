@@ -36,6 +36,7 @@ pub fn codegen(
             None
         };
         let ty = &res.ty;
+        let mangled_name = util::mangle_ident(&name);
 
         if ctxt.is_init() {
             if !analysis.ownerships.contains_key(name) {
@@ -47,7 +48,7 @@ pub fn codegen(
 
                 values.push(quote!(
                     #(#cfgs)*
-                    #name: &#mut_ #name
+                    #name: &#mut_ #mangled_name
                 ));
             } else {
                 // Owned by someone else
@@ -60,7 +61,7 @@ pub fn codegen(
 
                 values.push(quote!(
                     #(#cfgs)*
-                    #name: &mut #name
+                    #name: &mut #mangled_name
                 ));
             }
         } else {
@@ -115,9 +116,9 @@ pub fn codegen(
             let is_late = expr.is_none();
             if is_late {
                 let expr = if mut_.is_some() {
-                    quote!(&mut *#name.as_mut_ptr())
+                    quote!(&mut *#mangled_name.as_mut_ptr())
                 } else {
-                    quote!(&*#name.as_ptr())
+                    quote!(&*#mangled_name.as_ptr())
                 };
 
                 values.push(quote!(
@@ -127,7 +128,7 @@ pub fn codegen(
             } else {
                 values.push(quote!(
                     #(#cfgs)*
-                    #name: &#mut_ #name
+                    #name: &#mut_ #mangled_name
                 ));
             }
         }

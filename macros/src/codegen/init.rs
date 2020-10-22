@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote};
+use quote::quote;
 use rtic_syntax::{ast::App, Context};
 
 use crate::{
@@ -19,8 +19,6 @@ type CodegenResult = (
     Vec<TokenStream2>,
     // user_init -- the `#[init]` function written by the user
     Option<TokenStream2>,
-    // user_init_imports -- the imports for `#[init]` functio written by the user
-    Vec<TokenStream2>,
     // call_init -- the call to the user `#[init]` if there's one
     Option<TokenStream2>,
 );
@@ -50,7 +48,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
             })
             .collect::<Vec<_>>();
 
-        let mut user_init_imports = vec![];
         let late_resources = util::late_resources_ident(&name);
 
         root_init.push(quote!(
@@ -59,12 +56,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
             pub struct #late_resources {
                 #(#late_fields),*
             }
-        ));
-
-        let name_late = format_ident!("{}LateResources", name);
-        user_init_imports.push(quote!(
-                #[allow(non_snake_case)]
-                use super::#name_late;
         ));
 
         let mut locals_pat = None;
@@ -88,11 +79,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
                 #(#stmts)*
             }
         ));
-        user_init_imports.push(quote!(
-                #(#attrs)*
-                #[allow(non_snake_case)]
-                use super::#name;
-        ));
 
         let mut mod_app = None;
         if !init.args.resources.is_empty() {
@@ -101,17 +87,13 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
 
             root_init.push(item);
             mod_app = Some(constructor);
-
-            let name_late = format_ident!("{}Resources", name);
-            user_init_imports.push(quote!(
-                    #[allow(non_snake_case)]
-                    use super::#name_late;
-            ));
         }
 
+        let app_name = &app.name;
+        let app_path = quote! {crate::#app_name};
         let locals_new = locals_new.iter();
         let call_init = Some(
-            quote!(let late = crate::#name(#(#locals_new,)* #name::Context::new(core.into()));),
+            quote!(let late = #app_path::#name(#(#locals_new,)* #name::Context::new(core.into()));),
         );
 
         root_init.push(module::codegen(
@@ -122,8 +104,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
             extra,
         ));
 
-        (mod_app, root_init, user_init, user_init_imports, call_init)
+        (mod_app, root_init, user_init, call_init)
     } else {
-        (None, vec![], None, vec![], None)
+        (None, vec![], None, None)
     }
 }

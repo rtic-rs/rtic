@@ -17,18 +17,18 @@ mod app {
     // Cortex-M exception
     #[task(binds = SVCall)]
     fn foo(c: foo::Context) {
-        foo_trampoline(c)
+        crate::foo_trampoline(c)
     }
 
     // LM3S6965 interrupt
     #[task(binds = UART0)]
     fn bar(c: bar::Context) {
-        bar_trampoline(c)
+        crate::bar_trampoline(c)
     }
 }
 
 #[allow(dead_code)]
-fn foo_trampoline(_: foo::Context) {}
+fn foo_trampoline(_: app::foo::Context) {}
 
 #[allow(dead_code)]
-fn bar_trampoline(_: bar::Context) {}
+fn bar_trampoline(_: app::bar::Context) {}

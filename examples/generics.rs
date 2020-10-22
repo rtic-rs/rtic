@@ -5,13 +5,16 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::{debug, hprintln};
-use lm3s6965::Interrupt;
+use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
-use rtic::{Exclusive, Mutex};
+use rtic::Mutex;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use lm3s6965::Interrupt;
+    use rtic::Exclusive;
+
     #[resources]
     struct Resources {
         #[init(0)]
@@ -33,7 +36,7 @@ mod app {
         hprintln!("UART0(STATE = {})", *STATE).unwrap();
 
         // second argument has type `resources::shared`
-        advance(STATE, c.resources.shared);
+        super::advance(STATE, c.resources.shared);
 
         rtic::pend(Interrupt::UART1);
 
@@ -50,7 +53,7 @@ mod app {
         *c.resources.shared += 0;
 
         // second argument has type `Exclusive<u32>`
-        advance(STATE, Exclusive(c.resources.shared));
+        super::advance(STATE, Exclusive(c.resources.shared));
     }
 }
 

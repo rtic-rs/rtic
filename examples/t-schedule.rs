@@ -6,10 +6,11 @@
 #![no_std]
 
 use panic_halt as _;
-use rtic::cyccnt::{Instant, U32Ext as _};
 
 #[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
 mod app {
+    use rtic::cyccnt::{Instant, U32Ext as _};
+
     #[init]
     fn init(c: init::Context) -> init::LateResources {
         let _: Result<(), ()> = foo::schedule(c.start + 10.cycles());

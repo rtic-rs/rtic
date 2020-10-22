@@ -14,6 +14,7 @@ pub struct NotSend {
 #[rtic::app(device = lm3s6965)]
 mod app {
     use super::NotSend;
+    use core::marker::PhantomData;
 
     #[resources]
     struct Resources {

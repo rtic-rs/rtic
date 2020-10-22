@@ -5,13 +5,14 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::debug;
-#[cfg(debug_assertions)]
-use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use cortex_m_semihosting::debug;
+    #[cfg(debug_assertions)]
+    use cortex_m_semihosting::hprintln;
+
     #[resources]
     struct Resources {
         #[cfg(debug_assertions)] // <- `true` when using the `dev` profile

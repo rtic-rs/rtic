@@ -5,12 +5,13 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::{debug, hprintln};
-use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use lm3s6965::Interrupt;
+
     #[init]
     fn init(_: init::Context) -> init::LateResources {
         // Pends the UART0 interrupt but its handler won't run until *after*

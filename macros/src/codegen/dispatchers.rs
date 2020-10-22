@@ -57,7 +57,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         items.push(quote!(
             #[doc = #doc]
-            pub static mut #rq: #rq_ty = #rq_expr;
+            static mut #rq: #rq_ty = #rq_expr;
         ));
 
         let arms = channel
@@ -90,6 +90,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     quote!(#name::Locals::new(),)
                 };
 
+                let app_name = &app.name;
+                let app_path = quote! {crate::#app_name};
                 quote!(
                     #(#cfgs)*
                     #t::#name => {
@@ -98,7 +100,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                         #let_instant
                         #fq.split().0.enqueue_unchecked(index);
                         let priority = &rtic::export::Priority::new(PRIORITY);
-                        crate::#name(
+                        #app_path::#name(
                             #locals_new
                             #name::Context::new(priority #instant)
                             #(,#pats)*

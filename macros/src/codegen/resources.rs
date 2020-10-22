@@ -14,16 +14,14 @@ pub fn codegen(
     Vec<TokenStream2>,
     // mod_resources -- the `resources` module
     TokenStream2,
-    // mod_resources_imports -- the `resources` module imports
-    Vec<TokenStream2>,
 ) {
     let mut mod_app = vec![];
     let mut mod_resources = vec![];
-    let mut mod_resources_imports = vec![];
 
     for (name, res, expr, _) in app.resources(analysis) {
         let cfgs = &res.cfgs;
         let ty = &res.ty;
+        let mangled_name = util::mangle_ident(&name);
 
         {
             let section = if expr.is_none() {
@@ -47,7 +45,7 @@ pub fn codegen(
                 #(#attrs)*
                 #(#cfgs)*
                 #section
-                static mut #name: #ty = #expr;
+                static mut #mangled_name: #ty = #expr;
             ));
         }
 
@@ -76,20 +74,14 @@ pub fn codegen(
             let ptr = if expr.is_none() {
                 quote!(
                     #(#cfgs)*
-                    #name.as_mut_ptr()
+                    #mangled_name.as_mut_ptr()
                 )
             } else {
                 quote!(
                     #(#cfgs)*
-                    &mut #name
+                    &mut #mangled_name
                 )
             };
-
-            mod_resources_imports.push(quote!(
-                #[allow(non_camel_case_types)]
-                #(#cfgs)*
-                use super::resources::#name;
-            ));
 
             mod_app.push(util::impl_mutex(
                 extra,
@@ -106,11 +98,6 @@ pub fn codegen(
     let mod_resources = if mod_resources.is_empty() {
         quote!()
     } else {
-        // Also import the resource module
-        mod_resources_imports.push(quote!(
-            use super::resources;
-        ));
-
         quote!(mod resources {
             use rtic::export::Priority;
 
@@ -118,5 +105,5 @@ pub fn codegen(
         })
     };
 
-    (mod_app, mod_resources, mod_resources_imports)
+    (mod_app, mod_resources)
 }

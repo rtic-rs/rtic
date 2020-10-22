@@ -53,7 +53,7 @@ pub fn impl_mutex(
             type T = #ty;
 
             #[inline(always)]
-            fn lock<R>(&mut self, f: impl FnOnce(&mut #ty) -> R) -> R {
+            fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
                 /// Priority ceiling
                 const CEILING: u8 = #ceiling;
 
@@ -107,6 +107,14 @@ pub fn is_exception(name: &Ident) -> bool {
 pub fn late_resources_ident(init: &Ident) -> Ident {
     Ident::new(
         &format!("{}LateResources", init.to_string()),
+        Span::call_site(),
+    )
+}
+
+/// Mangle an ident
+pub fn mangle_ident(ident: &Ident) -> Ident {
+    Ident::new(
+        &format!("__rtic_internal_{}", ident.to_string()),
         Span::call_site(),
     )
 }

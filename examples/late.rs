@@ -5,21 +5,18 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::{debug, hprintln};
-use heapless::{
-    consts::*,
-    i,
-    spsc::{Consumer, Producer, Queue},
-};
-use lm3s6965::Interrupt;
 use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use cortex_m_semihosting::{debug, hprintln};
     use heapless::{
         consts::*,
-        spsc::{Consumer, Producer},
+        i,
+        spsc::{Consumer, Producer, Queue},
     };
+    use lm3s6965::Interrupt;
+
     // Late resources
     #[resources]
     struct Resources {

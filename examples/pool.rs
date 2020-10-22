@@ -5,12 +5,10 @@
 #![no_main]
 #![no_std]
 
-use cortex_m_semihosting::{debug, hprintln};
 use heapless::{
     pool,
     pool::singleton::{Box, Pool},
 };
-use lm3s6965::Interrupt;
 use panic_semihosting as _;
 use rtic::app;
 
@@ -19,7 +17,9 @@ pool!(P: [u8; 128]);
 
 #[app(device = lm3s6965)]
 mod app {
-    use crate::Box;
+    use crate::{Box, Pool};
+    use cortex_m_semihosting::{debug, hprintln};
+    use lm3s6965::Interrupt;
 
     // Import the memory pool into scope
     use super::P;
