@@ -14,6 +14,8 @@ pub fn codegen(
     let mut items = vec![];
     let mut fields = vec![];
     let mut values = vec![];
+    // Used to copy task cfgs to the whole module
+    let mut task_cfgs = vec![];
 
     let name = ctxt.ident(app);
 
@@ -191,6 +193,8 @@ pub fn codegen(
         let priority = spawnee.args.priority;
         let t = util::spawn_t_ident(priority);
         let cfgs = &spawnee.cfgs;
+        // Store a copy of the task cfgs
+        task_cfgs = cfgs.clone();
         let (args, tupled, _untupled, ty) = util::regroup_inputs(&spawnee.inputs);
         let args = &args;
         let tupled = &tupled;
@@ -285,6 +289,7 @@ pub fn codegen(
 
         quote!(
             #[allow(non_snake_case)]
+            #(#task_cfgs)*
             #[doc = #doc]
             pub mod #name {
                 #(
