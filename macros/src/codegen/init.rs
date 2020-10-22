@@ -82,8 +82,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
 
         let mut mod_app = None;
         if !init.args.resources.is_empty() {
-            let (item, constructor) =
-                resources_struct::codegen(Context::Init, 0, &mut needs_lt, app, analysis);
+            let (item, constructor) = resources_struct::codegen(Context::Init, &mut needs_lt, app);
 
             root_init.push(item);
             mod_app = Some(constructor);

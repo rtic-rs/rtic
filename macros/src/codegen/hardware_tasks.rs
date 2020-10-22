@@ -70,13 +70,8 @@ pub fn codegen(
 
         // `${task}Resources`
         if !task.args.resources.is_empty() {
-            let (item, constructor) = resources_struct::codegen(
-                Context::HardwareTask(name),
-                priority,
-                &mut needs_lt,
-                app,
-                analysis,
-            );
+            let (item, constructor) =
+                resources_struct::codegen(Context::HardwareTask(name), &mut needs_lt, app);
 
             root.push(item);
 

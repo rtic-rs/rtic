@@ -52,11 +52,15 @@ mod app {
     }
 
     #[task(binds = GPIOB, priority = 2, resources = [shared])]
-    fn gpiob(c: gpiob::Context) {
-        // the higher priority task does *not* need a critical section
-        *c.resources.shared += 1;
+    fn gpiob(mut c: gpiob::Context) {
+        // the higher priority task does still need a critical section
+        let shared = c.resources.shared.lock(|shared| {
+            *shared += 1;
 
-        hprintln!("D - shared = {}", *c.resources.shared).unwrap();
+            *shared
+        });
+
+        hprintln!("D - shared = {}", shared).unwrap();
     }
 
     #[task(binds = GPIOC, priority = 3)]

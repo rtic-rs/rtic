@@ -23,11 +23,8 @@ mod app {
         y: Option<NotSend>,
     }
 
-    #[init(resources = [y])]
-    fn init(c: init::Context) -> init::LateResources {
-        // equivalent to late resource initialization
-        *c.resources.y = Some(NotSend { _0: PhantomData });
-
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
         init::LateResources {
             x: NotSend { _0: PhantomData },
         }

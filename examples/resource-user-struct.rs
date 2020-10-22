@@ -47,18 +47,23 @@ mod app {
 
     // `shared` can be accessed from this context
     #[task(binds = UART0, resources = [shared])]
-    fn uart0(cx: uart0::Context) {
-        let shared: &mut u32 = cx.resources.shared;
-        *shared += 1;
+    fn uart0(mut cx: uart0::Context) {
+        let shared = cx.resources.shared.lock(|shared| {
+            *shared += 1;
+            *shared
+        });
 
         hprintln!("UART0: shared = {}", shared).unwrap();
     }
 
     // `shared` can be accessed from this context
     #[task(binds = UART1, resources = [shared])]
-    fn uart1(cx: uart1::Context) {
-        *cx.resources.shared += 1;
+    fn uart1(mut cx: uart1::Context) {
+        let shared = cx.resources.shared.lock(|shared| {
+            *shared += 1;
+            *shared
+        });
 
-        hprintln!("UART1: shared = {}", cx.resources.shared).unwrap();
+        hprintln!("UART1: shared = {}", shared).unwrap();
     }
 }

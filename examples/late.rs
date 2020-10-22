@@ -35,9 +35,9 @@ mod app {
     }
 
     #[idle(resources = [c])]
-    fn idle(c: idle::Context) -> ! {
+    fn idle(mut c: idle::Context) -> ! {
         loop {
-            if let Some(byte) = c.resources.c.dequeue() {
+            if let Some(byte) = c.resources.c.lock(|c| c.dequeue()) {
                 hprintln!("received message: {}", byte).unwrap();
 
                 debug::exit(debug::EXIT_SUCCESS);
@@ -48,7 +48,7 @@ mod app {
     }
 
     #[task(binds = UART0, resources = [p])]
-    fn uart0(c: uart0::Context) {
-        c.resources.p.enqueue(42).unwrap();
+    fn uart0(mut c: uart0::Context) {
+        c.resources.p.lock(|p| p.enqueue(42).unwrap());
     }
 }

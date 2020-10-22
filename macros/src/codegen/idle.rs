@@ -37,8 +37,7 @@ pub fn codegen(
         let name = &idle.name;
 
         if !idle.args.resources.is_empty() {
-            let (item, constructor) =
-                resources_struct::codegen(Context::Idle, 0, &mut needs_lt, app, analysis);
+            let (item, constructor) = resources_struct::codegen(Context::Idle, &mut needs_lt, app);
 
             root_idle.push(item);
             mod_app = Some(constructor);

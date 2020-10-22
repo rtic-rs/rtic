@@ -61,9 +61,11 @@ mod app {
     // l2 ok (task_local)
     // e1 ok (lock_free)
     #[task(priority = 1, binds = UART0, resources = [shared, l2, e1])]
-    fn uart0(cx: uart0::Context) {
-        let shared: &mut u32 = cx.resources.shared;
-        *shared += 1;
+    fn uart0(mut cx: uart0::Context) {
+        let shared = cx.resources.shared.lock(|shared| {
+            *shared += 1;
+            *shared
+        });
         *cx.resources.e1 += 10;
         hprintln!("UART0: shared = {}", shared).unwrap();
         hprintln!("UART0:l2 = {}", cx.resources.l2).unwrap();
@@ -73,9 +75,11 @@ mod app {
     // `shared` can be accessed from this context
     // e1 ok (lock_free)
     #[task(priority = 1, binds = UART1, resources = [shared, e1])]
-    fn uart1(cx: uart1::Context) {
-        let shared: &mut u32 = cx.resources.shared;
-        *shared += 1;
+    fn uart1(mut cx: uart1::Context) {
+        let shared = cx.resources.shared.lock(|shared| {
+            *shared += 1;
+            *shared
+        });
 
         hprintln!("UART1: shared = {}", shared).unwrap();
         hprintln!("UART1:e1 = {}", cx.resources.e1).unwrap();

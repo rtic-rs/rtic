@@ -49,7 +49,8 @@ pub fn codegen(
             ));
         }
 
-        if let Some(Ownership::Contended { ceiling }) = analysis.ownerships.get(name) {
+        let r_prop = &res.properties;
+        if !r_prop.task_local && !r_prop.lock_free {
             mod_resources.push(quote!(
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
@@ -83,13 +84,20 @@ pub fn codegen(
                 )
             };
 
+            let ceiling = match analysis.ownerships.get(name) {
+                Some(Ownership::Owned { priority }) => *priority,
+                Some(Ownership::CoOwned { priority }) => *priority,
+                Some(Ownership::Contended { ceiling }) => *ceiling,
+                None => 0,
+            };
+
             mod_app.push(util::impl_mutex(
                 extra,
                 cfgs,
                 true,
                 name,
                 quote!(#ty),
-                *ceiling,
+                ceiling,
                 ptr,
             ));
         }

@@ -38,12 +38,12 @@ mod app {
     }
 
     #[task(capacity = 2, resources = [count])]
-    fn foo(_cx: foo::Context) {
+    fn foo(mut _cx: foo::Context) {
         #[cfg(debug_assertions)]
         {
-            *_cx.resources.count += 1;
+            _cx.resources.count.lock(|count| *count += 1);
 
-            log::spawn(*_cx.resources.count).unwrap();
+            log::spawn(_cx.resources.count.lock(|count| *count)).unwrap();
         }
 
         // this wouldn't compile in `release` mode

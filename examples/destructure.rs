@@ -32,7 +32,7 @@ mod app {
     }
 
     // Direct destructure
-    #[task(binds = UART0, resources = [a, b, c])]
+    #[task(binds = UART0, resources = [&a, &b, &c])]
     fn uart0(cx: uart0::Context) {
         let a = cx.resources.a;
         let b = cx.resources.b;
@@ -42,7 +42,7 @@ mod app {
     }
 
     // De-structure-ing syntax
-    #[task(binds = UART1, resources = [a, b, c])]
+    #[task(binds = UART1, resources = [&a, &b, &c])]
     fn uart1(cx: uart1::Context) {
         let uart1::Resources { a, b, c } = cx.resources;
 
