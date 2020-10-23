@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+- Move dispatchers from extern block to app argument.
+
 ## [v0.5.5] - 2020-08-27
 
 - Includes the previous soundness fix.

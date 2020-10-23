@@ -7,7 +7,7 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, peripherals = true, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::debug;
     use rtic::cyccnt;
@@ -47,12 +47,5 @@ mod app {
         let _: cyccnt::Instant = cx.scheduled;
         let _: resources::shared = cx.resources.shared;
         let _: foo::Resources = cx.resources;
-    }
-
-    // RTIC requires that unused interrupts are declared in an extern block when
-    // using software tasks; these free interrupts will be used to dispatch the
-    // software tasks.
-    extern "C" {
-        fn SSI0();
     }
 }

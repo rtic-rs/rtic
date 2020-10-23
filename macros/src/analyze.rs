@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use rtic_syntax::{
     analyze::{self, Priority},
-    ast::App,
+    ast::{App, ExternInterrupt},
     P,
 };
 use syn::Ident;
@@ -11,7 +11,7 @@ use syn::Ident;
 /// Extend the upstream `Analysis` struct with our field
 pub struct Analysis {
     parent: P<analyze::Analysis>,
-    pub interrupts: BTreeMap<Priority, Ident>,
+    pub interrupts: BTreeMap<Priority, (Ident, ExternInterrupt)>,
 }
 
 impl ops::Deref for Analysis {
@@ -22,23 +22,23 @@ impl ops::Deref for Analysis {
     }
 }
 
-// Assign an `extern` interrupt to each priority level
+// Assign an interrupt to each priority level
 pub fn app(analysis: P<analyze::Analysis>, app: &App) -> P<Analysis> {
-    let mut interrupts = BTreeMap::new();
+    // the set of priorities (each priority only once)
     let priorities = app
         .software_tasks
         .values()
         .map(|task| task.args.priority)
         .collect::<BTreeSet<_>>();
 
-    if !priorities.is_empty() {
-        interrupts = priorities
-            .iter()
-            .cloned()
-            .rev()
-            .zip(app.extern_interrupts.keys().cloned())
-            .collect();
-    }
+    // map from priorities to interrupts (holding name and attributes)
+    let interrupts: BTreeMap<Priority, _> = priorities
+        .iter()
+        .cloned()
+        .rev()
+        .zip(&app.args.extern_interrupts)
+        .map(|(p, (id, ext))| (p, (id.clone(), ext.clone())))
+        .collect();
 
     P::new(Analysis {
         parent: analysis,

@@ -26,22 +26,20 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let mut core: rtic::export::Peripherals = rtic::export::Peripherals::steal().into();
     ));
 
-    let device = extra.device;
+    let device = &extra.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
 
+    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+
     // Unmask interrupts and set their priorities
-    for (&priority, name) in analysis
-        .interrupts
-        .iter()
-        .chain(app.hardware_tasks.values().flat_map(|task| {
-            if !util::is_exception(&task.args.binds) {
-                Some((&task.args.priority, &task.args.binds))
-            } else {
-                // We do exceptions in another pass
-                None
-            }
-        }))
-    {
+    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().flat_map(|task| {
+        if !util::is_exception(&task.args.binds) {
+            Some((&task.args.priority, &task.args.binds))
+        } else {
+            // We do exceptions in another pass
+            None
+        }
+    })) {
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 

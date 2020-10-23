@@ -8,7 +8,7 @@
 use panic_halt as _;
 
 // NOTE: does NOT work on QEMU!
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
 mod app {
     use cortex_m::peripheral::DWT;
     use cortex_m_semihosting::hprintln;
@@ -45,12 +45,5 @@ mod app {
     #[task]
     fn bar(_: bar::Context) {
         hprintln!("bar  @ {:?}", Instant::now()).unwrap();
-    }
-
-    // RTIC requires that unused interrupts are declared in an extern block when
-    // using software tasks; these free interrupts will be used to dispatch the
-    // software tasks.
-    extern "C" {
-        fn SSI0();
     }
 }

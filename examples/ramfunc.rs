@@ -7,7 +7,14 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(
+    device = lm3s6965,
+    dispatchers = [
+        UART0,
+        #[link_section = ".data.UART1"]
+        UART1
+    ])
+]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
@@ -32,13 +39,5 @@ mod app {
     #[task(priority = 2)]
     fn bar(_: bar::Context) {
         foo::spawn().unwrap();
-    }
-
-    extern "C" {
-        fn UART0();
-
-        // run the task dispatcher from RAM
-        #[link_section = ".data.UART1"]
-        fn UART1();
     }
 }

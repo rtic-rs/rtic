@@ -29,7 +29,7 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        let (let_instant, instant) = if let Some(m) = extra.monotonic {
+        let (let_instant, instant) = if let Some(ref m) = extra.monotonic {
             (
                 Some(quote!(let instant = <#m as rtic::Monotonic>::now();)),
                 Some(quote!(, instant)),

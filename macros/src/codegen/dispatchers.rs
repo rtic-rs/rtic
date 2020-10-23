@@ -119,11 +119,13 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         ));
 
         let doc = format!("Interrupt handler to dispatch tasks at priority {}", level);
-        let interrupt = util::suffixed(&interrupts[&level].to_string());
+        let interrupt = util::suffixed(&interrupts[&level].0.to_string());
+        let attribute = &interrupts[&level].1.attrs;
         items.push(quote!(
             #[allow(non_snake_case)]
             #[doc = #doc]
             #[no_mangle]
+            #(#attribute)*
             unsafe fn #interrupt() {
                 /// The priority of this interrupt handler
                 const PRIORITY: u8 = #level;

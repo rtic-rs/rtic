@@ -6,6 +6,37 @@ This section describes how to upgrade from v0.5.x to v0.6.0 of the RTIC framewor
 
 Change the version of `cortex-m-rtic` to `"0.6.0"`.
 
+## Move Dispatchers from `extern "C"` to app arguments.
+
+Change
+
+``` rust
+#[rtic::app(/* .. */)]
+const APP: () = {
+    [code here]
+
+    // RTIC requires that unused interrupts are declared in an extern block when
+    // using software tasks; these free interrupts will be used to dispatch the
+    // software tasks.
+    extern "C" {
+        fn SSI0();
+        fn QEI0();
+    }
+};
+```
+
+into
+
+``` rust
+#[rtic::app(/* .. */, dispatchers = [SSI0, QEI0])]
+mod app {
+  [code here]
+}
+```
+
+This works also for ram functions, see examples/ramfunc.rs
+
+
 ## Module instead of Const
 
 With the support of attributes on modules the `const APP` workaround is not needed.

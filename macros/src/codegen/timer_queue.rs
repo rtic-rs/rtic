@@ -8,7 +8,7 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
-    if let Some(m) = extra.monotonic {
+    if let Some(m) = &extra.monotonic {
         let t = util::schedule_t_ident();
 
         // Enumeration of `schedule`-able tasks
@@ -71,7 +71,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     let rq = util::rq_ident(priority);
                     let rqt = util::spawn_t_ident(priority);
                     let enum_ = util::interrupt_ident();
-                    let interrupt = &analysis.interrupts.get(&priority);
+                    let interrupt = &analysis.interrupts.get(&priority).expect("RTIC-ICE: interrupt not found").0;
 
                     let pend = {
                         quote!(
