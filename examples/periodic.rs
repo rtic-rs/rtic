@@ -8,7 +8,7 @@
 use panic_semihosting as _;
 
 // NOTE: does NOT work on QEMU!
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::hprintln;
     use rtic::cyccnt::{Instant, U32Ext};
@@ -30,12 +30,5 @@ mod app {
         hprintln!("foo(scheduled = {:?}, now = {:?})", cx.scheduled, now).unwrap();
 
         foo::schedule(cx.scheduled + PERIOD.cycles()).unwrap();
-    }
-
-    // RTIC requires that unused interrupts are declared in an extern block when
-    // using software tasks; these free interrupts will be used to dispatch the
-    // software tasks.
-    extern "C" {
-        fn SSI0();
     }
 }

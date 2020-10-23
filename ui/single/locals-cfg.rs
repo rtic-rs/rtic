@@ -1,7 +1,7 @@
 #![no_main]
 use panic_halt as _;
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     #[init]
     fn init(_: init::Context) -> init::LateResources {
@@ -45,9 +45,5 @@ mod app {
         static mut FOO: u32 = 0;
 
         FOO;
-    }
-
-    extern "C" {
-        fn UART1();
     }
 }

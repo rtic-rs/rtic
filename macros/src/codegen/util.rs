@@ -46,7 +46,7 @@ pub fn impl_mutex(
         (quote!(#name), quote!(self.priority))
     };
 
-    let device = extra.device;
+    let device = &extra.device;
     quote!(
         #(#cfgs)*
         impl<'a> rtic::Mutex for #path<'a> {

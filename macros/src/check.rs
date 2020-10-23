@@ -1,28 +1,19 @@
 use std::collections::HashSet;
 
 use proc_macro2::Span;
-use rtic_syntax::{
-    analyze::Analysis,
-    ast::{App, CustomArg},
-};
+use rtic_syntax::{analyze::Analysis, ast::App};
 use syn::{parse, Path};
 
-pub struct Extra<'a> {
-    pub device: &'a Path,
-    pub monotonic: Option<&'a Path>,
+pub struct Extra {
+    pub device: Path,
+    pub monotonic: Option<Path>,
     pub peripherals: bool,
 }
 
-impl<'a> Extra<'a> {
-    pub fn monotonic(&self) -> &'a Path {
-        self.monotonic.expect("UNREACHABLE")
-    }
-}
-
-pub fn app<'a>(app: &'a App, _analysis: &Analysis) -> parse::Result<Extra<'a>> {
+pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
     // Check that external (device-specific) interrupts are not named after known (Cortex-M)
     // exceptions
-    for name in app.extern_interrupts.keys() {
+    for name in app.args.extern_interrupts.keys() {
         let name_s = name.to_string();
 
         match &*name_s {
@@ -51,11 +42,11 @@ pub fn app<'a>(app: &'a App, _analysis: &Analysis) -> parse::Result<Extra<'a>> {
         .collect::<HashSet<_>>();
 
     let need = priorities.len();
-    let given = app.extern_interrupts.len();
+    let given = app.args.extern_interrupts.len();
     if need > given {
         let s = {
             format!(
-                "not enough `extern` interrupts to dispatch \
+                "not enough interrupts to dispatch \
                     all software tasks (need: {}; given: {})",
                 need, given
             )
@@ -66,52 +57,6 @@ pub fn app<'a>(app: &'a App, _analysis: &Analysis) -> parse::Result<Extra<'a>> {
         return Err(parse::Error::new(first.unwrap().span(), &s));
     }
 
-    let mut device = None;
-    let mut monotonic = None;
-    let mut peripherals = false;
-
-    for (k, v) in &app.args.custom {
-        let ks = k.to_string();
-
-        match &*ks {
-            "device" => match v {
-                CustomArg::Path(p) => device = Some(p),
-
-                _ => {
-                    return Err(parse::Error::new(
-                        k.span(),
-                        "unexpected argument value; this should be a path",
-                    ));
-                }
-            },
-
-            "monotonic" => match v {
-                CustomArg::Path(p) => monotonic = Some(p),
-
-                _ => {
-                    return Err(parse::Error::new(
-                        k.span(),
-                        "unexpected argument value; this should be a path",
-                    ));
-                }
-            },
-
-            "peripherals" => match v {
-                CustomArg::Bool(x) => peripherals = *x,
-                _ => {
-                    return Err(parse::Error::new(
-                        k.span(),
-                        "unexpected argument value; this should be a boolean",
-                    ));
-                }
-            },
-
-            _ => {
-                return Err(parse::Error::new(k.span(), "unexpected argument"));
-            }
-        }
-    }
-
     // Check that all exceptions are valid; only exceptions with configurable priorities are
     // accepted
     for (name, task) in &app.hardware_tasks {
@@ -119,7 +64,7 @@ pub fn app<'a>(app: &'a App, _analysis: &Analysis) -> parse::Result<Extra<'a>> {
         match &*name_s {
             "SysTick" => {
                 // If the timer queue is used, then SysTick is unavailable
-                if monotonic.is_some() {
+                if app.args.monotonic.is_some() {
                     return Err(parse::Error::new(
                         name.span(),
                         "this exception can't be used because it's being used by the runtime",
@@ -140,11 +85,11 @@ pub fn app<'a>(app: &'a App, _analysis: &Analysis) -> parse::Result<Extra<'a>> {
         }
     }
 
-    if let Some(device) = device {
+    if let Some(device) = app.args.device.clone() {
         Ok(Extra {
             device,
-            monotonic,
-            peripherals,
+            monotonic: app.args.monotonic.clone(),
+            peripherals: app.args.peripherals,
         })
     } else {
         Err(parse::Error::new(

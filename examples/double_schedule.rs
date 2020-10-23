@@ -7,7 +7,7 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
 mod app {
     use rtic::cyccnt::U32Ext;
 
@@ -31,9 +31,5 @@ mod app {
     #[task]
     fn task2(_cx: task2::Context) {
         task1::schedule(_cx.scheduled + 100.cycles()).ok();
-    }
-
-    extern "C" {
-        fn SSI0();
     }
 }

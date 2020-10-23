@@ -23,7 +23,7 @@ pub fn codegen(
     let mut lt = None;
     match ctxt {
         Context::Init => {
-            if let Some(m) = extra.monotonic {
+            if let Some(m) = &extra.monotonic {
                 fields.push(quote!(
                     /// System start time = `Instant(0 /* cycles */)`
                     pub start: <#m as rtic::Monotonic>::Instant
@@ -43,7 +43,7 @@ pub fn codegen(
             }
 
             if extra.peripherals {
-                let device = extra.device;
+                let device = &extra.device;
 
                 fields.push(quote!(
                     /// Device peripherals
@@ -67,7 +67,7 @@ pub fn codegen(
         Context::Idle => {}
 
         Context::HardwareTask(..) => {
-            if let Some(m) = extra.monotonic {
+            if let Some(m) = &extra.monotonic {
                 fields.push(quote!(
                     /// Time at which this handler started executing
                     pub start: <#m as rtic::Monotonic>::Instant
@@ -80,7 +80,7 @@ pub fn codegen(
         }
 
         Context::SoftwareTask(..) => {
-            if let Some(m) = extra.monotonic {
+            if let Some(m) = &extra.monotonic {
                 fields.push(quote!(
                     /// The time at which this task was scheduled to run
                     pub scheduled: <#m as rtic::Monotonic>::Instant
@@ -162,7 +162,7 @@ pub fn codegen(
     };
 
     let instant = if needs_instant {
-        let m = extra.monotonic();
+        let m = extra.monotonic.clone().expect("RTIC-ICE: UNREACHABLE");
 
         Some(quote!(, instant: <#m as rtic::Monotonic>::Instant))
     } else {
@@ -205,9 +205,13 @@ pub fn codegen(
         let app_name = &app.name;
         let app_path = quote! {crate::#app_name};
 
-        let device = extra.device;
+        let device = &extra.device;
         let enum_ = util::interrupt_ident();
-        let interrupt = &analysis.interrupts.get(&priority);
+        let interrupt = &analysis
+            .interrupts
+            .get(&priority)
+            .expect("RTIC-ICE: interrupt identifer not found")
+            .0;
 
         // Spawn caller
         items.push(quote!(
@@ -240,7 +244,7 @@ pub fn codegen(
         }));
 
         // Schedule caller
-        if let Some(m) = extra.monotonic {
+        if let Some(m) = &extra.monotonic {
             let instants = util::instants_ident(name);
 
             let tq = util::tq_ident();

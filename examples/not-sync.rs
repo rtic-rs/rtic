@@ -12,7 +12,7 @@ pub struct NotSync {
     _0: PhantomData<*const ()>,
 }
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use super::NotSync;
     use core::marker::PhantomData;
@@ -39,12 +39,5 @@ mod app {
     #[task(resources = [&shared])]
     fn bar(c: bar::Context) {
         let _: &NotSync = c.resources.shared;
-    }
-
-    // RTIC requires that unused interrupts are declared in an extern block when
-    // using software tasks; these free interrupts will be used to dispatch the
-    // software tasks.
-    extern "C" {
-        fn SSI0();
     }
 }

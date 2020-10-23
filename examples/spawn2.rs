@@ -7,7 +7,7 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
@@ -31,12 +31,5 @@ mod app {
     fn foo2(_c: foo2::Context, x: i32) {
         hprintln!("foo2 {}", x).unwrap();
         foo::spawn(x, 0).unwrap();
-    }
-
-    // RTIC requires that unused interrupts are declared in an extern block when
-    // using software tasks; these free interrupts will be used to dispatch the
-    // software tasks.
-    extern "C" {
-        fn SSI0();
     }
 }

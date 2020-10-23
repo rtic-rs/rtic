@@ -7,7 +7,7 @@
 
 use panic_halt as _;
 
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
+#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
 mod app {
     #[init]
     fn init(c: init::Context) -> init::LateResources {
@@ -18,11 +18,4 @@ mod app {
 
     #[task]
     fn some_task(_: some_task::Context) {}
-
-    // RTIC requires that unused interrupts are declared in an extern block when
-    // using software tasks; these free interrupts will be used to dispatch the
-    // software tasks.
-    extern "C" {
-        fn SSI0();
-    }
 }

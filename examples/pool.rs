@@ -15,7 +15,7 @@ use rtic::app;
 // Declare a pool of 128-byte memory blocks
 pool!(P: [u8; 128]);
 
-#[app(device = lm3s6965)]
+#[app(device = lm3s6965, dispatchers = [SSI0, QEI0])]
 mod app {
     use crate::{Box, Pool};
     use cortex_m_semihosting::{debug, hprintln};
@@ -64,13 +64,5 @@ mod app {
 
         // this is done automatically so we can omit the call to `drop`
         // drop(x);
-    }
-
-    // RTIC requires that unused interrupts are declared in an extern block when
-    // using software tasks; these free interrupts will be used to dispatch the
-    // software tasks.
-    extern "C" {
-        fn SSI0();
-        fn QEI0();
     }
 }

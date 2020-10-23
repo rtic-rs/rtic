@@ -86,7 +86,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let user_imports = &app.user_imports;
     let user_code = &app.user_code;
     let name = &app.name;
-    let device = extra.device;
+    let device = &extra.device;
 
     // Get the list of all tasks
     // Currently unused, might be useful

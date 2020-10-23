@@ -6,7 +6,8 @@ fn analyze() {
     let mut settings = Settings::default();
     settings.parse_extern_interrupt = true;
     let (app, analysis) = rtic_syntax::parse2(
-        quote!(device = pac),
+        // First interrupt is assigned to the highest priority dispatcher
+        quote!(device = pac, dispatchers = [B, A]),
         quote!(
             mod app {
                 #[task(priority = 1)]
@@ -14,12 +15,6 @@ fn analyze() {
 
                 #[task(priority = 2)]
                 fn b(_: b::Context) {}
-
-                // First interrupt is assigned to the highest priority dispatcher
-                extern "C" {
-                    fn B();
-                    fn A();
-                }
             }
         ),
         settings,
@@ -29,6 +24,6 @@ fn analyze() {
     let analysis = crate::analyze::app(analysis, &app);
     let interrupts = &analysis.interrupts;
     assert_eq!(interrupts.len(), 2);
-    assert_eq!(interrupts[&2].to_string(), "B");
-    assert_eq!(interrupts[&1].to_string(), "A");
+    assert_eq!(interrupts[&2].0.to_string(), "B");
+    assert_eq!(interrupts[&1].0.to_string(), "A");
 }
