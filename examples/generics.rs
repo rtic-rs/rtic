@@ -13,7 +13,6 @@ use rtic::Mutex;
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
     use lm3s6965::Interrupt;
-    use rtic::Exclusive;
 
     #[resources]
     struct Resources {
@@ -49,11 +48,8 @@ mod app {
 
         hprintln!("UART1(STATE = {})", *STATE).unwrap();
 
-        // just to show that `shared` can be accessed directly
-        *c.resources.shared += 0;
-
-        // second argument has type `Exclusive<u32>`
-        super::advance(STATE, Exclusive(c.resources.shared));
+        // second argument has type `resources::shared`
+        super::advance(STATE, c.resources.shared);
     }
 }
 

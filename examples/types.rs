@@ -45,7 +45,7 @@ mod app {
     #[task(priority = 2, resources = [shared])]
     fn foo(cx: foo::Context) {
         let _: cyccnt::Instant = cx.scheduled;
-        let _: &mut u32 = cx.resources.shared;
+        let _: resources::shared = cx.resources.shared;
         let _: foo::Resources = cx.resources;
     }
 

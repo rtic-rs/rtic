@@ -41,12 +41,12 @@ mod app {
     }
 
     #[task(capacity = 2, resources = [count])]
-    fn foo(_cx: foo::Context) {
+    fn foo(mut _cx: foo::Context) {
         #[cfg(debug_assertions)]
         {
-            *_cx.resources.count += 1;
+            _cx.resources.count.lock(|count| *count += 1);
 
-            log::spawn(*_cx.resources.count).unwrap();
+            log::spawn(_cx.resources.count.lock(|count| *count)).unwrap();
         }
 
         // this wouldn't compile in `release` mode
@@ -59,12 +59,12 @@ mod app {
     // currently still present in the Tasks enum
     #[cfg(never)]
     #[task(capacity = 2, resources = [count])]
-    fn foo2(_cx: foo2::Context) {
+    fn foo2(mut _cx: foo2::Context) {
         #[cfg(debug_assertions)]
         {
-            *_cx.resources.count += 10;
+            _cx.resources.count.lock(|count| *count += 10);
 
-            log::spawn(*_cx.resources.count).unwrap();
+            log::spawn(_cx.resources.count.lock(|count| *count)).unwrap();
         }
 
         // this wouldn't compile in `release` mode

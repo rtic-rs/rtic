@@ -2,15 +2,9 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::{ast::App, Context};
 
-use crate::{analyze::Analysis, codegen::util};
+use crate::codegen::util;
 
-pub fn codegen(
-    ctxt: Context,
-    priority: u8,
-    needs_lt: &mut bool,
-    app: &App,
-    analysis: &Analysis,
-) -> (TokenStream2, TokenStream2) {
+pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, TokenStream2) {
     let mut lt = None;
 
     let resources = match ctxt {
@@ -30,6 +24,7 @@ pub fn codegen(
         let cfgs = &res.cfgs;
         has_cfgs |= !cfgs.is_empty();
 
+        // access hold if the resource is [x] (exclusive) or [&x] (shared)
         let mut_ = if access.is_exclusive() {
             Some(quote!(mut))
         } else {
@@ -38,99 +33,66 @@ pub fn codegen(
         let ty = &res.ty;
         let mangled_name = util::mangle_ident(&name);
 
-        if ctxt.is_init() {
-            if !analysis.ownerships.contains_key(name) {
-                // Owned by `init`
-                fields.push(quote!(
-                    #(#cfgs)*
-                    pub #name: &'static #mut_ #ty
-                ));
+        // let ownership = &analysis.ownerships[name];
+        let r_prop = &res.properties;
 
-                values.push(quote!(
-                    #(#cfgs)*
-                    #name: &#mut_ #mangled_name
-                ));
-            } else {
-                // Owned by someone else
+        if !r_prop.task_local && !r_prop.lock_free {
+            if access.is_shared() {
                 lt = Some(quote!('a));
 
                 fields.push(quote!(
                     #(#cfgs)*
-                    pub #name: &'a mut #ty
+                    pub #name: &'a #ty
+                ));
+            } else {
+                // Resource proxy
+                lt = Some(quote!('a));
+
+                fields.push(quote!(
+                    #(#cfgs)*
+                    pub #name: resources::#name<'a>
                 ));
 
                 values.push(quote!(
                     #(#cfgs)*
-                    #name: &mut #mangled_name
+                    #name: resources::#name::new(priority)
+
                 ));
+
+                // continue as the value has been filled,
+                continue;
             }
         } else {
-            let ownership = &analysis.ownerships[name];
-
-            if ownership.needs_lock(priority) {
-                if mut_.is_none() {
-                    lt = Some(quote!('a));
-
-                    fields.push(quote!(
-                        #(#cfgs)*
-                        pub #name: &'a #ty
-                    ));
-                } else {
-                    // Resource proxy
-                    lt = Some(quote!('a));
-
-                    fields.push(quote!(
-                        #(#cfgs)*
-                        pub #name: resources::#name<'a>
-                    ));
-
-                    values.push(quote!(
-                        #(#cfgs)*
-                        #name: resources::#name::new(priority)
-
-                    ));
-
-                    continue;
-                }
+            let lt = if ctxt.runs_once() {
+                quote!('static)
             } else {
-                let lt = if ctxt.runs_once() {
-                    quote!('static)
-                } else {
-                    lt = Some(quote!('a));
-                    quote!('a)
-                };
+                lt = Some(quote!('a));
+                quote!('a)
+            };
 
-                if ownership.is_owned() || mut_.is_none() {
-                    fields.push(quote!(
-                        #(#cfgs)*
-                        pub #name: &#lt #mut_ #ty
-                    ));
-                } else {
-                    fields.push(quote!(
-                        #(#cfgs)*
-                        pub #name: &#lt mut #ty
-                    ));
-                }
-            }
+            fields.push(quote!(
+                #(#cfgs)*
+                pub #name: &#lt #mut_ #ty
+            ));
+        }
 
-            let is_late = expr.is_none();
-            if is_late {
-                let expr = if mut_.is_some() {
-                    quote!(&mut *#mangled_name.as_mut_ptr())
-                } else {
-                    quote!(&*#mangled_name.as_ptr())
-                };
-
-                values.push(quote!(
-                    #(#cfgs)*
-                    #name: #expr
-                ));
+        let is_late = expr.is_none();
+        if is_late {
+            let expr = if access.is_exclusive() {
+                quote!(&mut *#mangled_name.as_mut_ptr())
             } else {
-                values.push(quote!(
-                    #(#cfgs)*
-                    #name: &#mut_ #mangled_name
-                ));
-            }
+                quote!(&*#mangled_name.as_ptr())
+            };
+
+            values.push(quote!(
+                #(#cfgs)*
+                #name: #expr
+            ));
+        } else {
+            values.push(quote!(
+                #(#cfgs)*
+                #name: &#mut_ #mangled_name
+            ));
         }
     }
 

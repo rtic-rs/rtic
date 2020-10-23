@@ -31,29 +31,18 @@ mod app {
         s3: u32, // idle & uart0
     }
 
-    #[init(resources = [o1, o4, o5, o6, s3])]
-    fn init(c: init::Context) -> init::LateResources {
-        // owned by `init` == `&'static mut`
-        let _: &'static mut u32 = c.resources.o1;
-
-        // owned by `init` == `&'static` if read-only
-        let _: &'static u32 = c.resources.o6;
-
-        // `init` has exclusive access to all resources
-        let _: &mut u32 = c.resources.o4;
-        let _: &mut u32 = c.resources.o5;
-        let _: &mut u32 = c.resources.s3;
-
+    #[init]
+    fn init(_: init::Context) -> init::LateResources {
         init::LateResources {}
     }
 
     #[idle(resources = [o2, &o4, s1, &s3])]
     fn idle(mut c: idle::Context) -> ! {
         // owned by `idle` == `&'static mut`
-        let _: &'static mut u32 = c.resources.o2;
+        let _: resources::o2 = c.resources.o2;
 
         // owned by `idle` == `&'static` if read-only
-        let _: &'static u32 = c.resources.o4;
+        let _: &u32 = c.resources.o4;
 
         // shared with `idle` == `Mutex`
         c.resources.s1.lock(|_| {});
@@ -69,13 +58,13 @@ mod app {
     #[task(binds = UART0, resources = [o3, s1, s2, &s3])]
     fn uart0(c: uart0::Context) {
         // owned by interrupt == `&mut`
-        let _: &mut u32 = c.resources.o3;
+        let _: resources::o3 = c.resources.o3;
 
         // no `Mutex` proxy when access from highest priority task
-        let _: &mut u32 = c.resources.s1;
+        let _: resources::s1 = c.resources.s1;
 
         // no `Mutex` proxy when co-owned by cooperative (same priority) tasks
-        let _: &mut u32 = c.resources.s2;
+        let _: resources::s2 = c.resources.s2;
 
         // `&` if read-only
         let _: &u32 = c.resources.s3;
@@ -87,6 +76,6 @@ mod app {
         let _: &u32 = c.resources.o5;
 
         // no `Mutex` proxy when co-owned by cooperative (same priority) tasks
-        let _: &mut u32 = c.resources.s2;
+        let _: resources::s2 = c.resources.s2;
     }
 }
