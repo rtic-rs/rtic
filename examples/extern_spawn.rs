@@ -8,6 +8,7 @@
 use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
+// Free function implementing the spawnable task `foo`.
 fn foo(_c: app::foo::Context, x: i32, y: u32) {
     hprintln!("foo {}, {}", x, y).unwrap();
     if x == 2 {

@@ -36,7 +36,6 @@ mod app {
 
 This works also for ram functions, see examples/ramfunc.rs
 
-
 ## Module instead of Const
 
 With the support of attributes on modules the `const APP` workaround is not needed.
@@ -125,3 +124,13 @@ struct whateveryouwant {
 ```
 
 would work equally well.
+
+---
+
+## Additions
+
+## Extern tasks
+
+Both software and hardware tasks can now be defined external to the `mod app`. Previously this was possible only by implementing a trampoline calling out the task implementation.  
+
+See examples `examples/extern_binds.rs` and `examples/extern_spawn.rs`.

@@ -8,11 +8,11 @@
 use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
 
+// Free function implementing the interrupt bound task `foo`.
 fn foo(_: app::foo::Context) {
     hprintln!("foo called").ok();
 }
 
-// `examples/interrupt.rs` rewritten to use `binds`
 #[rtic::app(device = lm3s6965)]
 mod app {
     use crate::foo;
