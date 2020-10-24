@@ -99,21 +99,23 @@ pub fn codegen(
             root.push(struct_);
         }
 
-        let context = &task.context;
-        let attrs = &task.attrs;
-        let cfgs = &task.cfgs;
-        let stmts = &task.stmts;
-        let locals_pat = locals_pat.iter();
-        user_tasks.push(quote!(
-            #(#attrs)*
-            #(#cfgs)*
-            #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
-                use rtic::Mutex as _;
+        if !&task.is_extern {
+            let context = &task.context;
+            let attrs = &task.attrs;
+            let cfgs = &task.cfgs;
+            let stmts = &task.stmts;
+            let locals_pat = locals_pat.iter();
+            user_tasks.push(quote!(
+                #(#attrs)*
+                #(#cfgs)*
+                #[allow(non_snake_case)]
+                fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
+                    use rtic::Mutex as _;
 
-                #(#stmts)*
-            }
-        ));
+                    #(#stmts)*
+                }
+            ));
+        }
 
         root.push(module::codegen(
             Context::SoftwareTask(name),

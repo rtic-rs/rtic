@@ -95,19 +95,21 @@ pub fn codegen(
             locals_pat = Some(pat);
         }
 
-        let attrs = &task.attrs;
-        let context = &task.context;
-        let stmts = &task.stmts;
-        let locals_pat = locals_pat.iter();
-        user_tasks.push(quote!(
-            #(#attrs)*
-            #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context) {
-                use rtic::Mutex as _;
+        if !&task.is_extern {
+            let attrs = &task.attrs;
+            let context = &task.context;
+            let stmts = &task.stmts;
+            let locals_pat = locals_pat.iter();
+            user_tasks.push(quote!(
+                #(#attrs)*
+                #[allow(non_snake_case)]
+                fn #name(#(#locals_pat,)* #context: #name::Context) {
+                    use rtic::Mutex as _;
 
-                #(#stmts)*
-            }
-        ));
+                    #(#stmts)*
+                }
+            ));
+        }
     }
 
     (mod_app, root, user_tasks)
