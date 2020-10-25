@@ -25,6 +25,8 @@ mod app {
     #[resources]
     struct Resources {
         syst: cortex_m::peripheral::SYST,
+        #[init(None)]
+        waker: Option<Waker>,
     }
 
     #[init]
@@ -92,12 +94,12 @@ mod app {
         }
     }
 
-    #[task(resources = [syst])]
-    fn timer(cx: timer::Context<'static>) {
+    #[task(resources = [syst, waker])]
+    fn timer(cx: timer::Context<'static>, ticks: u32) {
         // BEGIN BOILERPLATE
         type F = impl Future + 'static;
-        fn create(cx: timer::Context<'static>) -> F {
-            task(cx)
+        fn create(cx: timer::Context<'static>, ticks: u32) -> F {
+            task(cx, ticks)
         }
 
         static mut TASK: Task<F> = Task::new();
@@ -107,7 +109,7 @@ mod app {
             match TASK {
                 Task::Idle | Task::Done(_) => {
                     hprintln!("create task").ok();
-                    TASK.spawn(|| create(mem::transmute(cx)));
+                    TASK.spawn(|| create(mem::transmute(cx), ticks));
                 }
                 _ => {}
             };
@@ -127,14 +129,35 @@ mod app {
         // END BOILERPLATE
 
         // for now assume this async task is done directly
-        async fn task(cx: timer::Context<'static>) {
-            hprintln!("SysTick ").ok();
+        async fn task(mut cx: timer::Context<'static>, ticks: u32) {
+            hprintln!("SysTick {:?}", ticks).ok();
+            // let q = Q {};
+            //q.await;
+
+            // cx.resources.waker.lock(|w| *w = Some())
         }
+
+        // static mut Q: Q<F1> =Q
+        // struct Q {
+        //     Init
+        // }
+
+        // impl Future for Q {
+        //     type Output = ();
+
+        //     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        //         // you get the waker in cx.waker()
+
+        //         Poll::Pending
+        //     }
+        // }
     }
 
     // This the actual RTIC task, binds to systic.
-    #[task(binds = SysTick)]
-    fn systic(cx: systic::Context) {}
+    #[task(binds = SysTick, resources = [waker], priority = 2)]
+    fn systic(mut cx: systic::Context) {
+        hprintln!("waker {}", cx.resources.waker.lock(|w| w.is_some())).ok();
+    }
 }
 
 //=============
@@ -189,6 +212,18 @@ impl<F: Future + 'static> Task<F> {
                 };
             }
             Task::Done(_) => {}
+        }
+    }
+
+    unsafe fn get_waker(&mut self, wake: fn()) -> Waker {
+        match self {
+            Task::Running(future) => {
+                let future = Pin::new_unchecked(future);
+                let waker_data: *const () = mem::transmute(wake);
+                let waker = Waker::from_raw(RawWaker::new(waker_data, &WAKER_VTABLE));
+                waker
+            }
+            _ => unreachable!(),
         }
     }
 }
