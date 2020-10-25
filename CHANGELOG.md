@@ -15,6 +15,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Improved ergonomics allowing separation of task signatures to actual implementation in extern block `extern "C" { #[task(..)] fn t(..); }`.
 
+- Experimental support for async/await.
+
 ### Changed
 
 - [breaking-change] [PR 400] Move dispatchers from extern block to app argument.
