@@ -107,7 +107,7 @@ mod app {
             match TASK {
                 Task::Idle | Task::Done(_) => {
                     hprintln!("create task").ok();
-                    TASK.spawn(|| create(cx));
+                    TASK.spawn(|| create(mem::transmute(cx)));
                 }
                 _ => {}
             };
