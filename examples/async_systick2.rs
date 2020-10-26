@@ -21,7 +21,6 @@ use rtic::Mutex;
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use crate::Timer;
     use crate::*;
 
     #[resources]
@@ -31,14 +30,14 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> init::LateResources {
-        hprintln!("init").unwrap();
+        hprintln!("init").ok();
         foo::spawn().unwrap();
         init::LateResources {
             systick: Systick {
                 syst: cx.core.SYST,
                 state: State::Done,
                 queue: BinaryHeap::new(),
-                waker: None,
+                // waker: None,
             },
         }
     }
@@ -47,7 +46,7 @@ mod app {
     fn idle(_: idle::Context) -> ! {
         // debug::exit(debug::EXIT_SUCCESS);
         loop {
-            hprintln!("idle");
+            hprintln!("idle").ok();
             cortex_m::asm::wfi(); // put the MCU in sleep mode until interrupt occurs
         }
     }
@@ -102,14 +101,14 @@ mod app {
         }
     }
 
-    // This the actual RTIC task, binds to systic.
+    // RTIC task bound to the HW SysTick interrupt
     #[task(binds = SysTick, resources = [systick], priority = 2)]
     fn systic(mut cx: systic::Context) {
         hprintln!("systic interrupt").ok();
         cx.resources.systick.lock(|s| {
             s.syst.disable_interrupt();
             s.state = State::Done;
-            s.waker.take().map(|w| w.wake());
+            s.queue.pop().map(|w| w.waker.wake());
         });
     }
 }
@@ -186,7 +185,7 @@ pub enum State {
 
 struct Timeout {
     time: u32,
-    waker: Option<Waker>,
+    waker: Waker,
 }
 
 impl Ord for Timeout {
@@ -213,7 +212,7 @@ pub struct Systick {
     syst: cortex_m::peripheral::SYST,
     state: State,
     queue: BinaryHeap<Timeout, U8, Max>,
-    waker: Option<Waker>,
+    // waker: Option<Waker>,
 }
 
 //=============
@@ -221,32 +220,31 @@ pub struct Systick {
 // Later we want a proper queue
 
 pub struct Timer<'a, T: Mutex<T = Systick>> {
-    started: bool,
-    t: u32,
+    request: Option<u32>,
     systick: &'a mut T,
 }
 
 impl<'a, T: Mutex<T = Systick>> Future for Timer<'a, T> {
     type Output = ();
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let Self {
-            started,
-            t,
-            systick,
-        } = &mut *self;
+        let Self { request, systick } = &mut *self;
         systick.lock(|s| {
-            if !*started {
-                s.syst.set_reload(*t);
+            // enqueue a new request
+            request.take().map(|t| {
+                s.syst.set_reload(t);
                 s.syst.enable_counter();
                 s.syst.enable_interrupt();
                 s.state = State::Started;
-                *started = true;
-            }
+                s.queue.push(Timeout {
+                    time: t,
+                    waker: cx.waker().clone(),
+                });
+            });
 
             match s.state {
                 State::Done => Poll::Ready(()),
                 State::Started => {
-                    s.waker = Some(cx.waker().clone());
+                    // s.waker = Some(cx.waker().clone());
                     Poll::Pending
                 }
             }
@@ -257,8 +255,7 @@ impl<'a, T: Mutex<T = Systick>> Future for Timer<'a, T> {
 fn timer_delay<'a, T: Mutex<T = Systick>>(systick: &'a mut T, t: u32) -> Timer<'a, T> {
     hprintln!("timer_delay {}", t);
     Timer {
-        started: false,
-        t,
+        request: Some(t),
         systick,
     }
 }
