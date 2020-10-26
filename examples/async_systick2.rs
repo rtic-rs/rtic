@@ -91,8 +91,10 @@ mod app {
         async fn task(mut cx: foo::Context<'static>) {
             hprintln!("foo task").ok();
 
-            hprintln!("delay long time").ok();
-            timer_delay(&mut cx.resources.systick, 5000000).await;
+            hprintln!("prepare two futures").ok();
+            let d1 = timer_delay(&mut cx.resources.systick, 5000000);
+            let d2 = timer_delay(&mut cx.resources.systick, 1000000);
+
             hprintln!("foo task resumed").ok();
 
             hprintln!("delay short time").ok();
@@ -182,6 +184,7 @@ impl<F: Future + 'static> Task<F> {
 use core::cmp::Ordering;
 use heapless::binary_heap::{BinaryHeap, Max};
 use heapless::consts::U8;
+use heapless::Vec;
 
 pub enum State {
     Started,
@@ -217,7 +220,6 @@ pub struct Systick {
     syst: cortex_m::peripheral::SYST,
     state: State,
     queue: BinaryHeap<Timeout, U8, Max>,
-    // waker: Option<Waker>,
 }
 
 //=============
@@ -260,7 +262,7 @@ impl<'a, T: Mutex<T = Systick>> Future for Timer<'a, T> {
 fn timer_delay<'a, T: Mutex<T = Systick>>(systick: &'a mut T, t: u32) -> Timer<'a, T> {
     hprintln!("timer_delay {}", t);
     Timer {
-        request: Some(t),
+        request: heapless,
         systick,
     }
 }

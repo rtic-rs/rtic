@@ -34,8 +34,15 @@
 #![deny(rust_2018_idioms)]
 #![deny(warnings)]
 #![no_std]
+// async currently requires nightly
+#![cfg_attr(feature = "async", feature(const_fn))]
+#![cfg_attr(feature = "async", feature(type_alias_impl_trait))]
 
 use core::ops::Sub;
+
+// currently requires nightly
+#[cfg(feature = "async")]
+pub mod async_util;
 
 use cortex_m::{
     interrupt::Nr,

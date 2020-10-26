@@ -82,6 +82,8 @@ version = "0.5.2"
 trybuild = "1"
 
 [features]
+# experimental support for async/await
+async = []
 # used for testing this crate; do not use in applications
 __v7 =[]
 __min_r1_43 =[]
