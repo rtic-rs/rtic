@@ -109,6 +109,11 @@ mod app {
             s.syst.disable_interrupt();
             s.state = State::Done;
             s.queue.pop().map(|w| w.waker.wake());
+            if let Some(w) = s.queue.peek() {
+                s.syst.set_reload(w.time);
+            } else {
+                s.syst.disable_interrupt();
+            }
         });
     }
 }
@@ -176,7 +181,7 @@ impl<F: Future + 'static> Task<F> {
 //use core::cmp::{Ord, Ordering, PartialOrd};
 use core::cmp::Ordering;
 use heapless::binary_heap::{BinaryHeap, Max};
-use heapless::consts::*;
+use heapless::consts::U8;
 
 pub enum State {
     Started,
