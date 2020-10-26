@@ -143,9 +143,10 @@ mod app {
     // }
 
     // This the actual RTIC task, binds to systic.
-    #[task(binds = SysTick, resources = [], priority = 2)]
+    #[task(binds = SysTick, resources = [syst], priority = 2)]
     fn systic(mut cx: systic::Context) {
         hprintln!("systic interrupt").ok();
+        cx.resources.syst.lock(|syst| syst.disable_interrupt());
         crate::app::foo::spawn(); // this should be from a Queue later
     }
 }
