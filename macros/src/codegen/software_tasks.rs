@@ -117,6 +117,10 @@ pub fn codegen(
             ));
         }
 
+        if &task.is_async {
+            eprintln!("")
+        }
+
         root.push(module::codegen(
             Context::SoftwareTask(name),
             needs_lt,
