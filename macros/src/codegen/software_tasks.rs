@@ -99,26 +99,81 @@ pub fn codegen(
             root.push(struct_);
         }
 
-        if !&task.is_extern {
+        if task.is_async {
+            // generate preamble for async task
             let context = &task.context;
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
             let locals_pat = locals_pat.iter();
+            let locals_pat2 = locals_pat.clone();
+
+            // TODO, should we require the user to give <'static>
+            // (not feasible today, as RTIC lends out a non static lifetime of cx)
             user_tasks.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
                 fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
-                    use rtic::Mutex as _;
+                    type F = impl Future + 'static;
+                    fn create(cx: #name::Context<'static>) -> F {
+                        task(cx)
+                    }
 
-                    #(#stmts)*
+                    static mut TASK: Task<F> = Task::new();
+
+                    unsafe {
+                        match TASK {
+                            Task::Idle | Task::Done(_) => {
+                                // TODO, soundness - reject tasks with &mut T resources?
+                                TASK.spawn(|| create(mem::transmute(cx)));
+                            }
+                            _ => {}
+                        };
+
+                        TASK.poll(|| {
+                            // TODO, should we panic here on error?
+                            let _ = foo::spawn();
+                        });
+
+                        match TASK {
+                            Task::Done(ref _r) => {
+                                // TODO, how to deal with return value?
+                            }
+                            _ => {}
+                        }
+                    }
+                    #(#attrs)*
+                    #(#cfgs)*
+                    #[allow(non_snake_case)]
+                    // TODO, should we require the user to give <'static>
+                    // (now we auto generate it)
+                    async fn task(#(#locals_pat2,)* #context: #name::Context<'static> #(,#inputs)*) {
+                        use rtic::Mutex as _;
+
+                        #(#stmts)*
+                    }
                 }
-            ));
-        }
+            ))
+        } else {
+            // emit task with attributes if not extern
+            if !&task.is_extern {
+                let context = &task.context;
+                let attrs = &task.attrs;
+                let cfgs = &task.cfgs;
+                let stmts = &task.stmts;
+                let locals_pat = locals_pat.iter();
+                user_tasks.push(quote!(
+                    #(#attrs)*
+                    #(#cfgs)*
+                    #[allow(non_snake_case)]
+                    fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
+                        use rtic::Mutex as _;
 
-        if &task.is_async {
-            eprintln!("")
+                        #(#stmts)*
+                    }
+                ));
+            }
         }
 
         root.push(module::codegen(

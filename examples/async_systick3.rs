@@ -13,7 +13,7 @@ use core::pin::Pin;
 // use core::ptr;
 // use core::ptr::NonNull;
 // use core::sync::atomic::{AtomicPtr, AtomicU32, Ordering};
-use core::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+use core::task::{Context, Poll, Waker};
 use rtic::async_util::Task;
 
 use cortex_m_semihosting::{debug, hprintln};
@@ -46,64 +46,28 @@ mod app {
 
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        // debug::exit(debug::EXIT_SUCCESS);
+        let mut i = 0;
         loop {
-            hprintln!("idle").ok();
+            i += 1;
+            hprintln!("idle {}", i).ok();
+            if i == 3 {
+                debug::exit(debug::EXIT_SUCCESS);
+            }
             cortex_m::asm::wfi(); // put the MCU in sleep mode until interrupt occurs
         }
     }
 
     #[task(resources = [systick])]
-    async fn foo(mut cx: foo::Context) {
-        // BEGIN BOILERPLATE
-        type F = impl Future + 'static;
-        fn create(cx: foo::Context<'static>) -> F {
-            task(cx)
-        }
+    async fn foo(cx: foo::Context) {
+        hprintln!("foo task").ok();
+        let mut systick = cx.resources.systick;
 
-        static mut TASK: Task<F> = Task::new();
+        hprintln!("delay long time").ok();
+        timer_delay(&mut systick, 5000000).await;
 
-        hprintln!("foo trampoline").ok();
-        unsafe {
-            match TASK {
-                Task::Idle | Task::Done(_) => {
-                    hprintln!("foo spawn task").ok();
-                    TASK.spawn(|| create(mem::transmute(cx)));
-                }
-                _ => {}
-            };
-
-            hprintln!("foo trampoline poll").ok();
-            TASK.poll(|| {
-                let _ = foo::spawn();
-            });
-
-            match TASK {
-                Task::Done(ref r) => {
-                    hprintln!("foo trampoline done").ok();
-                    // hprintln!("r = {:?}", mem::transmute::<_, &u32>(r)).ok();
-                }
-                _ => {
-                    hprintln!("foo trampoline running").ok();
-                }
-            }
-        }
-        // END BOILERPLATE
-
-        async fn task(mut cx: foo::Context<'static>) {
-            hprintln!("foo task").ok();
-
-            hprintln!("prepare two futures").ok();
-            let d1 = timer_delay(&mut cx.resources.systick, 5000000);
-            let d2 = timer_delay(&mut cx.resources.systick, 1000000);
-
-            //let pair = futures::future::join(d1, d2);
-            hprintln!("foo task resumed").ok();
-
-            hprintln!("delay short time").ok();
-            timer_delay(&mut cx.resources.systick, 1000000).await;
-            hprintln!("foo task resumed").ok();
-        }
+        hprintln!("delay short time").ok();
+        timer_delay(&mut systick, 1000000).await;
+        hprintln!("foo task resumed").ok();
     }
 
     // RTIC task bound to the HW SysTick interrupt
@@ -131,7 +95,7 @@ mod app {
 use core::cmp::Ordering;
 use heapless::binary_heap::{BinaryHeap, Max};
 use heapless::consts::U8;
-use heapless::Vec;
+// use heapless::Vec;
 
 pub enum State {
     Started,
@@ -189,25 +153,24 @@ impl<'a, T: Mutex<T = Systick>> Future for Timer<'a, T> {
                 s.syst.enable_counter();
                 s.syst.enable_interrupt();
                 s.state = State::Started;
-                s.queue.push(Timeout {
-                    time: t,
-                    waker: cx.waker().clone(),
-                });
+                s.queue
+                    .push(Timeout {
+                        time: t,
+                        waker: cx.waker().clone(),
+                    })
+                    .ok();
             });
 
             match s.state {
                 State::Done => Poll::Ready(()),
-                State::Started => {
-                    // s.waker = Some(cx.waker().clone());
-                    Poll::Pending
-                }
+                State::Started => Poll::Pending,
             }
         })
     }
 }
 
 fn timer_delay<'a, T: Mutex<T = Systick>>(systick: &'a mut T, t: u32) -> Timer<'a, T> {
-    hprintln!("timer_delay {}", t);
+    hprintln!("timer_delay {}", t).ok();
     Timer {
         request: Some(t),
         systick,
