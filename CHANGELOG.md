@@ -13,6 +13,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   - `#[task_local]`, there must be only one task, similar to a task local
     resource, but (optionally) set-up by init. This is similar to move.
 
+- Improved ergonomics allowing separation of task signatures to actual implementation in extern block `extern "Rust" { #[task(..)] fn t(..); }`.
+
 ### Changed
 
 - [breaking-change] [PR 400] Move dispatchers from extern block to app argument.
