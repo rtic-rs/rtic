@@ -6,15 +6,13 @@ application from any execution context.
 
 Software tasks can also be assigned priorities and, under the hood, are
 dispatched from interrupt handlers. RTIC requires that free interrupts are
-declared in an `extern` block when using software tasks; some of these free
+declared in the `dispatchers` app argument when using software tasks; some of these free
 interrupts will be used to dispatch the software tasks. An advantage of software
 tasks over hardware tasks is that many tasks can be mapped to a single interrupt
 handler.
 
 Software tasks are also declared using the `task` attribute but the `binds`
-argument must be omitted. To be able to spawn a software task from a context
-the name of the task must appear in the `spawn` argument of the context
-attribute (`init`, `idle`, `task`, etc.).
+argument must be omitted.
 
 The example below showcases three software tasks that run at 2 different
 priorities. The three software tasks are mapped to 2 interrupts handlers.

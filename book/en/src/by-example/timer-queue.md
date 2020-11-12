@@ -29,9 +29,7 @@ on the built-in CYCle CouNTer (CYCCNT). Note that this is a 32-bit timer clocked
 at the frequency of the CPU and as such it is not suitable for tracking time
 spans in the order of seconds.
 
-To be able to schedule a software task from a context the name of the task must
-first appear in the `schedule` argument of the context attribute. When
-scheduling a task the (user-defined) `Instant` at which the task should be
+When scheduling a task the (user-defined) `Instant` at which the task should be
 executed must be passed as the first argument of the `schedule` invocation.
 
 Additionally, the chosen `monotonic` timer must be configured and initialized
