@@ -34,14 +34,13 @@ And optionally, device specific peripherals through the `core` and `device` fiel
 of `init::Context`.
 
 `static mut` variables declared at the beginning of `init` will be transformed
-into `&'static mut` references that are safe to access.
+into `&'static mut` references that are safe to access. Notice, this feature may be deprecated in next release, see `task_local` resources.
 
 [`rtic::Peripherals`]: ../../api/rtic/struct.Peripherals.html
 
 The example below shows the types of the `core`, `device` and `cs` fields, and
 showcases safe access to a `static mut` variable. The `device` field is only
-available when the `peripherals` argument is set to `true` (it defaults to
-`false`).
+available when the `peripherals` argument is set to `true` (default). In the rare case you want to implement an ultra-slim application you can explicitly set `peripherals` to `false`.
 
 ``` rust
 {{#include ../../../../examples/init.rs}}
@@ -71,12 +70,12 @@ then sends the microcontroller to sleep after running `init`.
 [SLEEPONEXIT]: https://developer.arm.com/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
 
 Like in `init`, `static mut` variables will be transformed into `&'static mut`
-references that are safe to access.
+references that are safe to access. Notice, this feature may be deprecated in the next release, see `task_local` resources.
 
 The example below shows that `idle` runs after `init`.
 
-**Note:** The `loop {}` in idle cannot be empty as this will crash the microcontroller due to a bug
-in LLVM which miss-optimizes empty loops to a `UDF` instruction in release mode.
+**Note:** The `loop {}` in idle cannot be empty as this will crash the microcontroller due to
+LLVM compiling empty loops to an `UDF` instruction in release mode. To avoid UB, the loop needs to imply a "side-effect" by inserting an assembly instruction (e.g., `WFI`) or a `continue`.
 
 ``` rust
 {{#include ../../../../examples/idle.rs}}
@@ -146,9 +145,9 @@ $ cargo run --example preempt
 ```
 
 Note that the task `gpiob` does *not* preempt task `gpioc` because its priority
-is the *same* as `gpioc`'s. However, once `gpioc` terminates the execution of
-task, `gpiob` is prioritized over `gpioa` due to its higher priority. `gpioa`
-is resumed only after `gpiob` terminates.
+is the *same* as `gpioc`'s. However, once `gpioc` returns, the execution of
+task `gpiob` is prioritized over `gpioa` due to its higher priority. `gpioa`
+is resumed only after `gpiob` returns.
 
 One more note about priorities: choosing a priority higher than what the device
 supports (that is `1 << NVIC_PRIO_BITS`) will result in a compile error. Due to
