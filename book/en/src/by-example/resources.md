@@ -146,5 +146,5 @@ There exists two other options dealing with resources
   same priority never can preempt another task on the same priority
   this is safe.
 * `#[task_local]`: there must be only one task using this resource,
-  similar to a task local resource, but (optionally) set-up by init.
+  similar to a `static mut` task local resource, but (optionally) set-up by init.
 
