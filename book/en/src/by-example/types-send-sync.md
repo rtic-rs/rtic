@@ -27,31 +27,8 @@ resources.
 [`Send`]: https://doc.rust-lang.org/core/marker/trait.Send.html
 
 The `app` attribute will enforce that `Send` is implemented where required so
-you don't need to worry much about it. It's more important to know where you do
-*not* need the `Send` trait: on types that are transferred between tasks that
-run at the *same* priority. This occurs in two places: in message passing and in
-shared resources.
-
-The example below shows where a type that doesn't implement `Send` can be used.
-
-``` rust
-{{#include ../../../../examples/not-send.rs}}
-```
-
-It's important to note that late initialization of resources is effectively a
-send operation where the initial value is sent from the background context,
-which has the lowest priority of `0`, to a task, which will run at a priority
-greater than or equal to `1`. Thus all late resources need to implement the
-`Send` trait, except for those exclusively accessed by `idle`, which runs at a
-priority of `0`.
-
-Sharing a resource with `init` can be used to implement late initialization, see
-example below. For that reason, resources shared with `init` must also implement
-the `Send` trait.
-
-``` rust
-{{#include ../../../../examples/shared-with-init.rs}}
-```
+you don't need to worry much about it. Currently all types that are passed need
+to be `Send` in RTIC, however this restriction might be relaxed in the future.
 
 ## `Sync`
 
