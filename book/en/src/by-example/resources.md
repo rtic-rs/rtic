@@ -47,12 +47,12 @@ The only method on this trait, [`lock`], runs its closure argument in a critical
 [`lock`]: ../../../api/rtic/trait.Mutex.html#method.lock
 
 The critical section created by the `lock` API is based on dynamic priorities: it temporarily raises the dynamic priority of the context to a *ceiling* priority that prevents other tasks from preempting the critical section. This synchronization protocol is known as the [Immediate Ceiling Priority Protocol
-(ICPP)][icpp], and complies with [Stack Resource Policy(SRP)](srp) based scheduling of RTIC.
+(ICPP)][icpp], and complies with [Stack Resource Policy(SRP)][srp] based scheduling of RTIC.
 
 [icpp]: https://en.wikipedia.org/wiki/Priority_ceiling_protocol
 [srp]: https://en.wikipedia.org/wiki/Stack_Resource_Policy
 
-In the ex  ample below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for the `shared` resource and need to lock the resource for accessing the data. The highest priority handler, which do nat access the `shared` resource, is free to preempt the critical section created by the
+In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for the `shared` resource and need to lock the resource for accessing the data. The highest priority handler, which do nat access the `shared` resource, is free to preempt the critical section created by the
 lowest priority handler.
 
 ``` rust
