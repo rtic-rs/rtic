@@ -102,3 +102,15 @@ In the example below a key (e.g. a cryptographic key) is loaded (or created) at 
 $ cargo run --example only-shared-access
 {{#include ../../../../ci/expected/only-shared-access.run}}
 ```
+
+## Lock-free resource access of mutable resources
+
+There exists two other options dealing with resources
+
+* `#[lock_free]`: there might be several tasks with the same priority
+  accessing the resource without critical section. Since tasks with the
+  same priority never can preempt another task on the same priority
+  this is safe.
+* `#[task_local]`: there must be only one task using this resource,
+  similar to a `static mut` task local resource, but (optionally) set-up by init.
+
