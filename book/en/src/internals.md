@@ -1,5 +1,8 @@
 # Under the hood
 
+**This is chapter is currently work in progress,
+it will re-appear once it is more complete**
+
 This section describes the internals of the RTIC framework at a *high level*.
 Low level details like the parsing and code generation done by the procedural
 macro (`#[app]`) will not be explained here. The focus will be the analysis of

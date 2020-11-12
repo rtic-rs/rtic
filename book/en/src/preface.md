@@ -9,9 +9,9 @@ This book contains user level documentation for the Real-Time Interrupt-driven C
 
 Formerly known as Real-Time For the Masses.
 
-There is a translation of this book in [Russian].
+<!--There is a translation of this book in [Russian].-->
 
-[Russian]: ../ru/index.html
+<!--[Russian]: ../ru/index.html-->
 
 This is the documentation of v0.6.x of RTIC; for the documentation of version
 
