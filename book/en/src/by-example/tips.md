@@ -2,15 +2,8 @@
 
 ## Generics
 
-Resources may appear in contexts as resource proxies or as unique references
-(`&mut-`) depending on the priority of the task. Because the same resource may
-appear as *different* types in different contexts one cannot refactor a common
-operation that uses resources into a plain function; however, such refactor is
-possible using *generics*.
-
-All resource proxies implement the `rtic::Mutex` trait. On the other hand,
-unique references (`&mut-`) do *not* implement this trait (due to limitations in
-the trait system) but one can wrap these references in the [`rtic::Exclusive`]
+All resource proxies implement the `rtic::Mutex` trait.
+If a resource does not implement this, one can wrap it in the [`rtic::Exclusive`]
 newtype which does implement the `Mutex` trait. With the help of this newtype
 one can write a generic function that operates on generic resources and call it
 from different tasks to perform some operation on the same set of resources.
@@ -27,15 +20,13 @@ $ cargo run --example generics
 {{#include ../../../../ci/expected/generics.run}}
 ```
 
-Using generics also lets you change the static priorities of tasks during
-development without having to rewrite a bunch code every time.
-
 ## Conditional compilation
 
 You can use conditional compilation (`#[cfg]`) on resources (the fields of
-`struct Resources`) and tasks (the `fn` items). The effect of using `#[cfg]`
-attributes is that the resource / task will *not* be available through the
-corresponding `Context` `struct` if the condition doesn't hold.
+`#[resources] struct Resources`) and tasks (the `fn` items).
+The effect of using `#[cfg]` attributes is that the resource / task
+will *not* be available through the corresponding `Context` `struct`
+if the condition doesn't hold.
 
 The example below logs a message whenever the `foo` task is spawned, but only if
 the program has been compiled using the `dev` profile.
@@ -132,7 +123,7 @@ You can inspect the file `rtic-expansion.rs` inside the `target` directory. This
 file contains the expansion of the `#[rtic::app]` item (not your whole program!)
 of the *last built* (via `cargo build` or `cargo check`) RTIC application. The
 expanded code is not pretty printed by default so you'll want to run `rustfmt`
-over it before you read it.
+on it before you read it.
 
 ``` console
 $ cargo build --example foo
