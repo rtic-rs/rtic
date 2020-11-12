@@ -6,6 +6,32 @@ This section describes how to upgrade from v0.5.x to v0.6.0 of the RTIC framewor
 
 Change the version of `cortex-m-rtic` to `"0.6.0"`.
 
+## `mod` instead of `const`
+
+With the support of attributes on modules the `const APP` workaround is not needed.
+
+Change
+
+``` rust
+#[rtic::app(/* .. */)]
+const APP: () = {
+  [code here]
+};
+```
+
+into
+
+``` rust
+#[rtic::app(/* .. */)]
+mod app {
+  [code here]
+}
+```
+
+Now that a regular Rust module is used it means it is possible to have custom
+user code within that module.
+Additionally, it means that `use`-statements for resources etc may be required.
+
 ## Move Dispatchers from `extern "C"` to app arguments.
 
 Change
@@ -36,31 +62,6 @@ mod app {
 
 This works also for ram functions, see examples/ramfunc.rs
 
-## Module instead of Const
-
-With the support of attributes on modules the `const APP` workaround is not needed.
-
-Change
-
-``` rust
-#[rtic::app(/* .. */)]
-const APP: () = {
-  [code here]
-};
-```
-
-into
-
-``` rust
-#[rtic::app(/* .. */)]
-mod app {
-  [code here]
-}
-```
-
-Now that a regular Rust module is used it means it is possible to have custom
-user code within that module.
-Additionally, it means that `use`-statements for resources etc may be required.
 
 ## Init always returns late resources
 
@@ -75,7 +76,8 @@ mod app {
     fn init(_: init::Context) {
         rtic::pend(Interrupt::UART0);
     }
-    [more code]
+
+    // [more code]
 }
 ```
 
@@ -90,11 +92,12 @@ mod app {
 
         init::LateResources {}
     }
-    [more code]
+
+    // [more code]
 }
 ```
 
-## Resources struct - #[resources]
+## Resources struct - `#[resources]`
 
 Previously the RTIC resources had to be in in a struct named exactly "Resources":
 
@@ -118,12 +121,78 @@ In fact, the name of the struct is now up to the developer:
 
 ``` rust
 #[resources]
-struct whateveryouwant {
+struct Whateveryouwant {
     // Resources defined in here
 }
 ```
 
 would work equally well.
+
+## Spawn/schedule from anywhere
+
+With the new "spawn/schedule from anywhere", old code such as:
+
+
+
+``` rust
+#[task(spawn = [bar])]
+fn foo(cx: foo::Context) {
+    cx.spawn.bar().unwrap();
+}
+
+#[task(schedule = [bar])]
+fn bar(cx: bar::Context) {
+    cx.schedule.foo(/* ... */).unwrap();
+}
+```
+
+Will now be written as:
+
+``` rust
+#[task]
+fn foo(_c: foo::Context) {
+    bar::spawn().unwrap();
+}
+
+#[task]
+fn bar(_c: bar::Context) {
+    foo::schedule(/* ... */).unwrap();
+}
+```
+
+Note that the attributes `spawn` and `schedule` are no longer needed.
+
+## Symmetric locks
+
+Now RTIC utilizes symmetric locks, this means that the `lock` method need to be used for all resource access. In old code one could do the following as the high priority task has exclusive access to the resource:
+
+``` rust
+#[task(priority = 2, resources = [r])]
+fn foo(cx: foo::Context) {
+    cx.resources.r = /* ... */;
+}
+
+#[task(resources = [r])]
+fn bar(cx: bar::Context) {
+    cx.resources.r.lock(|r| r = /* ... */);
+}
+```
+
+And with symmetric locks one needs to use locks in both tasks:
+
+``` rust
+#[task(priority = 2, resources = [r])]
+fn foo(cx: foo::Context) {
+    cx.resources.r.lock(|r| r = /* ... */);
+}
+
+#[task(resources = [r])]
+fn bar(cx: bar::Context) {
+    cx.resources.r.lock(|r| r = /* ... */);
+}
+```
+
+Note that the performance does not change thanks to LLVM's optimizations which optimizes away unnecessary locks.
 
 ---
 
@@ -131,6 +200,7 @@ would work equally well.
 
 ### Extern tasks
 
-Both software and hardware tasks can now be defined external to the `mod app`. Previously this was possible only by implementing a trampoline calling out the task implementation.  
+Both software and hardware tasks can now be defined external to the `mod app`. Previously this was possible only by implementing a trampoline calling out the task implementation.
 
 See examples `examples/extern_binds.rs` and `examples/extern_spawn.rs`.
+
