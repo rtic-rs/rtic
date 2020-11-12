@@ -41,6 +41,7 @@ mod app {
     }
 
     // `shared` can be accessed from this context
+    // defaults to priority 1
     #[task(binds = UART0, resources = [shared])]
     fn uart0(mut cx: uart0::Context) {
         let shared = cx.resources.shared.lock(|shared| {
@@ -52,7 +53,8 @@ mod app {
     }
 
     // `shared` can be accessed from this context
-    #[task(binds = UART1, resources = [shared])]
+    // explicitly set to priority 2
+    #[task(binds = UART1, resources = [shared], priority = 2)]
     fn uart1(mut cx: uart1::Context) {
         let shared = cx.resources.shared.lock(|shared| {
             *shared += 1;
