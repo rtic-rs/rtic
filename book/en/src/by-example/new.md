@@ -46,10 +46,11 @@ $ cargo add cortex-m-rtic --allow-prerelease
 
 Here I'll use the `init` example from the `cortex-m-rtic` crate.
 
+The examples are found in the `examples` folder, and the contents
+of `init.rs` is shown here:
+
 ``` console
-$ curl \
-    -L https://github.com/rtic-rs/cortex-m-rtic/raw/v0.5.3/examples/init.rs \
-    > src/main.rs
+{{#include ../../../../examples/init.rs}}
 ```
 
 The `init` example uses the `lm3s6965` device. Remember to adjust the `device`
