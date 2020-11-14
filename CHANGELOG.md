@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Support for multi-locks, see `examples/multilock.rs` for syntax.
+
 ## [v0.6.0-alpha.0] - 2020-11-14
 
 ### Added
