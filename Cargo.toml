@@ -65,10 +65,6 @@ bare-metal = "1.0.0"
 [build-dependencies]
 version_check = "0.9"
 
-[dependencies.microamp]
-optional = true
-version = "0.1.0-alpha.2"
-
 [dev-dependencies]
 lm3s6965 = "0.1.3"
 panic-halt = "0.2.0"
