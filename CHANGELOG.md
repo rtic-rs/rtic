@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.6.0-alpha.0] - 2020-11-14
+
 ### Added
 
 - Allow annotating resources to activate special resource locking behaviour.
@@ -20,6 +22,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - [breaking-change] [PR 400] Move dispatchers from extern block to app argument.
 
 [PR 400]: https://github.com/rtic-rs/cortex-m-rtic/pull/400
+
+- [breaking-change] [PR 399] Locking resources are now always required to achieve a symmetric UI.
+
+[PR 399]: https://github.com/rtic-rs/cortex-m-rtic/pull/399
 
 - [breaking-change] [PR 390]  Rework whole spawn/schedule, support `foo::spawn( ... )`,
   `foo::schedule( ... )`.
