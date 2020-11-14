@@ -15,11 +15,11 @@
   - [v0.4.x to v0.5.x](./migration/migration_v4.md)
   - [RTFM to RTIC](./migration/migration_rtic.md)
 - [Under the hood](./internals.md)
-  - [Interrupt configuration](./internals/interrupt-configuration.md)
-  - [Non-reentrancy](./internals/non-reentrancy.md)
-  - [Access control](./internals/access.md)
-  - [Late resources](./internals/late-resources.md)
-  - [Critical sections](./internals/critical-sections.md)
-  - [Ceiling analysis](./internals/ceilings.md)
-  - [Software tasks](./internals/tasks.md)
-  - [Timer queue](./internals/timer-queue.md)
+  <!--- [Interrupt configuration](./internals/interrupt-configuration.md)-->
+  <!--- [Non-reentrancy](./internals/non-reentrancy.md)-->
+  <!--- [Access control](./internals/access.md)-->
+  <!--- [Late resources](./internals/late-resources.md)-->
+  <!--- [Critical sections](./internals/critical-sections.md)-->
+  <!--- [Ceiling analysis](./internals/ceilings.md)-->
+  <!--- [Software tasks](./internals/tasks.md)-->
+  <!--- [Timer queue](./internals/timer-queue.md)-->
