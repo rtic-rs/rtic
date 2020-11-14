@@ -43,7 +43,7 @@ use cortex_m::{
 };
 use cortex_m_rt as _; // vector table
 pub use cortex_m_rtic_macros::app;
-pub use rtic_core::{Exclusive, Mutex};
+pub use rtic_core::{prelude as mutex_prelude, Exclusive, Mutex};
 
 #[cfg(armv7m)]
 pub mod cyccnt;

@@ -64,6 +64,14 @@ $ cargo run --example lock
 {{#include ../../../../ci/expected/lock.run}}
 ```
 
+## Multi-lock
+
+As an extension to `lock`, and to reduce rightward drift, locks can be taken as tuples. The following examples shows this in use:
+
+``` rust
+{{#include ../../../../examples/multilock.rs}}
+```
+
 ## Late resources
 
 Late resources are resources that are not given an initial value at compile time using the `#[init]` attribute but instead are initialized at runtime using the `init::LateResources` values returned by the `init` function.

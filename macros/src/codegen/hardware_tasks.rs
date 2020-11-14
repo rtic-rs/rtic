@@ -105,6 +105,7 @@ pub fn codegen(
                 #[allow(non_snake_case)]
                 fn #name(#(#locals_pat,)* #context: #name::Context) {
                     use rtic::Mutex as _;
+                    use rtic::mutex_prelude::*;
 
                     #(#stmts)*
                 }
