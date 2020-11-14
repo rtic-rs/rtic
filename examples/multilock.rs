@@ -9,9 +9,10 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965, dispatchers = [GPIOA])]
+#[rtic::app(device = lm3s6965)]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
+    use lm3s6965::Interrupt;
 
     #[resources]
     struct Resources {
@@ -25,13 +26,13 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> init::LateResources {
-        locks::spawn().ok();
+        rtic::pend(Interrupt::GPIOA);
 
         init::LateResources {}
     }
 
     // when omitted priority is assumed to be `1`
-    #[task(resources = [shared1, shared2, shared3])]
+    #[task(binds = GPIOA, resources = [shared1, shared2, shared3])]
     fn locks(c: locks::Context) {
         let mut s1 = c.resources.shared1;
         let mut s2 = c.resources.shared2;
