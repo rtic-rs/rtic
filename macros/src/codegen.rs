@@ -57,7 +57,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     let main = util::suffixed("main");
     mains.push(quote!(
-        pub mod rtic_ext {
+        mod rtic_ext {
             use super::*;
             #[no_mangle]
             unsafe extern "C" fn #main() -> ! {
