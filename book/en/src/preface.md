@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="300" height="300" src="RTIC.svg">
+</p>
+
 <h1 align="center">Real-Time Interrupt-driven Concurrency</h1>
 
 <p align="center">A concurrency framework for building real-time systems</p>
