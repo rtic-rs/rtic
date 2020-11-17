@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="300" height="300" src="RTIC.png">
+  <img width="300" height="300" src="RTIC.svg">
 </p>
 
 <h1 align="center">Real-Time Interrupt-driven Concurrency</h1>
