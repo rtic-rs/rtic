@@ -31,5 +31,5 @@ error[E0425]: cannot find value `FOO` in this scope
 error: duplicate lang item in crate `panic_halt` (which `$CRATE` depends on): `panic_impl`.
   |
   = note: the lang item is first defined in crate `std` (which `$CRATE` depends on)
-  = note: first definition in `std` loaded from /usr/share/rust/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-f14aca24435a5414.rlib
-  = note: second definition in `panic_halt` loaded from $DIR/target/tests/target/x86_64-unknown-linux-gnu/debug/deps/libpanic_halt-33949299fdfa2375.rmeta
+  = note: first definition in `std` loaded from /usr/share/rust/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-93cbfed54dd1bac8.rlib
+  = note: second definition in `panic_halt` loaded from $DIR/target/tests/target/x86_64-unknown-linux-gnu/debug/deps/libpanic_halt-e17d79bd6be439e3.rmeta
