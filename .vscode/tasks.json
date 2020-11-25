@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cargo",
+			"command": "build --example ${fileBasenameNoExtension}  --target thumbv7m-none-eabi",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "cargo build --examples"
+		}
+	]
+}
