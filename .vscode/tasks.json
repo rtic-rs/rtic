@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"command": "build --example ${fileBasenameNoExtension}  --target thumbv7m-none-eabi",
+			"command": "build --example ${fileBasenameNoExtension}  --target thumbv7m-none-eabi --features __v7",
 			"problemMatcher": [
 				"$rustc"
 			],
