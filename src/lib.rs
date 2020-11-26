@@ -41,7 +41,6 @@ use cortex_m::{
     interrupt::Nr,
     peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
 };
-use cortex_m_rt as _; // vector table
 pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{prelude as mutex_prelude, Exclusive, Mutex};
 
