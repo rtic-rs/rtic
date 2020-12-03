@@ -131,10 +131,16 @@ pub fn codegen(
     if let Context::Init = ctxt {
         let init = &app.inits.first().unwrap();
         let late_resources = util::late_resources_ident(&init.name);
+        let monotonics = util::monotonics_ident(&init.name);
 
         items.push(quote!(
             #[doc(inline)]
             pub use super::#late_resources as LateResources;
+        ));
+
+        items.push(quote!(
+            #[doc(inline)]
+            pub use super::#monotonics as Monotonics;
         ));
     }
 

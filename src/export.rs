@@ -3,7 +3,7 @@ use core::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-pub use crate::tq::{NotReady, TimerQueue};
+//pub use crate::tq::{NotReady, TimerQueue};
 pub use bare_metal::CriticalSection;
 #[cfg(armv7m)]
 pub use cortex_m::register::basepri;

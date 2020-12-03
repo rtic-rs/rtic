@@ -57,7 +57,8 @@ required-features = ["__v7"]
 [dependencies]
 cortex-m = "0.6.2"
 cortex-m-rtic-macros = { path = "macros", version = "0.6.0-alpha.0" }
-rtic-core = "0.3.1"
+rtic-core = { git = "https://github.com/rtic-rs/rtic-core", branch = "new_monotonic" }
+#rtic-core = "0.3.1"
 heapless = "0.5.0"
 bare-metal = "1.0.0"
 

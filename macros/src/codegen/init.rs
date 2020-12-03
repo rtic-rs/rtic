@@ -58,6 +58,24 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
             }
         ));
 
+        let monotonic_types: Vec<_> = app
+            .monotonics
+            .iter()
+            .map(|(_, monotonic)| {
+                let mono = &monotonic.ty;
+                quote! {#mono}
+            })
+            .collect();
+        let monotonics = util::monotonics_ident(&name);
+
+        root_init.push(quote!(
+            /// Monotonics used by the system
+            #[allow(non_snake_case)]
+            pub struct #monotonics(
+                #(#monotonic_types),*
+            );
+        ));
+
         let mut locals_pat = None;
         let mut locals_new = None;
         if !init.locals.is_empty() {
@@ -72,10 +90,16 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         let attrs = &init.attrs;
         let stmts = &init.stmts;
         let locals_pat = locals_pat.iter();
+
+        let mut user_init_return = vec![quote! {#name::LateResources}];
+        if !app.monotonics.is_empty() {
+            user_init_return.push(quote! {#name::Monotonics});
+        }
+
         let user_init = Some(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context) -> #name::LateResources {
+            fn #name(#(#locals_pat,)* #context: #name::Context) -> (#(#user_init_return,)*) {
                 #(#stmts)*
             }
         ));
@@ -92,7 +116,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         let app_path = quote! {crate::#app_name};
         let locals_new = locals_new.iter();
         let call_init = Some(
-            quote!(let late = #app_path::#name(#(#locals_new,)* #name::Context::new(core.into()));),
+            quote!(let (late, monotonics) = #app_path::#name(#(#locals_new,)* #name::Context::new(core.into()));),
         );
 
         root_init.push(module::codegen(

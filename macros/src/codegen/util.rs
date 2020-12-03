@@ -111,6 +111,14 @@ pub fn late_resources_ident(init: &Ident) -> Ident {
     )
 }
 
+/// Generates a pre-reexport identifier for the "monotonics" struct
+pub fn monotonics_ident(init: &Ident) -> Ident {
+    Ident::new(
+        &format!("{}Monotonics", init.to_string()),
+        Span::call_site(),
+    )
+}
+
 /// Mangle an ident
 pub fn mangle_ident(ident: &Ident) -> Ident {
     Ident::new(

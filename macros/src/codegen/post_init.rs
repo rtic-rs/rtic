@@ -25,6 +25,9 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         }
     }
 
+    // Forget the monotonics so they won't be dropped.
+    stmts.push(quote!(core::mem::forget(monotonics);));
+
     // Enable the interrupts -- this completes the `init`-ialization phase
     stmts.push(quote!(rtic::export::interrupt::enable();));
 

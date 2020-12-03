@@ -61,8 +61,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             use super::*;
             #[no_mangle]
             unsafe extern "C" fn #main() -> ! {
-                let _TODO: () = ();
-
                 #(#assertion_stmts)*
 
                 #(#pre_init_stmts)*
