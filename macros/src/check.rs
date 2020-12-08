@@ -6,7 +6,6 @@ use syn::{parse, Path};
 
 pub struct Extra {
     pub device: Path,
-    pub monotonic: Option<Path>,
     pub peripherals: bool,
 }
 
@@ -76,7 +75,6 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
     if let Some(device) = app.args.device.clone() {
         Ok(Extra {
             device,
-            monotonic: None,
             peripherals: app.args.peripherals,
         })
     } else {

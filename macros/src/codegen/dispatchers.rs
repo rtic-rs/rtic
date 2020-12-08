@@ -70,19 +70,21 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 let inputs = util::inputs_ident(name);
                 let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
 
-                let (let_instant, instant) = if extra.monotonic.is_some() {
-                    let instants = util::instants_ident(name);
+                // TODO: Fix for new monotonics
+                // let (let_instant, instant) = if extra.monotonic.is_some() {
+                //     let instants = util::instants_ident(name);
 
-                    (
-                        quote!(
-                            let instant =
-                                #instants.get_unchecked(usize::from(index)).as_ptr().read();
-                        ),
-                        quote!(, instant),
-                    )
-                } else {
-                    (quote!(), quote!())
-                };
+                //     (
+                //         quote!(
+                //             let instant =
+                //                 #instants.get_unchecked(usize::from(index)).as_ptr().read();
+                //         ),
+                //         quote!(, instant),
+                //     )
+                // } else {
+                //     (quote!(), quote!())
+                // };
+                let (let_instant, instant) = (quote!(), quote!());
 
                 let locals_new = if task.locals.is_empty() {
                     quote!()

@@ -23,24 +23,25 @@ pub fn codegen(
     let mut lt = None;
     match ctxt {
         Context::Init => {
-            if let Some(m) = &extra.monotonic {
-                fields.push(quote!(
-                    /// System start time = `Instant(0 /* cycles */)`
-                    pub start: <#m as rtic::Monotonic>::Instant
-                ));
+            // TODO: What fields are needed?
+            // if let Some(m) = &extra.monotonic {
+            //     fields.push(quote!(
+            //         /// System start time = `Instant(0 /* cycles */)`
+            //         pub start: <#m as rtic::Monotonic>::Instant
+            //     ));
 
-                values.push(quote!(start: <#m as rtic::Monotonic>::zero()));
+            //     values.push(quote!(start: <#m as rtic::Monotonic>::zero()));
 
-                fields.push(quote!(
-                    /// Core (Cortex-M) peripherals minus the SysTick
-                    pub core: rtic::Peripherals
-                ));
-            } else {
-                fields.push(quote!(
-                    /// Core (Cortex-M) peripherals
-                    pub core: rtic::export::Peripherals
-                ));
-            }
+            //     fields.push(quote!(
+            //         /// Core (Cortex-M) peripherals minus the SysTick
+            //         pub core: rtic::Peripherals
+            //     ));
+            // } else {
+            //     fields.push(quote!(
+            //         /// Core (Cortex-M) peripherals
+            //         pub core: rtic::export::Peripherals
+            //     ));
+            // }
 
             if extra.peripherals {
                 let device = &extra.device;
@@ -67,29 +68,31 @@ pub fn codegen(
         Context::Idle => {}
 
         Context::HardwareTask(..) => {
-            if let Some(m) = &extra.monotonic {
-                fields.push(quote!(
-                    /// Time at which this handler started executing
-                    pub start: <#m as rtic::Monotonic>::Instant
-                ));
+            // TODO: What fields are needed for monotonic?
+            // if let Some(m) = &extra.monotonic {
+            //     fields.push(quote!(
+            //         /// Time at which this handler started executing
+            //         pub start: <#m as rtic::Monotonic>::Instant
+            //     ));
 
-                values.push(quote!(start: instant));
+            //     values.push(quote!(start: instant));
 
-                needs_instant = true;
-            }
+            //     needs_instant = true;
+            // }
         }
 
         Context::SoftwareTask(..) => {
-            if let Some(m) = &extra.monotonic {
-                fields.push(quote!(
-                    /// The time at which this task was scheduled to run
-                    pub scheduled: <#m as rtic::Monotonic>::Instant
-                ));
+            // TODO: What fields are needed for monotonic?
+            // if let Some(m) = &extra.monotonic {
+            //     fields.push(quote!(
+            //         /// The time at which this task was scheduled to run
+            //         pub scheduled: <#m as rtic::Monotonic>::Instant
+            //     ));
 
-                values.push(quote!(scheduled: instant));
+            //     values.push(quote!(scheduled: instant));
 
-                needs_instant = true;
-            }
+            //     needs_instant = true;
+            // }
         }
     }
 
@@ -152,11 +155,7 @@ pub fn codegen(
     };
 
     let core = if ctxt.is_init() {
-        if extra.monotonic.is_some() {
-            Some(quote!(core: rtic::Peripherals,))
-        } else {
-            Some(quote!(core: rtic::export::Peripherals,))
-        }
+        Some(quote!(core: rtic::export::Peripherals,))
     } else {
         None
     };
@@ -167,13 +166,15 @@ pub fn codegen(
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
 
-    let instant = if needs_instant {
-        let m = extra.monotonic.clone().expect("RTIC-ICE: UNREACHABLE");
+    // TODO: What is needed for the new monotonic?
+    // let instant = if needs_instant {
+    //     let m = extra.monotonic.clone().expect("RTIC-ICE: UNREACHABLE");
 
-        Some(quote!(, instant: <#m as rtic::Monotonic>::Instant))
-    } else {
-        None
-    };
+    //     Some(quote!(, instant: <#m as rtic::Monotonic>::Instant))
+    // } else {
+    //     None
+    // };
+    let instant = quote!();
 
     items.push(quote!(
         /// Execution context
@@ -250,50 +251,51 @@ pub fn codegen(
 
         }));
 
-        // Schedule caller
-        if let Some(m) = &extra.monotonic {
-            let instants = util::instants_ident(name);
+        // TODO: Needs updating for new monotonic.
+        // // Schedule caller
+        // if let Some(m) = &extra.monotonic {
+        //     let instants = util::instants_ident(name);
 
-            let tq = util::tq_ident();
-            let t = util::schedule_t_ident();
+        //     let tq = util::tq_ident();
+        //     let t = util::schedule_t_ident();
 
-            items.push(quote!(
-            #(#cfgs)*
-            pub fn schedule(
-                instant: <#m as rtic::Monotonic>::Instant
-                #(,#args)*
-            ) -> Result<(), #ty> {
-                unsafe {
-                    use rtic::Mutex as _;
-                    use rtic::mutex_prelude::*;
+        //     items.push(quote!(
+        //     #(#cfgs)*
+        //     pub fn schedule(
+        //         instant: <#m as rtic::Monotonic>::Instant
+        //         #(,#args)*
+        //     ) -> Result<(), #ty> {
+        //         unsafe {
+        //             use rtic::Mutex as _;
+        //             use rtic::mutex_prelude::*;
 
-                    let input = #tupled;
-                    if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
-                        #app_path::#inputs
-                            .get_unchecked_mut(usize::from(index))
-                            .as_mut_ptr()
-                            .write(input);
+        //             let input = #tupled;
+        //             if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+        //                 #app_path::#inputs
+        //                     .get_unchecked_mut(usize::from(index))
+        //                     .as_mut_ptr()
+        //                     .write(input);
 
-                        #app_path::#instants
-                            .get_unchecked_mut(usize::from(index))
-                            .as_mut_ptr()
-                            .write(instant);
+        //                 #app_path::#instants
+        //                     .get_unchecked_mut(usize::from(index))
+        //                     .as_mut_ptr()
+        //                     .write(instant);
 
-                        let nr = rtic::export::NotReady {
-                            instant,
-                            index,
-                            task: #app_path::#t::#name,
-                        };
+        //                 let nr = rtic::export::NotReady {
+        //                     instant,
+        //                     index,
+        //                     task: #app_path::#t::#name,
+        //                 };
 
-                        rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(nr));
+        //                 rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(nr));
 
-                        Ok(())
-                    } else {
-                        Err(input)
-                    }
-                }
-            }));
-        }
+        //                 Ok(())
+        //             } else {
+        //                 Err(input)
+        //             }
+        //         }
+        //     }));
+        // }
     }
 
     if !items.is_empty() {

@@ -29,14 +29,15 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        let (let_instant, instant) = if let Some(ref m) = extra.monotonic {
-            (
-                Some(quote!(let instant = <#m as rtic::Monotonic>::now();)),
-                Some(quote!(, instant)),
-            )
-        } else {
-            (None, None)
-        };
+        // let (let_instant, instant) = if let Some(ref m) = extra.monotonic {
+        //     (
+        //         Some(quote!(let instant = <#m as rtic::Monotonic>::now();)),
+        //         Some(quote!(, instant)),
+        //     )
+        // } else {
+        //     (None, None)
+        // };
+        let (let_instant, instant) = (quote!(), quote!());
 
         let locals_new = if task.locals.is_empty() {
             quote!()

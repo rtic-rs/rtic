@@ -247,8 +247,6 @@ pub fn suffixed(name: &str) -> Ident {
 }
 
 /// Generates an identifier for a timer queue
-///
-/// At most there is one timer queue
-pub fn tq_ident() -> Ident {
-    Ident::new(&"TQ".to_string(), Span::call_site())
+pub fn tq_ident(name: &str) -> Ident {
+    Ident::new(&format!("TQ_{}", name), Span::call_site())
 }

@@ -74,24 +74,25 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );));
     }
 
-    // Initialize the SysTick if there exist a TimerQueue
-    if extra.monotonic.is_some() {
-        let priority = analysis.channels.keys().max().unwrap();
+    // TODO: Update for noew monotonic
+    // // Initialize the SysTick if there exist a TimerQueue
+    // if extra.monotonic.is_some() {
+    //     let priority = analysis.channels.keys().max().unwrap();
 
-        // Compile time assert that this priority is supported by the device
-        stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+    //     // Compile time assert that this priority is supported by the device
+    //     stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
-        stmts.push(quote!(core.SCB.set_priority(
-            rtic::export::SystemHandler::SysTick,
-            rtic::export::logical2hw(#priority, #nvic_prio_bits),
-        );));
+    //     stmts.push(quote!(core.SCB.set_priority(
+    //         rtic::export::SystemHandler::SysTick,
+    //         rtic::export::logical2hw(#priority, #nvic_prio_bits),
+    //     );));
 
-        stmts.push(quote!(
-            core.SYST.set_clock_source(rtic::export::SystClkSource::Core);
-            core.SYST.enable_counter();
-            core.DCB.enable_trace();
-        ));
-    }
+    //     stmts.push(quote!(
+    //         core.SYST.set_clock_source(rtic::export::SystClkSource::Core);
+    //         core.SYST.enable_counter();
+    //         core.DCB.enable_trace();
+    //     ));
+    // }
 
     // If there's no user `#[idle]` then optimize returning from interrupt handlers
     if app.idles.is_empty() {

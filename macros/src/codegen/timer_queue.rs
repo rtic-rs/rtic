@@ -8,7 +8,7 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
-    if let Some(m) = &extra.monotonic {
+    if !app.monotonics.is_empty() {
         let t = util::schedule_t_ident();
 
         // Enumeration of `schedule`-able tasks
@@ -36,12 +36,17 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 }
             ));
         }
+    }
 
-        let tq = util::tq_ident();
+    for (_, monotonic) in &app.monotonics {
+        let monotonic_name = monotonic.ident.to_string();
+        let tq = util::tq_ident(&monotonic_name);
+        let t = util::schedule_t_ident();
+        let m = &monotonic.ident;
 
-        // Static variable and resource proxy
+        // Static variables and resource proxy
         {
-            let doc = "Timer queue".to_string();
+            let doc = &format!("Timer queue for {}", monotonic_name);
             let cap = app
                 .software_tasks
                 .iter()
@@ -71,6 +76,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     let rq = util::rq_ident(priority);
                     let rqt = util::spawn_t_ident(priority);
                     let enum_ = util::interrupt_ident();
+
+                    // The interrupt that runs the task dispatcher
                     let interrupt = &analysis.interrupts.get(&priority).expect("RTIC-ICE: interrupt not found").0;
 
                     let pend = {
@@ -90,10 +97,10 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 })
                 .collect::<Vec<_>>();
 
-            let sys_tick = util::suffixed("SysTick");
+            let bound_interrupt = &monotonic.args.binds;
             items.push(quote!(
                 #[no_mangle]
-                unsafe fn #sys_tick() {
+                unsafe fn #bound_interrupt() {
                     use rtic::Mutex as _;
 
                     while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue())
@@ -106,5 +113,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             ));
         }
     }
+
     items
 }

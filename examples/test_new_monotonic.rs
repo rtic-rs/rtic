@@ -6,7 +6,7 @@
 use panic_semihosting as _; // panic handler
 use rtic::app;
 
-#[app(device = lm3s6965)]
+#[app(device = lm3s6965, dispatchers = [UART])]
 mod app {
     #[monotonic(binds = SomeISR1)]
     type Mono1 = hal::Mono1;
@@ -17,5 +17,11 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
     }
+
+    #[task]
+    fn task1(_: task1::Context) {}
+
+    #[task]
+    fn task2(_: task2::Context) {}
 }
 
