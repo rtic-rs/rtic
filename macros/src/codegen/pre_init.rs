@@ -74,25 +74,26 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );));
     }
 
-    // TODO: Update for noew monotonic
-    // // Initialize the SysTick if there exist a TimerQueue
-    // if extra.monotonic.is_some() {
-    //     let priority = analysis.channels.keys().max().unwrap();
+    // Initialize monotonic's interrupts
+    for (priority, name) in app
+        .monotonics
+        .iter()
+        .map(|(_, monotonic)| (&monotonic.args.priority, &monotonic.args.binds))
+    {
+        // Compile time assert that this priority is supported by the device
+        stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
-    //     // Compile time assert that this priority is supported by the device
-    //     stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+        // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
+        let interrupt = util::interrupt_ident();
+        stmts.push(quote!(
+            core.NVIC.set_priority(
+                you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#interrupt::#name,
+                rtic::export::logical2hw(#priority, #nvic_prio_bits),
+            );
+        ));
 
-    //     stmts.push(quote!(core.SCB.set_priority(
-    //         rtic::export::SystemHandler::SysTick,
-    //         rtic::export::logical2hw(#priority, #nvic_prio_bits),
-    //     );));
-
-    //     stmts.push(quote!(
-    //         core.SYST.set_clock_source(rtic::export::SystClkSource::Core);
-    //         core.SYST.enable_counter();
-    //         core.DCB.enable_trace();
-    //     ));
-    // }
+        // NOTE we do not unmask the interrupt as this is part of the monotonic to keep track of
+    }
 
     // If there's no user `#[idle]` then optimize returning from interrupt handlers
     if app.idles.is_empty() {

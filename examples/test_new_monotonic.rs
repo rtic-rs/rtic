@@ -9,10 +9,10 @@ use rtic::app;
 #[app(device = lm3s6965, dispatchers = [UART])]
 mod app {
     #[monotonic(binds = SomeISR1)]
-    type Mono1 = hal::Mono1;
+    type MyMono1 = hal::Mono1;
 
-    #[monotonic(binds = SomeISR2)]
-    type Mono2 = hal::Mono2;
+    #[monotonic(binds = SomeISR2, default = true)]
+    type MyMono2 = hal::Mono2;
 
     #[init]
     fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {

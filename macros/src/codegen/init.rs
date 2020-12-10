@@ -5,7 +5,7 @@ use rtic_syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
     check::Extra,
-    codegen::{locals, module, resources_struct, util},
+    codegen::{locals, module, resources_struct},
 };
 
 type CodegenResult = (
@@ -32,50 +32,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
 
         let mut root_init = vec![];
 
-        let late_fields = analysis
-            .late_resources
-            .iter()
-            .flat_map(|resources| {
-                resources.iter().map(|name| {
-                    let ty = &app.late_resources[name].ty;
-                    let cfgs = &app.late_resources[name].cfgs;
-
-                    quote!(
-                        #(#cfgs)*
-                        pub #name: #ty
-                    )
-                })
-            })
-            .collect::<Vec<_>>();
-
-        let late_resources = util::late_resources_ident(&name);
-
-        root_init.push(quote!(
-            /// Resources initialized at runtime
-            #[allow(non_snake_case)]
-            pub struct #late_resources {
-                #(#late_fields),*
-            }
-        ));
-
-        let monotonic_types: Vec<_> = app
-            .monotonics
-            .iter()
-            .map(|(_, monotonic)| {
-                let mono = &monotonic.ty;
-                quote! {#mono}
-            })
-            .collect();
-        let monotonics = util::monotonics_ident(&name);
-
-        root_init.push(quote!(
-            /// Monotonics used by the system
-            #[allow(non_snake_case)]
-            pub struct #monotonics(
-                #(#monotonic_types),*
-            );
-        ));
-
         let mut locals_pat = None;
         let mut locals_new = None;
         if !init.locals.is_empty() {
@@ -91,15 +47,12 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         let stmts = &init.stmts;
         let locals_pat = locals_pat.iter();
 
-        let mut user_init_return = vec![quote! {#name::LateResources}];
-        if !app.monotonics.is_empty() {
-            user_init_return.push(quote! {#name::Monotonics});
-        }
+        let user_init_return = quote! {#name::LateResources, #name::Monotonics};
 
         let user_init = Some(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context) -> (#(#user_init_return,)*) {
+            fn #name(#(#locals_pat,)* #context: #name::Context) -> (#user_init_return) {
                 #(#stmts)*
             }
         ));

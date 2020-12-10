@@ -19,29 +19,13 @@ pub fn codegen(
 
     let name = ctxt.ident(app);
 
-    let mut needs_instant = false;
     let mut lt = None;
     match ctxt {
         Context::Init => {
-            // TODO: What fields are needed?
-            // if let Some(m) = &extra.monotonic {
-            //     fields.push(quote!(
-            //         /// System start time = `Instant(0 /* cycles */)`
-            //         pub start: <#m as rtic::Monotonic>::Instant
-            //     ));
-
-            //     values.push(quote!(start: <#m as rtic::Monotonic>::zero()));
-
-            //     fields.push(quote!(
-            //         /// Core (Cortex-M) peripherals minus the SysTick
-            //         pub core: rtic::Peripherals
-            //     ));
-            // } else {
-            //     fields.push(quote!(
-            //         /// Core (Cortex-M) peripherals
-            //         pub core: rtic::export::Peripherals
-            //     ));
-            // }
+            fields.push(quote!(
+                /// Core (Cortex-M) peripherals
+                pub core: rtic::export::Peripherals
+            ));
 
             if extra.peripherals {
                 let device = &extra.device;
@@ -68,31 +52,11 @@ pub fn codegen(
         Context::Idle => {}
 
         Context::HardwareTask(..) => {
-            // TODO: What fields are needed for monotonic?
-            // if let Some(m) = &extra.monotonic {
-            //     fields.push(quote!(
-            //         /// Time at which this handler started executing
-            //         pub start: <#m as rtic::Monotonic>::Instant
-            //     ));
-
-            //     values.push(quote!(start: instant));
-
-            //     needs_instant = true;
-            // }
+            // None for now.
         }
 
         Context::SoftwareTask(..) => {
-            // TODO: What fields are needed for monotonic?
-            // if let Some(m) = &extra.monotonic {
-            //     fields.push(quote!(
-            //         /// The time at which this task was scheduled to run
-            //         pub scheduled: <#m as rtic::Monotonic>::Instant
-            //     ));
-
-            //     values.push(quote!(scheduled: instant));
-
-            //     needs_instant = true;
-            // }
+            // None for now.
         }
     }
 
@@ -132,18 +96,45 @@ pub fn codegen(
     }
 
     if let Context::Init = ctxt {
-        let init = &app.inits.first().unwrap();
-        let late_resources = util::late_resources_ident(&init.name);
-        let monotonics = util::monotonics_ident(&init.name);
+        let late_fields = analysis
+            .late_resources
+            .iter()
+            .flat_map(|resources| {
+                resources.iter().map(|name| {
+                    let ty = &app.late_resources[name].ty;
+                    let cfgs = &app.late_resources[name].cfgs;
+
+                    quote!(
+                        #(#cfgs)*
+                        pub #name: #ty
+                    )
+                })
+            })
+            .collect::<Vec<_>>();
 
         items.push(quote!(
-            #[doc(inline)]
-            pub use super::#late_resources as LateResources;
+            /// Resources initialized at runtime
+            #[allow(non_snake_case)]
+            pub struct LateResources {
+                #(#late_fields),*
+            }
         ));
 
+        let monotonic_types: Vec<_> = app
+            .monotonics
+            .iter()
+            .map(|(_, monotonic)| {
+                let mono = &monotonic.ident;
+                quote! {#mono}
+            })
+            .collect();
+
         items.push(quote!(
-            #[doc(inline)]
-            pub use super::#monotonics as Monotonics;
+            /// Monotonics used by the system
+            #[allow(non_snake_case)]
+            pub struct Monotonics(
+                #(#monotonic_types),*
+            );
         ));
     }
 
@@ -166,16 +157,6 @@ pub fn codegen(
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
 
-    // TODO: What is needed for the new monotonic?
-    // let instant = if needs_instant {
-    //     let m = extra.monotonic.clone().expect("RTIC-ICE: UNREACHABLE");
-
-    //     Some(quote!(, instant: <#m as rtic::Monotonic>::Instant))
-    // } else {
-    //     None
-    // };
-    let instant = quote!();
-
     items.push(quote!(
         /// Execution context
         pub struct Context<#lt> {
@@ -184,7 +165,7 @@ pub fn codegen(
 
         impl<#lt> Context<#lt> {
             #[inline(always)]
-            pub unsafe fn new(#core #priority #instant) -> Self {
+            pub unsafe fn new(#core #priority) -> Self {
                 Context {
                     #(#values,)*
                 }
@@ -202,7 +183,7 @@ pub fn codegen(
         let cfgs = &spawnee.cfgs;
         // Store a copy of the task cfgs
         task_cfgs = cfgs.clone();
-        let (args, tupled, _untupled, ty) = util::regroup_inputs(&spawnee.inputs);
+        let (args, tupled, untupled, ty) = util::regroup_inputs(&spawnee.inputs);
         let args = &args;
         let tupled = &tupled;
         let fq = util::fq_ident(name);
@@ -251,51 +232,70 @@ pub fn codegen(
 
         }));
 
-        // TODO: Needs updating for new monotonic.
-        // // Schedule caller
-        // if let Some(m) = &extra.monotonic {
-        //     let instants = util::instants_ident(name);
+        // Schedule caller
+        for (_, monotonic) in &app.monotonics {
+            let instants = util::instants_ident(name);
 
-        //     let tq = util::tq_ident();
-        //     let t = util::schedule_t_ident();
+            let tq = util::tq_ident(&monotonic.ident.to_string());
+            let t = util::schedule_t_ident();
+            let m = &monotonic.ident;
 
-        //     items.push(quote!(
-        //     #(#cfgs)*
-        //     pub fn schedule(
-        //         instant: <#m as rtic::Monotonic>::Instant
-        //         #(,#args)*
-        //     ) -> Result<(), #ty> {
-        //         unsafe {
-        //             use rtic::Mutex as _;
-        //             use rtic::mutex_prelude::*;
+            if monotonic.args.default {
+                items.push(quote!(pub use #m::spawn_after;));
+                items.push(quote!(pub use #m::spawn_at;));
+            }
 
-        //             let input = #tupled;
-        //             if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
-        //                 #app_path::#inputs
-        //                     .get_unchecked_mut(usize::from(index))
-        //                     .as_mut_ptr()
-        //                     .write(input);
+            items.push(quote!(
+            pub mod #m {
+                #(#cfgs)*
+                pub fn spawn_after(
+                    duration: rtic::Duration,
+                    #(,#args)*
+                ) -> Result<(), #ty> {
+                    let instant = <#app_path::#m as rtic::Monotonic>::now();
 
-        //                 #app_path::#instants
-        //                     .get_unchecked_mut(usize::from(index))
-        //                     .as_mut_ptr()
-        //                     .write(instant);
+                    spawn_at(instant + duration, #(,#untupled)*)
+                }
 
-        //                 let nr = rtic::export::NotReady {
-        //                     instant,
-        //                     index,
-        //                     task: #app_path::#t::#name,
-        //                 };
+                #(#cfgs)*
+                pub fn spawn_at(
+                    instant: Instant<#app_path::#m as rtic::Monotonic>
+                    #(,#args)*
+                ) -> Result<(), #ty> {
+                    unsafe {
+                        use rtic::Mutex as _;
+                        use rtic::mutex_prelude::*;
 
-        //                 rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(nr));
+                        let input = #tupled;
+                        if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                            #app_path::#inputs
+                                .get_unchecked_mut(usize::from(index))
+                                .as_mut_ptr()
+                                .write(input);
 
-        //                 Ok(())
-        //             } else {
-        //                 Err(input)
-        //             }
-        //         }
-        //     }));
-        // }
+                            #app_path::#instants
+                                .get_unchecked_mut(usize::from(index))
+                                .as_mut_ptr()
+                                .write(instant);
+
+                            let nr = rtic::export::NotReady {
+                                instant,
+                                index,
+                                task: #app_path::#t::#name,
+                            };
+
+                            rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(nr));
+
+                            // TODO: After adding the scheduled task, check and setup the timer.
+
+                            Ok(())
+                        } else {
+                            Err(input)
+                        }
+                    }
+                }
+            }));
+        }
     }
 
     if !items.is_empty() {

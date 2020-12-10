@@ -39,7 +39,10 @@ use core::ops::Sub;
 
 use cortex_m::{interrupt::Nr, peripheral::NVIC};
 pub use cortex_m_rtic_macros::app;
-pub use rtic_core::{prelude as mutex_prelude, Exclusive, monotonic::Monotonic, Mutex};
+pub use rtic_core::{
+    monotonic::{Clock, Instant, Monotonic},
+    prelude as mutex_prelude, Exclusive, Mutex,
+};
 
 #[doc(hidden)]
 pub mod export;

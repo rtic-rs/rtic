@@ -5,7 +5,7 @@ use rtic_syntax::ast::App;
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates task dispatchers
-pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
+pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
     let interrupts = &analysis.interrupts;

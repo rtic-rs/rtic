@@ -16,6 +16,7 @@ pub use cortex_m::{
 use heapless::spsc::SingleCore;
 pub use heapless::{consts, i::Queue as iQueue, spsc::Queue};
 pub use heapless::{i::BinaryHeap as iBinaryHeap, BinaryHeap};
+pub use rtic_core::monotonic::Monotonic;
 
 pub type SCFQ<N> = Queue<u8, N, u8, SingleCore>;
 pub type SCRQ<T, N> = Queue<(T, u8), N, u8, SingleCore>;
@@ -109,6 +110,13 @@ where
 pub fn assert_sync<T>()
 where
     T: Sync,
+{
+}
+
+#[inline(always)]
+pub fn assert_monotonic<T>()
+where
+    T: Monotonic,
 {
 }
 

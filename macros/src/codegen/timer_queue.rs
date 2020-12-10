@@ -5,7 +5,7 @@ use rtic_syntax::ast::App;
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates timer queues and timer queue handlers
-pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
+pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 
     if !app.monotonics.is_empty() {

@@ -27,13 +27,13 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut user = vec![];
 
     // Generate the `main` function
-    let assertion_stmts = assertions::codegen(analysis);
+    let assertion_stmts = assertions::codegen(app, analysis);
 
-    let pre_init_stmts = pre_init::codegen(&app, analysis, extra);
+    let pre_init_stmts = pre_init::codegen(app, analysis, extra);
 
     let (mod_app_init, root_init, user_init, call_init) = init::codegen(app, analysis, extra);
 
-    let post_init_stmts = post_init::codegen(&app, analysis);
+    let post_init_stmts = post_init::codegen(app, analysis);
 
     let (mod_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis, extra);
 
@@ -104,11 +104,19 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         ));
     }
 
+    let monotonic_imports: Vec<_> = app.monotonics.iter().map(|(_, monotonic)| {
+        let name = &monotonic.ident;
+        let ty = &monotonic.ty;
+        quote!(pub type #name = #ty;)
+    }).collect();
+
     quote!(
         /// Implementation details
         pub mod #name {
             /// Always include the device crate which contains the vector table
             use #device as you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml;
+
+            #(#monotonic_imports)*
 
             #(#user_imports)*
 
