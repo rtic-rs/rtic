@@ -250,7 +250,7 @@ pub fn codegen(
             pub mod #m {
                 #(#cfgs)*
                 pub fn spawn_after(
-                    duration: rtic::Duration,
+                    duration: rtic::time::duration::Duration,
                     #(,#args)*
                 ) -> Result<(), #ty> {
                     let instant = <#app_path::#m as rtic::Monotonic>::now();
@@ -260,7 +260,7 @@ pub fn codegen(
 
                 #(#cfgs)*
                 pub fn spawn_at(
-                    instant: rtic::Instant<#app_path::#m>
+                    instant: rtic::time::Instant<#app_path::#m>
                     #(,#args)*
                 ) -> Result<(), #ty> {
                     unsafe {

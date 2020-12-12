@@ -1,4 +1,4 @@
-use crate::{Instant, Monotonic};
+use crate::{time::Instant, Monotonic};
 use core::cmp::Ordering;
 use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 

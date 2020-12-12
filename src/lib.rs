@@ -38,7 +38,7 @@
 use cortex_m::{interrupt::Nr, peripheral::NVIC};
 pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{
-    monotonic::{self, Clock, Duration, Instant, Monotonic},
+    monotonic::{self, embedded_time as time, Monotonic},
     prelude as mutex_prelude, Exclusive, Mutex,
 };
 

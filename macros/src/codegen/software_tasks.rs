@@ -69,7 +69,7 @@ pub fn codegen(
                 #uninit
                 /// Buffer that holds the instants associated to the inputs of a task
                 static mut #instants:
-                    [core::mem::MaybeUninit<rtic::Instant<#app_path::#m>>; #cap_lit] =
+                    [core::mem::MaybeUninit<rtic::time::Instant<#app_path::#m>>; #cap_lit] =
                     [#(#elems,)*];
             ));
         }
