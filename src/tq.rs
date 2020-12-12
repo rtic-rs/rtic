@@ -81,9 +81,10 @@ where
 
                         Some((nr.task, nr.index))
                     }
-                    Some(dur) => {
+                    Some(_) => {
                         // TODO: Fix this hack...
-                        let new_instant = *now.duration_since_epoch().integer() + *dur.integer();
+                        // Extract the compare time
+                        let new_instant = *instant.duration_since_epoch().integer();
                         M::set_compare(new_instant);
 
                         // Start counting down from the new reload
