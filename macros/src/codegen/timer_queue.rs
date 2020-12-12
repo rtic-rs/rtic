@@ -67,6 +67,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
         // Timer queue handler
         {
+            let enum_ = util::interrupt_ident();
+
             let arms = app
                 .software_tasks
                 .iter()
@@ -75,7 +77,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     let priority = task.args.priority;
                     let rq = util::rq_ident(priority);
                     let rqt = util::spawn_t_ident(priority);
-                    let enum_ = util::interrupt_ident();
 
                     // The interrupt that runs the task dispatcher
                     let interrupt = &analysis.interrupts.get(&priority).expect("RTIC-ICE: interrupt not found").0;
@@ -98,12 +99,15 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 .collect::<Vec<_>>();
 
             let bound_interrupt = &monotonic.args.binds;
+
             items.push(quote!(
                 #[no_mangle]
                 unsafe fn #bound_interrupt() {
                     use rtic::Mutex as _;
 
-                    while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue())
+                    while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue(
+                                || rtic::export::NVIC::unmask(you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#bound_interrupt),
+                            ))
                     {
                         match task {
                             #(#arms)*

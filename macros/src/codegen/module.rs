@@ -18,6 +18,8 @@ pub fn codegen(
     let mut task_cfgs = vec![];
 
     let name = ctxt.ident(app);
+    let app_name = &app.name;
+    let app_path = quote! {crate::#app_name};
 
     let mut lt = None;
     match ctxt {
@@ -125,7 +127,7 @@ pub fn codegen(
             .iter()
             .map(|(_, monotonic)| {
                 let mono = &monotonic.ident;
-                quote! {#mono}
+                quote! {#app_path::#mono}
             })
             .collect();
 
@@ -190,9 +192,6 @@ pub fn codegen(
         let rq = util::rq_ident(priority);
         let inputs = util::inputs_ident(name);
 
-        let app_name = &app.name;
-        let app_path = quote! {crate::#app_name};
-
         let device = &extra.device;
         let enum_ = util::interrupt_ident();
         let interrupt = &analysis
@@ -234,11 +233,13 @@ pub fn codegen(
 
         // Schedule caller
         for (_, monotonic) in &app.monotonics {
-            let instants = util::instants_ident(name);
+            let instants = util::monotonic_instants_ident(name, &monotonic.ident);
 
             let tq = util::tq_ident(&monotonic.ident.to_string());
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
+            let m_isr = &monotonic.args.binds;
+            let enum_ = util::interrupt_ident();
 
             if monotonic.args.default {
                 items.push(quote!(pub use #m::spawn_after;));
@@ -259,7 +260,7 @@ pub fn codegen(
 
                 #(#cfgs)*
                 pub fn spawn_at(
-                    instant: Instant<#app_path::#m as rtic::Monotonic>
+                    instant: rtic::Instant<#app_path::#m>
                     #(,#args)*
                 ) -> Result<(), #ty> {
                     unsafe {
@@ -284,9 +285,11 @@ pub fn codegen(
                                 task: #app_path::#t::#name,
                             };
 
-                            rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(nr));
-
-                            // TODO: After adding the scheduled task, check and setup the timer.
+                            rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(
+                                    nr,
+                                    || rtic::export::NVIC::unmask(#app_path::you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#m_isr),
+                                    || rtic::pend(#app_path::you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#m_isr),
+                            ));
 
                             Ok(())
                         } else {

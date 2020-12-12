@@ -57,19 +57,22 @@ pub fn codegen(
             .map(|_| quote!(core::mem::MaybeUninit::uninit()))
             .collect::<Vec<_>>();
 
-        // TODO: Update for new monotonic
-        // if let Some(m) = &extra.monotonic {
-        //     let instants = util::instants_ident(name);
+        let app_name = &app.name;
+        let app_path = quote! {crate::#app_name};
 
-        //     let uninit = mk_uninit();
-        //     mod_app.push(quote!(
-        //         #uninit
-        //         /// Buffer that holds the instants associated to the inputs of a task
-        //         static mut #instants:
-        //             [core::mem::MaybeUninit<<#m as rtic::Monotonic>::Instant>; #cap_lit] =
-        //             [#(#elems,)*];
-        //     ));
-        // }
+        for (_, monotonic) in &app.monotonics {
+            let instants = util::monotonic_instants_ident(name, &monotonic.ident);
+            let m = &monotonic.ident;
+
+            let uninit = mk_uninit();
+            mod_app.push(quote!(
+                #uninit
+                /// Buffer that holds the instants associated to the inputs of a task
+                static mut #instants:
+                    [core::mem::MaybeUninit<rtic::Instant<#app_path::#m>>; #cap_lit] =
+                    [#(#elems,)*];
+            ));
+        }
 
         let uninit = mk_uninit();
         let inputs_ident = util::inputs_ident(name);

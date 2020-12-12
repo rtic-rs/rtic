@@ -77,8 +77,8 @@ pub fn inputs_ident(task: &Ident) -> Ident {
 }
 
 /// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
-pub fn instants_ident(task: &Ident) -> Ident {
-    Ident::new(&format!("{}_INSTANTS", task), Span::call_site())
+pub fn monotonic_instants_ident(task: &Ident, monotonic: &Ident) -> Ident {
+    Ident::new(&format!("{}_{}_INSTANTS", task, monotonic), Span::call_site())
 }
 
 pub fn interrupt_ident() -> Ident {
@@ -100,22 +100,6 @@ pub fn is_exception(name: &Ident) -> bool {
             | "DebugMonitor"
             | "PendSV"
             | "SysTick"
-    )
-}
-
-/// Generates a pre-reexport identifier for the "late resources" struct
-pub fn late_resources_ident(init: &Ident) -> Ident {
-    Ident::new(
-        &format!("{}LateResources", init.to_string()),
-        Span::call_site(),
-    )
-}
-
-/// Generates a pre-reexport identifier for the "monotonics" struct
-pub fn monotonics_ident(init: &Ident) -> Ident {
-    Ident::new(
-        &format!("{}Monotonics", init.to_string()),
-        Span::call_site(),
     )
 }
 
