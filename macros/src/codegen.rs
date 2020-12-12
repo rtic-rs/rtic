@@ -104,11 +104,15 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         ));
     }
 
-    let monotonic_imports: Vec<_> = app.monotonics.iter().map(|(_, monotonic)| {
-        let name = &monotonic.ident;
-        let ty = &monotonic.ty;
-        quote!(pub type #name = #ty;)
-    }).collect();
+    let monotonic_imports: Vec<_> = app
+        .monotonics
+        .iter()
+        .map(|(_, monotonic)| {
+            let name = &monotonic.ident;
+            let ty = &monotonic.ty;
+            quote!(pub type #name = #ty;)
+        })
+        .collect();
 
     quote!(
         /// Implementation details

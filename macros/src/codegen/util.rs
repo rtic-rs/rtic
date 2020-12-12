@@ -78,7 +78,10 @@ pub fn inputs_ident(task: &Ident) -> Ident {
 
 /// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
 pub fn monotonic_instants_ident(task: &Ident, monotonic: &Ident) -> Ident {
-    Ident::new(&format!("{}_{}_INSTANTS", task, monotonic), Span::call_site())
+    Ident::new(
+        &format!("{}_{}_INSTANTS", task, monotonic),
+        Span::call_site(),
+    )
 }
 
 pub fn interrupt_ident() -> Ident {

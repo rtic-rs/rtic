@@ -15,8 +15,7 @@ mod app {
     type MyMono2 = hal::Mono2;
 
     #[init]
-    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
-    }
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {}
 
     #[task]
     fn task1(_: task1::Context) {}
@@ -24,4 +23,3 @@ mod app {
     #[task]
     fn task2(_: task2::Context) {}
 }
-
