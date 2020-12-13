@@ -2,17 +2,17 @@ use crate::{time::Instant, Monotonic};
 use core::cmp::Ordering;
 use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 
-pub struct TimerQueue<M, T, N>(pub BinaryHeap<NotReady<M, T>, N, Min>)
+pub struct TimerQueue<Mono, Task, N>(pub BinaryHeap<NotReady<Mono, Task>, N, Min>)
 where
-    M: Monotonic,
-    N: ArrayLength<NotReady<M, T>>,
-    T: Copy;
+    Mono: Monotonic,
+    N: ArrayLength<NotReady<Mono, Task>>,
+    Task: Copy;
 
-impl<M, T, N> TimerQueue<M, T, N>
+impl<Mono, Task, N> TimerQueue<Mono, Task, N>
 where
-    M: Monotonic,
-    N: ArrayLength<NotReady<M, T>>,
-    T: Copy,
+    Mono: Monotonic,
+    N: ArrayLength<NotReady<Mono, Task>>,
+    Task: Copy,
 {
     /// # Safety
     ///
@@ -23,7 +23,7 @@ where
     #[inline]
     pub unsafe fn enqueue_unchecked<F1, F2>(
         &mut self,
-        nr: NotReady<M, T>,
+        nr: NotReady<Mono, Task>,
         enable_interrupt: F1,
         pend_handler: F2,
     ) where
@@ -63,44 +63,39 @@ where
 
     /// Dequeue a task from the TimerQueue
     #[inline]
-    pub fn dequeue<F>(&mut self, disable_interrupt: F) -> Option<(T, u8)>
+    pub fn dequeue<F>(&mut self, disable_interrupt: F) -> Option<(Task, u8)>
     where
         F: FnOnce(),
     {
         unsafe {
-            M::clear_compare();
+            Mono::clear_compare();
 
             if let Some(instant) = self.0.peek().map(|p| p.instant) {
-                let now = M::now();
+                if instant < Mono::now() {
+                    // instant < now
+                    // task became ready
+                    let nr = self.0.pop_unchecked();
 
-                match instant.checked_duration_since(&now) {
-                    None => {
-                        // instant < now
-                        // task became ready
+                    Some((nr.task, nr.index))
+                } else {
+                    // TODO: Fix this hack...
+                    // Extract the compare time
+                    Mono::set_compare(*instant.duration_since_epoch().integer());
+
+                    // Double check that the instant we set is really in the future, else
+                    // dequeue. If the monotonic is fast enough it can happen that from the
+                    // read of now to the set of the compare, the time can overflow. This is to
+                    // guard against this.
+                    if instant < Mono::now() {
                         let nr = self.0.pop_unchecked();
 
                         Some((nr.task, nr.index))
+                    } else {
+                        None
                     }
-                    Some(_) => {
-                        // TODO: Fix this hack...
-                        // Extract the compare time
-                        M::set_compare(*instant.duration_since_epoch().integer());
 
-                        // Double check that the instant we set is really in the future, else
-                        // dequeue. If the monotonic is fast enough it can happen that from the
-                        // read of now to the set of the compare, the time can overflow. This is to
-                        // guard against this.
-                        if instant.checked_duration_since(&M::now()).is_none() {
-                            let nr = self.0.pop_unchecked();
-
-                            Some((nr.task, nr.index))
-                        } else {
-                            None
-                        }
-
-                        // Start counting down from the new reload
-                        // mem::transmute::<_, SYST>(()).clear_current();
-                    }
+                    // Start counting down from the new reload
+                    // mem::transmute::<_, SYST>(()).clear_current();
                 }
             } else {
                 // The queue is empty
@@ -113,47 +108,47 @@ where
     }
 }
 
-pub struct NotReady<M, T>
+pub struct NotReady<Mono, Task>
 where
-    T: Copy,
-    M: Monotonic,
+    Task: Copy,
+    Mono: Monotonic,
 {
     pub index: u8,
-    pub instant: Instant<M>,
-    pub task: T,
+    pub instant: Instant<Mono>,
+    pub task: Task,
 }
 
-impl<M, T> Eq for NotReady<M, T>
+impl<Mono, Task> Eq for NotReady<Mono, Task>
 where
-    T: Copy,
-    M: Monotonic,
+    Task: Copy,
+    Mono: Monotonic,
 {
 }
 
-impl<M, T> Ord for NotReady<M, T>
+impl<Mono, Task> Ord for NotReady<Mono, Task>
 where
-    T: Copy,
-    M: Monotonic,
+    Task: Copy,
+    Mono: Monotonic,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.instant.cmp(&other.instant)
     }
 }
 
-impl<M, T> PartialEq for NotReady<M, T>
+impl<Mono, Task> PartialEq for NotReady<Mono, Task>
 where
-    T: Copy,
-    M: Monotonic,
+    Task: Copy,
+    Mono: Monotonic,
 {
     fn eq(&self, other: &Self) -> bool {
         self.instant == other.instant
     }
 }
 
-impl<M, T> PartialOrd for NotReady<M, T>
+impl<Mono, Task> PartialOrd for NotReady<Mono, Task>
 where
-    T: Copy,
-    M: Monotonic,
+    Task: Copy,
+    Mono: Monotonic,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(&other))

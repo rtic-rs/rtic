@@ -68,8 +68,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         // Timer queue handler
         {
             let enum_ = util::interrupt_ident();
-            let app_name = &app.name;
-            let app_path = quote! {crate::#app_name};
             let rt_err = util::rt_err_ident();
 
             let arms = app
@@ -111,8 +109,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             items.push(quote!(
                 #[no_mangle]
                 unsafe fn #bound_interrupt() {
-                    use rtic::Mutex as _;
-
                     while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue(
                                 || #enable_isr,
                             ))

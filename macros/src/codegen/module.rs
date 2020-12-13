@@ -204,10 +204,6 @@ pub fn codegen(
         items.push(quote!(
         #(#cfgs)*
         pub fn spawn(#(#args,)*) -> Result<(), #ty> {
-            // #let_instant // do we need it?
-            use rtic::Mutex as _;
-            use rtic::mutex_prelude::*;
-
             let input = #tupled;
 
             unsafe {
@@ -277,9 +273,6 @@ pub fn codegen(
                     #(,#args)*
                 ) -> Result<(), #ty> {
                     unsafe {
-                        use rtic::Mutex as _;
-                        use rtic::mutex_prelude::*;
-
                         let input = #tupled;
                         if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
                             #app_path::#inputs
