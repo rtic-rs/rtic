@@ -84,13 +84,22 @@ where
                     Some(_) => {
                         // TODO: Fix this hack...
                         // Extract the compare time
-                        let new_instant = *instant.duration_since_epoch().integer();
-                        M::set_compare(new_instant);
+                        M::set_compare(*instant.duration_since_epoch().integer());
+
+                        // Double check that the instant we set is really in the future, else
+                        // dequeue. If the monotonic is fast enough it can happen that from the
+                        // read of now to the set of the compare, the time can overflow. This is to
+                        // guard against this.
+                        if instant.checked_duration_since(&M::now()).is_none() {
+                            let nr = self.0.pop_unchecked();
+
+                            Some((nr.task, nr.index))
+                        } else {
+                            None
+                        }
 
                         // Start counting down from the new reload
                         // mem::transmute::<_, SYST>(()).clear_current();
-
-                        None
                     }
                 }
             } else {
