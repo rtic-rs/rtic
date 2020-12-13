@@ -8,6 +8,8 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
+    let rt_err = util::rt_err_ident();
+
     // Disable interrupts -- `init` must run with interrupts disabled
     stmts.push(quote!(rtic::export::interrupt::disable();));
 
@@ -47,14 +49,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let interrupt = util::interrupt_ident();
         stmts.push(quote!(
             core.NVIC.set_priority(
-                you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#interrupt::#name,
+                #rt_err::#interrupt::#name,
                 rtic::export::logical2hw(#priority, #nvic_prio_bits),
             );
         ));
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(rtic::export::NVIC::unmask(you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#interrupt::#name);));
+        stmts.push(quote!(rtic::export::NVIC::unmask(#rt_err::#interrupt::#name);));
     }
 
     // Set exception priorities
@@ -83,14 +85,24 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
-        // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
-        let interrupt = util::interrupt_ident();
-        stmts.push(quote!(
-            core.NVIC.set_priority(
-                you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#interrupt::#name,
-                rtic::export::logical2hw(#priority, #nvic_prio_bits),
-            );
-        ));
+
+        if &*name.to_string() == "SysTick" {
+            stmts.push(quote!(
+                core.SCB.set_priority(
+                    rtic::export::SystemHandler::SysTick,
+                    rtic::export::logical2hw(#priority, #nvic_prio_bits),
+                );
+            ));
+        } else {
+            // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
+            let interrupt = util::interrupt_ident();
+            stmts.push(quote!(
+                core.NVIC.set_priority(
+                    #rt_err::#interrupt::#name,
+                    rtic::export::logical2hw(#priority, #nvic_prio_bits),
+                );
+            ));
+        }
 
         // NOTE we do not unmask the interrupt as this is part of the monotonic to keep track of
     }

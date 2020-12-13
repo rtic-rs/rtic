@@ -217,7 +217,7 @@ pub fn rq_ident(priority: u8) -> Ident {
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks
 pub fn schedule_t_ident() -> Ident {
-    Ident::new(&"SCHED_T".to_string(), Span::call_site())
+    Ident::new(&"SCHED_T", Span::call_site())
 }
 
 /// Generates an identifier for the `enum` of `spawn`-able tasks
@@ -228,6 +228,7 @@ pub fn spawn_t_ident(priority: u8) -> Ident {
     Ident::new(&format!("P{}_T", priority), Span::call_site())
 }
 
+/// Suffixed identifier
 pub fn suffixed(name: &str) -> Ident {
     let span = Span::call_site();
     Ident::new(name, span)
@@ -236,4 +237,12 @@ pub fn suffixed(name: &str) -> Ident {
 /// Generates an identifier for a timer queue
 pub fn tq_ident(name: &str) -> Ident {
     Ident::new(&format!("TQ_{}", name), Span::call_site())
+}
+
+/// The name to get better RT flag errors
+pub fn rt_err_ident() -> Ident {
+    Ident::new(
+        &"you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml",
+        Span::call_site(),
+    )
 }

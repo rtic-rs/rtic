@@ -246,6 +246,19 @@ pub fn codegen(
                 items.push(quote!(pub use #m::spawn_at;));
             }
 
+            let (unmask, pend) = if &*m_isr.to_string() == "SysTick" {
+                (
+                    quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(()).disable_interrupt()),
+                    quote!(cortex_m::peripheral::SCB::set_pendst()),
+                )
+            } else {
+                let rt_err = util::rt_err_ident();
+                (
+                    quote!(rtic::export::NVIC::unmask(#app_path::#rt_err::#enum_::#m_isr)),
+                    quote!(rtic::pend(#app_path::#rt_err::#enum_::#m_isr)),
+                )
+            };
+
             items.push(quote!(
             pub mod #m {
                 #(#cfgs)*
@@ -287,8 +300,8 @@ pub fn codegen(
 
                             rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(
                                     nr,
-                                    || rtic::export::NVIC::unmask(#app_path::you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#m_isr),
-                                    || rtic::pend(#app_path::you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#m_isr),
+                                    || #unmask,
+                                    || #pend,
                             ));
 
                             Ok(())

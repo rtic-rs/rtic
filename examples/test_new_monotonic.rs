@@ -8,7 +8,7 @@ use rtic::app;
 
 #[app(device = lm3s6965, dispatchers = [UART])]
 mod app {
-    #[monotonic(binds = SomeISR1)]
+    #[monotonic(binds = SysTick)]
     type MyMono1 = hal::Mono1;
 
     #[monotonic(binds = SomeISR2, default = true)]

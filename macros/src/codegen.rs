@@ -114,11 +114,13 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         })
         .collect();
 
+    let rt_err = util::rt_err_ident();
+
     quote!(
         /// Implementation details
         pub mod #name {
             /// Always include the device crate which contains the vector table
-            use #device as you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml;
+            use #device as #rt_err;
 
             #(#monotonic_imports)*
 

@@ -68,6 +68,9 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         // Timer queue handler
         {
             let enum_ = util::interrupt_ident();
+            let app_name = &app.name;
+            let app_path = quote! {crate::#app_name};
+            let rt_err = util::rt_err_ident();
 
             let arms = app
                 .software_tasks
@@ -83,7 +86,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
                     let pend = {
                         quote!(
-                            rtic::pend(you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#interrupt);
+                            rtic::pend(#rt_err::#enum_::#interrupt);
                         )
                     };
 
@@ -99,6 +102,11 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 .collect::<Vec<_>>();
 
             let bound_interrupt = &monotonic.args.binds;
+            let enable_isr = if &*bound_interrupt.to_string() == "SysTick" {
+                quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(()).enable_interrupt())
+            } else {
+                quote!(rtic::export::NVIC::mask(#rt_err::#enum_::#bound_interrupt))
+            };
 
             items.push(quote!(
                 #[no_mangle]
@@ -106,7 +114,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     use rtic::Mutex as _;
 
                     while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue(
-                                || rtic::export::NVIC::unmask(you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#enum_::#bound_interrupt),
+                                || #enable_isr,
                             ))
                     {
                         match task {
