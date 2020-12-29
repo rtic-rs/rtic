@@ -38,7 +38,7 @@
 use core::ops::Sub;
 
 use cortex_m::{
-    interrupt::Nr,
+    interrupt::InterruptNumber,
     peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
 };
 pub use cortex_m_rtic_macros::app;
@@ -158,7 +158,7 @@ pub trait Monotonic {
 /// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
 pub fn pend<I>(interrupt: I)
 where
-    I: Nr,
+    I: InterruptNumber,
 {
     NVIC::pend(interrupt)
 }
