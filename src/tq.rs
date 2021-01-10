@@ -72,14 +72,13 @@ where
 
             if let Some(instant) = self.0.peek().map(|p| p.instant) {
                 if instant < Mono::now() {
-                    // instant < now
                     // task became ready
                     let nr = self.0.pop_unchecked();
 
                     Some((nr.task, nr.index))
                 } else {
                     // TODO: Fix this hack...
-                    // Extract the compare time
+                    // Extract the compare time.
                     Mono::set_compare(*instant.duration_since_epoch().integer());
 
                     // Double check that the instant we set is really in the future, else
@@ -93,13 +92,9 @@ where
                     } else {
                         None
                     }
-
-                    // Start counting down from the new reload
-                    // mem::transmute::<_, SYST>(()).clear_current();
                 }
             } else {
-                // The queue is empty
-                // mem::transmute::<_, SYST>(()).disable_interrupt();
+                // The queue is empty, disable the interrupt.
                 disable_interrupt();
 
                 None
