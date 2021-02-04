@@ -135,7 +135,7 @@ pub fn codegen(
             /// Monotonics used by the system
             #[allow(non_snake_case)]
             pub struct Monotonics(
-                #(#monotonic_types),*
+                #(pub #monotonic_types),*
             );
         ));
     }
@@ -258,10 +258,13 @@ pub fn codegen(
             items.push(quote!(
             pub mod #m {
                 #(#cfgs)*
-                pub fn spawn_after(
-                    duration: rtic::time::duration::Duration,
+                pub fn spawn_after<D>(
+                    duration: D,
                     #(,#args)*
-                ) -> Result<(), #ty> {
+                ) -> Result<(), #ty>
+                    where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
+                        D::T: Into<<#app_path::#m as rtic::time::Clock>::T>,
+                {
                     let instant = <#app_path::#m as rtic::Monotonic>::now();
 
                     spawn_at(instant + duration, #(,#untupled)*)

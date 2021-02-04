@@ -108,6 +108,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
             items.push(quote!(
                 #[no_mangle]
+                #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
                     while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue(
                                 || #enable_isr,

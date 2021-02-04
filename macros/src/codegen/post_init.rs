@@ -25,6 +25,10 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         }
     }
 
+    for (monotonic, _) in app.monotonics.iter() {
+        stmts.push(quote!(#monotonic::reset();));
+    }
+
     // Forget the monotonics so they won't be dropped.
     stmts.push(quote!(core::mem::forget(monotonics);));
 
