@@ -5,7 +5,7 @@ first parameter. All the fields of these structures have predictable,
 non-anonymous types so you can write plain functions that take them as arguments.
 
 The API reference specifies how these types are generated from the input. You
-can also generate documentation for you binary crate (`cargo doc --bin <name>`);
+can also generate documentation for your binary crate (`cargo doc --bin <name>`);
 in the documentation you'll find `Context` structs (e.g. `init::Context` and
 `idle::Context`).
 

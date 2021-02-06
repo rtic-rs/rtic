@@ -35,7 +35,7 @@
 // #![deny(warnings)]
 #![no_std]
 
-use cortex_m::{interrupt::Nr, peripheral::NVIC};
+use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
 pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{
     monotonic::{self, embedded_time as time, Monotonic},
@@ -53,7 +53,7 @@ mod tq;
 /// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
 pub fn pend<I>(interrupt: I)
 where
-    I: Nr,
+    I: InterruptNumber,
 {
     NVIC::pend(interrupt)
 }
