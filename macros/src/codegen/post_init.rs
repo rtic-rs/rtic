@@ -1,6 +1,7 @@
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use rtic_syntax::ast::App;
+use syn::Index;
 
 use crate::{analyze::Analysis, codegen::util};
 
@@ -25,12 +26,17 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         }
     }
 
-    for (monotonic, _) in app.monotonics.iter() {
-        stmts.push(quote!(#monotonic::reset();));
-    }
+    for (i, (monotonic, _)) in app.monotonics.iter().enumerate() {
+        let idx = Index {
+            index: i as u32,
+            span: Span::call_site(),
+        };
+        stmts.push(quote!(monotonics.#idx.reset();));
 
-    // Forget the monotonics so they won't be dropped.
-    stmts.push(quote!(core::mem::forget(monotonics);));
+        // Store the monotonic
+        let name = util::monotonic_ident(&monotonic.to_string());
+        stmts.push(quote!(#name.as_mut_ptr().write(monotonics.#idx);));
+    }
 
     // Enable the interrupts -- this completes the `init`-ialization phase
     stmts.push(quote!(rtic::export::interrupt::enable();));

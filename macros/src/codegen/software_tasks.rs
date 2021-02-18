@@ -62,7 +62,7 @@ pub fn codegen(
 
         for (_, monotonic) in &app.monotonics {
             let instants = util::monotonic_instants_ident(name, &monotonic.ident);
-            let m = &monotonic.ident;
+            let m = util::mangle_monotonic_type(&monotonic.ident.to_string());
 
             let uninit = mk_uninit();
             mod_app.push(quote!(

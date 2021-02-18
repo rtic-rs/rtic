@@ -126,7 +126,7 @@ pub fn codegen(
             .monotonics
             .iter()
             .map(|(_, monotonic)| {
-                let mono = &monotonic.ident;
+                let mono = util::mangle_monotonic_type(&monotonic.ident.to_string());
                 quote! {#app_path::#mono}
             })
             .collect();
@@ -234,6 +234,7 @@ pub fn codegen(
             let tq = util::tq_ident(&monotonic.ident.to_string());
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
+            let m_mangled = util::mangle_monotonic_type(&monotonic.ident.to_string());
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
 
@@ -242,9 +243,10 @@ pub fn codegen(
                 items.push(quote!(pub use #m::spawn_at;));
             }
 
-            let (unmask, pend) = if &*m_isr.to_string() == "SysTick" {
+            let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
                 (
-                    quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(()).disable_interrupt()),
+                    quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(())
+                        .enable_interrupt()),
                     quote!(cortex_m::peripheral::SCB::set_pendst()),
                 )
             } else {
@@ -263,16 +265,16 @@ pub fn codegen(
                     #(,#args)*
                 ) -> Result<(), #ty>
                     where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
-                        D::T: Into<<#app_path::#m as rtic::time::Clock>::T>,
+                        D::T: Into<<#app_path::#m_mangled as rtic::time::Clock>::T>,
                 {
-                    let instant = <#app_path::#m as rtic::Monotonic>::now();
+                    let instant = #app_path::#m::now();
 
                     spawn_at(instant + duration, #(,#untupled)*)
                 }
 
                 #(#cfgs)*
                 pub fn spawn_at(
-                    instant: rtic::time::Instant<#app_path::#m>
+                    instant: rtic::time::Instant<#app_path::#m_mangled>
                     #(,#args)*
                 ) -> Result<(), #ty> {
                     unsafe {
@@ -296,7 +298,7 @@ pub fn codegen(
 
                             rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(
                                     nr,
-                                    || #unmask,
+                                    || #enable_interrupt,
                                     || #pend,
                             ));
 

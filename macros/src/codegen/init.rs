@@ -69,7 +69,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         let app_path = quote! {crate::#app_name};
         let locals_new = locals_new.iter();
         let call_init = Some(
-            quote!(let (late, monotonics) = #app_path::#name(#(#locals_new,)* #name::Context::new(core.into()));),
+            quote!(let (late, mut monotonics) = #app_path::#name(#(#locals_new,)* #name::Context::new(core.into()));),
         );
 
         root_init.push(module::codegen(

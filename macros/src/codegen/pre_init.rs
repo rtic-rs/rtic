@@ -77,14 +77,17 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     }
 
     // Initialize monotonic's interrupts
-    for (priority, name) in app
+    for (ident, priority, name) in app
         .monotonics
         .iter()
-        .map(|(_, monotonic)| (&monotonic.args.priority, &monotonic.args.binds))
+        .map(|(ident, monotonic)| (ident, &monotonic.args.priority, &monotonic.args.binds))
     {
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
+        let app_name = &app.name;
+        let app_path = quote! {crate::#app_name};
+        let mono_type = util::mangle_monotonic_type(&ident.to_string());
 
         if &*name.to_string() == "SysTick" {
             stmts.push(quote!(
@@ -92,6 +95,12 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     rtic::export::SystemHandler::SysTick,
                     rtic::export::logical2hw(#priority, #nvic_prio_bits),
                 );
+
+                // Always enable monotonic interrupts if they should never be off
+                if !#app_path::#mono_type::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
+                    core::mem::transmute::<_, cortex_m::peripheral::SYST>(())
+                        .enable_interrupt();
+                }
             ));
         } else {
             // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
@@ -101,10 +110,13 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     #rt_err::#interrupt::#name,
                     rtic::export::logical2hw(#priority, #nvic_prio_bits),
                 );
+
+                // Always enable monotonic interrupts if they should never be off
+                if !#app_path::#mono_type::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
+                    rtic::export::NVIC::unmask(#app_path::#rt_err::#interrupt::#name);
+                }
             ));
         }
-
-        // NOTE we do not unmask the interrupt as this is part of the monotonic to keep track of
     }
 
     // If there's no user `#[idle]` then optimize returning from interrupt handlers

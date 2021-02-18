@@ -1,4 +1,7 @@
-use crate::{time::Instant, Monotonic};
+use crate::{
+    time::{Clock, Instant},
+    Monotonic,
+};
 use core::cmp::Ordering;
 use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 
@@ -42,7 +45,7 @@ where
             })
             .unwrap_or(true);
         if if_heap_max_greater_than_nr {
-            if is_empty {
+            if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE && is_empty {
                 // mem::transmute::<_, SYST>(()).enable_interrupt();
                 enable_interrupt();
             }
@@ -61,44 +64,53 @@ where
         self.0.is_empty()
     }
 
+    #[inline]
+    fn unwrapper<T, E>(val: Result<T, E>) -> T {
+        if let Ok(v) = val {
+            v
+        } else {
+            unreachable!("Your monotonic is not infallible")
+        }
+    }
+
     /// Dequeue a task from the TimerQueue
     #[inline]
-    pub fn dequeue<F>(&mut self, disable_interrupt: F) -> Option<(Task, u8)>
+    pub fn dequeue<F>(&mut self, disable_interrupt: F, mono: &mut Mono) -> Option<(Task, u8)>
     where
         F: FnOnce(),
     {
-        unsafe {
-            Mono::clear_compare();
+        mono.clear_compare_flag();
 
-            if let Some(instant) = self.0.peek().map(|p| p.instant) {
-                if instant < Mono::now() {
-                    // task became ready
-                    let nr = self.0.pop_unchecked();
+        if let Some(instant) = self.0.peek().map(|p| p.instant) {
+            if instant < Self::unwrapper(Clock::try_now(mono)) {
+                // task became ready
+                let nr = unsafe { self.0.pop_unchecked() };
+
+                Some((nr.task, nr.index))
+            } else {
+                // TODO: Fix this hack...
+                // Extract the compare time.
+                mono.set_compare(*instant.duration_since_epoch().integer());
+
+                // Double check that the instant we set is really in the future, else
+                // dequeue. If the monotonic is fast enough it can happen that from the
+                // read of now to the set of the compare, the time can overflow. This is to
+                // guard against this.
+                if instant < Self::unwrapper(Clock::try_now(mono)) {
+                    let nr = unsafe { self.0.pop_unchecked() };
 
                     Some((nr.task, nr.index))
                 } else {
-                    // TODO: Fix this hack...
-                    // Extract the compare time.
-                    Mono::set_compare(*instant.duration_since_epoch().integer());
-
-                    // Double check that the instant we set is really in the future, else
-                    // dequeue. If the monotonic is fast enough it can happen that from the
-                    // read of now to the set of the compare, the time can overflow. This is to
-                    // guard against this.
-                    if instant < Mono::now() {
-                        let nr = self.0.pop_unchecked();
-
-                        Some((nr.task, nr.index))
-                    } else {
-                        None
-                    }
+                    None
                 }
-            } else {
-                // The queue is empty, disable the interrupt.
-                disable_interrupt();
-
-                None
             }
+        } else {
+            // The queue is empty, disable the interrupt.
+            if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
+                disable_interrupt();
+            }
+
+            None
         }
     }
 }

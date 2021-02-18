@@ -239,6 +239,16 @@ pub fn tq_ident(name: &str) -> Ident {
     Ident::new(&format!("TQ_{}", name), Span::call_site())
 }
 
+/// Generates an identifier for monotonic timer storage
+pub fn monotonic_ident(name: &str) -> Ident {
+    Ident::new(&format!("MONOTONIC_STORAGE_{}", name), Span::call_site())
+}
+
+/// Generates an identifier for monotonic timer storage
+pub fn mangle_monotonic_type(name: &str) -> Ident {
+    Ident::new(&format!("MonotonicMangled{}", name), Span::call_site())
+}
+
 /// The name to get better RT flag errors
 pub fn rt_err_ident() -> Ident {
     Ident::new(

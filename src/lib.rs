@@ -37,10 +37,8 @@
 
 use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
 pub use cortex_m_rtic_macros::app;
-pub use rtic_core::{
-    monotonic::{self, embedded_time as time, Monotonic},
-    prelude as mutex_prelude, Exclusive, Mutex,
-};
+pub use rtic_core::{prelude as mutex_prelude, Exclusive, Mutex};
+pub use rtic_monotonic::{self, embedded_time as time, Monotonic};
 
 #[doc(hidden)]
 pub mod export;

@@ -104,13 +104,35 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         ));
     }
 
+    let app_name = &app.name;
+    let app_path = quote! {crate::#app_name};
+
     let monotonic_imports: Vec<_> = app
         .monotonics
         .iter()
         .map(|(_, monotonic)| {
             let name = &monotonic.ident;
             let ty = &monotonic.ty;
-            quote!(pub type #name = #ty;)
+            let mangled_name = util::mangle_monotonic_type(&name.to_string());
+            let ident = util::monotonic_ident(&name.to_string());
+            quote! {
+                #[doc(hidden)]
+                pub type #mangled_name = #ty;
+
+                pub mod #name {
+                    pub fn now() -> rtic::time::Instant<#app_path::#mangled_name> {
+                        rtic::export::interrupt::free(|_| {
+                            use rtic::Monotonic as _;
+                            use rtic::time::Clock as _;
+                            if let Ok(v) = unsafe{ (&*#app_path::#ident.as_ptr()).try_now() } {
+                                v
+                            } else {
+                                unreachable!("Your monotonic is not infallible!")
+                            }
+                        })
+                    }
+                }
+            }
         })
         .collect();
 

@@ -42,7 +42,10 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         let monotonic_name = monotonic.ident.to_string();
         let tq = util::tq_ident(&monotonic_name);
         let t = util::schedule_t_ident();
-        let m = &monotonic.ident;
+        let m = util::mangle_monotonic_type(&monotonic_name);
+        let m_ident = util::monotonic_ident(&monotonic_name);
+        let app_name = &app.name;
+        let app_path = quote! {crate::#app_name};
 
         // Static variables and resource proxy
         {
@@ -62,6 +65,15 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                         rtic::export::iBinaryHeap::new()
                     )
                 );
+            ));
+
+            let mono = util::monotonic_ident(&monotonic_name);
+            let doc = &format!("Storage for {}", monotonic_name);
+            let mono_ty = quote!(core::mem::MaybeUninit<#m>);
+
+            items.push(quote!(
+                #[doc = #doc]
+                static mut #mono: #mono_ty = core::mem::MaybeUninit::uninit();
             ));
         }
 
@@ -100,8 +112,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 .collect::<Vec<_>>();
 
             let bound_interrupt = &monotonic.args.binds;
-            let enable_isr = if &*bound_interrupt.to_string() == "SysTick" {
-                quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(()).enable_interrupt())
+            let disable_isr = if &*bound_interrupt.to_string() == "SysTick" {
+                quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(()).disable_interrupt())
             } else {
                 quote!(rtic::export::NVIC::mask(#rt_err::#enum_::#bound_interrupt))
             };
@@ -111,7 +123,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
                     while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue(
-                                || #enable_isr,
+                                || #disable_isr,
+                                &mut *#app_path::#m_ident.as_mut_ptr(),
                             ))
                     {
                         match task {
