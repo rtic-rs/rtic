@@ -107,7 +107,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let app_name = &app.name;
     let app_path = quote! {crate::#app_name};
 
-    let monotonic_imports: Vec<_> = app
+    let monotonic_parts: Vec<_> = app
         .monotonics
         .iter()
         .map(|(_, monotonic)| {
@@ -116,9 +116,12 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             let mangled_name = util::mangle_monotonic_type(&name.to_string());
             let ident = util::monotonic_ident(&name.to_string());
             quote! {
+                pub use rtic::Monotonic as _;
+
                 #[doc(hidden)]
                 pub type #mangled_name = #ty;
 
+                #[allow(non_snake_case)]
                 pub mod #name {
                     pub fn now() -> rtic::time::Instant<#app_path::#mangled_name> {
                         rtic::export::interrupt::free(|_| {
@@ -144,7 +147,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             /// Always include the device crate which contains the vector table
             use #device as #rt_err;
 
-            #(#monotonic_imports)*
+            #(#monotonic_parts)*
 
             #(#user_imports)*
 
