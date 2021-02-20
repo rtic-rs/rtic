@@ -10,8 +10,8 @@ use panic_halt as _;
 #[rtic::app(device = lm3s6965)]
 mod app {
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
-        init::LateResources {}
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+        (init::LateResources {}, init::Monotonics())
     }
 
     // Cortex-M exception

@@ -13,14 +13,14 @@ mod app {
     use lm3s6965::Interrupt;
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         // Pends the UART0 interrupt but its handler won't run until *after*
         // `init` returns because interrupts are disabled
         rtic::pend(Interrupt::UART0); // equivalent to NVIC::pend
 
         hprintln!("init").unwrap();
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[idle]

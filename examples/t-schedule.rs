@@ -7,17 +7,17 @@
 
 use panic_halt as _;
 
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use rtic::cyccnt::{Instant, U32Ext as _};
 
     #[init]
-    fn init(c: init::Context) -> init::LateResources {
+    fn init(c: init::Context) -> (init::LateResources, init::Monotonics) {
         let _: Result<(), ()> = foo::schedule(c.start + 10.cycles());
         let _: Result<(), u32> = bar::schedule(c.start + 20.cycles(), 0);
         let _: Result<(), (u32, u32)> = baz::schedule(c.start + 30.cycles(), 0, 1);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[idle]

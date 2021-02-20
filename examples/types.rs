@@ -7,10 +7,9 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965, peripherals = true, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
+#[rtic::app(device = lm3s6965, peripherals = true, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::debug;
-    use rtic::cyccnt;
 
     #[resources]
     struct Resources {
@@ -19,14 +18,14 @@ mod app {
     }
 
     #[init]
-    fn init(cx: init::Context) -> init::LateResources {
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
         let _: cyccnt::Instant = cx.start;
         let _: rtic::Peripherals = cx.core;
         let _: lm3s6965::Peripherals = cx.device;
 
         debug::exit(debug::EXIT_SUCCESS);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[idle]

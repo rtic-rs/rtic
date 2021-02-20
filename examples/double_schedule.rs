@@ -7,20 +7,13 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use rtic::cyccnt::U32Ext;
-
-    #[resources]
-    struct Resources {
-        nothing: (),
-    }
-
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         task1::spawn().ok();
 
-        init::LateResources { nothing: () }
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[task]

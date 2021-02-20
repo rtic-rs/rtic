@@ -12,10 +12,10 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         foo::spawn(/* no message */).unwrap();
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[task]

@@ -5,7 +5,7 @@
 
 use panic_halt as _;
 
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0, QEI0])]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0, QEI0])]
 mod app {
     #[resources]
     struct Resources {
@@ -15,11 +15,11 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         #[cfg(never)]
         static mut BAR: u32 = 0;
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[idle]

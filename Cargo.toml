@@ -19,10 +19,6 @@ version = "0.6.0-alpha.0"
 name = "rtic"
 
 [[example]]
-name = "baseline"
-required-features = ["__v7"]
-
-[[example]]
 name = "periodic"
 required-features = ["__v7"]
 

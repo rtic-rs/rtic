@@ -18,11 +18,11 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
         rtic::pend(Interrupt::UART1);
 
-        init::LateResources { key: 0xdeadbeef }
+        (init::LateResources { key: 0xdeadbeef }, init::Monotonics())
     }
 
     #[task(binds = UART0, resources = [&key])]

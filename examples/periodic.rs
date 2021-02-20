@@ -8,7 +8,7 @@
 use panic_semihosting as _;
 
 // NOTE: does NOT work on QEMU!
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::hprintln;
     use rtic::cyccnt::{Instant, U32Ext};
@@ -16,12 +16,12 @@ mod app {
     const PERIOD: u32 = 8_000_000;
 
     #[init]
-    fn init(cx: init::Context) -> init::LateResources {
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
         // omitted: initialization of `CYCCNT`
 
         foo::schedule(cx.start + PERIOD.cycles()).unwrap();
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[task]

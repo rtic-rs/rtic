@@ -8,14 +8,14 @@
 use panic_halt as _;
 
 // NOTE: does NOT work on QEMU!
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use cortex_m::peripheral::DWT;
     use cortex_m_semihosting::hprintln;
     use rtic::cyccnt::{Instant, U32Ext as _};
 
     #[init()]
-    fn init(mut cx: init::Context) -> init::LateResources {
+    fn init(mut cx: init::Context) -> (init::LateResources, init::Monotonics) {
         // Initialize (enable) the monotonic timer (CYCCNT)
         cx.core.DCB.enable_trace();
         // required on Cortex-M7 devices that software lock the DWT (e.g. STM32F7)
@@ -34,7 +34,7 @@ mod app {
         // Schedule `bar` to run 4e6 cycles in the future
         bar::schedule(now + 4_000_000.cycles()).unwrap();
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[task]

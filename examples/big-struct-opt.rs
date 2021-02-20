@@ -31,7 +31,7 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         let big_struct = unsafe {
             static mut BIG_STRUCT: MaybeUninit<BigStruct> = MaybeUninit::uninit();
 
@@ -40,9 +40,12 @@ mod app {
             &mut *BIG_STRUCT.as_mut_ptr()
         };
 
-        init::LateResources {
-            // assign the reference so we can use the resource
-            big_struct,
-        }
+        (
+            init::LateResources {
+                // assign the reference so we can use the resource
+                big_struct,
+            },
+            init::Monotonics(),
+        )
     }
 }

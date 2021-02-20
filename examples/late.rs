@@ -25,13 +25,13 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         static mut Q: Queue<u32, U4> = Queue(i::Queue::new());
 
         let (p, c) = Q.split();
 
         // Initialization of late resources
-        init::LateResources { p, c }
+        (init::LateResources { p, c }, init::Monotonics())
     }
 
     #[idle(resources = [c])]

@@ -10,10 +10,10 @@ mod app {
     use cortex_m_semihosting::debug;
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         taskmain::spawn().ok();
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[task]

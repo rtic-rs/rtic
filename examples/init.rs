@@ -12,7 +12,7 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
     #[init]
-    fn init(cx: init::Context) -> init::LateResources {
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
         static mut X: u32 = 0;
 
         // Cortex-M peripherals
@@ -32,6 +32,6 @@ mod app {
 
         debug::exit(debug::EXIT_SUCCESS);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 }

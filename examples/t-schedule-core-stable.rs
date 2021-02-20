@@ -7,13 +7,13 @@
 
 use panic_halt as _;
 
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     #[init]
-    fn init(c: init::Context) -> init::LateResources {
-        let _c: rtic::Peripherals = c.core;
+    fn init(c: init::Context) -> (init::LateResources, init::Monotonics) {
+        let _c: cortex_m::Peripherals = c.core;
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[task]
