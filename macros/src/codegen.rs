@@ -112,9 +112,12 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         .iter()
         .map(|(_, monotonic)| {
             let name = &monotonic.ident;
+            let name_str = &name.to_string();
             let ty = &monotonic.ty;
-            let mangled_name = util::mangle_monotonic_type(&name.to_string());
-            let ident = util::monotonic_ident(&name.to_string());
+            let mangled_name = util::mangle_monotonic_type(&name_str);
+            let ident = util::monotonic_ident(&name_str);
+            let panic_str = &format!("Use of monotonic '{}' before it was passed to the runtime", name_str);
+
             quote! {
                 pub use rtic::Monotonic as _;
 
@@ -123,14 +126,20 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
                 #[allow(non_snake_case)]
                 pub mod #name {
+                    /// Access the global `Monotonic` implementation, not that this will panic
+                    /// before the this `Monotonic` has been passed to the RTIC runtime.
                     pub fn now() -> rtic::time::Instant<#app_path::#mangled_name> {
                         rtic::export::interrupt::free(|_| {
                             use rtic::Monotonic as _;
                             use rtic::time::Clock as _;
-                            if let Ok(v) = unsafe{ (&*#app_path::#ident.as_ptr()).try_now() } {
-                                v
+                            if let Some(m) = unsafe{ #app_path::#ident.as_ref() } {
+                                if let Ok(v) = m.try_now() {
+                                    v
+                                } else {
+                                    unreachable!("Your monotonic is not infallible!")
+                                }
                             } else {
-                                unreachable!("Your monotonic is not infallible!")
+                                panic!(#panic_str);
                             }
                         })
                     }

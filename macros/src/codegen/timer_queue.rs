@@ -69,11 +69,11 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
             let mono = util::monotonic_ident(&monotonic_name);
             let doc = &format!("Storage for {}", monotonic_name);
-            let mono_ty = quote!(core::mem::MaybeUninit<#m>);
+            let mono_ty = quote!(Option<#m>);
 
             items.push(quote!(
                 #[doc = #doc]
-                static mut #mono: #mono_ty = core::mem::MaybeUninit::uninit();
+                static mut #mono: #mono_ty = None;
             ));
         }
 
@@ -122,10 +122,15 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
-                    while let Some((task, index)) = rtic::export::interrupt::free(|_| #tq.dequeue(
-                                || #disable_isr,
-                                &mut *#app_path::#m_ident.as_mut_ptr(),
-                            ))
+
+                    while let Some((task, index)) = rtic::export::interrupt::free(|_|
+                        if let Some(mono) = #app_path::#m_ident.as_mut() {
+                            #tq.dequeue(|| #disable_isr, mono)
+                        } else {
+                            // We can only use the timer queue if `init` has returned, and it
+                            // writes the `Some(monotonic)` we are accessing here.
+                            core::hint::unreachable_unchecked()
+                        })
                     {
                         match task {
                             #(#arms)*
