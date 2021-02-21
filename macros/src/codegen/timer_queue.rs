@@ -136,6 +136,10 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                             #(#arms)*
                         }
                     }
+
+                    rtic::export::interrupt::free(|_| if let Some(mono) = #app_path::#m_ident.as_mut() {
+                        mono.on_interrupt();
+                    });
                 }
             ));
         }
