@@ -90,9 +90,8 @@ where
 
                 Some((nr.task, nr.index))
             } else {
-                // TODO: Fix this hack...
-                // Extract the compare time.
-                mono.set_compare(*instant.duration_since_epoch().integer());
+                // Set compare
+                mono.set_compare(&instant);
 
                 // Double check that the instant we set is really in the future, else
                 // dequeue. If the monotonic is fast enough it can happen that from the
