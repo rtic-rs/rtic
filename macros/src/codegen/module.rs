@@ -269,7 +269,12 @@ pub fn codegen(
                     where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
                         D::T: Into<<#app_path::#m_mangled as rtic::time::Clock>::T>,
                 {
-                    let instant = #app_path::#m::now();
+
+                    let instant = if rtic::export::interrupt::free(|_| unsafe { #app_path::#m_ident.is_none() }) {
+                        rtic::time::Instant::new(0)
+                    } else {
+                        #app_path::#m::now()
+                    };
 
                     spawn_at(instant + duration, #(,#untupled)*)
                 }
