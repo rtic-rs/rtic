@@ -29,6 +29,7 @@ where
         nr: NotReady<Mono, Task>,
         enable_interrupt: F1,
         pend_handler: F2,
+        mono: &mut Mono,
     ) where
         F1: FnOnce(),
         F2: FnOnce(),
@@ -46,7 +47,8 @@ where
             .unwrap_or(true);
         if if_heap_max_greater_than_nr {
             if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE && is_empty {
-                // mem::transmute::<_, SYST>(()).enable_interrupt();
+                // mem::transmute::<_, SYST>(()).enable_interrupt();A
+                mono.enable_timer();
                 enable_interrupt();
             }
 
@@ -108,6 +110,7 @@ where
             // The queue is empty, disable the interrupt.
             if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
                 disable_interrupt();
+                mono.disable_timer();
             }
 
             None

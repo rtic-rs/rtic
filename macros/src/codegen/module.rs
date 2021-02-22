@@ -230,11 +230,13 @@ pub fn codegen(
         // Schedule caller
         for (_, monotonic) in &app.monotonics {
             let instants = util::monotonic_instants_ident(name, &monotonic.ident);
+            let monotonic_name = monotonic.ident.to_string();
 
             let tq = util::tq_ident(&monotonic.ident.to_string());
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
-            let m_mangled = util::mangle_monotonic_type(&monotonic.ident.to_string());
+            let m_mangled = util::mangle_monotonic_type(&monotonic_name);
+            let m_ident = util::monotonic_ident(&monotonic_name);
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
 
@@ -296,11 +298,18 @@ pub fn codegen(
                                 task: #app_path::#t::#name,
                             };
 
-                            rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(
-                                    nr,
-                                    || #enable_interrupt,
-                                    || #pend,
-                            ));
+                            rtic::export::interrupt::free(|_|
+                                if let Some(mono) = #app_path::#m_ident.as_mut() {
+                                    #app_path::#tq.enqueue_unchecked(
+                                        nr,
+                                        || #enable_interrupt,
+                                        || #pend,
+                                        mono)
+                                } else {
+                                    // We can only use the timer queue if `init` has returned, and it
+                                    // writes the `Some(monotonic)` we are accessing here.
+                                    core::hint::unreachable_unchecked()
+                                });
 
                             Ok(())
                         } else {
