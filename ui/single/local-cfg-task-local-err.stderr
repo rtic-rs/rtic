@@ -5,15 +5,15 @@ error: task local resource "l2" is used by multiple tasks
    |         ^^
 
 error: task local resource "l2" is used by task "uart0" with priority 1
-  --> $DIR/local-cfg-task-local-err.rs:51:39
+  --> $DIR/local-cfg-task-local-err.rs:54:39
    |
-51 |         #[cfg(feature = "feature_l2")]l2,
+54 |         #[cfg(feature = "feature_l2")]l2,
    |                                       ^^
 
 error: task local resource "l2" is used by task "uart1" with priority 1
-  --> $DIR/local-cfg-task-local-err.rs:60:44
+  --> $DIR/local-cfg-task-local-err.rs:63:44
    |
-60 |         #[cfg(not(feature = "feature_l2"))]l2
+63 |         #[cfg(not(feature = "feature_l2"))]l2
    |                                            ^^
 
 warning: unused import: `cortex_m_semihosting::debug`
