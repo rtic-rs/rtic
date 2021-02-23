@@ -116,7 +116,10 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             let ty = &monotonic.ty;
             let mangled_name = util::mangle_monotonic_type(&name_str);
             let ident = util::monotonic_ident(&name_str);
-            let panic_str = &format!("Use of monotonic '{}' before it was passed to the runtime", name_str);
+            let panic_str = &format!(
+                "Use of monotonic '{}' before it was passed to the runtime",
+                name_str
+            );
 
             quote! {
                 pub use rtic::Monotonic as _;

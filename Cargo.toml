@@ -18,6 +18,38 @@ version = "0.6.0-alpha.0"
 [lib]
 name = "rtic"
 
+[[example]]
+name = "periodic"
+required-features = ["__v7"]
+
+[[example]]
+name = "pool"
+required-features = ["__v7"]
+
+[[example]]
+name = "schedule"
+required-features = ["__v7"]
+
+[[example]]
+name = "t-cfg"
+required-features = ["__v7"]
+
+[[example]]
+name = "t-cfg-resources"
+required-features = ["__min_r1_43"]
+
+[[example]]
+name = "t-schedule"
+required-features = ["__v7"]
+
+[[example]]
+name = "types"
+required-features = ["__v7"]
+
+[[example]]
+name = "double_schedule"
+required-features = ["__v7"]
+
 [dependencies]
 cortex-m = "0.7.0"
 cortex-m-rtic-macros = { path = "macros", version = "0.6.0-alpha.0" }
@@ -26,6 +58,11 @@ rtic-monotonic = { git = "https://github.com/rtic-rs/rtic-monotonic", branch = "
 #rtic-core = "0.3.1"
 heapless = "0.5.0"
 bare-metal = "1.0.0"
+
+[dependencies.dwt-systick-monotonic]
+git = "https://github.com/rtic-rs/dwt-systick-monotonic"
+branch = "master"
+optional = true
 
 [build-dependencies]
 version_check = "0.9"
@@ -41,6 +78,11 @@ version = "0.5.2"
 
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
 trybuild = "1"
+
+[features]
+# used for testing this crate; do not use in applications
+__v7 = ["dwt-systick-monotonic"]
+__min_r1_43 = []
 
 [profile.release]
 codegen-units = 1

@@ -9,48 +9,43 @@ use panic_halt as _;
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use rtic::cyccnt::{Instant, U32Ext as _};
+    use dwt_systick_monotonic::{
+        consts::{U0, U8},
+        DwtSystick,
+    };
+    use rtic::time::duration::Seconds;
+
+    #[monotonic(binds = SysTick, default = true)]
+    type MyMono = DwtSystick<U8, U0, U0>; // 8 MHz
 
     #[init]
-    fn init(c: init::Context) -> (init::LateResources, init::Monotonics) {
-        let _: Result<(), ()> = foo::schedule(c.start + 10.cycles());
-        let _: Result<(), u32> = bar::schedule(c.start + 20.cycles(), 0);
-        let _: Result<(), (u32, u32)> = baz::schedule(c.start + 30.cycles(), 0, 1);
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
+        let mut dcb = cx.core.DCB;
+        let dwt = cx.core.DWT;
+        let systick = cx.core.SYST;
 
-        (init::LateResources {}, init::Monotonics())
+        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
+
+        let _: Result<(), ()> = foo::spawn_after(Seconds(1_u32));
+        let _: Result<(), u32> = bar::spawn_after(Seconds(2_u32), 0);
+        let _: Result<(), (u32, u32)> = baz::spawn_after(Seconds(3_u32), 0, 1);
+
+        (init::LateResources {}, init::Monotonics(mono))
     }
 
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        let _: Result<(), ()> = foo::schedule(Instant::now() + 40.cycles());
-        let _: Result<(), u32> = bar::schedule(Instant::now() + 50.cycles(), 0);
-        let _: Result<(), (u32, u32)> = baz::schedule(Instant::now() + 60.cycles(), 0, 1);
+        let _: Result<(), ()> = foo::spawn_at(MyMono::now() + Seconds(3_u32));
+        let _: Result<(), u32> = bar::spawn_at(MyMono::now() + Seconds(4_u32), 0);
+        let _: Result<(), (u32, u32)> = baz::spawn_at(MyMono::now() + Seconds(5_u32), 0, 1);
 
         loop {
             cortex_m::asm::nop();
         }
     }
 
-    #[task(binds = SVCall)]
-    fn svcall(c: svcall::Context) {
-        let _: Result<(), ()> = foo::schedule(c.start + 70.cycles());
-        let _: Result<(), u32> = bar::schedule(c.start + 80.cycles(), 0);
-        let _: Result<(), (u32, u32)> = baz::schedule(c.start + 90.cycles(), 0, 1);
-    }
-
-    #[task(binds = UART0)]
-    fn uart0(c: uart0::Context) {
-        let _: Result<(), ()> = foo::schedule(c.start + 100.cycles());
-        let _: Result<(), u32> = bar::schedule(c.start + 110.cycles(), 0);
-        let _: Result<(), (u32, u32)> = baz::schedule(c.start + 120.cycles(), 0, 1);
-    }
-
     #[task]
-    fn foo(c: foo::Context) {
-        let _: Result<(), ()> = foo::schedule(c.scheduled + 130.cycles());
-        let _: Result<(), u32> = bar::schedule(c.scheduled + 140.cycles(), 0);
-        let _: Result<(), (u32, u32)> = baz::schedule(c.scheduled + 150.cycles(), 0, 1);
-    }
+    fn foo(_: foo::Context) {}
 
     #[task]
     fn bar(_: bar::Context, _x: u32) {}

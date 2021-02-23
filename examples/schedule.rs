@@ -10,40 +10,42 @@ use panic_halt as _;
 // NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use cortex_m::peripheral::DWT;
     use cortex_m_semihosting::hprintln;
-    use rtic::cyccnt::{Instant, U32Ext as _};
+    use dwt_systick_monotonic::{
+        consts::{U0, U8},
+        DwtSystick,
+    };
+    use rtic::time::duration::Seconds;
+
+    #[monotonic(binds = SysTick, default = true)]
+    type MyMono = DwtSystick<U8, U0, U0>; // 8 MHz
 
     #[init()]
-    fn init(mut cx: init::Context) -> (init::LateResources, init::Monotonics) {
-        // Initialize (enable) the monotonic timer (CYCCNT)
-        cx.core.DCB.enable_trace();
-        // required on Cortex-M7 devices that software lock the DWT (e.g. STM32F7)
-        DWT::unlock();
-        cx.core.DWT.enable_cycle_counter();
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
+        let mut dcb = cx.core.DCB;
+        let dwt = cx.core.DWT;
+        let systick = cx.core.SYST;
 
-        // semantically, the monotonic timer is frozen at time "zero" during `init`
-        // NOTE do *not* call `Instant::now` in this context; it will return a nonsense value
-        let now = cx.start; // the start time of the system
+        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
 
-        hprintln!("init @ {:?}", now).unwrap();
+        hprintln!("init").unwrap();
 
-        // Schedule `foo` to run 8e6 cycles (clock cycles) in the future
-        foo::schedule(now + 8_000_000.cycles()).unwrap();
+        // Schedule `foo` to run 1 second in the future
+        foo::spawn_after(Seconds(1_u32)).unwrap();
 
-        // Schedule `bar` to run 4e6 cycles in the future
-        bar::schedule(now + 4_000_000.cycles()).unwrap();
+        // Schedule `bar` to run 2 seconds in the future
+        bar::spawn_after(Seconds(2_u32)).unwrap();
 
-        (init::LateResources {}, init::Monotonics())
+        (init::LateResources {}, init::Monotonics(mono))
     }
 
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo  @ {:?}", Instant::now()).unwrap();
+        hprintln!("foo").unwrap();
     }
 
     #[task]
     fn bar(_: bar::Context) {
-        hprintln!("bar  @ {:?}", Instant::now()).unwrap();
+        hprintln!("bar").unwrap();
     }
 }

@@ -263,7 +263,7 @@ pub fn codegen(
             pub mod #m {
                 #(#cfgs)*
                 pub fn spawn_after<D>(
-                    duration: D,
+                    duration: D
                     #(,#args)*
                 ) -> Result<(), #ty>
                     where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
@@ -276,7 +276,7 @@ pub fn codegen(
                         #app_path::#m::now()
                     };
 
-                    spawn_at(instant + duration, #(,#untupled)*)
+                    spawn_at(instant + duration #(,#untupled)*)
                 }
 
                 #(#cfgs)*
