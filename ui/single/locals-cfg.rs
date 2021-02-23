@@ -4,13 +4,13 @@ use panic_halt as _;
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         #[cfg(never)]
         static mut FOO: u32 = 0;
 
         FOO;
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[idle]
