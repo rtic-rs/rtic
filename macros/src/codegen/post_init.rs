@@ -13,7 +13,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     if !analysis.late_resources.is_empty() {
         // BTreeSet wrapped in a vector
         for name in analysis.late_resources.first().unwrap() {
-            let mangled_name = util::mangle_ident(&name);
+            let mangled_name = util::mark_internal_ident(&name);
             // If it's live
             let cfgs = app.late_resources[name].cfgs.clone();
             if analysis.locations.get(name).is_some() {
@@ -35,6 +35,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
 
         // Store the monotonic
         let name = util::monotonic_ident(&monotonic.to_string());
+        let name = util::mark_internal_ident(&name);
         stmts.push(quote!(#name = Some(monotonics.#idx);));
     }
 

@@ -26,9 +26,10 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 })
                 .collect::<Vec<_>>();
 
-            let doc = "Tasks that can be scheduled".to_string();
+            // let doc = "Tasks that can be scheduled".to_string();
             items.push(quote!(
-                #[doc = #doc]
+                // #[doc = #doc]
+                #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
                 enum #t {
@@ -41,25 +42,27 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
     for (_, monotonic) in &app.monotonics {
         let monotonic_name = monotonic.ident.to_string();
         let tq = util::tq_ident(&monotonic_name);
+        let tq = util::mark_internal_ident(&tq);
         let t = util::schedule_t_ident();
-        let m = util::mangle_monotonic_type(&monotonic_name);
+        let mono_type = &monotonic.ty;
         let m_ident = util::monotonic_ident(&monotonic_name);
+        let m_ident = util::mark_internal_ident(&m_ident);
         let app_name = &app.name;
         let app_path = quote! {crate::#app_name};
 
         // Static variables and resource proxy
         {
-            let doc = &format!("Timer queue for {}", monotonic_name);
+            // let doc = &format!("Timer queue for {}", monotonic_name);
             let cap = app
                 .software_tasks
                 .iter()
                 .map(|(_name, task)| task.args.capacity)
                 .sum();
             let n = util::capacity_typenum(cap, false);
-            let tq_ty = quote!(rtic::export::TimerQueue<#m, #t, #n>);
+            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n>);
 
             items.push(quote!(
-                #[doc = #doc]
+                #[doc(hidden)]
                 static mut #tq: #tq_ty = rtic::export::TimerQueue(
                     rtic::export::BinaryHeap(
                         rtic::export::iBinaryHeap::new()
@@ -68,12 +71,12 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             ));
 
             let mono = util::monotonic_ident(&monotonic_name);
-            let doc = &format!("Storage for {}", monotonic_name);
-            let mono_ty = quote!(Option<#m>);
+            let mono = util::mark_internal_ident(&mono);
+            // let doc = &format!("Storage for {}", monotonic_name);
 
             items.push(quote!(
-                #[doc = #doc]
-                static mut #mono: #mono_ty = None;
+                #[doc(hidden)]
+                static mut #mono: Option<#mono_type> = None;
             ));
         }
 
@@ -89,6 +92,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     let cfgs = &task.cfgs;
                     let priority = task.args.priority;
                     let rq = util::rq_ident(priority);
+                    let rq = util::mark_internal_ident(&rq);
                     let rqt = util::spawn_t_ident(priority);
 
                     // The interrupt that runs the task dispatcher

@@ -31,7 +31,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             None
         };
         let ty = &res.ty;
-        let mangled_name = util::mangle_ident(&name);
+        let mangled_name = util::mark_internal_ident(&name);
 
         // let ownership = &analysis.ownerships[name];
         let r_prop = &res.properties;
@@ -112,6 +112,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let doc = format!("Resources `{}` has access to", ctxt.ident(app));
     let ident = util::resources_ident(ctxt, app);
+    let ident = util::mark_internal_ident(&ident);
     let item = quote!(
         #[allow(non_snake_case)]
         #[doc = #doc]

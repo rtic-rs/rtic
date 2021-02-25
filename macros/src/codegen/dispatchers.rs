@@ -26,15 +26,16 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             })
             .collect::<Vec<_>>();
 
-        let doc = format!(
-            "Software tasks to be dispatched at priority level {}",
-            level,
-        );
+        // let doc = format!(
+        //     "Software tasks to be dispatched at priority level {}",
+        //     level,
+        // );
         let t = util::spawn_t_ident(level);
         items.push(quote!(
             #[allow(non_camel_case_types)]
             #[derive(Clone, Copy)]
-            #[doc = #doc]
+            // #[doc = #doc]
+            #[doc(hidden)]
             pub enum #t {
                 #(#variants,)*
             }
@@ -42,6 +43,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
         let n = util::capacity_typenum(channel.capacity, true);
         let rq = util::rq_ident(level);
+        let rq = util::mark_internal_ident(&rq);
         let (rq_ty, rq_expr) = {
             (
                 quote!(rtic::export::SCRQ<#t, #n>),
@@ -51,12 +53,12 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             )
         };
 
-        let doc = format!(
-            "Queue of tasks ready to be dispatched at priority level {}",
-            level
-        );
+        // let doc = format!(
+        //     "Queue of tasks ready to be dispatched at priority level {}",
+        //     level
+        // );
         items.push(quote!(
-            #[doc = #doc]
+            #[doc(hidden)]
             static mut #rq: #rq_ty = #rq_expr;
         ));
 
@@ -67,7 +69,9 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 let task = &app.software_tasks[name];
                 let cfgs = &task.cfgs;
                 let fq = util::fq_ident(name);
+                let fq = util::mark_internal_ident(&fq);
                 let inputs = util::inputs_ident(name);
+                let inputs = util::mark_internal_ident(&inputs);
                 let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
 
                 let locals_new = if task.locals.is_empty() {

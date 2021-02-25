@@ -17,6 +17,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     for (name, task) in &app.software_tasks {
         let cap = task.args.capacity;
         let fq_ident = util::fq_ident(name);
+        let fq_ident = util::mark_internal_ident(&fq_ident);
 
         stmts.push(quote!(
             (0..#cap).for_each(|i| #fq_ident.enqueue_unchecked(i));
@@ -77,19 +78,20 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     }
 
     // Initialize monotonic's interrupts
-    for (ident, priority, name) in app
-        .monotonics
-        .iter()
-        .map(|(ident, monotonic)| (ident, &monotonic.args.priority, &monotonic.args.binds))
+    for (_, monotonic) in app.monotonics.iter()
+    //.map(|(ident, monotonic)| (ident, &monotonic.args.priority, &monotonic.args.binds))
     {
+        let priority = &monotonic.args.priority;
+        let binds = &monotonic.args.binds;
+
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
         let app_name = &app.name;
         let app_path = quote! {crate::#app_name};
-        let mono_type = util::mangle_monotonic_type(&ident.to_string());
+        let mono_type = &monotonic.ty;
 
-        if &*name.to_string() == "SysTick" {
+        if &*binds.to_string() == "SysTick" {
             stmts.push(quote!(
                 core.SCB.set_priority(
                     rtic::export::SystemHandler::SysTick,
@@ -97,7 +99,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 );
 
                 // Always enable monotonic interrupts if they should never be off
-                if !#app_path::#mono_type::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
+                if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
                     core::mem::transmute::<_, cortex_m::peripheral::SYST>(())
                         .enable_interrupt();
                 }
@@ -107,13 +109,13 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             let interrupt = util::interrupt_ident();
             stmts.push(quote!(
                 core.NVIC.set_priority(
-                    #rt_err::#interrupt::#name,
+                    #rt_err::#interrupt::#binds,
                     rtic::export::logical2hw(#priority, #nvic_prio_bits),
                 );
 
                 // Always enable monotonic interrupts if they should never be off
-                if !#app_path::#mono_type::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
-                    rtic::export::NVIC::unmask(#app_path::#rt_err::#interrupt::#name);
+                if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
+                    rtic::export::NVIC::unmask(#app_path::#rt_err::#interrupt::#binds);
                 }
             ));
         }

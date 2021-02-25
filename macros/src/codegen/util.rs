@@ -106,8 +106,8 @@ pub fn is_exception(name: &Ident) -> bool {
     )
 }
 
-/// Mangle an ident
-pub fn mangle_ident(ident: &Ident) -> Ident {
+/// Mark an ident as internal
+pub fn mark_internal_ident(ident: &Ident) -> Ident {
     Ident::new(
         &format!("__rtic_internal_{}", ident.to_string()),
         Span::call_site(),
@@ -242,11 +242,6 @@ pub fn tq_ident(name: &str) -> Ident {
 /// Generates an identifier for monotonic timer storage
 pub fn monotonic_ident(name: &str) -> Ident {
     Ident::new(&format!("MONOTONIC_STORAGE_{}", name), Span::call_site())
-}
-
-/// Generates an identifier for monotonic timer storage
-pub fn mangle_monotonic_type(name: &str) -> Ident {
-    Ident::new(&format!("MonotonicMangled{}", name), Span::call_site())
 }
 
 /// The name to get better RT flag errors

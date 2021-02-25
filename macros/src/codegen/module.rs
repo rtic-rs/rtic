@@ -68,6 +68,7 @@ pub fn codegen(
 
     if ctxt.has_resources(app) {
         let ident = util::resources_ident(ctxt, app);
+        let ident = util::mark_internal_ident(&ident);
         let lt = if resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
@@ -122,8 +123,8 @@ pub fn codegen(
             .monotonics
             .iter()
             .map(|(_, monotonic)| {
-                let mono = util::mangle_monotonic_type(&monotonic.ident.to_string());
-                quote! {#app_path::#mono}
+                let mono = &monotonic.ty;
+                quote! {#mono}
             })
             .collect();
 
@@ -185,8 +186,11 @@ pub fn codegen(
         let args = &args;
         let tupled = &tupled;
         let fq = util::fq_ident(name);
+        let fq = util::mark_internal_ident(&fq);
         let rq = util::rq_ident(priority);
+        let rq = util::mark_internal_ident(&rq);
         let inputs = util::inputs_ident(name);
+        let inputs = util::mark_internal_ident(&inputs);
 
         let device = &extra.device;
         let enum_ = util::interrupt_ident();
@@ -199,6 +203,7 @@ pub fn codegen(
         // Spawn caller
         items.push(quote!(
         #(#cfgs)*
+        /// Spawns the task directly
         pub fn spawn(#(#args,)*) -> Result<(), #ty> {
             let input = #tupled;
 
@@ -226,13 +231,16 @@ pub fn codegen(
         // Schedule caller
         for (_, monotonic) in &app.monotonics {
             let instants = util::monotonic_instants_ident(name, &monotonic.ident);
+            let instants = util::mark_internal_ident(&instants);
             let monotonic_name = monotonic.ident.to_string();
 
             let tq = util::tq_ident(&monotonic.ident.to_string());
+            let tq = util::mark_internal_ident(&tq);
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
-            let m_mangled = util::mangle_monotonic_type(&monotonic_name);
+            let mono_type = &monotonic.ty;
             let m_ident = util::monotonic_ident(&monotonic_name);
+            let m_ident = util::mark_internal_ident(&m_ident);
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
 
@@ -255,15 +263,24 @@ pub fn codegen(
                 )
             };
 
+            let user_imports = &app.user_imports;
+
             items.push(quote!(
+            /// Holds methods related to this monotonic
             pub mod #m {
+                #(
+                    #[allow(unused_imports)]
+                    #user_imports
+                )*
+
                 #(#cfgs)*
+                /// Spawns the task after a set duration relative to the current time
                 pub fn spawn_after<D>(
                     duration: D
                     #(,#args)*
                 ) -> Result<(), #ty>
                     where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
-                        D::T: Into<<#app_path::#m_mangled as rtic::time::Clock>::T>,
+                        D::T: Into<<#app_path::#mono_type as rtic::time::Clock>::T>,
                 {
 
                     let instant = if rtic::export::interrupt::free(|_| unsafe { #app_path::#m_ident.is_none() }) {
@@ -276,8 +293,9 @@ pub fn codegen(
                 }
 
                 #(#cfgs)*
+                /// Spawns the task at a fixed time instant
                 pub fn spawn_at(
-                    instant: rtic::time::Instant<#app_path::#m_mangled>
+                    instant: rtic::time::Instant<#app_path::#mono_type>
                     #(,#args)*
                 ) -> Result<(), #ty> {
                     unsafe {

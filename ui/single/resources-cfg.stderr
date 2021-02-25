@@ -4,7 +4,7 @@ error: duplicate lang item in crate `panic_halt` (which `$CRATE` depends on): `p
   = note: first definition in `std` loaded from /usr/share/rust/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-6f77337c1826707d.rlib
   = note: second definition in `panic_halt` loaded from $DIR/target/tests/target/x86_64-unknown-linux-gnu/debug/deps/libpanic_halt-ad4cf7fac73711f1.rmeta
 
-error[E0609]: no field `o1` on type `initResources<'_>`
+error[E0609]: no field `o1` on type `__rtic_internal_initResources<'_>`
   --> $DIR/resources-cfg.rs:47:21
    |
 47 |         c.resources.o1;
@@ -12,7 +12,7 @@ error[E0609]: no field `o1` on type `initResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `o4` on type `initResources<'_>`
+error[E0609]: no field `o4` on type `__rtic_internal_initResources<'_>`
   --> $DIR/resources-cfg.rs:48:21
    |
 48 |         c.resources.o4;
@@ -20,7 +20,7 @@ error[E0609]: no field `o4` on type `initResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `o5` on type `initResources<'_>`
+error[E0609]: no field `o5` on type `__rtic_internal_initResources<'_>`
   --> $DIR/resources-cfg.rs:49:21
    |
 49 |         c.resources.o5;
@@ -28,7 +28,7 @@ error[E0609]: no field `o5` on type `initResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `o6` on type `initResources<'_>`
+error[E0609]: no field `o6` on type `__rtic_internal_initResources<'_>`
   --> $DIR/resources-cfg.rs:50:21
    |
 50 |         c.resources.o6;
@@ -36,7 +36,7 @@ error[E0609]: no field `o6` on type `initResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `s3` on type `initResources<'_>`
+error[E0609]: no field `s3` on type `__rtic_internal_initResources<'_>`
   --> $DIR/resources-cfg.rs:51:21
    |
 51 |         c.resources.s3;
@@ -44,7 +44,7 @@ error[E0609]: no field `s3` on type `initResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `o2` on type `idleResources<'_>`
+error[E0609]: no field `o2` on type `__rtic_internal_idleResources<'_>`
   --> $DIR/resources-cfg.rs:58:21
    |
 58 |         c.resources.o2;
@@ -52,7 +52,7 @@ error[E0609]: no field `o2` on type `idleResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `o4` on type `idleResources<'_>`
+error[E0609]: no field `o4` on type `__rtic_internal_idleResources<'_>`
   --> $DIR/resources-cfg.rs:59:21
    |
 59 |         c.resources.o4;
@@ -60,7 +60,7 @@ error[E0609]: no field `o4` on type `idleResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `s1` on type `idleResources<'_>`
+error[E0609]: no field `s1` on type `__rtic_internal_idleResources<'_>`
   --> $DIR/resources-cfg.rs:60:21
    |
 60 |         c.resources.s1;
@@ -68,7 +68,7 @@ error[E0609]: no field `s1` on type `idleResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `s3` on type `idleResources<'_>`
+error[E0609]: no field `s3` on type `__rtic_internal_idleResources<'_>`
   --> $DIR/resources-cfg.rs:61:21
    |
 61 |         c.resources.s3;
@@ -76,7 +76,7 @@ error[E0609]: no field `s3` on type `idleResources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `o3` on type `uart0Resources<'_>`
+error[E0609]: no field `o3` on type `__rtic_internal_uart0Resources<'_>`
   --> $DIR/resources-cfg.rs:68:21
    |
 68 |         c.resources.o3;
@@ -84,7 +84,7 @@ error[E0609]: no field `o3` on type `uart0Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `s1` on type `uart0Resources<'_>`
+error[E0609]: no field `s1` on type `__rtic_internal_uart0Resources<'_>`
   --> $DIR/resources-cfg.rs:69:21
    |
 69 |         c.resources.s1;
@@ -92,7 +92,7 @@ error[E0609]: no field `s1` on type `uart0Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `s2` on type `uart0Resources<'_>`
+error[E0609]: no field `s2` on type `__rtic_internal_uart0Resources<'_>`
   --> $DIR/resources-cfg.rs:70:21
    |
 70 |         c.resources.s2;
@@ -100,7 +100,7 @@ error[E0609]: no field `s2` on type `uart0Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `s3` on type `uart0Resources<'_>`
+error[E0609]: no field `s3` on type `__rtic_internal_uart0Resources<'_>`
   --> $DIR/resources-cfg.rs:71:21
    |
 71 |         c.resources.s3;
@@ -108,7 +108,7 @@ error[E0609]: no field `s3` on type `uart0Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `s2` on type `uart1Resources<'_>`
+error[E0609]: no field `s2` on type `__rtic_internal_uart1Resources<'_>`
   --> $DIR/resources-cfg.rs:76:21
    |
 76 |         c.resources.s2;
@@ -116,7 +116,7 @@ error[E0609]: no field `s2` on type `uart1Resources<'_>`
    |
    = note: available fields are: `__marker__`
 
-error[E0609]: no field `o5` on type `uart1Resources<'_>`
+error[E0609]: no field `o5` on type `__rtic_internal_uart1Resources<'_>`
   --> $DIR/resources-cfg.rs:77:21
    |
 77 |         c.resources.o5;

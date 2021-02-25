@@ -57,6 +57,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     let main = util::suffixed("main");
     mains.push(quote!(
+        #[doc(hidden)]
         mod rtic_ext {
             use super::*;
             #[no_mangle]
@@ -88,22 +89,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let user_code = &app.user_code;
     let name = &app.name;
     let device = &extra.device;
-
-    // Get the list of all tasks
-    // Currently unused, might be useful
-    let task_list = analysis.tasks.clone();
-
-    let mut tasks = vec![];
-
-    if !task_list.is_empty() {
-        tasks.push(quote!(
-            #[allow(non_camel_case_types)]
-            pub enum Tasks {
-                #(#task_list),*
-            }
-        ));
-    }
-
     let app_name = &app.name;
     let app_path = quote! {crate::#app_name};
 
@@ -114,25 +99,31 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             let name = &monotonic.ident;
             let name_str = &name.to_string();
             let ty = &monotonic.ty;
-            let mangled_name = util::mangle_monotonic_type(&name_str);
             let ident = util::monotonic_ident(&name_str);
+            let ident = util::mark_internal_ident(&ident);
             let panic_str = &format!(
                 "Use of monotonic '{}' before it was passed to the runtime",
                 name_str
             );
+            let doc = &format!(
+                "This module holds the static implementation for `{}::now()`",
+                name_str
+            );
+            let user_imports = &app.user_imports;
 
             quote! {
                 pub use rtic::Monotonic as _;
 
-                #[doc(hidden)]
-                pub type #mangled_name = #ty;
-
-                /// This module holds the static implementation for `#name::now()`
+                #[doc = #doc]
                 #[allow(non_snake_case)]
                 pub mod #name {
-                    /// Access the global `Monotonic` implementation, not that this will panic
-                    /// before the this `Monotonic` has been passed to the RTIC runtime.
-                    pub fn now() -> rtic::time::Instant<#app_path::#mangled_name> {
+                    #(
+                        #[allow(unused_imports)]
+                        #user_imports
+                    )*
+
+                    /// Read the current time from this monotonic
+                    pub fn now() -> rtic::time::Instant<#ty> {
                         rtic::export::interrupt::free(|_| {
                             use rtic::Monotonic as _;
                             use rtic::time::Clock as _;
@@ -181,9 +172,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             #(#root_hardware_tasks)*
 
             #(#root_software_tasks)*
-
-            /// Unused
-            #(#tasks)*
 
             /// app module
             #(#mod_app)*
