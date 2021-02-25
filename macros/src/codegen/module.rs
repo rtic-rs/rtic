@@ -53,13 +53,9 @@ pub fn codegen(
 
         Context::Idle => {}
 
-        Context::HardwareTask(..) => {
-            // None for now.
-        }
+        Context::HardwareTask(_) => {}
 
-        Context::SoftwareTask(..) => {
-            // None for now.
-        }
+        Context::SoftwareTask(_) => {}
     }
 
     if ctxt.has_locals(app) {

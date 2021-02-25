@@ -127,6 +127,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
                 #[doc(hidden)]
                 pub type #mangled_name = #ty;
 
+                /// This module holds the static implementation for `#name::now()`
                 #[allow(non_snake_case)]
                 pub mod #name {
                     /// Access the global `Monotonic` implementation, not that this will panic
@@ -154,7 +155,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let rt_err = util::rt_err_ident();
 
     quote!(
-        /// Implementation details
+        /// The RTIC application module
         pub mod #name {
             /// Always include the device crate which contains the vector table
             use #device as #rt_err;
