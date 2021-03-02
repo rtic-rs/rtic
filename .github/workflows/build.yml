@@ -474,7 +474,7 @@ jobs:
         with:
           use-cross: false
           command: test
-          args: --test single --features __v7
+          args: --test tests --features __v7
 
   # Run test suite for thumbv6m
   testv6:
@@ -515,7 +515,7 @@ jobs:
         with:
           use-cross: false
           command: test
-          args: --test single
+          args: --test tests
 
   # Build documentation, check links
   docs:
