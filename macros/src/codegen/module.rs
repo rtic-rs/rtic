@@ -275,6 +275,9 @@ pub fn codegen(
 
                 #(#cfgs)*
                 /// Spawns the task after a set duration relative to the current time
+                ///
+                /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
+                /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
                 pub fn spawn_after<D>(
                     duration: D
                     #(,#args)*
