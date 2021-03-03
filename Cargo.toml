@@ -68,7 +68,6 @@ version_check = "0.9"
 
 [dev-dependencies]
 lm3s6965 = "0.1.3"
-panic-halt = "0.2.0"
 cortex-m-semihosting = "0.3.3"
 
 [dev-dependencies.panic-semihosting]

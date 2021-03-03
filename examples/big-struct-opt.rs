@@ -6,7 +6,7 @@
 #![no_main]
 #![no_std]
 
-use panic_halt as _;
+use panic_semihosting as _;
 
 /// Some big struct
 pub struct BigStruct {
