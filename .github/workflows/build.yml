@@ -628,9 +628,9 @@ jobs:
         run: pip install git+https://github.com/linkchecker/linkchecker.git
 
       - name: mdBook Action
-        uses: peaceiris/actions-mdbook@v1.1.11
+        uses: peaceiris/actions-mdbook@v1
         with:
-          mdbook-version: '0.3.1'
+          mdbook-version: 'latest'
 
       - name: Build book in English
         run: cd book/en && mdbook build
@@ -682,10 +682,9 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: mdBook Action
-        uses: peaceiris/actions-mdbook@v1.1.11
+        uses: peaceiris/actions-mdbook@v1
         with:
-          mdbook-version: '0.3.1'
-          # mdbook-version: 'latest'
+          mdbook-version: 'latest'
 
       - name: Remove cargo-config
         run: rm -f .cargo/config
