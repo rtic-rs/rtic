@@ -7,7 +7,7 @@
 
 use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
-use panic_halt as _;
+use panic_semihosting as _;
 use rtic::cyccnt::{Instant, U32Ext as _};
 
 // NOTE: does NOT work on QEMU!

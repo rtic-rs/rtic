@@ -1,13 +1,5 @@
-warning: unused import: `rtic::app`
- --> $DIR/task-priority-too-high.rs:3:5
-  |
-3 | use rtic::app;
-  |     ^^^^^^^^^
-  |
-  = note: #[warn(unused_imports)] on by default
-
 error[E0080]: evaluation of constant value failed
- --> $DIR/task-priority-too-high.rs:5:1
+ --> $DIR/task-priority-too-high.rs:3:1
   |
-5 | #[rtic::app(device = lm3s6965)]
+3 | #[rtic::app(device = lm3s6965)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to subtract with overflow
