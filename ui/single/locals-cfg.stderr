@@ -27,11 +27,3 @@ error[E0425]: cannot find value `FOO` in this scope
    |
 44 |         FOO;
    |         ^^^ not found in this scope
-
-error: duplicate lang item in crate `panic_halt`: `panic_impl`.
-  |
-  = note: first defined in crate `std`.
-
-error: duplicate lang item in crate `panic_semihosting`: `panic_impl`.
-  |
-  = note: first defined in crate `panic_halt`.

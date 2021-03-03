@@ -1,7 +1,5 @@
 #![no_main]
 
-use rtic::app;
-
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]

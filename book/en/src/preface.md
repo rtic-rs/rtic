@@ -18,8 +18,8 @@ There is a translation of this book in [Russian].
 
 This is the documentation of v0.5.x of RTIC; for the documentation of
 
-* development version go [here](/dev).
-* v0.4.x go [here](/0.4).
+* development version go [here](/dev/).
+* v0.4.x go [here](/0.4/).
 
 {{#include ../../../README.md:7:46}}
 

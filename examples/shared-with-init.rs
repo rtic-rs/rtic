@@ -7,7 +7,7 @@
 
 use cortex_m_semihosting::debug;
 use lm3s6965::Interrupt;
-use panic_halt as _;
+use panic_semihosting as _;
 use rtic::app;
 
 pub struct MustBeSend;

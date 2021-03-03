@@ -8,7 +8,7 @@
 use core::marker::PhantomData;
 
 use cortex_m_semihosting::debug;
-use panic_halt as _;
+use panic_semihosting as _;
 
 pub struct NotSync {
     _0: PhantomData<*const ()>,
