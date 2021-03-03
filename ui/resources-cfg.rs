@@ -1,5 +1,6 @@
 #![no_main]
-use panic_halt as _;
+
+use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {

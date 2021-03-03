@@ -5,7 +5,7 @@
 
 use core::marker::PhantomData;
 
-use panic_halt as _;
+use panic_semihosting as _;
 
 pub struct NotSend {
     _0: PhantomData<*const ()>,
