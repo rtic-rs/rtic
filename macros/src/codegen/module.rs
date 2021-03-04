@@ -18,29 +18,16 @@ pub fn codegen(
     let mut task_cfgs = vec![];
 
     let name = ctxt.ident(app);
+    let app_name = &app.name;
+    let app_path = quote! {crate::#app_name};
 
-    let mut needs_instant = false;
     let mut lt = None;
     match ctxt {
         Context::Init => {
-            if let Some(m) = &extra.monotonic {
-                fields.push(quote!(
-                    /// System start time = `Instant(0 /* cycles */)`
-                    pub start: <#m as rtic::Monotonic>::Instant
-                ));
-
-                values.push(quote!(start: <#m as rtic::Monotonic>::zero()));
-
-                fields.push(quote!(
-                    /// Core (Cortex-M) peripherals minus the SysTick
-                    pub core: rtic::Peripherals
-                ));
-            } else {
-                fields.push(quote!(
-                    /// Core (Cortex-M) peripherals
-                    pub core: rtic::export::Peripherals
-                ));
-            }
+            fields.push(quote!(
+                /// Core (Cortex-M) peripherals
+                pub core: rtic::export::Peripherals
+            ));
 
             if extra.peripherals {
                 let device = &extra.device;
@@ -66,31 +53,9 @@ pub fn codegen(
 
         Context::Idle => {}
 
-        Context::HardwareTask(..) => {
-            if let Some(m) = &extra.monotonic {
-                fields.push(quote!(
-                    /// Time at which this handler started executing
-                    pub start: <#m as rtic::Monotonic>::Instant
-                ));
+        Context::HardwareTask(_) => {}
 
-                values.push(quote!(start: instant));
-
-                needs_instant = true;
-            }
-        }
-
-        Context::SoftwareTask(..) => {
-            if let Some(m) = &extra.monotonic {
-                fields.push(quote!(
-                    /// The time at which this task was scheduled to run
-                    pub scheduled: <#m as rtic::Monotonic>::Instant
-                ));
-
-                values.push(quote!(scheduled: instant));
-
-                needs_instant = true;
-            }
-        }
+        Context::SoftwareTask(_) => {}
     }
 
     if ctxt.has_locals(app) {
@@ -103,6 +68,7 @@ pub fn codegen(
 
     if ctxt.has_resources(app) {
         let ident = util::resources_ident(ctxt, app);
+        let ident = util::mark_internal_ident(&ident);
         let lt = if resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
@@ -129,12 +95,45 @@ pub fn codegen(
     }
 
     if let Context::Init = ctxt {
-        let init = &app.inits.first().unwrap();
-        let late_resources = util::late_resources_ident(&init.name);
+        let late_fields = analysis
+            .late_resources
+            .iter()
+            .flat_map(|resources| {
+                resources.iter().map(|name| {
+                    let ty = &app.late_resources[name].ty;
+                    let cfgs = &app.late_resources[name].cfgs;
+
+                    quote!(
+                        #(#cfgs)*
+                        pub #name: #ty
+                    )
+                })
+            })
+            .collect::<Vec<_>>();
 
         items.push(quote!(
-            #[doc(inline)]
-            pub use super::#late_resources as LateResources;
+            /// Resources initialized at runtime
+            #[allow(non_snake_case)]
+            pub struct LateResources {
+                #(#late_fields),*
+            }
+        ));
+
+        let monotonic_types: Vec<_> = app
+            .monotonics
+            .iter()
+            .map(|(_, monotonic)| {
+                let mono = &monotonic.ty;
+                quote! {#mono}
+            })
+            .collect();
+
+        items.push(quote!(
+            /// Monotonics used by the system
+            #[allow(non_snake_case)]
+            pub struct Monotonics(
+                #(pub #monotonic_types),*
+            );
         ));
     }
 
@@ -146,11 +145,7 @@ pub fn codegen(
     };
 
     let core = if ctxt.is_init() {
-        if extra.monotonic.is_some() {
-            Some(quote!(core: rtic::Peripherals,))
-        } else {
-            Some(quote!(core: rtic::export::Peripherals,))
-        }
+        Some(quote!(core: rtic::export::Peripherals,))
     } else {
         None
     };
@@ -161,14 +156,6 @@ pub fn codegen(
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
 
-    let instant = if needs_instant {
-        let m = extra.monotonic.clone().expect("RTIC-ICE: UNREACHABLE");
-
-        Some(quote!(, instant: <#m as rtic::Monotonic>::Instant))
-    } else {
-        None
-    };
-
     items.push(quote!(
         /// Execution context
         pub struct Context<#lt> {
@@ -177,7 +164,7 @@ pub fn codegen(
 
         impl<#lt> Context<#lt> {
             #[inline(always)]
-            pub unsafe fn new(#core #priority #instant) -> Self {
+            pub unsafe fn new(#core #priority) -> Self {
                 Context {
                     #(#values,)*
                 }
@@ -195,15 +182,15 @@ pub fn codegen(
         let cfgs = &spawnee.cfgs;
         // Store a copy of the task cfgs
         task_cfgs = cfgs.clone();
-        let (args, tupled, _untupled, ty) = util::regroup_inputs(&spawnee.inputs);
+        let (args, tupled, untupled, ty) = util::regroup_inputs(&spawnee.inputs);
         let args = &args;
         let tupled = &tupled;
         let fq = util::fq_ident(name);
+        let fq = util::mark_internal_ident(&fq);
         let rq = util::rq_ident(priority);
+        let rq = util::mark_internal_ident(&rq);
         let inputs = util::inputs_ident(name);
-
-        let app_name = &app.name;
-        let app_path = quote! {crate::#app_name};
+        let inputs = util::mark_internal_ident(&inputs);
 
         let device = &extra.device;
         let enum_ = util::interrupt_ident();
@@ -216,11 +203,8 @@ pub fn codegen(
         // Spawn caller
         items.push(quote!(
         #(#cfgs)*
+        /// Spawns the task directly
         pub fn spawn(#(#args,)*) -> Result<(), #ty> {
-            // #let_instant // do we need it?
-            use rtic::Mutex as _;
-            use rtic::mutex_prelude::*;
-
             let input = #tupled;
 
             unsafe {
@@ -245,45 +229,114 @@ pub fn codegen(
         }));
 
         // Schedule caller
-        if let Some(m) = &extra.monotonic {
-            let instants = util::instants_ident(name);
+        for (_, monotonic) in &app.monotonics {
+            let instants = util::monotonic_instants_ident(name, &monotonic.ident);
+            let instants = util::mark_internal_ident(&instants);
+            let monotonic_name = monotonic.ident.to_string();
 
-            let tq = util::tq_ident();
+            let tq = util::tq_ident(&monotonic.ident.to_string());
+            let tq = util::mark_internal_ident(&tq);
             let t = util::schedule_t_ident();
+            let m = &monotonic.ident;
+            let mono_type = &monotonic.ty;
+            let m_ident = util::monotonic_ident(&monotonic_name);
+            let m_ident = util::mark_internal_ident(&m_ident);
+            let m_isr = &monotonic.args.binds;
+            let enum_ = util::interrupt_ident();
+
+            if monotonic.args.default {
+                items.push(quote!(pub use #m::spawn_after;));
+                items.push(quote!(pub use #m::spawn_at;));
+            }
+
+            let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
+                (
+                    quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(())
+                        .enable_interrupt()),
+                    quote!(cortex_m::peripheral::SCB::set_pendst()),
+                )
+            } else {
+                let rt_err = util::rt_err_ident();
+                (
+                    quote!(rtic::export::NVIC::unmask(#app_path::#rt_err::#enum_::#m_isr)),
+                    quote!(rtic::pend(#app_path::#rt_err::#enum_::#m_isr)),
+                )
+            };
+
+            let user_imports = &app.user_imports;
 
             items.push(quote!(
-            #(#cfgs)*
-            pub fn schedule(
-                instant: <#m as rtic::Monotonic>::Instant
-                #(,#args)*
-            ) -> Result<(), #ty> {
-                unsafe {
-                    use rtic::Mutex as _;
-                    use rtic::mutex_prelude::*;
+            /// Holds methods related to this monotonic
+            pub mod #m {
+                #(
+                    #[allow(unused_imports)]
+                    #user_imports
+                )*
 
-                    let input = #tupled;
-                    if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
-                        #app_path::#inputs
-                            .get_unchecked_mut(usize::from(index))
-                            .as_mut_ptr()
-                            .write(input);
+                #(#cfgs)*
+                /// Spawns the task after a set duration relative to the current time
+                ///
+                /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
+                /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
+                pub fn spawn_after<D>(
+                    duration: D
+                    #(,#args)*
+                ) -> Result<(), #ty>
+                    where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
+                        D::T: Into<<#app_path::#mono_type as rtic::time::Clock>::T>,
+                {
 
-                        #app_path::#instants
-                            .get_unchecked_mut(usize::from(index))
-                            .as_mut_ptr()
-                            .write(instant);
-
-                        let nr = rtic::export::NotReady {
-                            instant,
-                            index,
-                            task: #app_path::#t::#name,
-                        };
-
-                        rtic::export::interrupt::free(|_| #app_path::#tq.enqueue_unchecked(nr));
-
-                        Ok(())
+                    let instant = if rtic::export::interrupt::free(|_| unsafe { #app_path::#m_ident.is_none() }) {
+                        rtic::time::Instant::new(0)
                     } else {
-                        Err(input)
+                        #app_path::#m::now()
+                    };
+
+                    spawn_at(instant + duration #(,#untupled)*)
+                }
+
+                #(#cfgs)*
+                /// Spawns the task at a fixed time instant
+                pub fn spawn_at(
+                    instant: rtic::time::Instant<#app_path::#mono_type>
+                    #(,#args)*
+                ) -> Result<(), #ty> {
+                    unsafe {
+                        let input = #tupled;
+                        if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                            #app_path::#inputs
+                                .get_unchecked_mut(usize::from(index))
+                                .as_mut_ptr()
+                                .write(input);
+
+                            #app_path::#instants
+                                .get_unchecked_mut(usize::from(index))
+                                .as_mut_ptr()
+                                .write(instant);
+
+                            let nr = rtic::export::NotReady {
+                                instant,
+                                index,
+                                task: #app_path::#t::#name,
+                            };
+
+                            rtic::export::interrupt::free(|_|
+                                if let Some(mono) = #app_path::#m_ident.as_mut() {
+                                    #app_path::#tq.enqueue_unchecked(
+                                        nr,
+                                        || #enable_interrupt,
+                                        || #pend,
+                                        mono)
+                                } else {
+                                    // We can only use the timer queue if `init` has returned, and it
+                                    // writes the `Some(monotonic)` we are accessing here.
+                                    core::hint::unreachable_unchecked()
+                                });
+
+                            Ok(())
+                        } else {
+                            Err(input)
+                        }
                     }
                 }
             }));

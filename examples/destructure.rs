@@ -24,11 +24,11 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
         rtic::pend(Interrupt::UART1);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     // Direct destructure

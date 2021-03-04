@@ -14,12 +14,12 @@ mod app {
     use lm3s6965::Interrupt;
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
 
         hprintln!("init").unwrap();
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[idle]

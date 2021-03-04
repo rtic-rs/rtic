@@ -6,7 +6,6 @@ use syn::{parse, Path};
 
 pub struct Extra {
     pub device: Path,
-    pub monotonic: Option<Path>,
     pub peripherals: bool,
 }
 
@@ -62,18 +61,6 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
     for (name, task) in &app.hardware_tasks {
         let name_s = task.args.binds.to_string();
         match &*name_s {
-            "SysTick" => {
-                // If the timer queue is used, then SysTick is unavailable
-                if app.args.monotonic.is_some() {
-                    return Err(parse::Error::new(
-                        name.span(),
-                        "this exception can't be used because it's being used by the runtime",
-                    ));
-                } else {
-                    // OK
-                }
-            }
-
             "NonMaskableInt" | "HardFault" => {
                 return Err(parse::Error::new(
                     name.span(),
@@ -88,7 +75,6 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
     if let Some(device) = app.args.device.clone() {
         Ok(Extra {
             device,
-            monotonic: app.args.monotonic.clone(),
             peripherals: app.args.peripherals,
         })
     } else {

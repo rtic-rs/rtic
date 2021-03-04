@@ -10,10 +10,10 @@ mod app {
     use cortex_m_semihosting::debug;
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         assert!(cortex_m::Peripherals::take().is_none());
         debug::exit(debug::EXIT_SUCCESS);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 }

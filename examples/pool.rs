@@ -25,7 +25,7 @@ mod app {
     use super::P;
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         static mut MEMORY: [u8; 512] = [0; 512];
 
         // Increase the capacity of the memory pool by ~4
@@ -33,7 +33,7 @@ mod app {
 
         rtic::pend(Interrupt::I2C0);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[task(binds = I2C0, priority = 2)]

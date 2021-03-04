@@ -26,15 +26,18 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
         rtic::pend(Interrupt::UART1);
-        init::LateResources {
-            #[cfg(feature = "feature_l2")]
-            l2: 2,
-            #[cfg(not(feature = "feature_l2"))]
-            l2: 5,
-        }
+        (
+            init::LateResources {
+                #[cfg(feature = "feature_l2")]
+                l2: 2,
+                #[cfg(not(feature = "feature_l2"))]
+                l2: 5,
+            },
+            init::Monotonics(),
+        )
     }
 
     // l1 ok (task_local)

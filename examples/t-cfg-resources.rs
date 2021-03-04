@@ -3,7 +3,7 @@
 #![no_main]
 #![no_std]
 
-use panic_halt as _;
+use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
@@ -18,13 +18,16 @@ mod app {
         dummy: (), // dummy such that we have at least one late resource
     }
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
-        init::LateResources {
-            // The feature needs to be applied everywhere x is defined or used
-            #[cfg(feature = "feature_x")]
-            x: 0,
-            dummy: (), // dummy such that we have at least one late resource
-        }
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+        (
+            init::LateResources {
+                // The feature needs to be applied everywhere x is defined or used
+                #[cfg(feature = "feature_x")]
+                x: 0,
+                dummy: (), // dummy such that we have at least one late resource
+            },
+            init::Monotonics(),
+        )
     }
 
     #[idle]

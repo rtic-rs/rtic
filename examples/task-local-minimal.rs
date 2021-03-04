@@ -18,8 +18,8 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
-        init::LateResources { l: 42 }
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+        (init::LateResources { l: 42 }, init::Monotonics())
     }
 
     // l is task_local

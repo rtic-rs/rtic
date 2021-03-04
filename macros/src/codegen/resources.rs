@@ -21,7 +21,7 @@ pub fn codegen(
     for (name, res, expr, _) in app.resources(analysis) {
         let cfgs = &res.cfgs;
         let ty = &res.ty;
-        let mangled_name = util::mangle_ident(&name);
+        let mangled_name = util::mark_internal_ident(&name);
 
         {
             let section = if expr.is_none() {
@@ -42,6 +42,7 @@ pub fn codegen(
             let attrs = &res.attrs;
             mod_app.push(quote!(
                 #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
                 #(#attrs)*
                 #(#cfgs)*
                 #section

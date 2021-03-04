@@ -27,13 +27,13 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut user = vec![];
 
     // Generate the `main` function
-    let assertion_stmts = assertions::codegen(analysis);
+    let assertion_stmts = assertions::codegen(app, analysis);
 
-    let pre_init_stmts = pre_init::codegen(&app, analysis, extra);
+    let pre_init_stmts = pre_init::codegen(app, analysis, extra);
 
     let (mod_app_init, root_init, user_init, call_init) = init::codegen(app, analysis, extra);
 
-    let post_init_stmts = post_init::codegen(&app, analysis);
+    let post_init_stmts = post_init::codegen(app, analysis);
 
     let (mod_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis, extra);
 
@@ -57,12 +57,11 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     let main = util::suffixed("main");
     mains.push(quote!(
+        #[doc(hidden)]
         mod rtic_ext {
             use super::*;
             #[no_mangle]
             unsafe extern "C" fn #main() -> ! {
-                let _TODO: () = ();
-
                 #(#assertion_stmts)*
 
                 #(#pre_init_stmts)*
@@ -90,27 +89,69 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let user_code = &app.user_code;
     let name = &app.name;
     let device = &extra.device;
+    let app_name = &app.name;
+    let app_path = quote! {crate::#app_name};
 
-    // Get the list of all tasks
-    // Currently unused, might be useful
-    let task_list = analysis.tasks.clone();
+    let monotonic_parts: Vec<_> = app
+        .monotonics
+        .iter()
+        .map(|(_, monotonic)| {
+            let name = &monotonic.ident;
+            let name_str = &name.to_string();
+            let ty = &monotonic.ty;
+            let ident = util::monotonic_ident(&name_str);
+            let ident = util::mark_internal_ident(&ident);
+            let panic_str = &format!(
+                "Use of monotonic '{}' before it was passed to the runtime",
+                name_str
+            );
+            let doc = &format!(
+                "This module holds the static implementation for `{}::now()`",
+                name_str
+            );
+            let user_imports = &app.user_imports;
 
-    let mut tasks = vec![];
+            quote! {
+                pub use rtic::Monotonic as _;
 
-    if !task_list.is_empty() {
-        tasks.push(quote!(
-            #[allow(non_camel_case_types)]
-            pub enum Tasks {
-                #(#task_list),*
+                #[doc = #doc]
+                #[allow(non_snake_case)]
+                pub mod #name {
+                    #(
+                        #[allow(unused_imports)]
+                        #user_imports
+                    )*
+
+                    /// Read the current time from this monotonic
+                    pub fn now() -> rtic::time::Instant<#ty> {
+                        rtic::export::interrupt::free(|_| {
+                            use rtic::Monotonic as _;
+                            use rtic::time::Clock as _;
+                            if let Some(m) = unsafe{ #app_path::#ident.as_ref() } {
+                                if let Ok(v) = m.try_now() {
+                                    v
+                                } else {
+                                    unreachable!("Your monotonic is not infallible!")
+                                }
+                            } else {
+                                panic!(#panic_str);
+                            }
+                        })
+                    }
+                }
             }
-        ));
-    }
+        })
+        .collect();
+
+    let rt_err = util::rt_err_ident();
 
     quote!(
-        /// Implementation details
+        /// The RTIC application module
         pub mod #name {
             /// Always include the device crate which contains the vector table
-            use #device as you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml;
+            use #device as #rt_err;
+
+            #(#monotonic_parts)*
 
             #(#user_imports)*
 
@@ -131,9 +172,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             #(#root_hardware_tasks)*
 
             #(#root_software_tasks)*
-
-            /// Unused
-            #(#tasks)*
 
             /// app module
             #(#mod_app)*

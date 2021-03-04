@@ -77,8 +77,11 @@ pub fn inputs_ident(task: &Ident) -> Ident {
 }
 
 /// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
-pub fn instants_ident(task: &Ident) -> Ident {
-    Ident::new(&format!("{}_INSTANTS", task), Span::call_site())
+pub fn monotonic_instants_ident(task: &Ident, monotonic: &Ident) -> Ident {
+    Ident::new(
+        &format!("{}_{}_INSTANTS", task, monotonic),
+        Span::call_site(),
+    )
 }
 
 pub fn interrupt_ident() -> Ident {
@@ -103,16 +106,8 @@ pub fn is_exception(name: &Ident) -> bool {
     )
 }
 
-/// Generates a pre-reexport identifier for the "late resources" struct
-pub fn late_resources_ident(init: &Ident) -> Ident {
-    Ident::new(
-        &format!("{}LateResources", init.to_string()),
-        Span::call_site(),
-    )
-}
-
-/// Mangle an ident
-pub fn mangle_ident(ident: &Ident) -> Ident {
+/// Mark an ident as internal
+pub fn mark_internal_ident(ident: &Ident) -> Ident {
     Ident::new(
         &format!("__rtic_internal_{}", ident.to_string()),
         Span::call_site(),
@@ -222,7 +217,7 @@ pub fn rq_ident(priority: u8) -> Ident {
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks
 pub fn schedule_t_ident() -> Ident {
-    Ident::new(&"SCHED_T".to_string(), Span::call_site())
+    Ident::new(&"SCHED_T", Span::call_site())
 }
 
 /// Generates an identifier for the `enum` of `spawn`-able tasks
@@ -233,14 +228,26 @@ pub fn spawn_t_ident(priority: u8) -> Ident {
     Ident::new(&format!("P{}_T", priority), Span::call_site())
 }
 
+/// Suffixed identifier
 pub fn suffixed(name: &str) -> Ident {
     let span = Span::call_site();
     Ident::new(name, span)
 }
 
 /// Generates an identifier for a timer queue
-///
-/// At most there is one timer queue
-pub fn tq_ident() -> Ident {
-    Ident::new(&"TQ".to_string(), Span::call_site())
+pub fn tq_ident(name: &str) -> Ident {
+    Ident::new(&format!("TQ_{}", name), Span::call_site())
+}
+
+/// Generates an identifier for monotonic timer storage
+pub fn monotonic_ident(name: &str) -> Ident {
+    Ident::new(&format!("MONOTONIC_STORAGE_{}", name), Span::call_site())
+}
+
+/// The name to get better RT flag errors
+pub fn rt_err_ident() -> Ident {
+    Ident::new(
+        &"you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml",
+        Span::call_site(),
+    )
 }

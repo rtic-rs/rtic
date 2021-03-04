@@ -35,122 +35,15 @@
 #![deny(warnings)]
 #![no_std]
 
-use core::ops::Sub;
-
-use cortex_m::{
-    interrupt::InterruptNumber,
-    peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
-};
+use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
 pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{prelude as mutex_prelude, Exclusive, Mutex};
+pub use rtic_monotonic::{self, embedded_time as time, Monotonic};
 
-#[cfg(armv7m)]
-pub mod cyccnt;
 #[doc(hidden)]
 pub mod export;
 #[doc(hidden)]
 mod tq;
-
-/// `cortex_m::Peripherals` minus `SYST`
-#[allow(non_snake_case)]
-pub struct Peripherals {
-    /// Cache and branch predictor maintenance operations (not present on Cortex-M0 variants)
-    pub CBP: CBP,
-
-    /// CPUID
-    pub CPUID: CPUID,
-
-    /// Debug Control Block
-    pub DCB: DCB,
-
-    /// Data Watchpoint and Trace unit
-    pub DWT: DWT,
-
-    /// Flash Patch and Breakpoint unit (not present on Cortex-M0 variants)
-    pub FPB: FPB,
-
-    /// Floating Point Unit (only present on `thumbv7em-none-eabihf`)
-    pub FPU: FPU,
-
-    /// Instrumentation Trace Macrocell (not present on Cortex-M0 variants)
-    pub ITM: ITM,
-
-    /// Memory Protection Unit
-    pub MPU: MPU,
-
-    /// Nested Vector Interrupt Controller
-    pub NVIC: NVIC,
-
-    /// System Control Block
-    pub SCB: SCB,
-
-    // SysTick: System Timer
-    // pub SYST: SYST,
-    /// Trace Port Interface Unit (not present on Cortex-M0 variants)
-    pub TPIU: TPIU,
-}
-
-impl From<cortex_m::Peripherals> for Peripherals {
-    fn from(p: cortex_m::Peripherals) -> Self {
-        Self {
-            CBP: p.CBP,
-            CPUID: p.CPUID,
-            DCB: p.DCB,
-            DWT: p.DWT,
-            FPB: p.FPB,
-            FPU: p.FPU,
-            ITM: p.ITM,
-            MPU: p.MPU,
-            NVIC: p.NVIC,
-            SCB: p.SCB,
-            TPIU: p.TPIU,
-        }
-    }
-}
-
-/// A fraction
-pub struct Fraction {
-    /// The numerator
-    pub numerator: u32,
-
-    /// The denominator
-    pub denominator: u32,
-}
-
-/// A monotonic clock / counter
-pub trait Monotonic {
-    /// A measurement of this clock, use `CYCCNT` as a reference implementation for `Instant`.
-    /// Note that the Instant must be a signed value such as `i32`.
-    type Instant: Copy + Ord + Sub;
-
-    /// The ratio between the system timer (SysTick) frequency and this clock frequency, i.e.
-    /// `Monotonic clock * Fraction = System clock`
-    ///
-    /// The ratio must be expressed in *reduced* `Fraction` form to prevent overflows. That is
-    /// `2 / 3` instead of `4 / 6`
-    fn ratio() -> Fraction;
-
-    /// Returns the current time
-    ///
-    /// # Correctness
-    ///
-    /// This function is *allowed* to return nonsensical values if called before `reset` is invoked
-    /// by the runtime. Therefore application authors should *not* call this function during the
-    /// `#[init]` phase.
-    fn now() -> Self::Instant;
-
-    /// Resets the counter to *zero*
-    ///
-    /// # Safety
-    ///
-    /// This function will be called *exactly once* by the RTIC runtime after `#[init]` returns and
-    /// before tasks can start; this is also the case in multi-core applications. User code must
-    /// *never* call this function.
-    unsafe fn reset();
-
-    /// A `Self::Instant` that represents a count of *zero*
-    fn zero() -> Self::Instant;
-}
 
 /// Sets the given `interrupt` as pending
 ///

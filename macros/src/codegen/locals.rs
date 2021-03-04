@@ -49,6 +49,7 @@ pub fn codegen(
         ));
         items.push(quote!(
             #(#cfgs)*
+            #[doc(hidden)]
             static mut #name: #ty = #expr
         ));
         values.push(quote!(

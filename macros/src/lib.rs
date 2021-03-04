@@ -1,4 +1,4 @@
-#![deny(warnings)]
+// #![deny(warnings)]
 
 extern crate proc_macro;
 
@@ -20,7 +20,7 @@ mod tests;
 #[proc_macro_attribute]
 pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     let mut settings = Settings::default();
-    settings.optimize_priorities = true;
+    settings.optimize_priorities = false;
     settings.parse_binds = true;
     settings.parse_extern_interrupt = true;
 

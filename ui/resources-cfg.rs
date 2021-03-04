@@ -1,5 +1,6 @@
 #![no_main]
-use panic_halt as _;
+
+use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
@@ -43,14 +44,14 @@ mod app {
     }
 
     #[init(resources = [o1, o4, o5, o6, s3])]
-    fn init(c: init::Context) -> init::LateResources {
+    fn init(c: init::Context) -> (init::LateResources, init::Monotonics) {
         c.resources.o1;
         c.resources.o4;
         c.resources.o5;
         c.resources.o6;
         c.resources.s3;
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[idle(resources = [o2, &o4, s1, &s3])]

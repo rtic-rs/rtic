@@ -25,10 +25,10 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         rtic::pend(Interrupt::GPIOA);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     // when omitted priority is assumed to be `1`

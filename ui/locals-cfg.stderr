@@ -1,0 +1,29 @@
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:12:9
+   |
+12 |         FOO;
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:22:9
+   |
+22 |         FOO;
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:32:9
+   |
+32 |         FOO;
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:40:9
+   |
+40 |         FOO;
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find value `FOO` in this scope
+  --> $DIR/locals-cfg.rs:48:9
+   |
+48 |         FOO;
+   |         ^^^ not found in this scope

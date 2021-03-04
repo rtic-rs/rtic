@@ -8,27 +8,33 @@
 use panic_semihosting as _;
 
 // NOTE: does NOT work on QEMU!
-#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT, dispatchers = [SSI0])]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use cortex_m_semihosting::hprintln;
-    use rtic::cyccnt::{Instant, U32Ext};
+    use dwt_systick_monotonic::{
+        consts::{U0, U8},
+        DwtSystick,
+    };
+    use rtic::time::duration::Seconds;
 
-    const PERIOD: u32 = 8_000_000;
+    #[monotonic(binds = SysTick, default = true)]
+    type MyMono = DwtSystick<U8, U0, U0>; // 8 MHz
 
     #[init]
-    fn init(cx: init::Context) -> init::LateResources {
-        // omitted: initialization of `CYCCNT`
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
+        let mut dcb = cx.core.DCB;
+        let dwt = cx.core.DWT;
+        let systick = cx.core.SYST;
 
-        foo::schedule(cx.start + PERIOD.cycles()).unwrap();
+        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
 
-        init::LateResources {}
+        foo::spawn_after(Seconds(1_u32)).unwrap();
+
+        (init::LateResources {}, init::Monotonics(mono))
     }
 
     #[task]
-    fn foo(cx: foo::Context) {
-        let now = Instant::now();
-        hprintln!("foo(scheduled = {:?}, now = {:?})", cx.scheduled, now).unwrap();
-
-        foo::schedule(cx.scheduled + PERIOD.cycles()).unwrap();
+    fn foo(_cx: foo::Context) {
+        // Periodic
+        foo::spawn_after(Seconds(1_u32)).unwrap();
     }
 }

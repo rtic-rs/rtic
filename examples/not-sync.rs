@@ -6,7 +6,7 @@
 #![no_std]
 
 use core::marker::PhantomData;
-use panic_halt as _;
+use panic_semihosting as _;
 
 pub struct NotSync {
     _0: PhantomData<*const ()>,
@@ -25,10 +25,10 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         debug::exit(debug::EXIT_SUCCESS);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     #[task(resources = [&shared])]

@@ -5,7 +5,7 @@
 
 use core::marker::PhantomData;
 
-use panic_halt as _;
+use panic_semihosting as _;
 
 pub struct NotSend {
     _0: PhantomData<*const ()>,
@@ -24,10 +24,13 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
-        init::LateResources {
-            x: NotSend { _0: PhantomData },
-        }
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+        (
+            init::LateResources {
+                x: NotSend { _0: PhantomData },
+            },
+            init::Monotonics(),
+        )
     }
 
     #[idle(resources = [x, y])]

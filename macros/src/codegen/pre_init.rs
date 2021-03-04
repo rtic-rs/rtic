@@ -8,6 +8,8 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
+    let rt_err = util::rt_err_ident();
+
     // Disable interrupts -- `init` must run with interrupts disabled
     stmts.push(quote!(rtic::export::interrupt::disable();));
 
@@ -15,6 +17,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     for (name, task) in &app.software_tasks {
         let cap = task.args.capacity;
         let fq_ident = util::fq_ident(name);
+        let fq_ident = util::mark_internal_ident(&fq_ident);
 
         stmts.push(quote!(
             (0..#cap).for_each(|i| #fq_ident.enqueue_unchecked(i));
@@ -47,14 +50,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let interrupt = util::interrupt_ident();
         stmts.push(quote!(
             core.NVIC.set_priority(
-                you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#interrupt::#name,
+                #rt_err::#interrupt::#name,
                 rtic::export::logical2hw(#priority, #nvic_prio_bits),
             );
         ));
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(rtic::export::NVIC::unmask(you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml::#interrupt::#name);));
+        stmts.push(quote!(rtic::export::NVIC::unmask(#rt_err::#interrupt::#name);));
     }
 
     // Set exception priorities
@@ -74,23 +77,48 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );));
     }
 
-    // Initialize the SysTick if there exist a TimerQueue
-    if extra.monotonic.is_some() {
-        let priority = analysis.channels.keys().max().unwrap();
+    // Initialize monotonic's interrupts
+    for (_, monotonic) in app.monotonics.iter()
+    //.map(|(ident, monotonic)| (ident, &monotonic.args.priority, &monotonic.args.binds))
+    {
+        let priority = &monotonic.args.priority;
+        let binds = &monotonic.args.binds;
 
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
-        stmts.push(quote!(core.SCB.set_priority(
-            rtic::export::SystemHandler::SysTick,
-            rtic::export::logical2hw(#priority, #nvic_prio_bits),
-        );));
+        let app_name = &app.name;
+        let app_path = quote! {crate::#app_name};
+        let mono_type = &monotonic.ty;
 
-        stmts.push(quote!(
-            core.SYST.set_clock_source(rtic::export::SystClkSource::Core);
-            core.SYST.enable_counter();
-            core.DCB.enable_trace();
-        ));
+        if &*binds.to_string() == "SysTick" {
+            stmts.push(quote!(
+                core.SCB.set_priority(
+                    rtic::export::SystemHandler::SysTick,
+                    rtic::export::logical2hw(#priority, #nvic_prio_bits),
+                );
+
+                // Always enable monotonic interrupts if they should never be off
+                if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
+                    core::mem::transmute::<_, cortex_m::peripheral::SYST>(())
+                        .enable_interrupt();
+                }
+            ));
+        } else {
+            // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
+            let interrupt = util::interrupt_ident();
+            stmts.push(quote!(
+                core.NVIC.set_priority(
+                    #rt_err::#interrupt::#binds,
+                    rtic::export::logical2hw(#priority, #nvic_prio_bits),
+                );
+
+                // Always enable monotonic interrupts if they should never be off
+                if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
+                    rtic::export::NVIC::unmask(#app_path::#rt_err::#interrupt::#binds);
+                }
+            ));
+        }
     }
 
     // If there's no user `#[idle]` then optimize returning from interrupt handlers

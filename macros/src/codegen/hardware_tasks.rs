@@ -29,15 +29,6 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        let (let_instant, instant) = if let Some(ref m) = extra.monotonic {
-            (
-                Some(quote!(let instant = <#m as rtic::Monotonic>::now();)),
-                Some(quote!(, instant)),
-            )
-        } else {
-            (None, None)
-        };
-
         let locals_new = if task.locals.is_empty() {
             quote!()
         } else {
@@ -55,12 +46,10 @@ pub fn codegen(
             unsafe fn #symbol() {
                 const PRIORITY: u8 = #priority;
 
-                #let_instant
-
                 rtic::export::run(PRIORITY, || {
                     #app_path::#name(
                         #locals_new
-                        #name::Context::new(&rtic::export::Priority::new(PRIORITY) #instant)
+                        #name::Context::new(&rtic::export::Priority::new(PRIORITY))
                     )
                 });
             }

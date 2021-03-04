@@ -22,10 +22,10 @@ mod app {
     use crate::foo;
 
     #[init]
-    fn init(_c: init::Context) -> init::LateResources {
+    fn init(_c: init::Context) -> (init::LateResources, init::Monotonics) {
         foo::spawn(1, 2).unwrap();
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     extern "Rust" {

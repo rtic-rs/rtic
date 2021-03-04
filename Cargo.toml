@@ -13,14 +13,10 @@ license = "MIT OR Apache-2.0"
 name = "cortex-m-rtic"
 readme = "README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
-version = "0.6.0-alpha.0"
+version = "0.6.0-alpha.1"
 
 [lib]
 name = "rtic"
-
-[[example]]
-name = "baseline"
-required-features = ["__v7"]
 
 [[example]]
 name = "periodic"
@@ -57,16 +53,20 @@ required-features = ["__v7"]
 [dependencies]
 cortex-m = "0.7.0"
 cortex-m-rtic-macros = { path = "macros", version = "0.6.0-alpha.0" }
+rtic-monotonic = "0.1.0-alpha.0"
 rtic-core = "0.3.1"
-heapless = "0.5.0"
+heapless = "0.6.1"
 bare-metal = "1.0.0"
+
+[dependencies.dwt-systick-monotonic]
+version = "0.1.0-alpha.0"
+optional = true
 
 [build-dependencies]
 version_check = "0.9"
 
 [dev-dependencies]
 lm3s6965 = "0.1.3"
-panic-halt = "0.2.0"
 cortex-m-semihosting = "0.3.3"
 
 [dev-dependencies.panic-semihosting]
@@ -78,8 +78,8 @@ trybuild = "1"
 
 [features]
 # used for testing this crate; do not use in applications
-__v7 =[]
-__min_r1_43 =[]
+__v7 = ["dwt-systick-monotonic"]
+__min_r1_43 = []
 
 [profile.release]
 codegen-units = 1
