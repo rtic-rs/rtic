@@ -17,10 +17,14 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
             // If it's live
             let cfgs = app.late_resources[name].cfgs.clone();
             if analysis.locations.get(name).is_some() {
-                // Need to also include the cfgs
                 stmts.push(quote!(
-                #(#cfgs)*
-                #mangled_name.as_mut_ptr().write(late.#name);
+                    // We include the cfgs
+                    #(#cfgs)*
+                    // Late resource is a RacyCell<MaybeUninit<T>>
+                    // - `get_mut_unchecked` to obtain `MaybeUninit<T>`
+                    // - `as_mut_ptr` to obtain a raw pointer to `MaybeUninit<T>`
+                    // - `write` the defined value for the late resource T
+                #mangled_name.get_mut_unchecked().as_mut_ptr().write(late.#name);
                 ));
             }
         }

@@ -4,13 +4,20 @@ use rtic_syntax::{analyze::Ownership, ast::App};
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
-/// Generates `static [mut]` variables and resource proxies
+/// Generates `static` variables and resource proxies
+/// Early resources are stored in `RacyCell<T>`
+/// Late resource are stored in `RacyCell<MaybeUninit<T>>`
+///
+/// Safety:
+/// - RacyCell<T> access is `unsafe`.
+/// - RacyCell<MaybeUninit> is always written to before user access, thus
+//    the generated code for user access can safely `assume_init`.
 pub fn codegen(
     app: &App,
     analysis: &Analysis,
     extra: &Extra,
 ) -> (
-    // mod_app -- the `static [mut]` variables behind the proxies
+    // mod_app -- the `static` variables behind the proxies
     Vec<TokenStream2>,
     // mod_resources -- the `resources` module
     TokenStream2,
@@ -24,18 +31,26 @@ pub fn codegen(
         let mangled_name = util::mark_internal_ident(&name);
 
         {
+            // TODO: do we really need this in the single core case
+            // late resources in `util::link_section_uninit`
             let section = if expr.is_none() {
                 util::link_section_uninit(true)
             } else {
                 None
             };
 
+            // resource type and assigned value
             let (ty, expr) = if let Some(expr) = expr {
-                (quote!(#ty), quote!(#expr))
-            } else {
+                // early resource
                 (
-                    quote!(core::mem::MaybeUninit<#ty>),
-                    quote!(core::mem::MaybeUninit::uninit()),
+                    quote!(rtic::RacyCell<#ty>),
+                    quote!(rtic::RacyCell::new(#expr)),
+                )
+            } else {
+                // late resource
+                (
+                    quote!(rtic::RacyCell<core::mem::MaybeUninit<#ty>>),
+                    quote!(rtic::RacyCell::new(core::mem::MaybeUninit::uninit())),
                 )
             };
 
@@ -46,7 +61,7 @@ pub fn codegen(
                 #(#attrs)*
                 #(#cfgs)*
                 #section
-                static mut #mangled_name: #ty = #expr;
+                static #mangled_name: #ty = #expr;
             ));
         }
 
@@ -74,14 +89,16 @@ pub fn codegen(
             ));
 
             let ptr = if expr.is_none() {
+                // late resource
                 quote!(
                     #(#cfgs)*
-                    #mangled_name.as_mut_ptr()
+                    &mut #mangled_name.get_mut_unchecked().assume_init()
                 )
             } else {
+                // early resource
                 quote!(
                     #(#cfgs)*
-                    &mut #mangled_name
+                    unsafe { #mangled_name.get_mut_unchecked() }
                 )
             };
 

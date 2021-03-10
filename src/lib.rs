@@ -55,3 +55,24 @@ where
 {
     NVIC::pend(interrupt)
 }
+
+use core::cell::UnsafeCell;
+
+/// Internal replacement for `static mut T`
+// TODO: Decide name and location.
+pub struct RacyCell<T>(UnsafeCell<T>);
+
+impl<T> RacyCell<T> {
+    /// Create a RacyCell
+    pub const fn new(value: T) -> Self {
+        RacyCell(UnsafeCell::new(value))
+    }
+
+    /// Get &mut T
+    pub unsafe fn get_mut_unchecked(&self) -> &mut T {
+        &mut *self.0.get()
+    }
+}
+
+// The type wrapped need to be Sync for RacyCell<T> to be Sync
+unsafe impl<T> Sync for RacyCell<T> where T: Sync {}
