@@ -75,4 +75,5 @@ impl<T> RacyCell<T> {
 }
 
 // The type wrapped need to be Sync for RacyCell<T> to be Sync
-unsafe impl<T> Sync for RacyCell<T> where T: Sync {}
+//unsafe impl<T> Sync for RacyCell<T> where T: Sync {}
+unsafe impl<T> Sync for RacyCell<T> {}

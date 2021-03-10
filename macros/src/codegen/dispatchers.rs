@@ -59,7 +59,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         // );
         items.push(quote!(
             #[doc(hidden)]
-            static mut #rq: #rq_ty = #rq_expr;
+            static #rq: rtic::RacyCell<#rq_ty> = rtic::RacyCell::new(#rq_expr);
         ));
 
         let arms = channel
@@ -100,7 +100,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             .collect::<Vec<_>>();
 
         stmts.push(quote!(
-            while let Some((task, index)) = #rq.split().1.dequeue() {
+            while let Some((task, index)) = #rq.get_mut_unchecked().split().1.dequeue() {
                 match task {
                     #(#arms)*
                 }

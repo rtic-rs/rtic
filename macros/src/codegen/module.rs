@@ -215,7 +215,7 @@ pub fn codegen(
                         .write(input);
 
                     rtic::export::interrupt::free(|_| {
-                        #app_path::#rq.enqueue_unchecked((#app_path::#t::#name, index));
+                        #app_path::#rq.get_mut_unchecked().enqueue_unchecked((#app_path::#t::#name, index));
                     });
 
                     rtic::pend(#device::#enum_::#interrupt);
