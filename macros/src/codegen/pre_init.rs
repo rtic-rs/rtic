@@ -20,7 +20,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let fq_ident = util::mark_internal_ident(&fq_ident);
 
         stmts.push(quote!(
-            (0..#cap).for_each(|i| #fq_ident.enqueue_unchecked(i));
+            (0..#cap).for_each(|i| #fq_ident.get_mut_unchecked().enqueue_unchecked(i));
         ));
     }
 

@@ -52,7 +52,7 @@ pub fn codegen(
             // /// Queue version of a free-list that keeps track of empty slots in
             // /// the following buffers
             #[doc(hidden)]
-            static mut #fq: #fq_ty = #fq_expr;
+            static #fq: rtic::RacyCell<#fq_ty> = rtic::RacyCell::new(#fq_expr);
         ));
 
         let elems = &(0..cap)

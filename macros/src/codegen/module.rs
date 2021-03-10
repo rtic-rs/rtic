@@ -208,7 +208,7 @@ pub fn codegen(
             let input = #tupled;
 
             unsafe {
-                if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.get_mut_unchecked().dequeue()) {
                     #app_path::#inputs
                         .get_unchecked_mut(usize::from(index))
                         .as_mut_ptr()
