@@ -290,7 +290,7 @@ pub fn codegen(
                         D::T: Into<<#app_path::#mono_type as rtic::time::Clock>::T>,
                 {
 
-                    let instant = if rtic::export::interrupt::free(|_| unsafe { #app_path::#m_ident.is_none() }) {
+                    let instant = if rtic::export::interrupt::free(|_| unsafe { #app_path::#m_ident.get_mut_unchecked().is_none() }) {
                         rtic::time::Instant::new(0)
                     } else {
                         #app_path::#m::now()
@@ -327,7 +327,7 @@ pub fn codegen(
                             };
 
                             rtic::export::interrupt::free(|_|
-                                if let Some(mono) = #app_path::#m_ident.as_mut() {
+                                if let Some(mono) = #app_path::#m_ident.get_mut_unchecked().as_mut() {
                                     #app_path::#tq.get_mut_unchecked().enqueue_unchecked(
                                         nr,
                                         || #enable_interrupt,

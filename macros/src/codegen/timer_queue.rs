@@ -76,7 +76,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
             items.push(quote!(
                 #[doc(hidden)]
-                static mut #mono: Option<#mono_type> = None;
+                static #mono: rtic::RacyCell<Option<#mono_type>> = rtic::RacyCell::new(None);
             ));
         }
 
@@ -128,7 +128,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 unsafe fn #bound_interrupt() {
 
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
-                        if let Some(mono) = #app_path::#m_ident.as_mut() {
+                        if let Some(mono) = #app_path::#m_ident.get_mut_unchecked().as_mut() {
                             #tq.get_mut_unchecked().dequeue(|| #disable_isr, mono)
                         } else {
                             // We can only use the timer queue if `init` has returned, and it
@@ -141,7 +141,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                         }
                     }
 
-                    rtic::export::interrupt::free(|_| if let Some(mono) = #app_path::#m_ident.as_mut() {
+                    rtic::export::interrupt::free(|_| if let Some(mono) = #app_path::#m_ident.get_mut_unchecked().as_mut() {
                         mono.on_interrupt();
                     });
                 }
