@@ -126,7 +126,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
-
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = #app_path::#m_ident.get_mut_unchecked().as_mut() {
                             #tq.get_mut_unchecked().dequeue(|| #disable_isr, mono)

@@ -40,7 +40,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         // Store the monotonic
         let name = util::monotonic_ident(&monotonic.to_string());
         let name = util::mark_internal_ident(&name);
-        stmts.push(quote!(#name = Some(monotonics.#idx);));
+        stmts.push(quote!(*#name.get_mut_unchecked() = Some(monotonics.#idx);));
     }
 
     // Enable the interrupts -- this completes the `init`-ialization phase
