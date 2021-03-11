@@ -23,9 +23,9 @@ name = "rtic"
 name = "periodic"
 required-features = ["__v7"]
 
-[[example]]
-name = "pool"
-required-features = ["__v7"]
+# [[example]]
+# name = "pool"
+# required-features = ["__v7"]
 
 [[example]]
 name = "spawn_after"

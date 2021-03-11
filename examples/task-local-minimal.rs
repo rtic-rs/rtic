@@ -1,6 +1,6 @@
 //! examples/task-local_minimal.rs
 #![deny(unsafe_code)]
-#![deny(warnings)]
+//#![deny(warnings)]
 #![no_main]
 #![no_std]
 
@@ -14,18 +14,18 @@ mod app {
     struct Resources {
         // A local (move), late resource
         #[task_local]
-        l: u32,
+        task_local: u32,
     }
 
     #[init]
     fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
-        (init::LateResources { l: 42 }, init::Monotonics())
+        (init::LateResources { task_local: 42 }, init::Monotonics())
     }
 
-    // l is task_local
-    #[idle(resources =[l])]
+    // task_local is task_local
+    #[idle(resources =[task_local])]
     fn idle(cx: idle::Context) -> ! {
-        hprintln!("IDLE:l = {}", cx.resources.l).unwrap();
+        hprintln!("IDLE:l = {}", cx.resources.task_local).unwrap();
         debug::exit(debug::EXIT_SUCCESS);
         loop {
             cortex_m::asm::nop();
