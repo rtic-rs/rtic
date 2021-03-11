@@ -50,7 +50,7 @@ pub fn codegen(
         items.push(quote!(
             #(#cfgs)*
             #[doc(hidden)]
-            static mut #name: #ty = #expr
+            static #name: rtic::RacyCell<#ty> = rtic::RacyCell::new(#expr)
         ));
         values.push(quote!(
             #(#cfgs)*
@@ -64,7 +64,7 @@ pub fn codegen(
     }
 
     if lt.is_some() && has_cfgs {
-        fields.push(quote!(__marker__: core::marker::PhantomData<&'a mut ()>));
+        fields.push(quote!(__marker__: core::marker::PhantomData<&'a ()>));
         values.push(quote!(__marker__: core::marker::PhantomData));
     }
 

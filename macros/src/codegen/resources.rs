@@ -66,8 +66,11 @@ pub fn codegen(
         }
 
         let r_prop = &res.properties;
+        let doc = format!(" RTIC internal: {}:{}", file!(), line!());
+
         if !r_prop.task_local && !r_prop.lock_free {
             mod_resources.push(quote!(
+                #[doc = #doc]
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
                 pub struct #name<'a> {
