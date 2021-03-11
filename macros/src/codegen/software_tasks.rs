@@ -82,8 +82,8 @@ pub fn codegen(
             #uninit
             // /// Buffer that holds the inputs of a task
             #[doc(hidden)]
-            static mut #inputs_ident: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
-                [#(#elems,)*];
+            static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
+                rtic::RacyCell::new([#(#elems,)*]);
         ));
 
         // `${task}Resources`

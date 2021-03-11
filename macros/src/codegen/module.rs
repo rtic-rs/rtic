@@ -210,6 +210,7 @@ pub fn codegen(
             unsafe {
                 if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.get_mut_unchecked().dequeue()) {
                     #app_path::#inputs
+                        .get_mut_unchecked()
                         .get_unchecked_mut(usize::from(index))
                         .as_mut_ptr()
                         .write(input);
