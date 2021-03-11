@@ -28,7 +28,11 @@ name = "pool"
 required-features = ["__v7"]
 
 [[example]]
-name = "schedule"
+name = "spawn_after"
+required-features = ["__v7"]
+
+[[example]]
+name = "spawn_at"
 required-features = ["__v7"]
 
 [[example]]
