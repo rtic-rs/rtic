@@ -107,7 +107,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     quote!(
                         #(#cfgs)*
                         #t::#name => {
-                            rtic::export::interrupt::free(|_| #rq.split().0.enqueue_unchecked((#rqt::#name, index)));
+                            rtic::export::interrupt::free(|_| #rq.get_mut_unchecked().split().0.enqueue_unchecked((#rqt::#name, index)));
 
                             #pend
                         }
