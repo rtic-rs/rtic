@@ -61,13 +61,13 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             let n = util::capacity_typenum(cap, false);
             let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n>);
 
+            let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             items.push(quote!(
-                #[doc(hidden)]
-                static mut #tq: #tq_ty = rtic::export::TimerQueue(
-                    rtic::export::BinaryHeap(
-                        rtic::export::iBinaryHeap::new()
-                    )
-                );
+                #[doc = #doc]
+                static #tq: rtic::RacyCell<#tq_ty> =
+                    rtic::RacyCell::new(rtic::export::TimerQueue(
+                        rtic::export::BinaryHeap(rtic::export::iBinaryHeap::new())
+                    ));
             ));
 
             let mono = util::monotonic_ident(&monotonic_name);
@@ -129,7 +129,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = #app_path::#m_ident.as_mut() {
-                            #tq.dequeue(|| #disable_isr, mono)
+                            #tq.get_mut_unchecked().dequeue(|| #disable_isr, mono)
                         } else {
                             // We can only use the timer queue if `init` has returned, and it
                             // writes the `Some(monotonic)` we are accessing here.

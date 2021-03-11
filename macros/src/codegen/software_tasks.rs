@@ -65,13 +65,14 @@ pub fn codegen(
             let mono_type = &monotonic.ty;
 
             let uninit = mk_uninit();
+            let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             mod_app.push(quote!(
                 #uninit
                 // /// Buffer that holds the instants associated to the inputs of a task
-                #[doc(hidden)]
-                static mut #instants:
-                    [core::mem::MaybeUninit<rtic::time::Instant<#mono_type>>; #cap_lit] =
-                    [#(#elems,)*];
+                #[doc = #doc]
+                static #instants:
+                    rtic::RacyCell<[core::mem::MaybeUninit<rtic::time::Instant<#mono_type>>; #cap_lit]> =
+                    rtic::RacyCell::new([#(#elems,)*]);
             ));
         }
 

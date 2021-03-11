@@ -266,6 +266,9 @@ pub fn codegen(
 
             let user_imports = &app.user_imports;
 
+            let doc = format!(" RTIC internal: {}:{}", file!(), line!());
+            items.push(quote!(#[doc = #doc]));
+
             items.push(quote!(
             /// Holds methods related to this monotonic
             pub mod #m {
@@ -312,6 +315,7 @@ pub fn codegen(
                                 .write(input);
 
                             #app_path::#instants
+                                .get_mut_unchecked()
                                 .get_unchecked_mut(usize::from(index))
                                 .as_mut_ptr()
                                 .write(instant);
@@ -324,7 +328,7 @@ pub fn codegen(
 
                             rtic::export::interrupt::free(|_|
                                 if let Some(mono) = #app_path::#m_ident.as_mut() {
-                                    #app_path::#tq.enqueue_unchecked(
+                                    #app_path::#tq.get_mut_unchecked().enqueue_unchecked(
                                         nr,
                                         || #enable_interrupt,
                                         || #pend,
