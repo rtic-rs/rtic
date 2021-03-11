@@ -1,4 +1,4 @@
-//! examples/schedule.rs
+//! examples/spawn_at.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
