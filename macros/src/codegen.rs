@@ -127,7 +127,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
                         rtic::export::interrupt::free(|_| {
                             use rtic::Monotonic as _;
                             use rtic::time::Clock as _;
-                            if let Some(m) = unsafe{ #app_path::#ident.as_ref() } {
+                            if let Some(m) = unsafe{ #app_path::#ident.get_mut_unchecked().as_ref() } {
                                 if let Ok(v) = m.try_now() {
                                     v
                                 } else {
