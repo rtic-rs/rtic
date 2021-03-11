@@ -5,6 +5,15 @@ use crate::{
 use core::cmp::Ordering;
 use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 
+#[inline]
+fn unwrapper<T, E>(val: Result<T, E>) -> T {
+    if let Ok(v) = val {
+        v
+    } else {
+        unreachable!("Your monotonic is not infallible")
+    }
+}
+
 pub struct TimerQueue<Mono, Task, N>(pub BinaryHeap<NotReady<Mono, Task>, N, Min>)
 where
     Mono: Monotonic,
@@ -66,15 +75,6 @@ where
         self.0.is_empty()
     }
 
-    #[inline]
-    fn unwrapper<T, E>(val: Result<T, E>) -> T {
-        if let Ok(v) = val {
-            v
-        } else {
-            unreachable!("Your monotonic is not infallible")
-        }
-    }
-
     /// Dequeue a task from the TimerQueue
     #[inline]
     pub fn dequeue<F>(&mut self, disable_interrupt: F, mono: &mut Mono) -> Option<(Task, u8)>
@@ -84,7 +84,7 @@ where
         mono.clear_compare_flag();
 
         if let Some(instant) = self.0.peek().map(|p| p.instant) {
-            if instant <= Self::unwrapper(Clock::try_now(mono)) {
+            if instant <= unwrapper(Clock::try_now(mono)) {
                 // task became ready
                 let nr = unsafe { self.0.pop_unchecked() };
 
@@ -97,7 +97,7 @@ where
                 // dequeue. If the monotonic is fast enough it can happen that from the
                 // read of now to the set of the compare, the time can overflow. This is to
                 // guard against this.
-                if instant <= Self::unwrapper(Clock::try_now(mono)) {
+                if instant <= unwrapper(Clock::try_now(mono)) {
                     let nr = unsafe { self.0.pop_unchecked() };
 
                     Some((nr.task, nr.index))
@@ -125,6 +125,7 @@ where
     pub index: u8,
     pub instant: Instant<Mono>,
     pub task: Task,
+    pub marker: u32,
 }
 
 impl<Mono, Task> Eq for NotReady<Mono, Task>

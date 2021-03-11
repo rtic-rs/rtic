@@ -264,14 +264,63 @@ pub fn codegen(
             };
 
             let user_imports = &app.user_imports;
+            let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
 
             items.push(quote!(
             /// Holds methods related to this monotonic
             pub mod #m {
+                #[allow(unused_imports)]
+                use #app_path::#tq_marker;
+                #[allow(unused_imports)]
+                use #app_path::#t;
                 #(
                     #[allow(unused_imports)]
                     #user_imports
                 )*
+
+                pub struct SpawnHandle {
+                    #[doc(hidden)]
+                    marker: u32,
+                }
+
+                // TODO: remove
+                impl core::fmt::Debug for SpawnHandle
+                {
+                    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                        let handle = unsafe { &#app_path::#tq as *const _ as u32 };
+                        f.debug_struct("SpawnHandle")
+                            .field("marker", &self.marker)
+                            .field("handle", &handle)
+                            .finish()
+                    }
+                }
+
+                impl SpawnHandle {
+                    pub fn cancel(self) -> Result<#ty, ()> {
+                        // TODO: Actually cancel...
+                        // &mut #app_path::#tq;
+
+                        Err(())
+                    }
+
+                    #[inline]
+                    pub fn reschedule_after<D>(self, duration: D) -> Result<Self, ()>
+                        where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
+                                 D::T: Into<<#app_path::#mono_type as rtic::time::Clock>::T>,
+                    {
+                        self.reschedule_at(#app_path::#m::now() + duration)
+                    }
+
+                    pub fn reschedule_at(self, instant: rtic::time::Instant<#app_path::#mono_type>) -> Result<Self, ()>
+                    {
+                        let _ = instant;
+
+                        // TODO: Actually reschedule...
+                        // &mut #app_path::#tq;
+
+                        Err(())
+                    }
+                }
 
                 #(#cfgs)*
                 /// Spawns the task after a set duration relative to the current time
@@ -281,7 +330,7 @@ pub fn codegen(
                 pub fn spawn_after<D>(
                     duration: D
                     #(,#args)*
-                ) -> Result<(), #ty>
+                ) -> Result<SpawnHandle, #ty>
                     where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
                         D::T: Into<<#app_path::#mono_type as rtic::time::Clock>::T>,
                 {
@@ -300,7 +349,7 @@ pub fn codegen(
                 pub fn spawn_at(
                     instant: rtic::time::Instant<#app_path::#mono_type>
                     #(,#args)*
-                ) -> Result<(), #ty> {
+                ) -> Result<SpawnHandle, #ty> {
                     unsafe {
                         let input = #tupled;
                         if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
@@ -314,13 +363,17 @@ pub fn codegen(
                                 .as_mut_ptr()
                                 .write(instant);
 
-                            let nr = rtic::export::NotReady {
-                                instant,
-                                index,
-                                task: #app_path::#t::#name,
-                            };
+                            rtic::export::interrupt::free(|_| {
+                                let marker = #tq_marker;
+                                let nr = rtic::export::NotReady {
+                                    instant,
+                                    index,
+                                    task: #app_path::#t::#name,
+                                    marker,
+                                };
 
-                            rtic::export::interrupt::free(|_|
+                                #tq_marker = #tq_marker.wrapping_add(1);
+
                                 if let Some(mono) = #app_path::#m_ident.as_mut() {
                                     #app_path::#tq.enqueue_unchecked(
                                         nr,
@@ -331,9 +384,10 @@ pub fn codegen(
                                     // We can only use the timer queue if `init` has returned, and it
                                     // writes the `Some(monotonic)` we are accessing here.
                                     core::hint::unreachable_unchecked()
-                                });
+                                }
 
-                            Ok(())
+                                Ok(SpawnHandle { marker })
+                            })
                         } else {
                             Err(input)
                         }

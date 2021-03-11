@@ -9,6 +9,15 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
     let mut items = vec![];
 
     if !app.monotonics.is_empty() {
+        // Generate the marker counter used to track for `cancel` and `reschedule`
+        let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
+        items.push(quote!(
+            // #[doc = #doc]
+            #[doc(hidden)]
+            #[allow(non_camel_case_types)]
+            static mut #tq_marker: u32 = 0;
+        ));
+
         let t = util::schedule_t_ident();
 
         // Enumeration of `schedule`-able tasks
@@ -32,7 +41,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
-                enum #t {
+                pub enum #t {
                     #(#variants,)*
                 }
             ));

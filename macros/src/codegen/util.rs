@@ -89,6 +89,11 @@ pub fn interrupt_ident() -> Ident {
     Ident::new("interrupt", span)
 }
 
+pub fn timer_queue_marker_ident() -> Ident {
+    let span = Span::call_site();
+    Ident::new("TIMER_QUEUE_MARKER", span)
+}
+
 /// Whether `name` is an exception with configurable priority
 pub fn is_exception(name: &Ident) -> bool {
     let s = name.to_string();
