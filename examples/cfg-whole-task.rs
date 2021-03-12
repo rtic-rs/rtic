@@ -48,11 +48,6 @@ mod app {
 
             log::spawn(_cx.resources.count.lock(|count| *count)).unwrap();
         }
-
-        // this wouldn't compile in `release` mode
-        // *_cx.resources.count += 1;
-
-        // ..
     }
 
     // The whole task should disappear,
@@ -66,11 +61,6 @@ mod app {
 
             log::spawn(_cx.resources.count.lock(|count| *count)).unwrap();
         }
-
-        // this wouldn't compile in `release` mode
-        // *_cx.resources.count += 1;
-
-        // ..
     }
 
     #[cfg(debug_assertions)]
