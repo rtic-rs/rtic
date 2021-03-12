@@ -91,7 +91,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         } else {
             values.push(quote!(
                 #(#cfgs)*
-                #name: &#mut_ #mangled_name
+                #name: #mangled_name.get_mut_unchecked()
             ));
         }
     }

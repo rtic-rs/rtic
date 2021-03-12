@@ -55,9 +55,11 @@ pub fn codegen(
             };
 
             let attrs = &res.attrs;
+
+            let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             mod_app.push(quote!(
                 #[allow(non_upper_case_globals)]
-                #[doc(hidden)]
+                #[doc = #doc]
                 #(#attrs)*
                 #(#cfgs)*
                 #section
