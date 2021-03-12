@@ -12,7 +12,7 @@ use panic_semihosting as _;
 mod app {
     use super::*;
     #[init()]
-    fn init(c: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         hprintln!("init").unwrap();
         driver(&bar::spawn);
         foo::spawn(123).unwrap();
@@ -20,13 +20,13 @@ mod app {
     }
 
     #[task()]
-    fn foo(c: foo::Context, data: u32) {
+    fn foo(_: foo::Context, data: u32) {
         hprintln!("foo {}", data).unwrap();
         bar::spawn().unwrap();
     }
 
     #[task()]
-    fn bar(_c: bar::Context) {
+    fn bar(_: bar::Context) {
         hprintln!("bar").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS);
