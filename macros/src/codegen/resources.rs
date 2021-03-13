@@ -93,7 +93,7 @@ pub fn codegen(
                 }
             ));
 
-            let (ptr, doc) = if expr.is_none() {
+            let (ptr, _doc) = if expr.is_none() {
                 // late resource
                 (
                     quote!(
