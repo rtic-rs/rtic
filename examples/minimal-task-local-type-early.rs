@@ -1,4 +1,5 @@
 //! examples/minimal-task-local-type-early.rs
+
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]

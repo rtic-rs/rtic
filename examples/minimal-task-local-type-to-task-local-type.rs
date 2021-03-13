@@ -1,5 +1,4 @@
-//! examples/minimal-task-local-type-late.rs
-
+//! examples/minmal-task-local-to-task-local.rs
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
@@ -10,30 +9,40 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965)]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    pub struct TaskLocal {
+
+    pub struct InitType {
         x: u32,
     }
-    #[resources]
-    struct Resources {
-        // A local (move), late resource
-        #[task_local]
-        late: crate::app::TaskLocal,
+
+    pub struct TaskLocal {
+        y: u32,
     }
 
-    #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    #[resources]
+    struct Resources {
+        #[task_local]
+        #[init(InitType { x: 0 })]
+        init_resource: InitType,
+
+        #[task_local]
+        local: crate::app::TaskLocal,
+    }
+
+    #[init(resources = [ init_resource ])]
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
+        let y = cx.resources.init_resource.x;
         (
             init::LateResources {
-                late: TaskLocal { x: 42 },
+                local: TaskLocal { y },
             },
             init::Monotonics(),
         )
     }
 
     // task_local is task_local
-    #[idle(resources = [late])]
+    #[idle(resources = [local])]
     fn idle(cx: idle::Context) -> ! {
-        hprintln!("IDLE:late = {}", cx.resources.late.x).unwrap();
+        hprintln!("IDLE:shared = {}", cx.resources.local.y).unwrap();
         debug::exit(debug::EXIT_SUCCESS);
         loop {
             cortex_m::asm::nop();

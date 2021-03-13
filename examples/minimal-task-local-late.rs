@@ -1,4 +1,5 @@
 //! examples/minimal-task-local-late.rs
+
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]

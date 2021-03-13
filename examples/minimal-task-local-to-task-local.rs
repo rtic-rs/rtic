@@ -1,4 +1,4 @@
-//! examples/minimal-task-local-early.rs
+//! examples/minimal-task-local-to-task-local.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
@@ -13,21 +13,24 @@ mod app {
 
     #[resources]
     struct Resources {
-        // A local (move), early resource
+        #[task_local]
+        shared: u32,
+
         #[task_local]
         #[init(42)]
-        early: u32,
+        init_resource: u32,
     }
 
-    #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
-        (init::LateResources {}, init::Monotonics())
+    #[init(resources = [ init_resource ])]
+    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
+        let ir = *cx.resources.init_resource;
+        (init::LateResources { shared: ir }, init::Monotonics())
     }
 
     // task_local is task_local
-    #[idle(resources = [early])]
+    #[idle(resources = [shared])]
     fn idle(cx: idle::Context) -> ! {
-        hprintln!("IDLE:early = {}", cx.resources.early).unwrap();
+        hprintln!("IDLE:shared = {}", cx.resources.shared).unwrap();
         debug::exit(debug::EXIT_SUCCESS);
         loop {
             cortex_m::asm::nop();
