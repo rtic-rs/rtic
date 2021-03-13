@@ -93,17 +93,23 @@ pub fn codegen(
                 }
             ));
 
-            let ptr = if expr.is_none() {
+            let (ptr, doc) = if expr.is_none() {
                 // late resource
-                quote!(
-                    #(#cfgs)*
-                    &mut #mangled_name.get_mut_unchecked().assume_init()
+                (
+                    quote!(
+                        #(#cfgs)*
+                        #mangled_name.get_mut_unchecked().as_mut_ptr()
+                    ),
+                    "late",
                 )
             } else {
                 // early resource
-                quote!(
-                    #(#cfgs)*
-                    unsafe { #mangled_name.get_mut_unchecked() }
+                (
+                    quote!(
+                        #(#cfgs)*
+                        #mangled_name.get_mut_unchecked()
+                    ),
+                    "early",
                 )
             };
 
@@ -113,6 +119,8 @@ pub fn codegen(
                 Some(Ownership::Contended { ceiling }) => *ceiling,
                 None => 0,
             };
+
+            // let doc = format!(" RTIC internal ({} resource): {}:{}", doc, file!(), line!());
 
             mod_app.push(util::impl_mutex(
                 extra,

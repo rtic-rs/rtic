@@ -24,7 +24,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
                     // - `get_mut_unchecked` to obtain `MaybeUninit<T>`
                     // - `as_mut_ptr` to obtain a raw pointer to `MaybeUninit<T>`
                     // - `write` the defined value for the late resource T
-                #mangled_name.get_mut_unchecked().as_mut_ptr().write(late.#name);
+                    #mangled_name.get_mut_unchecked().as_mut_ptr().write(late.#name);
                 ));
             }
         }
