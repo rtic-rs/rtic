@@ -1,7 +1,7 @@
 //! examples/late.rs
 
 #![deny(unsafe_code)]
-#![deny(warnings)]
+// #![deny(warnings)]
 #![no_main]
 #![no_std]
 
@@ -20,7 +20,7 @@ mod app {
     // Late resources
     #[resources]
     struct Resources {
-        p: Producer<'static, u32, U4>,
+        // p: Producer<'static, u32, U4>,
         c: Consumer<'static, u32, U4>,
         #[task_local]
         #[init(Queue(i::Queue::new()))]
@@ -29,12 +29,11 @@ mod app {
 
     #[init(resources = [q])]
     fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
-        // static mut Q: Queue<u32, U4> = Queue(i::Queue::new());
-
         let (p, c) = cx.resources.q.split();
 
         // Initialization of late resources
-        (init::LateResources { p, c }, init::Monotonics())
+        // (init::LateResources { p, c }, init::Monotonics())
+        (init::LateResources { c }, init::Monotonics())
     }
 
     #[idle(resources = [c])]
@@ -50,8 +49,8 @@ mod app {
         }
     }
 
-    #[task(binds = UART0, resources = [p])]
-    fn uart0(mut c: uart0::Context) {
-        c.resources.p.lock(|p| p.enqueue(42).unwrap());
-    }
+    // #[task(binds = UART0, resources = [p])]
+    // fn uart0(mut c: uart0::Context) {
+    //     c.resources.p.lock(|p| p.enqueue(42).unwrap());
+    // }
 }
