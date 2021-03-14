@@ -32,7 +32,7 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_compatibility)]
 #![deny(rust_2018_idioms)]
-#![deny(warnings)]
+// #![deny(warnings)]
 #![no_std]
 
 use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
@@ -42,6 +42,8 @@ pub use rtic_monotonic::{self, embedded_time as time, Monotonic};
 
 #[doc(hidden)]
 pub mod export;
+#[doc(hidden)]
+mod linked_list;
 #[doc(hidden)]
 mod tq;
 

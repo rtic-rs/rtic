@@ -21,6 +21,33 @@ pub fn codegen(
     let app_name = &app.name;
     let app_path = quote! {crate::#app_name};
 
+    let all_task_names: Vec<_> = app
+        .software_tasks
+        .iter()
+        .map(|(name, st)| {
+            if !st.is_extern {
+                let cfgs = &st.cfgs;
+                quote! {
+                    #(#cfgs)*
+                    #[allow(unused_imports)]
+                    use #app_path::#name as #name;
+                }
+            } else {
+                quote!()
+            }
+        })
+        .chain(app.hardware_tasks.iter().map(|(name, ht)| {
+            if !ht.is_extern {
+                quote! {
+                    #[allow(unused_imports)]
+                    use #app_path::#name as #name;
+                }
+            } else {
+                quote!()
+            }
+        }))
+        .collect();
+
     let mut lt = None;
     match ctxt {
         Context::Init => {
@@ -202,6 +229,9 @@ pub fn codegen(
 
         // Spawn caller
         items.push(quote!(
+
+        #(#all_task_names)*
+
         #(#cfgs)*
         /// Spawns the task directly
         pub fn spawn(#(#args,)*) -> Result<(), #ty> {
@@ -247,6 +277,7 @@ pub fn codegen(
             if monotonic.args.default {
                 items.push(quote!(pub use #m::spawn_after;));
                 items.push(quote!(pub use #m::spawn_at;));
+                items.push(quote!(pub use #m::SpawnHandle;));
             }
 
             let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
@@ -269,6 +300,11 @@ pub fn codegen(
             items.push(quote!(
             /// Holds methods related to this monotonic
             pub mod #m {
+                // #(
+                //     #[allow(unused_imports)]
+                //     use #app_path::#all_task_names as #all_task_names;
+                // )*
+                use super::*;
                 #[allow(unused_imports)]
                 use #app_path::#tq_marker;
                 #[allow(unused_imports)]
@@ -297,10 +333,19 @@ pub fn codegen(
 
                 impl SpawnHandle {
                     pub fn cancel(self) -> Result<#ty, ()> {
-                        // TODO: Actually cancel...
-                        // &mut #app_path::#tq;
+                        rtic::export::interrupt::free(|_| unsafe {
+                            let tq = &mut *#app_path::#tq.as_mut_ptr();
+                            if let Some((_task, index)) = tq.cancel_marker(self.marker) {
+                                // Get the message
+                                let msg = #app_path::#inputs.get_unchecked(usize::from(index)).as_ptr().read();
+                                // Return the index to the free queue
+                                #app_path::#fq.split().0.enqueue_unchecked(index);
 
-                        Err(())
+                                Ok(msg)
+                            } else {
+                                Err(())
+                            }
+                        })
                     }
 
                     #[inline]
@@ -313,12 +358,14 @@ pub fn codegen(
 
                     pub fn reschedule_at(self, instant: rtic::time::Instant<#app_path::#mono_type>) -> Result<Self, ()>
                     {
-                        let _ = instant;
+                        rtic::export::interrupt::free(|_| unsafe {
+                            let marker = #tq_marker;
+                            #tq_marker = #tq_marker.wrapping_add(1);
 
-                        // TODO: Actually reschedule...
-                        // &mut #app_path::#tq;
+                            let tq = &mut *#app_path::#tq.as_mut_ptr();
 
-                        Err(())
+                            tq.update_marker(self.marker, marker, instant, || #pend).map(|_| SpawnHandle { marker })
+                        })
                     }
                 }
 
@@ -374,8 +421,10 @@ pub fn codegen(
 
                                 #tq_marker = #tq_marker.wrapping_add(1);
 
+                                let tq = unsafe { &mut *#app_path::#tq.as_mut_ptr() };
+
                                 if let Some(mono) = #app_path::#m_ident.as_mut() {
-                                    #app_path::#tq.enqueue_unchecked(
+                                    tq.enqueue_unchecked(
                                         nr,
                                         || #enable_interrupt,
                                         || #pend,
