@@ -32,7 +32,7 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_compatibility)]
 #![deny(rust_2018_idioms)]
-// #![deny(warnings)]
+#![deny(warnings)]
 #![no_std]
 
 use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};

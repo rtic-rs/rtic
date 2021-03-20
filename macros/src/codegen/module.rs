@@ -319,18 +319,6 @@ pub fn codegen(
                     marker: u32,
                 }
 
-                // TODO: remove
-                impl core::fmt::Debug for SpawnHandle
-                {
-                    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                        let handle = unsafe { &#app_path::#tq as *const _ as u32 };
-                        f.debug_struct("SpawnHandle")
-                            .field("marker", &self.marker)
-                            .field("handle", &handle)
-                            .finish()
-                    }
-                }
-
                 impl SpawnHandle {
                     pub fn cancel(self) -> Result<#ty, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
