@@ -42,15 +42,13 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             }
         ));
 
-        let n = util::capacity_typenum(channel.capacity, true);
+        let n = util::capacity_literal(channel.capacity as usize + 1);
         let rq = util::rq_ident(level);
         let rq = util::mark_internal_ident(&rq);
         let (rq_ty, rq_expr) = {
             (
                 quote!(rtic::export::SCRQ<#t, #n>),
-                quote!(rtic::export::Queue(unsafe {
-                    rtic::export::iQueue::u8_sc()
-                })),
+                quote!(rtic::export::Queue::new()),
             )
         };
 

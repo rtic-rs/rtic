@@ -32,8 +32,8 @@ pub fn codegen(
         let (_, _, _, input_ty) = util::regroup_inputs(inputs);
 
         let cap = task.args.capacity;
-        let cap_lit = util::capacity_literal(cap);
-        let cap_ty = util::capacity_typenum(cap, true);
+        let cap_lit = util::capacity_literal(cap as usize);
+        let cap_lit_p1 = util::capacity_literal(cap as usize + 1);
 
         // Create free queues and inputs / instants buffers
         let fq = util::fq_ident(name);
@@ -41,10 +41,8 @@ pub fn codegen(
 
         let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
             (
-                quote!(rtic::export::SCFQ<#cap_ty>),
-                quote!(rtic::export::Queue(unsafe {
-                    rtic::export::iQueue::u8_sc()
-                })),
+                quote!(rtic::export::SCFQ<#cap_lit_p1>),
+                quote!(rtic::export::Queue::new()),
                 Box::new(|| util::link_section_uninit()),
             )
         };
