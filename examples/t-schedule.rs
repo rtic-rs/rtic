@@ -9,14 +9,11 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use dwt_systick_monotonic::{
-        consts::{U0, U8},
-        DwtSystick,
-    };
+    use dwt_systick_monotonic::DwtSystick;
     use rtic::time::duration::Seconds;
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = DwtSystick<U8, U0, U0>; // 8 MHz
+    type MyMono = DwtSystick<8_000_000>; // 8 MHz
 
     #[init]
     fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
