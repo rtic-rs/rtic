@@ -112,8 +112,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             let user_imports = &app.user_imports;
 
             quote! {
-                pub use rtic::Monotonic as _;
-
                 #[doc = #doc]
                 #[allow(non_snake_case)]
                 pub mod #name {
@@ -143,6 +141,18 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         })
         .collect();
 
+    let monotonics = if !monotonic_parts.is_empty() {
+        quote!(
+            pub use rtic::Monotonic as _;
+
+            /// Holds static methods for each monotonic.
+            pub mod monotonics {
+                #(#monotonic_parts)*
+            }
+        )
+    } else {
+        quote!()
+    };
     let rt_err = util::rt_err_ident();
 
     quote!(
@@ -151,7 +161,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             /// Always include the device crate which contains the vector table
             use #device as #rt_err;
 
-            #(#monotonic_parts)*
+            #monotonics
 
             #(#user_imports)*
 
