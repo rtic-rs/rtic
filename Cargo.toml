@@ -58,6 +58,7 @@ rtic-monotonic = "0.1.0-alpha.0"
 rtic-core = "0.3.1"
 heapless = "0.6.1"
 bare-metal = "1.0.0"
+generic-array = "0.14"
 
 [dependencies.dwt-systick-monotonic]
 version = "0.1.0-alpha.0"

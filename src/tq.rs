@@ -1,22 +1,35 @@
 use crate::{
+    linked_list::{ArrayLength, LinkedList, Min, Node},
     time::{Clock, Instant},
     Monotonic,
 };
 use core::cmp::Ordering;
-use heapless::{binary_heap::Min, ArrayLength, BinaryHeap};
 
-pub struct TimerQueue<Mono, Task, N>(pub BinaryHeap<NotReady<Mono, Task>, N, Min>)
+#[inline(always)]
+fn unwrapper<T, E>(val: Result<T, E>) -> T {
+    if let Ok(v) = val {
+        v
+    } else {
+        unreachable!("Your monotonic is not infallible")
+    }
+}
+
+pub struct TimerQueue<Mono, Task, N>(pub LinkedList<NotReady<Mono, Task>, Min, N>)
 where
     Mono: Monotonic,
-    N: ArrayLength<NotReady<Mono, Task>>,
+    N: ArrayLength<Node<NotReady<Mono, Task>>>,
     Task: Copy;
 
 impl<Mono, Task, N> TimerQueue<Mono, Task, N>
 where
     Mono: Monotonic,
-    N: ArrayLength<NotReady<Mono, Task>>,
+    N: ArrayLength<Node<NotReady<Mono, Task>>>,
     Task: Copy,
 {
+    pub fn new() -> Self {
+        TimerQueue(LinkedList::new())
+    }
+
     /// # Safety
     ///
     /// Writing to memory with a transmute in order to enable
@@ -34,26 +47,20 @@ where
         F1: FnOnce(),
         F2: FnOnce(),
     {
-        let mut is_empty = true;
         // Check if the top contains a non-empty element and if that element is
         // greater than nr
         let if_heap_max_greater_than_nr = self
             .0
             .peek()
-            .map(|head| {
-                is_empty = false;
-                nr.instant < head.instant
-            })
+            .map(|head| nr.instant < head.instant)
             .unwrap_or(true);
+
         if if_heap_max_greater_than_nr {
-            if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE && is_empty {
-                // mem::transmute::<_, SYST>(()).enable_interrupt();A
+            if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE && self.0.is_empty() {
                 mono.enable_timer();
                 enable_interrupt();
             }
 
-            // Set SysTick pending
-            // SCB::set_pendst();
             pend_handler();
         }
 
@@ -66,17 +73,39 @@ where
         self.0.is_empty()
     }
 
-    #[inline]
-    fn unwrapper<T, E>(val: Result<T, E>) -> T {
-        if let Ok(v) = val {
-            v
+    /// Cancel the marker value
+    pub fn cancel_marker(&mut self, marker: u32) -> Option<(Task, u8)> {
+        if let Some(val) = self.0.find_mut(|nr| nr.marker == marker) {
+            let nr = val.pop();
+
+            Some((nr.task, nr.index))
         } else {
-            unreachable!("Your monotonic is not infallible")
+            None
+        }
+    }
+
+    /// Update the instant at an marker value to a new instant
+    pub fn update_marker<F: FnOnce()>(
+        &mut self,
+        marker: u32,
+        new_marker: u32,
+        instant: Instant<Mono>,
+        pend_handler: F,
+    ) -> Result<(), ()> {
+        if let Some(mut val) = self.0.find_mut(|nr| nr.marker == marker) {
+            val.instant = instant;
+            val.marker = new_marker;
+
+            // On update pend the handler to reconfigure the next compare match
+            pend_handler();
+
+            Ok(())
+        } else {
+            Err(())
         }
     }
 
     /// Dequeue a task from the TimerQueue
-    #[inline]
     pub fn dequeue<F>(&mut self, disable_interrupt: F, mono: &mut Mono) -> Option<(Task, u8)>
     where
         F: FnOnce(),
@@ -84,7 +113,7 @@ where
         mono.clear_compare_flag();
 
         if let Some(instant) = self.0.peek().map(|p| p.instant) {
-            if instant <= Self::unwrapper(Clock::try_now(mono)) {
+            if instant <= unwrapper(Clock::try_now(mono)) {
                 // task became ready
                 let nr = unsafe { self.0.pop_unchecked() };
 
@@ -97,7 +126,7 @@ where
                 // dequeue. If the monotonic is fast enough it can happen that from the
                 // read of now to the set of the compare, the time can overflow. This is to
                 // guard against this.
-                if instant <= Self::unwrapper(Clock::try_now(mono)) {
+                if instant <= unwrapper(Clock::try_now(mono)) {
                     let nr = unsafe { self.0.pop_unchecked() };
 
                     Some((nr.task, nr.index))
@@ -125,6 +154,7 @@ where
     pub index: u8,
     pub instant: Instant<Mono>,
     pub task: Task,
+    pub marker: u32,
 }
 
 impl<Mono, Task> Eq for NotReady<Mono, Task>

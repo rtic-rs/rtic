@@ -9,6 +9,15 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
     let mut items = vec![];
 
     if !app.monotonics.is_empty() {
+        // Generate the marker counter used to track for `cancel` and `reschedule`
+        let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
+        items.push(quote!(
+            // #[doc = #doc]
+            #[doc(hidden)]
+            #[allow(non_camel_case_types)]
+            static mut #tq_marker: u32 = 0;
+        ));
+
         let t = util::schedule_t_ident();
 
         // Enumeration of `schedule`-able tasks
@@ -32,7 +41,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[derive(Clone, Copy)]
-                enum #t {
+                pub enum #t {
                     #(#variants,)*
                 }
             ));
@@ -59,15 +68,12 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 .map(|(_name, task)| task.args.capacity)
                 .sum();
             let n = util::capacity_typenum(cap, false);
-            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n>);
+            let tq_ty =
+                quote!(core::mem::MaybeUninit<rtic::export::TimerQueue<#mono_type, #t, #n>>);
 
             items.push(quote!(
                 #[doc(hidden)]
-                static mut #tq: #tq_ty = rtic::export::TimerQueue(
-                    rtic::export::BinaryHeap(
-                        rtic::export::iBinaryHeap::new()
-                    )
-                );
+                static mut #tq: #tq_ty = core::mem::MaybeUninit::uninit();
             ));
 
             let mono = util::monotonic_ident(&monotonic_name);
@@ -129,7 +135,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = #app_path::#m_ident.as_mut() {
-                            #tq.dequeue(|| #disable_isr, mono)
+                            (&mut *#tq.as_mut_ptr()).dequeue(|| #disable_isr, mono)
                         } else {
                             // We can only use the timer queue if `init` has returned, and it
                             // writes the `Some(monotonic)` we are accessing here.

@@ -10,13 +10,10 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965, peripherals = true, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::debug;
-    use dwt_systick_monotonic::{
-        consts::{U0, U8},
-        DwtSystick,
-    };
+    use dwt_systick_monotonic::DwtSystick;
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = DwtSystick<U8, U0, U0>; // 8 MHz
+    type MyMono = DwtSystick<8_000_000>; // 8 MHz
 
     #[resources]
     struct Resources {

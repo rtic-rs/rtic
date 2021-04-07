@@ -43,6 +43,8 @@ pub use rtic_monotonic::{self, embedded_time as time, Monotonic};
 #[doc(hidden)]
 pub mod export;
 #[doc(hidden)]
+mod linked_list;
+#[doc(hidden)]
 mod tq;
 
 /// Sets the given `interrupt` as pending
