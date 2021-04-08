@@ -1,4 +1,4 @@
-//! examples/smallest.rs
+//! examples/type-usage.rs
 
 #![no_main]
 #![no_std]

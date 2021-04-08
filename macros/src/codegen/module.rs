@@ -414,17 +414,11 @@ pub fn codegen(
 
                                 let tq = unsafe { &mut *#app_path::#tq.as_mut_ptr() };
 
-                                if let Some(mono) = #app_path::#m_ident.as_mut() {
-                                    tq.enqueue_unchecked(
-                                        nr,
-                                        || #enable_interrupt,
-                                        || #pend,
-                                        mono)
-                                } else {
-                                    // We can only use the timer queue if `init` has returned, and it
-                                    // writes the `Some(monotonic)` we are accessing here.
-                                    core::hint::unreachable_unchecked()
-                                }
+                                tq.enqueue_unchecked(
+                                    nr,
+                                    || #enable_interrupt,
+                                    || #pend,
+                                    #app_path::#m_ident.as_mut());
 
                                 Ok(SpawnHandle { marker })
                             })
