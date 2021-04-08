@@ -52,7 +52,7 @@ pub fn codegen(
             // /// Queue version of a free-list that keeps track of empty slots in
             // /// the following buffers
             #[doc(hidden)]
-            static mut #fq: #fq_ty = #fq_expr;
+            static #fq: rtic::RacyCell<#fq_ty> = rtic::RacyCell::new(#fq_expr);
         ));
 
         let elems = &(0..cap)
@@ -65,13 +65,15 @@ pub fn codegen(
             let mono_type = &monotonic.ty;
 
             let uninit = mk_uninit();
+            // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             mod_app.push(quote!(
                 #uninit
                 // /// Buffer that holds the instants associated to the inputs of a task
+                // #[doc = #doc]
                 #[doc(hidden)]
-                static mut #instants:
-                    [core::mem::MaybeUninit<rtic::time::Instant<#mono_type>>; #cap_lit] =
-                    [#(#elems,)*];
+                static #instants:
+                    rtic::RacyCell<[core::mem::MaybeUninit<rtic::time::Instant<#mono_type>>; #cap_lit]> =
+                    rtic::RacyCell::new([#(#elems,)*]);
             ));
         }
 
@@ -82,8 +84,8 @@ pub fn codegen(
             #uninit
             // /// Buffer that holds the inputs of a task
             #[doc(hidden)]
-            static mut #inputs_ident: [core::mem::MaybeUninit<#input_ty>; #cap_lit] =
-                [#(#elems,)*];
+            static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
+                rtic::RacyCell::new([#(#elems,)*]);
         ));
 
         // `${task}Resources`

@@ -79,9 +79,9 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         let is_late = expr.is_none();
         if is_late {
             let expr = if access.is_exclusive() {
-                quote!(&mut *#mangled_name.as_mut_ptr())
+                quote!(&mut *#mangled_name.get_mut_unchecked().as_mut_ptr())
             } else {
-                quote!(&*#mangled_name.as_ptr())
+                quote!(&*#mangled_name.get_unchecked().as_ptr())
             };
 
             values.push(quote!(
@@ -91,7 +91,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         } else {
             values.push(quote!(
                 #(#cfgs)*
-                #name: &#mut_ #mangled_name
+                #name: #mangled_name.get_mut_unchecked()
             ));
         }
     }
