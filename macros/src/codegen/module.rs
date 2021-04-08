@@ -21,7 +21,7 @@ pub fn codegen(
     let app_name = &app.name;
     let app_path = quote! {crate::#app_name};
 
-    let all_task_names: Vec<_> = app
+    let all_task_imports: Vec<_> = app
         .software_tasks
         .iter()
         .map(|(name, st)| {
@@ -44,6 +44,13 @@ pub fn codegen(
                 }
             } else {
                 quote!()
+            }
+        }))
+        .chain(app.user_types.iter().map(|ty| {
+            let t = &ty.ident;
+            quote! {
+                #[allow(unused_imports)]
+                use super::#t;
             }
         }))
         .collect();
@@ -230,7 +237,7 @@ pub fn codegen(
         // Spawn caller
         items.push(quote!(
 
-        #(#all_task_names)*
+        #(#all_task_imports)*
 
         #(#cfgs)*
         /// Spawns the task directly
@@ -268,7 +275,7 @@ pub fn codegen(
             let tq = util::mark_internal_ident(&tq);
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
-            let mono_type = &monotonic.ty;
+            let mono_type = &monotonic.ident;
             let m_ident = util::monotonic_ident(&monotonic_name);
             let m_ident = util::mark_internal_ident(&m_ident);
             let m_isr = &monotonic.args.binds;
@@ -300,10 +307,6 @@ pub fn codegen(
             items.push(quote!(
             /// Holds methods related to this monotonic
             pub mod #m {
-                // #(
-                //     #[allow(unused_imports)]
-                //     use #app_path::#all_task_names as #all_task_names;
-                // )*
                 use super::*;
                 #[allow(unused_imports)]
                 use #app_path::#tq_marker;
@@ -341,7 +344,7 @@ pub fn codegen(
                         where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
                                  D::T: Into<<#app_path::#mono_type as rtic::time::Clock>::T>,
                     {
-                        self.reschedule_at(#app_path::#m::now() + duration)
+                        self.reschedule_at(#app_path::monotonics::#m::now() + duration)
                     }
 
                     pub fn reschedule_at(self, instant: rtic::time::Instant<#app_path::#mono_type>) -> Result<Self, ()>
@@ -373,7 +376,7 @@ pub fn codegen(
                     let instant = if rtic::export::interrupt::free(|_| unsafe { #app_path::#m_ident.is_none() }) {
                         rtic::time::Instant::new(0)
                     } else {
-                        #app_path::#m::now()
+                        #app_path::monotonics::#m::now()
                     };
 
                     spawn_at(instant + duration #(,#untupled)*)
@@ -411,17 +414,11 @@ pub fn codegen(
 
                                 let tq = unsafe { &mut *#app_path::#tq.as_mut_ptr() };
 
-                                if let Some(mono) = #app_path::#m_ident.as_mut() {
-                                    tq.enqueue_unchecked(
-                                        nr,
-                                        || #enable_interrupt,
-                                        || #pend,
-                                        mono)
-                                } else {
-                                    // We can only use the timer queue if `init` has returned, and it
-                                    // writes the `Some(monotonic)` we are accessing here.
-                                    core::hint::unreachable_unchecked()
-                                }
+                                tq.enqueue_unchecked(
+                                    nr,
+                                    || #enable_interrupt,
+                                    || #pend,
+                                    #app_path::#m_ident.as_mut());
 
                                 Ok(SpawnHandle { marker })
                             })

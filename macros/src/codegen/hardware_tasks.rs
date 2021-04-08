@@ -37,12 +37,16 @@ pub fn codegen(
 
         let symbol = task.args.binds.clone();
         let priority = task.args.priority;
+        let cfgs = &task.cfgs;
+        let attrs = &task.attrs;
 
         let app_name = &app.name;
         let app_path = quote! {crate::#app_name};
         mod_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
+            #(#attrs)*
+            #(#cfgs)*
             unsafe fn #symbol() {
                 const PRIORITY: u8 = #priority;
 

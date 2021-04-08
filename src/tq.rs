@@ -42,7 +42,7 @@ where
         nr: NotReady<Mono, Task>,
         enable_interrupt: F1,
         pend_handler: F2,
-        mono: &mut Mono,
+        mono: Option<&mut Mono>,
     ) where
         F1: FnOnce(),
         F2: FnOnce(),
@@ -57,7 +57,9 @@ where
 
         if if_heap_max_greater_than_nr {
             if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE && self.0.is_empty() {
-                mono.enable_timer();
+                if let Some(mono) = mono {
+                    mono.enable_timer();
+                }
                 enable_interrupt();
             }
 
