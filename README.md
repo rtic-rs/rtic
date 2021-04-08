@@ -74,7 +74,7 @@ New features and big changes should go through the RFC process in the
 
 ## Acknowledgments
 
-This crate is based on [the Real-Time For the Masses language][rtfm-lang]
+This crate is based on the [Real-Time For the Masses language][rtfm-lang]
 created by the Embedded Systems group at [Luleå University of Technology][ltu],
 led by [Prof. Per Lindgren][per].
 
