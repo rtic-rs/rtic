@@ -5,9 +5,28 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.6.0-alpha.2] - 2020-04-08
+
+### Added
+
+- Cancel and reschedule support to the monotonics
+
+### Fixed
+
+- UB in `spawn_at`
+- `#[cfg]` and other attributes now work on hardware tasks
+- Type aliases now work in `mod app`
+
+### Changed
+
+- The access to monotonic static methods was for example `MyMono::now()`, and is now `monotonics::MyMono::now()`
+
+## [v0.6.0-alpha.1] - 2020-03-04
+
 ### Added
 
 - Support for multi-locks, see `examples/multilock.rs` for syntax.
+- New monotonic syntax and support, see `#[monotonic]`
 
 ## [v0.6.0-alpha.0] - 2020-11-14
 
