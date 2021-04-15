@@ -517,6 +517,37 @@ jobs:
           command: test
           args: --test tests
 
+  # Run cargo bloat
+  cargobloat:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@master
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: thumbv7em-none-eabihf
+          override: true
+
+      - name: Check workflow permissions
+        id: check_permissions
+        uses: scherermichael-oss/action-has-permission@1.0.6
+        with:
+          required-permission: write
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run cargo bloat action to produce annotations
+        uses: orf/cargo-bloat-action@v1
+        if: steps.check_permissions.outputs.has-permission
+        with:
+          bloat_args: "--target thumbv7em-none-eabihf --example smallest"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run cargo bloat manually without annotations
+        if: ${{ !steps.check_permissions.outputs.has-permission }}
+        run: cargo bloat --target thumbv7em-none-eabihf --example smallest
+
   # Build documentation, check links
   docs:
     name: docs
