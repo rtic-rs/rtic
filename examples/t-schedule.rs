@@ -40,7 +40,7 @@ mod app {
         let _: Result<(), ()> = handle.unwrap().cancel();
 
         // Using default
-        let _: Result<foo::SpawnHandle, ()> = foo::spawn_at(monotonics::MyMono::now());
+        let _: Result<foo::SpawnHandle, ()> = foo::spawn_at(monotonics::now());
         let handle: Result<foo::SpawnHandle, ()> = foo::spawn_after(Seconds(1_u32));
         let _: Result<foo::SpawnHandle, ()> = handle.unwrap().reschedule_after(Seconds(1_u32));
 
