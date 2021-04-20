@@ -119,7 +119,15 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             );
             let user_imports = &app.user_imports;
 
+            let default_monotonic = if monotonic.args.default {
+                quote!(pub use #name::now;)
+            } else {
+                quote!()
+            };
+
             quote! {
+                #default_monotonic
+
                 #[doc = #doc]
                 #[allow(non_snake_case)]
                 pub mod #name {
