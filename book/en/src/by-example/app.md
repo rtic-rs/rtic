@@ -23,9 +23,8 @@ to use the [`cortex_m_rt::entry`] attribute.
 ## `init`
 
 Within the `app` module the attribute expects to find an initialization
-function marked with the `init` attribute. This function must have signature
-`fn(init::Context) [-> init::LateResources]` (the return type is not always
-required).
+function marked with the `init` attribute. This function must have
+signature `fn(init::Context) -> (init::LateResources, init::Monotonics)`.
 
 This initialization function will be the first part of the application to run.
 The `init` function will run *with interrupts disabled* and has exclusive access
