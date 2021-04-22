@@ -163,6 +163,11 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
             /// Holds static methods for each monotonic.
             pub mod monotonics {
+                #(
+                    #[allow(unused_imports)]
+                    #user_imports
+                )*
+
                 #(#monotonic_parts)*
             }
         )
