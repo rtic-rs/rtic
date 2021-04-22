@@ -50,11 +50,11 @@ pub fn codegen(
         items.push(quote!(
             #(#cfgs)*
             #[doc(hidden)]
-            static mut #name: #ty = #expr
+            static #name: rtic::RacyCell<#ty> = rtic::RacyCell::new(#expr)
         ));
         values.push(quote!(
             #(#cfgs)*
-            #name: &mut #name
+            #name: #name.get_mut_unchecked()
         ));
         names.push(name);
         pats.push(quote!(
@@ -64,7 +64,7 @@ pub fn codegen(
     }
 
     if lt.is_some() && has_cfgs {
-        fields.push(quote!(__marker__: core::marker::PhantomData<&'a mut ()>));
+        fields.push(quote!(__marker__: core::marker::PhantomData<&'a ()>));
         values.push(quote!(__marker__: core::marker::PhantomData));
     }
 

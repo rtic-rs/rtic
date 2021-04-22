@@ -245,14 +245,15 @@ pub fn codegen(
             let input = #tupled;
 
             unsafe {
-                if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.get_mut_unchecked().dequeue()) {
                     #app_path::#inputs
+                        .get_mut_unchecked()
                         .get_unchecked_mut(usize::from(index))
                         .as_mut_ptr()
                         .write(input);
 
                     rtic::export::interrupt::free(|_| {
-                        #app_path::#rq.enqueue_unchecked((#app_path::#t::#name, index));
+                        #app_path::#rq.get_mut_unchecked().enqueue_unchecked((#app_path::#t::#name, index));
                     });
 
                     rtic::pend(#device::#enum_::#interrupt);
@@ -304,6 +305,10 @@ pub fn codegen(
             let user_imports = &app.user_imports;
             let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
 
+            // For future use
+            // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
+            // items.push(quote!(#[doc = #doc]));
+
             items.push(quote!(
             /// Holds methods related to this monotonic
             pub mod #m {
@@ -325,12 +330,16 @@ pub fn codegen(
                 impl SpawnHandle {
                     pub fn cancel(self) -> Result<#ty, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
-                            let tq = &mut *#app_path::#tq.as_mut_ptr();
+                            let tq = &mut *#app_path::#tq.get_mut_unchecked().as_mut_ptr();
                             if let Some((_task, index)) = tq.cancel_marker(self.marker) {
                                 // Get the message
-                                let msg = #app_path::#inputs.get_unchecked(usize::from(index)).as_ptr().read();
+                                let msg = #app_path::#inputs
+                                    .get_unchecked()
+                                    .get_unchecked(usize::from(index))
+                                    .as_ptr()
+                                    .read();
                                 // Return the index to the free queue
-                                #app_path::#fq.split().0.enqueue_unchecked(index);
+                                #app_path::#fq.get_mut_unchecked().split().0.enqueue_unchecked(index);
 
                                 Ok(msg)
                             } else {
@@ -350,10 +359,10 @@ pub fn codegen(
                     pub fn reschedule_at(self, instant: rtic::time::Instant<#app_path::#mono_type>) -> Result<Self, ()>
                     {
                         rtic::export::interrupt::free(|_| unsafe {
-                            let marker = #tq_marker;
-                            #tq_marker = #tq_marker.wrapping_add(1);
+                            let marker = *#tq_marker.get_mut_unchecked();
+                            *#tq_marker.get_mut_unchecked() = #tq_marker.get_mut_unchecked().wrapping_add(1);
 
-                            let tq = &mut *#app_path::#tq.as_mut_ptr();
+                            let tq = &mut *#app_path::#tq.get_mut_unchecked().as_mut_ptr();
 
                             tq.update_marker(self.marker, marker, instant, || #pend).map(|_| SpawnHandle { marker })
                         })
@@ -373,7 +382,7 @@ pub fn codegen(
                         D::T: Into<<#app_path::#mono_type as rtic::time::Clock>::T>,
                 {
 
-                    let instant = if rtic::export::interrupt::free(|_| unsafe { #app_path::#m_ident.is_none() }) {
+                    let instant = if rtic::export::interrupt::free(|_| unsafe { #app_path::#m_ident.get_mut_unchecked().is_none() }) {
                         rtic::time::Instant::new(0)
                     } else {
                         #app_path::monotonics::#m::now()
@@ -390,19 +399,21 @@ pub fn codegen(
                 ) -> Result<SpawnHandle, #ty> {
                     unsafe {
                         let input = #tupled;
-                        if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.dequeue()) {
+                        if let Some(index) = rtic::export::interrupt::free(|_| #app_path::#fq.get_mut_unchecked().dequeue()) {
                             #app_path::#inputs
+                                .get_mut_unchecked()
                                 .get_unchecked_mut(usize::from(index))
                                 .as_mut_ptr()
                                 .write(input);
 
                             #app_path::#instants
+                                .get_mut_unchecked()
                                 .get_unchecked_mut(usize::from(index))
                                 .as_mut_ptr()
                                 .write(instant);
 
                             rtic::export::interrupt::free(|_| {
-                                let marker = #tq_marker;
+                                let marker = *#tq_marker.get_mut_unchecked();
                                 let nr = rtic::export::NotReady {
                                     instant,
                                     index,
@@ -410,15 +421,15 @@ pub fn codegen(
                                     marker,
                                 };
 
-                                #tq_marker = #tq_marker.wrapping_add(1);
+                                *#tq_marker.get_mut_unchecked() = #tq_marker.get_mut_unchecked().wrapping_add(1);
 
-                                let tq = unsafe { &mut *#app_path::#tq.as_mut_ptr() };
+                                let tq = &mut *#app_path::#tq.get_mut_unchecked().as_mut_ptr();
 
                                 tq.enqueue_unchecked(
                                     nr,
                                     || #enable_interrupt,
                                     || #pend,
-                                    #app_path::#m_ident.as_mut());
+                                    #app_path::#m_ident.get_mut_unchecked().as_mut());
 
                                 Ok(SpawnHandle { marker })
                             })

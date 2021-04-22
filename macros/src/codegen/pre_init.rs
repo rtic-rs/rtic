@@ -20,7 +20,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let fq_ident = util::mark_internal_ident(&fq_ident);
 
         stmts.push(quote!(
-            (0..#cap).for_each(|i| #fq_ident.enqueue_unchecked(i));
+            (0..#cap).for_each(|i| #fq_ident.get_mut_unchecked().enqueue_unchecked(i));
         ));
     }
 
@@ -86,7 +86,9 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let tq = util::mark_internal_ident(&tq);
 
         // Initialize timer queues
-        stmts.push(quote!(#tq.as_mut_ptr().write(rtic::export::TimerQueue::new());));
+        stmts.push(
+            quote!(#tq.get_mut_unchecked().as_mut_ptr().write(rtic::export::TimerQueue::new());),
+        );
 
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
