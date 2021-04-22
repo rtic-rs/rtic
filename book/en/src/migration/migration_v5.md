@@ -30,7 +30,46 @@ mod app {
 
 Now that a regular Rust module is used it means it is possible to have custom
 user code within that module.
-Additionally, it means that `use`-statements for resources etc may be required.
+Additionally, it means that `use`-statements for resources used in user
+code must be moved inside `mod app`, or be referred to with `super`. For
+example, change:
+
+```rust
+use some_crate::some_func;
+
+#[rtic::app(/* .. */)]
+const APP: () = {
+    fn func() {
+        some_crate::some_func();
+    }
+};
+```
+
+into
+
+```rust
+#[rtic::app(/* .. */)]
+mod app {
+    use some_crate::some_func;
+
+    fn func() {
+        some_crate::some_func();
+    }
+}
+```
+
+or
+
+```rust
+use some_crate::some_func;
+
+#[rtic::app(/* .. */)]
+mod app {
+    fn func() {
+        super::some_crate::some_func();
+    }
+};
+```
 
 ## Move Dispatchers from `extern "C"` to app arguments.
 
