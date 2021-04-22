@@ -7,10 +7,14 @@
 
 use panic_semihosting as _;
 
+pub struct SomeStruct;
+
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use dwt_systick_monotonic::DwtSystick;
     use rtic::time::duration::Seconds;
+
+    use super::SomeStruct;
 
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = DwtSystick<8_000_000>; // 8 MHz
