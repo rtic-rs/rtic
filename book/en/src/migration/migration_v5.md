@@ -71,14 +71,14 @@ From this:
 
 ``` rust
 #[rtic::app(device = lm3s6965)]
-mod app {
+const APP: () = {
     #[init]
     fn init(_: init::Context) {
         rtic::pend(Interrupt::UART0);
     }
 
     // [more code]
-}
+};
 ```
 
 to this:
@@ -87,10 +87,10 @@ to this:
 #[rtic::app(device = lm3s6965)]
 mod app {
     #[init]
-    fn init(_: init::Context) -> init::LateResources {
+    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
 
-        init::LateResources {}
+        (init::LateResources {}, init::Monotonics())
     }
 
     // [more code]
