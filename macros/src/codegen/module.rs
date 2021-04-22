@@ -305,6 +305,7 @@ pub fn codegen(
             let user_imports = &app.user_imports;
             let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
 
+            // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             // items.push(quote!(#[doc = #doc]));
 

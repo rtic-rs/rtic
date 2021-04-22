@@ -31,6 +31,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     }
 
     for (i, (monotonic, _)) in app.monotonics.iter().enumerate() {
+        // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
         // stmts.push(quote!(#[doc = #doc]));
 

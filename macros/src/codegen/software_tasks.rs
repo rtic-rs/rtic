@@ -65,6 +65,7 @@ pub fn codegen(
             let mono_type = &monotonic.ty;
 
             let uninit = mk_uninit();
+            // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             mod_app.push(quote!(
                 #uninit

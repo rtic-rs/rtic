@@ -31,7 +31,6 @@ pub fn codegen(
         let mangled_name = util::mark_internal_ident(&name);
 
         {
-            // TODO: do we really need this in the single core case
             // late resources in `util::link_section_uninit`
             let section = if expr.is_none() {
                 util::link_section_uninit(true)
@@ -56,6 +55,7 @@ pub fn codegen(
 
             let attrs = &res.attrs;
 
+            // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             mod_app.push(quote!(
                 #[allow(non_upper_case_globals)]
@@ -69,6 +69,7 @@ pub fn codegen(
         }
 
         let r_prop = &res.properties;
+        // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
 
         if !r_prop.task_local && !r_prop.lock_free {
@@ -122,6 +123,7 @@ pub fn codegen(
                 None => 0,
             };
 
+            // For future use
             // let doc = format!(" RTIC internal ({} resource): {}:{}", doc, file!(), line!());
 
             mod_app.push(util::impl_mutex(

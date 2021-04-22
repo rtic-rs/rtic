@@ -35,6 +35,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 })
                 .collect::<Vec<_>>();
 
+            // For future use
             // let doc = "Tasks that can be scheduled".to_string();
             items.push(quote!(
                 // #[doc = #doc]
@@ -61,6 +62,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
         // Static variables and resource proxy
         {
+            // For future use
             // let doc = &format!("Timer queue for {}", monotonic_name);
             let cap = app
                 .software_tasks
@@ -71,6 +73,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             let tq_ty =
                 quote!(core::mem::MaybeUninit<rtic::export::TimerQueue<#mono_type, #t, #n>>);
 
+            // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             items.push(quote!(
                 #[doc(hidden)]
@@ -80,6 +83,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
             let mono = util::monotonic_ident(&monotonic_name);
             let mono = util::mark_internal_ident(&mono);
+            // For future use
             // let doc = &format!("Storage for {}", monotonic_name);
 
             items.push(quote!(

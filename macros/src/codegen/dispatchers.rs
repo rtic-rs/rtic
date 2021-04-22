@@ -26,6 +26,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             })
             .collect::<Vec<_>>();
 
+        // For future use
         // let doc = format!(
         //     "Software tasks to be dispatched at priority level {}",
         //     level,
@@ -53,6 +54,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             )
         };
 
+        // For future use
         // let doc = format!(
         //     "Queue of tasks ready to be dispatched at priority level {}",
         //     level
