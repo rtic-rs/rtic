@@ -14,8 +14,11 @@ mod app {
     use dwt_systick_monotonic::DwtSystick;
     use rtic::time::duration::Seconds;
 
+    /// 8 MHz
+    const MONO_HZ: u32 = 8_000_000;
+
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = DwtSystick<8_000_000>; // 8 MHz
+    type MyMono = DwtSystick<MONO_HZ>;
 
     #[init()]
     fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
@@ -23,7 +26,7 @@ mod app {
         let dwt = cx.core.DWT;
         let systick = cx.core.SYST;
 
-        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
+        let mono = DwtSystick::new(&mut dcb, dwt, systick, MONO_HZ);
 
         hprintln!("init").unwrap();
 
