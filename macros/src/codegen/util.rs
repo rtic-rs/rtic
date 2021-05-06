@@ -111,10 +111,39 @@ pub fn is_exception(name: &Ident) -> bool {
     )
 }
 
+/// Generate an internal identifier for monotonics
+pub fn internal_monotonics_ident(task: &Ident, monotonic: &Ident, ident_name: &str) -> Ident {
+    Ident::new(
+        &format!(
+            "__rtic_internal_{}_{}_{}",
+            task.to_string(),
+            monotonic.to_string(),
+            ident_name,
+        ),
+        Span::call_site(),
+    )
+}
+
+/// Generate an internal identifier for tasks
+pub fn internal_task_ident(task: &Ident, ident_name: &str) -> Ident {
+    Ident::new(
+        &format!("__rtic_internal_{}_{}", task.to_string(), ident_name,),
+        Span::call_site(),
+    )
+}
+
 /// Mark an ident as internal
 pub fn mark_internal_ident(ident: &Ident) -> Ident {
     Ident::new(
         &format!("__rtic_internal_{}", ident.to_string()),
+        Span::call_site(),
+    )
+}
+
+/// Mark an ident as internal
+pub fn mark_internal_name(name: &str) -> Ident {
+    Ident::new(
+        &format!("__rtic_internal_{}", name),
         Span::call_site(),
     )
 }

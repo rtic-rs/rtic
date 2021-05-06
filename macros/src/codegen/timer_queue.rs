@@ -57,8 +57,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         let mono_type = &monotonic.ty;
         let m_ident = util::monotonic_ident(&monotonic_name);
         let m_ident = util::mark_internal_ident(&m_ident);
-        let app_name = &app.name;
-        let app_path = quote! {crate::#app_name};
 
         // Static variables and resource proxy
         {
@@ -139,7 +137,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
-                        if let Some(mono) = #app_path::#m_ident.get_mut_unchecked().as_mut() {
+                        if let Some(mono) = #m_ident.get_mut_unchecked().as_mut() {
                             (&mut *#tq.get_mut_unchecked().as_mut_ptr()).dequeue(|| #disable_isr, mono)
                         } else {
                             // We can only use the timer queue if `init` has returned, and it
@@ -152,7 +150,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                         }
                     }
 
-                    rtic::export::interrupt::free(|_| if let Some(mono) = #app_path::#m_ident.get_mut_unchecked().as_mut() {
+                    rtic::export::interrupt::free(|_| if let Some(mono) = #m_ident.get_mut_unchecked().as_mut() {
                         mono.on_interrupt();
                     });
                 }

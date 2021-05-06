@@ -97,8 +97,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let user_code = &app.user_code;
     let name = &app.name;
     let device = &extra.device;
-    let app_name = &app.name;
-    let app_path = quote! {crate::#app_name};
 
     let monotonic_parts: Vec<_> = app
         .monotonics
@@ -106,7 +104,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         .map(|(_, monotonic)| {
             let name = &monotonic.ident;
             let name_str = &name.to_string();
-            let ty = &monotonic.ty;
             let ident = util::monotonic_ident(&name_str);
             let ident = util::mark_internal_ident(&ident);
             let panic_str = &format!(
@@ -117,7 +114,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
                 "This module holds the static implementation for `{}::now()`",
                 name_str
             );
-            let user_imports = &app.user_imports;
 
             let default_monotonic = if monotonic.args.default {
                 quote!(pub use #name::now;)
@@ -131,17 +127,13 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
                 #[doc = #doc]
                 #[allow(non_snake_case)]
                 pub mod #name {
-                    #(
-                        #[allow(unused_imports)]
-                        #user_imports
-                    )*
 
                     /// Read the current time from this monotonic
-                    pub fn now() -> rtic::time::Instant<#ty> {
+                    pub fn now() -> rtic::time::Instant<super::super::#name> {
                         rtic::export::interrupt::free(|_| {
                             use rtic::Monotonic as _;
                             use rtic::time::Clock as _;
-                            if let Some(m) = unsafe{ #app_path::#ident.get_mut_unchecked() } {
+                            if let Some(m) = unsafe{ super::super::#ident.get_mut_unchecked() } {
                                 if let Ok(v) = m.try_now() {
                                     v
                                 } else {
@@ -163,11 +155,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
             /// Holds static methods for each monotonic.
             pub mod monotonics {
-                #(
-                    #[allow(unused_imports)]
-                    #user_imports
-                )*
-
                 #(#monotonic_parts)*
             }
         )

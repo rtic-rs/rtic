@@ -82,8 +82,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     quote!(#name::Locals::new(),)
                 };
 
-                let app_name = &app.name;
-                let app_path = quote! {crate::#app_name};
                 quote!(
                     #(#cfgs)*
                     #t::#name => {
@@ -95,7 +93,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                             .read();
                         #fq.get_mut_unchecked().split().0.enqueue_unchecked(index);
                         let priority = &rtic::export::Priority::new(PRIORITY);
-                        #app_path::#name(
+                        #name(
                             #locals_new
                             #name::Context::new(priority)
                             #(,#pats)*
