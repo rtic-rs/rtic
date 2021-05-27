@@ -157,11 +157,11 @@ pub fn codegen(
         Context::HardwareTask(t) => {
             &app.hardware_tasks[t].cfgs
             // ...
-        },
+        }
         Context::SoftwareTask(t) => {
             &app.software_tasks[t].cfgs
             // ...
-        },
+        }
         _ => &v,
     };
 

@@ -142,10 +142,7 @@ pub fn mark_internal_ident(ident: &Ident) -> Ident {
 
 /// Mark an ident as internal
 pub fn mark_internal_name(name: &str) -> Ident {
-    Ident::new(
-        &format!("__rtic_internal_{}", name),
-        Span::call_site(),
-    )
+    Ident::new(&format!("__rtic_internal_{}", name), Span::call_site())
 }
 
 fn link_section_index() -> usize {
