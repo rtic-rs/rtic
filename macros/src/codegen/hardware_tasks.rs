@@ -40,8 +40,6 @@ pub fn codegen(
         let cfgs = &task.cfgs;
         let attrs = &task.attrs;
 
-        let app_name = &app.name;
-        let app_path = quote! {crate::#app_name};
         mod_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
@@ -51,7 +49,7 @@ pub fn codegen(
                 const PRIORITY: u8 = #priority;
 
                 rtic::export::run(PRIORITY, || {
-                    #app_path::#name(
+                    #name(
                         #locals_new
                         #name::Context::new(&rtic::export::Priority::new(PRIORITY))
                     )

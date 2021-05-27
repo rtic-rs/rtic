@@ -14,8 +14,10 @@ mod app {
     use dwt_systick_monotonic::DwtSystick;
     use rtic::time::duration::Seconds;
 
+    const MONO_HZ: u32 = 8_000_000; // 8 MHz
+
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = DwtSystick<8_000_000>; // 8 MHz
+    type MyMono = DwtSystick<MONO_HZ>;
 
     #[init()]
     fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
@@ -25,24 +27,24 @@ mod app {
 
         let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
 
-        hprintln!("init").unwrap();
+        hprintln!("init").ok();
 
         // Schedule `foo` to run 1 second in the future
-        foo::spawn_after(Seconds(1_u32)).unwrap();
+        foo::spawn_after(Seconds(1_u32)).ok();
 
         // Schedule `bar` to run 2 seconds in the future
-        bar::spawn_after(Seconds(2_u32)).unwrap();
+        bar::spawn_after(Seconds(2_u32)).ok();
 
         (init::LateResources {}, init::Monotonics(mono))
     }
 
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo").unwrap();
+        hprintln!("foo").ok();
     }
 
     #[task]
     fn bar(_: bar::Context) {
-        hprintln!("bar").unwrap();
+        hprintln!("bar").ok();
     }
 }

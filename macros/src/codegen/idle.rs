@@ -74,10 +74,8 @@ pub fn codegen(
             }
         ));
 
-        let app_name = &app.name;
-        let app_path = quote! {crate::#app_name};
         let locals_new = locals_new.iter();
-        let call_idle = quote!(#app_path::#name(
+        let call_idle = quote!(#name(
             #(#locals_new,)*
             #name::Context::new(&rtic::export::Priority::new(0))
         ));

@@ -5,7 +5,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v0.6.0-alpha.2] - 2020-04-08
+## [v0.6.0-alpha.3] - 2021-05-27
+
+### Fixed
+
+- Fixed codegen structure to not have issues with local paths
+- Default paths for monotonics now work properly
+- New `embedded-time` version to `0.11`
+
+## [v0.6.0-alpha.2] - 2021-04-08
 
 ### Added
 
@@ -21,7 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - The access to monotonic static methods was for example `MyMono::now()`, and is now `monotonics::MyMono::now()`
 
-## [v0.6.0-alpha.1] - 2020-03-04
+## [v0.6.0-alpha.1] - 2021-03-04
 
 ### Added
 

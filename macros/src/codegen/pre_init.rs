@@ -93,8 +93,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
-        let app_name = &app.name;
-        let app_path = quote! {crate::#app_name};
         let mono_type = &monotonic.ty;
 
         if &*binds.to_string() == "SysTick" {
@@ -121,7 +119,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                 // Always enable monotonic interrupts if they should never be off
                 if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
-                    rtic::export::NVIC::unmask(#app_path::#rt_err::#interrupt::#binds);
+                    rtic::export::NVIC::unmask(#rt_err::#interrupt::#binds);
                 }
             ));
         }
