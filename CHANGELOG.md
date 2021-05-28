@@ -5,13 +5,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v0.6.0-alpha.3] - 2021-05-27
+## [v0.6.0-alpha.4] - 2021-05-27
 
 ### Fixed
 
 - Fixed codegen structure to not have issues with local paths
 - Default paths for monotonics now work properly
 - New `embedded-time` version to `0.11`
+
+## [v0.6.0-alpha.3] - 2021-0X-XX
+
+- Lost in the ether...
 
 ## [v0.6.0-alpha.2] - 2021-04-08
 
