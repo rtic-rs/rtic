@@ -566,6 +566,7 @@ mod tests {
     fn test_zero_size() {
         let ll: LinkedList<u32, Max, U0> = LinkedList::new();
 
+        assert!(ll.is_empty());
         assert!(ll.is_full());
     }
 
