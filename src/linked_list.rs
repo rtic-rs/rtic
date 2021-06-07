@@ -269,6 +269,11 @@ where
         let len = N::U16;
         let mut free = 0;
 
+        if len == 0 {
+            list.free = LinkedIndex::none();
+            return list;
+        }
+
         // Initialize indexes
         while free < len - 1 {
             unsafe {
@@ -555,6 +560,14 @@ mod tests {
         let ll: LinkedList<u32, Max, U3> = LinkedList::new();
 
         assert!(ll.is_empty())
+    }
+
+    #[test]
+    fn test_zero_size() {
+        let ll: LinkedList<u32, Max, U0> = LinkedList::new();
+
+        assert!(ll.is_empty());
+        assert!(ll.is_full());
     }
 
     #[test]
