@@ -28,7 +28,7 @@ Formerly known as Real-Time For the Masses.
 - **Efficient and data race free memory sharing** through fine grained *priority
   based* critical sections [^1].
 
-- **Deadlock free execution** guaranteed at compile time. This is an stronger
+- **Deadlock free execution** guaranteed at compile time. This is a stronger
   guarantee than what's provided by [the standard `Mutex`
   abstraction][std-mutex].
 
