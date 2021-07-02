@@ -68,7 +68,7 @@ mod app {
     fn func() {
         super::some_crate::some_func();
     }
-};
+}
 ```
 
 ## Move Dispatchers from `extern "C"` to app arguments.
