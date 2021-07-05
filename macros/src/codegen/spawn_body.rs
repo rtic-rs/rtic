@@ -10,7 +10,7 @@ pub fn codegen(
     name: &Ident,
     app: &App,
     analysis: &Analysis,
-    extra: &Extra,
+    _extra: &Extra,
 ) -> TokenStream2 {
     let sender = spawner.core(app);
     let spawnee = &app.software_tasks[name];
@@ -44,16 +44,16 @@ pub fn codegen(
         )
     };
 
-    let device = extra.device;
+    let rt_err = util::rt_err_ident();
     let enum_ = util::interrupt_ident(receiver, app.args.cores);
     let interrupt = &analysis.interrupts[&receiver][&priority];
     let pend = if sender != receiver {
         quote!(
-            #device::xpend(#receiver, #device::#enum_::#interrupt);
+            #rt_err::xpend(#receiver, #rt_err::#enum_::#interrupt);
         )
     } else {
         quote!(
-            rtic::pend(#device::#enum_::#interrupt);
+            rtic::pend(#rt_err::#enum_::#interrupt);
         )
     };
 

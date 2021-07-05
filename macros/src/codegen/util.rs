@@ -109,7 +109,7 @@ pub fn instants_ident(task: &Ident, sender: Core) -> Ident {
 pub fn interrupt_ident(core: Core, cores: u8) -> Ident {
     let span = Span::call_site();
     if cores == 1 {
-        Ident::new("Interrupt", span)
+        Ident::new("interrupt", span)
     } else {
         Ident::new(&format!("Interrupt_{}", core), span)
     }
@@ -322,4 +322,11 @@ pub fn suffixed(name: &str, core: u8) -> Ident {
 /// At most there's one timer queue per core
 pub fn tq_ident(core: Core) -> Ident {
     Ident::new(&format!("TQ{}", core), Span::call_site())
+}
+
+pub fn rt_err_ident() -> Ident {
+    Ident::new(
+        "you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml",
+        Span::call_site(),
+    )
 }
