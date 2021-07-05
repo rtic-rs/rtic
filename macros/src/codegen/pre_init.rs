@@ -52,6 +52,7 @@ pub fn codegen(
     }
 
     let device = extra.device;
+    let rt_err = util::rt_err_ident();
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
 
     // unmask interrupts and set their priorities
@@ -76,14 +77,14 @@ pub fn codegen(
         let interrupt = util::interrupt_ident(core, app.args.cores);
         stmts.push(quote!(
             core.NVIC.set_priority(
-                #device::#interrupt::#name,
+                #rt_err::#interrupt::#name,
                 rtic::export::logical2hw(#priority, #nvic_prio_bits),
             );
         ));
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(rtic::export::NVIC::unmask(#device::#interrupt::#name);));
+        stmts.push(quote!(rtic::export::NVIC::unmask(#rt_err::#interrupt::#name);));
     }
 
     // cross-spawn barriers: now that priorities have been set and the interrupts have been unmasked

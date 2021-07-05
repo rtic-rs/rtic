@@ -79,7 +79,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
         // Timer queue handler
         {
-            let device = extra.device;
+            let rt_err = util::rt_err_ident();
             let arms = timer_queue
                 .tasks
                 .iter()
@@ -96,11 +96,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                     let pend = if sender != receiver {
                         quote!(
-                            #device::xpend(#receiver, #device::#enum_::#interrupt);
+                            #rt_err::xpend(#receiver, #rt_err::#enum_::#interrupt);
                         )
                     } else {
                         quote!(
-                            rtic::pend(#device::#enum_::#interrupt);
+                            rtic::pend(#rt_err::#enum_::#interrupt);
                         )
                     };
 

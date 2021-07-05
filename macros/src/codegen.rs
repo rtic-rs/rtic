@@ -120,6 +120,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
     let name = &app.name;
     let device = extra.device;
+    let rt_err = util::rt_err_ident();
     quote!(
         #(#user)*
 
@@ -139,7 +140,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         // the user can't access the items within this `const` item
         const #name: () = {
             /// Always include the device crate which contains the vector table
-            use #device as _;
+            use #device as #rt_err;
 
             #check_excess_cores
 
