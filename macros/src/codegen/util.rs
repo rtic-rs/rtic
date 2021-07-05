@@ -325,5 +325,8 @@ pub fn tq_ident(core: Core) -> Ident {
 }
 
 pub fn rt_err_ident() -> Ident {
-    Ident::new("you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml", Span::call_site())
+    Ident::new(
+        "you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml",
+        Span::call_site(),
+    )
 }
