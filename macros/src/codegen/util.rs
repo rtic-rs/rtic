@@ -109,7 +109,7 @@ pub fn instants_ident(task: &Ident, sender: Core) -> Ident {
 pub fn interrupt_ident(core: Core, cores: u8) -> Ident {
     let span = Span::call_site();
     if cores == 1 {
-        Ident::new("Interrupt", span)
+        Ident::new("interrupt", span)
     } else {
         Ident::new(&format!("Interrupt_{}", core), span)
     }
