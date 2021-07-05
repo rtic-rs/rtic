@@ -4,14 +4,7 @@ use rtic_syntax::{analyze::Ownership, ast::App};
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
-/// Generates `static` variables and resource proxies
-/// Early resources are stored in `RacyCell<T>`
-/// Late resource are stored in `RacyCell<MaybeUninit<T>>`
-///
-/// Safety:
-/// - RacyCell<T> access is `unsafe`.
-/// - RacyCell<MaybeUninit> is always written to before user access, thus
-//    the generated code for user access can safely `assume_init`.
+/// Generates `local` variables and local resource proxies
 pub fn codegen(
     app: &App,
     analysis: &Analysis,
@@ -25,7 +18,8 @@ pub fn codegen(
     let mut mod_app = vec![];
     let mut mod_resources = vec![];
 
-    for (name, res, expr, _) in app.resources(analysis) {
+    for (name, res) in app.local_resources {
+        // let expr = &res.expr; // TODO: Extract from tasks???...
         let cfgs = &res.cfgs;
         let ty = &res.ty;
         let mangled_name = util::mark_internal_ident(&name);

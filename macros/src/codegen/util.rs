@@ -166,8 +166,8 @@ pub fn link_section_uninit(empty_expr: bool) -> Option<TokenStream2> {
 /// Generates a pre-reexport identifier for the "locals" struct
 pub fn locals_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
-        Context::Init => app.inits.first().unwrap().name.to_string(),
-        Context::Idle => app.idles.first().unwrap().name.to_string(),
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.unwrap().name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -225,15 +225,28 @@ pub fn regroup_inputs(
     }
 }
 
-/// Generates a pre-reexport identifier for the "resources" struct
-pub fn resources_ident(ctxt: Context, app: &App) -> Ident {
+/// Generates a pre-reexport identifier for the "shared resources" struct
+pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
-        Context::Init => app.inits.first().unwrap().name.to_string(),
-        Context::Idle => app.idles.first().unwrap().name.to_string(),
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.unwrap().name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
-    s.push_str("Resources");
+    s.push_str("SharedResources");
+
+    Ident::new(&s, Span::call_site())
+}
+
+/// Generates a pre-reexport identifier for the "local resources" struct
+pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
+    let mut s = match ctxt {
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.unwrap().name.to_string(),
+        Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
+    };
+
+    s.push_str("LocalResources");
 
     Ident::new(&s, Span::call_site())
 }

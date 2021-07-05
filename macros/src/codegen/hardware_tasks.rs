@@ -29,7 +29,7 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        let locals_new = if task.locals.is_empty() {
+        let locals_new = if task.args.local_resources.is_empty() {
             quote!()
         } else {
             quote!(#name::Locals::new(),)
@@ -60,7 +60,7 @@ pub fn codegen(
         let mut needs_lt = false;
 
         // `${task}Resources`
-        if !task.args.resources.is_empty() {
+        if !task.args.shared_resources.is_empty() {
             let (item, constructor) =
                 resources_struct::codegen(Context::HardwareTask(name), &mut needs_lt, app);
 
