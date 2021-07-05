@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.5.7] - 2021-07-05
+
+- Backport: "you must enable the rt feature" compile time detection
+
 ## [v0.5.6] - 2021-03-03
 
 - **Security** Use latest security patched heapless
@@ -332,7 +336,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.6...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.7...HEAD
+[v0.5.7]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.6...v0.5.7
 [v0.5.6]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.5...v0.5.6
 [v0.5.5]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.4...v0.5.5
 [v0.5.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.3...v0.5.4
