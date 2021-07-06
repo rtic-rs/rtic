@@ -41,7 +41,7 @@ pub fn impl_mutex(
     ptr: TokenStream2,
 ) -> TokenStream2 {
     let (path, priority) = if resources_prefix {
-        (quote!(resources::#name), quote!(self.priority()))
+        (quote!(shared_resources::#name), quote!(self.priority()))
     } else {
         (quote!(#name), quote!(self.priority))
     };
@@ -167,7 +167,7 @@ pub fn link_section_uninit(empty_expr: bool) -> Option<TokenStream2> {
 pub fn locals_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.unwrap().name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -229,7 +229,7 @@ pub fn regroup_inputs(
 pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.unwrap().name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -242,7 +242,7 @@ pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
 pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.unwrap().name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -286,6 +286,14 @@ pub fn tq_ident(name: &str) -> Ident {
 /// Generates an identifier for monotonic timer storage
 pub fn monotonic_ident(name: &str) -> Ident {
     Ident::new(&format!("MONOTONIC_STORAGE_{}", name), Span::call_site())
+}
+
+pub fn static_shared_resource_ident(name: &Ident) -> Ident {
+    Ident::new(&format!("shared_{}", name.to_string()), Span::call_site())
+}
+
+pub fn static_local_resource_ident(name: &Ident) -> Ident {
+    Ident::new(&format!("local_{}", name.to_string()), Span::call_site())
 }
 
 /// The name to get better RT flag errors

@@ -84,7 +84,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         }
     ));
 
-    let (mod_app_resources, mod_resources) = resources::codegen(app, analysis, extra);
+    let (mod_app_shared_resources, mod_shared_resources) = shared_resources::codegen(app, analysis, extra);
+    let (mod_app_local_resources, mod_local_resources) = local_resources::codegen(app, analysis, extra);
 
     let (mod_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks) =
         hardware_tasks::codegen(app, analysis, extra);
@@ -186,7 +187,9 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
             #(#root)*
 
-            #mod_resources
+            #mod_shared_resources
+
+            #mod_local_resources
 
             #(#root_hardware_tasks)*
 
@@ -195,7 +198,9 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             /// app module
             #(#mod_app)*
 
-            #(#mod_app_resources)*
+            #(#mod_app_shared_resources)*
+
+            #(#mod_app_local_resources)*
 
             #(#mod_app_hardware_tasks)*
 

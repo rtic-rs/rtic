@@ -56,16 +56,16 @@ pub fn codegen(
         Context::SoftwareTask(_) => {}
     }
 
-    if ctxt.has_locals(app) {
-        let ident = util::locals_ident(ctxt, app);
-        module_items.push(quote!(
-            #[doc(inline)]
-            pub use super::#ident as Locals;
-        ));
-    }
+    // if ctxt.has_locals(app) {
+    //     let ident = util::locals_ident(ctxt, app);
+    //     module_items.push(quote!(
+    //         #[doc(inline)]
+    //         pub use super::#ident as Locals;
+    //     ));
+    // }
 
-    if ctxt.has_resources(app) {
-        let ident = util::resources_ident(ctxt, app);
+    if ctxt.has_local_resources(app) {
+        let ident = util::local_resources_ident(ctxt, app);
         let ident = util::mark_internal_ident(&ident);
         let lt = if resources_tick {
             lt = Some(quote!('a));
@@ -76,12 +76,35 @@ pub fn codegen(
 
         module_items.push(quote!(
             #[doc(inline)]
-            pub use super::#ident as Resources;
+            pub use super::#ident as LocalResources;
         ));
 
         fields.push(quote!(
-            /// Resources this task has access to
-            pub resources: #name::Resources<#lt>
+            /// Local Resources this task has access to
+            pub local: #name::LocalResources<#lt>
+        ));
+
+        values.push(quote!(local: #name::LocalResources::new()));
+    }
+
+    if ctxt.has_shared_resources(app) {
+        let ident = util::shared_resources_ident(ctxt, app);
+        let ident = util::mark_internal_ident(&ident);
+        let lt = if resources_tick {
+            lt = Some(quote!('a));
+            Some(quote!('a))
+        } else {
+            None
+        };
+
+        module_items.push(quote!(
+            #[doc(inline)]
+            pub use super::#ident as SharedResources;
+        ));
+
+        fields.push(quote!(
+            /// Shared Resources this task has access to
+            pub shared: #name::SharedResources<#lt>
         ));
 
         let priority = if ctxt.is_init() {
@@ -89,38 +112,10 @@ pub fn codegen(
         } else {
             Some(quote!(priority))
         };
-        values.push(quote!(resources: #name::Resources::new(#priority)));
+        values.push(quote!(shared: #name::SharedResources::new(#priority)));
     }
 
     if let Context::Init = ctxt {
-        let late_fields = analysis
-            .late_resources
-            .iter()
-            .flat_map(|resources| {
-                resources.iter().map(|name| {
-                    let ty = &app.late_resources[name].ty;
-                    let cfgs = &app.late_resources[name].cfgs;
-
-                    quote!(
-                        #(#cfgs)*
-                        pub #name: #ty
-                    )
-                })
-            })
-            .collect::<Vec<_>>();
-
-        let internal_late_ident = util::mark_internal_name("LateResources");
-        items.push(quote!(
-            /// Resources initialized at runtime
-            #[allow(non_snake_case)]
-            pub struct #internal_late_ident {
-                #(#late_fields),*
-            }
-        ));
-        module_items.push(quote!(
-            pub use super::#internal_late_ident as LateResources;
-        ));
-
         let monotonic_types: Vec<_> = app
             .monotonics
             .iter()

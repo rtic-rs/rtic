@@ -18,54 +18,31 @@ pub fn codegen(
     let mut mod_app = vec![];
     let mut mod_resources = vec![];
 
-    for (name, res) in app.shared_resources {
+    for (name, res) in &app.shared_resources {
         let cfgs = &res.cfgs;
         let ty = &res.ty;
-        let mangled_name = util::mark_internal_ident(&name);
+        let mangled_name = util::mark_internal_ident(&util::static_shared_resource_ident(&name));
 
-        {
-            // late resources in `util::link_section_uninit`
-            let section = if expr.is_none() {
-                util::link_section_uninit(true)
-            } else {
-                None
-            };
+        // late resources in `util::link_section_uninit`
+        let section = util::link_section_uninit(true);
+        let attrs = &res.attrs;
 
-            // resource type and assigned value
-            let (ty, expr) = if let Some(expr) = expr {
-                // early resource
-                (
-                    quote!(rtic::RacyCell<#ty>),
-                    quote!(rtic::RacyCell::new(#expr)),
-                )
-            } else {
-                // late resource
-                (
-                    quote!(rtic::RacyCell<core::mem::MaybeUninit<#ty>>),
-                    quote!(rtic::RacyCell::new(core::mem::MaybeUninit::uninit())),
-                )
-            };
+        // For future use
+        // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
+        mod_app.push(quote!(
+            #[allow(non_upper_case_globals)]
+            // #[doc = #doc]
+            #[doc(hidden)]
+            #(#attrs)*
+            #(#cfgs)*
+            #section
+            static #mangled_name: rtic::RacyCell<core::mem::MaybeUninit<#ty>> = rtic::RacyCell::new(core::mem::MaybeUninit::uninit());
+        ));
 
-            let attrs = &res.attrs;
-
-            // For future use
-            // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
-            mod_app.push(quote!(
-                #[allow(non_upper_case_globals)]
-                // #[doc = #doc]
-                #[doc(hidden)]
-                #(#attrs)*
-                #(#cfgs)*
-                #section
-                static #mangled_name: #ty = #expr;
-            ));
-        }
-
-        let r_prop = &res.properties;
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
 
-        if !r_prop.task_local && !r_prop.lock_free {
+        if !res.properties.lock_free {
             mod_resources.push(quote!(
                 // #[doc = #doc]
                 #[doc(hidden)]
@@ -89,25 +66,10 @@ pub fn codegen(
                 }
             ));
 
-            let (ptr, _doc) = if expr.is_none() {
-                // late resource
-                (
-                    quote!(
-                        #(#cfgs)*
-                        #mangled_name.get_mut_unchecked().as_mut_ptr()
-                    ),
-                    "late",
-                )
-            } else {
-                // early resource
-                (
-                    quote!(
-                        #(#cfgs)*
-                        #mangled_name.get_mut_unchecked()
-                    ),
-                    "early",
-                )
-            };
+            let ptr = quote!(
+                #(#cfgs)*
+                #mangled_name.get_mut_unchecked().as_mut_ptr()
+            );
 
             let ceiling = match analysis.ownerships.get(name) {
                 Some(Ownership::Owned { priority }) => *priority,
@@ -123,7 +85,7 @@ pub fn codegen(
                 extra,
                 cfgs,
                 true,
-                name,
+                &name,
                 quote!(#ty),
                 ceiling,
                 ptr,
@@ -134,7 +96,7 @@ pub fn codegen(
     let mod_resources = if mod_resources.is_empty() {
         quote!()
     } else {
-        quote!(mod resources {
+        quote!(mod shared_resources {
             use rtic::export::Priority;
 
             #(#mod_resources)*

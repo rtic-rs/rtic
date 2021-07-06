@@ -10,7 +10,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let resources = match ctxt {
         Context::Init => unreachable!("Tried to generate shared resources struct for init"),
-        Context::Idle => &app.idle.unwrap().args.shared_resources,
+        Context::Idle => &app.idle.as_ref().unwrap().args.shared_resources,
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.shared_resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.shared_resources,
     };
@@ -48,12 +48,12 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
                 fields.push(quote!(
                     #(#cfgs)*
-                    pub #name: resources::#name<'a>
+                    pub #name: shared_resources::#name<'a>
                 ));
 
                 values.push(quote!(
                     #(#cfgs)*
-                    #name: resources::#name::new(priority)
+                    #name: shared_resources::#name::new(priority)
 
                 ));
 

@@ -10,7 +10,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let resources = match ctxt {
         Context::Init => &app.init.args.local_resources,
-        Context::Idle => &app.idle.unwrap().args.local_resources,
+        Context::Idle => &app.idle.as_ref().unwrap().args.local_resources,
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.local_resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.local_resources,
     };
@@ -33,7 +33,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         };
 
         let ty = &res.ty;
-        let mangled_name = util::mark_internal_ident(&name);
+        let mangled_name = util::mark_internal_ident(&util::static_local_resource_ident(name));
 
         fields.push(quote!(
             #(#cfgs)*

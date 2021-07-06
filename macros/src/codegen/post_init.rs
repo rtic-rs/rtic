@@ -9,24 +9,39 @@ use crate::{analyze::Analysis, codegen::util};
 pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
-    // Initialize late resources
-    if !analysis.late_resources.is_empty() {
-        // BTreeSet wrapped in a vector
-        for name in analysis.late_resources.first().unwrap() {
-            let mangled_name = util::mark_internal_ident(&name);
-            // If it's live
-            let cfgs = app.late_resources[name].cfgs.clone();
-            if analysis.locations.get(name).is_some() {
-                stmts.push(quote!(
-                    // We include the cfgs
-                    #(#cfgs)*
-                    // Late resource is a RacyCell<MaybeUninit<T>>
-                    // - `get_mut_unchecked` to obtain `MaybeUninit<T>`
-                    // - `as_mut_ptr` to obtain a raw pointer to `MaybeUninit<T>`
-                    // - `write` the defined value for the late resource T
-                    #mangled_name.get_mut_unchecked().as_mut_ptr().write(late.#name);
-                ));
-            }
+    // Initialize shared resources
+    for (name, res) in &app.shared_resources {
+        let mangled_name = util::mark_internal_ident(&util::static_shared_resource_ident(name));
+        // If it's live
+        let cfgs = res.cfgs.clone();
+        if analysis.shared_resource_locations.get(name).is_some() {
+            stmts.push(quote!(
+                // We include the cfgs
+                #(#cfgs)*
+                // Resource is a RacyCell<MaybeUninit<T>>
+                // - `get_mut_unchecked` to obtain `MaybeUninit<T>`
+                // - `as_mut_ptr` to obtain a raw pointer to `MaybeUninit<T>`
+                // - `write` the defined value for the late resource T
+                #mangled_name.get_mut_unchecked().as_mut_ptr().write(shared_resources.#name);
+            ));
+        }
+    }
+
+    // Initialize local resources
+    for (name, res) in &app.local_resources {
+        let mangled_name = util::mark_internal_ident(&util::static_local_resource_ident(name));
+        // If it's live
+        let cfgs = res.cfgs.clone();
+        if analysis.local_resource_locations.get(name).is_some() {
+            stmts.push(quote!(
+                // We include the cfgs
+                #(#cfgs)*
+                // Resource is a RacyCell<MaybeUninit<T>>
+                // - `get_mut_unchecked` to obtain `MaybeUninit<T>`
+                // - `as_mut_ptr` to obtain a raw pointer to `MaybeUninit<T>`
+                // - `write` the defined value for the late resource T
+                #mangled_name.get_mut_unchecked().as_mut_ptr().write(local_resources.#name);
+            ));
         }
     }
 

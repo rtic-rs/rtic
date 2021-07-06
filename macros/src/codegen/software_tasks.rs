@@ -5,7 +5,7 @@ use rtic_syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
     check::Extra,
-    codegen::{locals, module, resources_struct, util},
+    codegen::{local_resources_struct, module, shared_resources_struct, util},
 };
 
 pub fn codegen(
@@ -91,35 +91,38 @@ pub fn codegen(
 
         // `${task}Resources`
         let mut needs_lt = false;
-        if !task.args.resources.is_empty() {
+
+        // TODO: Fix locals
+        // `${task}Locals`
+        if !task.args.local_resources.is_empty() {
             let (item, constructor) =
-                resources_struct::codegen(Context::SoftwareTask(name), &mut needs_lt, app);
+                local_resources_struct::codegen(Context::SoftwareTask(name), &mut needs_lt, app);
 
             root.push(item);
 
             mod_app.push(constructor);
         }
 
-        // `${task}Locals`
-        let mut locals_pat = None;
-        if !task.locals.is_empty() {
-            let (struct_, pat) = locals::codegen(Context::SoftwareTask(name), &task.locals, app);
+        if !task.args.shared_resources.is_empty() {
+            let (item, constructor) =
+                shared_resources_struct::codegen(Context::SoftwareTask(name), &mut needs_lt, app);
 
-            locals_pat = Some(pat);
-            root.push(struct_);
+            root.push(item);
+
+            mod_app.push(constructor);
         }
+
 
         if !&task.is_extern {
             let context = &task.context;
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
-            let locals_pat = locals_pat.iter();
             user_tasks.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                fn #name(#(#locals_pat,)* #context: #name::Context #(,#inputs)*) {
+                fn #name(#context: #name::Context #(,#inputs)*) {
                     use rtic::Mutex as _;
                     use rtic::mutex_prelude::*;
 

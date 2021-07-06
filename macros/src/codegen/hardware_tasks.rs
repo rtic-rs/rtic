@@ -5,7 +5,7 @@ use rtic_syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
     check::Extra,
-    codegen::{locals, module, resources_struct},
+    codegen::{local_resources_struct, module, shared_resources_struct},
 };
 
 /// Generate support code for hardware tasks (`#[exception]`s and `#[interrupt]`s)
@@ -29,11 +29,12 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        let locals_new = if task.args.local_resources.is_empty() {
-            quote!()
-        } else {
-            quote!(#name::Locals::new(),)
-        };
+        // TODO: Fix locals
+        // let locals_new = if task.args.local_resources.is_empty() {
+        //     quote!()
+        // } else {
+        //     quote!(#name::Locals::new(),)
+        // };
 
         let symbol = task.args.binds.clone();
         let priority = task.args.priority;
@@ -50,7 +51,6 @@ pub fn codegen(
 
                 rtic::export::run(PRIORITY, || {
                     #name(
-                        #locals_new
                         #name::Context::new(&rtic::export::Priority::new(PRIORITY))
                     )
                 });
@@ -59,10 +59,21 @@ pub fn codegen(
 
         let mut needs_lt = false;
 
+        // TODO: Fix locals
+        // `${task}Locals`
+        if !task.args.local_resources.is_empty() {
+            let (item, constructor) =
+                local_resources_struct::codegen(Context::HardwareTask(name), &mut needs_lt, app);
+
+            root.push(item);
+
+            mod_app.push(constructor);
+        }
+
         // `${task}Resources`
         if !task.args.shared_resources.is_empty() {
             let (item, constructor) =
-                resources_struct::codegen(Context::HardwareTask(name), &mut needs_lt, app);
+                shared_resources_struct::codegen(Context::HardwareTask(name), &mut needs_lt, app);
 
             root.push(item);
 
@@ -77,24 +88,25 @@ pub fn codegen(
             extra,
         ));
 
-        // `${task}Locals`
-        let mut locals_pat = None;
-        if !task.locals.is_empty() {
-            let (struct_, pat) = locals::codegen(Context::HardwareTask(name), &task.locals, app);
+        // TODO: Fix locals
+        // // `${task}Locals`
+        // let mut locals_pat = None;
+        // if !task.locals.is_empty() {
+        //     let (struct_, pat) =
+        //         local_resources_struct::codegen(Context::HardwareTask(name), &task.locals, app);
 
-            root.push(struct_);
-            locals_pat = Some(pat);
-        }
+        //     root.push(struct_);
+        //     locals_pat = Some(pat);
+        // }
 
-        if !&task.is_extern {
+        if !task.is_extern {
             let attrs = &task.attrs;
             let context = &task.context;
             let stmts = &task.stmts;
-            let locals_pat = locals_pat.iter();
             user_tasks.push(quote!(
                 #(#attrs)*
                 #[allow(non_snake_case)]
-                fn #name(#(#locals_pat,)* #context: #name::Context) {
+                fn #name(#context: #name::Context) {
                     use rtic::Mutex as _;
                     use rtic::mutex_prelude::*;
 
