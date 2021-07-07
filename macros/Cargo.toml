@@ -23,4 +23,4 @@ proc-macro-error = "1"
 quote = "1"
 syn = "1"
 # rtic-syntax = "0.5.0-alpha.3"
-rtic-syntax = { path = "../../rtic-syntax" }
+rtic-syntax = { git = "https://github.com/rtic-rs/rtic-syntax.git", branch = "resources_take_2" }
