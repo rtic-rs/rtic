@@ -90,13 +90,16 @@ pub fn codegen(
         ));
 
         // `${task}Resources`
-        let mut needs_lt = false;
+        let mut shared_needs_lt = false;
+        let mut local_needs_lt = false;
 
-        // TODO: Fix locals
         // `${task}Locals`
         if !task.args.local_resources.is_empty() {
-            let (item, constructor) =
-                local_resources_struct::codegen(Context::SoftwareTask(name), &mut needs_lt, app);
+            let (item, constructor) = local_resources_struct::codegen(
+                Context::SoftwareTask(name),
+                &mut local_needs_lt,
+                app,
+            );
 
             root.push(item);
 
@@ -104,14 +107,16 @@ pub fn codegen(
         }
 
         if !task.args.shared_resources.is_empty() {
-            let (item, constructor) =
-                shared_resources_struct::codegen(Context::SoftwareTask(name), &mut needs_lt, app);
+            let (item, constructor) = shared_resources_struct::codegen(
+                Context::SoftwareTask(name),
+                &mut shared_needs_lt,
+                app,
+            );
 
             root.push(item);
 
             mod_app.push(constructor);
         }
-
 
         if !&task.is_extern {
             let context = &task.context;
@@ -133,7 +138,8 @@ pub fn codegen(
 
         root.push(module::codegen(
             Context::SoftwareTask(name),
-            needs_lt,
+            shared_needs_lt,
+            local_needs_lt,
             app,
             analysis,
             extra,

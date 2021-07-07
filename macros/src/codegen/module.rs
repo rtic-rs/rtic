@@ -5,7 +5,8 @@ use rtic_syntax::{ast::App, Context};
 
 pub fn codegen(
     ctxt: Context,
-    resources_tick: bool,
+    shared_resources_tick: bool,
+    local_resources_tick: bool,
     app: &App,
     analysis: &Analysis,
     extra: &Extra,
@@ -67,7 +68,7 @@ pub fn codegen(
     if ctxt.has_local_resources(app) {
         let ident = util::local_resources_ident(ctxt, app);
         let ident = util::mark_internal_ident(&ident);
-        let lt = if resources_tick {
+        let lt = if local_resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
         } else {
@@ -90,7 +91,7 @@ pub fn codegen(
     if ctxt.has_shared_resources(app) {
         let ident = util::shared_resources_ident(ctxt, app);
         let ident = util::mark_internal_ident(&ident);
-        let lt = if resources_tick {
+        let lt = if shared_resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
         } else {

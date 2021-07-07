@@ -10,12 +10,12 @@ mod hardware_tasks;
 mod idle;
 mod init;
 mod local_resources;
-mod shared_resources;
 mod local_resources_struct;
-mod shared_resources_struct;
 mod module;
 mod post_init;
 mod pre_init;
+mod shared_resources;
+mod shared_resources_struct;
 mod software_tasks;
 mod timer_queue;
 mod util;
@@ -53,7 +53,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     mod_app.push(quote!(
         #mod_app_init
 
-        #mod_app_idle
+        #(#mod_app_idle)*
     ));
 
     let main = util::suffixed("main");
@@ -84,8 +84,10 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         }
     ));
 
-    let (mod_app_shared_resources, mod_shared_resources) = shared_resources::codegen(app, analysis, extra);
-    let (mod_app_local_resources, mod_local_resources) = local_resources::codegen(app, analysis, extra);
+    let (mod_app_shared_resources, mod_shared_resources) =
+        shared_resources::codegen(app, analysis, extra);
+    let (mod_app_local_resources, mod_local_resources) =
+        local_resources::codegen(app, analysis, extra);
 
     let (mod_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks) =
         hardware_tasks::codegen(app, analysis, extra);

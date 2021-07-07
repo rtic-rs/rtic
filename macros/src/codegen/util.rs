@@ -163,19 +163,6 @@ pub fn link_section_uninit(empty_expr: bool) -> Option<TokenStream2> {
     Some(quote!(#[link_section = #section]))
 }
 
-/// Generates a pre-reexport identifier for the "locals" struct
-pub fn locals_ident(ctxt: Context, app: &App) -> Ident {
-    let mut s = match ctxt {
-        Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
-        Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
-    };
-
-    s.push_str("Locals");
-
-    Ident::new(&s, Span::call_site())
-}
-
 // Regroups the inputs of a task
 //
 // `inputs` could be &[`input: Foo`] OR &[`mut x: i32`, `ref y: i64`]

@@ -1,6 +1,9 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
+use rtic_syntax::{
+    ast::{App, TaskLocal},
+    Context,
+};
 
 use crate::codegen::util;
 
@@ -20,9 +23,15 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     let mut has_cfgs = false;
 
     for (name, task_local) in resources {
-        let res = app.local_resources.get(name).expect("UNREACHABLE");
+        let (cfgs, ty, is_declared) = match task_local {
+            TaskLocal::External => {
+                let r = app.local_resources.get(name).expect("UNREACHABLE");
+                (&r.cfgs, &r.ty, false)
+            }
+            TaskLocal::Declared(r) => (&r.cfgs, &r.ty, true),
+            _ => unreachable!(),
+        };
 
-        let cfgs = &res.cfgs;
         has_cfgs |= !cfgs.is_empty();
 
         let lt = if ctxt.runs_once() {
@@ -32,7 +41,6 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             quote!('a)
         };
 
-        let ty = &res.ty;
         let mangled_name = util::mark_internal_ident(&util::static_local_resource_ident(name));
 
         fields.push(quote!(
@@ -40,7 +48,13 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             pub #name: &#lt mut #ty
         ));
 
-        let expr = quote!(&mut *#mangled_name.get_mut_unchecked().as_mut_ptr());
+        let expr = if is_declared {
+            // If the local resources is already initialized, we only need to access its value and
+            // not go through an `MaybeUninit`
+            quote!(#mangled_name.get_mut_unchecked())
+        } else {
+            quote!(&mut *#mangled_name.get_mut_unchecked().as_mut_ptr())
+        };
 
         values.push(quote!(
             #(#cfgs)*

@@ -26,7 +26,7 @@ type CodegenResult = (
 /// Generates support code for `#[init]` functions
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
     let init = &app.init;
-    let mut needs_lt = false;
+    let mut local_needs_lt = false;
     let name = &init.name;
 
     let mut root_init = vec![];
@@ -96,6 +96,16 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
 
     let mut mod_app = None;
 
+    // `${task}Locals`
+    if !init.args.local_resources.is_empty() {
+        let (item, constructor) =
+            local_resources_struct::codegen(Context::Init, &mut local_needs_lt, app);
+
+        root_init.push(item);
+
+        mod_app = Some(constructor);
+    }
+
     // let locals_new = locals_new.iter();
     let call_init = quote! {
         let (shared_resources, local_resources, mut monotonics) = #name(#name::Context::new(core.into()));
@@ -103,7 +113,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
 
     root_init.push(module::codegen(
         Context::Init,
-        needs_lt,
+        false,
+        local_needs_lt,
         app,
         analysis,
         extra,
