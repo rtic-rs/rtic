@@ -31,17 +31,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
 
     let mut root_init = vec![];
 
-    // TODO: Fix locals
-    // let mut locals_pat = None;
-    // let mut locals_new = None;
-    // if !init.locals.is_empty() {
-    //     let (struct_, pat) = locals::codegen(Context::Init, &init.locals, app);
-
-    //     locals_new = Some(quote!(#name::Locals::new()));
-    //     locals_pat = Some(pat);
-    //     root_init.push(struct_);
-    // }
-
     let context = &init.context;
     let attrs = &init.attrs;
     let stmts = &init.stmts;

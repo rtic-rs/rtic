@@ -20,7 +20,6 @@ mod software_tasks;
 mod timer_queue;
 mod util;
 
-// TODO document the syntax here or in `rtic-syntax`
 pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut mod_app = vec![];
     let mut mains = vec![];

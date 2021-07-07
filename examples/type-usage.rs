@@ -10,6 +10,17 @@ use rtic::app;
 mod app {
     type Test = u32;
 
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
+    #[init]
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+        (Shared {}, Local {}, init::Monotonics {})
+    }
+
     #[task]
     fn t1(_: t1::Context, _val: Test) {}
 }

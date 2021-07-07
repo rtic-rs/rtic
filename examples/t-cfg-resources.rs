@@ -7,25 +7,24 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
-    #[resources]
-    struct Resources {
-        // A resource
-        #[init(0)]
-        shared: u32,
+    #[shared]
+    struct Shared {
         // A conditionally compiled resource behind feature_x
         #[cfg(feature = "feature_x")]
         x: u32,
-        dummy: (), // dummy such that we have at least one late resource
     }
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         (
-            init::LateResources {
-                // The feature needs to be applied everywhere x is defined or used
+            Shared {
                 #[cfg(feature = "feature_x")]
                 x: 0,
-                dummy: (), // dummy such that we have at least one late resource
             },
+            Local {},
             init::Monotonics(),
         )
     }

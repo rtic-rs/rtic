@@ -14,29 +14,37 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
     use lm3s6965::Interrupt;
 
-    #[resources]
-    struct Resources {
-        #[init(0)]
+    #[shared]
+    struct Shared {
         shared1: u32,
-        #[init(0)]
         shared2: u32,
-        #[init(0)]
         shared3: u32,
     }
 
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         rtic::pend(Interrupt::GPIOA);
 
-        (init::LateResources {}, init::Monotonics())
+        (
+            Shared {
+                shared1: 0,
+                shared2: 0,
+                shared3: 0,
+            },
+            Local {},
+            init::Monotonics(),
+        )
     }
 
     // when omitted priority is assumed to be `1`
-    #[task(binds = GPIOA, resources = [shared1, shared2, shared3])]
+    #[task(binds = GPIOA, shared = [shared1, shared2, shared3])]
     fn locks(c: locks::Context) {
-        let mut s1 = c.resources.shared1;
-        let mut s2 = c.resources.shared2;
-        let mut s3 = c.resources.shared3;
+        let mut s1 = c.shared.shared1;
+        let mut s2 = c.shared.shared2;
+        let mut s3 = c.shared.shared3;
 
         hprintln!("Multiple single locks").unwrap();
         s1.lock(|s1| {

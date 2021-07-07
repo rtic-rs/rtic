@@ -212,6 +212,17 @@ pub fn regroup_inputs(
     }
 }
 
+/// Get the ident for the name of the task
+pub fn get_task_name(ctxt: Context, app: &App) -> Ident {
+    let s = match ctxt {
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
+    };
+
+    Ident::new(&s, Span::call_site())
+}
+
 /// Generates a pre-reexport identifier for the "shared resources" struct
 pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
@@ -276,11 +287,24 @@ pub fn monotonic_ident(name: &str) -> Ident {
 }
 
 pub fn static_shared_resource_ident(name: &Ident) -> Ident {
-    Ident::new(&format!("shared_{}", name.to_string()), Span::call_site())
+    Ident::new(
+        &format!("shared_resource_{}", name.to_string()),
+        Span::call_site(),
+    )
 }
 
 pub fn static_local_resource_ident(name: &Ident) -> Ident {
-    Ident::new(&format!("local_{}", name.to_string()), Span::call_site())
+    Ident::new(
+        &format!("local_resource_{}", name.to_string()),
+        Span::call_site(),
+    )
+}
+
+pub fn declared_static_local_resource_ident(name: &Ident, task_name: &Ident) -> Ident {
+    Ident::new(
+        &format!("local_{}_{}", task_name.to_string(), name.to_string()),
+        Span::call_site(),
+    )
 }
 
 /// The name to get better RT flag errors

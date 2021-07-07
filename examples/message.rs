@@ -11,21 +11,25 @@ use panic_semihosting as _;
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         foo::spawn(/* no message */).unwrap();
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 
-    #[task]
-    fn foo(_: foo::Context) {
-        static mut COUNT: u32 = 0;
-
+    #[task(local = [count: u32 = 0])]
+    fn foo(cx: foo::Context) {
         hprintln!("foo").unwrap();
 
-        bar::spawn(*COUNT).unwrap();
-        *COUNT += 1;
+        bar::spawn(*cx.local.count).unwrap();
+        *cx.local.count += 1;
     }
 
     #[task]

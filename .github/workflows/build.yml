@@ -244,18 +244,15 @@ jobs:
               resource
               lock
               multilock
-              late
               only-shared-access
 
               task
               message
               capacity
 
-              types
               not-sync
 
               generics
-              cfg
               pool
               ramfunc
 

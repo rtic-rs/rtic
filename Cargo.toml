@@ -32,19 +32,11 @@ name = "schedule"
 required-features = ["__v7"]
 
 [[example]]
-name = "t-cfg"
-required-features = ["__v7"]
-
-[[example]]
 name = "t-cfg-resources"
 required-features = ["__min_r1_43"]
 
 [[example]]
 name = "t-schedule"
-required-features = ["__v7"]
-
-[[example]]
-name = "types"
 required-features = ["__v7"]
 
 [[example]]

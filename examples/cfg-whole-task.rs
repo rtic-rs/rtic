@@ -13,22 +13,32 @@ mod app {
     #[cfg(debug_assertions)]
     use cortex_m_semihosting::hprintln;
 
-    #[resources]
-    struct Resources {
+    #[shared]
+    struct Shared {
         #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
-        #[init(0)]
         count: u32,
         #[cfg(never)]
-        #[init(0)]
         unused: u32,
     }
 
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         foo::spawn().unwrap();
         foo::spawn().unwrap();
 
-        (init::LateResources {}, init::Monotonics())
+        (
+            Shared {
+                #[cfg(debug_assertions)]
+                count: 0,
+                #[cfg(never)]
+                unused: 1,
+            },
+            Local {},
+            init::Monotonics(),
+        )
     }
 
     #[idle]
@@ -40,17 +50,17 @@ mod app {
         }
     }
 
-    #[task(capacity = 2, resources = [count])]
+    #[task(capacity = 2, shared = [count])]
     fn foo(mut _cx: foo::Context) {
         #[cfg(debug_assertions)]
         {
-            _cx.resources.count.lock(|count| *count += 1);
+            _cx.shared.count.lock(|count| *count += 1);
 
-            log::spawn(_cx.resources.count.lock(|count| *count)).unwrap();
+            log::spawn(_cx.shared.count.lock(|count| *count)).unwrap();
         }
 
         // this wouldn't compile in `release` mode
-        // *_cx.resources.count += 1;
+        // *_cx.shared.count += 1;
 
         // ..
     }
@@ -58,17 +68,17 @@ mod app {
     // The whole task should disappear,
     // currently still present in the Tasks enum
     #[cfg(never)]
-    #[task(capacity = 2, resources = [count])]
+    #[task(capacity = 2, shared = [count])]
     fn foo2(mut _cx: foo2::Context) {
         #[cfg(debug_assertions)]
         {
-            _cx.resources.count.lock(|count| *count += 10);
+            _cx.shared.count.lock(|count| *count += 10);
 
-            log::spawn(_cx.resources.count.lock(|count| *count)).unwrap();
+            log::spawn(_cx.shared.count.lock(|count| *count)).unwrap();
         }
 
         // this wouldn't compile in `release` mode
-        // *_cx.resources.count += 1;
+        // *_cx.shared.count += 1;
 
         // ..
     }

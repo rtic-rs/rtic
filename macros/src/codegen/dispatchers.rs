@@ -76,13 +76,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 let inputs = util::mark_internal_ident(&inputs);
                 let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
 
-                // TODO Fix me
-                // let locals_new = if task.args.local_resources.is_empty() {
-                //     quote!()
-                // } else {
-                //     quote!(#name::Locals::new(),)
-                // };
-
                 quote!(
                     #(#cfgs)*
                     #t::#name => {

@@ -18,6 +18,8 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         Context::SoftwareTask(name) => &app.software_tasks[name].args.local_resources,
     };
 
+    let task_name = util::get_task_name(ctxt, app);
+
     let mut fields = vec![];
     let mut values = vec![];
     let mut has_cfgs = false;
@@ -41,7 +43,13 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             quote!('a)
         };
 
-        let mangled_name = util::mark_internal_ident(&util::static_local_resource_ident(name));
+        let mangled_name = if matches!(task_local, TaskLocal::External) {
+            util::mark_internal_ident(&util::static_local_resource_ident(name))
+        } else {
+            util::mark_internal_ident(&util::declared_static_local_resource_ident(
+                name, &task_name,
+            ))
+        };
 
         fields.push(quote!(
             #(#cfgs)*

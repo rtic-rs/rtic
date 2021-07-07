@@ -29,13 +29,6 @@ pub fn codegen(
     let mut user_tasks = vec![];
 
     for (name, task) in &app.hardware_tasks {
-        // TODO: Fix locals
-        // let locals_new = if task.args.local_resources.is_empty() {
-        //     quote!()
-        // } else {
-        //     quote!(#name::Locals::new(),)
-        // };
-
         let symbol = task.args.binds.clone();
         let priority = task.args.priority;
         let cfgs = &task.cfgs;
@@ -60,7 +53,6 @@ pub fn codegen(
         let mut shared_needs_lt = false;
         let mut local_needs_lt = false;
 
-        // TODO: Fix locals
         // `${task}Locals`
         if !task.args.local_resources.is_empty() {
             let (item, constructor) = local_resources_struct::codegen(

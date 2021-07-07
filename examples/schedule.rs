@@ -19,8 +19,14 @@ mod app {
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = DwtSystick<MONO_HZ>;
 
-    #[init()]
-    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
+    #[init]
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         let mut dcb = cx.core.DCB;
         let dwt = cx.core.DWT;
         let systick = cx.core.SYST;
@@ -35,7 +41,7 @@ mod app {
         // Schedule `bar` to run 2 seconds in the future
         bar::spawn_after(Seconds(2_u32)).ok();
 
-        (init::LateResources {}, init::Monotonics(mono))
+        (Shared {}, Local {}, init::Monotonics(mono))
     }
 
     #[task]

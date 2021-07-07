@@ -9,10 +9,16 @@ use panic_semihosting as _;
 mod app {
     use cortex_m_semihosting::debug;
 
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         debug::exit(debug::EXIT_SUCCESS);
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 }

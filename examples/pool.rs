@@ -24,16 +24,20 @@ mod app {
     // Import the memory pool into scope
     use super::P;
 
-    #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
-        static mut MEMORY: [u8; 512] = [0; 512];
+    #[shared]
+    struct Shared {}
 
+    #[local]
+    struct Local {}
+
+    #[init(local = [memory: [u8; 512] = [0; 512]])]
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         // Increase the capacity of the memory pool by ~4
-        P::grow(MEMORY);
+        P::grow(cx.local.memory);
 
         rtic::pend(Interrupt::I2C0);
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 
     #[task(binds = I2C0, priority = 2)]

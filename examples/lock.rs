@@ -12,26 +12,28 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
     use lm3s6965::Interrupt;
 
-    #[resources]
-    struct Resources {
-        #[init(0)]
+    #[shared]
+    struct Shared {
         shared: u32,
     }
 
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         rtic::pend(Interrupt::GPIOA);
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared { shared: 0 }, Local {}, init::Monotonics())
     }
 
     // when omitted priority is assumed to be `1`
-    #[task(binds = GPIOA, resources = [shared])]
+    #[task(binds = GPIOA, shared = [shared])]
     fn gpioa(mut c: gpioa::Context) {
         hprintln!("A").unwrap();
 
         // the lower priority task requires a critical section to access the data
-        c.resources.shared.lock(|shared| {
+        c.shared.shared.lock(|shared| {
             // data can only be modified within this critical section (closure)
             *shared += 1;
 
@@ -51,10 +53,10 @@ mod app {
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[task(binds = GPIOB, priority = 2, resources = [shared])]
+    #[task(binds = GPIOB, priority = 2, shared = [shared])]
     fn gpiob(mut c: gpiob::Context) {
         // the higher priority task does still need a critical section
-        let shared = c.resources.shared.lock(|shared| {
+        let shared = c.shared.shared.lock(|shared| {
             *shared += 1;
 
             *shared

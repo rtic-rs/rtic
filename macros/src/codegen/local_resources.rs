@@ -44,13 +44,16 @@ pub fn codegen(
     }
 
     // All declared `local = [NAME: TY = EXPR]` local resources
-    for (name, task_local) in app.declared_local_resources() {
+    for (task_name, resource_name, task_local) in app.declared_local_resources() {
         let cfgs = &task_local.cfgs;
         let ty = &task_local.ty;
         let expr = &task_local.expr;
         let attrs = &task_local.attrs;
 
-        let mangled_name = util::mark_internal_ident(&util::static_local_resource_ident(name));
+        let mangled_name = util::mark_internal_ident(&util::declared_static_local_resource_ident(
+            resource_name,
+            &task_name,
+        ));
 
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
@@ -63,14 +66,6 @@ pub fn codegen(
             static #mangled_name: rtic::RacyCell<#ty> = rtic::RacyCell::new(#expr);
         ));
     }
-
-    // let mod_resources = if mod_resources.is_empty() {
-    //     quote!()
-    // } else {
-    //     quote!(mod local_resources {
-    //         #(#mod_resources)*
-    //     })
-    // };
 
     (mod_app, TokenStream2::new())
 }

@@ -21,11 +21,17 @@ fn foo(_c: app::foo::Context, x: i32, y: u32) {
 mod app {
     use crate::foo;
 
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_c: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         foo::spawn(1, 2).unwrap();
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 
     extern "Rust" {

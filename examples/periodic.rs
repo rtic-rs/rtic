@@ -16,8 +16,14 @@ mod app {
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = DwtSystick<8_000_000>; // 8 MHz
 
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         let mut dcb = cx.core.DCB;
         let dwt = cx.core.DWT;
         let systick = cx.core.SYST;
@@ -26,7 +32,7 @@ mod app {
 
         foo::spawn_after(Seconds(1_u32)).unwrap();
 
-        (init::LateResources {}, init::Monotonics(mono))
+        (Shared {}, Local {}, init::Monotonics(mono))
     }
 
     #[task]

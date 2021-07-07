@@ -18,27 +18,26 @@ mod app {
     };
     use lm3s6965::Interrupt;
 
-    // Late resources
-    #[resources]
-    struct Resources {
+    #[shared]
+    struct Shared {
         p: Producer<'static, u32, U4>,
         c: Consumer<'static, u32, U4>,
     }
 
-    #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
-        static mut Q: Queue<u32, U4> = Queue(i::Queue::new());
+    #[local]
+    struct Local {}
 
-        let (p, c) = Q.split();
+    #[init(local = [q: Queue<u32, U4> = Queue(i::Queue::new())])]
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+        let (p, c) = cx.local.q.split();
 
-        // Initialization of late resources
-        (init::LateResources { p, c }, init::Monotonics())
+        (Shared { p, c }, Local {}, init::Monotonics())
     }
 
-    #[idle(resources = [c])]
+    #[idle(shared = [c])]
     fn idle(mut c: idle::Context) -> ! {
         loop {
-            if let Some(byte) = c.resources.c.lock(|c| c.dequeue()) {
+            if let Some(byte) = c.shared.c.lock(|c| c.dequeue()) {
                 hprintln!("received message: {}", byte).unwrap();
 
                 debug::exit(debug::EXIT_SUCCESS);
@@ -48,10 +47,9 @@ mod app {
         }
     }
 
-    #[task(binds = UART0, resources = [p])]
+    #[task(binds = UART0, shared = [p], local = [kalle: u32 = 0])]
     fn uart0(mut c: uart0::Context) {
-        static mut KALLE: u32 = 0;
-        *KALLE += 1;
-        c.resources.p.lock(|p| p.enqueue(42).unwrap());
+        *c.local.kalle += 1;
+        c.shared.p.lock(|p| p.enqueue(42).unwrap());
     }
 }
