@@ -22,5 +22,4 @@ proc-macro2 = "1"
 proc-macro-error = "1"
 quote = "1"
 syn = "1"
-# rtic-syntax = "0.5.0-alpha.3"
-rtic-syntax = { git = "https://github.com/rtic-rs/rtic-syntax.git" }
+rtic-syntax = "0.5.0-alpha.4"

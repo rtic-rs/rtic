@@ -42,16 +42,14 @@ required-features = ["__v7"]
 [dependencies]
 cortex-m = "0.7.0"
 cortex-m-rtic-macros = { path = "macros", version = "0.6.0-alpha.4" }
-# rtic-monotonic = "0.1.0-alpha.2"
-rtic-monotonic = { path = "../rtic-monotonic" }
+rtic-monotonic = "0.1.0-alpha.2"
 rtic-core = "0.3.1"
 heapless = "0.6.1"
 bare-metal = "1.0.0"
 generic-array = "0.14"
 
 [dependencies.dwt-systick-monotonic]
-# version = "0.1.0-alpha.3"
-path = "../dwt-systick-monotonic"
+version = "0.1.0-alpha.3"
 optional = true
 
 [build-dependencies]
