@@ -198,9 +198,6 @@ pub fn codegen(
         pub use super::#internal_context_name as Context;
     ));
 
-    // not sure if this is the right way, maybe its backwards,
-    // that spawn_module should put in in root
-
     if let Context::SoftwareTask(..) = ctxt {
         let spawnee = &app.software_tasks[name];
         let priority = spawnee.args.priority;

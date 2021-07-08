@@ -152,13 +152,8 @@ fn link_section_index() -> usize {
 }
 
 // NOTE `None` means in shared memory
-pub fn link_section_uninit(empty_expr: bool) -> Option<TokenStream2> {
-    let section = if empty_expr {
-        let index = link_section_index();
-        format!(".uninit.rtic{}", index)
-    } else {
-        format!(".uninit.rtic{}", link_section_index())
-    };
+pub fn link_section_uninit() -> Option<TokenStream2> {
+    let section = format!(".uninit.rtic{}", link_section_index());
 
     Some(quote!(#[link_section = #section]))
 }

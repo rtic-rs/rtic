@@ -138,7 +138,7 @@ jobs:
         with:
           use-cross: false
           command: check
-          args: --examples --target=${{ matrix.target }} --features __min_r1_43,${{ env.V7 }}
+          args: --examples --target=${{ matrix.target }} --features ${{ env.V7 }}
 
   # Verify the example output with run-pass tests
   testexamples:

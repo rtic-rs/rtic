@@ -24,7 +24,7 @@ pub fn codegen(
         let mangled_name = util::mark_internal_ident(&util::static_shared_resource_ident(&name));
 
         // late resources in `util::link_section_uninit`
-        let section = util::link_section_uninit(true);
+        let section = util::link_section_uninit();
         let attrs = &res.attrs;
 
         // For future use

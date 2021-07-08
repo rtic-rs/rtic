@@ -45,7 +45,7 @@ pub fn codegen(
                 quote!(rtic::export::Queue(unsafe {
                     rtic::export::iQueue::u8_sc()
                 })),
-                Box::new(|| util::link_section_uninit(true)),
+                Box::new(|| util::link_section_uninit()),
             )
         };
         mod_app.push(quote!(

@@ -28,7 +28,7 @@ pub fn codegen(
 
         let attrs = &res.attrs;
         // late resources in `util::link_section_uninit`
-        let section = util::link_section_uninit(true);
+        let section = util::link_section_uninit();
 
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
