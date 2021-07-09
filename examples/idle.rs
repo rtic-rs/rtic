@@ -11,19 +11,23 @@ use panic_semihosting as _;
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         hprintln!("init").unwrap();
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 
-    #[idle]
-    fn idle(_: idle::Context) -> ! {
-        static mut X: u32 = 0;
-
-        // Safe access to local `static mut` variable
-        let _x: &'static mut u32 = X;
+    #[idle(local = [x: u32 = 0])]
+    fn idle(cx: idle::Context) -> ! {
+        // Locals in idle have lifetime 'static
+        let _x: &'static mut u32 = cx.local.x;
 
         hprintln!("idle").unwrap();
 

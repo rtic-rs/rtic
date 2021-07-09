@@ -5,7 +5,7 @@ use rtic_syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
     check::Extra,
-    codegen::{locals, module, resources_struct},
+    codegen::{local_resources_struct, module},
 };
 
 type CodegenResult = (
@@ -18,68 +18,96 @@ type CodegenResult = (
     // - the `${init}` module, which contains types like `${init}::Context`
     Vec<TokenStream2>,
     // user_init -- the `#[init]` function written by the user
-    Option<TokenStream2>,
-    // call_init -- the call to the user `#[init]` if there's one
-    Option<TokenStream2>,
+    TokenStream2,
+    // call_init -- the call to the user `#[init]`
+    TokenStream2,
 );
 
 /// Generates support code for `#[init]` functions
 pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
-    if !app.inits.is_empty() {
-        let init = &app.inits.first().unwrap();
-        let mut needs_lt = false;
-        let name = &init.name;
+    let init = &app.init;
+    let mut local_needs_lt = false;
+    let name = &init.name;
 
-        let mut root_init = vec![];
+    let mut root_init = vec![];
 
-        let mut locals_pat = None;
-        let mut locals_new = None;
-        if !init.locals.is_empty() {
-            let (struct_, pat) = locals::codegen(Context::Init, &init.locals, app);
+    let context = &init.context;
+    let attrs = &init.attrs;
+    let stmts = &init.stmts;
+    let shared = &init.user_shared_struct;
+    let local = &init.user_local_struct;
 
-            locals_new = Some(quote!(#name::Locals::new()));
-            locals_pat = Some(pat);
-            root_init.push(struct_);
+    let shared_resources: Vec<_> = app
+        .shared_resources
+        .iter()
+        .map(|(k, v)| {
+            let ty = &v.ty;
+            let cfgs = &v.cfgs;
+            quote!(
+                #(#cfgs)*
+                #k: #ty,
+            )
+        })
+        .collect();
+    let local_resources: Vec<_> = app
+        .local_resources
+        .iter()
+        .map(|(k, v)| {
+            let ty = &v.ty;
+            let cfgs = &v.cfgs;
+            quote!(
+                #(#cfgs)*
+                #k: #ty,
+            )
+        })
+        .collect();
+    root_init.push(quote! {
+        struct #shared {
+            #(#shared_resources)*
         }
 
-        let context = &init.context;
-        let attrs = &init.attrs;
-        let stmts = &init.stmts;
-        let locals_pat = locals_pat.iter();
-
-        let user_init_return = quote! {#name::LateResources, #name::Monotonics};
-
-        let user_init = Some(quote!(
-            #(#attrs)*
-            #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context) -> (#user_init_return) {
-                #(#stmts)*
-            }
-        ));
-
-        let mut mod_app = None;
-        if !init.args.resources.is_empty() {
-            let (item, constructor) = resources_struct::codegen(Context::Init, &mut needs_lt, app);
-
-            root_init.push(item);
-            mod_app = Some(constructor);
+        struct #local {
+            #(#local_resources)*
         }
+    });
 
-        let locals_new = locals_new.iter();
-        let call_init = Some(
-            quote!(let (late, mut monotonics) = #name(#(#locals_new,)* #name::Context::new(core.into()));),
-        );
+    // let locals_pat = locals_pat.iter();
 
-        root_init.push(module::codegen(
-            Context::Init,
-            needs_lt,
-            app,
-            analysis,
-            extra,
-        ));
+    let user_init_return = quote! {#shared, #local, #name::Monotonics};
 
-        (mod_app, root_init, user_init, call_init)
-    } else {
-        (None, vec![], None, None)
+    let user_init = quote!(
+        #(#attrs)*
+        #[allow(non_snake_case)]
+        fn #name(#context: #name::Context) -> (#user_init_return) {
+            #(#stmts)*
+        }
+    );
+
+    let mut mod_app = None;
+
+    // `${task}Locals`
+    if !init.args.local_resources.is_empty() {
+        let (item, constructor) =
+            local_resources_struct::codegen(Context::Init, &mut local_needs_lt, app);
+
+        root_init.push(item);
+
+        mod_app = Some(constructor);
     }
+
+    // let locals_new = locals_new.iter();
+    let call_init = quote! {
+        let (shared_resources, local_resources, mut monotonics) = #name(#name::Context::new(core.into()));
+    };
+
+    root_init.push(module::codegen(
+        Context::Init,
+        false,
+        local_needs_lt,
+        app,
+        analysis,
+        extra,
+    ));
+
+    (mod_app, root_init, user_init, call_init)
 }

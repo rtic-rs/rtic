@@ -9,13 +9,19 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         let _: Result<(), ()> = foo::spawn();
         let _: Result<(), u32> = bar::spawn(0);
         let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 
     #[idle]

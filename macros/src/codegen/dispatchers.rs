@@ -76,12 +76,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 let inputs = util::mark_internal_ident(&inputs);
                 let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
 
-                let locals_new = if task.locals.is_empty() {
-                    quote!()
-                } else {
-                    quote!(#name::Locals::new(),)
-                };
-
                 quote!(
                     #(#cfgs)*
                     #t::#name => {
@@ -94,7 +88,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                         #fq.get_mut_unchecked().split().0.enqueue_unchecked(index);
                         let priority = &rtic::export::Priority::new(PRIORITY);
                         #name(
-                            #locals_new
                             #name::Context::new(priority)
                             #(,#pats)*
                         )

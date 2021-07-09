@@ -1,5 +1,5 @@
 error: dispatcher interrupts can't be used as hardware tasks
- --> $DIR/extern-interrupt-used.rs:5:20
-  |
-5 |     #[task(binds = UART0)]
-  |                    ^^^^^
+  --> $DIR/extern-interrupt-used.rs:16:20
+   |
+16 |     #[task(binds = UART0)]
+   |                    ^^^^^

@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.6.0-alpha.5] - 2021-07-09
+
+### Changed
+
+- The new resources syntax is implemented.
+
 ## [v0.6.0-alpha.4] - 2021-05-27
 
 ### Fixed

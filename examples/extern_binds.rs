@@ -19,13 +19,19 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
     use lm3s6965::Interrupt;
 
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
 
         hprintln!("init").unwrap();
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 
     #[idle]

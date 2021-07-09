@@ -11,18 +11,22 @@ use panic_semihosting as _;
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
-    #[init]
-    fn init(cx: init::Context) -> (init::LateResources, init::Monotonics) {
-        static mut X: u32 = 0;
+    #[shared]
+    struct Shared {}
 
+    #[local]
+    struct Local {}
+
+    #[init(local = [x: u32 = 0])]
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         // Cortex-M peripherals
         let _core: cortex_m::Peripherals = cx.core;
 
         // Device specific peripherals
         let _device: lm3s6965::Peripherals = cx.device;
 
-        // Safe access to local `static mut` variable
-        let _x: &'static mut u32 = X;
+        // Locals in `init` have 'static lifetime
+        let _x: &'static mut u32 = cx.local.x;
 
         // Access to the critical section token,
         // to indicate that this is a critical seciton
@@ -32,6 +36,6 @@ mod app {
 
         debug::exit(debug::EXIT_SUCCESS);
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 }

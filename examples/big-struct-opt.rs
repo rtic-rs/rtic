@@ -25,27 +25,32 @@ mod app {
     use super::BigStruct;
     use core::mem::MaybeUninit;
 
-    #[resources]
-    struct Resources {
+    #[shared]
+    struct Shared {
         big_struct: &'static mut BigStruct,
     }
 
-    #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
-        let big_struct = unsafe {
-            static mut BIG_STRUCT: MaybeUninit<BigStruct> = MaybeUninit::uninit();
+    #[local]
+    struct Local {}
 
+    #[init(local = [bs: MaybeUninit<BigStruct> = MaybeUninit::uninit()])]
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+        let big_struct = unsafe {
             // write directly into the static storage
-            BIG_STRUCT.as_mut_ptr().write(BigStruct::new());
-            &mut *BIG_STRUCT.as_mut_ptr()
+            cx.local.bs.as_mut_ptr().write(BigStruct::new());
+            &mut *cx.local.bs.as_mut_ptr()
         };
 
         (
-            init::LateResources {
+            Shared {
                 // assign the reference so we can use the resource
                 big_struct,
             },
+            Local {},
             init::Monotonics(),
         )
     }
+
+    #[task(binds = UART0, shared = [big_struct])]
+    fn task(_: task::Context) {}
 }

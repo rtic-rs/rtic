@@ -1,4 +1,4 @@
-//! [compile-pass] late resources don't need to be `Send` if they are owned by `idle`
+//! [compile-pass] shared resources don't need to be `Send` if they are owned by `idle`
 
 #![no_main]
 #![no_std]
@@ -16,24 +16,28 @@ mod app {
     use super::NotSend;
     use core::marker::PhantomData;
 
-    #[resources]
-    struct Resources {
+    #[shared]
+    struct Shared {
         x: NotSend,
-        #[init(None)]
         y: Option<NotSend>,
     }
 
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         (
-            init::LateResources {
+            Shared {
                 x: NotSend { _0: PhantomData },
+                y: None,
             },
+            Local {},
             init::Monotonics(),
         )
     }
 
-    #[idle(resources = [x, y])]
+    #[idle(shared = [x, y])]
     fn idle(_: idle::Context) -> ! {
         loop {
             cortex_m::asm::nop();

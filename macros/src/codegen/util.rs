@@ -41,7 +41,7 @@ pub fn impl_mutex(
     ptr: TokenStream2,
 ) -> TokenStream2 {
     let (path, priority) = if resources_prefix {
-        (quote!(resources::#name), quote!(self.priority()))
+        (quote!(shared_resources::#name), quote!(self.priority()))
     } else {
         (quote!(#name), quote!(self.priority))
     };
@@ -152,28 +152,10 @@ fn link_section_index() -> usize {
 }
 
 // NOTE `None` means in shared memory
-pub fn link_section_uninit(empty_expr: bool) -> Option<TokenStream2> {
-    let section = if empty_expr {
-        let index = link_section_index();
-        format!(".uninit.rtic{}", index)
-    } else {
-        format!(".uninit.rtic{}", link_section_index())
-    };
+pub fn link_section_uninit() -> Option<TokenStream2> {
+    let section = format!(".uninit.rtic{}", link_section_index());
 
     Some(quote!(#[link_section = #section]))
-}
-
-/// Generates a pre-reexport identifier for the "locals" struct
-pub fn locals_ident(ctxt: Context, app: &App) -> Ident {
-    let mut s = match ctxt {
-        Context::Init => app.inits.first().unwrap().name.to_string(),
-        Context::Idle => app.idles.first().unwrap().name.to_string(),
-        Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
-    };
-
-    s.push_str("Locals");
-
-    Ident::new(&s, Span::call_site())
 }
 
 // Regroups the inputs of a task
@@ -225,15 +207,39 @@ pub fn regroup_inputs(
     }
 }
 
-/// Generates a pre-reexport identifier for the "resources" struct
-pub fn resources_ident(ctxt: Context, app: &App) -> Ident {
-    let mut s = match ctxt {
-        Context::Init => app.inits.first().unwrap().name.to_string(),
-        Context::Idle => app.idles.first().unwrap().name.to_string(),
+/// Get the ident for the name of the task
+pub fn get_task_name(ctxt: Context, app: &App) -> Ident {
+    let s = match ctxt {
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
-    s.push_str("Resources");
+    Ident::new(&s, Span::call_site())
+}
+
+/// Generates a pre-reexport identifier for the "shared resources" struct
+pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
+    let mut s = match ctxt {
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
+    };
+
+    s.push_str("SharedResources");
+
+    Ident::new(&s, Span::call_site())
+}
+
+/// Generates a pre-reexport identifier for the "local resources" struct
+pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
+    let mut s = match ctxt {
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
+    };
+
+    s.push_str("LocalResources");
 
     Ident::new(&s, Span::call_site())
 }
@@ -273,6 +279,27 @@ pub fn tq_ident(name: &str) -> Ident {
 /// Generates an identifier for monotonic timer storage
 pub fn monotonic_ident(name: &str) -> Ident {
     Ident::new(&format!("MONOTONIC_STORAGE_{}", name), Span::call_site())
+}
+
+pub fn static_shared_resource_ident(name: &Ident) -> Ident {
+    Ident::new(
+        &format!("shared_resource_{}", name.to_string()),
+        Span::call_site(),
+    )
+}
+
+pub fn static_local_resource_ident(name: &Ident) -> Ident {
+    Ident::new(
+        &format!("local_resource_{}", name.to_string()),
+        Span::call_site(),
+    )
+}
+
+pub fn declared_static_local_resource_ident(name: &Ident, task_name: &Ident) -> Ident {
+    Ident::new(
+        &format!("local_{}_{}", task_name.to_string(), name.to_string()),
+        Span::call_site(),
+    )
 }
 
 /// The name to get better RT flag errors

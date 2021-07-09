@@ -13,13 +13,19 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
     use lm3s6965::Interrupt;
 
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
 
         hprintln!("init").unwrap();
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared {}, Local {}, init::Monotonics())
     }
 
     #[idle]
@@ -35,16 +41,14 @@ mod app {
         }
     }
 
-    #[task(binds = UART0)]
-    fn foo(_: foo::Context) {
-        static mut TIMES: u32 = 0;
-
-        *TIMES += 1;
+    #[task(binds = UART0, local = [times: u32 = 0])]
+    fn foo(cx: foo::Context) {
+        *cx.local.times += 1;
 
         hprintln!(
             "foo called {} time{}",
-            *TIMES,
-            if *TIMES > 1 { "s" } else { "" }
+            *cx.local.times,
+            if *cx.local.times > 1 { "s" } else { "" }
         )
         .unwrap();
     }

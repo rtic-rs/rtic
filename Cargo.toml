@@ -14,7 +14,7 @@ name = "cortex-m-rtic"
 readme = "README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
 
-version = "0.6.0-alpha.4"
+version = "0.6.0-alpha.5"
 
 [lib]
 name = "rtic"
@@ -32,19 +32,7 @@ name = "schedule"
 required-features = ["__v7"]
 
 [[example]]
-name = "t-cfg"
-required-features = ["__v7"]
-
-[[example]]
-name = "t-cfg-resources"
-required-features = ["__min_r1_43"]
-
-[[example]]
 name = "t-schedule"
-required-features = ["__v7"]
-
-[[example]]
-name = "types"
 required-features = ["__v7"]
 
 [[example]]
@@ -54,14 +42,14 @@ required-features = ["__v7"]
 [dependencies]
 cortex-m = "0.7.0"
 cortex-m-rtic-macros = { path = "macros", version = "0.6.0-alpha.4" }
-rtic-monotonic = "0.1.0-alpha.1"
+rtic-monotonic = "0.1.0-alpha.2"
 rtic-core = "0.3.1"
 heapless = "0.6.1"
 bare-metal = "1.0.0"
 generic-array = "0.14"
 
 [dependencies.dwt-systick-monotonic]
-version = "0.1.0-alpha.2"
+version = "0.1.0-alpha.3"
 optional = true
 
 [build-dependencies]
@@ -81,7 +69,6 @@ trybuild = "1"
 [features]
 # used for testing this crate; do not use in applications
 __v7 = ["dwt-systick-monotonic"]
-__min_r1_43 = []
 
 [profile.release]
 codegen-units = 1

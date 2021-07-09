@@ -5,7 +5,7 @@ use rtic_syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
     check::Extra,
-    codegen::{locals, module, resources_struct},
+    codegen::{local_resources_struct, module, shared_resources_struct},
 };
 
 /// Generates support code for `#[idle]` functions
@@ -15,7 +15,7 @@ pub fn codegen(
     extra: &Extra,
 ) -> (
     // mod_app_idle -- the `${idle}Resources` constructor
-    Option<TokenStream2>,
+    Vec<TokenStream2>,
     // root_idle -- items that must be placed in the root of the crate:
     // - the `${idle}Locals` struct
     // - the `${idle}Resources` struct
@@ -26,34 +26,35 @@ pub fn codegen(
     // call_idle
     TokenStream2,
 ) {
-    if !app.idles.is_empty() {
-        let idle = &app.idles.first().unwrap();
-        let mut needs_lt = false;
-        let mut mod_app = None;
+    if let Some(idle) = &app.idle {
+        let mut shared_needs_lt = false;
+        let mut local_needs_lt = false;
+        let mut mod_app = vec![];
         let mut root_idle = vec![];
-        let mut locals_pat = None;
-        let mut locals_new = None;
 
         let name = &idle.name;
 
-        if !idle.args.resources.is_empty() {
-            let (item, constructor) = resources_struct::codegen(Context::Idle, &mut needs_lt, app);
+        if !idle.args.shared_resources.is_empty() {
+            let (item, constructor) =
+                shared_resources_struct::codegen(Context::Idle, &mut shared_needs_lt, app);
 
             root_idle.push(item);
-            mod_app = Some(constructor);
+            mod_app.push(constructor);
         }
 
-        if !idle.locals.is_empty() {
-            let (locals, pat) = locals::codegen(Context::Idle, &idle.locals, app);
+        if !idle.args.local_resources.is_empty() {
+            let (item, constructor) =
+                local_resources_struct::codegen(Context::Idle, &mut local_needs_lt, app);
 
-            locals_new = Some(quote!(#name::Locals::new()));
-            locals_pat = Some(pat);
-            root_idle.push(locals);
+            root_idle.push(item);
+
+            mod_app.push(constructor);
         }
 
         root_idle.push(module::codegen(
             Context::Idle,
-            needs_lt,
+            shared_needs_lt,
+            local_needs_lt,
             app,
             analysis,
             extra,
@@ -62,11 +63,10 @@ pub fn codegen(
         let attrs = &idle.attrs;
         let context = &idle.context;
         let stmts = &idle.stmts;
-        let locals_pat = locals_pat.iter();
         let user_idle = Some(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            fn #name(#(#locals_pat,)* #context: #name::Context) -> ! {
+            fn #name(#context: #name::Context) -> ! {
                 use rtic::Mutex as _;
                 use rtic::mutex_prelude::*;
 
@@ -74,16 +74,14 @@ pub fn codegen(
             }
         ));
 
-        let locals_new = locals_new.iter();
         let call_idle = quote!(#name(
-            #(#locals_new,)*
             #name::Context::new(&rtic::export::Priority::new(0))
         ));
 
         (mod_app, root_idle, user_idle, call_idle)
     } else {
         (
-            None,
+            vec![],
             vec![],
             None,
             quote!(loop {

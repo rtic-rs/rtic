@@ -1,6 +1,6 @@
 //! `examples/not-sync.rs`
 
-#![deny(unsafe_code)]
+// #![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
 #![no_std]
@@ -12,32 +12,42 @@ pub struct NotSync {
     _0: PhantomData<*const ()>,
 }
 
+unsafe impl Send for NotSync {}
+
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use super::NotSync;
     use core::marker::PhantomData;
     use cortex_m_semihosting::debug;
 
-    #[resources]
-    struct Resources {
-        #[init(NotSync { _0: PhantomData })]
+    #[shared]
+    struct Shared {
         shared: NotSync,
     }
 
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         debug::exit(debug::EXIT_SUCCESS);
 
-        (init::LateResources {}, init::Monotonics())
+        (
+            Shared {
+                shared: NotSync { _0: PhantomData },
+            },
+            Local {},
+            init::Monotonics(),
+        )
     }
 
-    #[task(resources = [&shared])]
+    #[task(shared = [&shared])]
     fn foo(c: foo::Context) {
-        let _: &NotSync = c.resources.shared;
+        let _: &NotSync = c.shared.shared;
     }
 
-    #[task(resources = [&shared])]
+    #[task(shared = [&shared])]
     fn bar(c: bar::Context) {
-        let _: &NotSync = c.resources.shared;
+        let _: &NotSync = c.shared.shared;
     }
 }

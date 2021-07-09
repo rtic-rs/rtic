@@ -4,14 +4,15 @@ use rtic_syntax::{ast::App, Context};
 
 use crate::codegen::util;
 
+/// Generate shared resources structs
 pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, TokenStream2) {
     let mut lt = None;
 
     let resources = match ctxt {
-        Context::Init => &app.inits.first().unwrap().args.resources,
-        Context::Idle => &app.idles.first().unwrap().args.resources,
-        Context::HardwareTask(name) => &app.hardware_tasks[name].args.resources,
-        Context::SoftwareTask(name) => &app.software_tasks[name].args.resources,
+        Context::Init => unreachable!("Tried to generate shared resources struct for init"),
+        Context::Idle => &app.idle.as_ref().unwrap().args.shared_resources,
+        Context::HardwareTask(name) => &app.hardware_tasks[name].args.shared_resources,
+        Context::SoftwareTask(name) => &app.software_tasks[name].args.shared_resources,
     };
 
     let mut fields = vec![];
@@ -19,7 +20,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     let mut has_cfgs = false;
 
     for (name, access) in resources {
-        let (res, expr) = app.resource(name).expect("UNREACHABLE");
+        let res = app.shared_resources.get(name).expect("UNREACHABLE");
 
         let cfgs = &res.cfgs;
         has_cfgs |= !cfgs.is_empty();
@@ -31,12 +32,9 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             None
         };
         let ty = &res.ty;
-        let mangled_name = util::mark_internal_ident(&name);
+        let mangled_name = util::mark_internal_ident(&util::static_shared_resource_ident(&name));
 
-        // let ownership = &analysis.ownerships[name];
-        let r_prop = &res.properties;
-
-        if !r_prop.task_local && !r_prop.lock_free {
+        if !res.properties.lock_free {
             if access.is_shared() {
                 lt = Some(quote!('a));
 
@@ -50,12 +48,12 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
                 fields.push(quote!(
                     #(#cfgs)*
-                    pub #name: resources::#name<'a>
+                    pub #name: shared_resources::#name<'a>
                 ));
 
                 values.push(quote!(
                     #(#cfgs)*
-                    #name: resources::#name::new(priority)
+                    #name: shared_resources::#name::new(priority)
 
                 ));
 
@@ -76,24 +74,16 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             ));
         }
 
-        let is_late = expr.is_none();
-        if is_late {
-            let expr = if access.is_exclusive() {
-                quote!(&mut *#mangled_name.get_mut_unchecked().as_mut_ptr())
-            } else {
-                quote!(&*#mangled_name.get_unchecked().as_ptr())
-            };
-
-            values.push(quote!(
-                #(#cfgs)*
-                #name: #expr
-            ));
+        let expr = if access.is_exclusive() {
+            quote!(&mut *#mangled_name.get_mut_unchecked().as_mut_ptr())
         } else {
-            values.push(quote!(
-                #(#cfgs)*
-                #name: #mangled_name.get_mut_unchecked()
-            ));
-        }
+            quote!(&*#mangled_name.get_unchecked().as_ptr())
+        };
+
+        values.push(quote!(
+            #(#cfgs)*
+            #name: #expr
+        ));
     }
 
     if lt.is_some() {
@@ -110,8 +100,8 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         }
     }
 
-    let doc = format!("Resources `{}` has access to", ctxt.ident(app));
-    let ident = util::resources_ident(ctxt, app);
+    let doc = format!("Shared resources `{}` has access to", ctxt.ident(app));
+    let ident = util::shared_resources_ident(ctxt, app);
     let ident = util::mark_internal_ident(&ident);
     let item = quote!(
         #[allow(non_snake_case)]

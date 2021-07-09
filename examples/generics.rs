@@ -14,42 +14,40 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
     use lm3s6965::Interrupt;
 
-    #[resources]
-    struct Resources {
-        #[init(0)]
+    #[shared]
+    struct Shared {
         shared: u32,
     }
 
+    #[local]
+    struct Local {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
         rtic::pend(Interrupt::UART1);
 
-        (init::LateResources {}, init::Monotonics())
+        (Shared { shared: 0 }, Local {}, init::Monotonics())
     }
 
-    #[task(binds = UART0, resources = [shared])]
+    #[task(binds = UART0, shared = [shared], local = [state: u32 = 0])]
     fn uart0(c: uart0::Context) {
-        static mut STATE: u32 = 0;
+        hprintln!("UART0(STATE = {})", *c.local.state).unwrap();
 
-        hprintln!("UART0(STATE = {})", *STATE).unwrap();
-
-        // second argument has type `resources::shared`
-        super::advance(STATE, c.resources.shared);
+        // second argument has type `shared::shared`
+        super::advance(c.local.state, c.shared.shared);
 
         rtic::pend(Interrupt::UART1);
 
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[task(binds = UART1, priority = 2, resources = [shared])]
+    #[task(binds = UART1, priority = 2, shared = [shared], local = [state: u32 = 0])]
     fn uart1(c: uart1::Context) {
-        static mut STATE: u32 = 0;
+        hprintln!("UART1(STATE = {})", *c.local.state).unwrap();
 
-        hprintln!("UART1(STATE = {})", *STATE).unwrap();
-
-        // second argument has type `resources::shared`
-        super::advance(STATE, c.resources.shared);
+        // second argument has type `shared::shared`
+        super::advance(c.local.state, c.shared.shared);
     }
 }
 
