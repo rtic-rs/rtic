@@ -14,7 +14,7 @@ name = "cortex-m-rtic"
 readme = "README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
 
-version = "0.6.0-alpha.4"
+version = "0.6.0-alpha.5"
 
 [lib]
 name = "rtic"
