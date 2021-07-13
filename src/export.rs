@@ -94,7 +94,7 @@ impl Priority {
 
     /// Get the current priority
     #[inline(always)]
-    fn get(&self) -> u8 {
+    pub fn get(&self) -> u8 {
         self.inner.get()
     }
 }
