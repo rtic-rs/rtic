@@ -102,6 +102,134 @@ mod app {
 This works also for ram functions, see examples/ramfunc.rs
 
 
+## Resources structs - `#[shared]`, `#[local]`
+
+Previously the RTIC resources had to be in in a struct named exactly "Resources":
+
+``` rust
+struct Resources {
+    // Resources defined in here
+}
+```
+
+With RTIC v0.6.0 the resources structs are annotated similarly like
+`#[task]`, `#[init]`, `#[idle]`: with the attributes `#[shared]` and `#[local]`
+
+``` rust
+#[shared]
+struct MySharedResources {
+    // Resources shared between tasks are defined here
+}
+
+#[local]
+struct MyLocalResources {
+    // Resources defined here cannot be shared between tasks; each one is local to a single task
+}
+```
+
+These structs can be freely named by the developer.
+
+## `shared` and `local` arguments in `#[task]`s
+
+In v0.6.0 resources are split between `shared` resources and `local` resources.
+`#[task]`, `#[init]` and `#[idle]` no longer have a `resources` argument; they must now use the `shared` and `local` arguments.
+
+In v0.5.x:
+
+``` rust
+struct Resources {
+    local_to_b: i64,
+    shared_by_a_and_b: i64,
+}
+
+#[task(resources = [shared_by_a_and_b])]
+fn a(_: a::Context) {}
+
+#[task(resources = [shared_by_a_and_b, local_to_b])]
+fn b(_: b::Context) {}
+```
+
+In v0.6.0:
+
+``` rust
+#[shared]
+struct Shared {
+    shared_by_a_and_b: i64,
+}
+
+#[local]
+struct Local {
+    local_to_b: i64,
+}
+
+#[task(shared = [shared_by_a_and_b])]
+fn a(_: a::Context) {}
+
+#[task(shared = [shared_by_a_and_b], local = [local_to_b])]
+fn b(_: b::Context) {}
+```
+
+## Symmetric locks
+
+Now RTIC utilizes symmetric locks, this means that the `lock` method need to be used for all `shared` resource access. In old code one could do the following as the high priority task has exclusive access to the resource:
+
+``` rust
+#[task(priority = 2, resources = [r])]
+fn foo(cx: foo::Context) {
+    cx.resources.r = /* ... */;
+}
+
+#[task(resources = [r])]
+fn bar(cx: bar::Context) {
+    cx.resources.r.lock(|r| r = /* ... */);
+}
+```
+
+And with symmetric locks one needs to use locks in both tasks:
+
+``` rust
+#[task(priority = 2, shared = [r])]
+fn foo(cx: foo::Context) {
+    cx.shared.r.lock(|r| r = /* ... */);
+}
+
+#[task(shared = [r])]
+fn bar(cx: bar::Context) {
+    cx.shared.r.lock(|r| r = /* ... */);
+}
+```
+
+Note that the performance does not change thanks to LLVM's optimizations which optimizes away unnecessary locks.
+
+## no `static mut` transform
+
+`static mut` variables are no longer transformed to safe `&'static mut` references.
+Instead of that syntax, use the `local` argument in `#[init]`.
+
+v0.5.x code:
+
+``` rust
+#[init]
+fn init(_: init::Context) {
+    static mut BUFFER: [u8; 1024] = [0; 1024];
+    let buffer: &'static mut [u8; 1024] = BUFFER;
+}
+```
+
+v0.6.0 code:
+
+``` rust
+#[init(local = [
+    buffer: [u8; 1024] = [0; 1024]
+//   type ^^^^^^^^^^^^   ^^^^^^^^^ initial value
+])]
+fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    let buffer: &'static mut [u8; 1024] = cx.local.buffer;
+
+    (Shared {}, Local {}, init::Monotonics {})
+}
+```
+
 ## Init always returns late resources
 
 In order to make the API more symmetric the #[init]-task always returns a late resource.
@@ -125,47 +253,22 @@ to this:
 ``` rust
 #[rtic::app(device = lm3s6965)]
 mod app {
+    #[shared]
+    struct MySharedResources {}
+
+    #[local]
+    struct MyLocalResources {}
+
     #[init]
-    fn init(_: init::Context) -> (init::LateResources, init::Monotonics) {
+    fn init(_: init::Context) -> (MySharedResources, MyLocalResources, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
 
-        (init::LateResources {}, init::Monotonics())
+        (MySharedResources, MyLocalResources, init::Monotonics {})
     }
 
     // [more code]
 }
 ```
-
-## Resources struct - `#[resources]`
-
-Previously the RTIC resources had to be in in a struct named exactly "Resources":
-
-``` rust
-struct Resources {
-    // Resources defined in here
-}
-```
-
-With RTIC v0.6.0 the resources struct is annotated similarly like
-`#[task]`, `#[init]`, `#[idle]`: with an attribute `#[resources]`
-
-``` rust
-#[resources]
-struct Resources {
-    // Resources defined in here
-}
-```
-
-In fact, the name of the struct is now up to the developer:
-
-``` rust
-#[resources]
-struct Whateveryouwant {
-    // Resources defined in here
-}
-```
-
-would work equally well.
 
 ## Spawn/schedule from anywhere
 
@@ -201,37 +304,6 @@ fn bar(_c: bar::Context) {
 
 Note that the attributes `spawn` and `schedule` are no longer needed.
 
-## Symmetric locks
-
-Now RTIC utilizes symmetric locks, this means that the `lock` method need to be used for all resource access. In old code one could do the following as the high priority task has exclusive access to the resource:
-
-``` rust
-#[task(priority = 2, resources = [r])]
-fn foo(cx: foo::Context) {
-    cx.resources.r = /* ... */;
-}
-
-#[task(resources = [r])]
-fn bar(cx: bar::Context) {
-    cx.resources.r.lock(|r| r = /* ... */);
-}
-```
-
-And with symmetric locks one needs to use locks in both tasks:
-
-``` rust
-#[task(priority = 2, resources = [r])]
-fn foo(cx: foo::Context) {
-    cx.resources.r.lock(|r| r = /* ... */);
-}
-
-#[task(resources = [r])]
-fn bar(cx: bar::Context) {
-    cx.resources.r.lock(|r| r = /* ... */);
-}
-```
-
-Note that the performance does not change thanks to LLVM's optimizations which optimizes away unnecessary locks.
 
 ---
 
@@ -242,4 +314,3 @@ Note that the performance does not change thanks to LLVM's optimizations which o
 Both software and hardware tasks can now be defined external to the `mod app`. Previously this was possible only by implementing a trampoline calling out the task implementation.
 
 See examples `examples/extern_binds.rs` and `examples/extern_spawn.rs`.
-
