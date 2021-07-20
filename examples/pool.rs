@@ -42,14 +42,14 @@ mod app {
 
     #[task(binds = I2C0, priority = 2)]
     fn i2c0(_: i2c0::Context) {
-        // claim a memory block, leave it uninitialized and ..
-        let x = P::alloc().unwrap().freeze();
+        // claim a memory block, initialize it and ..
+        let x = P::alloc().unwrap().init([0u8; 128]);
 
         // .. send it to the `foo` task
         foo::spawn(x).ok().unwrap();
 
         // send another block to the task `bar`
-        bar::spawn(P::alloc().unwrap().freeze()).ok().unwrap();
+        bar::spawn(P::alloc().unwrap().init([0u8; 128])).ok().unwrap();
     }
 
     #[task]
