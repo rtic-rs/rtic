@@ -49,7 +49,9 @@ mod app {
         foo::spawn(x).ok().unwrap();
 
         // send another block to the task `bar`
-        bar::spawn(P::alloc().unwrap().init([0u8; 128])).ok().unwrap();
+        bar::spawn(P::alloc().unwrap().init([0u8; 128]))
+            .ok()
+            .unwrap();
     }
 
     #[task]
