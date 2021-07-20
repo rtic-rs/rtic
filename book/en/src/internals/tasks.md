@@ -151,7 +151,7 @@ mod app {
     const RQ1_CEILING: u8 = 2;
 
     // used to track how many more `bar` messages can be enqueued
-    // `U2` is the capacity of the `bar` task; a max of two instances can be queued
+    // `3-1=2` represents the capacity of this queue
     // this queue is filled by the framework before `init` runs
     static mut bar_FQ: Queue<(), 3> = Queue::new();
 
