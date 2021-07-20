@@ -13,13 +13,12 @@ pub use cortex_m::{
     peripheral::{scb::SystemHandler, syst::SystClkSource, DWT, NVIC},
     Peripherals,
 };
-use heapless::spsc::SingleCore;
-pub use heapless::{consts, i::Queue as iQueue, spsc::Queue};
-pub use heapless::{i::BinaryHeap as iBinaryHeap, BinaryHeap};
+pub use heapless::spsc::Queue;
+pub use heapless::BinaryHeap;
 pub use rtic_monotonic as monotonic;
 
-pub type SCFQ<N> = Queue<u8, N, u8, SingleCore>;
-pub type SCRQ<T, N> = Queue<(T, u8), N, u8, SingleCore>;
+pub type SCFQ<const N: usize> = Queue<u8, N>;
+pub type SCRQ<T, const N: usize> = Queue<(T, u8), N>;
 
 #[cfg(armv7m)]
 #[inline(always)]

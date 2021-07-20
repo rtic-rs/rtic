@@ -62,12 +62,12 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         {
             // For future use
             // let doc = &format!("Timer queue for {}", monotonic_name);
-            let cap = app
+            let cap: u8 = app
                 .software_tasks
                 .iter()
                 .map(|(_name, task)| task.args.capacity)
                 .sum();
-            let n = util::capacity_typenum(cap, false);
+            let n = util::capacity_literal(cap as usize);
             let tq_ty =
                 quote!(core::mem::MaybeUninit<rtic::export::TimerQueue<#mono_type, #t, #n>>);
 

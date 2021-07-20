@@ -10,23 +10,19 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965)]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use heapless::{
-        consts::*,
-        i,
-        spsc::{Consumer, Producer, Queue},
-    };
+    use heapless::spsc::{Consumer, Producer, Queue};
     use lm3s6965::Interrupt;
 
     #[shared]
     struct Shared {
-        p: Producer<'static, u32, U4>,
-        c: Consumer<'static, u32, U4>,
+        p: Producer<'static, u32, 5>,
+        c: Consumer<'static, u32, 5>,
     }
 
     #[local]
     struct Local {}
 
-    #[init(local = [q: Queue<u32, U4> = Queue(i::Queue::new())])]
+    #[init(local = [q: Queue<u32, 5> = Queue::new()])]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         let (p, c) = cx.local.q.split();
 

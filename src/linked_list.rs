@@ -3,8 +3,6 @@ use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut};
 use core::ptr;
-pub use generic_array::ArrayLength;
-use generic_array::GenericArray;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct LinkedIndex(u16);
@@ -37,21 +35,19 @@ pub struct Node<T> {
 }
 
 /// Iterator for the linked list.
-pub struct Iter<'a, T, Kind, N>
+pub struct Iter<'a, T, Kind, const N: usize>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     list: &'a LinkedList<T, Kind, N>,
     index: LinkedIndex,
 }
 
-impl<'a, T, Kind, N> Iterator for Iter<'a, T, Kind, N>
+impl<'a, T, Kind, const N: usize> Iterator for Iter<'a, T, Kind, N>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     type Item = &'a T;
 
@@ -66,11 +62,10 @@ where
 }
 
 /// Comes from [`LinkedList::find_mut`].
-pub struct FindMut<'a, T, Kind, N>
+pub struct FindMut<'a, T, Kind, const N: usize>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     list: &'a mut LinkedList<T, Kind, N>,
     is_head: bool,
@@ -79,11 +74,10 @@ where
     maybe_changed: bool,
 }
 
-impl<'a, T, Kind, N> FindMut<'a, T, Kind, N>
+impl<'a, T, Kind, const N: usize> FindMut<'a, T, Kind, N>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     fn pop_internal(&mut self) -> T {
         if self.is_head {
@@ -122,11 +116,10 @@ where
     }
 }
 
-impl<T, Kind, N> Drop for FindMut<'_, T, Kind, N>
+impl<T, Kind, const N: usize> Drop for FindMut<'_, T, Kind, N>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     fn drop(&mut self) {
         // Only resort the list if the element has changed
@@ -137,11 +130,10 @@ where
     }
 }
 
-impl<T, Kind, N> Deref for FindMut<'_, T, Kind, N>
+impl<T, Kind, const N: usize> Deref for FindMut<'_, T, Kind, N>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     type Target = T;
 
@@ -150,11 +142,10 @@ where
     }
 }
 
-impl<T, Kind, N> DerefMut for FindMut<'_, T, Kind, N>
+impl<T, Kind, const N: usize> DerefMut for FindMut<'_, T, Kind, N>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.maybe_changed = true;
@@ -162,11 +153,10 @@ where
     }
 }
 
-impl<T, Kind, N> fmt::Debug for FindMut<'_, T, Kind, N>
+impl<T, Kind, const N: usize> fmt::Debug for FindMut<'_, T, Kind, N>
 where
     T: PartialEq + PartialOrd + core::fmt::Debug,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("FindMut")
@@ -189,23 +179,21 @@ where
 }
 
 /// The linked list.
-pub struct LinkedList<T, Kind, N>
+pub struct LinkedList<T, Kind, const N: usize>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
-    list: MaybeUninit<GenericArray<Node<T>, N>>,
+    list: MaybeUninit<[Node<T>; N]>,
     head: LinkedIndex,
     free: LinkedIndex,
     _kind: PhantomData<Kind>,
 }
 
-impl<T, Kind, N> LinkedList<T, Kind, N>
+impl<T, Kind, const N: usize> LinkedList<T, Kind, N>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     /// Internal helper to not do pointer arithmetic all over the place.
     #[inline]
@@ -266,7 +254,7 @@ where
             _kind: PhantomData,
         };
 
-        let len = N::U16;
+        let len = N as u16;
         let mut free = 0;
 
         if len == 0 {
@@ -451,11 +439,10 @@ where
     }
 }
 
-impl<T, Kind, N> Drop for LinkedList<T, Kind, N>
+impl<T, Kind, const N: usize> Drop for LinkedList<T, Kind, N>
 where
     T: PartialEq + PartialOrd,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     fn drop(&mut self) {
         let mut index = self.head;
@@ -471,11 +458,10 @@ where
     }
 }
 
-impl<T, Kind, N> fmt::Debug for LinkedList<T, Kind, N>
+impl<T, Kind, const N: usize> fmt::Debug for LinkedList<T, Kind, N>
 where
     T: PartialEq + PartialOrd + core::fmt::Debug,
     Kind: kind::Kind,
-    N: ArrayLength<Node<T>>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.iter()).finish()
@@ -518,11 +504,10 @@ pub mod kind {
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use generic_array::typenum::consts::*;
 
     #[test]
     fn test_peek() {
-        let mut ll: LinkedList<u32, Max, U3> = LinkedList::new();
+        let mut ll: LinkedList<u32, Max, 3> = LinkedList::new();
 
         ll.push(1).unwrap();
         assert_eq!(ll.peek().unwrap(), &1);
@@ -533,7 +518,7 @@ mod tests {
         ll.push(3).unwrap();
         assert_eq!(ll.peek().unwrap(), &3);
 
-        let mut ll: LinkedList<u32, Min, U3> = LinkedList::new();
+        let mut ll: LinkedList<u32, Min, 3> = LinkedList::new();
 
         ll.push(2).unwrap();
         assert_eq!(ll.peek().unwrap(), &2);
@@ -547,7 +532,7 @@ mod tests {
 
     #[test]
     fn test_full() {
-        let mut ll: LinkedList<u32, Max, U3> = LinkedList::new();
+        let mut ll: LinkedList<u32, Max, 3> = LinkedList::new();
         ll.push(1).unwrap();
         ll.push(2).unwrap();
         ll.push(3).unwrap();
@@ -557,14 +542,14 @@ mod tests {
 
     #[test]
     fn test_empty() {
-        let ll: LinkedList<u32, Max, U3> = LinkedList::new();
+        let ll: LinkedList<u32, Max, 3> = LinkedList::new();
 
         assert!(ll.is_empty())
     }
 
     #[test]
     fn test_zero_size() {
-        let ll: LinkedList<u32, Max, U0> = LinkedList::new();
+        let ll: LinkedList<u32, Max, 0> = LinkedList::new();
 
         assert!(ll.is_empty());
         assert!(ll.is_full());
@@ -572,7 +557,7 @@ mod tests {
 
     #[test]
     fn test_rejected_push() {
-        let mut ll: LinkedList<u32, Max, U3> = LinkedList::new();
+        let mut ll: LinkedList<u32, Max, 3> = LinkedList::new();
         ll.push(1).unwrap();
         ll.push(2).unwrap();
         ll.push(3).unwrap();
@@ -585,7 +570,7 @@ mod tests {
 
     #[test]
     fn test_updating() {
-        let mut ll: LinkedList<u32, Max, U3> = LinkedList::new();
+        let mut ll: LinkedList<u32, Max, 3> = LinkedList::new();
         ll.push(1).unwrap();
         ll.push(2).unwrap();
         ll.push(3).unwrap();

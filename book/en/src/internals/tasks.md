@@ -78,8 +78,8 @@ mod app {
     }
 
     // ready queue of the task dispatcher
-    // `U4` is a type-level integer that represents the capacity of this queue
-    static mut RQ1: Queue<Ready<T1>, U4> = Queue::new();
+    // `5-1=4` represents the capacity of this queue
+    static mut RQ1: Queue<Ready<T1>, 5> = Queue::new();
 
     // interrupt handler chosen to dispatch tasks at priority `1`
     #[no_mangle]
@@ -153,7 +153,7 @@ mod app {
     // used to track how many more `bar` messages can be enqueued
     // `U2` is the capacity of the `bar` task; a max of two instances can be queued
     // this queue is filled by the framework before `init` runs
-    static mut bar_FQ: Queue<(), U2> = Queue::new();
+    static mut bar_FQ: Queue<(), 3> = Queue::new();
 
     // Priority ceiling for the consumer endpoint of `bar_FQ`
     const bar_FQ_CEILING: u8 = 2;
@@ -227,7 +227,7 @@ mod app {
 
     // the free queue: used to track free slots in the `baz_INPUTS` array
     // this queue is initialized with values `0` and `1` before `init` is executed
-    static mut baz_FQ: Queue<u8, U2> = Queue::new();
+    static mut baz_FQ: Queue<u8, 3> = Queue::new();
 
     // Priority ceiling for the consumer endpoint of `baz_FQ`
     const baz_FQ_CEILING: u8 = 2;

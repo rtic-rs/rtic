@@ -1,5 +1,5 @@
 use crate::{
-    linked_list::{ArrayLength, LinkedList, Min, Node},
+    linked_list::{LinkedList, Min},
     time::{Clock, Instant},
     Monotonic,
 };
@@ -14,16 +14,14 @@ fn unwrapper<T, E>(val: Result<T, E>) -> T {
     }
 }
 
-pub struct TimerQueue<Mono, Task, N>(pub LinkedList<NotReady<Mono, Task>, Min, N>)
+pub struct TimerQueue<Mono, Task, const N: usize>(pub LinkedList<NotReady<Mono, Task>, Min, N>)
 where
     Mono: Monotonic,
-    N: ArrayLength<Node<NotReady<Mono, Task>>>,
     Task: Copy;
 
-impl<Mono, Task, N> TimerQueue<Mono, Task, N>
+impl<Mono, Task, const N: usize> TimerQueue<Mono, Task, N>
 where
     Mono: Monotonic,
-    N: ArrayLength<Node<NotReady<Mono, Task>>>,
     Task: Copy,
 {
     pub fn new() -> Self {
