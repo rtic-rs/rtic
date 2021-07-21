@@ -7,9 +7,11 @@ Resources are data visible only to functions declared within the `#[app]`
 module. The framework gives the user complete control over which context
 can access which resource.
 
-All resources are declared as a single `struct` within the `#[app]`
-module. Each field in the structure corresponds to a different resource.
-The `struct` must be annotated with the following attribute: `#[resources]`.
+All resources are declared as *two* `struct`s within the `#[app]` module.
+Each field in these structures corresponds to a different resource.
+One `struct` must be annotated with the attribute `#[local]`.
+The other `struct` must be annotated with the attribute `#[shared]`.
+The difference between these two sets of resources will be covered later.
 
 Resources can optionally be given an initial value using the `#[init]`
 attribute. Resources that are not given an initial value are referred to as
@@ -17,12 +19,13 @@ attribute. Resources that are not given an initial value are referred to as
 page.
 
 Each context (task handler, `init` or `idle`) must declare the resources it
-intends to access in its corresponding metadata attribute using the `resources`
-argument. This argument takes a list of resource names as its value. The listed
-resources are made available to the context under the `resources` field of the
-`Context` structure.
+intends to access in its corresponding metadata attribute using either the
+`local` or `shared` argument. This argument takes a list of resource names as
+its value. The listed resources are made available to the context under the
+`local` and `shared` fields of the `Context` structure.
 
-The example application shown below contains two interrupt handlers that share access to a resource named `shared`.
+The example application shown below contains two interrupt handlers.
+Each handler has access to its own `#[local]` resource.
 
 ``` rust
 {{#include ../../../../examples/resource.rs}}
@@ -33,13 +36,14 @@ $ cargo run --example resource
 {{#include ../../../../ci/expected/resource.run}}
 ```
 
-Note that the `shared` resource cannot be accessed from `idle`. Attempting to do so results in a compile error.
+A `#[local]` resource cannot be accessed from outside the task it was associated to in a `#[task]` attribute.
+Assigning the same `#[local]` resource to more than one task is a compile-time error.
 
 ## `lock`
 
-Critical sections are required to access shared mutable data in a data race-free manner.
+Critical sections are required to access `#[shared]` resources in a data race-free manner.
 
-The `resources` field of the passed `Context` implements the [`Mutex`] trait for each shared resource accessible to the task.
+The `shared` field of the passed `Context` implements the [`Mutex`] trait for each shared resource accessible to the task.
 
 The only method on this trait, [`lock`], runs its closure argument in a critical section.
 
@@ -91,7 +95,7 @@ $ cargo run --example late
 {{#include ../../../../ci/expected/late.run}}
 ```
 
-## Only shared access
+## Only shared (`&-`) access
 
 By default the framework assumes that all tasks require exclusive access (`&mut-`) to resources but it is possible to specify that a task only requires shared access (`&-`) to a resource using the `&resource_name` syntax in the `resources` list.
 
@@ -121,4 +125,3 @@ There exists two other options dealing with resources
   this is safe.
 * `#[task_local]`: there must be only one task using this resource,
   similar to a `static mut` task local resource, but (optionally) set-up by init.
-
