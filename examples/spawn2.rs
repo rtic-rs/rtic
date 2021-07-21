@@ -21,7 +21,7 @@ mod app {
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         foo::spawn(1, 2).unwrap();
 
-        (Shared {}, Local {}, init::Monotonics {})
+        (Shared {}, Local {}, init::Monotonics())
     }
 
     #[task]

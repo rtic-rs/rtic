@@ -226,7 +226,7 @@ v0.6.0 code:
 fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
     let buffer: &'static mut [u8; 1024] = cx.local.buffer;
 
-    (Shared {}, Local {}, init::Monotonics {})
+    (Shared {}, Local {}, init::Monotonics())
 }
 ```
 
@@ -263,7 +263,7 @@ mod app {
     fn init(_: init::Context) -> (MySharedResources, MyLocalResources, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
 
-        (MySharedResources, MyLocalResources, init::Monotonics {})
+        (MySharedResources, MyLocalResources, init::Monotonics())
     }
 
     // [more code]
