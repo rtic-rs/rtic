@@ -13,16 +13,15 @@ One `struct` must be annotated with the attribute `#[local]`.
 The other `struct` must be annotated with the attribute `#[shared]`.
 The difference between these two sets of resources will be covered later.
 
-Resources can optionally be given an initial value using the `#[init]`
-attribute. Resources that are not given an initial value are referred to as
-*late* resources and are covered in more detail in a follow-up section in this
-page.
-
 Each context (task handler, `init` or `idle`) must declare the resources it
 intends to access in its corresponding metadata attribute using either the
 `local` or `shared` argument. This argument takes a list of resource names as
 its value. The listed resources are made available to the context under the
 `local` and `shared` fields of the `Context` structure.
+
+All resources are initialized at runtime, after the `#[init]` function returns.
+The `#[init]` function must return the initial values for all resources; hence its return type includes the types of the `#[shared]` and `#[local]` structs.
+Because resources are uninitialized during the execution of the `#[init]` function, they cannot be accessed within the `#[init]` function.
 
 The example application shown below contains two interrupt handlers.
 Each handler has access to its own `#[local]` resource.
@@ -56,7 +55,7 @@ The critical section created by the `lock` API is based on dynamic priorities: i
 [icpp]: https://en.wikipedia.org/wiki/Priority_ceiling_protocol
 [srp]: https://en.wikipedia.org/wiki/Stack_Resource_Policy
 
-In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for the `shared` resource and need to lock the resource for accessing the data. The highest priority handler, which do nat access the `shared` resource, is free to preempt the critical section created by the
+In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for the `shared` resource and need to lock the resource for accessing the data. The highest priority handler, which do not access the `shared` resource, is free to preempt the critical section created by the
 lowest priority handler.
 
 ``` rust
@@ -74,25 +73,6 @@ As an extension to `lock`, and to reduce rightward drift, locks can be taken as 
 
 ``` rust
 {{#include ../../../../examples/multilock.rs}}
-```
-
-## Late resources
-
-Late resources are resources that are not given an initial value at compile time using the `#[init]` attribute but instead are initialized at runtime using the `init::LateResources` values returned by the `init` function.
-
-Late resources are useful e.g., to *move* (as in transferring the ownership of) peripherals initialized in `init` into tasks.
-
-The example below uses late resources to establish a lockless, one-way channel between the `UART0` interrupt handler and the `idle` task. A single producer single consumer [`Queue`] is used as the channel. The queue is split into consumer and producer end points in `init` and then each end point is stored in a different resource; `UART0` owns the producer resource and `idle` owns the consumer resource.
-
-[`Queue`]: ../../../api/heapless/spsc/struct.Queue.html
-
-``` rust
-{{#include ../../../../examples/late.rs}}
-```
-
-``` console
-$ cargo run --example late
-{{#include ../../../../ci/expected/late.run}}
 ```
 
 ## Only shared (`&-`) access

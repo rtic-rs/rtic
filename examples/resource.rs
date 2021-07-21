@@ -28,6 +28,7 @@ mod app {
 
         (
             Shared {},
+            // initial values for the `#[local]` resources
             Local {
                 local_to_uart0: 0,
                 local_to_uart1: 0,
