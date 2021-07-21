@@ -16,6 +16,6 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        (Shared {}, Local {}, init::Monotonics {})
+        (Shared {}, Local {}, init::Monotonics())
     }
 }

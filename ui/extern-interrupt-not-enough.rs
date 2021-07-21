@@ -10,7 +10,7 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        (Shared {}, Local {}, init::Monotonics {})
+        (Shared {}, Local {}, init::Monotonics())
     }
 
     #[task]
