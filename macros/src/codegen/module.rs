@@ -317,11 +317,13 @@ pub fn codegen(
             ));
 
             items.push(quote!(
+                #(#cfgs)*
                 pub struct #internal_spawn_handle_ident {
                     #[doc(hidden)]
                     marker: u32,
                 }
 
+                #(#cfgs)*
                 impl #internal_spawn_handle_ident {
                     pub fn cancel(self) -> Result<#ty, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
