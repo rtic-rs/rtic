@@ -97,11 +97,15 @@ $ cargo run --example only-shared-access
 
 ## Lock-free resource access of mutable resources
 
-There exists two other options dealing with resources
+A critical section is *not* required to access a `#[shared]` resource that's only accessed by tasks running at the *same* priority.
+In this case, you can opt out of the `lock` API by adding the `#[lock_free]` field-level attribute to the resource declaration (see example below).
+Note that this is merely a convenience: if you do use the `lock` API, at runtime the framework will *not* produce a critical section.
 
-* `#[lock_free]`: there might be several tasks with the same priority
-  accessing the resource without critical section. Since tasks with the
-  same priority never can preempt another task on the same priority
-  this is safe.
-* `#[task_local]`: there must be only one task using this resource,
-  similar to a `static mut` task local resource, but (optionally) set-up by init.
+``` rust
+{{#include ../../../../examples/lock-free.rs}}
+```
+
+``` console
+$ cargo run --example lock-free
+{{#include ../../../../ci/expected/lock-free.run}}
+```
