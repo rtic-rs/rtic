@@ -100,6 +100,7 @@ $ cargo run --example only-shared-access
 A critical section is *not* required to access a `#[shared]` resource that's only accessed by tasks running at the *same* priority.
 In this case, you can opt out of the `lock` API by adding the `#[lock_free]` field-level attribute to the resource declaration (see example below).
 Note that this is merely a convenience: if you do use the `lock` API, at runtime the framework will *not* produce a critical section.
+Also worth noting: using `#[lock_free]` on resources shared by tasks running at different priorities will result in a *compile-time* error -- not using the `lock` API would be a data race in that case.
 
 ``` rust
 {{#include ../../../../examples/lock-free.rs}}
