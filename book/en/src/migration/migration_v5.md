@@ -201,6 +201,49 @@ fn bar(cx: bar::Context) {
 
 Note that the performance does not change thanks to LLVM's optimizations which optimizes away unnecessary locks.
 
+## Lock-free resource access
+
+In RTIC 0.5 resources shared by tasks running at the same priority could be accessed *without* the `lock` API.
+This is still possible in 0.6: the `#[shared]` resource must be annotated with the field-level `#[lock_free]` attribute.
+
+v0.5 code:
+
+``` rust
+struct Resources {
+    counter: u64,
+}
+
+#[task(resources = [counter])]
+fn a(cx: a::Context) {
+    *cx.resources.counter += 1;
+}
+
+#[task(resources = [counter])]
+fn b(cx: b::Context) {
+    *cx.resources.counter += 1;
+}
+```
+
+v0.6 code:
+
+``` rust
+#[shared]
+struct Shared {
+    #[lock_free]
+    counter: u64,
+}
+
+#[task(shared = [counter])]
+fn a(cx: a::Context) {
+    *cx.shared.counter += 1;
+}
+
+#[task(shared = [counter])]
+fn b(cx: b::Context) {
+    *cx.shared.counter += 1;
+}
+```
+
 ## no `static mut` transform
 
 `static mut` variables are no longer transformed to safe `&'static mut` references.
