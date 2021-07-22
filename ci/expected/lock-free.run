@@ -1,0 +1,14 @@
+GPIOA/start
+  GPIOA/counter = 1
+GPIOA/end
+GPIOB/start
+  GPIOB/counter = 2
+GPIOB/end
+GPIOA/start
+  GPIOA/counter = 3
+GPIOA/end
+GPIOB/start
+  GPIOB/counter = 4
+GPIOB/end
+GPIOA/start
+  GPIOA/counter = 5

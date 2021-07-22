@@ -7,22 +7,24 @@ Resources are data visible only to functions declared within the `#[app]`
 module. The framework gives the user complete control over which context
 can access which resource.
 
-All resources are declared as a single `struct` within the `#[app]`
-module. Each field in the structure corresponds to a different resource.
-The `struct` must be annotated with the following attribute: `#[resources]`.
-
-Resources can optionally be given an initial value using the `#[init]`
-attribute. Resources that are not given an initial value are referred to as
-*late* resources and are covered in more detail in a follow-up section in this
-page.
+All resources are declared as *two* `struct`s within the `#[app]` module.
+Each field in these structures corresponds to a different resource.
+One `struct` must be annotated with the attribute `#[local]`.
+The other `struct` must be annotated with the attribute `#[shared]`.
+The difference between these two sets of resources will be covered later.
 
 Each context (task handler, `init` or `idle`) must declare the resources it
-intends to access in its corresponding metadata attribute using the `resources`
-argument. This argument takes a list of resource names as its value. The listed
-resources are made available to the context under the `resources` field of the
-`Context` structure.
+intends to access in its corresponding metadata attribute using either the
+`local` or `shared` argument. This argument takes a list of resource names as
+its value. The listed resources are made available to the context under the
+`local` and `shared` fields of the `Context` structure.
 
-The example application shown below contains two interrupt handlers that share access to a resource named `shared`.
+All resources are initialized at runtime, after the `#[init]` function returns.
+The `#[init]` function must return the initial values for all resources; hence its return type includes the types of the `#[shared]` and `#[local]` structs.
+Because resources are uninitialized during the execution of the `#[init]` function, they cannot be accessed within the `#[init]` function.
+
+The example application shown below contains two interrupt handlers.
+Each handler has access to its own `#[local]` resource.
 
 ``` rust
 {{#include ../../../../examples/resource.rs}}
@@ -33,13 +35,14 @@ $ cargo run --example resource
 {{#include ../../../../ci/expected/resource.run}}
 ```
 
-Note that the `shared` resource cannot be accessed from `idle`. Attempting to do so results in a compile error.
+A `#[local]` resource cannot be accessed from outside the task it was associated to in a `#[task]` attribute.
+Assigning the same `#[local]` resource to more than one task is a compile-time error.
 
 ## `lock`
 
-Critical sections are required to access shared mutable data in a data race-free manner.
+Critical sections are required to access `#[shared]` resources in a data race-free manner.
 
-The `resources` field of the passed `Context` implements the [`Mutex`] trait for each shared resource accessible to the task.
+The `shared` field of the passed `Context` implements the [`Mutex`] trait for each shared resource accessible to the task.
 
 The only method on this trait, [`lock`], runs its closure argument in a critical section.
 
@@ -52,7 +55,7 @@ The critical section created by the `lock` API is based on dynamic priorities: i
 [icpp]: https://en.wikipedia.org/wiki/Priority_ceiling_protocol
 [srp]: https://en.wikipedia.org/wiki/Stack_Resource_Policy
 
-In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for the `shared` resource and need to lock the resource for accessing the data. The highest priority handler, which do nat access the `shared` resource, is free to preempt the critical section created by the
+In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for the `shared` resource and need to lock the resource for accessing the data. The highest priority handler, which do not access the `shared` resource, is free to preempt the critical section created by the
 lowest priority handler.
 
 ``` rust
@@ -72,26 +75,7 @@ As an extension to `lock`, and to reduce rightward drift, locks can be taken as 
 {{#include ../../../../examples/multilock.rs}}
 ```
 
-## Late resources
-
-Late resources are resources that are not given an initial value at compile time using the `#[init]` attribute but instead are initialized at runtime using the `init::LateResources` values returned by the `init` function.
-
-Late resources are useful e.g., to *move* (as in transferring the ownership of) peripherals initialized in `init` into tasks.
-
-The example below uses late resources to establish a lockless, one-way channel between the `UART0` interrupt handler and the `idle` task. A single producer single consumer [`Queue`] is used as the channel. The queue is split into consumer and producer end points in `init` and then each end point is stored in a different resource; `UART0` owns the producer resource and `idle` owns the consumer resource.
-
-[`Queue`]: ../../../api/heapless/spsc/struct.Queue.html
-
-``` rust
-{{#include ../../../../examples/late.rs}}
-```
-
-``` console
-$ cargo run --example late
-{{#include ../../../../ci/expected/late.run}}
-```
-
-## Only shared access
+## Only shared (`&-`) access
 
 By default the framework assumes that all tasks require exclusive access (`&mut-`) to resources but it is possible to specify that a task only requires shared access (`&-`) to a resource using the `&resource_name` syntax in the `resources` list.
 
@@ -113,12 +97,15 @@ $ cargo run --example only-shared-access
 
 ## Lock-free resource access of mutable resources
 
-There exists two other options dealing with resources
+A critical section is *not* required to access a `#[shared]` resource that's only accessed by tasks running at the *same* priority.
+In this case, you can opt out of the `lock` API by adding the `#[lock_free]` field-level attribute to the resource declaration (see example below).
+Note that this is merely a convenience: if you do use the `lock` API, at runtime the framework will *not* produce a critical section.
 
-* `#[lock_free]`: there might be several tasks with the same priority
-  accessing the resource without critical section. Since tasks with the
-  same priority never can preempt another task on the same priority
-  this is safe.
-* `#[task_local]`: there must be only one task using this resource,
-  similar to a `static mut` task local resource, but (optionally) set-up by init.
+``` rust
+{{#include ../../../../examples/lock-free.rs}}
+```
 
+``` console
+$ cargo run --example lock-free
+{{#include ../../../../ci/expected/lock-free.run}}
+```

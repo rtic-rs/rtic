@@ -13,55 +13,69 @@ mod app {
     use lm3s6965::Interrupt;
 
     #[shared]
-    struct Shared {
-        shared: u32,
-    }
+    struct Shared {}
 
     #[local]
-    struct Local {}
+    struct Local {
+        local_to_uart0: i64,
+        local_to_uart1: i64,
+    }
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
         rtic::pend(Interrupt::UART1);
 
-        (Shared { shared: 0 }, Local {}, init::Monotonics())
+        (
+            Shared {},
+            // initial values for the `#[local]` resources
+            Local {
+                local_to_uart0: 0,
+                local_to_uart1: 0,
+            },
+            init::Monotonics(),
+        )
     }
 
-    // `shared` cannot be accessed from this context
+    // `#[local]` resources cannot be accessed from this context
     #[idle]
     fn idle(_cx: idle::Context) -> ! {
         debug::exit(debug::EXIT_SUCCESS);
 
-        // error: no `shared` field in `idle::Context`
-        // _cx.shared.shared += 1;
+        // error: no `local` field in `idle::Context`
+        // _cx.local.local_to_uart0 += 1;
+
+        // error: no `local` field in `idle::Context`
+        // _cx.local.local_to_uart1 += 1;
 
         loop {
             cortex_m::asm::nop();
         }
     }
 
-    // `shared` can be accessed from this context
+    // `local_to_uart0` can only be accessed from this context
     // defaults to priority 1
-    #[task(binds = UART0, shared = [shared])]
-    fn uart0(mut cx: uart0::Context) {
-        let shared = cx.shared.shared.lock(|shared| {
-            *shared += 1;
-            *shared
-        });
+    #[task(binds = UART0, local = [local_to_uart0])]
+    fn uart0(cx: uart0::Context) {
+        *cx.local.local_to_uart0 += 1;
+        let local_to_uart0 = cx.local.local_to_uart0;
 
-        hprintln!("UART0: shared = {}", shared).unwrap();
+        // error: no `local_to_uart1` field in `uart0::LocalResources`
+        // cx.local.local_to_uart1 += 1;
+
+        hprintln!("UART0: local_to_uart0 = {}", local_to_uart0).unwrap();
     }
 
-    // `shared` can be accessed from this context
+    // `shared` can only be accessed from this context
     // explicitly set to priority 2
-    #[task(binds = UART1, shared = [shared], priority = 2)]
-    fn uart1(mut cx: uart1::Context) {
-        let shared = cx.shared.shared.lock(|shared| {
-            *shared += 1;
-            *shared
-        });
+    #[task(binds = UART1, local = [local_to_uart1], priority = 2)]
+    fn uart1(cx: uart1::Context) {
+        *cx.local.local_to_uart1 += 1;
+        let local_to_uart1 = cx.local.local_to_uart1;
 
-        hprintln!("UART1: shared = {}", shared).unwrap();
+        // error: no `local_to_uart0` field in `uart1::LocalResources`
+        // cx.local.local_to_uart0 += 1;
+
+        hprintln!("UART1: local_to_uart1 = {}", local_to_uart1).unwrap();
     }
 }
