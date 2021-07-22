@@ -61,7 +61,7 @@ mod app {
         let local_to_uart0 = cx.local.local_to_uart0;
 
         // error: no `local_to_uart1` field in `uart0::LocalResources`
-        cx.local.local_to_uart1 += 1;
+        // cx.local.local_to_uart1 += 1;
 
         hprintln!("UART0: local_to_uart0 = {}", local_to_uart0).unwrap();
     }
