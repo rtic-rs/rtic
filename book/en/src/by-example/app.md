@@ -53,6 +53,10 @@ $ cargo run --example init
 {{#include ../../../../ci/expected/init.run}}
 ```
 
+> **NOTE**: Remember to always specify your chosen target device or configure
+> one to be used by default in `.cargo/config.toml`. In this case, we use
+> a Cortex M3 running in QEMU so the target is `thumbv7m-none-eabi`.
+
 ## `idle`
 
 A function marked with the `idle` attribute can optionally appear in the
@@ -120,7 +124,7 @@ crate. When the `priority` argument is omitted, the priority is assumed to be
 `1`. The `idle` task has a non-configurable static priority of `0`, the lowest priority.
 
 > A higher number means a higher priority in RTIC, which is the opposite from what
-> Cortex-M does in the NVIC peripheral.  
+> Cortex-M does in the NVIC peripheral.
 > Explicitly, this means that number `10` has a **higher** priority than number `9`.
 
 When several tasks are ready to be executed the one with highest static
