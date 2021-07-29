@@ -6,32 +6,6 @@ This is the smallest possible RTIC application:
 {{#include ../../../../examples/smallest.rs}}
 ```
 
-All RTIC applications use the [`app`] attribute (`#[app(..)]`). This attribute
-must be applied to a `mod`-item. The `app` attribute has a mandatory `device`
-argument that takes a *path* as a value. This must be a full path pointing to a
-*peripheral access crate* (PAC) generated using [`svd2rust`] **v0.14.x** or
-newer. More details can be found in the [Starting a new project](./new.md)
-section.
-
-The `app` attribute will expand into a suitable entry point so it's not required
-to use the [`cortex_m_rt::entry`] attribute.
-
-[`app`]: ../../../api/cortex_m_rtic_macros/attr.app.html
-[`svd2rust`]: https://crates.io/crates/svd2rust
-[`cortex_m_rt::entry`]: ../../../api/cortex_m_rt_macros/attr.entry.html
-
-## `init`
-
-Within the `app` module the attribute expects to find an initialization
-function marked with the `init` attribute. This function must have
-signature `fn(init::Context) -> (init::LateResources, init::Monotonics)`.
-
-This initialization function will be the first part of the application to run.
-The `init` function will run *with interrupts disabled* and has exclusive access
-to Cortex-M where the `bare_metal::CriticalSection` token is available as `cs`.
-And optionally, device specific peripherals through the `core` and `device` fields
-of `init::Context`.
-
 `static mut` variables declared at the beginning of `init` will be transformed
 into `&'static mut` references that are safe to access. Notice, this feature may be deprecated in next release, see `task_local` resources.
 
@@ -57,6 +31,7 @@ $ cargo run --example init
 > triple to cargo (e.g `cargo run --example init --target thumbv7m-none-eabi`) or
 > configure a device to be used by default when building the examples in `.cargo/config.toml`.
 > In this case, we use a Cortex M3 emulated in QEMU so the target is `thumbv7m-none-eabi`.
+> See [`Starting a new project`](./new.md) for more info.
 
 ## `idle`
 
