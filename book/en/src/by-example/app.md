@@ -57,6 +57,7 @@ $ cargo run --example init
 > triple to cargo (e.g `cargo run --example init --target thumbv7m-none-eabi`) or
 > configure a device to be used by default when building the examples in `.cargo/config.toml`.
 > In this case, we use a Cortex M3 emulated in QEMU so the target is `thumbv7m-none-eabi`.
+> See [`Starting a new project`](./new.md) for more info.
 
 ## `idle`
 
