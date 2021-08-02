@@ -4,4 +4,4 @@ error[E0080]: evaluation of constant value failed
 3 | #[rtic::app(device = lm3s6965)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to compute `8_usize - 9_usize`, which would overflow
   |
-  = note: this error originates in an attribute macro (in Nightly builds, run with -Z macro-backtrace for more info)
+  = note: this error originates in the attribute macro `rtic::app` (in Nightly builds, run with -Z macro-backtrace for more info)
