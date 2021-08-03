@@ -50,9 +50,15 @@
 
 - Приложения должны быть написаны в редакции 2018.
 
+## [Руководство пользователя](https://rtic.rs) - [(Версия в разработке)](https://rtic.rs/dev)
+
 ## [Документация пользователя](https://rtic.rs)
 
 ## [Справочник по API](https://rtic.rs/stable/api/)
+
+## [Сборник примеров, предоставляемы сообществом][examples]
+
+[examples]: https://github.com/rtic-rs/rtic-examples
 
 ## Чат
 
