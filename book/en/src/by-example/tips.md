@@ -1,5 +1,9 @@
 # Tips & tricks
 
+For complete RTIC examples see the [rtic-examples][rtic-examples] repository.
+
+[rtic-examples]: https://github.com/rtic-rs/rtic-examples
+
 ## Generics
 
 All resource proxies implement the `rtic::Mutex` trait.

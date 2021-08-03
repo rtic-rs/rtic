@@ -52,9 +52,13 @@ Formerly known as Real-Time For the Masses.
 
 - Applications must be written using the 2018 edition.
 
-## [User documentation](https://rtic.rs)
+## [User documentation](https://rtic.rs) - [(Development version)](https://rtic.rs/dev)
 
 ## [API reference](https://rtic.rs/stable/api/)
+
+## [Community provided examples repo][examples]
+
+[examples]: https://github.com/rtic-rs/rtic-examples
 
 ## Chat
 
