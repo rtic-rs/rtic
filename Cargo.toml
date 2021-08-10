@@ -13,7 +13,7 @@ license = "MIT OR Apache-2.0"
 name = "cortex-m-rtic"
 readme = "README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
-version = "0.5.7"
+version = "0.5.8"
 
 [lib]
 name = "rtic"
@@ -51,7 +51,7 @@ name = "types"
 required-features = ["__v7"]
 
 [dependencies]
-cortex-m = "0.6.2"
+cortex-m = "0.7.3"
 cortex-m-rtic-macros = { path = "macros", version = "0.5.3" }
 rtic-core = "0.3.0"
 cortex-m-rt = "0.6.9"

@@ -7,7 +7,7 @@ use core::{
     ops::{Add, Sub},
 };
 
-use bare_metal::Nr;
+use cortex_m::interrupt::InterruptNumber;
 use rtic::{Fraction, Monotonic, MultiCore};
 
 // both cores have the exact same interrupts
@@ -16,7 +16,7 @@ pub use Interrupt_0 as Interrupt_1;
 // Fake priority bits
 pub const NVIC_PRIO_BITS: u8 = 3;
 
-pub fn xpend(_core: u8, _interrupt: impl Nr) {}
+pub fn xpend(_core: u8, _interrupt: impl InterruptNumber) {}
 
 /// Fake monotonic timer
 pub struct MT;
@@ -92,8 +92,8 @@ pub enum Interrupt_0 {
     I7 = 7,
 }
 
-unsafe impl Nr for Interrupt_0 {
-    fn nr(&self) -> u8 {
-        *self as u8
+unsafe impl InterruptNumber for Interrupt_0 {
+    fn number(self) -> u16 {
+        self as u16
     }
 }

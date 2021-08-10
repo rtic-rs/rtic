@@ -45,7 +45,7 @@
 use core::ops::Sub;
 
 use cortex_m::{
-    interrupt::Nr,
+    interrupt::InterruptNumber,
     peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
 };
 #[cfg(all(not(feature = "heterogeneous"), not(feature = "homogeneous")))]
@@ -170,7 +170,7 @@ pub trait MultiCore {}
 /// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
 pub fn pend<I>(interrupt: I)
 where
-    I: Nr,
+    I: InterruptNumber,
 {
     NVIC::pend(interrupt)
 }
