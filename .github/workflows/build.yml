@@ -6,6 +6,8 @@ on:
       - master
       - staging
       - trying
+      - test
+      - v0.5.7-as-released
 
 env:
   CARGO_TERM_COLOR: always
