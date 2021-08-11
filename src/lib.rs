@@ -44,10 +44,15 @@
 
 use core::ops::Sub;
 
-use cortex_m::{
-    interrupt::InterruptNumber,
-    peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU},
-};
+#[cfg(feature = "cortex-m")]
+use cortex_m::interrupt::Nr;
+
+#[cfg(feature = "cortex-m-7")]
+extern crate cortex_m_7 as cortex_m;
+#[cfg(feature = "cortex-m-7")]
+use cortex_m::interrupt::InterruptNumber;
+
+use cortex_m::peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU};
 #[cfg(all(not(feature = "heterogeneous"), not(feature = "homogeneous")))]
 use cortex_m_rt as _; // vector table
 pub use cortex_m_rtic_macros::app;
@@ -168,6 +173,19 @@ pub trait MultiCore {}
 ///
 /// This is a convenience function around
 /// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
+#[cfg(feature = "cortex-m")]
+pub fn pend<I>(interrupt: I)
+where
+    I: Nr,
+{
+    NVIC::pend(interrupt)
+}
+
+/// Sets the given `interrupt` as pending
+///
+/// This is a convenience function around
+/// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
+#[cfg(feature = "cortex-m-7")]
 pub fn pend<I>(interrupt: I)
 where
     I: InterruptNumber,

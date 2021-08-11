@@ -7,11 +7,16 @@ publish = false
 version = "0.0.0-alpha.0"
 
 [dependencies]
-cortex-m = "0.7.3"
+cortex-m = { version = "0.7.3", optional = true }
+bare-metal = { version = "0.2.4", optional = true }
 
 [dependencies.cortex-m-rtic]
 path = ".."
 features = ["homogeneous"]
+
+[features]
+default = ["bare-metal"]
+cortex-m-7 = ["cortex-m"]
 
 [dev-dependencies]
 panic-halt = "0.2.0"

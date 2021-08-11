@@ -7,6 +7,9 @@ use core::{
     ops::{Add, Sub},
 };
 
+#[cfg(feature = "bare-metal")]
+use bare_metal::Nr;
+#[cfg(feature = "cortex-m-7")]
 use cortex_m::interrupt::InterruptNumber;
 use rtic::{Fraction, Monotonic, MultiCore};
 
@@ -16,6 +19,9 @@ pub use Interrupt_0 as Interrupt_1;
 // Fake priority bits
 pub const NVIC_PRIO_BITS: u8 = 3;
 
+#[cfg(feature = "bare-metal")]
+pub fn xpend(_core: u8, _interrupt: impl Nr) {}
+#[cfg(feature = "cortex-m-7")]
 pub fn xpend(_core: u8, _interrupt: impl InterruptNumber) {}
 
 /// Fake monotonic timer
@@ -92,6 +98,14 @@ pub enum Interrupt_0 {
     I7 = 7,
 }
 
+#[cfg(feature = "bare-metal")]
+unsafe impl Nr for Interrupt_0 {
+    fn nr(&self) -> u8 {
+        *self as u8
+    }
+}
+
+#[cfg(feature = "cortex-m-7")]
 unsafe impl InterruptNumber for Interrupt_0 {
     fn number(self) -> u16 {
         self as u16
