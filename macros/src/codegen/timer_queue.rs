@@ -62,21 +62,20 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         {
             // For future use
             // let doc = &format!("Timer queue for {}", monotonic_name);
-            let cap: u8 = app
+            let cap: usize = app
                 .software_tasks
                 .iter()
-                .map(|(_name, task)| task.args.capacity)
+                .map(|(_name, task)| task.args.capacity as usize)
                 .sum();
-            let n = util::capacity_literal(cap as usize);
-            let tq_ty =
-                quote!(core::mem::MaybeUninit<rtic::export::TimerQueue<#mono_type, #t, #n>>);
+            let n = util::capacity_literal(cap);
+            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n>);
 
             // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             items.push(quote!(
                 #[doc(hidden)]
                 static #tq: rtic::RacyCell<#tq_ty> =
-                    rtic::RacyCell::new(core::mem::MaybeUninit::uninit());
+                    rtic::RacyCell::new(rtic::export::TimerQueue(rtic::export::SortedLinkedList::new_u16()));
             ));
 
             let mono = util::monotonic_ident(&monotonic_name);
@@ -138,7 +137,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 unsafe fn #bound_interrupt() {
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = #m_ident.get_mut_unchecked().as_mut() {
-                            (&mut *#tq.get_mut_unchecked().as_mut_ptr()).dequeue(|| #disable_isr, mono)
+                            #tq.get_mut_unchecked().dequeue(|| #disable_isr, mono)
                         } else {
                             // We can only use the timer queue if `init` has returned, and it
                             // writes the `Some(monotonic)` we are accessing here.

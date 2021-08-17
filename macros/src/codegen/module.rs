@@ -327,7 +327,7 @@ pub fn codegen(
                 impl #internal_spawn_handle_ident {
                     pub fn cancel(self) -> Result<#ty, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
-                            let tq = &mut *#tq.get_mut_unchecked().as_mut_ptr();
+                            let tq = #tq.get_mut_unchecked();
                             if let Some((_task, index)) = tq.cancel_marker(self.marker) {
                                 // Get the message
                                 let msg = #inputs
@@ -359,7 +359,7 @@ pub fn codegen(
                             let marker = *#tq_marker.get_mut_unchecked();
                             *#tq_marker.get_mut_unchecked() = #tq_marker.get_mut_unchecked().wrapping_add(1);
 
-                            let tq = &mut *#tq.get_mut_unchecked().as_mut_ptr();
+                            let tq = #tq.get_mut_unchecked();
 
                             tq.update_marker(self.marker, marker, instant, || #pend).map(|_| #name::#m::SpawnHandle { marker })
                         })
@@ -420,7 +420,7 @@ pub fn codegen(
 
                                 *#tq_marker.get_mut_unchecked() = #tq_marker.get_mut_unchecked().wrapping_add(1);
 
-                                let tq = &mut *#tq.get_mut_unchecked().as_mut_ptr();
+                                let tq = #tq.get_mut_unchecked();
 
                                 tq.enqueue_unchecked(
                                     nr,

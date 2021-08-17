@@ -13,6 +13,7 @@ pub use cortex_m::{
     peripheral::{scb::SystemHandler, syst::SystClkSource, DWT, NVIC},
     Peripherals,
 };
+pub use heapless::sorted_linked_list::SortedLinkedList;
 pub use heapless::spsc::Queue;
 pub use heapless::BinaryHeap;
 pub use rtic_monotonic as monotonic;
