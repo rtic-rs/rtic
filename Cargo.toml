@@ -13,7 +13,7 @@ license = "MIT OR Apache-2.0"
 name = "cortex-m-rtic"
 readme = "README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
-version = "0.5.7"
+version = "0.5.8"
 
 [lib]
 name = "rtic"
@@ -51,11 +51,20 @@ name = "types"
 required-features = ["__v7"]
 
 [dependencies]
-cortex-m = "0.6.2"
 cortex-m-rtic-macros = { path = "macros", version = "0.5.3" }
 rtic-core = "0.3.0"
 cortex-m-rt = "0.6.9"
 heapless = "0.6.1"
+
+[dependencies.cortex-m]
+package = "cortex-m"
+version = "0.6.2"
+optional = true
+
+[dependencies.cortex-m-7]
+package = "cortex-m"
+version = "0.7.3"
+optional = true
 
 [build-dependencies]
 version_check = "0.9"
@@ -65,7 +74,9 @@ optional = true
 version = "0.1.0-alpha.2"
 
 [dev-dependencies]
-lm3s6965 = "0.1.3"
+# The difference between this git version and the crates.io version is that this version implements Copy & Clone on Interrupt
+# which is needed for the cortex-m-7 feature (to use InterruptNumber instead of Nr on interrups)
+lm3s6965 = { git = "https://github.com/japaric/lm3s6965.git", version= "0.1.3", rev = "facf63aa0169c773175a143f6014a1d0977fb74f" }
 cortex-m-semihosting = "0.3.3"
 
 [dev-dependencies.panic-semihosting]
@@ -76,6 +87,7 @@ version = "0.5.2"
 trybuild = "1"
 
 [features]
+default = ["cortex-m"]
 heterogeneous = ["cortex-m-rtic-macros/heterogeneous", "microamp"]
 homogeneous = ["cortex-m-rtic-macros/homogeneous"]
 # used for testing this crate; do not use in applications
