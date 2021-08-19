@@ -7,7 +7,7 @@ Formerly known as Real-Time For the Masses.
 ![crates.io](https://img.shields.io/crates/v/cortex-m-rtic)
 ![docs.rs](https://docs.rs/cortex-m-rtic/badge.svg)
 ![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)
-![rustc](https://img.shields.io/badge/rustc-1.36+-lightgray.svg)
+![rustc](https://img.shields.io/badge/rustc-1.38+-lightgray.svg)
 
 ## Features
 
@@ -46,7 +46,7 @@ Formerly known as Real-Time For the Masses.
 
 ## Requirements
 
-- Rust 1.36.0+
+- Rust 1.38.0+
 
 - Applications must be written using the 2018 edition.
 

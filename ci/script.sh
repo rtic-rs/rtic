@@ -50,7 +50,7 @@ main() {
         fi
 
         if [ $TRAVIS_RUST_VERSION = nightly ]; then
-            # Tests where required MSRV > 1.36
+            # Tests where required MSRV > 1.38
             #local exs=(
             #)
             #for ex in ${exs[@]}; do

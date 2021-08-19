@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.5.8] - 2021-08-19
+
+- Feature flag was added to support `cortex-m v0.7.x`
+- MSRV raised to 1.38.
+
 ## [v0.5.7] - 2021-07-05
 
 - Backport: "you must enable the rt feature" compile time detection
