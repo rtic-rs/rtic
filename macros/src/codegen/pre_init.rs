@@ -17,7 +17,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     for (name, task) in &app.software_tasks {
         let cap = task.args.capacity;
         let fq_ident = util::fq_ident(name);
-        let fq_ident = util::mark_internal_ident(&fq_ident);
 
         stmts.push(quote!(
             (0..#cap).for_each(|i| #fq_ident.get_mut_unchecked().enqueue_unchecked(i));

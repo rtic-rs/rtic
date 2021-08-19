@@ -11,7 +11,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
 
     // Initialize shared resources
     for (name, res) in &app.shared_resources {
-        let mangled_name = util::mark_internal_ident(&util::static_shared_resource_ident(name));
+        let mangled_name = util::static_shared_resource_ident(name);
         // If it's live
         let cfgs = res.cfgs.clone();
         if analysis.shared_resource_locations.get(name).is_some() {
@@ -29,7 +29,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
 
     // Initialize local resources
     for (name, res) in &app.local_resources {
-        let mangled_name = util::mark_internal_ident(&util::static_local_resource_ident(name));
+        let mangled_name = util::static_local_resource_ident(name);
         // If it's live
         let cfgs = res.cfgs.clone();
         if analysis.local_resource_locations.get(name).is_some() {
@@ -58,7 +58,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
 
         // Store the monotonic
         let name = util::monotonic_ident(&monotonic.to_string());
-        let name = util::mark_internal_ident(&name);
         stmts.push(quote!(*#name.get_mut_unchecked() = Some(monotonics.#idx);));
     }
 

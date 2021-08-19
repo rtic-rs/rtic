@@ -67,7 +67,6 @@ pub fn codegen(
 
     if ctxt.has_local_resources(app) {
         let ident = util::local_resources_ident(ctxt, app);
-        let ident = util::mark_internal_ident(&ident);
         let lt = if local_resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
@@ -90,7 +89,6 @@ pub fn codegen(
 
     if ctxt.has_shared_resources(app) {
         let ident = util::shared_resources_ident(ctxt, app);
-        let ident = util::mark_internal_ident(&ident);
         let lt = if shared_resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
@@ -212,11 +210,8 @@ pub fn codegen(
         let args = &args;
         let tupled = &tupled;
         let fq = util::fq_ident(name);
-        let fq = util::mark_internal_ident(&fq);
         let rq = util::rq_ident(priority);
-        let rq = util::mark_internal_ident(&rq);
         let inputs = util::inputs_ident(name);
-        let inputs = util::mark_internal_ident(&inputs);
 
         let device = &extra.device;
         let enum_ = util::interrupt_ident();
@@ -266,16 +261,13 @@ pub fn codegen(
         // Schedule caller
         for (_, monotonic) in &app.monotonics {
             let instants = util::monotonic_instants_ident(name, &monotonic.ident);
-            let instants = util::mark_internal_ident(&instants);
             let monotonic_name = monotonic.ident.to_string();
 
             let tq = util::tq_ident(&monotonic.ident.to_string());
-            let tq = util::mark_internal_ident(&tq);
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
             let mono_type = &monotonic.ident;
             let m_ident = util::monotonic_ident(&monotonic_name);
-            let m_ident = util::mark_internal_ident(&m_ident);
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
 
@@ -293,7 +285,7 @@ pub fn codegen(
                 )
             };
 
-            let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
+            let tq_marker = &util::timer_queue_marker_ident();
 
             // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());

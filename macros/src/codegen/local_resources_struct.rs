@@ -44,11 +44,9 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         };
 
         let mangled_name = if matches!(task_local, TaskLocal::External) {
-            util::mark_internal_ident(&util::static_local_resource_ident(name))
+            util::static_local_resource_ident(name)
         } else {
-            util::mark_internal_ident(&util::declared_static_local_resource_ident(
-                name, &task_name,
-            ))
+            util::declared_static_local_resource_ident(name, &task_name)
         };
 
         fields.push(quote!(
@@ -86,7 +84,6 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let doc = format!("Local resources `{}` has access to", ctxt.ident(app));
     let ident = util::local_resources_ident(ctxt, app);
-    let ident = util::mark_internal_ident(&ident);
     let item = quote!(
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]

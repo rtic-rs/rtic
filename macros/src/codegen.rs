@@ -108,7 +108,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             let name = &monotonic.ident;
             let name_str = &name.to_string();
             let ident = util::monotonic_ident(&name_str);
-            let ident = util::mark_internal_ident(&ident);
             let panic_str = &format!(
                 "Use of monotonic '{}' before it was passed to the runtime",
                 name_str
