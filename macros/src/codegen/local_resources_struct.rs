@@ -89,6 +89,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     let ident = util::mark_internal_ident(&ident);
     let item = quote!(
         #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
         #[doc = #doc]
         pub struct #ident<#lt> {
             #(#fields,)*
