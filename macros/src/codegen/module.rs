@@ -131,6 +131,7 @@ pub fn codegen(
         items.push(quote!(
             /// Monotonics used by the system
             #[allow(non_snake_case)]
+            #[allow(non_camel_case_types)]
             pub struct #internal_monotonics_ident(
                 #(pub #monotonic_types),*
             );
@@ -178,6 +179,8 @@ pub fn codegen(
     items.push(quote!(
         #(#cfgs)*
         /// Execution context
+        #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
         pub struct #internal_context_name<#lt> {
             #(#fields,)*
         }
@@ -318,6 +321,8 @@ pub fn codegen(
 
             items.push(quote!(
                 #(#cfgs)*
+                #[allow(non_snake_case)]
+                #[allow(non_camel_case_types)]
                 pub struct #internal_spawn_handle_ident {
                     #[doc(hidden)]
                     marker: u32,

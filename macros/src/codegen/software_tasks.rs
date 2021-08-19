@@ -49,6 +49,8 @@ pub fn codegen(
         mod_app.push(quote!(
             // /// Queue version of a free-list that keeps track of empty slots in
             // /// the following buffers
+            #[allow(non_camel_case_types)]
+            #[allow(non_upper_case_globals)]
             #[doc(hidden)]
             static #fq: rtic::RacyCell<#fq_ty> = rtic::RacyCell::new(#fq_expr);
         ));
@@ -69,6 +71,8 @@ pub fn codegen(
                 #uninit
                 // /// Buffer that holds the instants associated to the inputs of a task
                 // #[doc = #doc]
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
                 #[doc(hidden)]
                 static #instants:
                     rtic::RacyCell<[core::mem::MaybeUninit<rtic::time::Instant<#mono_type>>; #cap_lit]> =
@@ -82,6 +86,8 @@ pub fn codegen(
         mod_app.push(quote!(
             #uninit
             // /// Buffer that holds the inputs of a task
+            #[allow(non_camel_case_types)]
+            #[allow(non_upper_case_globals)]
             #[doc(hidden)]
             static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
                 rtic::RacyCell::new([#(#elems,)*]);

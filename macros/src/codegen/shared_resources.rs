@@ -30,6 +30,7 @@ pub fn codegen(
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
         mod_app.push(quote!(
+            #[allow(non_camel_case_types)]
             #[allow(non_upper_case_globals)]
             // #[doc = #doc]
             #[doc(hidden)]
