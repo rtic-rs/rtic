@@ -33,6 +33,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         // );
         let t = util::spawn_t_ident(level);
         items.push(quote!(
+            #[allow(non_snake_case)]
             #[allow(non_camel_case_types)]
             #[derive(Clone, Copy)]
             // #[doc = #doc]
@@ -59,6 +60,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         // );
         items.push(quote!(
             #[doc(hidden)]
+            #[allow(non_camel_case_types)]
+            #[allow(non_upper_case_globals)]
             static #rq: rtic::RacyCell<#rq_ty> = rtic::RacyCell::new(#rq_expr);
         ));
 

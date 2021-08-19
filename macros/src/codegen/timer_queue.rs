@@ -15,6 +15,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             // #[doc = #doc]
             #[doc(hidden)]
             #[allow(non_camel_case_types)]
+            #[allow(non_upper_case_globals)]
             static #tq_marker: rtic::RacyCell<u32> = rtic::RacyCell::new(0);
         ));
 
@@ -74,6 +75,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             items.push(quote!(
                 #[doc(hidden)]
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
                 static #tq: rtic::RacyCell<#tq_ty> =
                     rtic::RacyCell::new(rtic::export::TimerQueue(rtic::export::SortedLinkedList::new_u16()));
             ));
@@ -85,6 +88,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
             items.push(quote!(
                 #[doc(hidden)]
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
                 static #mono: rtic::RacyCell<Option<#mono_type>> = rtic::RacyCell::new(None);
             ));
         }
