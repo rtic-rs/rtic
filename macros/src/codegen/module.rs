@@ -376,6 +376,7 @@ pub fn codegen(
                 ///
                 /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
                 /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
+                #[allow(non_snake_case)]
                 pub fn #internal_spawn_after_ident<D>(
                     duration: D
                     #(,#args)*
@@ -395,6 +396,7 @@ pub fn codegen(
 
                 #(#cfgs)*
                 /// Spawns the task at a fixed time instant
+                #[allow(non_snake_case)]
                 pub fn #internal_spawn_at_ident(
                     instant: rtic::time::Instant<#mono_type>
                     #(,#args)*
