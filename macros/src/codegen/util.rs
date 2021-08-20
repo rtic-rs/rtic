@@ -7,6 +7,8 @@ use syn::{Attribute, Ident, LitInt, PatType};
 
 use crate::check::Extra;
 
+const RTIC_INTERNAL: &str = "__rtic_internal";
+
 /// Turns `capacity` into an unsuffixed integer literal
 pub fn capacity_literal(capacity: usize) -> LitInt {
     LitInt::new(&capacity.to_string(), Span::call_site())
@@ -14,7 +16,7 @@ pub fn capacity_literal(capacity: usize) -> LitInt {
 
 /// Identifier for the free queue
 pub fn fq_ident(task: &Ident) -> Ident {
-    Ident::new(&format!("{}_FQ", task.to_string()), Span::call_site())
+    mark_internal_name(&format!("{}_FQ", task.to_string()))
 }
 
 /// Generates a `Mutex` implementation
@@ -60,15 +62,12 @@ pub fn impl_mutex(
 
 /// Generates an identifier for the `INPUTS` buffer (`spawn` & `schedule` API)
 pub fn inputs_ident(task: &Ident) -> Ident {
-    Ident::new(&format!("{}_INPUTS", task), Span::call_site())
+    mark_internal_name(&format!("{}_INPUTS", task))
 }
 
 /// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
 pub fn monotonic_instants_ident(task: &Ident, monotonic: &Ident) -> Ident {
-    Ident::new(
-        &format!("{}_{}_INSTANTS", task, monotonic),
-        Span::call_site(),
-    )
+    mark_internal_name(&format!("{}_{}_INSTANTS", task, monotonic))
 }
 
 pub fn interrupt_ident() -> Ident {
@@ -77,8 +76,7 @@ pub fn interrupt_ident() -> Ident {
 }
 
 pub fn timer_queue_marker_ident() -> Ident {
-    let span = Span::call_site();
-    Ident::new("TIMER_QUEUE_MARKER", span)
+    mark_internal_name(&"TIMER_QUEUE_MARKER")
 }
 
 /// Whether `name` is an exception with configurable priority
@@ -98,38 +96,24 @@ pub fn is_exception(name: &Ident) -> bool {
     )
 }
 
+/// Mark a name as internal
+pub fn mark_internal_name(name: &str) -> Ident {
+    Ident::new(&format!("{}_{}", RTIC_INTERNAL, name), Span::call_site())
+}
+
 /// Generate an internal identifier for monotonics
 pub fn internal_monotonics_ident(task: &Ident, monotonic: &Ident, ident_name: &str) -> Ident {
-    Ident::new(
-        &format!(
-            "__rtic_internal_{}_{}_{}",
-            task.to_string(),
-            monotonic.to_string(),
-            ident_name,
-        ),
-        Span::call_site(),
-    )
+    mark_internal_name(&format!(
+        "{}_{}_{}",
+        task.to_string(),
+        monotonic.to_string(),
+        ident_name,
+    ))
 }
 
 /// Generate an internal identifier for tasks
 pub fn internal_task_ident(task: &Ident, ident_name: &str) -> Ident {
-    Ident::new(
-        &format!("__rtic_internal_{}_{}", task.to_string(), ident_name,),
-        Span::call_site(),
-    )
-}
-
-/// Mark an ident as internal
-pub fn mark_internal_ident(ident: &Ident) -> Ident {
-    Ident::new(
-        &format!("__rtic_internal_{}", ident.to_string()),
-        Span::call_site(),
-    )
-}
-
-/// Mark an ident as internal
-pub fn mark_internal_name(name: &str) -> Ident {
-    Ident::new(&format!("__rtic_internal_{}", name), Span::call_site())
+    mark_internal_name(&format!("{}_{}", task.to_string(), ident_name))
 }
 
 fn link_section_index() -> usize {
@@ -215,7 +199,7 @@ pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
 
     s.push_str("SharedResources");
 
-    Ident::new(&s, Span::call_site())
+    mark_internal_name(&s)
 }
 
 /// Generates a pre-reexport identifier for the "local resources" struct
@@ -228,7 +212,7 @@ pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
 
     s.push_str("LocalResources");
 
-    Ident::new(&s, Span::call_site())
+    mark_internal_name(&s)
 }
 
 /// Generates an identifier for a ready queue
@@ -236,7 +220,7 @@ pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
 /// There may be several task dispatchers, one for each priority level.
 /// The ready queues are SPSC queues
 pub fn rq_ident(priority: u8) -> Ident {
-    Ident::new(&format!("P{}_RQ", priority), Span::call_site())
+    mark_internal_name(&format!("P{}_RQ", priority))
 }
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks
@@ -260,33 +244,28 @@ pub fn suffixed(name: &str) -> Ident {
 
 /// Generates an identifier for a timer queue
 pub fn tq_ident(name: &str) -> Ident {
-    Ident::new(&format!("TQ_{}", name), Span::call_site())
+    mark_internal_name(&format!("TQ_{}", name))
 }
 
 /// Generates an identifier for monotonic timer storage
 pub fn monotonic_ident(name: &str) -> Ident {
-    Ident::new(&format!("MONOTONIC_STORAGE_{}", name), Span::call_site())
+    mark_internal_name(&format!("MONOTONIC_STORAGE_{}", name))
 }
 
 pub fn static_shared_resource_ident(name: &Ident) -> Ident {
-    Ident::new(
-        &format!("shared_resource_{}", name.to_string()),
-        Span::call_site(),
-    )
+    mark_internal_name(&format!("shared_resource_{}", name.to_string()))
 }
 
 pub fn static_local_resource_ident(name: &Ident) -> Ident {
-    Ident::new(
-        &format!("local_resource_{}", name.to_string()),
-        Span::call_site(),
-    )
+    mark_internal_name(&format!("local_resource_{}", name.to_string()))
 }
 
 pub fn declared_static_local_resource_ident(name: &Ident, task_name: &Ident) -> Ident {
-    Ident::new(
-        &format!("local_{}_{}", task_name.to_string(), name.to_string()),
-        Span::call_site(),
-    )
+    mark_internal_name(&format!(
+        "local_{}_{}",
+        task_name.to_string(),
+        name.to_string()
+    ))
 }
 
 /// The name to get better RT flag errors

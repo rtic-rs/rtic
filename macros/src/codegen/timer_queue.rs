@@ -10,7 +10,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
     if !app.monotonics.is_empty() {
         // Generate the marker counter used to track for `cancel` and `reschedule`
-        let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
+        let tq_marker = util::timer_queue_marker_ident();
         items.push(quote!(
             // #[doc = #doc]
             #[doc(hidden)]
@@ -53,11 +53,9 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
     for (_, monotonic) in &app.monotonics {
         let monotonic_name = monotonic.ident.to_string();
         let tq = util::tq_ident(&monotonic_name);
-        let tq = util::mark_internal_ident(&tq);
         let t = util::schedule_t_ident();
         let mono_type = &monotonic.ty;
         let m_ident = util::monotonic_ident(&monotonic_name);
-        let m_ident = util::mark_internal_ident(&m_ident);
 
         // Static variables and resource proxy
         {
@@ -82,7 +80,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             ));
 
             let mono = util::monotonic_ident(&monotonic_name);
-            let mono = util::mark_internal_ident(&mono);
             // For future use
             // let doc = &format!("Storage for {}", monotonic_name);
 
@@ -106,7 +103,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     let cfgs = &task.cfgs;
                     let priority = task.args.priority;
                     let rq = util::rq_ident(priority);
-                    let rq = util::mark_internal_ident(&rq);
                     let rqt = util::spawn_t_ident(priority);
 
                     // The interrupt that runs the task dispatcher

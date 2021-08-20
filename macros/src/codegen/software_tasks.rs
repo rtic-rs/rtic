@@ -37,7 +37,6 @@ pub fn codegen(
 
         // Create free queues and inputs / instants buffers
         let fq = util::fq_ident(name);
-        let fq = util::mark_internal_ident(&fq);
 
         let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
             (
@@ -61,7 +60,6 @@ pub fn codegen(
 
         for (_, monotonic) in &app.monotonics {
             let instants = util::monotonic_instants_ident(name, &monotonic.ident);
-            let instants = util::mark_internal_ident(&instants);
             let mono_type = &monotonic.ty;
 
             let uninit = mk_uninit();
@@ -82,7 +80,6 @@ pub fn codegen(
 
         let uninit = mk_uninit();
         let inputs_ident = util::inputs_ident(name);
-        let inputs_ident = util::mark_internal_ident(&inputs_ident);
         mod_app.push(quote!(
             #uninit
             // /// Buffer that holds the inputs of a task

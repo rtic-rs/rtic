@@ -45,7 +45,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
         let n = util::capacity_literal(channel.capacity as usize + 1);
         let rq = util::rq_ident(level);
-        let rq = util::mark_internal_ident(&rq);
         let (rq_ty, rq_expr) = {
             (
                 quote!(rtic::export::SCRQ<#t, #n>),
@@ -72,9 +71,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 let task = &app.software_tasks[name];
                 let cfgs = &task.cfgs;
                 let fq = util::fq_ident(name);
-                let fq = util::mark_internal_ident(&fq);
                 let inputs = util::inputs_ident(name);
-                let inputs = util::mark_internal_ident(&inputs);
                 let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
 
                 quote!(
