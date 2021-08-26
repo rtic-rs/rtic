@@ -76,6 +76,7 @@ lto = true
 [workspace]
 members = [
   "macros",
+  "xtask",
 ]
 
 # do not optimize proc-macro deps or build scripts
