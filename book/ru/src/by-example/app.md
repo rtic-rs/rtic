@@ -73,7 +73,7 @@ $ cargo run --example init
 Если функция `idle` не определена, среда вполнения устанавливает бит [SLEEPONEXIT], а затем
 отправляет микроконтроллер в сон после запуска `init`.
 
-[SLEEPONEXIT]: https://developer.arm.com/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
+[SLEEPONEXIT]: https://developer.arm.com/docs/100737/0100/Power-management/Sleep-mode/Sleep-on-exit-bit
 
 Как и в  `init`, `static mut` переменные будут трансформированы в `&'static mut` ссылки,
 безопасные для доступа. Обратите внимание, данная возможность может
