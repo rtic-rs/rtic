@@ -36,8 +36,8 @@
 //!
 //! - `homogeneous`. This opt-in feature enables the *experimental* homogeneous multi-core support.
 //!
-//! - `cortex-m-7`. This opt-in feature changes the `cortex-m` version from the default 0.6 to the newer 0.7. 
-//! This is to use the `InterruptNumber` trait instead of the `Nr` trait for interrupt numbers. 
+//! - `cortex-m-7`. This opt-in feature changes the `cortex-m` version from the default 0.6 to the newer 0.7.
+//! This is to use the `InterruptNumber` trait instead of the `Nr` trait for interrupt numbers.
 //! Enabling this feature **requires disabling the default features**.
 
 #![deny(missing_docs)]
