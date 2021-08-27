@@ -52,9 +52,9 @@ Formerly known as Real-Time For the Masses.
 
 - Applications must be written using the 2018 edition.
 
-### `cortex-m` 0.6 vs 0.7 in RTIC 0.5.x
+### Crate `cortex-m` 0.6 vs 0.7 in RTIC 0.5.x
 
-`cortex-m` 0.7 started using trait `InterruptNumber` for interrupts instead of `Nr` from `bare-metal`. In order to preserve backwards compatibility, RTIC 0.5.x will keep using `cortex-m` 0.6 by default. `cortex-m` 0.7 can be enabled using the feature `cortex-m-7` and disabling default features, e.g. on your `Cargo.toml`:
+The crate `cortex-m` 0.7 started using trait `InterruptNumber` for interrupts instead of `Nr` from `bare-metal`. In order to preserve backwards compatibility, RTIC 0.5.x will keep using `cortex-m` 0.6 by default. `cortex-m` 0.7 can be enabled using the feature `cortex-m-7` and disabling default features:
 
 ```
 cortex-m-rtic = { version = "0.5.8", default-features = false, features = ["cortex-m-7"] }
