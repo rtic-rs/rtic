@@ -10,11 +10,12 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
     if !app.monotonics.is_empty() {
         // Generate the marker counter used to track for `cancel` and `reschedule`
-        let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
+        let tq_marker = util::timer_queue_marker_ident();
         items.push(quote!(
             // #[doc = #doc]
             #[doc(hidden)]
             #[allow(non_camel_case_types)]
+            #[allow(non_upper_case_globals)]
             static #tq_marker: rtic::RacyCell<u32> = rtic::RacyCell::new(0);
         ));
 
@@ -52,40 +53,40 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
     for (_, monotonic) in &app.monotonics {
         let monotonic_name = monotonic.ident.to_string();
         let tq = util::tq_ident(&monotonic_name);
-        let tq = util::mark_internal_ident(&tq);
         let t = util::schedule_t_ident();
         let mono_type = &monotonic.ty;
         let m_ident = util::monotonic_ident(&monotonic_name);
-        let m_ident = util::mark_internal_ident(&m_ident);
 
         // Static variables and resource proxy
         {
             // For future use
             // let doc = &format!("Timer queue for {}", monotonic_name);
-            let cap: u8 = app
+            let cap: usize = app
                 .software_tasks
                 .iter()
-                .map(|(_name, task)| task.args.capacity)
+                .map(|(_name, task)| task.args.capacity as usize)
                 .sum();
-            let n = util::capacity_literal(cap as usize);
-            let tq_ty =
-                quote!(core::mem::MaybeUninit<rtic::export::TimerQueue<#mono_type, #t, #n>>);
+            let n = util::capacity_literal(cap);
+            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n>);
 
             // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             items.push(quote!(
                 #[doc(hidden)]
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
                 static #tq: rtic::RacyCell<#tq_ty> =
-                    rtic::RacyCell::new(core::mem::MaybeUninit::uninit());
+                    rtic::RacyCell::new(rtic::export::TimerQueue(rtic::export::SortedLinkedList::new_u16()));
             ));
 
             let mono = util::monotonic_ident(&monotonic_name);
-            let mono = util::mark_internal_ident(&mono);
             // For future use
             // let doc = &format!("Storage for {}", monotonic_name);
 
             items.push(quote!(
                 #[doc(hidden)]
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
                 static #mono: rtic::RacyCell<Option<#mono_type>> = rtic::RacyCell::new(None);
             ));
         }
@@ -102,7 +103,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     let cfgs = &task.cfgs;
                     let priority = task.args.priority;
                     let rq = util::rq_ident(priority);
-                    let rq = util::mark_internal_ident(&rq);
                     let rqt = util::spawn_t_ident(priority);
 
                     // The interrupt that runs the task dispatcher
@@ -138,7 +138,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 unsafe fn #bound_interrupt() {
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = #m_ident.get_mut_unchecked().as_mut() {
-                            (&mut *#tq.get_mut_unchecked().as_mut_ptr()).dequeue(|| #disable_isr, mono)
+                            #tq.get_mut_unchecked().dequeue(|| #disable_isr, mono)
                         } else {
                             // We can only use the timer queue if `init` has returned, and it
                             // writes the `Some(monotonic)` we are accessing here.

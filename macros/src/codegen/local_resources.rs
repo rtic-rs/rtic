@@ -24,7 +24,7 @@ pub fn codegen(
     for (name, res) in &app.local_resources {
         let cfgs = &res.cfgs;
         let ty = &res.ty;
-        let mangled_name = util::mark_internal_ident(&util::static_local_resource_ident(name));
+        let mangled_name = util::static_local_resource_ident(name);
 
         let attrs = &res.attrs;
         // late resources in `util::link_section_uninit`
@@ -33,6 +33,7 @@ pub fn codegen(
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
         mod_app.push(quote!(
+            #[allow(non_camel_case_types)]
             #[allow(non_upper_case_globals)]
             // #[doc = #doc]
             #[doc(hidden)]
@@ -50,14 +51,12 @@ pub fn codegen(
         let expr = &task_local.expr;
         let attrs = &task_local.attrs;
 
-        let mangled_name = util::mark_internal_ident(&util::declared_static_local_resource_ident(
-            resource_name,
-            &task_name,
-        ));
+        let mangled_name = util::declared_static_local_resource_ident(resource_name, &task_name);
 
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
         mod_app.push(quote!(
+            #[allow(non_camel_case_types)]
             #[allow(non_upper_case_globals)]
             // #[doc = #doc]
             #[doc(hidden)]

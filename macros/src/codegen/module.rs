@@ -67,7 +67,6 @@ pub fn codegen(
 
     if ctxt.has_local_resources(app) {
         let ident = util::local_resources_ident(ctxt, app);
-        let ident = util::mark_internal_ident(&ident);
         let lt = if local_resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
@@ -90,7 +89,6 @@ pub fn codegen(
 
     if ctxt.has_shared_resources(app) {
         let ident = util::shared_resources_ident(ctxt, app);
-        let ident = util::mark_internal_ident(&ident);
         let lt = if shared_resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
@@ -131,6 +129,7 @@ pub fn codegen(
         items.push(quote!(
             /// Monotonics used by the system
             #[allow(non_snake_case)]
+            #[allow(non_camel_case_types)]
             pub struct #internal_monotonics_ident(
                 #(pub #monotonic_types),*
             );
@@ -178,6 +177,8 @@ pub fn codegen(
     items.push(quote!(
         #(#cfgs)*
         /// Execution context
+        #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
         pub struct #internal_context_name<#lt> {
             #(#fields,)*
         }
@@ -209,11 +210,8 @@ pub fn codegen(
         let args = &args;
         let tupled = &tupled;
         let fq = util::fq_ident(name);
-        let fq = util::mark_internal_ident(&fq);
         let rq = util::rq_ident(priority);
-        let rq = util::mark_internal_ident(&rq);
         let inputs = util::inputs_ident(name);
-        let inputs = util::mark_internal_ident(&inputs);
 
         let device = &extra.device;
         let enum_ = util::interrupt_ident();
@@ -263,16 +261,13 @@ pub fn codegen(
         // Schedule caller
         for (_, monotonic) in &app.monotonics {
             let instants = util::monotonic_instants_ident(name, &monotonic.ident);
-            let instants = util::mark_internal_ident(&instants);
             let monotonic_name = monotonic.ident.to_string();
 
             let tq = util::tq_ident(&monotonic.ident.to_string());
-            let tq = util::mark_internal_ident(&tq);
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
             let mono_type = &monotonic.ident;
             let m_ident = util::monotonic_ident(&monotonic_name);
-            let m_ident = util::mark_internal_ident(&m_ident);
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
 
@@ -290,7 +285,7 @@ pub fn codegen(
                 )
             };
 
-            let tq_marker = util::mark_internal_ident(&util::timer_queue_marker_ident());
+            let tq_marker = &util::timer_queue_marker_ident();
 
             // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
@@ -318,6 +313,8 @@ pub fn codegen(
 
             items.push(quote!(
                 #(#cfgs)*
+                #[allow(non_snake_case)]
+                #[allow(non_camel_case_types)]
                 pub struct #internal_spawn_handle_ident {
                     #[doc(hidden)]
                     marker: u32,
@@ -327,7 +324,7 @@ pub fn codegen(
                 impl #internal_spawn_handle_ident {
                     pub fn cancel(self) -> Result<#ty, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
-                            let tq = &mut *#tq.get_mut_unchecked().as_mut_ptr();
+                            let tq = #tq.get_mut_unchecked();
                             if let Some((_task, index)) = tq.cancel_marker(self.marker) {
                                 // Get the message
                                 let msg = #inputs
@@ -359,7 +356,7 @@ pub fn codegen(
                             let marker = *#tq_marker.get_mut_unchecked();
                             *#tq_marker.get_mut_unchecked() = #tq_marker.get_mut_unchecked().wrapping_add(1);
 
-                            let tq = &mut *#tq.get_mut_unchecked().as_mut_ptr();
+                            let tq = #tq.get_mut_unchecked();
 
                             tq.update_marker(self.marker, marker, instant, || #pend).map(|_| #name::#m::SpawnHandle { marker })
                         })
@@ -371,6 +368,7 @@ pub fn codegen(
                 ///
                 /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
                 /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
+                #[allow(non_snake_case)]
                 pub fn #internal_spawn_after_ident<D>(
                     duration: D
                     #(,#args)*
@@ -390,6 +388,7 @@ pub fn codegen(
 
                 #(#cfgs)*
                 /// Spawns the task at a fixed time instant
+                #[allow(non_snake_case)]
                 pub fn #internal_spawn_at_ident(
                     instant: rtic::time::Instant<#mono_type>
                     #(,#args)*
@@ -420,7 +419,7 @@ pub fn codegen(
 
                                 *#tq_marker.get_mut_unchecked() = #tq_marker.get_mut_unchecked().wrapping_add(1);
 
-                                let tq = &mut *#tq.get_mut_unchecked().as_mut_ptr();
+                                let tq = #tq.get_mut_unchecked();
 
                                 tq.enqueue_unchecked(
                                     nr,

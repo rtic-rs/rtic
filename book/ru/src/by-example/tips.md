@@ -1,5 +1,9 @@
 # Советы и хитрости
 
+Полные примеры для RTIC смотрите в репозитарии [rtic-examples][rtic-examples].
+
+[rtic-examples]: https://github.com/rtic-rs/rtic-examples
+
 ## Обобщенное программирование (Generics)
 
 Все объекты, предоставляющие ресурысы реализуют трейт `rtic::Mutex`.

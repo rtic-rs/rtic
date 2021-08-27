@@ -1,9 +1,9 @@
 use crate::{
-    linked_list::{LinkedList, Min},
     time::{Clock, Instant},
     Monotonic,
 };
 use core::cmp::Ordering;
+use heapless::sorted_linked_list::{LinkedIndexU16, Min, SortedLinkedList};
 
 #[inline(always)]
 fn unwrapper<T, E>(val: Result<T, E>) -> T {
@@ -14,7 +14,9 @@ fn unwrapper<T, E>(val: Result<T, E>) -> T {
     }
 }
 
-pub struct TimerQueue<Mono, Task, const N: usize>(pub LinkedList<NotReady<Mono, Task>, Min, N>)
+pub struct TimerQueue<Mono, Task, const N: usize>(
+    pub SortedLinkedList<NotReady<Mono, Task>, LinkedIndexU16, Min, N>,
+)
 where
     Mono: Monotonic,
     Task: Copy;
@@ -24,10 +26,6 @@ where
     Mono: Monotonic,
     Task: Copy,
 {
-    pub fn new() -> Self {
-        TimerQueue(LinkedList::new())
-    }
-
     /// # Safety
     ///
     /// Writing to memory with a transmute in order to enable

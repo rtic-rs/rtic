@@ -32,7 +32,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             None
         };
         let ty = &res.ty;
-        let mangled_name = util::mark_internal_ident(&util::static_shared_resource_ident(&name));
+        let mangled_name = util::static_shared_resource_ident(&name);
 
         if !res.properties.lock_free {
             if access.is_shared() {
@@ -102,9 +102,9 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let doc = format!("Shared resources `{}` has access to", ctxt.ident(app));
     let ident = util::shared_resources_ident(ctxt, app);
-    let ident = util::mark_internal_ident(&ident);
     let item = quote!(
         #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
         #[doc = #doc]
         pub struct #ident<#lt> {
             #(#fields,)*

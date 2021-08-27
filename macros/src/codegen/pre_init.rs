@@ -17,7 +17,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     for (name, task) in &app.software_tasks {
         let cap = task.args.capacity;
         let fq_ident = util::fq_ident(name);
-        let fq_ident = util::mark_internal_ident(&fq_ident);
 
         stmts.push(quote!(
             (0..#cap).for_each(|i| #fq_ident.get_mut_unchecked().enqueue_unchecked(i));
@@ -77,18 +76,10 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );));
     }
 
-    // Initialize monotonic's interrupts and timer queues
+    // Initialize monotonic's interrupts
     for (_, monotonic) in &app.monotonics {
         let priority = &monotonic.args.priority;
         let binds = &monotonic.args.binds;
-        let monotonic_name = monotonic.ident.to_string();
-        let tq = util::tq_ident(&monotonic_name);
-        let tq = util::mark_internal_ident(&tq);
-
-        // Initialize timer queues
-        stmts.push(
-            quote!(#tq.get_mut_unchecked().as_mut_ptr().write(rtic::export::TimerQueue::new());),
-        );
 
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
