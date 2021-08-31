@@ -31,6 +31,13 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     let device = &extra.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
 
+    // check that all dispatchers exists in the `Interrupt` enumeration regardless of whether
+    // they are used or not 
+    let interrupt = util::interrupt_ident();
+    for name in app.args.extern_interrupts.keys() {
+        stmts.push(quote!(let _ = #rt_err::#interrupt::#name;));
+    }
+
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
     // Unmask interrupts and set their priorities
@@ -45,8 +52,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
 
-        // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
-        let interrupt = util::interrupt_ident();
         stmts.push(quote!(
             core.NVIC.set_priority(
                 #rt_err::#interrupt::#name,
@@ -100,8 +105,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 }
             ));
         } else {
-            // NOTE this also checks that the interrupt exists in the `Interrupt` enumeration
-            let interrupt = util::interrupt_ident();
             stmts.push(quote!(
                 core.NVIC.set_priority(
                     #rt_err::#interrupt::#binds,
