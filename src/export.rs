@@ -5,12 +5,10 @@ use core::{
 
 pub use crate::tq::{NotReady, TimerQueue};
 pub use bare_metal::CriticalSection;
-#[cfg(armv7m)]
-pub use cortex_m::register::basepri;
 pub use cortex_m::{
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, syst::SystClkSource, DWT, NVIC},
+    peripheral::{scb::SystemHandler, DWT, NVIC, SCB},
     Peripherals,
 };
 pub use heapless::sorted_linked_list::SortedLinkedList;
@@ -20,6 +18,9 @@ pub use rtic_monotonic as monotonic;
 
 pub type SCFQ<const N: usize> = Queue<u8, N>;
 pub type SCRQ<T, const N: usize> = Queue<(T, u8), N>;
+
+#[cfg(armv7m)]
+use cortex_m::register::basepri;
 
 #[cfg(armv7m)]
 #[inline(always)]
