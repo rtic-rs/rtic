@@ -275,7 +275,7 @@ pub fn codegen(
                 (
                     quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(())
                         .enable_interrupt()),
-                    quote!(cortex_m::peripheral::SCB::set_pendst()),
+                    quote!(rtic::export::SCB::set_pendst()),
                 )
             } else {
                 let rt_err = util::rt_err_ident();

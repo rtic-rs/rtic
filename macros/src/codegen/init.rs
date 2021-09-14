@@ -77,6 +77,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
 
     let user_init = quote!(
         #(#attrs)*
+        #[inline(always)]
         #[allow(non_snake_case)]
         fn #name(#context: #name::Context) -> (#user_init_return) {
             #(#stmts)*
