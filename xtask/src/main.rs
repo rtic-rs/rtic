@@ -4,7 +4,6 @@ mod command;
 use anyhow::bail;
 use core::fmt;
 use std::{
-    env,
     error::Error,
     ffi::OsString,
     path::{Path, PathBuf},
@@ -68,8 +67,10 @@ impl fmt::Display for TestRunError {
 impl Error for TestRunError {}
 
 fn main() -> anyhow::Result<()> {
-    let execution_dir = env::current_dir()?;
-    if execution_dir.file_name().unwrap() != "cortex-m-rtic" {
+    // if there's an `xtask` folder, we're *probably* at the root of this repo (we can't just
+    // check the name of `env::current_dir()` because people might clone it into a different name)
+    let probably_running_from_repo_root = Path::new("./xtask").exists();
+    if probably_running_from_repo_root == false {
         bail!("xtasks can only be executed from the root of the `cortex-m-rtic` repository");
     }
 
