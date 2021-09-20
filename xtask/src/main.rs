@@ -14,7 +14,7 @@ use std::{
 use structopt::StructOpt;
 
 use crate::{
-    build::{build_hexpath, compare_builds},
+    build::{build_hexpath, compare_builds, init_build_dir},
     command::{run_command, run_successful, BuildMode, CargoCommand},
 };
 
@@ -97,6 +97,8 @@ fn main() -> anyhow::Result<()> {
 
     let opts = Options::from_args();
     let target = &opts.target;
+
+    init_build_dir()?;
 
     if target == "all" {
         for t in targets {

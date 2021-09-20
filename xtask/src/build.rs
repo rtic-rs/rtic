@@ -1,6 +1,21 @@
-use std::path::PathBuf;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use crate::{command::BuildMode, TestRunError};
+
+const HEX_BUILD_ROOT: &str = "ci/builds";
+
+/// make sure we're starting with a clean,but existing slate
+pub fn init_build_dir() -> anyhow::Result<()> {
+    if Path::new(HEX_BUILD_ROOT).exists() {
+        fs::remove_dir_all(HEX_BUILD_ROOT)
+            .map_err(|_| anyhow::anyhow!("Could not clear out directory:  {}", HEX_BUILD_ROOT))?;
+    }
+    fs::create_dir_all(HEX_BUILD_ROOT)
+        .map_err(|_| anyhow::anyhow!("Could not create directory:  {}", HEX_BUILD_ROOT))
+}
 
 pub fn build_hexpath(
     example: &str,
@@ -14,10 +29,11 @@ pub fn build_hexpath(
     };
 
     let filename = format!("{}_{}_{}_{}.hex", example, features, build_mode, build_num);
-    ["ci", "builds", &filename]
-        .iter()
-        .collect::<PathBuf>()
-        .into_os_string()
+
+    let mut path = PathBuf::from(HEX_BUILD_ROOT);
+    path.push(filename);
+
+    path.into_os_string()
         .into_string()
         .map_err(|e| anyhow::Error::new(TestRunError::PathConversionError(e)))
 }
