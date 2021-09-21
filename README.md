@@ -86,6 +86,16 @@ New features and big changes should go through the RFC process in the
 
 [rfcs]: https://github.com/rtic-rs/rfcs
 
+## Running tests locally
+
+To check all `Run-pass tests` locally on your `thumbv6m-none-eabi` or `thumbv7m-none-eabi` target device, run
+
+```console
+$ cargo xtask --target <your target>
+#                       ˆˆˆˆˆˆˆˆˆˆˆˆ
+#                   e.g. thumbv7m-none-eabi
+```
+
 ## Acknowledgments
 
 This crate is based on the [Real-Time For the Masses language][rtfm-lang]
