@@ -12,7 +12,7 @@ use panic_semihosting as _;
 fn foo(_c: app::foo::Context, x: i32, y: u32) {
     hprintln!("foo {}, {}", x, y).unwrap();
     if x == 2 {
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
     app::foo::spawn(2, 3).unwrap();
 }

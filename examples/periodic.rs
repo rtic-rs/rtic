@@ -10,11 +10,12 @@ use panic_semihosting as _;
 // NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use dwt_systick_monotonic::DwtSystick;
-    use rtic::time::duration::Seconds;
+    use cortex_m_semihosting::{debug, hprintln};
+    use rtic::time::duration::*;
+    use systick_monotonic::Systick;
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = DwtSystick<8_000_000>; // 8 MHz
+    type MyMono = Systick<100>; // 100 Hz / 10 ms granularity
 
     #[shared]
     struct Shared {}
@@ -24,20 +25,25 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mut dcb = cx.core.DCB;
-        let dwt = cx.core.DWT;
         let systick = cx.core.SYST;
 
-        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
+        let mono = Systick::new(systick, 12_000_000);
 
-        foo::spawn_after(Seconds(1_u32)).unwrap();
+        foo::spawn_after(1.seconds()).unwrap();
 
         (Shared {}, Local {}, init::Monotonics(mono))
     }
 
-    #[task]
-    fn foo(_cx: foo::Context) {
-        // Periodic
-        foo::spawn_after(Seconds(1_u32)).unwrap();
+    #[task(local = [cnt: u32 = 0])]
+    fn foo(cx: foo::Context) {
+        hprintln!("foo").ok();
+        *cx.local.cnt += 1;
+
+        if *cx.local.cnt == 4 {
+            debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+        }
+
+        // Periodic ever 1 seconds
+        foo::spawn_after(1.seconds()).unwrap();
     }
 }

@@ -24,6 +24,7 @@ impl BigStruct {
 mod app {
     use super::BigStruct;
     use core::mem::MaybeUninit;
+    use cortex_m_semihosting::debug;
 
     #[shared]
     struct Shared {
@@ -40,6 +41,8 @@ mod app {
             cx.local.bs.as_mut_ptr().write(BigStruct::new());
             &mut *cx.local.bs.as_mut_ptr()
         };
+
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
         (
             Shared {

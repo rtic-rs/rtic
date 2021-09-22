@@ -1,14 +1,16 @@
-use crate::RunResult;
+use crate::{RunResult, TestRunError};
 use core::fmt;
 use os_pipe::pipe;
 use std::{fs::File, io::Read, path::Path, process::Command};
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BuildMode {
     Release,
     Debug,
 }
 
+#[derive(Debug)]
 pub enum CargoCommand<'a> {
     Run {
         example: &'a str,
@@ -146,17 +148,26 @@ pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
 /// Check if `run` was sucessful.
 /// returns Ok in case the run went as expected,
 /// Err otherwise
-pub fn run_successful(run: &RunResult, expected_output_file: String) -> anyhow::Result<()> {
-    let mut file_handle = File::open(expected_output_file)?;
+pub fn run_successful(run: &RunResult, expected_output_file: String) -> Result<(), TestRunError> {
+    let mut file_handle =
+        File::open(expected_output_file.clone()).map_err(|_| TestRunError::FileError {
+            file: expected_output_file.clone(),
+        })?;
     let mut expected_output = String::new();
-    file_handle.read_to_string(&mut expected_output)?;
-    if expected_output == run.output && run.exit_status.success() {
-        Ok(())
+    file_handle
+        .read_to_string(&mut expected_output)
+        .map_err(|_| TestRunError::FileError {
+            file: expected_output_file.clone(),
+        })?;
+
+    if expected_output != run.output {
+        Err(TestRunError::FileCmpError {
+            expected: expected_output.clone(),
+            got: run.output.clone(),
+        })
+    } else if !run.exit_status.success() {
+        Err(TestRunError::CommandError(run.clone()))
     } else {
-        Err(anyhow::anyhow!(
-            "Run failed with exit status {}: {}",
-            run.exit_status,
-            run.output
-        ))
+        Ok(())
     }
 }

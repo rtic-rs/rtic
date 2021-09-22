@@ -7,10 +7,9 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [GPIOA, GPIOB, GPIOC])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use lm3s6965::Interrupt;
 
     #[shared]
     struct Shared {
@@ -22,14 +21,14 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        rtic::pend(Interrupt::GPIOA);
+        foo::spawn().unwrap();
 
         (Shared { shared: 0 }, Local {}, init::Monotonics())
     }
 
     // when omitted priority is assumed to be `1`
-    #[task(binds = GPIOA, shared = [shared])]
-    fn gpioa(mut c: gpioa::Context) {
+    #[task(shared = [shared])]
+    fn foo(mut c: foo::Context) {
         hprintln!("A").unwrap();
 
         // the lower priority task requires a critical section to access the data
@@ -37,24 +36,24 @@ mod app {
             // data can only be modified within this critical section (closure)
             *shared += 1;
 
-            // GPIOB will *not* run right now due to the critical section
-            rtic::pend(Interrupt::GPIOB);
+            // bar will *not* run right now due to the critical section
+            bar::spawn().unwrap();
 
             hprintln!("B - shared = {}", *shared).unwrap();
 
-            // GPIOC does not contend for `shared` so it's allowed to run now
-            rtic::pend(Interrupt::GPIOC);
+            // baz does not contend for `shared` so it's allowed to run now
+            baz::spawn().unwrap();
         });
 
-        // critical section is over: GPIOB can now start
+        // critical section is over: bar can now start
 
         hprintln!("E").unwrap();
 
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
-    #[task(binds = GPIOB, priority = 2, shared = [shared])]
-    fn gpiob(mut c: gpiob::Context) {
+    #[task(priority = 2, shared = [shared])]
+    fn bar(mut c: bar::Context) {
         // the higher priority task does still need a critical section
         let shared = c.shared.shared.lock(|shared| {
             *shared += 1;
@@ -65,8 +64,8 @@ mod app {
         hprintln!("D - shared = {}", shared).unwrap();
     }
 
-    #[task(binds = GPIOC, priority = 3)]
-    fn gpioc(_: gpioc::Context) {
+    #[task(priority = 3)]
+    fn baz(_: baz::Context) {
         hprintln!("C").unwrap();
     }
 }

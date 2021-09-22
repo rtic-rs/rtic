@@ -44,6 +44,6 @@ mod app {
     fn bar(_: bar::Context) {
         hprintln!("bar").unwrap();
 
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 }

@@ -43,7 +43,7 @@ mod app {
 
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
         loop {
             cortex_m::asm::nop();

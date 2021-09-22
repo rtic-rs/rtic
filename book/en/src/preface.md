@@ -21,6 +21,6 @@ This is the documentation of v0.6.x of RTIC; for the documentation of version
 * v0.5.x go [here](/0.5).
 * v0.4.x go [here](/0.4).
 
-{{#include ../../../README.md:7:46}}
+{{#include ../../../README.md:7:47}}
 
-{{#include ../../../README.md:52:}}
+{{#include ../../../README.md:48:}}

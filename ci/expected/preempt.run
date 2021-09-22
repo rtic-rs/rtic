@@ -1,5 +1,5 @@
-GPIOA - start
- GPIOC - start
- GPIOC - end
- GPIOB
-GPIOA - end
+foo - start
+ baz - start
+ baz - end
+ bar
+foo - end

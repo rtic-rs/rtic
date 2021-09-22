@@ -36,7 +36,7 @@ mod app {
             if let Some(byte) = c.shared.c.lock(|c| c.dequeue()) {
                 hprintln!("received message: {}", byte).unwrap();
 
-                debug::exit(debug::EXIT_SUCCESS);
+                debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
             } else {
                 rtic::pend(Interrupt::UART0);
             }

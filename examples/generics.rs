@@ -39,7 +39,7 @@ mod app {
 
         rtic::pend(Interrupt::UART1);
 
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(binds = UART1, priority = 2, shared = [shared], local = [state: u32 = 0])]

@@ -132,13 +132,11 @@ jobs:
 
       - name: Check the examples
         if: matrix.target == 'thumbv7m-none-eabi'
-        env:
-          V7: __v7
         uses: actions-rs/cargo@v1
         with:
           use-cross: false
           command: check
-          args: --examples --target=${{ matrix.target }} --features ${{ env.V7 }}
+          args: --examples --target=${{ matrix.target }}
 
   # Verify the example output with run-pass tests
   testexamples:
@@ -304,9 +302,15 @@ jobs:
           args: --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
 
   # Run test suite for thumbv7m
-  testv7:
-    name: testv7
+  tests:
+    name: tests
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+        toolchain:
+          - stable
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -334,56 +338,15 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
-          target: thumbv7m-none-eabi
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
           override: true
 
       - uses: actions-rs/cargo@v1
         with:
           use-cross: false
           command: test
-          args: --test tests --features __v7
-
-  # Run test suite for thumbv6m
-  testv6:
-    name: testv6
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Cache cargo dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            - ~/.cargo/bin/
-            - ~/.cargo/registry/index/
-            - ~/.cargo/registry/cache/
-            - ~/.cargo/git/db/
-          key: ${{ runner.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.OS }}-cargo-
-
-      - name: Cache build output dependencies
-        uses: actions/cache@v2
-        with:
-          path: target
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.OS }}-build-
-
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: thumbv6m-none-eabi
-          override: true
-
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: false
-          command: test
-          args: --test tests
+          args: --test tests --target=${{ matrix.target }}
 
   # Build documentation, check links
   docs:
@@ -506,8 +469,7 @@ jobs:
       - testexamples
       - checkmacros
       - testmacros
-      - testv7
-      - testv6
+      - tests
       - docs
       - mdbook
     # Only run this when pushing to master branch
@@ -624,8 +586,7 @@ jobs:
       - testexamples
       - checkmacros
       - testmacros
-      - testv7
-      - testv6
+      - tests
       - docs
       - mdbook
     runs-on: ubuntu-20.04

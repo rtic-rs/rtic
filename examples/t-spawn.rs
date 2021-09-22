@@ -9,6 +9,8 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
+    use cortex_m_semihosting::debug;
+
     #[shared]
     struct Shared {}
 
@@ -20,6 +22,8 @@ mod app {
         let _: Result<(), ()> = foo::spawn();
         let _: Result<(), u32> = bar::spawn(0);
         let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
+
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
         (Shared {}, Local {}, init::Monotonics())
     }

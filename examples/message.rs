@@ -44,7 +44,7 @@ mod app {
         hprintln!("baz({}, {})", x, y).unwrap();
 
         if x + y > 4 {
-            debug::exit(debug::EXIT_SUCCESS);
+            debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         }
 
         foo::spawn().unwrap();

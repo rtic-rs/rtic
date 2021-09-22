@@ -1,2 +1,2 @@
-UART1(key = 0xdeadbeef)
-UART0(key = 0xdeadbeef)
+bar(key = 0xdeadbeef)
+foo(key = 0xdeadbeef)

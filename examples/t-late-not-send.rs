@@ -15,6 +15,7 @@ pub struct NotSend {
 mod app {
     use super::NotSend;
     use core::marker::PhantomData;
+    use cortex_m_semihosting::debug;
 
     #[shared]
     struct Shared {
@@ -39,6 +40,7 @@ mod app {
 
     #[idle(shared = [x, y])]
     fn idle(_: idle::Context) -> ! {
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         loop {
             cortex_m::asm::nop();
         }

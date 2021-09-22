@@ -36,7 +36,7 @@ mod app {
     fn foo(_: foo::Context) {
         hprintln!("foo").unwrap();
 
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     // run this task from RAM

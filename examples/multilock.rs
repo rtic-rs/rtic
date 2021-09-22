@@ -1,6 +1,4 @@
 //! examples/mutlilock.rs
-//!
-//! The multi-lock feature example.
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
@@ -9,10 +7,9 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [GPIOA])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use lm3s6965::Interrupt;
 
     #[shared]
     struct Shared {
@@ -26,7 +23,7 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        rtic::pend(Interrupt::GPIOA);
+        locks::spawn().unwrap();
 
         (
             Shared {
@@ -40,47 +37,20 @@ mod app {
     }
 
     // when omitted priority is assumed to be `1`
-    #[task(binds = GPIOA, shared = [shared1, shared2, shared3])]
+    #[task(shared = [shared1, shared2, shared3])]
     fn locks(c: locks::Context) {
-        let mut s1 = c.shared.shared1;
-        let mut s2 = c.shared.shared2;
-        let mut s3 = c.shared.shared3;
-
-        hprintln!("Multiple single locks").unwrap();
-        s1.lock(|s1| {
-            s2.lock(|s2| {
-                s3.lock(|s3| {
-                    *s1 += 1;
-                    *s2 += 1;
-                    *s3 += 1;
-
-                    hprintln!(
-                        "Multiple single locks, s1: {}, s2: {}, s3: {}",
-                        *s1,
-                        *s2,
-                        *s3
-                    )
-                    .unwrap();
-                })
-            })
-        });
-
-        hprintln!("Multilock!").unwrap();
+        let s1 = c.shared.shared1;
+        let s2 = c.shared.shared2;
+        let s3 = c.shared.shared3;
 
         (s1, s2, s3).lock(|s1, s2, s3| {
             *s1 += 1;
             *s2 += 1;
             *s3 += 1;
 
-            hprintln!(
-                "Multiple single locks, s1: {}, s2: {}, s3: {}",
-                *s1,
-                *s2,
-                *s3
-            )
-            .unwrap();
+            hprintln!("Multiple locks, s1: {}, s2: {}, s3: {}", *s1, *s2, *s3).unwrap();
         });
 
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 }

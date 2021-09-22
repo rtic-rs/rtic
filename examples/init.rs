@@ -34,7 +34,7 @@ mod app {
 
         hprintln!("init").unwrap();
 
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
         (Shared {}, Local {}, init::Monotonics())
     }

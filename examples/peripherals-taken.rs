@@ -18,7 +18,7 @@ mod app {
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         assert!(cortex_m::Peripherals::take().is_none());
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
         (Shared {}, Local {}, init::Monotonics())
     }

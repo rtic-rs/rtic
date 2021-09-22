@@ -7,6 +7,8 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965)]
 mod app {
+    use cortex_m_semihosting::debug;
+
     #[shared]
     struct Shared {
         // A conditionally compiled resource behind feature_x
@@ -19,6 +21,8 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+
         (
             Shared {
                 #[cfg(feature = "feature_x")]
