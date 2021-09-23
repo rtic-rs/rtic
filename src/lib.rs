@@ -53,8 +53,6 @@ extern crate cortex_m_7 as cortex_m;
 use cortex_m::interrupt::InterruptNumber;
 
 use cortex_m::peripheral::{CBP, CPUID, DCB, DWT, FPB, FPU, ITM, MPU, NVIC, SCB, TPIU};
-#[cfg(all(not(feature = "heterogeneous"), not(feature = "homogeneous")))]
-use cortex_m_rt as _; // vector table
 pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{Exclusive, Mutex};
 
