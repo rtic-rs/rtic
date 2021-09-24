@@ -65,6 +65,28 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
             )
         })
         .collect();
+    let actors_struct = if let Some(actors) = &init.user_actors_struct {
+        let fields = app
+            .actors
+            .iter()
+            .filter_map(|(name, ao)| {
+                if ao.init.is_none() {
+                    let ty = &ao.ty;
+                    Some(quote!(#name: #ty,))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        quote!(
+            struct #actors {
+                #(#fields)*
+            }
+        )
+    } else {
+        quote!()
+    };
     root_init.push(quote! {
         struct #shared {
             #(#shared_resources)*
@@ -73,11 +95,17 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         struct #local {
             #(#local_resources)*
         }
+
+        #actors_struct
     });
 
     // let locals_pat = locals_pat.iter();
 
-    let user_init_return = quote! {#shared, #local, #name::Monotonics};
+    let user_init_return = if let Some(actors) = &init.user_actors_struct {
+        quote! {#shared, #local, #name::Monotonics, #actors}
+    } else {
+        quote! {#shared, #local, #name::Monotonics}
+    };
 
     let user_init = quote!(
         #(#attrs)*
@@ -101,8 +129,13 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
     }
 
     // let locals_new = locals_new.iter();
+    let let_pat = if init.user_actors_struct.is_some() {
+        quote!((shared_resources, local_resources, mut monotonics, actors))
+    } else {
+        quote!((shared_resources, local_resources, mut monotonics))
+    };
     let call_init = quote! {
-        let (shared_resources, local_resources, mut monotonics) = #name(#name::Context::new(core.into()));
+        let #let_pat = #name(#name::Context::new(core.into()));
     };
 
     root_init.push(module::codegen(

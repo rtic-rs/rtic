@@ -66,5 +66,30 @@ pub fn codegen(
         ));
     }
 
+    // Actor states
+    for (actor_name, actor) in &app.actors {
+        let mangled_name = util::actor_state_ident(actor_name);
+        let ty = &actor.ty;
+
+        let item = if let Some(init) = &actor.init {
+            quote!(
+                #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
+                static #mangled_name: rtic::RacyCell<#ty> = rtic::RacyCell::new(#init);
+            )
+        } else {
+            let uninit_section = util::link_section_uninit();
+
+            quote!(
+                #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
+                #uninit_section
+                static #mangled_name: rtic::RacyCell<core::mem::MaybeUninit<#ty>> = rtic::RacyCell::new(core::mem::MaybeUninit::uninit());
+            )
+        };
+
+        mod_app.push(item);
+    }
+
     (mod_app, TokenStream2::new())
 }

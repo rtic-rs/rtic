@@ -16,6 +16,7 @@ pub use cortex_m::{
 pub use heapless::sorted_linked_list::SortedLinkedList;
 pub use heapless::spsc::Queue;
 pub use heapless::BinaryHeap;
+pub use rtic_actor_traits::{Post, Receive};
 pub use rtic_monotonic as monotonic;
 
 pub type SCFQ<const N: usize> = Queue<u8, N>;

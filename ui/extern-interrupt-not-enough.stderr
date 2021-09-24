@@ -1,4 +1,4 @@
-error: not enough interrupts to dispatch all software tasks (need: 1; given: 0)
+error: not enough interrupts to dispatch all software tasks / actors (need: 1; given: 0)
   --> $DIR/extern-interrupt-not-enough.rs:17:8
    |
 17 |     fn a(_: a::Context) {}

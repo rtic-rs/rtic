@@ -46,9 +46,13 @@ pub fn codegen(
                 pub cs: rtic::export::CriticalSection<#lt>
             ));
 
+            fields.push(quote!(poster: Poster));
+
             values.push(quote!(cs: rtic::export::CriticalSection::new()));
 
             values.push(quote!(core));
+
+            values.push(quote!(poster: Poster));
         }
 
         Context::Idle | Context::HardwareTask(_) | Context::SoftwareTask(_) => {}
@@ -222,33 +226,33 @@ pub fn codegen(
 
         // Spawn caller
         items.push(quote!(
+            #(#cfgs)*
+            /// Spawns the task directly
+            pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
+                let input = #tupled;
 
-        #(#cfgs)*
-        /// Spawns the task directly
-        pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
-            let input = #tupled;
+                unsafe {
+                    if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
+                        (&mut *#inputs
+                            .get_mut())
+                            .get_unchecked_mut(usize::from(index))
+                            .as_mut_ptr()
+                            .write(input);
 
-            unsafe {
-                if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
-                    (&mut *#inputs
-                        .get_mut())
-                        .get_unchecked_mut(usize::from(index))
-                        .as_mut_ptr()
-                        .write(input);
+                        rtic::export::interrupt::free(|_| {
+                            (&mut *#rq.get_mut()).enqueue_unchecked((#t::#name, index));
+                        });
 
-                    rtic::export::interrupt::free(|_| {
-                        (&mut *#rq.get_mut()).enqueue_unchecked((#t::#name, index));
-                    });
+                        rtic::pend(#device::#enum_::#interrupt);
 
-                    rtic::pend(#device::#enum_::#interrupt);
-
-                    Ok(())
-                } else {
-                    Err(input)
+                        Ok(())
+                    } else {
+                        Err(input)
+                    }
                 }
-            }
 
-        }));
+            }
+        ));
 
         module_items.push(quote!(
             #(#cfgs)*

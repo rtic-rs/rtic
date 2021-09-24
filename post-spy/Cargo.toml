@@ -1,0 +1,7 @@
+[package]
+edition = "2018"
+name = "rtic-post-spy"
+version = "0.1.0"
+
+[dependencies]
+rtic-actor-traits = { path = "../actor-traits" }

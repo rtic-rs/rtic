@@ -22,6 +22,7 @@ name = "rtic"
 [dependencies]
 cortex-m = "0.7.0"
 cortex-m-rtic-macros = { path = "macros", version = "1.1.5" }
+rtic-actor-traits = { path = "actor-traits" }
 rtic-monotonic = "1.0.0"
 rtic-core = "1.0.0"
 heapless = "0.7.7"
@@ -42,13 +43,18 @@ version = "0.5.2"
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
 trybuild = "1"
 
+[features]
+memory-watermark = ["cortex-m-rtic-macros/memory-watermark"]
+
 [profile.release]
 codegen-units = 1
 lto = true
 
 [workspace]
 members = [
+  "actor-traits",
   "macros",
+  "post-spy",
   "xtask",
 ]
 
@@ -70,3 +76,5 @@ overflow-checks = false
 
 [patch.crates-io]
 lm3s6965 = { git = "https://github.com/japaric/lm3s6965" }
+# remove when rtic-rs/rtic-syntax#75 is merged
+rtic-syntax = { branch = "actor", git = "https://github.com/rtic-rs/rtic-syntax" }
