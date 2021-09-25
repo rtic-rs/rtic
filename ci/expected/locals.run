@@ -1,0 +1,3 @@
+foo: local_to_foo = 1
+bar: local_to_bar = 1
+idle: local_to_idle = 1

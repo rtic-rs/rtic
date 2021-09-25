@@ -24,6 +24,6 @@ mod app {
 
     #[task(binds = UART0)]
     fn taskmain(_: taskmain::Context) {
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 }

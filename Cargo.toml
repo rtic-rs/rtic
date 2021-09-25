@@ -19,37 +19,13 @@ version = "0.6.0-alpha.5"
 [lib]
 name = "rtic"
 
-[[example]]
-name = "periodic"
-required-features = ["__v7"]
-
-[[example]]
-name = "pool"
-required-features = ["__v7"]
-
-[[example]]
-name = "schedule"
-required-features = ["__v7"]
-
-[[example]]
-name = "t-schedule"
-required-features = ["__v7"]
-
-[[example]]
-name = "double_schedule"
-required-features = ["__v7"]
-
 [dependencies]
 cortex-m = "0.7.0"
 cortex-m-rtic-macros = { path = "macros", version = "0.6.0-alpha.5" }
 rtic-monotonic = "0.1.0-alpha.2"
 rtic-core = "0.3.1"
-heapless = "0.7.5"
+heapless = "0.7.7"
 bare-metal = "1.0.0"
-
-[dependencies.dwt-systick-monotonic]
-version = "0.1.0-alpha.3"
-optional = true
 
 [build-dependencies]
 version_check = "0.9"
@@ -57,6 +33,7 @@ version_check = "0.9"
 [dev-dependencies]
 lm3s6965 = "0.1.3"
 cortex-m-semihosting = "0.3.3"
+systick-monotonic = "0.1.0-alpha.0"
 
 [dev-dependencies.panic-semihosting]
 features = ["exit"]
@@ -64,10 +41,6 @@ version = "0.5.2"
 
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
 trybuild = "1"
-
-[features]
-# used for testing this crate; do not use in applications
-__v7 = ["dwt-systick-monotonic"]
 
 [profile.release]
 codegen-units = 1

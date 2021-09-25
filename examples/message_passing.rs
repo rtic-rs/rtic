@@ -1,4 +1,4 @@
-//! examples/spawn2.rs
+//! examples/message_passing.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
@@ -19,23 +19,19 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+        foo::spawn(1, 1).unwrap();
         foo::spawn(1, 2).unwrap();
+        foo::spawn(2, 3).unwrap();
+        assert!(foo::spawn(1, 4).is_err()); // The capacity of `foo` is reached
 
         (Shared {}, Local {}, init::Monotonics())
     }
 
-    #[task]
+    #[task(capacity = 3)]
     fn foo(_c: foo::Context, x: i32, y: u32) {
         hprintln!("foo {}, {}", x, y).unwrap();
         if x == 2 {
-            debug::exit(debug::EXIT_SUCCESS);
+            debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         }
-        foo2::spawn(2).unwrap();
-    }
-
-    #[task]
-    fn foo2(_c: foo2::Context, x: i32) {
-        hprintln!("foo2 {}", x).unwrap();
-        foo::spawn(x, 0).unwrap();
     }
 }

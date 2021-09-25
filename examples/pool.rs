@@ -61,7 +61,7 @@ mod app {
         // explicitly return the block to the pool
         drop(x);
 
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(priority = 2)]

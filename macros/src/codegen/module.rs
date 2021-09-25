@@ -270,6 +270,7 @@ pub fn codegen(
             let m_ident = util::monotonic_ident(&monotonic_name);
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
+            let spawn_handle_string = format!("{}::SpawnHandle", m.to_string());
 
             let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
                 (
@@ -318,6 +319,12 @@ pub fn codegen(
                 pub struct #internal_spawn_handle_ident {
                     #[doc(hidden)]
                     marker: u32,
+                }
+
+                impl core::fmt::Debug for #internal_spawn_handle_ident {
+                    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                        f.debug_struct(#spawn_handle_string).finish()
+                    }
                 }
 
                 #(#cfgs)*

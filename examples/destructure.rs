@@ -7,14 +7,12 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [UART0])]
 mod app {
-    use cortex_m_semihosting::hprintln;
-    use lm3s6965::Interrupt;
+    use cortex_m_semihosting::{debug, hprintln};
 
     #[shared]
     struct Shared {
-        // Some resources to work with
         a: u32,
         b: u32,
         c: u32,
@@ -25,27 +23,33 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        rtic::pend(Interrupt::UART0);
-        rtic::pend(Interrupt::UART1);
+        foo::spawn().unwrap();
+        bar::spawn().unwrap();
 
         (Shared { a: 0, b: 0, c: 0 }, Local {}, init::Monotonics())
     }
 
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+        loop {}
+    }
+
     // Direct destructure
-    #[task(binds = UART0, shared = [&a, &b, &c])]
-    fn uart0(cx: uart0::Context) {
+    #[task(shared = [&a, &b, &c])]
+    fn foo(cx: foo::Context) {
         let a = cx.shared.a;
         let b = cx.shared.b;
         let c = cx.shared.c;
 
-        hprintln!("UART0: a = {}, b = {}, c = {}", a, b, c).unwrap();
+        hprintln!("foo: a = {}, b = {}, c = {}", a, b, c).unwrap();
     }
 
     // De-structure-ing syntax
-    #[task(binds = UART1, shared = [&a, &b, &c])]
-    fn uart1(cx: uart1::Context) {
-        let uart1::SharedResources { a, b, c } = cx.shared;
+    #[task(shared = [&a, &b, &c])]
+    fn bar(cx: bar::Context) {
+        let bar::SharedResources { a, b, c } = cx.shared;
 
-        hprintln!("UART0: a = {}, b = {}, c = {}", a, b, c).unwrap();
+        hprintln!("bar: a = {}, b = {}, c = {}", a, b, c).unwrap();
     }
 }

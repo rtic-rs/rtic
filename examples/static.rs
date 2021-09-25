@@ -7,45 +7,53 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [UART0])]
 mod app {
-
     use cortex_m_semihosting::{debug, hprintln};
     use heapless::spsc::{Consumer, Producer, Queue};
-    use lm3s6965::Interrupt;
 
     #[shared]
-    struct Shared {
+    struct Shared {}
+
+    #[local]
+    struct Local {
         p: Producer<'static, u32, 5>,
         c: Consumer<'static, u32, 5>,
     }
 
-    #[local]
-    struct Local {}
-
     #[init(local = [q: Queue<u32, 5> = Queue::new()])]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+        // q has 'static life-time so after the split and return of `init`
+        // it will continue to exist and be allocated
         let (p, c) = cx.local.q.split();
 
-        (Shared { p, c }, Local {}, init::Monotonics())
+        foo::spawn().unwrap();
+
+        (Shared {}, Local { p, c }, init::Monotonics())
     }
 
-    #[idle(shared = [c])]
-    fn idle(mut c: idle::Context) -> ! {
+    #[idle(local = [c])]
+    fn idle(c: idle::Context) -> ! {
         loop {
-            if let Some(byte) = c.shared.c.lock(|c| c.dequeue()) {
-                hprintln!("received message: {}", byte).unwrap();
+            // Lock-free access to the same underlying queue!
+            if let Some(data) = c.local.c.dequeue() {
+                hprintln!("received message: {}", data).unwrap();
 
-                debug::exit(debug::EXIT_SUCCESS);
-            } else {
-                rtic::pend(Interrupt::UART0);
+                // Run foo until data
+                if data == 3 {
+                    debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+                } else {
+                    foo::spawn().unwrap();
+                }
             }
         }
     }
 
-    #[task(binds = UART0, shared = [p], local = [kalle: u32 = 0])]
-    fn uart0(mut c: uart0::Context) {
-        *c.local.kalle += 1;
-        c.shared.p.lock(|p| p.enqueue(42).unwrap());
+    #[task(local = [p, state: u32 = 0])]
+    fn foo(c: foo::Context) {
+        *c.local.state += 1;
+
+        // Lock-free access to the same underlying queue!
+        c.local.p.enqueue(*c.local.state).unwrap();
     }
 }

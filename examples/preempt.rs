@@ -6,10 +6,9 @@
 use panic_semihosting as _;
 use rtic::app;
 
-#[app(device = lm3s6965)]
+#[app(device = lm3s6965, dispatchers = [SSI0, QEI0])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use lm3s6965::Interrupt;
 
     #[shared]
     struct Shared {}
@@ -19,28 +18,28 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        rtic::pend(Interrupt::GPIOA);
+        foo::spawn().unwrap();
 
         (Shared {}, Local {}, init::Monotonics())
     }
 
-    #[task(binds = GPIOA, priority = 1)]
-    fn gpioa(_: gpioa::Context) {
-        hprintln!("GPIOA - start").unwrap();
-        rtic::pend(Interrupt::GPIOC);
-        hprintln!("GPIOA - end").unwrap();
-        debug::exit(debug::EXIT_SUCCESS);
+    #[task(priority = 1)]
+    fn foo(_: foo::Context) {
+        hprintln!("foo - start").unwrap();
+        baz::spawn().unwrap();
+        hprintln!("foo - end").unwrap();
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
-    #[task(binds = GPIOB, priority = 2)]
-    fn gpiob(_: gpiob::Context) {
-        hprintln!(" GPIOB").unwrap();
+    #[task(priority = 2)]
+    fn bar(_: bar::Context) {
+        hprintln!(" bar").unwrap();
     }
 
-    #[task(binds = GPIOC, priority = 2)]
-    fn gpioc(_: gpioc::Context) {
-        hprintln!(" GPIOC - start").unwrap();
-        rtic::pend(Interrupt::GPIOB);
-        hprintln!(" GPIOC - end").unwrap();
+    #[task(priority = 2)]
+    fn baz(_: baz::Context) {
+        hprintln!(" baz - start").unwrap();
+        bar::spawn().unwrap();
+        hprintln!(" baz - end").unwrap();
     }
 }

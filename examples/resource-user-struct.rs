@@ -39,7 +39,7 @@ mod app {
     // `shared` cannot be accessed from this context
     #[idle]
     fn idle(_cx: idle::Context) -> ! {
-        debug::exit(debug::EXIT_SUCCESS);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
         // error: no `shared` field in `idle::Context`
         // _cx.shared.shared += 1;

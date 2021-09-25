@@ -27,15 +27,16 @@ struct Options {
     target: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RunResult {
     exit_status: ExitStatus,
     output: String,
 }
 
 #[derive(Debug)]
-enum TestRunError {
-    FileCmpError { file_1: String, file_2: String },
+pub enum TestRunError {
+    FileCmpError { expected: String, got: String },
+    FileError { file: String },
     PathConversionError(OsString),
     CommandError(RunResult),
     IncompatibleCommand,
@@ -44,8 +45,17 @@ enum TestRunError {
 impl fmt::Display for TestRunError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TestRunError::FileCmpError { file_1, file_2 } => {
-                write!(f, "Differing output in Files: {} {}", file_1, file_2)
+            TestRunError::FileCmpError { expected, got } => {
+                writeln!(f, "Differing output in files.")?;
+                writeln!(f, "")?;
+                writeln!(f, "Expected:")?;
+                writeln!(f, "{}", expected)?;
+                writeln!(f, "")?;
+                writeln!(f, "Got:")?;
+                write!(f, "{}", got)
+            }
+            TestRunError::FileError { file } => {
+                write!(f, "File error on: {}", file)
             }
             TestRunError::CommandError(e) => {
                 write!(
@@ -75,25 +85,32 @@ fn main() -> anyhow::Result<()> {
     }
 
     let targets = [ARMV7M, ARMV6M];
-    let examples = &[
-        "idle",
-        "init",
-        "hardware",
-        "preempt",
-        "binds",
-        "resource",
-        "lock",
-        "multilock",
-        "only-shared-access",
-        "task",
-        "message",
-        "capacity",
-        "not-sync",
-        "generics",
-        "pool",
-        "ramfunc",
-        "peripherals-taken",
-    ];
+
+    let examples: Vec<_> = std::fs::read_dir("./examples")?
+        .filter_map(|path| {
+            path.map(|p| p.path().file_stem().unwrap().to_str().unwrap().to_string())
+                .ok()
+        })
+        .collect();
+
+    // let examples = &[
+    //     "idle",
+    //     "init",
+    //     "hardware",
+    //     "preempt",
+    //     "binds",
+    //     "lock",
+    //     "multilock",
+    //     "only-shared-access",
+    //     "task",
+    //     "message",
+    //     "capacity",
+    //     "not-sync",
+    //     "generics",
+    //     "pool",
+    //     "ramfunc",
+    //     "peripherals-taken",
+    // ];
 
     let opts = Options::from_args();
     let target = &opts.target;
@@ -102,12 +119,12 @@ fn main() -> anyhow::Result<()> {
 
     if target == "all" {
         for t in targets {
-            run_test(t, examples)?;
-            build_test(t, examples)?;
+            run_test(t, &examples)?;
+            build_test(t, &examples)?;
         }
     } else if targets.contains(&target.as_str()) {
-        run_test(&target, examples)?;
-        build_test(&target, examples)?;
+        run_test(&target, &examples)?;
+        build_test(&target, &examples)?;
     } else {
         eprintln!(
             "The target you specified is not available. Available targets are:\
@@ -121,115 +138,26 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_test(target: &str, examples: &[&str]) -> anyhow::Result<()> {
+fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
     for example in examples {
-        match *example {
-            "pool" => {
-                if target != ARMV6M {
-                    // check this one manually because addresses printed in `pool.run` may vary
-                    let features_v7 = Some("__v7");
+        let cmd = CargoCommand::Run {
+            example,
+            target,
+            features: None,
+            mode: BuildMode::Release,
+        };
 
-                    let debug_run_result = run_command(&CargoCommand::Run {
-                        example,
-                        target,
-                        features: features_v7,
-                        mode: BuildMode::Debug,
-                    })?;
+        arm_example(&cmd, 1)?;
 
-                    if debug_run_result.exit_status.success() {
-                        print_from_output("foo(0x2", &debug_run_result.output);
-                        print_from_output("bar(0x2", &debug_run_result.output);
-                    }
-
-                    let hexpath = &build_hexpath(*example, features_v7, BuildMode::Debug, 1)?;
-
-                    run_command(&CargoCommand::Objcopy {
-                        example,
-                        target,
-                        features: features_v7,
-                        ihex: hexpath,
-                    })?;
-
-                    let release_run_result = run_command(&CargoCommand::Run {
-                        example,
-                        target,
-                        features: features_v7,
-                        mode: BuildMode::Release,
-                    })?;
-
-                    if release_run_result.exit_status.success() {
-                        print_from_output("foo(0x2", &release_run_result.output);
-                        print_from_output("bar(0x2", &release_run_result.output);
-                    }
-
-                    let hexpath = &build_hexpath(*example, features_v7, BuildMode::Release, 1)?;
-                    run_command(&CargoCommand::Objcopy {
-                        example,
-                        target,
-                        features: features_v7,
-                        ihex: hexpath,
-                    })?;
-                }
-            }
-            "types" => {
-                let features_v7 = Some("__v7");
-
-                // TODO this example doesn't exist anymore, can we remove this case?
-                if target != ARMV6M {
-                    arm_example(
-                        &CargoCommand::Run {
-                            example,
-                            target,
-                            features: features_v7,
-                            mode: BuildMode::Debug,
-                        },
-                        1,
-                    )?;
-                    arm_example(
-                        &CargoCommand::Run {
-                            example,
-                            target,
-                            features: features_v7,
-                            mode: BuildMode::Release,
-                        },
-                        1,
-                    )?;
-                }
-            }
-            _ => {
-                arm_example(
-                    &CargoCommand::Run {
-                        example,
-                        target,
-                        features: None,
-                        mode: BuildMode::Debug,
-                    },
-                    1,
-                )?;
-
-                if *example == "types" {
-                    arm_example(
-                        &CargoCommand::Run {
-                            example,
-                            target,
-                            features: None,
-                            mode: BuildMode::Release,
-                        },
-                        1,
-                    )?;
-                } else {
-                    arm_example(
-                        &CargoCommand::Build {
-                            example,
-                            target,
-                            features: None,
-                            mode: BuildMode::Release,
-                        },
-                        1,
-                    )?;
-                }
-            }
-        }
+        arm_example(
+            &CargoCommand::Build {
+                example,
+                target,
+                features: None,
+                mode: BuildMode::Release,
+            },
+            1,
+        )?;
     }
 
     Ok(())
@@ -264,11 +192,7 @@ fn arm_example(command: &CargoCommand, build_num: u32) -> anyhow::Result<()> {
 
             match &command {
                 CargoCommand::Run { .. } => {
-                    if run_successful(&cargo_run_result, expected_output_file).is_err() {
-                        return Err(anyhow::Error::new(TestRunError::CommandError(
-                            cargo_run_result,
-                        )));
-                    }
+                    run_successful(&cargo_run_result, expected_output_file)?;
                 }
                 _ => (),
             }
@@ -289,82 +213,43 @@ fn arm_example(command: &CargoCommand, build_num: u32) -> anyhow::Result<()> {
     }
 }
 
-fn build_test(target: &str, examples: &[&str]) -> anyhow::Result<()> {
+fn build_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
     run_command(&CargoCommand::Clean)?;
 
     let mut built = vec![];
-    let build_path: PathBuf = ["target", target, "debug", "examples"].iter().collect();
+    let build_path: PathBuf = ["target", target, "release", "examples"].iter().collect();
 
     for example in examples {
-        match *example {
-            "pool" | "types" => {
-                if target != ARMV6M {
-                    let features_v7 = Some("__v7");
+        let no_features = None;
+        arm_example(
+            &CargoCommand::Build {
+                target,
+                example,
+                mode: BuildMode::Release,
+                features: no_features,
+            },
+            2,
+        )?;
+        let expected = build_hexpath(example, no_features, BuildMode::Release, 1)?;
+        let got = build_hexpath(example, no_features, BuildMode::Release, 2)?;
 
-                    arm_example(
-                        &CargoCommand::Build {
-                            target,
-                            example,
-                            mode: BuildMode::Debug,
-                            features: features_v7,
-                        },
-                        2,
-                    )?;
-                    let file_1 = build_hexpath(example, features_v7, BuildMode::Debug, 1)?;
-                    let file_2 = build_hexpath(example, features_v7, BuildMode::Debug, 2)?;
+        compare_builds(expected, got)?;
 
-                    compare_builds(file_1, file_2)?;
+        arm_example(
+            &CargoCommand::Build {
+                target,
+                example,
+                mode: BuildMode::Release,
+                features: no_features,
+            },
+            2,
+        )?;
+        let expected = build_hexpath(example, no_features, BuildMode::Release, 1)?;
+        let got = build_hexpath(example, no_features, BuildMode::Release, 2)?;
 
-                    arm_example(
-                        &CargoCommand::Build {
-                            target,
-                            example,
-                            mode: BuildMode::Release,
-                            features: features_v7,
-                        },
-                        2,
-                    )?;
-                    let file_1 = build_hexpath(example, features_v7, BuildMode::Release, 1)?;
-                    let file_2 = build_hexpath(example, features_v7, BuildMode::Release, 2)?;
+        compare_builds(expected, got)?;
 
-                    compare_builds(file_1, file_2)?;
-
-                    built.push(build_path.join(example));
-                }
-            }
-            _ => {
-                let no_features = None;
-                arm_example(
-                    &CargoCommand::Build {
-                        target,
-                        example,
-                        mode: BuildMode::Debug,
-                        features: no_features,
-                    },
-                    2,
-                )?;
-                let file_1 = build_hexpath(example, no_features, BuildMode::Debug, 1)?;
-                let file_2 = build_hexpath(example, no_features, BuildMode::Debug, 2)?;
-
-                compare_builds(file_1, file_2)?;
-
-                arm_example(
-                    &CargoCommand::Build {
-                        target,
-                        example,
-                        mode: BuildMode::Release,
-                        features: no_features,
-                    },
-                    2,
-                )?;
-                let file_1 = build_hexpath(example, no_features, BuildMode::Release, 1)?;
-                let file_2 = build_hexpath(example, no_features, BuildMode::Release, 2)?;
-
-                compare_builds(file_1, file_2)?;
-
-                built.push(build_path.join(example));
-            }
-        }
+        built.push(build_path.join(example));
     }
 
     let example_paths: Vec<&Path> = built.iter().map(|p| p.as_path()).collect();
@@ -377,12 +262,12 @@ fn build_test(target: &str, examples: &[&str]) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Check if lines in `output` contain `pattern` and print matching lines
-fn print_from_output(pattern: &str, lines: &str) {
-    let lines = lines.split("\n");
-    for line in lines {
-        if line.contains(pattern) {
-            println!("{}", line);
-        }
-    }
-}
+// /// Check if lines in `output` contain `pattern` and print matching lines
+// fn print_from_output(pattern: &str, lines: &str) {
+//     let lines = lines.split("\n");
+//     for line in lines {
+//         if line.contains(pattern) {
+//             println!("{}", line);
+//         }
+//     }
+// }

@@ -7,17 +7,14 @@
 
 use panic_semihosting as _;
 
-// NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use cortex_m_semihosting::hprintln;
-    use dwt_systick_monotonic::DwtSystick;
-    use rtic::time::duration::Seconds;
-
-    const MONO_HZ: u32 = 8_000_000; // 8 MHz
+    use cortex_m_semihosting::{debug, hprintln};
+    use rtic::time::duration::*;
+    use systick_monotonic::Systick;
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = DwtSystick<MONO_HZ>;
+    type MyMono = Systick<100>; // 100 Hz / 10 ms granularity
 
     #[shared]
     struct Shared {}
@@ -27,30 +24,42 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mut dcb = cx.core.DCB;
-        let dwt = cx.core.DWT;
         let systick = cx.core.SYST;
 
-        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
+        // Initialize the monotonic
+        let mono = Systick::new(systick, 12_000_000);
 
         hprintln!("init").ok();
 
         // Schedule `foo` to run 1 second in the future
-        foo::spawn_after(Seconds(1_u32)).ok();
+        foo::spawn_after(1.seconds()).unwrap();
 
-        // Schedule `bar` to run 2 seconds in the future
-        bar::spawn_after(Seconds(2_u32)).ok();
-
-        (Shared {}, Local {}, init::Monotonics(mono))
+        (
+            Shared {},
+            Local {},
+            init::Monotonics(mono), // Give the monotonic to RTIC
+        )
     }
 
     #[task]
     fn foo(_: foo::Context) {
         hprintln!("foo").ok();
+
+        // Schedule `bar` to run 2 seconds in the future (1 second after foo runs)
+        bar::spawn_after(1.seconds()).unwrap();
     }
 
     #[task]
     fn bar(_: bar::Context) {
         hprintln!("bar").ok();
+
+        // Schedule `baz` to run 1 seconds from now, but with a specific time instant.
+        baz::spawn_at(monotonics::now() + 1.seconds()).unwrap();
+    }
+
+    #[task]
+    fn baz(_: baz::Context) {
+        hprintln!("baz").ok();
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 }

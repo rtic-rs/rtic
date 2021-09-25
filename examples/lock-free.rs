@@ -7,10 +7,9 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [GPIOA])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use lm3s6965::Interrupt;
 
     #[shared]
     struct Shared {
@@ -23,38 +22,28 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        rtic::pend(Interrupt::GPIOA);
+        foo::spawn().unwrap();
 
         (Shared { counter: 0 }, Local {}, init::Monotonics())
     }
 
-    #[task(binds = GPIOA, shared = [counter])] // <- same priority
-    fn gpioa(c: gpioa::Context) {
-        hprintln!("GPIOA/start").unwrap();
-        rtic::pend(Interrupt::GPIOB);
+    #[task(shared = [counter])] // <- same priority
+    fn foo(c: foo::Context) {
+        bar::spawn().unwrap();
 
         *c.shared.counter += 1; // <- no lock API required
         let counter = *c.shared.counter;
-        hprintln!("  GPIOA/counter = {}", counter).unwrap();
-
-        if counter == 5 {
-            debug::exit(debug::EXIT_SUCCESS);
-        }
-        hprintln!("GPIOA/end").unwrap();
+        hprintln!("  foo = {}", counter).unwrap();
     }
 
-    #[task(binds = GPIOB, shared = [counter])] // <- same priority
-    fn gpiob(c: gpiob::Context) {
-        hprintln!("GPIOB/start").unwrap();
-        rtic::pend(Interrupt::GPIOA);
+    #[task(shared = [counter])] // <- same priority
+    fn bar(c: bar::Context) {
+        foo::spawn().unwrap();
 
         *c.shared.counter += 1; // <- no lock API required
         let counter = *c.shared.counter;
-        hprintln!("  GPIOB/counter = {}", counter).unwrap();
+        hprintln!("  bar = {}", counter).unwrap();
 
-        if counter == 5 {
-            debug::exit(debug::EXIT_SUCCESS);
-        }
-        hprintln!("GPIOB/end").unwrap();
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 }

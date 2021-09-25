@@ -9,11 +9,12 @@ use panic_semihosting as _;
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
-    use dwt_systick_monotonic::DwtSystick;
+    use cortex_m_semihosting::debug;
     use rtic::time::duration::Seconds;
+    use systick_monotonic::Systick;
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = DwtSystick<8_000_000>; // 8 MHz
+    type MyMono = Systick<100>; // 100 Hz / 10 ms granularity
 
     #[shared]
     struct Shared {}
@@ -23,12 +24,17 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mut dcb = cx.core.DCB;
-        let dwt = cx.core.DWT;
         let systick = cx.core.SYST;
 
-        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
+        let mono = Systick::new(systick, 12_000_000);
 
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+
+        (Shared {}, Local {}, init::Monotonics(mono))
+    }
+
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
         // Task without message passing
 
         // Not default
@@ -120,11 +126,6 @@ mod app {
         let handle: Result<baz::SpawnHandle, (u32, u32)> = baz::spawn_after(Seconds(1_u32), 0, 1);
         let _: Result<(u32, u32), ()> = handle.unwrap().cancel();
 
-        (Shared {}, Local {}, init::Monotonics(mono))
-    }
-
-    #[idle]
-    fn idle(_: idle::Context) -> ! {
         loop {
             cortex_m::asm::nop();
         }

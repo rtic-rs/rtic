@@ -19,17 +19,16 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        foo::spawn(1, 2).unwrap();
+        hprintln!("init").unwrap();
+        foo::spawn().unwrap();
 
         (Shared {}, Local {}, init::Monotonics())
     }
 
-    #[task()]
-    fn foo(_c: foo::Context, x: i32, y: u32) {
-        hprintln!("foo {}, {}", x, y).unwrap();
-        if x == 2 {
-            debug::exit(debug::EXIT_SUCCESS);
-        }
-        foo::spawn(2, 3).unwrap();
+    #[task]
+    fn foo(_: foo::Context) {
+        hprintln!("foo").unwrap();
+
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 }
