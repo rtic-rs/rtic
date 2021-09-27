@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.6.0-rc.1] - 2021-09-27
+
+- Documentation updates
+- Monotonic handlers default to maximum priority instead of minimum (to follow RTIC 0.5)
+- Better support for `rust-analyzer`
+
 ## [v0.6.0-alpha.5] - 2021-07-09
 
 ### Changed
