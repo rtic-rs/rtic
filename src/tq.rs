@@ -111,7 +111,9 @@ where
         mono.clear_compare_flag();
 
         if let Some(instant) = self.0.peek().map(|p| p.instant) {
-            if instant <= unwrapper(Clock::try_now(mono)) {
+            let now = unwrapper(Clock::try_now(mono));
+            // This if statement is like this and not <= due to a bug in embedded-time
+            if instant < now || instant == now {
                 // task became ready
                 let nr = unsafe { self.0.pop_unchecked() };
 
@@ -124,7 +126,8 @@ where
                 // dequeue. If the monotonic is fast enough it can happen that from the
                 // read of now to the set of the compare, the time can overflow. This is to
                 // guard against this.
-                if instant <= unwrapper(Clock::try_now(mono)) {
+                let now = unwrapper(Clock::try_now(mono));
+                if instant < now || instant == now {
                     let nr = unsafe { self.0.pop_unchecked() };
 
                     Some((nr.task, nr.index))
