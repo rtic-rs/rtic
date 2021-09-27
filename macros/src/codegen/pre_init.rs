@@ -83,7 +83,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
     // Initialize monotonic's interrupts
     for (_, monotonic) in &app.monotonics {
-        let priority = &monotonic.args.priority;
+        let priority = if let Some(prio) = monotonic.args.priority {
+            quote! { #prio }
+        } else {
+            quote! { (1 << #nvic_prio_bits) }
+        };
         let binds = &monotonic.args.binds;
 
         // Compile time assert that this priority is supported by the device
