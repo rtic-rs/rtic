@@ -1,0 +1,10 @@
+[package]
+name = "actors"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies.rtic-actor-traits]
+path = "../../actor-traits"
+
+[dev-dependencies.rtic-post-spy]
+path = "../../post-spy"

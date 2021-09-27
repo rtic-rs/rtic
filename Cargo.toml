@@ -57,6 +57,7 @@ members = [
   "post-spy",
   "xtask",
 ]
+exclude = ["actor-example"]
 
 # do not optimize proc-macro deps or build scripts
 [profile.dev.build-override]
