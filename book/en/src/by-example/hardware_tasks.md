@@ -1,6 +1,6 @@
 # Hardware tasks
 
-In it's core RTIC is based on using the interrupt controller in the hardware to do scheduling and
+At its core RTIC is based on using the interrupt controller in the hardware to do scheduling and
 run tasks, as all tasks in the framework are run as interrupt handlers (except `#[init]` and
 `#[idle]`). This also means that you can directly bind tasks to interrupt handlers.
 
