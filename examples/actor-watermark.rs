@@ -55,6 +55,8 @@ mod app {
         // monotonically increasing: does not decrease after receive is called
         assert_eq!(2, actor::SUBSCRIPTIONS[0].watermark());
 
+        hprintln!("{:#?}", actor::SUBSCRIPTIONS).ok();
+
         loop {
             debug::exit(debug::EXIT_SUCCESS);
         }
