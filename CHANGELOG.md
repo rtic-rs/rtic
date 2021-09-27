@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.5.9] - 2021-09-27
+
+- Removed the `cortex-m-rt` dependency
+- Docs updates
+
 ## [v0.5.8] - 2021-08-19
 
 - Feature flag was added to support `cortex-m v0.7.x`
@@ -341,7 +346,9 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.7...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.9...HEAD
+[v0.5.9]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.8...v0.5.9
+[v0.5.8]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.7...v0.5.8
 [v0.5.7]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.6...v0.5.7
 [v0.5.6]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.5...v0.5.6
 [v0.5.5]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.4...v0.5.5
