@@ -48,8 +48,6 @@ Formerly known as Real-Time For the Masses.
 
 ## Requirements
 
-- Rust 1.36.0+
-
 - Applications must be written using the 2018 edition.
 
 ### Crate `cortex-m` 0.6 vs 0.7 in RTIC 0.5.x

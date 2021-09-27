@@ -1,4 +1,4 @@
-# App initialization and `#[init]`
+# App initialization and the `#[init]` task
 
 An RTIC application is required an `init` task setting up the system. The corresponding function must have the signature `fn(init::Context) -> (Shared, Local, init::Monotonics)`, where `Shared` and `Local` are the resource structures defined by the user.
 
