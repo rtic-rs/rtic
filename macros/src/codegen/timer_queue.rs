@@ -127,7 +127,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
             let bound_interrupt = &monotonic.args.binds;
             let disable_isr = if &*bound_interrupt.to_string() == "SysTick" {
-                quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(()).disable_interrupt())
+                quote!(core::mem::transmute::<_, rtic::export::SYST>(()).disable_interrupt())
             } else {
                 quote!(rtic::export::NVIC::mask(#rt_err::#enum_::#bound_interrupt))
             };

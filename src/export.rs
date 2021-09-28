@@ -8,7 +8,7 @@ pub use bare_metal::CriticalSection;
 pub use cortex_m::{
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, DWT, NVIC, SCB},
+    peripheral::{scb::SystemHandler, DWT, NVIC, SCB, SYST},
     Peripherals,
 };
 pub use heapless::sorted_linked_list::SortedLinkedList;
