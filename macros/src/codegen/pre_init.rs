@@ -104,7 +104,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
                 // Always enable monotonic interrupts if they should never be off
                 if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
-                    core::mem::transmute::<_, cortex_m::peripheral::SYST>(())
+                    core::mem::transmute::<_, rtic::export::SYST>(())
                         .enable_interrupt();
                 }
             ));

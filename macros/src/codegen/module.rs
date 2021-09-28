@@ -274,8 +274,7 @@ pub fn codegen(
 
             let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
                 (
-                    quote!(core::mem::transmute::<_, cortex_m::peripheral::SYST>(())
-                        .enable_interrupt()),
+                    quote!(core::mem::transmute::<_, rtic::export::SYST>(()).enable_interrupt()),
                     quote!(rtic::export::SCB::set_pendst()),
                 )
             } else {
