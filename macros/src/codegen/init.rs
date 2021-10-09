@@ -43,8 +43,10 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         .map(|(k, v)| {
             let ty = &v.ty;
             let cfgs = &v.cfgs;
+            let docs = &v.docs;
             quote!(
                 #(#cfgs)*
+                #(#docs)*
                 #k: #ty,
             )
         })
@@ -55,8 +57,10 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         .map(|(k, v)| {
             let ty = &v.ty;
             let cfgs = &v.cfgs;
+            let docs = &v.docs;
             quote!(
                 #(#cfgs)*
+                #(#docs)*
                 #k: #ty,
             )
         })
