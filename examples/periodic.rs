@@ -7,7 +7,6 @@
 
 use panic_semihosting as _;
 
-// NOTE: does NOT work on QEMU!
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
