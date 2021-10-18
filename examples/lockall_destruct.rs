@@ -1,4 +1,4 @@
-//! examples/lockall.rs
+//! examples/lockall_destruct.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
@@ -30,9 +30,9 @@ mod app {
     // when omitted priority is assumed to be `1`
     #[task(shared = [a, b])]
     fn foo(mut c: foo::Context) {
-        c.shared.lock(|Shared { a, b }| {
+        c.shared.lock(|foo::Shared { a, b }| {
             hprintln!("foo: a = {}, b = {}", a, b).ok();
-            *a += 1;
+            **a += 1;
             bar::spawn().unwrap();
             baz::spawn().unwrap();
             hprintln!("still in foo::lock").ok();
