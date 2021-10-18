@@ -111,6 +111,13 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             #(#fields,)*
             priority: &'a rtic::export::Priority,
         }
+
+        impl<#lt>#ident<#lt> {
+            #[inline(always)]
+            pub unsafe fn priority(&self) -> &rtic::export::Priority {
+                self.priority
+            }
+        }
     );
 
     let arg = if ctxt.is_init() {
