@@ -128,13 +128,13 @@ pub fn codegen(
             }
         }
 
-        #[doc = #manual]
-        impl<'a> __rtic_internal_fooSharedResources<'a> {
-            #[inline(always)]
-            pub unsafe fn priority(&self) -> &rtic::export::Priority {
-                self.priority
-            }
-        }
+        // #[doc = #manual]
+        // impl<'a> __rtic_internal_fooSharedResources<'a> {
+        //     #[inline(always)]
+        //     pub unsafe fn priority(&self) -> &rtic::export::Priority {
+        //         self.priority
+        //     }
+        // }
 
         #[doc = #manual]
         impl<'a> rtic::Mutex for __rtic_internal_fooSharedResources<'a> {
