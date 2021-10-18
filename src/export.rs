@@ -69,6 +69,9 @@ impl Barrier {
 }
 
 // Newtype over `Cell` that forbids mutation through a shared reference
+// Debug is convenient for debugging the RTIC framework
+// but Priority should not be user-facing
+#[derive(Debug)]
 pub struct Priority {
     inner: Cell<u8>,
 }

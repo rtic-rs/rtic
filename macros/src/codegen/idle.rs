@@ -35,8 +35,13 @@ pub fn codegen(
         let name = &idle.name;
 
         if !idle.args.shared_resources.is_empty() {
-            let (item, constructor) =
-                shared_resources_struct::codegen(Context::Idle, &mut shared_needs_lt, app);
+            let (item, constructor) = shared_resources_struct::codegen(
+                Context::Idle,
+                &mut shared_needs_lt,
+                app,
+                analysis,
+                extra,
+            );
 
             root_idle.push(item);
             mod_app.push(constructor);
