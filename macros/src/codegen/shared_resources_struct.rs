@@ -19,6 +19,10 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     let mut values = vec![];
     let mut has_cfgs = false;
 
+    // Lock-all api related
+    let mut fields_mut = vec![];
+    let mut values_mut = vec![];
+
     for (name, access) in resources {
         let res = app.shared_resources.get(name).expect("UNREACHABLE");
 
@@ -37,6 +41,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
         if !res.properties.lock_free {
             if access.is_shared() {
+                // [&x] (shared)
                 lt = Some(quote!('a));
 
                 fields.push(quote!(
@@ -55,6 +60,18 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                 values.push(quote!(
                     #(#cfgs)*
                     #name: shared_resources::#shared_name::new(priority)
+
+                ));
+
+                // Lock-all related
+                fields_mut.push(quote!(
+                    #(#cfgs)*
+                    pub #name: &'static mut #ty
+                ));
+
+                values_mut.push(quote!(
+                    #(#cfgs)*
+                    #name: &mut *(&mut *#mangled_name.get_mut()).as_mut_ptr()
 
                 ));
 
@@ -103,6 +120,14 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let doc = format!("Shared resources `{}` has access to", ctxt.ident(app));
     let ident = util::shared_resources_ident(ctxt, app);
+
+    // Lock-all related
+    let doc_mut = format!(
+        "Shared resources `{}` has lock all access to",
+        ctxt.ident(app)
+    );
+    let ident_mut = util::shared_resources_ident_mut(ctxt, app);
+
     let item = quote!(
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
@@ -112,11 +137,12 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             priority: &'a rtic::export::Priority,
         }
 
-        impl<#lt>#ident<#lt> {
-            #[inline(always)]
-            pub unsafe fn priority(&self) -> &rtic::export::Priority {
-                self.priority
-            }
+        // Used by the lock-all API
+        #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
+        #[doc = #doc_mut]
+        pub struct #ident_mut {
+            #(#fields_mut,)*
         }
     );
 
@@ -125,7 +151,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     } else {
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
-    let constructor = quote!(
+    let implementations = quote!(
         impl<#lt> #ident<#lt> {
             #[inline(always)]
             pub unsafe fn new(#arg) -> Self {
@@ -134,8 +160,23 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                     priority
                 }
             }
+
+            #[inline(always)]
+            pub unsafe fn priority(&self) -> &rtic::export::Priority {
+                self.priority
+            }
+        }
+
+        // Used by the lock-all API
+        impl #ident_mut {
+            #[inline(always)]
+            pub unsafe fn new() -> Self {
+                #ident_mut {
+                    #(#values_mut,)*
+                }
+            }
         }
     );
 
-    (item, constructor)
+    (item, implementations)
 }

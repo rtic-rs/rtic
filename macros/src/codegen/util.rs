@@ -202,6 +202,19 @@ pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
     mark_internal_name(&s)
 }
 
+/// Generates a pre-reexport identifier for the "shared resources" struct
+pub fn shared_resources_ident_mut(ctxt: Context, app: &App) -> Ident {
+    let mut s = match ctxt {
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
+    };
+
+    s.push_str("Shared");
+
+    mark_internal_name(&s)
+}
+
 /// Generates a pre-reexport identifier for the "local resources" struct
 pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
