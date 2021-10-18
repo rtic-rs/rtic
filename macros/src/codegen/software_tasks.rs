@@ -112,6 +112,8 @@ pub fn codegen(
                 Context::SoftwareTask(name),
                 &mut shared_needs_lt,
                 app,
+                analysis,
+                extra,
             );
 
             root.push(item);

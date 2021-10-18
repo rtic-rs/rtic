@@ -106,34 +106,5 @@ pub fn codegen(
         })
     };
 
-    let manual = "Manual Codegen".to_string();
-
-    let to_gen = quote! {
-
-        #[doc = #manual]
-        impl<'a> rtic::Mutex for __rtic_internal_fooSharedResources<'a> {
-            type T = __rtic_internal_fooShared;
-            #[inline(always)]
-            fn lock<RTIC_INTERNAL_R>(
-                &mut self,
-                f: impl FnOnce(&mut __rtic_internal_fooShared) -> RTIC_INTERNAL_R,
-            ) -> RTIC_INTERNAL_R {
-                /// Priority ceiling
-                const CEILING: u8 = 1u8;
-                unsafe {
-                    rtic::export::lock(
-                        &mut __rtic_internal_fooShared::new(),
-                        self.priority(),
-                        CEILING,
-                        lm3s6965::NVIC_PRIO_BITS,
-                        f,
-                    )
-                }
-            }
-        }
-    };
-
-    mod_app.push(to_gen);
-
     (mod_app, mod_resources)
 }

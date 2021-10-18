@@ -1,11 +1,17 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
+use rtic_syntax::{analyze::Ownership, ast::App, Context};
 
-use crate::codegen::util;
+use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generate shared resources structs
-pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, TokenStream2) {
+pub fn codegen(
+    ctxt: Context,
+    needs_lt: &mut bool,
+    app: &App,
+    analysis: &Analysis,
+    extra: &Extra,
+) -> (TokenStream2, TokenStream2) {
     let mut lt = None;
 
     let resources = match ctxt {
@@ -22,6 +28,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     // Lock-all api related
     let mut fields_mut = vec![];
     let mut values_mut = vec![];
+    let mut max_ceiling = 0;
 
     for (name, access) in resources {
         let res = app.shared_resources.get(name).expect("UNREACHABLE");
@@ -74,6 +81,15 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                     #name: &mut *(&mut *#mangled_name.get_mut()).as_mut_ptr()
 
                 ));
+
+                let ceiling = match analysis.ownerships.get(name) {
+                    Some(Ownership::Owned { priority }) => *priority,
+                    Some(Ownership::CoOwned { priority }) => *priority,
+                    Some(Ownership::Contended { ceiling }) => *ceiling,
+                    None => 0,
+                };
+
+                max_ceiling = std::cmp::max(ceiling, max_ceiling);
 
                 // continue as the value has been filled,
                 continue;
@@ -151,6 +167,18 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     } else {
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
+
+    // Generate code for the lock-all API
+    let lock_all = util::impl_mutex(
+        extra,
+        &vec![], // TODO: what cfg should go here?
+        false,   // resource proxy at top level (not in shared_resources)
+        &ident,
+        quote!(#ident_mut),
+        max_ceiling,
+        quote!(&mut #ident_mut::new()),
+    );
+
     let implementations = quote!(
         impl<#lt> #ident<#lt> {
             #[inline(always)]
@@ -176,6 +204,8 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                 }
             }
         }
+
+        #lock_all
     );
 
     (item, implementations)
