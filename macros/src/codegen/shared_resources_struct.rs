@@ -109,6 +109,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         #[doc = #doc]
         pub struct #ident<#lt> {
             #(#fields,)*
+            priority: &'a rtic::export::Priority,
         }
     );
 
@@ -123,6 +124,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             pub unsafe fn new(#arg) -> Self {
                 #ident {
                     #(#values,)*
+                    priority
                 }
             }
         }
