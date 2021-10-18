@@ -108,34 +108,6 @@ pub fn codegen(
 
     let to_gen = quote! {
 
-        pub struct __rtic_internal_fooShared {
-            a: &'static mut u32,
-            b: &'static mut i64,
-        }
-
-
-        impl __rtic_internal_fooShared {
-        #[inline(always)]
-        pub unsafe fn new() -> Self {
-            __rtic_internal_fooShared {
-                a: &mut *__rtic_internal_shared_resource_a
-                .get_mut_unchecked()
-                .as_mut_ptr(),
-                b: &mut *__rtic_internal_shared_resource_b
-                .get_mut_unchecked()
-                .as_mut_ptr(),
-                }
-            }
-        }
-
-        // #[doc = #manual]
-        // impl<'a> __rtic_internal_fooSharedResources<'a> {
-        //     #[inline(always)]
-        //     pub unsafe fn priority(&self) -> &rtic::export::Priority {
-        //         self.priority
-        //     }
-        // }
-
         #[doc = #manual]
         impl<'a> rtic::Mutex for __rtic_internal_fooSharedResources<'a> {
             type T = __rtic_internal_fooShared;
