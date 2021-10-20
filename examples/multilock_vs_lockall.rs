@@ -1,4 +1,4 @@
-//! examples/mutlilock_vs_lockall.rs
+//! examples/multilock_vs_lockall.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
