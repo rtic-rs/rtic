@@ -29,6 +29,7 @@ pub fn codegen(
     let mut fields_mut = vec![];
     let mut values_mut = vec![];
     let mut max_ceiling = 0;
+    let mut field_get_prio = None;
 
     for (name, access) in resources {
         let res = app.shared_resources.get(name).expect("UNREACHABLE");
@@ -61,6 +62,10 @@ pub fn codegen(
                 fields.push(quote!(
                     #(#cfgs)*
                     pub #name: shared_resources::#name<'a>
+                ));
+
+                field_get_prio = Some(quote!(
+                    #name
                 ));
 
                 values.push(quote!(
@@ -148,7 +153,6 @@ pub fn codegen(
         #[doc = #doc]
         pub struct #ident<#lt> {
             #(#fields,)*
-            priority: &'a rtic::export::Priority,
         }
 
         // Used by the lock-all API
@@ -166,16 +170,29 @@ pub fn codegen(
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
 
-    // Generate code for the lock-all API
-    let lock_all = util::impl_mutex(
-        extra,
-        &vec![], // TODO: what cfg should go here?
-        false,   // resource proxy at top level (not in shared_resources)
-        &ident,
-        quote!(#ident_mut),
-        max_ceiling,
-        quote!(&mut #ident_mut::new()),
-    );
+    let (lock_all, get_prio) = if let Some(name) = field_get_prio {
+        (
+            util::impl_mutex(
+                extra,
+                &vec![], // TODO: what cfg should go here?
+                quote!(#ident),
+                quote!(#ident_mut),
+                max_ceiling,
+                quote!(self.priority()),
+                quote!(&mut #ident_mut::new()),
+            ),
+            quote!(
+                // Used by the lock-all API
+                #[inline(always)]
+                pub unsafe fn priority(&self) -> &rtic::export::Priority {
+                    //panic!("here {:?}", self);
+                    self.#name.priority()
+                }
+            ),
+        )
+    } else {
+        (quote!(), quote!())
+    };
 
     let implementations = quote!(
         impl<#lt> #ident<#lt> {
@@ -183,14 +200,10 @@ pub fn codegen(
             pub unsafe fn new(#arg) -> Self {
                 #ident {
                     #(#values,)*
-                    priority
                 }
             }
 
-            #[inline(always)]
-            pub unsafe fn priority(&self) -> &rtic::export::Priority {
-                self.priority
-            }
+            #get_prio
         }
 
         // Used by the lock-all API

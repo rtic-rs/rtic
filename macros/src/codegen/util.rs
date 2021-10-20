@@ -23,18 +23,12 @@ pub fn fq_ident(task: &Ident) -> Ident {
 pub fn impl_mutex(
     extra: &Extra,
     cfgs: &[Attribute],
-    resources_prefix: bool,
-    name: &Ident,
+    path: TokenStream2,
     ty: TokenStream2,
     ceiling: u8,
+    priority: TokenStream2,
     ptr: TokenStream2,
 ) -> TokenStream2 {
-    let (path, priority) = if resources_prefix {
-        (quote!(shared_resources::#name), quote!(self.priority()))
-    } else {
-        (quote!(#name), quote!(self.priority))
-    };
-
     let device = &extra.device;
     quote!(
         #(#cfgs)*

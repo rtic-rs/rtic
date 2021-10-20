@@ -85,10 +85,10 @@ pub fn codegen(
             mod_app.push(util::impl_mutex(
                 extra,
                 cfgs,
-                true,
-                &name,
+                quote!(shared_resources::#name),
                 quote!(#ty),
                 ceiling,
+                quote!(self.priority()),
                 ptr,
             ));
         }
