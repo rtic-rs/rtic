@@ -46,12 +46,10 @@ mod app {
     }
 
     // De-structure-ing syntax
-
-    // TODO: hide priority field (or re-use priority from first resource)
     #[task(shared = [&a, &b, &c])]
     fn bar(cx: bar::Context) {
-        let bar::SharedResources { a, b, c, priority } = cx.shared;
+        let bar::SharedResources { a, b, c } = cx.shared;
 
-        hprintln!("bar: a = {}, b = {}, c = {}, p = {:?}", a, b, c, priority).unwrap();
+        hprintln!("bar: a = {}, b = {}, c = {}", a, b, c).unwrap();
     }
 }
