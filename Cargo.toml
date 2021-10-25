@@ -46,6 +46,10 @@ trybuild = "1"
 codegen-units = 1
 lto = true
 
+[features]
+inline-asm = ["cortex-m/inline-asm"]
+linker-plugin-lto = ["cortex-m/linker-plugin-lto"]
+
 [workspace]
 members = [
   "macros",
