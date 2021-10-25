@@ -20,7 +20,7 @@ version = "0.6.0-rc.2"
 name = "rtic"
 
 [dependencies]
-cortex-m = "0.7.0"
+cortex-m = "0.7.3"
 cortex-m-rtic-macros = { path = "macros", version = "0.6.0-rc.2" }
 rtic-monotonic = "0.1.0-rc.1"
 rtic-core = "0.3.1"
@@ -45,6 +45,10 @@ trybuild = "1"
 [profile.release]
 codegen-units = 1
 lto = true
+
+[features]
+inline-asm = ["cortex-m/inline-asm"]
+linker-plugin-lto = ["cortex-m/linker-plugin-lto"]
 
 [workspace]
 members = [
