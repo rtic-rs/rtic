@@ -1,0 +1,25 @@
+error[E0499]: cannot borrow `c.shared` as mutable more than once at a time
+  --> ui/lockall_borrow_shared_a.rs:20:9
+   |
+20 |           c.shared.lock(|_| {
+   |           ^        ---- --- first mutable borrow occurs here
+   |           |        |
+   |  _________|        first borrow later used by call
+   | |
+21 | |             c.shared.a.lock(|_| {}); // borrow error
+   | |             ---------- first borrow occurs due to use of `c` in closure
+22 | |         });
+   | |__________^ second mutable borrow occurs here
+
+error[E0499]: cannot borrow `c` as mutable more than once at a time
+  --> ui/lockall_borrow_shared_a.rs:20:23
+   |
+20 |           c.shared.lock(|_| {
+   |           -        ---- ^^^ second mutable borrow occurs here
+   |           |        |
+   |  _________|        first borrow later used by call
+   | |
+21 | |             c.shared.a.lock(|_| {}); // borrow error
+   | |             ---------- second borrow occurs due to use of `c` in closure
+22 | |         });
+   | |__________- first mutable borrow occurs here
