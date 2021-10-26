@@ -1,0 +1,5 @@
+foo: a = 1, b = 2
+baz
+still in foo::lock
+bar: a = 3
+still in foo
