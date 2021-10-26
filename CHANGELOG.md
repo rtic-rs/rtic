@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 2021-10-26
+
+- Lockall api added
+
 ## [v0.6.0-rc.2] - 2021-09-28
 
 - Fixed issue with `cortex_m` being used by the codegen instead of using the `rtic::export::...` which could make an app not compile if Systick is used and the user did not have the cortex-m crate as a dependency
