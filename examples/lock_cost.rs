@@ -19,6 +19,8 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+        use cortex_m_semihosting::debug;
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         (Shared { shared: 0 }, Local {}, init::Monotonics())
     }
 
