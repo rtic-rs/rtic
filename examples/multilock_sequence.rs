@@ -40,11 +40,11 @@ mod app {
     #[task(shared = [shared1, shared2, shared3])]
     fn locks(c: locks::Context) {
         // nested multi-lock
-        let s1 = c.shared.shared1;
-        let s2 = c.shared.shared2;
-        let s3 = c.shared.shared3;
+        let mut s1 = c.shared.shared1;
+        let mut s2 = c.shared.shared2;
+        let mut s3 = c.shared.shared3;
 
-        (s1, s2, s3).lock(|s1, s2, s3| {
+        (&mut s1, &mut s2, &mut s3).lock(|s1, s2, s3| {
             *s1 += 1;
             *s2 += 2;
             *s3 += 3;
@@ -52,14 +52,14 @@ mod app {
             hprintln!("Multiple locks, s1: {}, s2: {}, s3: {}", s1, s2, s3).ok();
         });
 
-        // re-construct gives error (consumed by above lock)
+        // re-construct
         let s = locks::SharedResources {
             shared1: s1,
             shared2: s2,
             shared3: s3,
         };
 
-        // nested multi-lock destruct
+        // second nested multi-lock destruct
         let locks::SharedResources {
             shared1,
             shared2,

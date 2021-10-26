@@ -1,0 +1,9 @@
+error: lifetime may not live long enough
+  --> ui/lockall_lifetime_destruct_field.rs:28:13
+   |
+27 |         let _ = c.shared.lock(|foo::Shared { a }| {
+   |                                ------------------ return type of closure is &'2 mut &mut u32
+   |                                |
+   |                                has type `&'1 mut __rtic_internal_fooShared`
+28 |             a // lifetime
+   |             ^ returning this value requires that `'1` must outlive `'2`
