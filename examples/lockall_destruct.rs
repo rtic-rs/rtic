@@ -35,19 +35,17 @@ mod app {
             **a += 1;
             bar::spawn().unwrap();
             baz::spawn().unwrap();
-            hprintln!("still in foo::lock").ok();
         });
-        hprintln!("still in foo").ok();
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(priority = 2, shared = [a])]
     fn bar(mut c: bar::Context) {
         // the higher priority task does still need a critical section
-        let a = c.shared.lock(|s| {
-            *s.a += 1;
+        let a = c.shared.lock(|bar::Shared { a }| {
+            **a += 1;
             // *s.b += 1; `b` not accessible
-            *s.a
+            **a
         });
 
         hprintln!("bar: a = {}", a).unwrap();
