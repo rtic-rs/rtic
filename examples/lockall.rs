@@ -35,9 +35,7 @@ mod app {
             *s.a += 1;
             bar::spawn().unwrap();
             baz::spawn().unwrap();
-            hprintln!("still in foo::lock").ok();
         });
-        hprintln!("still in foo").ok();
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
