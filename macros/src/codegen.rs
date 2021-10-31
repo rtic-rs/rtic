@@ -108,10 +108,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             let name = &monotonic.ident;
             let name_str = &name.to_string();
             let ident = util::monotonic_ident(&name_str);
-            let panic_str = &format!(
-                "Use of monotonic '{}' before it was passed to the runtime",
-                name_str
-            );
             let doc = &format!(
                 "This module holds the static implementation for `{}::now()`",
                 name_str
@@ -131,18 +127,13 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
                 pub mod #name {
 
                     /// Read the current time from this monotonic
-                    pub fn now() -> rtic::time::Instant<super::super::#name> {
+                    pub fn now() -> <super::super::#name as rtic::Monotonic>::Instant {
                         rtic::export::interrupt::free(|_| {
                             use rtic::Monotonic as _;
-                            use rtic::time::Clock as _;
                             if let Some(m) = unsafe{ &mut *super::super::#ident.get_mut() } {
-                                if let Ok(v) = m.try_now() {
-                                    v
-                                } else {
-                                    unreachable!("Your monotonic is not infallible!")
-                                }
+                                m.now()
                             } else {
-                                panic!(#panic_str);
+                                <super::super::#name as rtic::Monotonic>::zero()
                             }
                         })
                     }

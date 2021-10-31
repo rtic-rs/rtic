@@ -266,7 +266,6 @@ pub fn codegen(
             let tq = util::tq_ident(&monotonic.ident.to_string());
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
-            let mono_type = &monotonic.ident;
             let m_ident = util::monotonic_ident(&monotonic_name);
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
@@ -349,15 +348,17 @@ pub fn codegen(
                     }
 
                     #[inline]
-                    pub fn reschedule_after<D>(self, duration: D) -> Result<Self, ()>
-                        where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
-                                 D::T: Into<<#mono_type as rtic::time::Clock>::T>,
-                    {
+                    pub fn reschedule_after(
+                        self,
+                        duration: <#m as rtic::Monotonic>::Duration
+                    ) -> Result<Self, ()> {
                         self.reschedule_at(monotonics::#m::now() + duration)
                     }
 
-                    pub fn reschedule_at(self, instant: rtic::time::Instant<#mono_type>) -> Result<Self, ()>
-                    {
+                    pub fn reschedule_at(
+                        self,
+                        instant: <#m as rtic::Monotonic>::Instant
+                    ) -> Result<Self, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
                             let marker = #tq_marker.get().read();
                             #tq_marker.get_mut().write(marker.wrapping_add(1));
@@ -375,19 +376,12 @@ pub fn codegen(
                 /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
                 /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
                 #[allow(non_snake_case)]
-                pub fn #internal_spawn_after_ident<D>(
-                    duration: D
+                pub fn #internal_spawn_after_ident(
+                    duration: <#m as rtic::Monotonic>::Duration
                     #(,#args)*
                 ) -> Result<#name::#m::SpawnHandle, #ty>
-                    where D: rtic::time::duration::Duration + rtic::time::fixed_point::FixedPoint,
-                        D::T: Into<<#mono_type as rtic::time::Clock>::T>,
                 {
-
-                    let instant = if rtic::export::interrupt::free(|_| unsafe { (&*#m_ident.get()).is_none() }) {
-                        rtic::time::Instant::new(0)
-                    } else {
-                        monotonics::#m::now()
-                    };
+                    let instant = monotonics::#m::now();
 
                     #internal_spawn_at_ident(instant + duration #(,#untupled)*)
                 }
@@ -396,7 +390,7 @@ pub fn codegen(
                 /// Spawns the task at a fixed time instant
                 #[allow(non_snake_case)]
                 pub fn #internal_spawn_at_ident(
-                    instant: rtic::time::Instant<#mono_type>
+                    instant: <#m as rtic::Monotonic>::Instant
                     #(,#args)*
                 ) -> Result<#name::#m::SpawnHandle, #ty> {
                     unsafe {

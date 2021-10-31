@@ -22,7 +22,8 @@ name = "rtic"
 [dependencies]
 cortex-m = "0.7.0"
 cortex-m-rtic-macros = { path = "macros", version = "0.6.0-rc.3" }
-rtic-monotonic = "0.1.0-rc.1"
+# rtic-monotonic = "0.1.0-rc.1"
+rtic-monotonic = { git = "https://github.com/rtic-rs/rtic-monotonic.git", branch = "master" }
 rtic-core = "0.3.1"
 heapless = "0.7.7"
 bare-metal = "1.0.0"
@@ -33,7 +34,7 @@ version_check = "0.9"
 [dev-dependencies]
 lm3s6965 = "0.1.3"
 cortex-m-semihosting = "0.3.3"
-systick-monotonic = "0.1.0-rc.1"
+systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", branch = "new-trait-and-time-lib" }
 
 [dev-dependencies.panic-semihosting]
 features = ["exit"]

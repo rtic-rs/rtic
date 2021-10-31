@@ -73,7 +73,7 @@ pub fn codegen(
                 #[allow(non_upper_case_globals)]
                 #[doc(hidden)]
                 static #instants:
-                    rtic::RacyCell<[core::mem::MaybeUninit<rtic::time::Instant<#mono_type>>; #cap_lit]> =
+                    rtic::RacyCell<[core::mem::MaybeUninit<<#mono_type as rtic::Monotonic>::Instant>; #cap_lit]> =
                     rtic::RacyCell::new([#(#elems,)*]);
             ));
         }

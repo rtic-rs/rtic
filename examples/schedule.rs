@@ -10,8 +10,7 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use rtic::time::duration::*;
-    use systick_monotonic::Systick;
+    use systick_monotonic::*;
 
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = Systick<100>; // 100 Hz / 10 ms granularity
@@ -32,7 +31,7 @@ mod app {
         hprintln!("init").ok();
 
         // Schedule `foo` to run 1 second in the future
-        foo::spawn_after(1.seconds()).unwrap();
+        foo::spawn_after(1.secs()).unwrap();
 
         (
             Shared {},
@@ -46,7 +45,7 @@ mod app {
         hprintln!("foo").ok();
 
         // Schedule `bar` to run 2 seconds in the future (1 second after foo runs)
-        bar::spawn_after(1.seconds()).unwrap();
+        bar::spawn_after(1.secs()).unwrap();
     }
 
     #[task]
@@ -54,7 +53,7 @@ mod app {
         hprintln!("bar").ok();
 
         // Schedule `baz` to run 1 seconds from now, but with a specific time instant.
-        baz::spawn_at(monotonics::now() + 1.seconds()).unwrap();
+        baz::spawn_at(monotonics::now() + 1.secs()).unwrap();
     }
 
     #[task]
