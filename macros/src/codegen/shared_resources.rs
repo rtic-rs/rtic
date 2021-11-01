@@ -67,9 +67,11 @@ pub fn codegen(
                 }
             ));
 
+            // ptr is an Fn closure that return *mut T
             let ptr = quote!(
                 #(#cfgs)*
-                #mangled_name.get_mut() as *mut _
+                || { #mangled_name.get_mut() as *mut _ }
+                // || { #mangled_name.get_mut_unchecked().as_mut_ptr() }
             );
 
             let ceiling = match analysis.ownerships.get(name) {

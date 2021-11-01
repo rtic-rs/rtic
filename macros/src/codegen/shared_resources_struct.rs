@@ -47,18 +47,15 @@ pub fn codegen(
         let mangled_name = util::static_shared_resource_ident(&name);
 
         if !res.properties.lock_free {
+            lt = Some(quote!('a));
             if access.is_shared() {
                 // [&x] (shared)
-                lt = Some(quote!('a));
-
                 fields.push(quote!(
                     #(#cfgs)*
                     pub #name: &'a #ty
                 ));
             } else {
                 // Resource proxy
-                lt = Some(quote!('a));
-
                 fields.push(quote!(
                     #(#cfgs)*
                     pub #name: shared_resources::#name<'a>
@@ -76,7 +73,7 @@ pub fn codegen(
                 // Lock-all related
                 fields_mut.push(quote!(
                     #(#cfgs)*
-                    pub #name: &'static mut #ty
+                    pub #name: &#lt mut #ty
                 ));
 
                 values_mut.push(quote!(
@@ -159,7 +156,7 @@ pub fn codegen(
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         #[doc = #doc_mut]
-        pub struct #ident_mut {
+        pub struct #ident_mut<#lt> {
             #(#fields_mut,)*
         }
     );
@@ -176,16 +173,15 @@ pub fn codegen(
                 extra,
                 &vec![], // TODO: what cfg should go here?
                 quote!(#ident),
-                quote!(#ident_mut),
+                quote!(#ident_mut<#lt>),
                 max_ceiling,
                 quote!(self.priority()),
-                quote!(&mut #ident_mut::new()),
+                quote!(|| { &mut #ident_mut::new() }),
             ),
             quote!(
                 // Used by the lock-all API
                 #[inline(always)]
                 pub unsafe fn priority(&self) -> &rtic::export::Priority {
-                    //panic!("here {:?}", self);
                     self.#name.priority()
                 }
             ),
@@ -207,7 +203,7 @@ pub fn codegen(
         }
 
         // Used by the lock-all API
-        impl #ident_mut {
+        impl<#lt> #ident_mut<#lt> {
             #[inline(always)]
             pub unsafe fn new() -> Self {
                 #ident_mut {

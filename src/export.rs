@@ -134,7 +134,7 @@ where
 #[cfg(armv7m)]
 #[inline(always)]
 pub unsafe fn lock<T, R>(
-    ptr: *mut T,
+    ptr: impl Fn() -> *mut T,
     priority: &Priority,
     ceiling: u8,
     nvic_prio_bits: u8,
@@ -145,19 +145,19 @@ pub unsafe fn lock<T, R>(
     if current < ceiling {
         if ceiling == (1 << nvic_prio_bits) {
             priority.set(u8::max_value());
-            let r = interrupt::free(|_| f(&mut *ptr));
+            let r = interrupt::free(|_| f(&mut *ptr()));
             priority.set(current);
             r
         } else {
             priority.set(ceiling);
             basepri::write(logical2hw(ceiling, nvic_prio_bits));
-            let r = f(&mut *ptr);
+            let r = f(&mut *ptr()); // inside of lock
             basepri::write(logical2hw(current, nvic_prio_bits));
             priority.set(current);
             r
         }
     } else {
-        f(&mut *ptr)
+        f(&mut *ptr())
     }
 }
 
@@ -171,7 +171,7 @@ pub unsafe fn lock<T, R>(
 #[cfg(not(armv7m))]
 #[inline(always)]
 pub unsafe fn lock<T, R>(
-    ptr: *mut T,
+    ptr: impl Fn() -> *mut T,
     priority: &Priority,
     ceiling: u8,
     _nvic_prio_bits: u8,
@@ -181,11 +181,11 @@ pub unsafe fn lock<T, R>(
 
     if current < ceiling {
         priority.set(u8::max_value());
-        let r = interrupt::free(|_| f(&mut *ptr));
+        let r = interrupt::free(|_| f(&mut *ptr()));
         priority.set(current);
         r
     } else {
-        f(&mut *ptr)
+        f(&mut *ptr())
     }
 }
 
