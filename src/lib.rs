@@ -69,16 +69,16 @@ impl<T> RacyCell<T> {
         RacyCell(UnsafeCell::new(value))
     }
 
-    /// Get `&mut T`
+    /// Get `*mut T`
     #[inline(always)]
-    pub unsafe fn get_mut_unchecked(&self) -> &mut T {
-        &mut *self.0.get()
+    pub unsafe fn get_mut(&self) -> *mut T {
+        self.0.get()
     }
 
-    /// Get `&T`
+    /// Get `*const T`
     #[inline(always)]
-    pub unsafe fn get_unchecked(&self) -> &T {
-        &*self.0.get()
+    pub unsafe fn get(&self) -> *const T {
+        self.0.get()
     }
 }
 

@@ -57,9 +57,9 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         let expr = if is_declared {
             // If the local resources is already initialized, we only need to access its value and
             // not go through an `MaybeUninit`
-            quote!(#mangled_name.get_mut_unchecked())
+            quote!(&mut *#mangled_name.get_mut())
         } else {
-            quote!(&mut *#mangled_name.get_mut_unchecked().as_mut_ptr())
+            quote!(&mut *(&mut *#mangled_name.get_mut()).as_mut_ptr())
         };
 
         values.push(quote!(

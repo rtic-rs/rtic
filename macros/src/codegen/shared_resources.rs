@@ -69,7 +69,7 @@ pub fn codegen(
 
             let ptr = quote!(
                 #(#cfgs)*
-                #mangled_name.get_mut_unchecked().as_mut_ptr()
+                (&mut *#mangled_name.get_mut()).as_mut_ptr()
             );
 
             let ceiling = match analysis.ownerships.get(name) {
