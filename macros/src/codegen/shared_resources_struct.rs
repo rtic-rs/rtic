@@ -168,14 +168,14 @@ pub fn codegen(
 
     let (lock_all, get_prio) = if let Some(name) = field_get_prio {
         (
-            util::impl_mutex(
+            util::impl_mutex_struct(
                 extra,
                 &vec![], // TODO: what cfg should go here?
                 quote!(#ident),
                 quote!(#ident_mut<#lt>),
                 max_ceiling,
                 quote!(self.priority()),
-                quote!(|| { &mut #ident_mut::new() }),
+                quote!(|| { #ident_mut::new() }),
             ),
             quote!(
                 // Used by the lock-all API

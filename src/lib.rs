@@ -104,3 +104,12 @@ impl<T> RacyCell<T> {
 }
 
 unsafe impl<T> Sync for RacyCell<T> {}
+
+/// Should be moved to `rtic-core`
+pub trait MutexStruct {
+    /// Data protected by the mutex
+    type T;
+
+    /// Creates a critical section and grants temporary access to the protected data
+    fn lock<R>(&mut self, f: impl FnOnce(Self::T) -> R) -> R;
+}

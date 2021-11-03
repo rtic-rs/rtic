@@ -132,6 +132,7 @@ pub fn codegen(
                 #[allow(non_snake_case)]
                 fn #name(#context: #name::Context #(,#inputs)*) {
                     use rtic::Mutex as _;
+                    use rtic::MutexStruct as _;
                     use rtic::mutex_prelude::*;
 
                     #(#stmts)*

@@ -54,6 +54,41 @@ pub fn impl_mutex(
     )
 }
 
+/// Generates a `MutexStruct` implementation
+pub fn impl_mutex_struct(
+    extra: &Extra,
+    cfgs: &[Attribute],
+    path: TokenStream2,
+    ty: TokenStream2,
+    ceiling: u8,
+    priority: TokenStream2,
+    ptr: TokenStream2,
+) -> TokenStream2 {
+    let device = &extra.device;
+    quote!(
+        #(#cfgs)*
+        impl<'a> rtic::MutexStruct for #path<'a> {
+            type T = #ty;
+
+            #[inline(always)]
+            fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(#ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
+                /// Priority ceiling
+                const CEILING: u8 = #ceiling;
+
+                unsafe {
+                    rtic::export::lock_struct(
+                        #ptr,
+                        #priority,
+                        CEILING,
+                        #device::NVIC_PRIO_BITS,
+                        f,
+                    )
+                }
+            }
+        }
+    )
+}
+
 /// Generates an identifier for the `INPUTS` buffer (`spawn` & `schedule` API)
 pub fn inputs_ident(task: &Ident) -> Ident {
     mark_internal_name(&format!("{}_INPUTS", task))

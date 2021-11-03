@@ -29,10 +29,10 @@ mod app {
         cx.shared.lock(|x| *x.shared += 1);
     }
 
-    #[task(binds = GPIOB, priority = 2, shared = [shared])]
-    fn high(mut cx: high::Context) {
-        cx.shared.lock(|x| *x.shared += 1);
-    }
+    // #[task(binds = GPIOB, priority = 2, shared = [shared])]
+    // fn high(mut cx: high::Context) {
+    //     cx.shared.lock(|x| *x.shared += 1);
+    // }
 }
 
 // cargo objdump --example lockall_cost --target thumbv7m-none-eabi --release --features inline-asm -- --disassemble > lockall_cost.ojbdump
