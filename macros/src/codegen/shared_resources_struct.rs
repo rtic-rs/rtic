@@ -78,8 +78,7 @@ pub fn codegen(
 
                 values_mut.push(quote!(
                     #(#cfgs)*
-                    #name: &mut *#mangled_name.get_mut_unchecked().as_mut_ptr()
-
+                    #name: &mut *(&mut *#mangled_name.get_mut()).as_mut_ptr()
                 ));
 
                 let ceiling = match analysis.ownerships.get(name) {
