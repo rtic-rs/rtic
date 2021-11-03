@@ -67,7 +67,7 @@ pub fn impl_mutex_struct(
     let device = &extra.device;
     quote!(
         #(#cfgs)*
-        impl<'a> rtic::MutexStruct for #path<'a> {
+        impl<'a> rtic::Mutex for #path<'a> {
             type T = #ty;
 
             #[inline(always)]

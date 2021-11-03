@@ -177,7 +177,7 @@ pub fn codegen(
                 quote!(#ident_mut<#lt>),
                 max_ceiling,
                 quote!(self.priority()),
-                quote!(|| { #ident_mut::new() }),
+                quote!(#ident_mut::new ),
             ),
             quote!(
                 // Used by the lock-all API

@@ -171,7 +171,7 @@ pub unsafe fn lock<T, R>(
 #[cfg(armv7m)]
 #[inline(always)]
 pub unsafe fn lock_struct<T, R>(
-    ptr: impl Fn() -> T,
+    ptr: unsafe fn() -> T,
     priority: &Priority,
     ceiling: u8,
     nvic_prio_bits: u8,
@@ -237,7 +237,7 @@ pub unsafe fn lock<T, R>(
 #[cfg(not(armv7m))]
 #[inline(always)]
 pub unsafe fn lock_struct<T, R>(
-    ptr: impl Fn() -> T,
+    ptr: unsafe fn() -> T,
     priority: &Priority,
     ceiling: u8,
     _nvic_prio_bits: u8,
