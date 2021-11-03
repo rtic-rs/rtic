@@ -75,9 +75,9 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         }
 
         let expr = if access.is_exclusive() {
-            quote!(&mut *#mangled_name.get_mut_unchecked().as_mut_ptr())
+            quote!(&mut *(&mut *#mangled_name.get_mut()).as_mut_ptr())
         } else {
-            quote!(&*#mangled_name.get_unchecked().as_ptr())
+            quote!(&*(&*#mangled_name.get()).as_ptr())
         };
 
         values.push(quote!(

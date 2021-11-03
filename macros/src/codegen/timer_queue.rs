@@ -117,7 +117,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     quote!(
                         #(#cfgs)*
                         #t::#name => {
-                            rtic::export::interrupt::free(|_| #rq.get_mut_unchecked().split().0.enqueue_unchecked((#rqt::#name, index)));
+                            rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).split().0.enqueue_unchecked((#rqt::#name, index)));
 
                             #pend
                         }
@@ -137,8 +137,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
-                        if let Some(mono) = #m_ident.get_mut_unchecked().as_mut() {
-                            #tq.get_mut_unchecked().dequeue(|| #disable_isr, mono)
+                        if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {
+                            (&mut *#tq.get_mut()).dequeue(|| #disable_isr, mono)
                         } else {
                             // We can only use the timer queue if `init` has returned, and it
                             // writes the `Some(monotonic)` we are accessing here.
@@ -150,7 +150,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                         }
                     }
 
-                    rtic::export::interrupt::free(|_| if let Some(mono) = #m_ident.get_mut_unchecked().as_mut() {
+                    rtic::export::interrupt::free(|_| if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {
                         mono.on_interrupt();
                     });
                 }

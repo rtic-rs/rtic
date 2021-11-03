@@ -232,15 +232,15 @@ pub fn codegen(
             let input = #tupled;
 
             unsafe {
-                if let Some(index) = rtic::export::interrupt::free(|_| #fq.get_mut_unchecked().dequeue()) {
-                    #inputs
-                        .get_mut_unchecked()
+                if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
+                    (&mut *#inputs
+                        .get_mut())
                         .get_unchecked_mut(usize::from(index))
                         .as_mut_ptr()
                         .write(input);
 
                     rtic::export::interrupt::free(|_| {
-                        #rq.get_mut_unchecked().enqueue_unchecked((#t::#name, index));
+                        (&mut *#rq.get_mut()).enqueue_unchecked((#t::#name, index));
                     });
 
                     rtic::pend(#device::#enum_::#interrupt);
@@ -330,16 +330,16 @@ pub fn codegen(
                 impl #internal_spawn_handle_ident {
                     pub fn cancel(self) -> Result<#ty, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
-                            let tq = #tq.get_mut_unchecked();
+                            let tq = &mut *#tq.get_mut();
                             if let Some((_task, index)) = tq.cancel_marker(self.marker) {
                                 // Get the message
-                                let msg = #inputs
-                                    .get_unchecked()
+                                let msg = (&*#inputs
+                                    .get())
                                     .get_unchecked(usize::from(index))
                                     .as_ptr()
                                     .read();
                                 // Return the index to the free queue
-                                #fq.get_mut_unchecked().split().0.enqueue_unchecked(index);
+                                (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
 
                                 Ok(msg)
                             } else {
@@ -359,10 +359,10 @@ pub fn codegen(
                     pub fn reschedule_at(self, instant: rtic::time::Instant<#mono_type>) -> Result<Self, ()>
                     {
                         rtic::export::interrupt::free(|_| unsafe {
-                            let marker = *#tq_marker.get_mut_unchecked();
-                            *#tq_marker.get_mut_unchecked() = #tq_marker.get_mut_unchecked().wrapping_add(1);
+                            let marker = #tq_marker.get().read();
+                            #tq_marker.get_mut().write(marker.wrapping_add(1));
 
-                            let tq = #tq.get_mut_unchecked();
+                            let tq = (&mut *#tq.get_mut());
 
                             tq.update_marker(self.marker, marker, instant, || #pend).map(|_| #name::#m::SpawnHandle { marker })
                         })
@@ -383,7 +383,7 @@ pub fn codegen(
                         D::T: Into<<#mono_type as rtic::time::Clock>::T>,
                 {
 
-                    let instant = if rtic::export::interrupt::free(|_| unsafe { #m_ident.get_mut_unchecked().is_none() }) {
+                    let instant = if rtic::export::interrupt::free(|_| unsafe { (&*#m_ident.get()).is_none() }) {
                         rtic::time::Instant::new(0)
                     } else {
                         monotonics::#m::now()
@@ -401,21 +401,21 @@ pub fn codegen(
                 ) -> Result<#name::#m::SpawnHandle, #ty> {
                     unsafe {
                         let input = #tupled;
-                        if let Some(index) = rtic::export::interrupt::free(|_| #fq.get_mut_unchecked().dequeue()) {
-                            #inputs
-                                .get_mut_unchecked()
+                        if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
+                            (&mut *#inputs
+                                .get_mut())
                                 .get_unchecked_mut(usize::from(index))
                                 .as_mut_ptr()
                                 .write(input);
 
-                            #instants
-                                .get_mut_unchecked()
+                            (&mut *#instants
+                                .get_mut())
                                 .get_unchecked_mut(usize::from(index))
                                 .as_mut_ptr()
                                 .write(instant);
 
                             rtic::export::interrupt::free(|_| {
-                                let marker = *#tq_marker.get_mut_unchecked();
+                                let marker = #tq_marker.get().read();
                                 let nr = rtic::export::NotReady {
                                     instant,
                                     index,
@@ -423,15 +423,15 @@ pub fn codegen(
                                     marker,
                                 };
 
-                                *#tq_marker.get_mut_unchecked() = #tq_marker.get_mut_unchecked().wrapping_add(1);
+                                #tq_marker.get_mut().write(#tq_marker.get().read().wrapping_add(1));
 
-                                let tq = #tq.get_mut_unchecked();
+                                let tq = &mut *#tq.get_mut();
 
                                 tq.enqueue_unchecked(
                                     nr,
                                     || #enable_interrupt,
                                     || #pend,
-                                    #m_ident.get_mut_unchecked().as_mut());
+                                    (&mut *#m_ident.get_mut()).as_mut());
 
                                 Ok(#name::#m::SpawnHandle { marker })
                             })

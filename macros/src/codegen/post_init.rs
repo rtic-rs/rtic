@@ -19,10 +19,9 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
                 // We include the cfgs
                 #(#cfgs)*
                 // Resource is a RacyCell<MaybeUninit<T>>
-                // - `get_mut_unchecked` to obtain `MaybeUninit<T>`
-                // - `as_mut_ptr` to obtain a raw pointer to `MaybeUninit<T>`
+                // - `get_mut` to obtain a raw pointer to `MaybeUninit<T>`
                 // - `write` the defined value for the late resource T
-                #mangled_name.get_mut_unchecked().as_mut_ptr().write(shared_resources.#name);
+                #mangled_name.get_mut().write(core::mem::MaybeUninit::new(shared_resources.#name));
             ));
         }
     }
@@ -37,10 +36,9 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
                 // We include the cfgs
                 #(#cfgs)*
                 // Resource is a RacyCell<MaybeUninit<T>>
-                // - `get_mut_unchecked` to obtain `MaybeUninit<T>`
-                // - `as_mut_ptr` to obtain a raw pointer to `MaybeUninit<T>`
+                // - `get_mut` to obtain a raw pointer to `MaybeUninit<T>`
                 // - `write` the defined value for the late resource T
-                #mangled_name.get_mut_unchecked().as_mut_ptr().write(local_resources.#name);
+                #mangled_name.get_mut().write(core::mem::MaybeUninit::new(local_resources.#name));
             ));
         }
     }
@@ -58,7 +56,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
 
         // Store the monotonic
         let name = util::monotonic_ident(&monotonic.to_string());
-        stmts.push(quote!(*#name.get_mut_unchecked() = Some(monotonics.#idx);));
+        stmts.push(quote!(#name.get_mut().write(Some(monotonics.#idx));));
     }
 
     // Enable the interrupts -- this completes the `init`-ialization phase

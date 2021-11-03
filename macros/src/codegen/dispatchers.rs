@@ -78,12 +78,12 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     #(#cfgs)*
                     #t::#name => {
                         let #tupled =
-                            #inputs
-                            .get_unchecked()
+                            (&*#inputs
+                            .get())
                             .get_unchecked(usize::from(index))
                             .as_ptr()
                             .read();
-                        #fq.get_mut_unchecked().split().0.enqueue_unchecked(index);
+                        (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
                         let priority = &rtic::export::Priority::new(PRIORITY);
                         #name(
                             #name::Context::new(priority)
@@ -95,7 +95,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             .collect::<Vec<_>>();
 
         stmts.push(quote!(
-            while let Some((task, index)) = #rq.get_mut_unchecked().split().1.dequeue() {
+            while let Some((task, index)) = (&mut *#rq.get_mut()).split().1.dequeue() {
                 match task {
                     #(#arms)*
                 }
