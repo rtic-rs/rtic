@@ -15,7 +15,6 @@ mod app {
 
     #[shared]
     struct Shared {
-        #[cfg(debug_assertions)] // <- `true` when using the `dev` profile
         count: u32,
         #[cfg(never)]
         unused: u32,
@@ -31,7 +30,6 @@ mod app {
 
         (
             Shared {
-                #[cfg(debug_assertions)]
                 count: 0,
                 #[cfg(never)]
                 unused: 1,
