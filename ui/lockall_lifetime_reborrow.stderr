@@ -5,4 +5,4 @@ error: lifetime may not live long enough
    |                                -- ^^^^^^^^^ returning this value requires that `'1` must outlive `'2`
    |                                ||
    |                                |return type of closure is &'2 mut u32
-   |                                has type `&'1 mut __rtic_internal_fooShared`
+   |                                has type `&'1 mut __rtic_internal_fooShared<'_>`

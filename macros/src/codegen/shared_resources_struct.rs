@@ -143,22 +143,15 @@ pub fn codegen(
     );
     let ident_mut = util::shared_resources_ident_mut(ctxt, app);
 
-    let item = quote!(
+    let mut items = vec![];
+    items.push(quote!(
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         #[doc = #doc]
         pub struct #ident<#lt> {
             #(#fields,)*
         }
-
-        // Used by the lock-all API
-        #[allow(non_snake_case)]
-        #[allow(non_camel_case_types)]
-        #[doc = #doc_mut]
-        pub struct #ident_mut<#lt> {
-            #(#fields_mut,)*
-        }
-    );
+    ));
 
     let arg = if ctxt.is_init() {
         None
@@ -166,7 +159,16 @@ pub fn codegen(
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
 
-    let (lock_all, get_prio) = if let Some(name) = field_get_prio {
+    let (lock_all, new_struct, get_prio) = if let Some(name) = field_get_prio {
+        items.push(quote!(
+            // Used by the lock-all API
+            #[allow(non_snake_case)]
+            #[allow(non_camel_case_types)]
+            #[doc = #doc_mut]
+            pub struct #ident_mut<#lt> {
+                #(#fields_mut,)*
+            }
+        ));
         (
             util::impl_mutex_struct(
                 extra,
@@ -179,6 +181,17 @@ pub fn codegen(
             ),
             quote!(
                 // Used by the lock-all API
+                impl<#lt> #ident_mut<#lt> {
+                    #[inline(always)]
+                    pub unsafe fn new() -> Self {
+                        #ident_mut {
+                            #(#values_mut,)*
+                        }
+                    }
+                }
+            ),
+            quote!(
+                // Used by the lock-all API
                 #[inline(always)]
                 pub unsafe fn priority(&self) -> &rtic::export::Priority {
                     self.#name.priority()
@@ -186,7 +199,14 @@ pub fn codegen(
             ),
         )
     } else {
-        (quote!(), quote!())
+        items.push(quote!(
+            // Used by the lock-all API
+            #[allow(non_snake_case)]
+            #[allow(non_camel_case_types)]
+            #[doc = #doc_mut]
+            pub struct #ident_mut {}
+        ));
+        (quote!(), quote!(), quote!())
     };
 
     let implementations = quote!(
@@ -201,18 +221,10 @@ pub fn codegen(
             #get_prio
         }
 
-        // Used by the lock-all API
-        impl<#lt> #ident_mut<#lt> {
-            #[inline(always)]
-            pub unsafe fn new() -> Self {
-                #ident_mut {
-                    #(#values_mut,)*
-                }
-            }
-        }
+        #new_struct
 
         #lock_all
     );
 
-    (item, implementations)
+    (quote!(#(#items)*), implementations)
 }

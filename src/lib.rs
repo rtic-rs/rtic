@@ -111,5 +111,5 @@ pub trait MutexStruct {
     type T;
 
     /// Creates a critical section and grants temporary access to the protected data
-    fn lock<R>(&mut self, f: impl FnOnce(Self::T) -> R) -> R;
+    fn lock<R>(&mut self, f: impl FnOnce(&mut Self::T) -> R) -> R;
 }

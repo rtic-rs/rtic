@@ -4,5 +4,5 @@ error: lifetime may not live long enough
 20 |         let _ = c.shared.lock(|s| s); // lifetime
    |                                -- ^ returning this value requires that `'1` must outlive `'2`
    |                                ||
-   |                                |return type of closure is &'2 mut __rtic_internal_fooShared
-   |                                has type `&'1 mut __rtic_internal_fooShared`
+   |                                |return type of closure is &'2 mut __rtic_internal_fooShared<'_>
+   |                                has type `&'1 mut __rtic_internal_fooShared<'_>`

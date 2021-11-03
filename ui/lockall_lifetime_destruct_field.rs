@@ -1,9 +1,4 @@
-//! examples/lockall_soundness.rs
-
-#![deny(unsafe_code)]
-#![deny(warnings)]
 #![no_main]
-#![no_std]
 
 use panic_semihosting as _;
 

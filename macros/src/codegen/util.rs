@@ -71,7 +71,7 @@ pub fn impl_mutex_struct(
             type T = #ty;
 
             #[inline(always)]
-            fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(#ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
+            fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
                 /// Priority ceiling
                 const CEILING: u8 = #ceiling;
 
