@@ -21,7 +21,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
                 // Resource is a RacyCell<MaybeUninit<T>>
                 // - `get_mut` to obtain a raw pointer to `MaybeUninit<T>`
                 // - `write` the defined value for the late resource T
-                (&mut *#mangled_name.get_mut()).as_mut_ptr().write(shared_resources.#name);
+                #mangled_name.get_mut().write(core::mem::MaybeUninit::new(shared_resources.#name));
             ));
         }
     }
@@ -38,7 +38,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
                 // Resource is a RacyCell<MaybeUninit<T>>
                 // - `get_mut` to obtain a raw pointer to `MaybeUninit<T>`
                 // - `write` the defined value for the late resource T
-                (&mut *#mangled_name.get_mut()).as_mut_ptr().write(local_resources.#name);
+                #mangled_name.get_mut().write(core::mem::MaybeUninit::new(local_resources.#name));
             ));
         }
     }
