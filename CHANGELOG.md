@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v0.6.0-rc.3] - 2021-11-08
+
 ### Fixed
 
 - Match rtic-syntax Analysis-struct updates from https://github.com/rtic-rs/rtic-syntax/pull/61
@@ -19,11 +22,25 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Monotonic handlers default to maximum priority instead of minimum (to follow RTIC 0.5)
 - Better support for `rust-analyzer`
 
+## [v0.5.9] - 2021-09-27
+
+- Removed the `cortex-m-rt` dependency
+- Docs updates
+
+## [v0.5.8] - 2021-08-19
+
+- Feature flag was added to support `cortex-m v0.7.x`
+- MSRV raised to 1.38.
+
 ## [v0.6.0-alpha.5] - 2021-07-09
 
 ### Changed
 
 - The new resources syntax is implemented.
+
+## [v0.5.7] - 2021-07-05
+
+- Backport: "you must enable the rt feature" compile time detection
 
 ## [v0.6.0-alpha.4] - 2021-05-27
 
@@ -59,6 +76,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Support for multi-locks, see `examples/multilock.rs` for syntax.
 - New monotonic syntax and support, see `#[monotonic]`
+
+## [v0.5.6] - 2021-03-03
+
+- **Security** Use latest security patched heapless
 
 ## [v0.6.0-alpha.0] - 2020-11-14
 
@@ -423,7 +444,12 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.5...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.9...HEAD
+[v0.5.x unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.8...v0.5.x
+[v0.5.9]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.8...v0.5.9
+[v0.5.8]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.7...v0.5.8
+[v0.5.7]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.6...v0.5.7
+[v0.5.6]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.5...v0.5.6
 [v0.5.5]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.4...v0.5.5
 [v0.5.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.3...v0.5.4
 [v0.5.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.2...v0.5.3
