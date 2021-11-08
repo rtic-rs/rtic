@@ -444,7 +444,17 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.9...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.3...HEAD
+[v0.6.0-rc.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.2...v0.6.0-rc.3
+[v0.6.0-rc.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.1...v0.6.0-rc.2
+[v0.6.0-rc.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.0...v0.6.0-rc.1
+[v0.6.0-rc.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-alpha.5...v0.6.0-rc.0
+[v0.6.0-alpha.5]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-alpha.4...v0.6.0-alpha.5
+[v0.6.0-alpha.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-alpha.3...v0.6.0-alpha.4
+[v0.6.0-alpha.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-alpha.2...v0.6.0-alpha.3
+[v0.6.0-alpha.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-alpha.1...v0.6.0-alpha.2
+[v0.6.0-alpha.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-alpha.0...v0.6.0-alpha.1
+[v0.6.0-alpha.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.5...v0.6.0-alpha.0
 [v0.5.x unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.8...v0.5.x
 [v0.5.9]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.8...v0.5.9
 [v0.5.8]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.5.7...v0.5.8
