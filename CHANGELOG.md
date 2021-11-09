@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.6.0-rc.4] - 2021-11-09
+
+- Updated to use the new generic `Monotonic` trait
 
 ## [v0.6.0-rc.3] - 2021-11-08
 
@@ -444,7 +447,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.3...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.4...HEAD
+[v0.6.0-rc.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.3...v0.6.0-rc.4
 [v0.6.0-rc.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.2...v0.6.0-rc.3
 [v0.6.0-rc.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.1...v0.6.0-rc.2
 [v0.6.0-rc.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.0...v0.6.0-rc.1
