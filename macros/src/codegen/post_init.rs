@@ -14,7 +14,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         let mangled_name = util::static_shared_resource_ident(name);
         // If it's live
         let cfgs = res.cfgs.clone();
-        if analysis.shared_resource_locations.get(name).is_some() {
+        if analysis.shared_resources.get(name).is_some() {
             stmts.push(quote!(
                 // We include the cfgs
                 #(#cfgs)*
@@ -31,7 +31,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         let mangled_name = util::static_local_resource_ident(name);
         // If it's live
         let cfgs = res.cfgs.clone();
-        if analysis.local_resource_locations.get(name).is_some() {
+        if analysis.local_resources.get(name).is_some() {
             stmts.push(quote!(
                 // We include the cfgs
                 #(#cfgs)*
