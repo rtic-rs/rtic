@@ -1,18 +1,6 @@
-use crate::{
-    time::{Clock, Instant},
-    Monotonic,
-};
+use crate::Monotonic;
 use core::cmp::Ordering;
 use heapless::sorted_linked_list::{LinkedIndexU16, Min, SortedLinkedList};
-
-#[inline(always)]
-fn unwrapper<T, E>(val: Result<T, E>) -> T {
-    if let Ok(v) = val {
-        v
-    } else {
-        unreachable!("Your monotonic is not infallible")
-    }
-}
 
 pub struct TimerQueue<Mono, Task, const N: usize>(
     pub SortedLinkedList<NotReady<Mono, Task>, LinkedIndexU16, Min, N>,
@@ -87,7 +75,7 @@ where
         &mut self,
         marker: u32,
         new_marker: u32,
-        instant: Instant<Mono>,
+        instant: Mono::Instant,
         pend_handler: F,
     ) -> Result<(), ()> {
         if let Some(mut val) = self.0.find_mut(|nr| nr.marker == marker) {
@@ -111,23 +99,20 @@ where
         mono.clear_compare_flag();
 
         if let Some(instant) = self.0.peek().map(|p| p.instant) {
-            let now = unwrapper(Clock::try_now(mono));
-            // This if statement is like this and not <= due to a bug in embedded-time
-            if instant < now || instant == now {
+            if instant <= mono.now() {
                 // task became ready
                 let nr = unsafe { self.0.pop_unchecked() };
 
                 Some((nr.task, nr.index))
             } else {
                 // Set compare
-                mono.set_compare(&instant);
+                mono.set_compare(instant);
 
                 // Double check that the instant we set is really in the future, else
                 // dequeue. If the monotonic is fast enough it can happen that from the
                 // read of now to the set of the compare, the time can overflow. This is to
                 // guard against this.
-                let now = unwrapper(Clock::try_now(mono));
-                if instant < now || instant == now {
+                if instant <= mono.now() {
                     let nr = unsafe { self.0.pop_unchecked() };
 
                     Some((nr.task, nr.index))
@@ -153,7 +138,7 @@ where
     Mono: Monotonic,
 {
     pub index: u8,
-    pub instant: Instant<Mono>,
+    pub instant: Mono::Instant,
     pub task: Task,
     pub marker: u32,
 }

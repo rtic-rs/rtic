@@ -10,8 +10,7 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::debug;
-    use rtic::time::duration::Seconds;
-    use systick_monotonic::Systick;
+    use systick_monotonic::*;
 
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = Systick<100>; // 100 Hz / 10 ms granularity
@@ -40,27 +39,26 @@ mod app {
         // Not default
         let _: Result<foo::MyMono::SpawnHandle, ()> =
             foo::MyMono::spawn_at(monotonics::MyMono::now());
-        let handle: Result<foo::MyMono::SpawnHandle, ()> = foo::MyMono::spawn_after(Seconds(1_u32));
-        let _: Result<foo::MyMono::SpawnHandle, ()> =
-            handle.unwrap().reschedule_after(Seconds(1_u32));
+        let handle: Result<foo::MyMono::SpawnHandle, ()> = foo::MyMono::spawn_after(1.secs());
+        let _: Result<foo::MyMono::SpawnHandle, ()> = handle.unwrap().reschedule_after(1.secs());
 
-        let handle: Result<foo::MyMono::SpawnHandle, ()> = foo::MyMono::spawn_after(Seconds(1_u32));
+        let handle: Result<foo::MyMono::SpawnHandle, ()> = foo::MyMono::spawn_after(1.secs());
         let _: Result<foo::MyMono::SpawnHandle, ()> =
             handle.unwrap().reschedule_at(monotonics::MyMono::now());
 
-        let handle: Result<foo::MyMono::SpawnHandle, ()> = foo::MyMono::spawn_after(Seconds(1_u32));
+        let handle: Result<foo::MyMono::SpawnHandle, ()> = foo::MyMono::spawn_after(1.secs());
         let _: Result<(), ()> = handle.unwrap().cancel();
 
         // Using default
         let _: Result<foo::SpawnHandle, ()> = foo::spawn_at(monotonics::now());
-        let handle: Result<foo::SpawnHandle, ()> = foo::spawn_after(Seconds(1_u32));
-        let _: Result<foo::SpawnHandle, ()> = handle.unwrap().reschedule_after(Seconds(1_u32));
+        let handle: Result<foo::SpawnHandle, ()> = foo::spawn_after(1.secs());
+        let _: Result<foo::SpawnHandle, ()> = handle.unwrap().reschedule_after(1.secs());
 
-        let handle: Result<foo::SpawnHandle, ()> = foo::spawn_after(Seconds(1_u32));
+        let handle: Result<foo::SpawnHandle, ()> = foo::spawn_after(1.secs());
         let _: Result<foo::SpawnHandle, ()> =
             handle.unwrap().reschedule_at(monotonics::MyMono::now());
 
-        let handle: Result<foo::SpawnHandle, ()> = foo::spawn_after(Seconds(1_u32));
+        let handle: Result<foo::SpawnHandle, ()> = foo::spawn_after(1.secs());
         let _: Result<(), ()> = handle.unwrap().cancel();
 
         // Task with single message passing
@@ -68,30 +66,26 @@ mod app {
         // Not default
         let _: Result<bar::MyMono::SpawnHandle, u32> =
             bar::MyMono::spawn_at(monotonics::MyMono::now(), 0);
-        let handle: Result<bar::MyMono::SpawnHandle, u32> =
-            bar::MyMono::spawn_after(Seconds(1_u32), 0);
-        let _: Result<bar::MyMono::SpawnHandle, ()> =
-            handle.unwrap().reschedule_after(Seconds(1_u32));
+        let handle: Result<bar::MyMono::SpawnHandle, u32> = bar::MyMono::spawn_after(1.secs(), 1);
+        let _: Result<bar::MyMono::SpawnHandle, ()> = handle.unwrap().reschedule_after(1.secs());
 
-        let handle: Result<bar::MyMono::SpawnHandle, u32> =
-            bar::MyMono::spawn_after(Seconds(1_u32), 0);
+        let handle: Result<bar::MyMono::SpawnHandle, u32> = bar::MyMono::spawn_after(1.secs(), 1);
         let _: Result<bar::MyMono::SpawnHandle, ()> =
             handle.unwrap().reschedule_at(monotonics::MyMono::now());
 
-        let handle: Result<bar::MyMono::SpawnHandle, u32> =
-            bar::MyMono::spawn_after(Seconds(1_u32), 0);
+        let handle: Result<bar::MyMono::SpawnHandle, u32> = bar::MyMono::spawn_after(1.secs(), 1);
         let _: Result<u32, ()> = handle.unwrap().cancel();
 
         // Using default
         let _: Result<bar::SpawnHandle, u32> = bar::spawn_at(monotonics::MyMono::now(), 0);
-        let handle: Result<bar::SpawnHandle, u32> = bar::spawn_after(Seconds(1_u32), 0);
-        let _: Result<bar::SpawnHandle, ()> = handle.unwrap().reschedule_after(Seconds(1_u32));
+        let handle: Result<bar::SpawnHandle, u32> = bar::spawn_after(1.secs(), 1);
+        let _: Result<bar::SpawnHandle, ()> = handle.unwrap().reschedule_after(1.secs());
 
-        let handle: Result<bar::SpawnHandle, u32> = bar::spawn_after(Seconds(1_u32), 0);
+        let handle: Result<bar::SpawnHandle, u32> = bar::spawn_after(1.secs(), 1);
         let _: Result<bar::SpawnHandle, ()> =
             handle.unwrap().reschedule_at(monotonics::MyMono::now());
 
-        let handle: Result<bar::SpawnHandle, u32> = bar::spawn_after(Seconds(1_u32), 0);
+        let handle: Result<bar::SpawnHandle, u32> = bar::spawn_after(1.secs(), 1);
         let _: Result<u32, ()> = handle.unwrap().cancel();
 
         // Task with multiple message passing
@@ -100,30 +94,29 @@ mod app {
         let _: Result<baz::MyMono::SpawnHandle, (u32, u32)> =
             baz::MyMono::spawn_at(monotonics::MyMono::now(), 0, 1);
         let handle: Result<baz::MyMono::SpawnHandle, (u32, u32)> =
-            baz::MyMono::spawn_after(Seconds(1_u32), 0, 1);
-        let _: Result<baz::MyMono::SpawnHandle, ()> =
-            handle.unwrap().reschedule_after(Seconds(1_u32));
+            baz::MyMono::spawn_after(1.secs(), 1, 2);
+        let _: Result<baz::MyMono::SpawnHandle, ()> = handle.unwrap().reschedule_after(1.secs());
 
         let handle: Result<baz::MyMono::SpawnHandle, (u32, u32)> =
-            baz::MyMono::spawn_after(Seconds(1_u32), 0, 1);
+            baz::MyMono::spawn_after(1.secs(), 1, 2);
         let _: Result<baz::MyMono::SpawnHandle, ()> =
             handle.unwrap().reschedule_at(monotonics::MyMono::now());
 
         let handle: Result<baz::MyMono::SpawnHandle, (u32, u32)> =
-            baz::MyMono::spawn_after(Seconds(1_u32), 0, 1);
+            baz::MyMono::spawn_after(1.secs(), 1, 2);
         let _: Result<(u32, u32), ()> = handle.unwrap().cancel();
 
         // Using default
         let _: Result<baz::SpawnHandle, (u32, u32)> =
             baz::spawn_at(monotonics::MyMono::now(), 0, 1);
-        let handle: Result<baz::SpawnHandle, (u32, u32)> = baz::spawn_after(Seconds(1_u32), 0, 1);
-        let _: Result<baz::SpawnHandle, ()> = handle.unwrap().reschedule_after(Seconds(1_u32));
+        let handle: Result<baz::SpawnHandle, (u32, u32)> = baz::spawn_after(1.secs(), 1, 2);
+        let _: Result<baz::SpawnHandle, ()> = handle.unwrap().reschedule_after(1.secs());
 
-        let handle: Result<baz::SpawnHandle, (u32, u32)> = baz::spawn_after(Seconds(1_u32), 0, 1);
+        let handle: Result<baz::SpawnHandle, (u32, u32)> = baz::spawn_after(1.secs(), 1, 2);
         let _: Result<baz::SpawnHandle, ()> =
             handle.unwrap().reschedule_at(monotonics::MyMono::now());
 
-        let handle: Result<baz::SpawnHandle, (u32, u32)> = baz::spawn_after(Seconds(1_u32), 0, 1);
+        let handle: Result<baz::SpawnHandle, (u32, u32)> = baz::spawn_after(1.secs(), 1, 2);
         let _: Result<(u32, u32), ()> = handle.unwrap().cancel();
 
         loop {

@@ -10,8 +10,7 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0, QEI0])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use rtic::time::duration::*;
-    use systick_monotonic::Systick; // Implements the `Monotonic` trait // Time helpers, such as `N.seconds()`
+    use systick_monotonic::*; // Implements the `Monotonic` trait
 
     // A monotonic timer to enable scheduling in RTIC
     #[monotonic(binds = SysTick, default = true)]
@@ -41,7 +40,7 @@ mod app {
 
         // Spawn the task `bar` 1 second after `init` finishes, this is enabled
         // by the `#[monotonic(..)]` above
-        bar::spawn_after(1.seconds()).unwrap();
+        bar::spawn_after(1.secs()).unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
@@ -83,7 +82,7 @@ mod app {
         hprintln!("bar").ok();
 
         // Run `bar` once per second
-        bar::spawn_after(1.seconds()).unwrap();
+        bar::spawn_after(1.secs()).unwrap();
     }
 
     // Hardware task, bound to a hardware interrupt
