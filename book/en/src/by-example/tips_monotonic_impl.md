@@ -14,7 +14,8 @@ it is almost trivial to implement the `Monotonic` trait and use any timer in a s
 The trait documents the requirements for each method, however below you can find a list of
 implementations in the wild that can be used as inspiration:
 
-- [`STM32F411 timers`], implemented for the 32-bit timers
+- [`STM32F411 series`], implemented for the 32-bit timers
+- [`Nordic nRF52 series`], implemented for the 32-bit timers
 - [`Systick based`], runs at a fixed rate - some overhead but simple
 - [`DWT and Systick based`], a more efficient `Systick` based implementation, but requires `DWT`
 
@@ -23,7 +24,8 @@ If you know of more implementations feel free to add them to this list.
 [`rtic_monotonic::Monotonic`]: https://docs.rs/rtic-monotonic/
 [`fugit`]: https://docs.rs/fugit/
 [`embedded_time`]: https://docs.rs/embedded_time/
-[`STM32F411 timers`]: https://github.com/kalkyl/f411-rtic/blob/main/src/bin/mono.rs
+[`STM32F411 series`]: https://github.com/kalkyl/f411-rtic/blob/main/src/bin/mono.rs
+[`Nordic nRF52 series`]: https://github.com/kalkyl/nrf-play/blob/main/src/bin/mono.rs
 [`Systick based`]: https://github.com/rtic-rs/systick-monotonic
 [`DWT and Systick based`]: https://github.com/rtic-rs/dwt-systick-monotonic
 
