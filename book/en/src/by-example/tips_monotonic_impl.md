@@ -11,55 +11,19 @@ RTIC 0.6 we have moved to assume the user has a time library, e.g. [`fugit`] or 
 as the basis for all time-based operations when implementing `Monotonic`. This is why in RTIC 0.6
 it is almost trivial to implement the `Monotonic` trait and use any timer in a system for scheduling.
 
-The trait documents the requirements for each method, however a small PoC implementation is provided
-below.
+The trait documents the requirements for each method, however below you can find a list of
+implementations in the wild that can be used as inspiration:
+
+- [`STM32F411 timers`], implemented for the 32-bit timers
+- [`Systick based`], runs at a fixed rate - some overhead but simple
+- [`DWT and Systick based`], a more efficient `Systick` based implementation, but requires `DWT`
+
+If you know of more implementations feel free to add them to this list.
 
 [`rtic_monotonic::Monotonic`]: https://docs.rs/rtic-monotonic/
 [`fugit`]: https://docs.rs/fugit/
 [`embedded_time`]: https://docs.rs/embedded_time/
+[`STM32F411 timers`]: https://github.com/kalkyl/f411-rtic/blob/main/src/bin/mono.rs
+[`Systick based`]: https://github.com/rtic-rs/systick-monotonic
+[`DWT and Systick based`]: https://github.com/rtic-rs/dwt-systick-monotonic
 
-```rust
-pub use fugit::{self, ExtU32};
-use rtic_monotonic::Monotonic;
-
-/// Example wrapper struct for a timer
-pub struct Timer<const TIMER_HZ: u32> {
-    tim: TIM2,
-}
-
-impl<const TIMER_HZ: u32> Monotonic for Timer<TIMER_HZ> {
-    type Instant = fugit::TimerInstantU32<TIMER_HZ>;
-    type Duration = fugit::TimerDurationU32<TIMER_HZ>;
-
-    fn now(&mut self) -> Self::Instant {
-        // Read the timer count
-        Self::Instant::from_ticks(Self::count())
-    }
-
-    fn zero() -> Self::Instant {
-        // This is used while the app is in `#[init]`, if the system cannot
-        // support time in `#[init]` this can also be a `panic!(..)`
-        Self::Instant::from_ticks(0)
-    }
-
-    unsafe fn reset(&mut self) {
-        // Reset timer counter
-        self.tim.cnt.write(|_, w| w.bits(0));
-
-        // Since reset is only called once, we use it to enable
-        // the interrupt generation bit.
-        self.tim.dier.modify(|_, w| w.cc1ie().set_bit());
-    }
-
-    fn set_compare(&mut self, instant: Instant<Self>) {
-        // Use Compare channel 1 for Monotonic
-        self.tim
-            .ccr1
-            .write(|w| w.ccr().bits(instant.ticks()));
-    }
-
-    fn clear_compare_flag(&mut self) {
-        self.tim.sr.modify(|_, w| w.cc1if().clear_bit());
-    }
-}
-```
