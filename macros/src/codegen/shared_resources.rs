@@ -43,21 +43,23 @@ pub fn codegen(
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
 
+        let shared_name = util::need_to_lock_ident(name);
+
         if !res.properties.lock_free {
             mod_resources.push(quote!(
                 // #[doc = #doc]
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
-                pub struct #name<'a> {
+                pub struct #shared_name<'a> {
                     priority: &'a Priority,
                 }
 
                 #(#cfgs)*
-                impl<'a> #name<'a> {
+                impl<'a> #shared_name<'a> {
                     #[inline(always)]
                     pub unsafe fn new(priority: &'a Priority) -> Self {
-                        #name { priority }
+                        #shared_name { priority }
                     }
 
                     #[inline(always)]
@@ -86,7 +88,7 @@ pub fn codegen(
                 extra,
                 cfgs,
                 true,
-                &name,
+                &shared_name,
                 quote!(#ty),
                 ceiling,
                 ptr,
