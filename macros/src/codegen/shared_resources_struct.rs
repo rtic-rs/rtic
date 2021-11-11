@@ -33,6 +33,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         };
         let ty = &res.ty;
         let mangled_name = util::static_shared_resource_ident(&name);
+        let shared_name = util::need_to_lock_ident(name);
 
         if !res.properties.lock_free {
             if access.is_shared() {
@@ -48,12 +49,12 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
                 fields.push(quote!(
                     #(#cfgs)*
-                    pub #name: shared_resources::#name<'a>
+                    pub #name: shared_resources::#shared_name<'a>
                 ));
 
                 values.push(quote!(
                     #(#cfgs)*
-                    #name: shared_resources::#name::new(priority)
+                    #name: shared_resources::#shared_name::new(priority)
 
                 ));
 
