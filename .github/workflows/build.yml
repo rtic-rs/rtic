@@ -27,6 +27,9 @@ jobs:
           override: true
           components: rustfmt
 
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+
       - name: cargo fmt --check
         uses: actions-rs/cargo@v1
         with:
@@ -77,6 +80,9 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
           override: true
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: cargo check
         uses: actions-rs/cargo@v1
@@ -196,6 +202,8 @@ jobs:
           sudo apt update
           sudo apt install -y qemu-system-arm
 
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Run-pass tests
         run:
@@ -243,6 +251,9 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
           override: true
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: cargo check
         uses: actions-rs/cargo@v1
@@ -293,6 +304,9 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
           override: true
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: cargo check
         uses: actions-rs/cargo@v1
@@ -402,6 +416,9 @@ jobs:
 
       - name: Remove cargo-config
         run: rm -f .cargo/config
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Build docs
         run: cargo doc
