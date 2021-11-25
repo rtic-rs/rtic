@@ -1,9 +1,8 @@
-// #![deny(warnings)]
-
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg",
     html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg"
 )]
+//deny_warnings_placeholder_for_ci
 
 extern crate proc_macro;
 
