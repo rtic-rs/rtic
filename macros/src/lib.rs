@@ -1,5 +1,10 @@
 // #![deny(warnings)]
 
+#![doc(
+    html_logo_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg",
+    html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg"
+)]
+
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
