@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Change default `idle` behaviour to be `NOP` instead of `WFI`
+
 ## [v0.6.0-rc.4] - 2021-11-09
 
 - Updated to use the new generic `Monotonic` trait
