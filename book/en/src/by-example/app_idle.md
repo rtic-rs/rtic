@@ -1,14 +1,18 @@
 # The background task `#[idle]`
 
 A function marked with the `idle` attribute can optionally appear in the
-module. This function is used as the special *idle task* and must have
-signature `fn(idle::Context) -> !`.
+module. This becomes the special *idle task* and must have signature
+`fn(idle::Context) -> !`.
 
 When present, the runtime will execute the `idle` task after `init`. Unlike
-`init`, `idle` will run *with interrupts enabled* and it's not allowed to return
-so it must run forever.
+`init`, `idle` will run *with interrupts enabled* and must never return,
+as the `-> !` function signature indicates.
+[The Rust type `!` means “never”][nevertype].
 
-Like in `init`, locally declared resources will have `'static` lifetimes that are safe to access.
+[nevertype]: https://doc.rust-lang.org/core/primitive.never.html
+
+Like in `init`, locally declared resources will have `'static` lifetimes that
+are safe to access.
 
 The example below shows that `idle` runs after `init`.
 
@@ -21,9 +25,9 @@ $ cargo run --target thumbv7m-none-eabi --example idle
 {{#include ../../../../ci/expected/idle.run}}
 ```
 
-By default the RTIC `idle` task does not try to optimise for any specific targets.
+By default, the RTIC `idle` task does not try to optimize for any specific targets.
 
-A common useful optimisation is to enable the [SLEEPONEXIT] and allow the MCU
+A common useful optimization is to enable the [SLEEPONEXIT] and allow the MCU
 to enter sleep when reaching `idle`.
 
 >**Caution** some hardware unless configured disables the debug unit during sleep mode.

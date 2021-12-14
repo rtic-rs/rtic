@@ -1,17 +1,21 @@
 # Hardware tasks
 
-At its core RTIC is based on using the interrupt controller in the hardware to do scheduling and
-run tasks, as all tasks in the framework are run as interrupt handlers (except `#[init]` and
-`#[idle]`). This also means that you can directly bind tasks to interrupt handlers.
+At its core RTIC is using the hardware interrupt controller ([ARM NVIC on cortex-m][NVIC])
+to perform scheduling and executing tasks, and all tasks except `#[init]` and `#[idle]`
+run as interrupt handlers.
+This also means that you can manually bind tasks to interrupt handlers.
 
-To declare interrupt handlers the  `#[task]` attribute takes a `binds = InterruptName` argument whose
-value is the name of the interrupt to which the handler will be bound to; the
-function used with this attribute becomes the interrupt handler. Within the
-framework these type of tasks are referred to as *hardware* tasks, because they
-start executing in reaction to a hardware event.
+To bind an interrupt use the `#[task]` attribute argument `binds = InterruptName`.
+This task becomes the interrupt handler for this hardware interrupt vector.
 
-Providing an interrupt name that does not exist will cause a compile error to help with accidental
-errors.
+All tasks bound to an explicit interrupt are *hardware tasks* since they
+start execution in reaction to a hardware event.
+
+Specifying a non-existing interrupt name will cause a compilation error. The interrupt names
+are commonly defined by [PAC or HAL][pacorhal] crates.
+
+[pacorhal]: https://docs.rust-embedded.org/book/start/registers.html
+[NVIC]: https://developer.arm.com/documentation/100166/0001/Nested-Vectored-Interrupt-Controller/NVIC-functional-description/NVIC-interrupts
 
 The example below demonstrates the use of the `#[task]` attribute to declare an
 interrupt handler.
@@ -24,4 +28,3 @@ interrupt handler.
 $ cargo run --target thumbv7m-none-eabi --example hardware
 {{#include ../../../../ci/expected/hardware.run}}
 ```
-

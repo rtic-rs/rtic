@@ -1,22 +1,22 @@
 # Resource usage
 
-The RTIC framework manages shared and task local resources which allows data to be persistently
-stored and safely accessed without the use of unsafe code.
+The RTIC framework manages shared and task local resources allowing persistent data
+storage and safe accesses without the use of `unsafe` code.
 
 RTIC resources are visible only to functions declared within the `#[app]` module and the framework
 gives the user complete control (on a per-task basis) over resource accessibility.
 
-System wide resources are declared as **two** `struct`'s within the `#[app]` module annotated with
-the attribute `#[local]` and `#[shared]` respectively. Each field in these structures corresponds
-to a different resource (identified by field name). The difference between these two sets of
-resources will be covered below.
+Declaration of system-wide resources are by annotating **two** `struct`s within the `#[app]` module
+with the attribute `#[local]` and `#[shared]`.
+Each field in these structures corresponds to a different resource (identified by field name).
+The difference between these two sets of resources will be covered below.
 
 Each task must declare the resources it intends to access in its corresponding metadata attribute
-using the `local` and `shared` arguments. Each argument takes a list of resource identifiers. The
-listed resources are made available to the context under the `local` and `shared` fields of the
+using the `local` and `shared` arguments. Each argument takes a list of resource identifiers.
+The listed resources are made available to the context under the `local` and `shared` fields of the
 `Context` structure.
 
-The `init` task returns the initial values for the system wide (`#[shared]` and `#[local]`)
+The `init` task returns the initial values for the system-wide (`#[shared]` and `#[local]`)
 resources, and the set of initialized timers used by the application. The monotonic timers will be
 further discussed in [Monotonic & `spawn_{at/after}`](./monotonic.md).
 
@@ -26,6 +26,9 @@ further discussed in [Monotonic & `spawn_{at/after}`](./monotonic.md).
 access the resource and does so without locks or critical sections. This allows for the resources,
 commonly drivers or large objects, to be initialized in `#[init]` and then be passed to a specific
 task.
+
+Thus, a task `#[local]` resource can only be accessed by one singular task.
+Attempting to assign the same `#[local]` resource to more than one task is a compile-time error.
 
 The example application shown below contains two tasks where each task has access to its own
 `#[local]` resource, plus that the `idle` task has its own `#[local]` as well.
@@ -39,15 +42,12 @@ $ cargo run --target thumbv7m-none-eabi --example locals
 {{#include ../../../../ci/expected/locals.run}}
 ```
 
-A `#[local]` resource cannot be accessed from outside the task it was associated to in a `#[task]` attribute.
-Assigning the same `#[local]` resource to more than one task is a compile-time error.
-
 ### Task local initialized resources
 
 A special use-case of local resources are the ones specified directly in the resource claim,
 `#[task(local = [my_var: TYPE = INITIAL_VALUE, ...])]`, this allows for creating locals which do no need to be
 initialized in `#[init]`.
-Moreover local resources in `#[init]` and `#[idle]` have `'static` lifetimes, this is safe since both are not re-entrant.
+Moreover, local resources in `#[init]` and `#[idle]` have `'static` lifetimes, this is safe since both are not re-entrant.
 
 In the example below the different uses and lifetimes are shown:
 
@@ -96,7 +96,7 @@ $ cargo run --target thumbv7m-none-eabi --example lock
 ## Multi-lock
 
 As an extension to `lock`, and to reduce rightward drift, locks can be taken as tuples. The
-following examples shows this in use:
+following examples show this in use:
 
 ``` rust
 {{#include ../../../../examples/multilock.rs}}
@@ -109,12 +109,12 @@ $ cargo run --target thumbv7m-none-eabi --example multilock
 
 ## Only shared (`&-`) access
 
-By default the framework assumes that all tasks require exclusive access (`&mut-`) to resources but
-it is possible to specify that a task only requires shared access (`&-`) to a resource using the
+By default, the framework assumes that all tasks require exclusive access (`&mut-`) to resources,
+but it is possible to specify that a task only requires shared access (`&-`) to a resource using the
 `&resource_name` syntax in the `shared` list.
 
 The advantage of specifying shared access (`&-`) to a resource is that no locks are required to
-access the resource even if the resource is contended by several tasks running at different
+access the resource even if the resource is contended by more than one task running at different
 priorities. The downside is that the task only gets a shared reference (`&-`) to the resource,
 limiting the operations it can perform on it, but where a shared reference is enough this approach
 reduces the number of required locks. In addition to simple immutable data, this shared access can
@@ -142,8 +142,11 @@ $ cargo run --target thumbv7m-none-eabi --example only-shared-access
 A critical section is *not* required to access a `#[shared]` resource that's only accessed by tasks
 running at the *same* priority. In this case, you can opt out of the `lock` API by adding the
 `#[lock_free]` field-level attribute to the resource declaration (see example below). Note that
-this is merely a convenience: if you do use the `lock` API, at runtime the framework will
-**not** produce a critical section. Also worth noting: using `#[lock_free]` on resources shared by
+this is merely a convenience to reduce needless resource locking code, because even if the
+`lock` API is used, at runtime the framework will **not** produce a critical section due to how
+the underlying resource-ceiling preemption works.
+
+Also worth noting: using `#[lock_free]` on resources shared by
 tasks running at different priorities will result in a *compile-time* error -- not using the `lock`
 API would be a data race in that case.
 
