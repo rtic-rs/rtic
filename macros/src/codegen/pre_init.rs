@@ -122,12 +122,5 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             ));
         }
     }
-
-    // If there's no user `#[idle]` then optimize returning from interrupt handlers
-    if app.idle.is_none() {
-        // Set SLEEPONEXIT bit to enter sleep mode when returning from ISR
-        stmts.push(quote!(core.SCB.scr.modify(|r| r | 1 << 1);));
-    }
-
     stmts
 }

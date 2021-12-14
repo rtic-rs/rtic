@@ -85,7 +85,7 @@ pub fn codegen(
             vec![],
             None,
             quote!(loop {
-                rtic::export::wfi()
+                rtic::export::nop()
             }),
         )
     }
