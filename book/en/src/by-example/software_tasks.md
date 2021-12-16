@@ -1,21 +1,31 @@
 # Software tasks & spawn
 
-Software tasks, as hardware tasks, are run as interrupt handlers where all software tasks at the
-same priority shares a "free" interrupt handler to run from, called a dispatcher. These free
-interrupts are interrupt vectors not used by hardware tasks.
+Software tasks are tasks which are not directly assigned to a specific interrupt vector.
 
-To declare tasks in the framework the `#[task]` attribute is used on a function.
-By default these tasks are referred to as software tasks as they do not have a direct coupling to
-an interrupt handler. Software tasks can be spawned (started) using the `task_name::spawn()` static
-method which will directly run the task given that there are no higher priority tasks running.
+They run as interrupt handlers where all software tasks at the
+same priority level shares a "free" interrupt handler acting as a dispatcher.
+Thus, what differentiates software and hardware tasks are the dispatcher versus
+bound interrupt vector.
 
-To indicate to the framework which interrupts are free for use to dispatch software tasks with the
-`#[app]` attribute has a `dispatchers = [FreeInterrupt1, FreeInterrupt2, ...]` argument. You need
-to provide as many dispatchers as there are priority levels used by software tasks, as an
-dispatcher is assigned per interrupt level. The framework will also give a compile error if there
-are not enough dispatchers provided.
+These free interrupts used as dispatchers are interrupt vectors not used by hardware tasks.
 
-This is exemplified in the following:
+The `#[task]` attribute used on a function declare it as a software tasks.
+The static method `task_name::spawn()` spawn (start) a software task and
+given that there are no higher priority tasks running the task will start executing directly.
+
+A list of “free” and usable interrupts allows the framework to dispatch software tasks.
+This list of dispatchers, `dispatchers = [FreeInterrupt1, FreeInterrupt2, ...]` is an
+argument to the `#[app]` attribute.
+
+Each interrupt vector acting as dispatcher gets assigned to one priority level meaning that
+the list of dispatchers need to cover all priority levels used by software tasks.
+
+Example: The `dispatchers =` argument needs to have at least 3 entries for an application using
+three different priorities for software tasks.
+
+The framework will give a compilation error if there are not enough dispatchers provided.
+
+See the following example:
 
 ``` rust
 {{#include ../../../../examples/spawn.rs}}
