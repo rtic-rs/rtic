@@ -3,7 +3,9 @@
 Message passing always involves copying the payload from the sender into a
 static variable and then from the static variable into the receiver. Thus
 sending a large buffer, like a `[u8; 128]`, as a message involves two expensive
-`memcpy`s. To minimize the message passing overhead one can use indirection:
+`memcpy`s.
+
+Indirection can minimize message passing overhead:
 instead of sending the buffer by value, one can send an owning pointer into the
 buffer.
 
@@ -23,4 +25,3 @@ Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 $ cargo run --target thumbv7m-none-eabi --example pool
 {{#include ../../../../ci/expected/pool.run}}
 ```
-
