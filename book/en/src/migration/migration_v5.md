@@ -71,7 +71,7 @@ mod app {
 }
 ```
 
-## Move Dispatchers from `extern "C"` to app arguments.
+## Move Dispatchers from `extern "C"` to app arguments
 
 Change
 
@@ -171,7 +171,10 @@ fn b(_: b::Context) {}
 
 ## Symmetric locks
 
-Now RTIC utilizes symmetric locks, this means that the `lock` method need to be used for all `shared` resource access. In old code one could do the following as the high priority task has exclusive access to the resource:
+Now RTIC utilizes symmetric locks, this means that the `lock` method need
+to be used for all `shared` resource access.
+In old code one could do the following as the high priority
+task has exclusive access to the resource:
 
 ``` rust
 #[task(priority = 2, resources = [r])]
@@ -354,6 +357,7 @@ Note that the attributes `spawn` and `schedule` are no longer needed.
 
 ### Extern tasks
 
-Both software and hardware tasks can now be defined external to the `mod app`. Previously this was possible only by implementing a trampoline calling out the task implementation.
+Both software and hardware tasks can now be defined external to the `mod app`.
+Previously this was possible only by implementing a trampoline calling out the task implementation.
 
 See examples `examples/extern_binds.rs` and `examples/extern_spawn.rs`.

@@ -1,19 +1,31 @@
 # Migrating from v0.4.x to v0.5.0
 
-This section covers how to upgrade an application written against RTIC v0.4.x to
+This section covers how to upgrade an application written against RTFM v0.4.x to
 the version v0.5.0 of the framework.
+
+## Project name change RTFM -> RTIC
+
+With release [v0.5.2][rtic0.5.2] the name was change to Real-Time Interrupt-driven Concurrency
+
+All occurrences of `RTFM` needs to change to `RTIC`.
+
+See [migration guide RTFM to RTIC](./migration_rtic.md)
+
+[rtic0.5.2]: https://crates.io/crates/cortex-m-rtic/0.5.2
 
 ## `Cargo.toml`
 
-First, the version of the `cortex-m-rtic` dependency needs to be updated to
-`"0.5.0"`. The `timer-queue` feature needs to be removed.
+Change the version of `cortex-m-rtfm` to
+`"0.5.0"`, change `rtfm` to `rtic`.
+Remove the `timer-queue` feature.
 
 ``` toml
-[dependencies.cortex-m-rtic]
+[dependencies.cortex-m-rtfm]
 # change this
 version = "0.4.3"
 
 # into this
+[dependencies.cortex-m-rtic]
 version = "0.5.0"
 
 # and remove this Cargo feature
@@ -23,15 +35,15 @@ features = ["timer-queue"]
 
 ## `Context` argument
 
-All functions inside the `#[rtic::app]` item need to take as first argument a
+All functions inside the `#[rtfm::app]` item need to take as first argument a
 `Context` structure. This `Context` type will contain the variables that were
 magically injected into the scope of the function by version v0.4.x of the
 framework: `resources`, `spawn`, `schedule` -- these variables will become
-fields of the `Context` structure. Each function within the `#[rtic::app]` item
+fields of the `Context` structure. Each function within the `#[rtfm::app]` item
 gets a different `Context` type.
 
 ``` rust
-#[rtic::app(/* .. */)]
+#[rtfm::app(/* .. */)]
 const APP: () = {
     // change this
     #[task(resources = [x], spawn = [a], schedule = [b])]
@@ -75,11 +87,11 @@ const APP: () = {
 
 ## Resources
 
-The syntax used to declare resources has been changed from `static mut`
+The syntax used to declare resources has changed from `static mut`
 variables to a `struct Resources`.
 
 ``` rust
-#[rtic::app(/* .. */)]
+#[rtfm::app(/* .. */)]
 const APP: () = {
     // change this
     static mut X: u32 = 0;
@@ -101,13 +113,13 @@ const APP: () = {
 
 If your application was accessing the device peripherals in `#[init]` through
 the `device` variable then you'll need to add `peripherals = true` to the
-`#[rtic::app]` attribute to continue to access the device peripherals through
+`#[rtfm::app]` attribute to continue to access the device peripherals through
 the `device` field of the `init::Context` structure.
 
 Change this:
 
 ``` rust
-#[rtic::app(/* .. */)]
+#[rtfm::app(/* .. */)]
 const APP: () = {
     #[init]
     fn init() {
@@ -121,7 +133,7 @@ const APP: () = {
 Into this:
 
 ``` rust
-#[rtic::app(/* .. */, peripherals = true)]
+#[rtfm::app(/* .. */, peripherals = true)]
 //                    ^^^^^^^^^^^^^^^^^^
 const APP: () = {
     #[init]
@@ -137,13 +149,14 @@ const APP: () = {
 
 ## `#[interrupt]` and `#[exception]`
 
-The `#[interrupt]` and `#[exception]` attributes have been removed. To declare
-hardware tasks in v0.5.x use the `#[task]` attribute with the `binds` argument.
+Remove the attributes `#[interrupt]` and `#[exception]`.
+To declare hardware tasks in v0.5.x use the `#[task]`
+attribute with the `binds` argument instead.
 
 Change this:
 
 ``` rust
-#[rtic::app(/* .. */)]
+#[rtfm::app(/* .. */)]
 const APP: () = {
     // hardware tasks
     #[exception]
@@ -163,7 +176,7 @@ const APP: () = {
 Into this:
 
 ``` rust
-#[rtic::app(/* .. */)]
+#[rtfm::app(/* .. */)]
 const APP: () = {
     #[task(binds = SVCall)]
     //     ^^^^^^^^^^^^^^
@@ -183,25 +196,26 @@ const APP: () = {
 
 ## `schedule`
 
-The `schedule` API no longer requires the `timer-queue` cargo feature, which has
-been removed. To use the `schedule` API one must
-first define the monotonic timer the runtime will use using the `monotonic`
-argument of the `#[rtic::app]` attribute. To continue using the cycle counter
-(CYCCNT) as the monotonic timer, and match the behavior of version v0.4.x, add
-the `monotonic = rtic::cyccnt::CYCCNT` argument to the `#[rtic::app]` attribute.
+The `schedule` API no longer requires the `timer-queue` cargo feature.
+To use the `schedule` API one must first define the monotonic timer the
+runtime will use using the `monotonic` argument of the `#[rtfm::app]` attribute.
+To continue using the cycle counter (CYCCNT) as the monotonic timer,
+and match the behavior of version v0.4.x, add the `monotonic = rtfm::cyccnt::CYCCNT`
+argument to the `#[rtfm::app]` attribute.
 
-Also, the `Duration` and `Instant` types and the `U32Ext` trait have been moved
-into the `rtic::cyccnt` module. This module is only available on ARMv7-M+
-devices. The removal of the `timer-queue` also brings back the `DWT` peripheral
-inside the core peripherals struct, this will need to be enabled by the application
-inside `init`.
+Also, the `Duration` and `Instant` types and the `U32Ext` trait moved
+into the `rtfm::cyccnt` module.
+This module is only available on ARMv7-M+ devices.
+The removal of the `timer-queue` also brings back the `DWT` peripheral
+inside the core peripherals struct, if `DWT` is required,
+ensure it is enabled by the application inside `init`.
 
 Change this:
 
 ``` rust
-use rtic::{Duration, Instant, U32Ext};
+use rtfm::{Duration, Instant, U32Ext};
 
-#[rtic::app(/* .. */)]
+#[rtfm::app(/* .. */)]
 const APP: () = {
     #[task(schedule = [b])]
     fn a() {
@@ -213,10 +227,10 @@ const APP: () = {
 Into this:
 
 ``` rust
-use rtic::cyccnt::{Duration, Instant, U32Ext};
+use rtfm::cyccnt::{Duration, Instant, U32Ext};
 //        ^^^^^^^^
 
-#[rtic::app(/* .. */, monotonic = rtic::cyccnt::CYCCNT)]
+#[rtfm::app(/* .. */, monotonic = rtfm::cyccnt::CYCCNT)]
 //                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 const APP: () = {
     #[init]
