@@ -9,7 +9,7 @@ Implementing time counting that supports large time spans is generally **difficu
 implementing time handling was a common problem.
 Moreover, the relation between time and timers used for scheduling was difficult to understand.
 
-For RTIC 0.6 we have moved to assume the user has a time library, e.g. [`fugit`] or [`embedded_time`],
+For RTIC 0.6 we instead assume the user has a time library, e.g. [`fugit`] or [`embedded_time`],
 as the basis for all time-based operations when implementing `Monotonic`.
 This makes it almost trivial to implement the `Monotonic` trait allowing the use of any timer in
 the system for scheduling.
