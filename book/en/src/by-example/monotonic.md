@@ -10,7 +10,7 @@ The `#[monotonic]` attribute, applied to a type alias definition, exists to supp
 This type alias must point to a type which implements the [`rtic_monotonic::Monotonic`] trait.
 This is generally some timer which handles the timing of the system.
 One or more monotonics can coexist in the same system, for example a slow timer that wakes the
-system from sleep and another which purpose is for high granularity scheduling while the
+system from sleep and another which purpose is for fine grained scheduling while the
 system is awake.
 
 [`rtic_monotonic::Monotonic`]: https://docs.rs/rtic-monotonic
