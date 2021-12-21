@@ -7,7 +7,7 @@ options:
 You can inspect the file `rtic-expansion.rs` inside the `target` directory. This
 file contains the expansion of the `#[rtic::app]` item (not your whole program!)
 of the *last built* (via `cargo build` or `cargo check`) RTIC application. The
-expanded code is not pretty printed by default so you'll want to run `rustfmt`
+expanded code is not pretty printed by default, so you'll want to run `rustfmt`
 on it before you read it.
 
 ``` console
@@ -15,7 +15,7 @@ $ cargo build --example foo
 
 $ rustfmt target/rtic-expansion.rs
 
-$ tail target/rtic-expansion.rs
+tail target/rtic-expansion.rs
 ```
 
 ``` rust
@@ -43,6 +43,6 @@ crate and print the output to the console.
 [`cargo-expand`]: https://crates.io/crates/cargo-expand
 
 ``` console
-$ # produces the same output as before
-$ cargo expand --example smallest | tail
+# produces the same output as before
+cargo expand --example smallest | tail
 ```

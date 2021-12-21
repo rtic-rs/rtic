@@ -1,7 +1,8 @@
 # Resource de-structure-ing
 
-When having a task taking multiple resources it can help in readability to split
-up the resource struct. Here are two examples on how this can be done:
+Destructuring task resources might help readability if a task takes multiple
+resources.
+Here are two examples on how to split up the resource struct:
 
 ``` rust
 {{#include ../../../../examples/destructure.rs}}

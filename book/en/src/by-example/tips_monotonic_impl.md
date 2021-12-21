@@ -1,18 +1,21 @@
 # Implementing a `Monotonic` timer for scheduling
 
-The framework is very flexible in that it can utilize any timer which has compare-match and (optional)
-overflow interrupts for scheduling. The only thing needed to make a timer usable with RTIC is to
-implement the [`rtic_monotonic::Monotonic`] trait.
+The framework is flexible because it can use any timer which has compare-match and optionally
+supporting overflow interrupts for scheduling.
+The single requirement to make a timer usable with RTIC is implementing the
+[`rtic_monotonic::Monotonic`] trait.
 
-Implementing time that supports a vast range is generally **very** difficult, and in RTIC 0.5 it was a
-common problem how to implement time handling and not get stuck in weird special cases. Moreover
-it was difficult to understand the relation between time and the timers used for scheduling. For
-RTIC 0.6 we have moved to assume the user has a time library, e.g. [`fugit`] or [`embedded_time`],
-as the basis for all time-based operations when implementing `Monotonic`. This is why in RTIC 0.6
-it is almost trivial to implement the `Monotonic` trait and use any timer in a system for scheduling.
+Implementing time counting that supports large time spans is generally **difficult**, in RTIC 0.5
+implementing time handling was a common problem.
+Moreover, the relation between time and timers used for scheduling was difficult to understand.
 
-The trait documents the requirements for each method, however below you can find a list of
-implementations in the wild that can be used as inspiration:
+For RTIC 0.6 we instead assume the user has a time library, e.g. [`fugit`] or [`embedded_time`],
+as the basis for all time-based operations when implementing `Monotonic`.
+This makes it almost trivial to implement the `Monotonic` trait allowing the use of any timer in
+the system for scheduling.
+
+The trait documents the requirements for each method,
+and for inspiration here is a list of `Monotonic` implementations:
 
 - [`STM32F411 series`], implemented for the 32-bit timers
 - [`Nordic nRF52 series`], implemented for the 32-bit timers
@@ -28,4 +31,3 @@ If you know of more implementations feel free to add them to this list.
 [`Nordic nRF52 series`]: https://github.com/kalkyl/nrf-play/blob/main/src/bin/mono.rs
 [`Systick based`]: https://github.com/rtic-rs/systick-monotonic
 [`DWT and Systick based`]: https://github.com/rtic-rs/dwt-systick-monotonic
-

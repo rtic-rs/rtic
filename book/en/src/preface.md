@@ -8,7 +8,7 @@
 # Preface
 
 This book contains user level documentation for the Real-Time Interrupt-driven Concurrency
-(RTIC) framework. The API reference can be found [here](../../api/).
+(RTIC) framework. The API reference is available [here](../../api/).
 
 Formerly known as Real-Time For the Masses.
 
