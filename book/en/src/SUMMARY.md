@@ -25,7 +25,7 @@
     <!-- - [`#[cfg(..)]` support](./by-example/tips.md) -->
 - [Awesome RTIC examples](./awesome_rtic.md)
 - [Migration Guides](./migration.md)
-  - [v0.5.x to v0.6.x](./migration/migration_v5.md)
+  - [v0.5.x to v1.0.x](./migration/migration_v5.md)
   - [v0.4.x to v0.5.x](./migration/migration_v4.md)
   - [RTFM to RTIC](./migration/migration_rtic.md)
 - [Under the hood](./internals.md)

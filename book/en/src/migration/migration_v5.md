@@ -1,10 +1,10 @@
-# Migrating from v0.5.x to v0.6.0
+# Migrating from v0.5.x to v1.0.0
 
-This section describes how to upgrade from v0.5.x to v0.6.0 of the RTIC framework.
+This section describes how to upgrade from v0.5.x to v1.0.0 of the RTIC framework.
 
 ## `Cargo.toml` - version bump
 
-Change the version of `cortex-m-rtic` to `"0.6.0"`.
+Change the version of `cortex-m-rtic` to `"1.0.0"`.
 
 ## `mod` instead of `const`
 
@@ -112,7 +112,7 @@ struct Resources {
 }
 ```
 
-With RTIC v0.6.0 the resources structs are annotated similarly like
+With RTIC v1.0.0 the resources structs are annotated similarly like
 `#[task]`, `#[init]`, `#[idle]`: with the attributes `#[shared]` and `#[local]`
 
 ``` rust
@@ -131,7 +131,7 @@ These structs can be freely named by the developer.
 
 ## `shared` and `local` arguments in `#[task]`s
 
-In v0.6.0 resources are split between `shared` resources and `local` resources.
+In v1.0.0 resources are split between `shared` resources and `local` resources.
 `#[task]`, `#[init]` and `#[idle]` no longer have a `resources` argument; they must now use the `shared` and `local` arguments.
 
 In v0.5.x:
@@ -149,7 +149,7 @@ fn a(_: a::Context) {}
 fn b(_: b::Context) {}
 ```
 
-In v0.6.0:
+In v1.0.0:
 
 ``` rust
 #[shared]
@@ -207,7 +207,7 @@ Note that the performance does not change thanks to LLVM's optimizations which o
 ## Lock-free resource access
 
 In RTIC 0.5 resources shared by tasks running at the same priority could be accessed *without* the `lock` API.
-This is still possible in 0.6: the `#[shared]` resource must be annotated with the field-level `#[lock_free]` attribute.
+This is still possible in 1.0: the `#[shared]` resource must be annotated with the field-level `#[lock_free]` attribute.
 
 v0.5 code:
 
@@ -227,7 +227,7 @@ fn b(cx: b::Context) {
 }
 ```
 
-v0.6 code:
+v1.0 code:
 
 ``` rust
 #[shared]
@@ -262,7 +262,7 @@ fn init(_: init::Context) {
 }
 ```
 
-v0.6.0 code:
+v1.0.0 code:
 
 ``` rust
 #[init(local = [
