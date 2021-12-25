@@ -95,12 +95,20 @@ impl<T> RacyCell<T> {
     }
 
     /// Get `*mut T`
+    ///
+    /// # Safety
+    ///
+    /// See documentation notes for [`RacyCell`]
     #[inline(always)]
     pub unsafe fn get_mut(&self) -> *mut T {
         self.0.get()
     }
 
     /// Get `*const T`
+    ///
+    /// # Safety
+    ///
+    /// See documentation notes for [`RacyCell`]
     #[inline(always)]
     pub unsafe fn get(&self) -> *const T {
         self.0.get()

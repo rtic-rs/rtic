@@ -76,7 +76,7 @@ pub fn interrupt_ident() -> Ident {
 }
 
 pub fn timer_queue_marker_ident() -> Ident {
-    mark_internal_name(&"TIMER_QUEUE_MARKER")
+    mark_internal_name("TIMER_QUEUE_MARKER")
 }
 
 /// Whether `name` is an exception with configurable priority
@@ -225,7 +225,7 @@ pub fn rq_ident(priority: u8) -> Ident {
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks
 pub fn schedule_t_ident() -> Ident {
-    Ident::new(&"SCHED_T", Span::call_site())
+    Ident::new("SCHED_T", Span::call_site())
 }
 
 /// Generates an identifier for the `enum` of `spawn`-able tasks
@@ -278,7 +278,7 @@ pub fn need_to_lock_ident(name: &Ident) -> Ident {
 /// The name to get better RT flag errors
 pub fn rt_err_ident() -> Ident {
     Ident::new(
-        &"you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml",
+        "you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml",
         Span::call_site(),
     )
 }
