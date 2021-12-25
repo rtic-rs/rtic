@@ -32,7 +32,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             None
         };
         let ty = &res.ty;
-        let mangled_name = util::static_shared_resource_ident(&name);
+        let mangled_name = util::static_shared_resource_ident(name);
         let shared_name = util::need_to_lock_ident(name);
 
         if !res.properties.lock_free {

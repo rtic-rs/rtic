@@ -51,7 +51,7 @@ pub fn codegen(
         let expr = &task_local.expr;
         let attrs = &task_local.attrs;
 
-        let mangled_name = util::declared_static_local_resource_ident(resource_name, &task_name);
+        let mangled_name = util::declared_static_local_resource_ident(resource_name, task_name);
 
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());

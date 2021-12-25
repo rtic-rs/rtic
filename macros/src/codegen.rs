@@ -107,7 +107,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         .map(|(_, monotonic)| {
             let name = &monotonic.ident;
             let name_str = &name.to_string();
-            let ident = util::monotonic_ident(&name_str);
+            let ident = util::monotonic_ident(name_str);
             let doc = &format!(
                 "This module holds the static implementation for `{}::now()`",
                 name_str

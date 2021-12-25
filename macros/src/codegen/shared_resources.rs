@@ -21,7 +21,7 @@ pub fn codegen(
     for (name, res) in &app.shared_resources {
         let cfgs = &res.cfgs;
         let ty = &res.ty;
-        let mangled_name = &util::static_shared_resource_ident(&name);
+        let mangled_name = &util::static_shared_resource_ident(name);
 
         // late resources in `util::link_section_uninit`
         let section = util::link_section_uninit();
