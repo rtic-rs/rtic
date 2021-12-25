@@ -30,6 +30,7 @@
 //! [SemVer]: https://semver.org/spec/v2.0.0.html
 
 #![deny(missing_docs)]
+#![deny(rust_2021_compatibility)]
 #![deny(rust_2018_compatibility)]
 #![deny(rust_2018_idioms)]
 #![no_std]

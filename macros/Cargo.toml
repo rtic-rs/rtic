@@ -12,7 +12,7 @@ license = "MIT OR Apache-2.0"
 name = "cortex-m-rtic-macros"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
-version = "0.6.0-rc.4"
+version = "1.0.0"
 
 [lib]
 proc-macro = true
@@ -22,4 +22,4 @@ proc-macro2 = "1"
 proc-macro-error = "1"
 quote = "1"
 syn = "1"
-rtic-syntax = "0.5.0-rc.2"
+rtic-syntax = "1.0.0"
