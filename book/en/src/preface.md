@@ -16,7 +16,7 @@ Formerly known as Real-Time For the Masses.
 
 <!--[Russian]: ../ru/index.html-->
 
-This is the documentation of v0.6.x of RTIC; for the documentation of version
+This is the documentation of v1.0.x of RTIC; for the documentation of version
 
 * v0.5.x go [here](/0.5).
 * v0.4.x go [here](/0.4).

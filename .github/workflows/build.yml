@@ -522,7 +522,7 @@ jobs:
           langs=( en ru )
           devver=( dev )
           # The latest stable must be the first element in the array
-          vers=( 0.5.x 0.4.x  )
+          vers=( 1.0.x 0.5.x 0.4.x  )
 
           # All releases start with "v"
           # followed by MAJOR.MINOR.PATCH, see semver.org

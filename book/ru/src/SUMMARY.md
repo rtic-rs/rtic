@@ -11,7 +11,7 @@
   - [Создание нового проекта](./by-example/new.md)
   - [Советы и хитрости](./by-example/tips.md)
 - [Инструкции по миграции](./migration.md)
-  - [v0.5.x на v0.6.x](./migration/migration_v5.md)
+  - [v0.5.x на v1.0.x](./migration/migration_v5.md)
   - [v0.4.x на v0.5.x](./migration/migration_v4.md)
   - [RTFM на RTIC](./migration/migration_rtic.md)
 - [Под капотом](./internals.md)
