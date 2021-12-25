@@ -14,13 +14,13 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! This crate is guaranteed to compile on stable Rust 1.36 (2018 edition) and up. It *might*
-//! compile on older versions but that may change in any new patch release.
+//! This crate is compiled and tested with the latest toolchain (rolling) as of the release date.
+//! If you run into compilation errors, try the latest stable release of the rust toolchain.
 //!
 //! # Semantic Versioning
 //!
 //! Like the Rust project, this crate adheres to [SemVer]: breaking changes in the API and semantics
-//! require a *semver bump* (a new minor version release), with the exception of breaking changes
+//! require a *semver bump* (since 1.0.0 a new major version release), with the exception of breaking changes
 //! that fix soundness issues -- those are considered bug fixes and can be landed in a new patch
 //! release.
 //!
