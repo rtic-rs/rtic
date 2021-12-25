@@ -1,7 +1,4 @@
-//! Real-Time Interrupt-driven Concurrency (RTIC) framework for ARM Cortex-M microcontrollers
-//!
-//! **HEADS UP** This is an **beta** pre-release; there may be breaking changes in the API and
-//! semantics before a proper release is made.
+//! Real-Time Interrupt-driven Concurrency (RTIC) framework for ARM Cortex-M microcontrollers.
 //!
 //! **IMPORTANT**: This crate is published as [`cortex-m-rtic`] on crates.io but the name of the
 //! library is `rtic`.
