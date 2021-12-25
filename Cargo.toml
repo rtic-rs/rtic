@@ -14,16 +14,16 @@ name = "cortex-m-rtic"
 readme = "README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
 
-version = "0.6.0-rc.4"
+version = "1.0.0"
 
 [lib]
 name = "rtic"
 
 [dependencies]
 cortex-m = "0.7.0"
-cortex-m-rtic-macros = { path = "macros", version = "0.6.0-rc.4" }
-rtic-monotonic = "0.1.0-rc.2"
-rtic-core = "0.3.1"
+cortex-m-rtic-macros = { path = "macros", version = "1.0.0" }
+rtic-monotonic = "1.0.0"
+rtic-core = "1.0.0"
 heapless = "0.7.7"
 bare-metal = "1.0.0"
 
@@ -33,7 +33,7 @@ version_check = "0.9"
 [dev-dependencies]
 lm3s6965 = "0.1.3"
 cortex-m-semihosting = "0.3.3"
-systick-monotonic = "0.1.0-rc.2"
+systick-monotonic = "1.0.0"
 
 [dev-dependencies.panic-semihosting]
 features = ["exit"]
@@ -70,4 +70,3 @@ overflow-checks = false
 
 [patch.crates-io]
 lm3s6965 = { git = "https://github.com/japaric/lm3s6965" }
-# embedded-time = { path = "../../embedded-time" }
