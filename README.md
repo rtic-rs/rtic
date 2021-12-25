@@ -42,8 +42,7 @@ Formerly known as Real-Time For the Masses.
 - **All Cortex-M devices are fully supported**.
 
 - This task model is amenable to known WCET (Worst Case Execution Time) analysis
-  and scheduling analysis techniques. (Though we haven't yet developed Rust
-  friendly tooling for that.)
+  and scheduling analysis techniques. 
 
 ### Crate `cortex-m` 0.6 vs 0.7 in RTIC 0.5.x
 
@@ -55,7 +54,9 @@ cortex-m-rtic = { version = "0.5.8", default-features = false, features = ["cort
 
 RTIC 1.0.0 already uses `cortex-m` 0.7 by default.
 
-## [User documentation](https://rtic.rs) 
+## [User documentation](https://rtic.rs)
+
+Documentation for the current master branch is found in [(Development version)](https://rtic.rs/dev).
 
 ## [API reference](https://rtic.rs/stable/api/)
 
