@@ -1,7 +1,7 @@
 use crate::{RunResult, TestRunError};
 use core::fmt;
 use os_pipe::pipe;
-use std::{fs::File, io::Read, path::Path, process::Command};
+use std::{fs::File, io::Read, process::Command};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -18,44 +18,29 @@ pub enum CargoCommand<'a> {
         features: Option<&'a str>,
         mode: BuildMode,
     },
-    Build {
-        example: &'a str,
+    BuildAll {
         target: &'a str,
         features: Option<&'a str>,
         mode: BuildMode,
     },
-    Objcopy {
-        example: &'a str,
-        target: &'a str,
-        features: Option<&'a str>,
-        ihex: &'a str,
-    },
-    Size {
-        example_paths: Vec<&'a Path>,
-    },
-    Clean,
+    // Size {
+    //     example_paths: Vec<&'a Path>,
+    // },
+    // Clean,
 }
 
 impl<'a> CargoCommand<'a> {
     fn name(&self) -> &str {
         match self {
             CargoCommand::Run { .. } => "run",
-            CargoCommand::Size { example_paths: _ } => "rust-size",
-            CargoCommand::Clean => "clean",
-            CargoCommand::Build { .. } => "build",
-            CargoCommand::Objcopy { .. } => "objcopy",
+            // CargoCommand::Size { example_paths: _ } => "rust-size",
+            CargoCommand::BuildAll { .. } => "build",
         }
     }
 
     pub fn args(&self) -> Vec<&str> {
         match self {
             CargoCommand::Run {
-                example,
-                target,
-                features,
-                mode,
-            }
-            | CargoCommand::Build {
                 example,
                 target,
                 features,
@@ -71,26 +56,23 @@ impl<'a> CargoCommand<'a> {
                 }
                 args
             }
-            CargoCommand::Size { example_paths } => {
-                example_paths.iter().map(|p| p.to_str().unwrap()).collect()
-            }
-            CargoCommand::Clean => vec!["clean"],
-            CargoCommand::Objcopy {
-                example,
+            CargoCommand::BuildAll {
                 target,
                 features,
-                ihex,
+                mode,
             } => {
-                let mut args = vec![self.name(), "--example", example, "--target", target];
+                let mut args = vec![self.name(), "--examples", "--target", target];
 
                 if let Some(feature_name) = features {
                     args.extend_from_slice(&["--features", feature_name]);
                 }
-
-                // this always needs to go at the end
-                args.extend_from_slice(&["--", "-O", "ihex", ihex]);
+                if let Some(flag) = mode.to_flag() {
+                    args.push(flag);
+                }
                 args
-            }
+            } // CargoCommand::Size { example_paths } => {
+              //     example_paths.iter().map(|p| p.to_str().unwrap()).collect()
+              // }
         }
     }
 
@@ -99,7 +81,7 @@ impl<'a> CargoCommand<'a> {
             // we need to cheat a little here:
             // `cargo size` can't be ran on multiple files, so we're using `rust-size` instead –
             // which isn't a command that starts wizh `cargo`. So we're sneakily swapping them out :)
-            CargoCommand::Size { .. } => "rust-size",
+            // CargoCommand::Size { .. } => "rust-size",
             _ => "cargo",
         }
     }

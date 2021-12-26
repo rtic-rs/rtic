@@ -14,7 +14,7 @@ use std::{
 use structopt::StructOpt;
 
 use crate::{
-    build::{build_hexpath, compare_builds, init_build_dir},
+    build::init_build_dir,
     command::{run_command, run_successful, BuildMode, CargoCommand},
 };
 
@@ -93,25 +93,6 @@ fn main() -> anyhow::Result<()> {
         })
         .collect();
 
-    // let examples = &[
-    //     "idle",
-    //     "init",
-    //     "hardware",
-    //     "preempt",
-    //     "binds",
-    //     "lock",
-    //     "multilock",
-    //     "only-shared-access",
-    //     "task",
-    //     "message",
-    //     "capacity",
-    //     "not-sync",
-    //     "generics",
-    //     "pool",
-    //     "ramfunc",
-    //     "peripherals-taken",
-    // ];
-
     let opts = Options::from_args();
     let target = &opts.target;
 
@@ -120,11 +101,9 @@ fn main() -> anyhow::Result<()> {
     if target == "all" {
         for t in targets {
             run_test(t, &examples)?;
-            build_test(t, &examples)?;
         }
     } else if targets.contains(&target.as_str()) {
         run_test(&target, &examples)?;
-        build_test(&target, &examples)?;
     } else {
         eprintln!(
             "The target you specified is not available. Available targets are:\
@@ -139,6 +118,12 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
+    arm_example(&CargoCommand::BuildAll {
+        target,
+        features: None,
+        mode: BuildMode::Release,
+    })?;
+
     for example in examples {
         let cmd = CargoCommand::Run {
             example,
@@ -147,37 +132,16 @@ fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
             mode: BuildMode::Release,
         };
 
-        arm_example(&cmd, 1)?;
-
-        arm_example(
-            &CargoCommand::Build {
-                example,
-                target,
-                features: None,
-                mode: BuildMode::Release,
-            },
-            1,
-        )?;
+        arm_example(&cmd)?;
     }
 
     Ok(())
 }
 
 // run example binary `example`
-fn arm_example(command: &CargoCommand, build_num: u32) -> anyhow::Result<()> {
+fn arm_example(command: &CargoCommand) -> anyhow::Result<()> {
     match *command {
-        CargoCommand::Run {
-            example,
-            target,
-            features,
-            mode,
-        }
-        | CargoCommand::Build {
-            example,
-            target,
-            features,
-            mode,
-        } => {
+        CargoCommand::Run { example, .. } => {
             let run_file = format!("{}.run", example);
             let expected_output_file = ["ci", "expected", &run_file]
                 .iter()
@@ -197,77 +161,14 @@ fn arm_example(command: &CargoCommand, build_num: u32) -> anyhow::Result<()> {
                 _ => (),
             }
 
-            // now, prepare to objcopy
-            let hexpath = build_hexpath(example, features, mode, build_num)?;
-
-            run_command(&CargoCommand::Objcopy {
-                example,
-                target,
-                features,
-                ihex: &hexpath,
-            })?;
-
             Ok(())
         }
-        _ => Err(anyhow::Error::new(TestRunError::IncompatibleCommand)),
+        CargoCommand::BuildAll { .. } => {
+            // command is either build or run
+            let cargo_run_result = run_command(&command)?;
+            println!("{}", cargo_run_result.output);
+
+            Ok(())
+        } // _ => Err(anyhow::Error::new(TestRunError::IncompatibleCommand)),
     }
 }
-
-fn build_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
-    run_command(&CargoCommand::Clean)?;
-
-    let mut built = vec![];
-    let build_path: PathBuf = ["target", target, "release", "examples"].iter().collect();
-
-    for example in examples {
-        let no_features = None;
-        arm_example(
-            &CargoCommand::Build {
-                target,
-                example,
-                mode: BuildMode::Release,
-                features: no_features,
-            },
-            2,
-        )?;
-        let expected = build_hexpath(example, no_features, BuildMode::Release, 1)?;
-        let got = build_hexpath(example, no_features, BuildMode::Release, 2)?;
-
-        compare_builds(expected, got)?;
-
-        arm_example(
-            &CargoCommand::Build {
-                target,
-                example,
-                mode: BuildMode::Release,
-                features: no_features,
-            },
-            2,
-        )?;
-        let expected = build_hexpath(example, no_features, BuildMode::Release, 1)?;
-        let got = build_hexpath(example, no_features, BuildMode::Release, 2)?;
-
-        compare_builds(expected, got)?;
-
-        built.push(build_path.join(example));
-    }
-
-    let example_paths: Vec<&Path> = built.iter().map(|p| p.as_path()).collect();
-    let size_run_result = run_command(&CargoCommand::Size { example_paths })?;
-
-    if size_run_result.exit_status.success() {
-        println!("{}", size_run_result.output);
-    }
-
-    Ok(())
-}
-
-// /// Check if lines in `output` contain `pattern` and print matching lines
-// fn print_from_output(pattern: &str, lines: &str) {
-//     let lines = lines.split("\n");
-//     for line in lines {
-//         if line.contains(pattern) {
-//             println!("{}", line);
-//         }
-//     }
-// }
