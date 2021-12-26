@@ -33,6 +33,8 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         let systick = cx.core.SYST;
+
+        // Initialize the monotonic (SysTick rate in QEMU is 12 MHz)
         let mono = Systick::new(systick, 12_000_000);
 
         // Spawn the task `foo` directly after `init` finishes

@@ -25,7 +25,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         let systick = cx.core.SYST;
 
-        // Initialize the monotonic
+        // Initialize the monotonic (SysTick rate in QEMU is 12 MHz)
         let mono = Systick::new(systick, 12_000_000);
 
         hprintln!("init").ok();
