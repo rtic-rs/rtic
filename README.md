@@ -56,7 +56,7 @@ RTIC 1.0.0 already uses `cortex-m` 0.7 by default.
 
 ## [User documentation](https://rtic.rs)
 
-Documentation for the current master branch is found in [(Development version)](https://rtic.rs/dev).
+Documentation for the [development version](https://rtic.rs/dev).
 
 ## [API reference](https://rtic.rs/stable/api/)
 
