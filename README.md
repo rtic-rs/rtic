@@ -7,7 +7,6 @@ Formerly known as Real-Time For the Masses.
 [![crates.io](https://img.shields.io/crates/v/cortex-m-rtic)](https://crates.io/crates/cortex-m-rtic)
 [![docs.rs](https://docs.rs/cortex-m-rtic/badge.svg)](https://docs.rs/cortex-m-rtic)
 [![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)](https://rtic.rs/)
-[![rustc](https://img.shields.io/badge/rustc-1.36+-lightgray.svg)](https://github.com/rust-lang/rust/releases/tag/1.36.0)
 [![matrix](https://img.shields.io/matrix/rtic:matrix.org)](https://matrix.to/#/#rtic:matrix.org)
 [![Meeting notes](https://hackmd.io/badge.svg)](https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH)
 
@@ -43,12 +42,7 @@ Formerly known as Real-Time For the Masses.
 - **All Cortex-M devices are fully supported**.
 
 - This task model is amenable to known WCET (Worst Case Execution Time) analysis
-  and scheduling analysis techniques. (Though we haven't yet developed Rust
-  friendly tooling for that.)
-
-## Requirements
-
-- Applications must be written using the 2018 edition.
+  and scheduling analysis techniques. 
 
 ### Crate `cortex-m` 0.6 vs 0.7 in RTIC 0.5.x
 
@@ -58,9 +52,11 @@ The crate `cortex-m` 0.7 started using trait `InterruptNumber` for interrupts in
 cortex-m-rtic = { version = "0.5.8", default-features = false, features = ["cortex-m-7"] }
 ```
 
-RTIC 0.6 already uses `cortex-m` 0.7 by default.
+RTIC 1.0.0 already uses `cortex-m` 0.7 by default.
 
-## [User documentation](https://rtic.rs) - [(Development version)](https://rtic.rs/dev)
+## [User documentation](https://rtic.rs)
+
+Documentation for the [development version](https://rtic.rs/dev).
 
 ## [API reference](https://rtic.rs/stable/api/)
 
