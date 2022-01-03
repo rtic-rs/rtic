@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- CI changelog entry enforcer
+
 ## [v1.0.0] - 2021-12-25
 
 ### Changed
