@@ -536,6 +536,10 @@ jobs:
           mkdir -p $td/$devver/book/
           cp -r target/doc $td/$devver/api
 
+          # Redirect rtic.rs/meeting/index.html to hackmd
+          mkdir $td/meeting
+          sed "s|URL|https://hackmd.io/c_mFUZL-Q2C6614MlrrxOg|g" redirect.html > $td/meeting/index.html
+
           # Redirect the main site to the stable release
           sed "s|URL|$stable|g" redirect.html > $td/index.html
 
