@@ -376,14 +376,15 @@ pub fn codegen(
                 /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
                 /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
                 #[allow(non_snake_case)]
-                pub fn #internal_spawn_after_ident(
-                    duration: <#m as rtic::Monotonic>::Duration
+                pub fn #internal_spawn_after_ident<D>(
+                    duration: D
                     #(,#args)*
                 ) -> Result<#name::#m::SpawnHandle, #ty>
+                where D: Into<<#m as rtic::Monotonic>::Duration>
                 {
                     let instant = monotonics::#m::now();
 
-                    #internal_spawn_at_ident(instant + duration #(,#untupled)*)
+                    #internal_spawn_at_ident(instant + duration.into() #(,#untupled)*)
                 }
 
                 #(#cfgs)*
