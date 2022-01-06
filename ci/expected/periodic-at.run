@@ -1,0 +1,4 @@
+foo Instant { ticks: 0 }
+foo Instant { ticks: 100 }
+foo Instant { ticks: 200 }
+foo Instant { ticks: 300 }
