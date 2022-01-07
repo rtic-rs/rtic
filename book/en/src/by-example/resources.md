@@ -6,7 +6,7 @@ storage and safe accesses without the use of `unsafe` code.
 RTIC resources are visible only to functions declared within the `#[app]` module and the framework
 gives the user complete control (on a per-task basis) over resource accessibility.
 
-Declaration of system-wide resources are by annotating **two** `struct`s within the `#[app]` module
+Declaration of system-wide resources is done by annotating **two** `struct`s within the `#[app]` module
 with the attribute `#[local]` and `#[shared]`.
 Each field in these structures corresponds to a different resource (identified by field name).
 The difference between these two sets of resources will be covered below.
