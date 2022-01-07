@@ -9,6 +9,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - CI changelog entry enforcer
 
+### Changed
+
+- `spawn_after` now takes an `Into<Duration>` instead of bare `Duration`
+
 ## [v1.0.0] - 2021-12-25
 
 ### Changed
