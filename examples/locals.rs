@@ -72,7 +72,7 @@ mod app {
         hprintln!("foo: local_to_foo = {}", local_to_foo).unwrap();
     }
 
-    // `shared` can only be accessed from this context
+    // `local_to_bar` can only be accessed from this context
     #[task(local = [local_to_bar])]
     fn bar(cx: bar::Context) {
         let local_to_bar = cx.local.local_to_bar;
