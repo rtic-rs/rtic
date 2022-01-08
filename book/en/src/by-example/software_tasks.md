@@ -10,7 +10,7 @@ bound interrupt vector.
 These free interrupts used as dispatchers are interrupt vectors not used by hardware tasks.
 
 The `#[task]` attribute used on a function declare it as a software tasks.
-The static method `task_name::spawn()` spawn (start) a software task and
+The static method `task_name::spawn()` spawns (starts) a software task and
 given that there are no higher priority tasks running the task will start executing directly.
 
 A list of “free” and usable interrupts allows the framework to dispatch software tasks.
