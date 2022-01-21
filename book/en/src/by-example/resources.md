@@ -37,6 +37,8 @@ The example application shown below contains two tasks where each task has acces
 {{#include ../../../../examples/locals.rs}}
 ```
 
+Running the example:
+
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example locals
 {{#include ../../../../ci/expected/locals.run}}
