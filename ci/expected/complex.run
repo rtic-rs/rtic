@@ -1,0 +1,47 @@
+init
+idle p0 started
+t2 p4 called 1 time
+enter lock s4 0
+t3 p4 exit
+idle enter lock s3 0
+idle pend t0
+idle pend t1
+idle pend t2
+t2 p4 called 2 times
+enter lock s4 1
+t3 p4 exit
+idle still in lock s3 0
+t1 p3 called 1 time
+t1 enter lock s4 2
+t1 pend t0
+t1 pend t2
+t1 still in lock s4 2
+t2 p4 called 3 times
+enter lock s4 2
+t3 p4 exit
+t1 p3 exit
+t0 p2 called 1 time
+t0 p2 exit
+
+back in idle
+enter lock s2 0
+idle pend t0
+idle pend t1
+t1 p3 called 2 times
+t1 enter lock s4 3
+t1 pend t0
+t1 pend t2
+t1 still in lock s4 3
+t2 p4 called 4 times
+enter lock s4 3
+t3 p4 exit
+t1 p3 exit
+idle pend t2
+t2 p4 called 5 times
+enter lock s4 4
+t3 p4 exit
+idle still in lock s2 0
+t0 p2 called 2 times
+t0 p2 exit
+
+idle exit
