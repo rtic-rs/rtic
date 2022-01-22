@@ -15,3 +15,18 @@ Check [the embedded Rust book] for instructions on how to set up an
 embedded development environment that includes QEMU.
 
 [the embedded Rust book]: https://rust-embedded.github.io/book/intro/install.html
+
+To run the examples found in `examples/` locally, cargo needs a supported `target` and
+either `--examples` (run all examples) or `--example NAME` to run a specific example.
+
+Assuming dependencies in place, running:
+
+``` console
+$ cargo run --target thumbv7m-none-eabi --example locals
+```
+
+Yields this output:
+
+``` console
+{{#include ../../../ci/expected/locals.run}}
+```
