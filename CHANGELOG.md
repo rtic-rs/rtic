@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- Try to detect `target-dir` for rtic-expansion.rs
 - Bump RTIC dependencies also updated to v1.0.0
 - Edition 2021
 - Change default `idle` behaviour to be `NOP` instead of `WFI`
