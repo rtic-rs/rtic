@@ -8,9 +8,8 @@ mod app {
     use actors::{
         FakeTemperatureSensor, TemperatureAlert, TemperatureMonitor, TemperatureReadingCelsius,
     };
-    use rtic::time::duration::*;
     use rtic_actor_traits::Receive;
-    use systick_monotonic::Systick;
+    use systick_monotonic::*;
 
     // configuration
     const TEMPERATURE_THRESHOLD: i32 = 37;
@@ -31,7 +30,7 @@ mod app {
 
     impl Receive<TemperatureReadingCelsius> for TemperatureTracer {
         fn receive(&mut self, reading: TemperatureReadingCelsius) {
-            defmt::trace!("temperature: {} C", reading.0);
+            defmt::println!("temperature: {} C", reading.0);
         }
     }
 
@@ -83,7 +82,7 @@ mod app {
     #[task(local = [temperature_sensor])]
     fn periodic(cx: periodic::Context) {
         cx.local.temperature_sensor.read();
-        periodic::spawn_after(1.seconds()).expect("OOM");
+        periodic::spawn_after(1.secs()).expect("OOM");
     }
 
     #[shared]
