@@ -9,10 +9,10 @@ Implementing time counting that supports large time spans is generally **difficu
 implementing time handling was a common problem.
 Moreover, the relation between time and timers used for scheduling was difficult to understand.
 
-For RTIC 0.6 we instead assume the user has a time library, e.g. [`fugit`] or [`embedded_time`],
+For RTIC 1.0 we instead assume the user has a time library, e.g. [`fugit`] or [`embedded_time`],
 as the basis for all time-based operations when implementing `Monotonic`.
-This makes it almost trivial to implement the `Monotonic` trait allowing the use of any timer in
-the system for scheduling.
+This makes it much easier to correctly implement the `Monotonic` trait allowing the use of
+almost any timer in the system for scheduling.
 
 The trait documents the requirements for each method,
 and for inspiration here is a list of `Monotonic` implementations:
@@ -20,8 +20,8 @@ and for inspiration here is a list of `Monotonic` implementations:
 - [`STM32F411 series`], implemented for the 32-bit timers
 - [`Nordic nRF52 series Timer`], implemented for the 32-bit timers
 - [`Nordic nRF52 series RTC`], implemented for the RTCs
-- [`Systick based`], runs at a fixed rate - some overhead but simple
-- [`DWT and Systick based`], a more efficient `Systick` based implementation, but requires `DWT`
+- [`Systick based`], runs at a fixed interrupt (tick) rate - with some overhead but simple and with support for large time spans
+- [`DWT and Systick based`], a more efficient (tickless) implementation - requires both `SysTick` and `DWT`, supports both high resolution and large time spans
 
 If you know of more implementations feel free to add them to this list.
 
