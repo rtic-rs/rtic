@@ -28,8 +28,8 @@ If you know of more implementations feel free to add them to this list.
 [`rtic_monotonic::Monotonic`]: https://docs.rs/rtic-monotonic/
 [`fugit`]: https://docs.rs/fugit/
 [`embedded_time`]: https://docs.rs/embedded_time/
-[`STM32F411 series`]: https://github.com/kalkyl/f411-rtic/blob/main/src/bin/mono.rs
-[`Nordic nRF52 series Timer`]: https://github.com/kalkyl/nrf-play/blob/main/src/bin/mono.rs
+[`STM32F411 series`]: https://github.com/kalkyl/f411-rtic/blob/a696fce7d6d19fda2356c37642c4d53547982cca/src/mono.rs
+[`Nordic nRF52 series Timer`]: https://github.com/kalkyl/nrf-play/blob/47f4410d4e39374c18ff58dc17c25159085fb526/src/mono.rs
 [`Nordic nRF52 series RTC`]: https://gist.github.com/korken89/fe94a475726414dd1bce031c76adc3dd
 [`Systick based`]: https://github.com/rtic-rs/systick-monotonic
 [`DWT and Systick based`]: https://github.com/rtic-rs/dwt-systick-monotonic
