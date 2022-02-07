@@ -1,0 +1,5 @@
+error[E0507]: cannot move out of `s.a` which is behind a mutable reference
+  --> ui/lockall_move_out_field.rs:22:35
+   |
+22 |         let _ = c.shared.lock(|s| s.a);
+   |                                   ^^^ move occurs because `s.a` has type `&mut u32`, which does not implement the `Copy` trait

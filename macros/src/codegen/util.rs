@@ -23,18 +23,12 @@ pub fn fq_ident(task: &Ident) -> Ident {
 pub fn impl_mutex(
     extra: &Extra,
     cfgs: &[Attribute],
-    resources_prefix: bool,
-    name: &Ident,
+    path: TokenStream2,
     ty: TokenStream2,
     ceiling: u8,
+    priority: TokenStream2,
     ptr: TokenStream2,
 ) -> TokenStream2 {
-    let (path, priority) = if resources_prefix {
-        (quote!(shared_resources::#name), quote!(self.priority()))
-    } else {
-        (quote!(#name), quote!(self.priority))
-    };
-
     let device = &extra.device;
     quote!(
         #(#cfgs)*
@@ -198,6 +192,19 @@ pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
     };
 
     s.push_str("SharedResources");
+
+    mark_internal_name(&s)
+}
+
+/// Generates a pre-reexport identifier for the "shared resources" struct
+pub fn shared_resources_ident_mut(ctxt: Context, app: &App) -> Ident {
+    let mut s = match ctxt {
+        Context::Init => app.init.name.to_string(),
+        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
+    };
+
+    s.push_str("Shared");
 
     mark_internal_name(&s)
 }

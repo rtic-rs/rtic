@@ -1,0 +1,8 @@
+error: lifetime may not live long enough
+  --> ui/lockall_lifetime.rs:20:35
+   |
+20 |         let _ = c.shared.lock(|s| s); // lifetime
+   |                                -- ^ returning this value requires that `'1` must outlive `'2`
+   |                                ||
+   |                                |return type of closure is &'2 mut __rtic_internal_fooShared
+   |                                has type `&'1 mut __rtic_internal_fooShared`

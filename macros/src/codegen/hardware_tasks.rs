@@ -72,6 +72,8 @@ pub fn codegen(
                 Context::HardwareTask(name),
                 &mut shared_needs_lt,
                 app,
+                analysis,
+                extra,
             );
 
             root.push(item);

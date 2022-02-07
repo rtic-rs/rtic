@@ -1,11 +1,17 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
+use rtic_syntax::{analyze::Ownership, ast::App, Context};
 
-use crate::codegen::util;
+use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generate shared resources structs
-pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, TokenStream2) {
+pub fn codegen(
+    ctxt: Context,
+    needs_lt: &mut bool,
+    app: &App,
+    analysis: &Analysis,
+    extra: &Extra,
+) -> (TokenStream2, TokenStream2) {
     let mut lt = None;
 
     let resources = match ctxt {
@@ -18,6 +24,12 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     let mut fields = vec![];
     let mut values = vec![];
     let mut has_cfgs = false;
+
+    // Lock-all api related
+    let mut fields_mut = vec![];
+    let mut values_mut = vec![];
+    let mut max_ceiling = 0;
+    let mut field_get_prio = None;
 
     for (name, access) in resources {
         let res = app.shared_resources.get(name).expect("UNREACHABLE");
@@ -37,6 +49,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
         if !res.properties.lock_free {
             if access.is_shared() {
+                // [&x] (shared)
                 lt = Some(quote!('a));
 
                 fields.push(quote!(
@@ -52,11 +65,36 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                     pub #name: shared_resources::#shared_name<'a>
                 ));
 
+                field_get_prio = Some(quote!(
+                    #name
+                ));
+
                 values.push(quote!(
                     #(#cfgs)*
                     #name: shared_resources::#shared_name::new(priority)
 
                 ));
+
+                // Lock-all related
+                fields_mut.push(quote!(
+                    #(#cfgs)*
+                    pub #name: &'static mut #ty
+                ));
+
+                values_mut.push(quote!(
+                    #(#cfgs)*
+                    #name: &mut *(&mut *#mangled_name.get_mut()).as_mut_ptr()
+
+                ));
+
+                let ceiling = match analysis.ownerships.get(name) {
+                    Some(Ownership::Owned { priority }) => *priority,
+                    Some(Ownership::CoOwned { priority }) => *priority,
+                    Some(Ownership::Contended { ceiling }) => *ceiling,
+                    None => 0,
+                };
+
+                max_ceiling = std::cmp::max(ceiling, max_ceiling);
 
                 // continue as the value has been filled,
                 continue;
@@ -103,12 +141,28 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let doc = format!("Shared resources `{}` has access to", ctxt.ident(app));
     let ident = util::shared_resources_ident(ctxt, app);
+
+    // Lock-all related
+    let doc_mut = format!(
+        "Shared resources `{}` has lock all access to",
+        ctxt.ident(app)
+    );
+    let ident_mut = util::shared_resources_ident_mut(ctxt, app);
+
     let item = quote!(
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         #[doc = #doc]
         pub struct #ident<#lt> {
             #(#fields,)*
+        }
+
+        // Used by the lock-all API
+        #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
+        #[doc = #doc_mut]
+        pub struct #ident_mut {
+            #(#fields_mut,)*
         }
     );
 
@@ -117,7 +171,32 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     } else {
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
-    let constructor = quote!(
+
+    let (lock_all, get_prio) = if let Some(name) = field_get_prio {
+        (
+            util::impl_mutex(
+                extra,
+                &vec![], // TODO: what cfg should go here?
+                quote!(#ident),
+                quote!(#ident_mut),
+                max_ceiling,
+                quote!(self.priority()),
+                quote!(&mut #ident_mut::new()),
+            ),
+            quote!(
+                // Used by the lock-all API
+                #[inline(always)]
+                pub unsafe fn priority(&self) -> &rtic::export::Priority {
+                    //panic!("here {:?}", self);
+                    self.#name.priority()
+                }
+            ),
+        )
+    } else {
+        (quote!(), quote!())
+    };
+
+    let implementations = quote!(
         impl<#lt> #ident<#lt> {
             #[inline(always)]
             pub unsafe fn new(#arg) -> Self {
@@ -125,8 +204,22 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                     #(#values,)*
                 }
             }
+
+            #get_prio
         }
+
+        // Used by the lock-all API
+        impl #ident_mut {
+            #[inline(always)]
+            pub unsafe fn new() -> Self {
+                #ident_mut {
+                    #(#values_mut,)*
+                }
+            }
+        }
+
+        #lock_all
     );
 
-    (item, constructor)
+    (item, implementations)
 }

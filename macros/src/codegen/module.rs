@@ -89,6 +89,7 @@ pub fn codegen(
 
     if ctxt.has_shared_resources(app) {
         let ident = util::shared_resources_ident(ctxt, app);
+        let ident_mut = util::shared_resources_ident_mut(ctxt, app);
         let lt = if shared_resources_tick {
             lt = Some(quote!('a));
             Some(quote!('a))
@@ -99,6 +100,10 @@ pub fn codegen(
         module_items.push(quote!(
             #[doc(inline)]
             pub use super::#ident as SharedResources;
+
+            #[doc(inline)]
+            pub use super::#ident_mut as Shared;
+
         ));
 
         fields.push(quote!(
