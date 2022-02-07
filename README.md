@@ -42,7 +42,7 @@ Formerly known as Real-Time For the Masses.
 - **All Cortex-M devices are fully supported**.
 
 - This task model is amenable to known WCET (Worst Case Execution Time) analysis
-  and scheduling analysis techniques. 
+  and scheduling analysis techniques.
 
 ### Crate `cortex-m` 0.6 vs 0.7 in RTIC 0.5.x
 
@@ -94,11 +94,11 @@ $ cargo xtask --target <your target>
 
 This crate is based on the [Real-Time For the Masses language][rtfm-lang]
 created by the Embedded Systems group at [Luleå University of Technology][ltu],
-led by [Prof. Per Lindgren][per].
+led by [Prof. Per Lindgren][perl].
 
 [rtfm-lang]: http://www.rtfm-lang.org/
 [ltu]: https://www.ltu.se/?l=en
-[per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
+[perl]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 
 ## References
 
