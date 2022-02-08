@@ -35,10 +35,10 @@ One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' foo::'
-{{#include ../../../../ci/expected/ramfunc.grep.foo}}
+{{#include ../../../../ci/expected/ramfunc.run.grep.foo}}
 ```
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
-{{#include ../../../../ci/expected/ramfunc.grep.bar}}
+{{#include ../../../../ci/expected/ramfunc.run.grep.bar}}
 ```
