@@ -479,8 +479,18 @@ jobs:
           sed "s|URL|$stable|g" redirect.html > $td/index.html
 
           # Create the redirects for dev-version
-          sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
-          sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html
+          # If the current stable and the version being built differ,
+          # then there is a dev-version and the links should point to it.
+          if [[ "$stable" != "{{ env.versionmajor }}" ]];
+          then
+            sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
+            sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html
+          else
+            # If the current stable and the "dev" version in master branch
+            # share the same major version, redirect dev/ to stable book
+            sed 's|URL|rtic.rs/$stable/api/rtic|g' redirect.html > $td/$devver/api/index.html
+            sed 's|URL|rtic.rs/$stable|g' redirect.html > $td/$devver/index.html
+          fi
 
           # Build books
           for lang in ${langs[@]}; do
