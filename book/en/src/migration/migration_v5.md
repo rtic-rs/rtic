@@ -316,11 +316,10 @@ mod app {
 }
 ```
 
-## Spawn/schedule from anywhere
+## Spawn from anywhere
 
-With the new "spawn/schedule from anywhere", old code such as:
-
-
+With the new spawn/spawn_after/spawn_at interface,
+old code requiring the context `cx` for spawning such as:
 
 ``` rust
 #[task(spawn = [bar])]
@@ -344,12 +343,20 @@ fn foo(_c: foo::Context) {
 
 #[task]
 fn bar(_c: bar::Context) {
-    foo::schedule(/* ... */).unwrap();
+    // Takes a Duration, relative to “now”
+    let spawn_handle = foo::spawn_after(/* ... */);
+}
+
+#[task]
+fn bar(_c: bar::Context) {
+    // Takes an Instant
+    let spawn_handle = foo::spawn_at(/* ... */);
 }
 ```
 
-Note that the attributes `spawn` and `schedule` are no longer needed.
+Thus the requirement of having access to the context is dropped.
 
+Note that the attributes `spawn`/`schedule` in the task definition are no longer needed.
 
 ---
 

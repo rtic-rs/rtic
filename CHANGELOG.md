@@ -19,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+- Fix dated migration docs for spawn
 - Force mdBook to return error codes
 - Readded missing ramfunc output to book
 
