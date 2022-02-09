@@ -370,6 +370,7 @@ jobs:
     needs:
       - style
       - check
+      - clippy
       - checkexamples
       - testexamples
       - checkmacros
