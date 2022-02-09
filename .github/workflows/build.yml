@@ -463,7 +463,7 @@ jobs:
 
       - name: Build book in Russian
         shell: 'script --return --quiet --command "bash {0}"'
-        run: cd book/ru && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
+        run: cd book/ru && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then echo "Russian book needs updating!"; else exit 0; fi
 
       - name: Check links
         run: |

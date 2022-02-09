@@ -83,12 +83,12 @@ $ cargo run --example ramfunc
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' foo::'
-{{#include ../../../../ci/expected/ramfunc.grep.foo}}
+{{#include ../../../../ci/expected/ramfunc.run.grep.foo}}
 ```
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
-{{#include ../../../../ci/expected/ramfunc.grep.bar}}
+{{#include ../../../../ci/expected/ramfunc.run.grep.bar}}
 ```
 
 ## Обходной путь для быстрой передачи сообщений
