@@ -72,6 +72,33 @@ jobs:
           command: check
           args: --target=${{ matrix.target }}
 
+  # Clippy
+  clippy:
+    name: Cargo clippy
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          override: true
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: cargo clippy
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: false
+          command: clippy
+
   # Verify all examples, checks
   checkexamples:
     name: checkexamples
@@ -467,6 +494,7 @@ jobs:
     needs:
       - style
       - check
+      - clippy
       - checkexamples
       - testexamples
       - checkmacros
