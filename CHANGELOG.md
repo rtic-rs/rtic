@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+- Force mdBook to return error codes
 - Readded missing ramfunc output to book
 
 ## [v1.0.0] - 2021-12-25
