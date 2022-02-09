@@ -189,21 +189,15 @@ jobs:
   testmacros:
     name: testmacros
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - stable
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{ matrix.toolchain }}
-          target: ${{ matrix.target }}
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
           override: true
 
       - name: Cache Dependencies
@@ -217,18 +211,12 @@ jobs:
         with:
           use-cross: false
           command: test
-          args: --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
+          args: --manifest-path macros/Cargo.toml
 
-  # Run test suite for thumbv7m
+  # Run test suite
   tests:
     name: tests
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - stable
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -236,8 +224,8 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{ matrix.toolchain }}
-          target: ${{ matrix.target }}
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
           override: true
 
       - name: Cache Dependencies
@@ -250,13 +238,12 @@ jobs:
         with:
           use-cross: false
           command: test
-          args: --test tests --target=${{ matrix.target }}
+          args: --test tests
 
   # Build documentation, check links
   docs:
     name: docs
     runs-on: ubuntu-20.04
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
