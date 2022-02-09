@@ -458,10 +458,12 @@ jobs:
           mdbook-version: 'latest'
 
       - name: Build book in English
-        run: cd book/en && mdbook build
+        shell: 'script --return --quiet --command "bash {0}"'
+        run: cd book/en && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
 
       - name: Build book in Russian
-        run: cd book/ru && mdbook build
+        shell: 'script --return --quiet --command "bash {0}"'
+        run: cd book/ru && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then echo "Russian book needs updating!"; else exit 0; fi
 
       - name: Check links
         run: |
@@ -518,6 +520,7 @@ jobs:
         run: cargo doc
 
       - name: Build books
+        shell: 'script --return --quiet --command "bash {0}"'
         run: |
           langs=( en ru )
           devver=( dev )
@@ -549,7 +552,9 @@ jobs:
 
           # Build books
           for lang in ${langs[@]}; do
-              ( cd book/$lang && mdbook build )
+              ( cd book/$lang &&
+                if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
+              )
               cp -r book/$lang/book $td/$devver/book/$lang
               cp LICENSE-* $td/$devver/book/$lang/
           done
@@ -569,7 +574,9 @@ jobs:
               cp -r target/doc $td/$prefix/api
               sed 's|URL|rtic/index.html|g' $root/redirect.html > $td/$prefix/api/index.html
               for lang in ${langs[@]}; do
-                  ( cd book/$lang && mdbook build )
+                  ( cd book/$lang &&
+                    if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
+                  )
                   cp -r book/$lang/book $td/$prefix/book/$lang
                   cp LICENSE-* $td/$prefix/book/$lang/
               done
