@@ -38,6 +38,7 @@ pub fn codegen(
         // Create free queues and inputs / instants buffers
         let fq = util::fq_ident(name);
 
+        #[allow(clippy::redundant_closure)]
         let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
             (
                 quote!(rtic::export::SCFQ<#cap_lit_p1>),

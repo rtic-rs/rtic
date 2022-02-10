@@ -16,7 +16,7 @@ pub fn capacity_literal(capacity: usize) -> LitInt {
 
 /// Identifier for the free queue
 pub fn fq_ident(task: &Ident) -> Ident {
-    mark_internal_name(&format!("{}_FQ", task.to_string()))
+    mark_internal_name(&format!("{}_FQ", task))
 }
 
 /// Generates a `Mutex` implementation
@@ -103,17 +103,12 @@ pub fn mark_internal_name(name: &str) -> Ident {
 
 /// Generate an internal identifier for monotonics
 pub fn internal_monotonics_ident(task: &Ident, monotonic: &Ident, ident_name: &str) -> Ident {
-    mark_internal_name(&format!(
-        "{}_{}_{}",
-        task.to_string(),
-        monotonic.to_string(),
-        ident_name,
-    ))
+    mark_internal_name(&format!("{}_{}_{}", task, monotonic, ident_name,))
 }
 
 /// Generate an internal identifier for tasks
 pub fn internal_task_ident(task: &Ident, ident_name: &str) -> Ident {
-    mark_internal_name(&format!("{}_{}", task.to_string(), ident_name))
+    mark_internal_name(&format!("{}_{}", task, ident_name))
 }
 
 fn link_section_index() -> usize {
@@ -253,26 +248,19 @@ pub fn monotonic_ident(name: &str) -> Ident {
 }
 
 pub fn static_shared_resource_ident(name: &Ident) -> Ident {
-    mark_internal_name(&format!("shared_resource_{}", name.to_string()))
+    mark_internal_name(&format!("shared_resource_{}", name))
 }
 
 pub fn static_local_resource_ident(name: &Ident) -> Ident {
-    mark_internal_name(&format!("local_resource_{}", name.to_string()))
+    mark_internal_name(&format!("local_resource_{}", name))
 }
 
 pub fn declared_static_local_resource_ident(name: &Ident, task_name: &Ident) -> Ident {
-    mark_internal_name(&format!(
-        "local_{}_{}",
-        task_name.to_string(),
-        name.to_string()
-    ))
+    mark_internal_name(&format!("local_{}_{}", task_name, name))
 }
 
 pub fn need_to_lock_ident(name: &Ident) -> Ident {
-    Ident::new(
-        &format!("{}_that_needs_to_be_locked", name.to_string()),
-        name.span(),
-    )
+    Ident::new(&format!("{}_that_needs_to_be_locked", name), name.span())
 }
 
 /// The name to get better RT flag errors

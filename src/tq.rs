@@ -71,6 +71,7 @@ where
     }
 
     /// Update the instant at an marker value to a new instant
+    #[allow(clippy::result_unit_err)]
     pub fn update_marker<F: FnOnce()>(
         &mut self,
         marker: u32,

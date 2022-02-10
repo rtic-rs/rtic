@@ -269,7 +269,7 @@ pub fn codegen(
             let m_ident = util::monotonic_ident(&monotonic_name);
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
-            let spawn_handle_string = format!("{}::SpawnHandle", m.to_string());
+            let spawn_handle_string = format!("{}::SpawnHandle", m);
 
             let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
                 (
