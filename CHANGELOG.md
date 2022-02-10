@@ -15,7 +15,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Use rust-cache Github Action
 - CI changelog entry enforcer
 - `examples/periodic-at.rs`, an example of a periodic timer without accumulated drift.
-- `examples/periodic-at2.rs`, an example of a periodic process with two tasks, with offset timing. Here we depict two alternative usages of the timer type, explicit and trait based.
+- `examples/periodic-at2.rs`, an example of a periodic process with two tasks, with offset timing.
+  Here we depict two alternative usages of the timer type, explicit and trait based.
 - book: Update `Monotonic` tips.
 
 ### Fixed
