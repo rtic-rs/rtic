@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- If current $stable and master version matches, dev-book redirects to $stable book
+- During deploy stage, merge master branch into current stable IFF cargo package version matches
+- Rework branch structure, release/vVERSION
 - Cargo clippy in CI
 - Use rust-cache Github Action
 - CI changelog entry enforcer

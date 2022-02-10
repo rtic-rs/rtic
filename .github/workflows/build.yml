@@ -363,13 +363,16 @@ jobs:
           linkchecker $td/book/en/
           linkchecker $td/book/ru/
 
-  # Only runs when pushing to master branch
-  deploy:
-    name: deploy
+  # Update stable branch
+  #
+  # This needs to run before book is built
+  mergetostablebranch:
+    name: If CI passes, merge master branch into release/vX
     runs-on: ubuntu-20.04
     needs:
       - style
       - check
+      - clippy
       - checkexamples
       - testexamples
       - checkmacros
@@ -377,6 +380,39 @@ jobs:
       - tests
       - docs
       - mdbook
+
+    # Only run this when pushing to master branch
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get crate version and print output branch release/vX
+        id: crateversionbranch
+        # Parse metadata for version number, extract the Semver Major
+        run: |
+          VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="cortex-m-rtic") | .version')
+          VERSIONMAJOR=${VERSION%.*.*}
+          echo "branch=release/v$VERSIONMAJOR" >> $GITHUB_ENV
+          echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_ENV
+
+      - uses: everlytic/branch-merge@1.1.2
+        with:
+          github_token: ${{ github.token }}
+          source_ref: 'master'
+          target_branch: ${{ env.branch }}
+          commit_message_template: '[Bors] Merged {source_ref} into target {target_branch}'
+
+  # Only runs when pushing to master branch
+  # Bors run CI against staging branch,
+  # if that succeeds Borst tries against master branch
+  # If all tests pass, then deploy stage is run
+  deploy:
+    name: deploy
+    runs-on: ubuntu-20.04
+    needs:
+      mergetostablebranch
+
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
     steps:
@@ -399,6 +435,16 @@ jobs:
         with:
           mdbook-version: 'latest'
 
+      - name: Get crate version
+        id: crateversion
+        # Parse metadata for version number, extract the Semver Major
+        run: |
+          VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="cortex-m-rtic") | .version')
+          VERSIONMAJOR=${VERSION%.*.*}
+          echo "branch=release/v$VERSIONMAJOR" >> $GITHUB_ENV
+          echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_ENV
+
       - name: Remove cargo-config
         run: rm -f .cargo/config
 
@@ -411,12 +457,12 @@ jobs:
           langs=( en ru )
           devver=( dev )
           # The latest stable must be the first element in the array
-          vers=( 1.0.x 0.5.x 0.4.x  )
+          vers=( "1" "0.5" "0.4"  )
 
           # All releases start with "v"
           # followed by MAJOR.MINOR.PATCH, see semver.org
-          # Retain MAJOR.MINOR as $stable
-          stable=${vers%.*}
+          # Store first in array as stable
+          stable=${vers}
 
           echo "Stable version: $stable"
 
@@ -433,8 +479,18 @@ jobs:
           sed "s|URL|$stable|g" redirect.html > $td/index.html
 
           # Create the redirects for dev-version
-          sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
-          sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html
+          # If the current stable and the version being built differ,
+          # then there is a dev-version and the links should point to it.
+          if [[ "$stable" != "{{ env.versionmajor }}" ]];
+          then
+            sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
+            sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html
+          else
+            # If the current stable and the "dev" version in master branch
+            # share the same major version, redirect dev/ to stable book
+            sed 's|URL|rtic.rs/$stable/api/rtic|g' redirect.html > $td/$devver/api/index.html
+            sed 's|URL|rtic.rs/$stable|g' redirect.html > $td/$devver/index.html
+          fi
 
           # Build books
           for lang in ${langs[@]}; do
@@ -448,11 +504,11 @@ jobs:
           # Build older versions, including stable
           root=$(pwd)
           for ver in ${vers[@]}; do
-              prefix=${ver%.*}
+              prefix=${ver}
 
               mkdir -p $td/$prefix/book
               src=$(mktemp -d)
-              curl -L https://github.com/rtic-rs/cortex-m-rtic/archive/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
+              curl -L https://github.com/rtic-rs/cortex-m-rtic/archive/release/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
 
               pushd $src
               rm -f .cargo/config
