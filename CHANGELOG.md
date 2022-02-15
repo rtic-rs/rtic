@@ -16,6 +16,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `examples/periodic-at.rs`, an example of a periodic timer without accumulated drift.
 - `examples/periodic-at2.rs`, an example of a periodic process with two tasks, with offset timing. Here we depict two alternative usages of the timer type, explicit and trait based.
 - book: Update `Monotonic` tips.
+- rename lock types `{}_lock` (instead of `{}_that_needs_to_be_locked`)
+- change visibility of `app::shared_resources` module to pub
 
 ### Fixed
 
