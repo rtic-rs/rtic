@@ -99,7 +99,7 @@ pub fn codegen(
     let mod_resources = if mod_resources.is_empty() {
         quote!()
     } else {
-        quote!(mod shared_resources {
+        quote!(pub mod shared_resources {
             use rtic::export::Priority;
 
             #(#mod_resources)*
