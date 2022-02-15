@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Improve how CHANGELOG.md merges are handled
 - If current $stable and master version matches, dev-book redirects to $stable book
 - During deploy stage, merge master branch into current stable IFF cargo package version matches
 - Rework branch structure, release/vVERSION
