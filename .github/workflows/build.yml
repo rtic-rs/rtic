@@ -163,7 +163,6 @@ jobs:
         with:
           crate: cargo-binutils
           version: latest
-          use-tool-cache: true
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v1
