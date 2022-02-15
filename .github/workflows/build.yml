@@ -463,8 +463,10 @@ jobs:
           # followed by MAJOR.MINOR.PATCH, see semver.org
           # Store first in array as stable
           stable=${vers}
+          crateversion={{ env.versionmajor }}
 
-          echo "Stable version: $stable"
+          echo "Latest stable version: $stable"
+          echo "Current crate version: $crateversion"
 
           # Create directories
           td=$(mktemp -d)
@@ -481,7 +483,7 @@ jobs:
           # Create the redirects for dev-version
           # If the current stable and the version being built differ,
           # then there is a dev-version and the links should point to it.
-          if [[ "$stable" != "{{ env.versionmajor }}" ]];
+          if [[ "$stable" != "$crateversion" ]];
           then
             sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
             sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html

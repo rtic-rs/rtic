@@ -4,7 +4,7 @@
 
 New features should go through the [RFC process][rfcs] before creating a Pull Request to this repository.
 
-[rfcs](https://github.com/rtic-rs/rfcs)
+[rfcs]: https://github.com/rtic-rs/rfcs
 
 ## Bugs
 
