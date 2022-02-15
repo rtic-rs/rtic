@@ -259,8 +259,8 @@ pub fn declared_static_local_resource_ident(name: &Ident, task_name: &Ident) -> 
     mark_internal_name(&format!("local_{}_{}", task_name, name))
 }
 
-pub fn need_to_lock_ident(name: &Ident) -> Ident {
-    Ident::new(&format!("{}_that_needs_to_be_locked", name), name.span())
+pub fn lock_ident(name: &Ident) -> Ident {
+    Ident::new(&format!("{}_lock", name), name.span())
 }
 
 /// The name to get better RT flag errors

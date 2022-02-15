@@ -43,7 +43,7 @@ pub fn codegen(
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
 
-        let shared_name = util::need_to_lock_ident(name);
+        let shared_name = util::lock_ident(name);
 
         if !res.properties.lock_free {
             mod_resources.push(quote!(
