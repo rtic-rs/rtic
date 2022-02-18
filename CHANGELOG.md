@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+- Re-export `rtic_core::prelude` as `rtic::mutex::prelude` to allow glob imports + Clippy
 - Fix dated migration docs for spawn
 - Force mdBook to return error codes
 - Readded missing ramfunc output to book
