@@ -45,6 +45,7 @@ pub use rtic_monotonic::{self, Monotonic};
 /// module `mutex::prelude` provides `Mutex` and multi-lock variants. Recommended over `mutex_prelude`
 pub mod mutex {
     pub use rtic_core::prelude;
+    pub use rtic_core::Mutex;
 }
 
 #[doc(hidden)]
