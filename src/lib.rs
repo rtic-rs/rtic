@@ -36,6 +36,7 @@
     html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg"
 )]
 //deny_warnings_placeholder_for_ci
+#![allow(clippy::inline_always)]
 
 use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
 pub use cortex_m_rtic_macros::app;
@@ -61,7 +62,7 @@ pub fn pend<I>(interrupt: I)
 where
     I: InterruptNumber,
 {
-    NVIC::pend(interrupt)
+    NVIC::pend(interrupt);
 }
 
 use core::cell::UnsafeCell;
@@ -72,12 +73,12 @@ use core::cell::UnsafeCell;
 ///
 /// Soundness:
 /// 1) Unsafe API for internal use only
-/// 2) get_mut(&self) -> *mut T
+/// 2) ``get_mut(&self) -> *mut T``
 ///    returns a raw mutable pointer to the inner T
 ///    casting to &mut T is under control of RTIC
 ///    RTIC ensures &mut T to be unique under Rust aliasing rules.
 ///
-///    Implementation uses the underlying UnsafeCell<T>
+///    Implementation uses the underlying ``UnsafeCell<T>``
 ///    self.0.get() -> *mut T
 ///
 /// 3) get(&self) -> *const T
@@ -85,14 +86,14 @@ use core::cell::UnsafeCell;
 ///    casting to &T is under control of RTIC
 ///    RTIC ensures &T to be shared under Rust aliasing rules.
 ///
-///    Implementation uses the underlying UnsafeCell<T>
+///    Implementation uses the underlying ``UnsafeCell<T>``
 ///    self.0.get() -> *mut T, demoted to *const T
-///    
+///
 #[repr(transparent)]
 pub struct RacyCell<T>(UnsafeCell<T>);
 
 impl<T> RacyCell<T> {
-    /// Create a RacyCell
+    /// Create a ``RacyCell``
     #[inline(always)]
     pub const fn new(value: T) -> Self {
         RacyCell(UnsafeCell::new(value))

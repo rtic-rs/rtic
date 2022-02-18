@@ -1,3 +1,4 @@
+#![allow(clippy::inline_always)]
 use core::{
     cell::Cell,
     sync::atomic::{AtomicBool, Ordering},
@@ -61,7 +62,7 @@ impl Barrier {
     }
 
     pub fn release(&self) {
-        self.inner.store(true, Ordering::Release)
+        self.inner.store(true, Ordering::Release);
     }
 
     pub fn wait(&self) {
@@ -91,7 +92,7 @@ impl Priority {
     // These two methods are used by `lock` (see below) but can't be used from the RTIC application
     #[inline(always)]
     fn set(&self, value: u8) {
-        self.inner.set(value)
+        self.inner.set(value);
     }
 
     /// Get the current priority
@@ -160,7 +161,7 @@ pub unsafe fn lock<T, R>(
 }
 
 /// Lock the resource proxy by setting the PRIMASK
-/// and running the closure with interrupt::free
+/// and running the closure with ``interrupt::free``
 ///
 /// # Safety
 ///
@@ -188,6 +189,7 @@ pub unsafe fn lock<T, R>(
 }
 
 #[inline]
+#[must_use]
 pub fn logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
 }

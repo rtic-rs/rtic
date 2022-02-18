@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Re-export `rtic_core::prelude` as `rtic::mutex::prelude` to allow glob imports + Clippy
+- Fix all except `must_use` lints from clippy::pedantic
 - Fix dated migration docs for spawn
 - Remove obsolete action-rs tool-cache
 - Force mdBook to return error codes
