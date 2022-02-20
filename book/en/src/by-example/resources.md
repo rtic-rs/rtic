@@ -30,13 +30,13 @@ task.
 Thus, a task `#[local]` resource can only be accessed by one singular task.
 Attempting to assign the same `#[local]` resource to more than one task is a compile-time error.
 
-Types of `#[local]` resources must implement [`Send`] trait as they are being sent from `init`
-to target task and thus crossing the thread boundary.
+Types of `#[local]` resources must implement a [`Send`] trait as they are being sent from `init`
+to a target task, crossing a thread boundary.
 
 [`Send`]: https://doc.rust-lang.org/stable/core/marker/trait.Send.html
 
 The example application shown below contains two tasks where each task has access to its own
-`#[local]` resource, plus that the `idle` task has its own `#[local]` as well.
+`#[local]` resource; the `idle` task has its own `#[local]` as well.
 
 ``` rust
 {{#include ../../../../examples/locals.rs}}
@@ -49,12 +49,14 @@ $ cargo run --target thumbv7m-none-eabi --example locals
 {{#include ../../../../ci/expected/locals.run}}
 ```
 
+Local resources in `#[init]` and `#[idle]` have `'static`
+lifetimes. This is safe since both tasks are not re-entrant.
+
 ### Task local initialized resources
 
-A special use-case of local resources are the ones specified directly in the resource claim,
-`#[task(local = [my_var: TYPE = INITIAL_VALUE, ...])]`, this allows for creating locals which do no need to be
+Local resources can also be specified directly in the resource claim like so:
+`#[task(local = [my_var: TYPE = INITIAL_VALUE, ...])]`; this allows for creating locals which do no need to be
 initialized in `#[init]`.
-Moreover, local resources in `#[init]` and `#[idle]` have `'static` lifetimes, this is safe since both are not re-entrant.
 
 Types of `#[task(local = [..])]` resources have to be neither [`Send`] nor [`Sync`] as they
 are not crossing any thread boundary.
@@ -92,9 +94,9 @@ preempting the critical section. This synchronization protocol is known as the
 [srp]: https://en.wikipedia.org/wiki/Stack_Resource_Policy
 
 In the example below we have three interrupt handlers with priorities ranging from one to three.
-The two handlers with the lower priorities contend for the `shared` resource and need to lock the
-resource for accessing the data. The highest priority handler, which do not access the `shared`
-resource, is free to preempt the critical section created by the lowest priority handler.
+The two handlers with the lower priorities contend for a `shared` resource and need to succeed in locking the
+resource in order to access its data. The highest priority handler, which does not access the `shared`
+resource, is free to preempt a critical section created by the lowest priority handler.
 
 ``` rust
 {{#include ../../../../examples/lock.rs}}
