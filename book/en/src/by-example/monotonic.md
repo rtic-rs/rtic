@@ -1,7 +1,7 @@
 # Monotonic & spawn_{at/after}
 
 The understanding of time is an important concept in embedded systems, and to be able to run tasks
-based on time is useful. For this use-case the framework provides the static methods
+based on time is essential. The framework provides the static methods
 `task::spawn_after(/* duration */)` and `task::spawn_at(/* specific time instant */)`.
 `spawn_after` is more commonly used, but in cases where it's needed to have spawns happen
 without drift or to a fixed baseline `spawn_at` is available.
@@ -13,7 +13,7 @@ One or more monotonics can coexist in the same system, for example a slow timer 
 system from sleep and another which purpose is for fine grained scheduling while the
 system is awake.
 
-[`rtic_monotonic::Monotonic`]: https://docs.rs/rtic-monotonic
+[`rtic_monotonic::Monotonic`](https://docs.rs/rtic-monotonic)
 
 The attribute has one required parameter and two optional parameters, `binds`, `default` and
 `priority` respectively.
@@ -43,10 +43,14 @@ $ cargo run --target thumbv7m-none-eabi --example schedule
 {{#include ../../../../ci/expected/schedule.run}}
 ```
 
+A key requirement of a Monotonic is that it must deal gracefully with
+hardware timer overruns.
+
 ## Canceling or rescheduling a scheduled task
 
 Tasks spawned using `task::spawn_after` and `task::spawn_at` returns a `SpawnHandle`,
 which allows canceling or rescheduling of the task scheduled to run in the future.
+
 If `cancel` or `reschedule_at`/`reschedule_after` returns an `Err` it means that the operation was
 too late and that the task is already sent for execution. The following example shows this in action:
 

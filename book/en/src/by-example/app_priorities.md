@@ -4,7 +4,7 @@
 
 The `priority` argument declares the static priority of each `task`.
 
-For Cortex-M, tasks can have priorities in the range `1..=(1 << NVIC_PRIO_BITS)`
+For Cortex-M, tasks can have priorities in the range `1..(1 << NVIC_PRIO_BITS)`
 where `NVIC_PRIO_BITS` is a constant defined in the `device` crate.
 
 Omitting the `priority` argument the task priority defaults to `1`.
@@ -18,21 +18,21 @@ The highest static priority task takes precedence when more than one
 task are ready to execute.
 
 The following scenario demonstrates task prioritization:
-Spawning a higher priority task A during execution of a lower priority task B pends
-task A. Task A has higher priority thus preempting task B which gets suspended
+Spawning a higher priority task A during execution of a lower priority task B suspends
+task B. Task A has higher priority thus preempting task B which gets suspended
 until task A completes execution. Thus, when task A completes task B resumes execution.
 
 ```text
 Task Priority
   ┌────────────────────────────────────────────────────────┐
-  │                                                        │
-  │                                                        │
-3 │                      Preempts                          │
-2 │                    A─────────►                         │
-1 │          B─────────► - - - - B────────►                │
-0 │Idle┌─────►                   Resumes  ┌──────────►     │
+  │                                                                                           │
+  │                                                                                           │
+3 │                                   Preempts                                                │
+2 │                                 A─────────►                                         │
+1 │                 B─────────► - - - - - - - B────────►                           │
+0 │   Idle┌─────►                                    Resumes  ┌──────────►         │
   ├────┴──────────────────────────────────┴────────────────┤
-  │                                                        │
+  │                                                                                           │
   └────────────────────────────────────────────────────────┘Time
 ```
 
@@ -53,7 +53,8 @@ when `baz`returns. When `bar` returns `foo` can resume.
 
 One more note about priorities: choosing a priority higher than what the device
 supports will result in a compilation error.
-The error is cryptic due to limitations in the language,
+
+The error is cryptic due to limitations in the language (XXX  which language ? XXX),
 if `priority = 9` for task `uart0_interrupt` in `example/common.rs` this looks like:
 
 ```text

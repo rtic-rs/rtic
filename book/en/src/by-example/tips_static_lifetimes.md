@@ -1,6 +1,6 @@
 # 'static super-powers
 
-In `#[init]` and `#[idle]` `local` resources has `'static` lifetime.
+In `#[init]` and `#[idle]` `local` resources have `'static` lifetime.
 
 Useful when pre-allocating and/or splitting resources between tasks, drivers
 or some other object.

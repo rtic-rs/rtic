@@ -29,6 +29,7 @@
   - [v0.4.x to v0.5.x](./migration/migration_v4.md)
   - [RTFM to RTIC](./migration/migration_rtic.md)
 - [Under the hood](./internals.md)
+  - [Conceptual execution model](./internals/conceptual_view.md)
   <!--- [Interrupt configuration](./internals/interrupt-configuration.md)-->
   <!--- [Non-reentrancy](./internals/non-reentrancy.md)-->
   <!--- [Access control](./internals/access.md)-->
@@ -37,3 +38,6 @@
   <!--- [Ceiling analysis](./internals/ceilings.md)-->
   <!--- [Software tasks](./internals/tasks.md)-->
   <!--- [Timer queue](./internals/timer-queue.md)-->
+
+(XXX would it be a good idea to add a section on code organization,
+i.e. how to break a larger application into a set of files? XXX)
