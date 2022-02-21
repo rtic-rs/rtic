@@ -13,7 +13,7 @@ One or more monotonics can coexist in the same system, for example a slow timer 
 system from sleep and another which purpose is for fine grained scheduling while the
 system is awake.
 
-[`rtic_monotonic::Monotonic`](https://docs.rs/rtic-monotonic)
+[`rtic_monotonic::Monotonic`]: https://docs.rs/rtic-monotonic
 
 The attribute has one required parameter and two optional parameters, `binds`, `default` and
 `priority` respectively.
