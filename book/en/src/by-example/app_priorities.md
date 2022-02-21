@@ -54,7 +54,7 @@ when `baz`returns. When `bar` returns `foo` can resume.
 One more note about priorities: choosing a priority higher than what the device
 supports will result in a compilation error.
 
-The error is cryptic due to limitations in the language (XXX  which language ? XXX),
+The error is cryptic due to limitations in the Rust language
 if `priority = 9` for task `uart0_interrupt` in `example/common.rs` this looks like:
 
 ```text
