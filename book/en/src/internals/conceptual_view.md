@@ -1,6 +1,6 @@
 # Conceptual view
 
-[Conceptual execution model](./conceptual_execution_model.png)
+![Conceptual execution model](./conceptual_execution_model.png)
 
 This tries to provide a high level view of how tasks are managed in
 the RTIC context. It focuses on the execution flow.
@@ -52,8 +52,7 @@ breaks the execution flow of the processor.
 ## Software queue: task dispatchers
 
 The software queues are maintained by task dispatchers. They can be
-thought of as "pre-wired" hardwa
-re tasks initiated by the NVIC.
+thought of as "pre-wired" hardware tasks initiated by the NVIC.
 
 Each task dispatcher keeps a queue of tasks which are ready to
 execute; this queue is referred to as the ready queue. Spawning a
@@ -65,7 +64,6 @@ execute and a pointer to the message passed to the task.
 You can think of the dispatchers as just calling the SW tasks as
 functions.
 
-
 The ready queue is a SPSC (Single Producer Single Consumer) lock-free
 queue. The task dispatcher owns the consumer endpoint of the queue;
 the producer endpoint is treated as a resource contended by the tasks
@@ -75,8 +73,8 @@ Concurrency](https://rtic.rs/0.5/book/en/internals/tasks.html).
 
 ## spawning
 
-Any task may influence the context via the "spawn" API, adding tasks
-to the queues for later execution.
+Any task may influence the execution context via the "spawn" API,
+adding tasks to the queues for later execution.
 
-The defined priority of the task spawned determines te queue it lands
+The defined priority of the task spawned determines the queue it lands
 in.
