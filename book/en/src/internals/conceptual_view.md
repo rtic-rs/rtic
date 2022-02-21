@@ -37,10 +37,10 @@ then takes over again.
 
 The CPU's ability to set a "minimum priority level" of hardware
 interrupts allows alignment of the software and hardware queues. This
-holds hardware-level interrupts coming in, if an equal or higher
-priority level software task is exectuting. It lets the NVIC keep the
-hardware tasks pending until the software task ends and the CPU then
-lowers the priority level of execution.
+masks hardware-level interrupts coming in while equal or higher
+priority level software tasks are exectuting. It makes the NVIC keep
+the hardware tasks interrupt pending until the software task ends (and
+the CPU has lowered the minimum priority level of interrupt acceptance).
 
 ## Hardware queue: NVIC
 
