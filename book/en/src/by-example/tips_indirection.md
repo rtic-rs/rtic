@@ -15,8 +15,9 @@ or one can use a statically allocated memory pool like [`heapless::Pool`].
 
 [`heapless::Pool`]: https://docs.rs/heapless/0.5.0/heapless/pool/index.html
 
-(XXX Could this approach break the locking mechanisms enforced on
-shared resources and produce unsound code? XXX)
+As this example of approach goes completely outside of RTIC resource
+model with shared and local the program would rely on the correctness
+of the memory allocator, in this case `heapless::pool`.
 
 Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 
