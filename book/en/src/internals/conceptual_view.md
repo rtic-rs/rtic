@@ -18,7 +18,7 @@ The other is a hardware-controlled queue maintained by the NVIC. If
 there are two hardware interrupts pending, the highest priority code
 will execute first: a "priority queue" at a hardware level.
 
-The the NVIC operates essentially independently of the CPU, outside of
+The NVIC operates essentially independently of the CPU, outside of
 the various masking and other registers that the CPU can use to ignore
 specific interrupt sources.
 
