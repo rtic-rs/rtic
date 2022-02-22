@@ -25,6 +25,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Remove obsolete action-rs tool-cache
 - Force mdBook to return error codes
 - Readded missing ramfunc output to book
+- Several minor editorial changes in book
 
 ## [v1.0.0] - 2021-12-25
 
