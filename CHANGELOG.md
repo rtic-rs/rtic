@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
+
 ## [Unreleased]
 
 ### Added
@@ -28,11 +30,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Force mdBook to return error codes
 - Readded missing ramfunc output to book
 
+### Changed
+
+- Try to detect `target-dir` for rtic-expansion.rs
+
 ## [v1.0.0] - 2021-12-25
 
 ### Changed
 
-- Try to detect `target-dir` for rtic-expansion.rs
 - Bump RTIC dependencies also updated to v1.0.0
 - Edition 2021
 - Change default `idle` behaviour to be `NOP` instead of `WFI`
