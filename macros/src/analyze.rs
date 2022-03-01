@@ -34,7 +34,7 @@ pub fn app(analysis: P<analyze::Analysis>, app: &App) -> P<Analysis> {
     // map from priorities to interrupts (holding name and attributes)
     let interrupts: BTreeMap<Priority, _> = priorities
         .iter()
-        .cloned()
+        .copied()
         .rev()
         .zip(&app.args.extern_interrupts)
         .map(|(p, (id, ext))| (p, (id.clone(), ext.clone())))

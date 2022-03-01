@@ -35,33 +35,8 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         let mangled_name = util::static_shared_resource_ident(name);
         let shared_name = util::need_to_lock_ident(name);
 
-        if !res.properties.lock_free {
-            if access.is_shared() {
-                lt = Some(quote!('a));
-
-                fields.push(quote!(
-                    #(#cfgs)*
-                    pub #name: &'a #ty
-                ));
-            } else {
-                // Resource proxy
-                lt = Some(quote!('a));
-
-                fields.push(quote!(
-                    #(#cfgs)*
-                    pub #name: shared_resources::#shared_name<'a>
-                ));
-
-                values.push(quote!(
-                    #(#cfgs)*
-                    #name: shared_resources::#shared_name::new(priority)
-
-                ));
-
-                // continue as the value has been filled,
-                continue;
-            }
-        } else {
+        if res.properties.lock_free {
+            // Lock free resources of `idle` and `init` get 'static lifetime
             let lt = if ctxt.runs_once() {
                 quote!('static)
             } else {
@@ -73,6 +48,30 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                 #(#cfgs)*
                 pub #name: &#lt #mut_ #ty
             ));
+        } else if access.is_shared() {
+            lt = Some(quote!('a));
+
+            fields.push(quote!(
+                #(#cfgs)*
+                pub #name: &'a #ty
+            ));
+        } else {
+            // Resource proxy
+            lt = Some(quote!('a));
+
+            fields.push(quote!(
+                #(#cfgs)*
+                pub #name: shared_resources::#shared_name<'a>
+            ));
+
+            values.push(quote!(
+                #(#cfgs)*
+                #name: shared_resources::#shared_name::new(priority)
+
+            ));
+
+            // continue as the value has been filled,
+            continue;
         }
 
         let expr = if access.is_exclusive() {
@@ -97,7 +96,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                 pub __marker__: core::marker::PhantomData<&'a ()>
             ));
 
-            values.push(quote!(__marker__: core::marker::PhantomData))
+            values.push(quote!(__marker__: core::marker::PhantomData));
         }
     }
 

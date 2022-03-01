@@ -3,6 +3,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::{ast::App, Context};
 
+#[allow(clippy::too_many_lines)]
 pub fn codegen(
     ctxt: Context,
     shared_resources_tick: bool,
@@ -50,11 +51,7 @@ pub fn codegen(
             values.push(quote!(core));
         }
 
-        Context::Idle => {}
-
-        Context::HardwareTask(_) => {}
-
-        Context::SoftwareTask(_) => {}
+        Context::Idle | Context::HardwareTask(_) | Context::SoftwareTask(_) => {}
     }
 
     // if ctxt.has_locals(app) {
@@ -438,7 +435,9 @@ pub fn codegen(
         }
     }
 
-    if !items.is_empty() {
+    if items.is_empty() {
+        quote!()
+    } else {
         quote!(
             #(#items)*
 
@@ -449,7 +448,5 @@ pub fn codegen(
                 #(#module_items)*
             }
         )
-    } else {
-        quote!()
     }
 }

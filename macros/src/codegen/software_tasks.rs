@@ -43,7 +43,7 @@ pub fn codegen(
             (
                 quote!(rtic::export::SCFQ<#cap_lit_p1>),
                 quote!(rtic::export::Queue::new()),
-                Box::new(|| util::link_section_uninit()),
+                Box::new(|| Some(util::link_section_uninit())),
             )
         };
         mod_app.push(quote!(

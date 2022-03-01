@@ -41,12 +41,12 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
     // Unmask interrupts and set their priorities
-    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().flat_map(|task| {
-        if !util::is_exception(&task.args.binds) {
-            Some((&task.args.priority, &task.args.binds))
-        } else {
+    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {
+        if util::is_exception(&task.args.binds) {
             // We do exceptions in another pass
             None
+        } else {
+            Some((&task.args.priority, &task.args.binds))
         }
     })) {
         // Compile time assert that this priority is supported by the device

@@ -75,8 +75,7 @@ pub fn codegen(
             );
 
             let ceiling = match analysis.ownerships.get(name) {
-                Some(Ownership::Owned { priority }) => *priority,
-                Some(Ownership::CoOwned { priority }) => *priority,
+                Some(Ownership::Owned { priority } | Ownership::CoOwned { priority }) => *priority,
                 Some(Ownership::Contended { ceiling }) => *ceiling,
                 None => 0,
             };
@@ -89,9 +88,9 @@ pub fn codegen(
                 cfgs,
                 true,
                 &shared_name,
-                quote!(#ty),
+                &quote!(#ty),
                 ceiling,
-                ptr,
+                &ptr,
             ));
         }
     }
