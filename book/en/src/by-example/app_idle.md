@@ -17,12 +17,12 @@ are safe to access.
 The example below shows that `idle` runs after `init`.
 
 ``` rust
-{{#include ../../../../examples/idle.rs}}
+{{#include ../../../../examples-runner/src/bin/idle.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example idle
-{{#include ../../../../ci/expected/idle.run}}
+{{#include ../../../../examples-runner/ci/expected/idle.run}}
 ```
 
 By default, the RTIC `idle` task does not try to optimize for any specific targets.
@@ -43,10 +43,10 @@ default [`nop()`][NOP] with [`wfi()`][WFI].
 [NOP]: https://developer.arm.com/documentation/dui0662/b/The-Cortex-M0--Instruction-Set/Miscellaneous-instructions/NOP
 
 ``` rust
-{{#include ../../../../examples/idle-wfi.rs}}
+{{#include ../../../../examples-runner/src/bin/idle-wfi.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example idle-wfi
-{{#include ../../../../ci/expected/idle-wfi.run}}
+{{#include ../../../../examples-runner/ci/expected/idle-wfi.run}}
 ```

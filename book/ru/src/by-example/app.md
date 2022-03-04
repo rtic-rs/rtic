@@ -51,7 +51,7 @@
 
 ```  console
 $ cargo run --example init
-{{#include ../../../../ci/expected/init.run}}
+{{#include ../../../../examples-runner/ci/expected/init.run}}
 ```
 
 > **ПРИМЕЧАНИЕ**: Не забывайте указывать выбранное вами целевое устройство, передавая параметр target
@@ -87,7 +87,7 @@ $ cargo run --example init
 
 ``` console
 $ cargo run --example idle
-{{#include ../../../../ci/expected/idle.run}}
+{{#include ../../../../examples-runner/ci/expected/idle.run}}
 ```
 
 ## Аппаратные задачи
@@ -109,7 +109,7 @@ mut` переменные безопасны для использования �
 
 ``` console
 $ cargo run --example hardware
-{{#include ../../../../ci/expected/hardware.run}}
+{{#include ../../../../examples-runner/ci/expected/hardware.run}}
 ```
 
 До сих пор все программы на RTIC, которые мы видели, не отличались от программ,
@@ -145,7 +145,7 @@ $ cargo run --example hardware
 
 ``` console
 $ cargo run --example preempt
-{{#include ../../../../ci/expected/preempt.run}}
+{{#include ../../../../examples-runner/ci/expected/preempt.run}}
 ```
 
 Заметьте, что задача `gpiob` *не* вытесняет задачу `gpioc`, потому что ее приоритет

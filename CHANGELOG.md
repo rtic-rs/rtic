@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- HIL tests (embedded-ci)
 - Improve how CHANGELOG.md merges are handled
 - If current $stable and master version matches, dev-book redirects to $stable book
 - During deploy stage, merge master branch into current stable IFF cargo package version matches

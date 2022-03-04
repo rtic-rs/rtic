@@ -22,5 +22,5 @@ To give a flavour of RTIC, the following example contains commonly used features
 In the following sections we will go through each feature in detail.
 
 ``` rust
-{{#include ../../../../examples/common.rs}}
+{{#include ../../../../examples-runner/src/bin/common.rs}}
 ```

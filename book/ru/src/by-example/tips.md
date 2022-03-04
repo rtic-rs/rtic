@@ -22,7 +22,7 @@
 
 ``` console
 $ cargo run --example generics
-{{#include ../../../../ci/expected/generics.run}}
+{{#include ../../../../examples-runner/ci/expected/generics.run}}
 ```
 
 ## Условная компиляция
@@ -43,7 +43,7 @@ $ cargo run --example generics
 $ cargo run --example cfg --release
 
 $ cargo run --example cfg
-{{#include ../../../../ci/expected/cfg.run}}
+{{#include ../../../../examples-runner/ci/expected/cfg.run}}
 ```
 
 ## Запуск задач из ОЗУ
@@ -75,7 +75,7 @@ RTIC v0.4.x была возможность взаимодействия с др
 
 ``` console
 $ cargo run --example ramfunc
-{{#include ../../../../ci/expected/ramfunc.run}}
+{{#include ../../../../examples-runner/ci/expected/ramfunc.run}}
 ```
 
 Можно посмотреть на вывод `cargo-nm`, чтобы убедиться, что `bar` расположен в ОЗУ
@@ -83,12 +83,12 @@ $ cargo run --example ramfunc
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' foo::'
-{{#include ../../../../ci/expected/ramfunc.run.grep.foo}}
+{{#include ../../../../examples-runner/ci/expected/ramfunc.run.grep.foo}}
 ```
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
-{{#include ../../../../ci/expected/ramfunc.run.grep.bar}}
+{{#include ../../../../examples-runner/ci/expected/ramfunc.run.grep.bar}}
 ```
 
 ## Обходной путь для быстрой передачи сообщений
@@ -113,7 +113,7 @@ $ cargo nm --example ramfunc --release | grep ' bar::'
 
 ``` console
 $ cargo run --example pool
-{{#include ../../../../ci/expected/pool.run}}
+{{#include ../../../../examples-runner/ci/expected/pool.run}}
 ```
 
 ## Инспектирование раскрываемого кода

@@ -39,12 +39,12 @@ Task Priority
 The following example showcases the priority based scheduling of tasks:
 
 ``` rust
-{{#include ../../../../examples/preempt.rs}}
+{{#include ../../../../examples-runner/src/bin/preempt.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example preempt
-{{#include ../../../../ci/expected/preempt.run}}
+{{#include ../../../../examples-runner/ci/expected/preempt.run}}
 ```
 
 Note that the task `bar` does *not* preempt task `baz` because its priority

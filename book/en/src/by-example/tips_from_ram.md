@@ -20,14 +20,14 @@ improve performance in some cases.
 The example below shows how to place the higher priority task, `bar`, in RAM.
 
 ``` rust
-{{#include ../../../../examples/ramfunc.rs}}
+{{#include ../../../../examples-runner/src/bin/ramfunc.rs}}
 ```
 
 Running this program produces the expected output.
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example ramfunc
-{{#include ../../../../ci/expected/ramfunc.run}}
+{{#include ../../../../examples-runner/ci/expected/ramfunc.run}}
 ```
 
 One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
@@ -35,10 +35,10 @@ One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' foo::'
-{{#include ../../../../ci/expected/ramfunc.run.grep.foo}}
+{{#include ../../../../examples-runner/ci/expected/ramfunc.run.grep.foo}}
 ```
 
 ``` console
 $ cargo nm --example ramfunc --release | grep ' bar::'
-{{#include ../../../../ci/expected/ramfunc.run.grep.bar}}
+{{#include ../../../../examples-runner/ci/expected/ramfunc.run.grep.bar}}
 ```

@@ -28,10 +28,10 @@ The example below demonstrates the use of the `#[task(binds = InterruptName)]` a
 hardware task bound to an interrupt handler.
 
 ``` rust
-{{#include ../../../../examples/hardware.rs}}
+{{#include ../../../../examples-runner/src/bin/hardware.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example hardware
-{{#include ../../../../ci/expected/hardware.run}}
+{{#include ../../../../examples-runner/ci/expected/hardware.run}}
 ```

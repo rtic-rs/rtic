@@ -49,7 +49,9 @@ lto = true
 [workspace]
 members = [
   "macros",
-  "xtask",
+]
+exclude = [
+    "examples-runner",
 ]
 
 # do not optimize proc-macro deps or build scripts

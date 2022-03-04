@@ -35,12 +35,12 @@ This activates the monotonics making it possible to use them.
 See the following example:
 
 ``` rust
-{{#include ../../../../examples/schedule.rs}}
+{{#include ../../../../examples-runner/src/bin/schedule.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example schedule
-{{#include ../../../../ci/expected/schedule.run}}
+{{#include ../../../../examples-runner/ci/expected/schedule.run}}
 ```
 
 ## Canceling or rescheduling a scheduled task
@@ -51,10 +51,10 @@ If `cancel` or `reschedule_at`/`reschedule_after` returns an `Err` it means that
 too late and that the task is already sent for execution. The following example shows this in action:
 
 ``` rust
-{{#include ../../../../examples/cancel-reschedule.rs}}
+{{#include ../../../../examples-runner/src/bin/cancel-reschedule.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example cancel-reschedule
-{{#include ../../../../ci/expected/cancel-reschedule.run}}
+{{#include ../../../../examples-runner/ci/expected/cancel-reschedule.run}}
 ```

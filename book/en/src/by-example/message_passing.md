@@ -11,10 +11,10 @@ pending spawns of `foo`. Exceeding this capacity is an `Error`.
 The number of arguments to a task is not limited:
 
 ``` rust
-{{#include ../../../../examples/message_passing.rs}}
+{{#include ../../../../examples-runner/src/bin/message_passing.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example message_passing
-{{#include ../../../../ci/expected/message_passing.run}}
+{{#include ../../../../examples-runner/ci/expected/message_passing.run}}
 ```

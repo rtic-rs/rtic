@@ -18,10 +18,10 @@ or one can use a statically allocated memory pool like [`heapless::Pool`].
 Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 
 ``` rust
-{{#include ../../../../examples/pool.rs}}
+{{#include ../../../../examples-runner/src/bin/pool.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example pool
-{{#include ../../../../ci/expected/pool.run}}
+{{#include ../../../../examples-runner/ci/expected/pool.run}}
 ```

@@ -1,0 +1,79 @@
+[package]
+# TODO(1) fix `authors` and `name` if you didn't use `cargo-generate`
+authors = ["Emil Fresk <emil.fresk@gmail.com>"]
+name = "examples-runner"
+edition = "2018"
+version = "0.1.0"
+
+[dependencies]
+defmt = { version = "0.3.0", optional = true }
+defmt-rtt = { version = "0.3.0", optional = true }
+panic-probe = { version = "0.3.0", optional = true }
+cortex-m-rtic = { path = ".." }
+cortex-m = "0.7"
+systick-monotonic = "1"
+fugit = { version = "0.3", features = ["defmt"] }
+cortex-m-semihosting = { version = "0.3.7", optional = true }
+panic-semihosting =  { version = "0.5.6", optional = true }
+heapless = "0.7"
+rtic-monotonic = "1"
+bare-metal = "1"
+
+[dependencies.embedded-ci-pac]
+version = "0.1.0"
+git = "https://github.com/korken89/embedded-ci-pac.git"
+
+[workspace]
+members = [
+  "xtask",
+]
+
+[features]
+embedded-ci = ["defmt", "defmt-rtt", "panic-probe/print-defmt"]
+qemu = ["cortex-m-semihosting", "panic-semihosting/exit"]
+
+# cargo build/run
+[profile.dev]
+codegen-units = 1
+debug = 2
+debug-assertions = true # <-
+incremental = false
+opt-level = "s" # <-
+overflow-checks = true # <-
+
+# cargo test
+[profile.test]
+codegen-units = 1
+debug = 2
+debug-assertions = true # <-
+incremental = false
+opt-level = "s" # <-
+overflow-checks = true # <-
+
+# cargo build/run --release
+[profile.release]
+codegen-units = 1
+debug = 2
+debug-assertions = false # <-
+incremental = false
+lto = 'fat'
+opt-level = "s" # <-
+overflow-checks = false # <-
+
+# cargo test --release
+[profile.bench]
+codegen-units = 1
+debug = 2
+debug-assertions = false # <-
+incremental = false
+lto = 'fat'
+opt-level = "s" # <-
+overflow-checks = false # <-
+
+# uncomment this to switch from the crates.io version of defmt to its git version
+# check app-template's README for instructions
+# [patch.crates-io]
+# defmt = { git = "https://github.com/knurling-rs/defmt", rev = "use defmt version reported by `probe-run --version`" }
+# defmt-rtt = { git = "https://github.com/knurling-rs/defmt", rev = "use defmt version reported by `probe-run --version`" }
+# defmt-test = { git = "https://github.com/knurling-rs/defmt", rev = "use defmt version reported by `probe-run --version`" }
+# panic-probe = { git = "https://github.com/knurling-rs/defmt", rev = "use defmt version reported by `probe-run --version`" }

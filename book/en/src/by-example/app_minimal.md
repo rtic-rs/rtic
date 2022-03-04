@@ -3,5 +3,5 @@
 This is the smallest possible RTIC application:
 
 ``` rust
-{{#include ../../../../examples/smallest.rs}}
+{{#include ../../../../examples-runner/src/bin/smallest.rs}}
 ```
