@@ -15,6 +15,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 - Rework branch structure, release/vVERSION
 - Cargo clippy in CI
 - Use rust-cache Github Action
+- Support for NVIC based SPR based scheduling for armv6m.
 - CI changelog entry enforcer
 - `examples/periodic-at.rs`, an example of a periodic timer without accumulated drift.
 - `examples/periodic-at2.rs`, an example of a periodic process with two tasks, with offset timing.

@@ -52,6 +52,7 @@ pub fn impl_mutex(
                         #priority,
                         CEILING,
                         #device::NVIC_PRIO_BITS,
+                        &MASKS,
                         f,
                     )
                 }

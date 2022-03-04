@@ -28,7 +28,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut user = vec![];
 
     // Generate the `main` function
-    let assertion_stmts = assertions::codegen(app, analysis);
+    let assertion_stmts = assertions::codegen(app, analysis, extra);
 
     let pre_init_stmts = pre_init::codegen(app, analysis, extra);
 
