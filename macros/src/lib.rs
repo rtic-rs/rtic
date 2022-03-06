@@ -20,7 +20,10 @@ mod tests;
 /// Attribute used to declare a RTIC application
 ///
 /// For user documentation see the [RTIC book](https://rtic.rs)
-
+///
+/// # Panics
+///
+/// Should never panic, cargo feeds a path which is later converted to a string
 #[proc_macro_attribute]
 pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     let mut settings = Settings::default();
@@ -61,7 +64,10 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     #[cfg(feature = "debugprint")]
     println!("OUT_DIR\n{:#?}", out_str);
 
-    if !out_dir.exists() {
+    if out_dir.exists() {
+        #[cfg(feature = "debugprint")]
+        println!("\ntarget/ exists\n");
+    } else {
         // Set out_dir to OUT_DIR
         out_dir = Path::new(&out_str);
 
@@ -80,24 +86,19 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
                     .to_str()
                     .unwrap()
                     .starts_with(target_triple_prefix)
-                //|| path.ends_with(&out_dir_root)
                 {
                     if let Some(out) = path.parent() {
                         out_dir = out;
                         #[cfg(feature = "debugprint")]
                         println!("{:#?}\n", out_dir);
                         break;
-                    } else {
-                        // If no parent, just use it
-                        out_dir = path;
-                        break;
                     }
+                    // If no parent, just use it
+                    out_dir = path;
+                    break;
                 }
             }
         }
-    } else {
-        #[cfg(feature = "debugprint")]
-        println!("\ntarget/ exists\n");
     }
 
     // Try to write the expanded code to disk

@@ -25,9 +25,9 @@ pub fn impl_mutex(
     cfgs: &[Attribute],
     resources_prefix: bool,
     name: &Ident,
-    ty: TokenStream2,
+    ty: &TokenStream2,
     ceiling: u8,
-    ptr: TokenStream2,
+    ptr: &TokenStream2,
 ) -> TokenStream2 {
     let (path, priority) = if resources_prefix {
         (quote!(shared_resources::#name), quote!(self.priority()))
@@ -52,6 +52,7 @@ pub fn impl_mutex(
                         #priority,
                         CEILING,
                         #device::NVIC_PRIO_BITS,
+                        &MASKS,
                         f,
                     )
                 }
@@ -117,11 +118,11 @@ fn link_section_index() -> usize {
     INDEX.fetch_add(1, Ordering::Relaxed)
 }
 
-// NOTE `None` means in shared memory
-pub fn link_section_uninit() -> Option<TokenStream2> {
+/// Add `link_section` attribute
+pub fn link_section_uninit() -> TokenStream2 {
     let section = format!(".uninit.rtic{}", link_section_index());
 
-    Some(quote!(#[link_section = #section]))
+    quote!(#[link_section = #section])
 }
 
 // Regroups the inputs of a task

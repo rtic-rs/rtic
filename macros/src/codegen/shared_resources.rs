@@ -75,8 +75,7 @@ pub fn codegen(
             );
 
             let ceiling = match analysis.ownerships.get(name) {
-                Some(Ownership::Owned { priority }) => *priority,
-                Some(Ownership::CoOwned { priority }) => *priority,
+                Some(Ownership::Owned { priority } | Ownership::CoOwned { priority }) => *priority,
                 Some(Ownership::Contended { ceiling }) => *ceiling,
                 None => 0,
             };
@@ -89,9 +88,9 @@ pub fn codegen(
                 cfgs,
                 true,
                 &shared_name,
-                quote!(#ty),
+                &quote!(#ty),
                 ceiling,
-                ptr,
+                &ptr,
             ));
         }
     }
@@ -105,6 +104,39 @@ pub fn codegen(
             #(#mod_resources)*
         })
     };
+
+    // Computing mapping of used interrupts to masks
+    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+
+    use std::collections::HashMap;
+    let mut masks: HashMap<u8, _> = std::collections::HashMap::new();
+    let device = &extra.device;
+
+    for p in 0..3 {
+        masks.insert(p, quote!(0));
+    }
+
+    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().flat_map(|task| {
+        if !util::is_exception(&task.args.binds) {
+            Some((&task.args.priority, &task.args.binds))
+        } else {
+            // TODO: exceptions not implemented
+            None
+        }
+    })) {
+        let name = quote!(#device::Interrupt::#name as u32);
+        if let Some(v) = masks.get_mut(&(priority - 1)) {
+            *v = quote!(#v | 1 << #name);
+        };
+    }
+
+    let mut mask_arr: Vec<(_, _)> = masks.iter().collect();
+    mask_arr.sort_by_key(|(k, _v)| *k);
+    let mask_arr: Vec<_> = mask_arr.iter().map(|(_, v)| v).collect();
+
+    mod_app.push(quote!(
+        const MASKS: [u32; 3] = [#(#mask_arr),*];
+    ));
 
     (mod_app, mod_resources)
 }

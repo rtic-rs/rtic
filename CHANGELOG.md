@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
+
 ## [Unreleased]
 
 ### Added
@@ -13,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Rework branch structure, release/vVERSION
 - Cargo clippy in CI
 - Use rust-cache Github Action
+- Support for NVIC based SPR based scheduling for armv6m.
 - CI changelog entry enforcer
 - `examples/periodic-at.rs`, an example of a periodic timer without accumulated drift.
 - `examples/periodic-at2.rs`, an example of a periodic process with two tasks, with offset timing.
@@ -21,17 +24,22 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+- Re-export `rtic_core::prelude` as `rtic::mutex::prelude` to allow glob imports + Clippy
+- Fix all except `must_use` lints from clippy::pedantic
 - Fix dated migration docs for spawn
 - Remove obsolete action-rs tool-cache
 - Force mdBook to return error codes
 - Readded missing ramfunc output to book
 - Several minor editorial changes in book
 
+### Changed
+
+- Try to detect `target-dir` for rtic-expansion.rs
+
 ## [v1.0.0] - 2021-12-25
 
 ### Changed
 
-- Try to detect `target-dir` for rtic-expansion.rs
 - Bump RTIC dependencies also updated to v1.0.0
 - Edition 2021
 - Change default `idle` behaviour to be `NOP` instead of `WFI`
