@@ -15,8 +15,9 @@ start execution in reaction to a hardware event.
 Specifying a non-existing interrupt name will cause a compilation error. The interrupt names
 are commonly defined by [PAC or HAL][pacorhal] crates.
 
-Any available interrupt vector should work. Specific devices may
-allow selection of interrupt priority level, such as the
+Any available interrupt vector should work. Specific devices may bind
+specific interrupt priorities to specific interrupt vectors outside
+user code control. See for example the 
 [nRF “softdevice”](https://github.com/rtic-rs/cortex-m-rtic/issues/434).
 
 Beware of using interrupt vectors that are used internally by hardware features;
