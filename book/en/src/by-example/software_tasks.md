@@ -1,6 +1,6 @@
 # Software tasks & spawn
 
-The RTIC concept of a software task shares a lot with that of [hardware tasks][hardware_tasks.md]
+The RTIC concept of a software task shares a lot with that of [hardware tasks](./hardware_tasks.md)
 with the core difference that a software task is not explicitly bound to a specific
 interrupt vector, but rather a “dispatcher” interrupt vector running
 at the same priority as the software task.
