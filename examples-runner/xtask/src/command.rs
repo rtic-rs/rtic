@@ -17,6 +17,14 @@ pub enum Runner {
     EmbeddedCi,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, ArgEnum)]
+pub enum CoreRun {
+    CortexM0,
+    CortexM3,
+    CortexM4,
+    CortexM7,
+}
+
 #[derive(Debug)]
 pub enum CargoCommand<'a> {
     Run {
@@ -25,6 +33,7 @@ pub enum CargoCommand<'a> {
         features: Option<&'a str>,
         mode: BuildMode,
         runner: Runner,
+        core_runner: Option<CoreRun>,
     },
     BuildAll {
         target: &'a str,
@@ -54,6 +63,7 @@ impl<'a> CargoCommand<'a> {
                 features,
                 mode,
                 runner,
+                core_runner,
             } => match runner {
                 Runner::Qemu => {
                     let mut args = vec![self.name(), "--bin", example, "--target", target];
@@ -68,12 +78,22 @@ impl<'a> CargoCommand<'a> {
                 }
                 Runner::EmbeddedCi => {
                     let mut args = vec![];
-                    if target.contains("thumbv6") {
-                        args.extend_from_slice(&["--cores", "cortexm0plus"])
-                    } else if target.contains("thumbv7") {
-                        args.extend_from_slice(&["--cores", "cortexm3,cortexm4,cortexm7"])
-                    } else {
-                        panic!("Unknown target: {}", target);
+                    match core_runner {
+                        Some(CoreRun::CortexM0) => {
+                            args.extend_from_slice(&["--cores", "cortexm0plus"])
+                        }
+                        Some(CoreRun::CortexM3) => args.extend_from_slice(&["--cores", "cortexm3"]),
+                        Some(CoreRun::CortexM4) => args.extend_from_slice(&["--cores", "cortexm4"]),
+                        Some(CoreRun::CortexM7) => args.extend_from_slice(&["--cores", "cortexm7"]),
+                        None => {
+                            if target.contains("thumbv6") {
+                                args.extend_from_slice(&["--cores", "cortexm0plus"])
+                            } else if target.contains("thumbv7") {
+                                args.extend_from_slice(&["--cores", "cortexm3,cortexm4,cortexm7"])
+                            } else {
+                                panic!("Unknown target: {}", target);
+                            }
+                        }
                     }
                     let s = Box::new(format!("target/{target}/{mode}/{example}"));
                     let s = s.into_boxed_str();
@@ -112,6 +132,7 @@ impl<'a> CargoCommand<'a> {
                 features: _,
                 mode: _,
                 runner,
+                core_runner: _,
             } => match runner {
                 Runner::Qemu => "cargo",
                 Runner::EmbeddedCi => "embedded-ci-client",

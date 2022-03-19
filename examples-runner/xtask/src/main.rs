@@ -2,7 +2,7 @@ mod build;
 mod command;
 
 use anyhow::bail;
-use clap::Parser;
+use clap::{ArgEnum, Parser};
 use core::fmt;
 use std::{
     error::Error,
@@ -15,7 +15,7 @@ use std::{
 
 use crate::{
     build::init_build_dir,
-    command::{run_command, run_successful, BuildMode, CargoCommand, Runner},
+    command::{run_command, run_successful, BuildMode, CargoCommand, Runner, CoreRun},
 };
 
 const ARMV6M: &str = "thumbv6m-none-eabi";
@@ -28,6 +28,8 @@ struct Options {
     target: String,
     #[clap(short, long, arg_enum)]
     runner: Runner,
+    #[clap(short, long, arg_enum)]
+    core_runner: Option<CoreRun>
 }
 
 #[derive(Debug, Clone)]
@@ -99,14 +101,14 @@ fn main() -> anyhow::Result<()> {
     let opts = Options::parse();
     let target = &opts.target;
 
-    init_build_dir()?;
+    // init_build_dir()?;
 
     if target == "all" {
         for t in targets {
-            run_tests(t, opts.runner, &examples)?;
+            run_tests(t, opts.runner, opts.core_runner, &examples)?;
         }
     } else if targets.contains(&target.as_str()) {
-        run_tests(&target, opts.runner, &examples)?;
+        run_tests(&target, opts.runner, opts.core_runner, &examples)?;
     } else {
         eprintln!(
             "The target you specified is not available. Available targets are:\
@@ -120,7 +122,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_tests(target: &str, runner: Runner, examples: &[String]) -> anyhow::Result<()> {
+fn run_tests(target: &str, runner: Runner, core_runner: Option<CoreRun>, examples: &[String]) -> anyhow::Result<()> {
     let features = Some(match runner {
         Runner::Qemu => "qemu",
         Runner::EmbeddedCi => "embedded-ci",
@@ -139,6 +141,7 @@ fn run_tests(target: &str, runner: Runner, examples: &[String]) -> anyhow::Resul
             features,
             mode: BuildMode::Release,
             runner,
+            core_runner,
         };
 
         arm_example(&cmd)?;

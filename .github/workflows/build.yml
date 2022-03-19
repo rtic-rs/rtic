@@ -173,13 +173,12 @@ jobs:
           cd examples-runner
           cargo xtask --target ${{ matrix.target }} --runner qemu
 
-  testexamplesembeddedci:
-    name: testexamplesembeddedci
+  testexamplesembeddedcim0:
+    name: testexamplesembeddedcim0
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         target:
-          - thumbv7m-none-eabi
           - thumbv6m-none-eabi
         toolchain:
           - stable
@@ -211,7 +210,124 @@ jobs:
           EMBEDDED_CI_SERVER: ${{ secrets.EMBEDDED_CI_SERVER }}
         run: |
           cd examples-runner
-          cargo xtask --target ${{ matrix.target }} --runner embedded-ci
+          cargo xtask --target ${{ matrix.target }} --runner embedded-ci --core-runner cortex-m0
+
+  testexamplesembeddedcim3:
+    name: testexamplesembeddedcim3
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+          components: llvm-tools-preview
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Install embedded-ci-client
+        run: |
+          cargo install --git https://github.com/korken89/embedded-ci.git embedded-ci-client
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+
+      - name: Run-pass tests
+        env:
+          EMBEDDED_CI_TOKEN: ${{ secrets.EMBEDDED_CI_TOKEN }}
+          EMBEDDED_CI_SERVER: ${{ secrets.EMBEDDED_CI_SERVER }}
+        run: |
+          cd examples-runner
+          cargo xtask --target ${{ matrix.target }} --runner embedded-ci --core-runner cortex-m3
+
+  testexamplesembeddedcim4:
+    name: testexamplesembeddedcim4
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+          components: llvm-tools-preview
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Install embedded-ci-client
+        run: |
+          cargo install --git https://github.com/korken89/embedded-ci.git embedded-ci-client
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+
+      - name: Run-pass tests
+        env:
+          EMBEDDED_CI_TOKEN: ${{ secrets.EMBEDDED_CI_TOKEN }}
+          EMBEDDED_CI_SERVER: ${{ secrets.EMBEDDED_CI_SERVER }}
+        run: |
+          cd examples-runner
+          cargo xtask --target ${{ matrix.target }} --runner embedded-ci --core-runner cortex-m4
+
+  testexamplesembeddedcim7:
+    name: testexamplesembeddedcim7
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+          components: llvm-tools-preview
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Install embedded-ci-client
+        run: |
+          cargo install --git https://github.com/korken89/embedded-ci.git embedded-ci-client
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+
+      - name: Run-pass tests
+        env:
+          EMBEDDED_CI_TOKEN: ${{ secrets.EMBEDDED_CI_TOKEN }}
+          EMBEDDED_CI_SERVER: ${{ secrets.EMBEDDED_CI_SERVER }}
+        run: |
+          cd examples-runner
+          cargo xtask --target ${{ matrix.target }} --runner embedded-ci --core-runner cortex-m7
 
   # Check the correctness of macros/ crate
   checkmacros:
@@ -408,7 +524,10 @@ jobs:
       - clippy
       - checkexamples
       - testexamplesqemu
-      - testexamplesembeddedci
+      - testexamplesembeddedcim0
+      - testexamplesembeddedcim3
+      - testexamplesembeddedcim4
+      - testexamplesembeddedcim7
       - checkmacros
       - testmacros
       - tests
@@ -591,7 +710,10 @@ jobs:
       - clippy
       - checkexamples
       - testexamplesqemu
-      - testexamplesembeddedci
+      - testexamplesembeddedcim0
+      - testexamplesembeddedcim3
+      - testexamplesembeddedcim4
+      - testexamplesembeddedcim7
       - checkmacros
       - testmacros
       - tests
