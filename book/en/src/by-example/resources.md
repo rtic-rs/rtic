@@ -105,7 +105,7 @@ $ cargo run --target thumbv7m-none-eabi --example lock
 {{#include ../../../../ci/expected/lock.run}}
 ```
 
-Types of `#[shared]` resources have to be both [`Send`] and [`Sync`].
+Types of `#[shared]` resources have to be [`Send`].
 
 ## Multi-lock
 
