@@ -4,7 +4,7 @@
 
 The `priority` argument declares the static priority of each `task`.
 
-For Cortex-M, tasks can have priorities in the range `1..(1 << NVIC_PRIO_BITS)`
+For Cortex-M, tasks can have priorities in the range `1..=(1 << NVIC_PRIO_BITS)`
 where `NVIC_PRIO_BITS` is a constant defined in the `device` crate.
 
 Omitting the `priority` argument the task priority defaults to `1`.
