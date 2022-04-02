@@ -24,7 +24,6 @@ until task A completes execution. Thus, when task A completes task B resumes exe
 
 ```text
 Task Priority
-Task Priority
   ┌────────────────────────────────────────────────────────┐
   │                                                        │
   │                                                        │
