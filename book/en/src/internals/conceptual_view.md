@@ -27,7 +27,7 @@ memory of lower or same priority level interrupts to process them once
 they become eligible?)
 
 So, a hardware task initiated by and bound to a hardware interrupt is
-controlled by the NVIC's queuing mechanism without direct involement
+controlled by the NVIC's queuing mechanism without direct involvement
 of the processor; a software-spawned task just gets put into the task
 FIFO (at some priority level) for later execution whenever the current
 execution priority level is low enough. If a hardware or software task
