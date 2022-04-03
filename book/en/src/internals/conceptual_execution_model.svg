@@ -13,7 +13,7 @@
    version="1.1"
    id="svg8"
    inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
-   sodipodi:docname="RTIC_mental_model_V4.svg">
+   sodipodi:docname="conceptual_execution_model.svg">
   <defs
      id="defs2">
     <marker
@@ -144,11 +144,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98994949"
-     inkscape:cx="260.52236"
-     inkscape:cy="632.33355"
+     inkscape:zoom="0.7"
+     inkscape:cx="224.73146"
+     inkscape:cy="602.55878"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer2"
      inkscape:document-rotation="0"
      showgrid="false"
      inkscape:window-width="1920"
@@ -164,10 +164,22 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="background">
+    <rect
+       style="opacity:1;fill:#cfcfff;fill-opacity:1;stroke:none;stroke-width:0.264564;stroke-dasharray:0.264564, 0.26456400000000002;stroke-opacity:0.976471"
+       id="rect1082"
+       width="191.72566"
+       height="153.84906"
+       x="2.7989247"
+       y="87.225288" />
+  </g>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
@@ -522,7 +534,7 @@
 </tspan></tspan><tspan
              x="68.594337"
              y="99.789652"><tspan
-               style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.66403px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">I</tspan><tspan
+               style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.66403px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">I</tspan><tspan></tspan><tspan
                y="99.789652"> </tspan></tspan></text>
         <rect
            style="fill:none;fill-opacity:0.59322;stroke:#000004;stroke-width:0.103383;stroke-miterlimit:4.4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.976471"

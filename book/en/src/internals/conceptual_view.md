@@ -1,6 +1,6 @@
 # Conceptual view
 
-![Conceptual execution model](./conceptual_execution_model.png)
+![Conceptual execution model](./conceptual_execution_model.svg)
 
 This tries to provide a high level view of how tasks are managed in
 the RTIC context. It focuses on the execution flow.
