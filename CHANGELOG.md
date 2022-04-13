@@ -9,6 +9,14 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [v1.1.0] - 2022-04-13
+
+### Added
+
 - Improve how CHANGELOG.md merges are handled
 - If current $stable and master version matches, dev-book redirects to $stable book
 - During deploy stage, merge master branch into current stable IFF cargo package version matches
@@ -485,7 +493,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.0...HEAD
+[v1.1.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.0...v1.1.0
 [v1.0.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.4...v1.0.0
 [v0.6.0-rc.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.3...v0.6.0-rc.4
 [v0.6.0-rc.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.2...v0.6.0-rc.3
