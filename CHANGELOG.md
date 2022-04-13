@@ -7,9 +7,13 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+## [v1.1.1] - 2022-04-13
+
 ### Added
 
 ### Fixed
+
+- Fixed `marcro` version
 
 ### Changed
 
