@@ -7,13 +7,21 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+### Fixed
+
+- For now allow `const_err`, MASKS for armv6 is erroneously computed for armv7 too
+
+### Changed
+
 ## [v1.1.1] - 2022-04-13
 
 ### Added
 
 ### Fixed
 
-- Fixed `marcro` version
+- Fixed `macro` version
 
 ### Changed
 
