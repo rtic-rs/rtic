@@ -36,11 +36,32 @@ pub fn impl_mutex(
     };
 
     let device = &extra.device;
+
     quote!(
         #(#cfgs)*
         impl<'a> rtic::Mutex for #path<'a> {
             type T = #ty;
 
+            #[cfg(not(armv7m))]
+            #[inline(always)]
+            fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
+                /// Priority ceiling
+                const CEILING: u8 = #ceiling;
+
+
+                unsafe {
+                    rtic::export::lock(
+                        #ptr,
+                        #priority,
+                        CEILING,
+                        #device::NVIC_PRIO_BITS,
+                        &MASKS,
+                        f,
+                    )
+                }
+            }
+
+            #[cfg(armv7m)]
             #[inline(always)]
             fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
                 /// Priority ceiling
@@ -52,7 +73,6 @@ pub fn impl_mutex(
                         #priority,
                         CEILING,
                         #device::NVIC_PRIO_BITS,
-                        &MASKS,
                         f,
                     )
                 }
