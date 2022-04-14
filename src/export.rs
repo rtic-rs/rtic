@@ -21,10 +21,10 @@ pub use rtic_monotonic as monotonic;
 pub type SCFQ<const N: usize> = Queue<u8, N>;
 pub type SCRQ<T, const N: usize> = Queue<(T, u8), N>;
 
-#[cfg(armv7m)]
+#[cfg(not(armv6m))]
 use cortex_m::register::basepri;
 
-#[cfg(armv7m)]
+#[cfg(not(armv6m))]
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
 where
@@ -41,7 +41,7 @@ where
     }
 }
 
-#[cfg(not(armv7m))]
+#[cfg(armv6m)]
 #[inline(always)]
 pub fn run<F>(_priority: u8, f: F)
 where
@@ -170,7 +170,7 @@ where
 /// Total OH of per task is max 2 clock cycles, negligible in practice
 /// but can in theory be fixed.
 ///
-#[cfg(armv7m)]
+#[cfg(not(armv6m))]
 #[inline(always)]
 pub unsafe fn lock<T, R>(
     ptr: *mut T,
@@ -245,7 +245,7 @@ pub unsafe fn lock<T, R>(
 /// - Temporary lower exception priority
 ///
 /// These possible solutions are set goals for future work
-#[cfg(not(armv7m))]
+#[cfg(armv6m)]
 #[inline(always)]
 pub unsafe fn lock<T, R>(
     ptr: *mut T,
@@ -286,7 +286,7 @@ pub unsafe fn lock<T, R>(
     }
 }
 
-#[cfg(not(armv7m))]
+#[cfg(armv6m)]
 #[inline(always)]
 fn compute_mask(from_prio: u8, to_prio: u8, masks: &[u32; 3]) -> u32 {
     let mut res = 0;
@@ -297,14 +297,14 @@ fn compute_mask(from_prio: u8, to_prio: u8, masks: &[u32; 3]) -> u32 {
 }
 
 // enables interrupts
-#[cfg(not(armv7m))]
+#[cfg(armv6m)]
 #[inline(always)]
 unsafe fn set_enable_mask(mask: u32) {
     (*NVIC::ptr()).iser[0].write(mask)
 }
 
 // disables interrupts
-#[cfg(not(armv7m))]
+#[cfg(armv6m)]
 #[inline(always)]
 unsafe fn clear_enable_mask(mask: u32) {
     (*NVIC::ptr()).icer[0].write(mask)
