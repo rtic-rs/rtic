@@ -48,7 +48,6 @@ pub fn impl_mutex(
                 /// Priority ceiling
                 const CEILING: u8 = #ceiling;
 
-
                 unsafe {
                     rtic::export::lock(
                         #ptr,
