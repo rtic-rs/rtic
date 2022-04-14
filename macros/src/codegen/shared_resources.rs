@@ -135,6 +135,7 @@ pub fn codegen(
     let mask_arr: Vec<_> = mask_arr.iter().map(|(_, v)| v).collect();
 
     mod_app.push(quote!(
+        #[cfg(not(armv7m))]
         const MASKS: [u32; 3] = [#(#mask_arr),*];
     ));
 

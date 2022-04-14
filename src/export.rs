@@ -177,7 +177,6 @@ pub unsafe fn lock<T, R>(
     priority: &Priority,
     ceiling: u8,
     nvic_prio_bits: u8,
-    _mask: &[u32; 3],
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
     let current = priority.get();
