@@ -22,7 +22,7 @@ RTIC также поддерживает *программные* задачи, 
 
 ``` console
 $ cargo run --example task
-{{#include ../../../../ci/expected/task.run}}
+{{#include ../../../../examples-runner/ci/expected/task.run}}
 ```
 
 ## Передача сообщений
@@ -39,7 +39,7 @@ $ cargo run --example task
 
 ``` console
 $ cargo run --example message
-{{#include ../../../../ci/expected/message.run}}
+{{#include ../../../../examples-runner/ci/expected/message.run}}
 ```
 
 ## Вместимость
@@ -63,7 +63,7 @@ RTIC *не* производит никакого рода аллокаций п
 
 ``` console
 $ cargo run --example capacity
-{{#include ../../../../ci/expected/capacity.run}}
+{{#include ../../../../examples-runner/ci/expected/capacity.run}}
 ```
 
 ## Обработка ошибок

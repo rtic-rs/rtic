@@ -28,5 +28,5 @@ $ cargo run --target thumbv7m-none-eabi --example locals
 Yields this output:
 
 ``` console
-{{#include ../../../ci/expected/locals.run}}
+{{#include ../../../examples-runner/ci/expected/locals.run}}
 ```

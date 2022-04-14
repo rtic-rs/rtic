@@ -49,7 +49,7 @@
 Запусе программы на реальном оборудовании создает следующий вывод в консоли:
 
 ``` text
-{{#include ../../../../ci/expected/schedule.run}}
+{{#include ../../../../examples-runner/ci/expected/schedule.run}}
 ```
 
 Когда интерфейс `schedule` используется, среда исполнения использует внутри
@@ -73,7 +73,7 @@
 `Instant::now` вместо `scheduled` вызвало бы дрейф / колебания.
 
 ``` text
-{{#include ../../../../ci/expected/periodic.run}}
+{{#include ../../../../examples-runner/ci/expected/periodic.run}}
 ```
 
 ## Базовое время
@@ -104,5 +104,5 @@
 Запуск программы на реальном оборудовании приведет к следующему выводу в консоли:
 
 ``` text
-{{#include ../../../../ci/expected/baseline.run}}
+{{#include ../../../../examples-runner/ci/expected/baseline.run}}
 ```

@@ -34,10 +34,10 @@ The framework will give a compilation error if there are not enough dispatchers 
 See the following example:
 
 ``` rust
-{{#include ../../../../examples/spawn.rs}}
+{{#include ../../../../examples-runner/src/bin/spawn.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example spawn
-{{#include ../../../../ci/expected/spawn.run}}
+{{#include ../../../../examples-runner/ci/expected/spawn.run}}
 ```

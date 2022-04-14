@@ -34,7 +34,7 @@
 
 ``` console
 $ cargo run --example resource
-{{#include ../../../../ci/expected/resource.run}}
+{{#include ../../../../examples-runner/ci/expected/resource.run}}
 ```
 
 К ресурсу `#[local]` нельзя получить доступ извне задачи к которой он
@@ -76,7 +76,7 @@ $ cargo run --example resource
 
 ``` console
 $ cargo run --example lock
-{{#include ../../../../ci/expected/lock.run}}
+{{#include ../../../../examples-runner/ci/expected/lock.run}}
 ```
 
 ## Множественное блокировка
@@ -115,7 +115,7 @@ $ cargo run --example lock
 
 ``` console
 $ cargo run --example only-shared-access
-{{#include ../../../../ci/expected/only-shared-access.run}}
+{{#include ../../../../examples-runner/ci/expected/only-shared-access.run}}
 ```
 
 ## Неблокируемый доступ к изменяемым ресурсам
@@ -136,5 +136,5 @@ $ cargo run --example only-shared-access
 
 ``` console
 $ cargo run --example lock-free
-{{#include ../../../../ci/expected/lock-free.run}}
+{{#include ../../../../examples-runner/ci/expected/lock-free.run}}
 ```

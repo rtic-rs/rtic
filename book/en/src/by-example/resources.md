@@ -39,14 +39,14 @@ The example application shown below contains two tasks where each task has acces
 `#[local]` resource, plus that the `idle` task has its own `#[local]` as well.
 
 ``` rust
-{{#include ../../../../examples/locals.rs}}
+{{#include ../../../../examples-runner/src/bin/locals.rs}}
 ```
 
 Running the example:
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example locals
-{{#include ../../../../ci/expected/locals.run}}
+{{#include ../../../../examples-runner/ci/expected/locals.run}}
 ```
 
 ### Task local initialized resources
@@ -64,12 +64,12 @@ are not crossing any thread boundary.
 In the example below the different uses and lifetimes are shown:
 
 ``` rust
-{{#include ../../../../examples/declared_locals.rs}}
+{{#include ../../../../examples-runner/src/bin/declared_locals.rs}}
 ```
 
 <!-- ``` console
 $ cargo run --target thumbv7m-none-eabi --example declared_locals
-{{#include ../../../../ci/expected/declared_locals.run}}
+{{#include ../../../../examples-runner/ci/expected/declared_locals.run}}
 ``` -->
 
 ## `#[shared]` resources and `lock`
@@ -97,12 +97,12 @@ resource for accessing the data. The highest priority handler, which do not acce
 resource, is free to preempt the critical section created by the lowest priority handler.
 
 ``` rust
-{{#include ../../../../examples/lock.rs}}
+{{#include ../../../../examples-runner/src/bin/lock.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example lock
-{{#include ../../../../ci/expected/lock.run}}
+{{#include ../../../../examples-runner/ci/expected/lock.run}}
 ```
 
 Types of `#[shared]` resources have to be both [`Send`] and [`Sync`].
@@ -113,12 +113,12 @@ As an extension to `lock`, and to reduce rightward drift, locks can be taken as 
 following examples show this in use:
 
 ``` rust
-{{#include ../../../../examples/multilock.rs}}
+{{#include ../../../../examples-runner/src/bin/multilock.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example multilock
-{{#include ../../../../ci/expected/multilock.run}}
+{{#include ../../../../examples-runner/ci/expected/multilock.run}}
 ```
 
 ## Only shared (`&-`) access
@@ -143,12 +143,12 @@ In the example below a key (e.g. a cryptographic key) is loaded (or created) at 
 used from two tasks that run at different priorities without any kind of lock.
 
 ``` rust
-{{#include ../../../../examples/only-shared-access.rs}}
+{{#include ../../../../examples-runner/src/bin/only-shared-access.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example only-shared-access
-{{#include ../../../../ci/expected/only-shared-access.run}}
+{{#include ../../../../examples-runner/ci/expected/only-shared-access.run}}
 ```
 
 ## Lock-free resource access of shared resources
@@ -165,10 +165,10 @@ tasks running at different priorities will result in a *compile-time* error -- n
 API would be a data race in that case.
 
 ``` rust
-{{#include ../../../../examples/lock-free.rs}}
+{{#include ../../../../examples-runner/src/bin/lock-free.rs}}
 ```
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example lock-free
-{{#include ../../../../ci/expected/lock-free.run}}
+{{#include ../../../../examples-runner/ci/expected/lock-free.run}}
 ```

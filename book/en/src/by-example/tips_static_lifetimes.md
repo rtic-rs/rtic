@@ -13,12 +13,12 @@ for lock-free access to the shared queue.
 [`heapless::spsc::Queue`]: https://docs.rs/heapless/0.7.5/heapless/spsc/struct.Queue.html
 
 ``` rust
-{{#include ../../../../examples/static.rs}}
+{{#include ../../../../examples-runner/src/bin/static.rs}}
 ```
 
 Running this program produces the expected output.
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example static
-{{#include ../../../../ci/expected/static.run}}
+{{#include ../../../../examples-runner/ci/expected/static.run}}
 ```

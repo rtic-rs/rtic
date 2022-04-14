@@ -19,14 +19,14 @@ The `device` field is available when the `peripherals` argument is set to the de
 In the rare case you want to implement an ultra-slim application you can explicitly set `peripherals` to `false`.
 
 ``` rust
-{{#include ../../../../examples/init.rs}}
+{{#include ../../../../examples-runner/src/bin/init.rs}}
 ```
 
 Running the example will print `init` to the console and then exit the QEMU process.
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example init
-{{#include ../../../../ci/expected/init.run}}
+{{#include ../../../../examples-runner/ci/expected/init.run}}
 ```
 
 > **NOTE**: You can choose target device by passing a target
