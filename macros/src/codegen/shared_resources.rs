@@ -110,12 +110,32 @@ pub fn codegen(
 
     let mut prio_to_masks = HashMap::new();
     let device = &extra.device;
+    let mut uses_exceptions_with_resources = false;
 
     for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().flat_map(|task| {
         if !util::is_exception(&task.args.binds) {
             Some((&task.args.priority, &task.args.binds))
         } else {
-            // TODO: exceptions not implemented
+            // If any resource to the exception uses non-lock-free or non-local resources this is
+            // not allwed on thumbv6.
+            uses_exceptions_with_resources = uses_exceptions_with_resources
+                || task
+                    .args
+                    .shared_resources
+                    .iter()
+                    .map(|(ident, access)| {
+                        if access.is_exclusive() {
+                            if let Some(r) = app.shared_resources.get(ident) {
+                                !r.properties.lock_free
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        }
+                    })
+                    .any(|v| v);
+
             None
         }
     })) {
@@ -145,6 +165,14 @@ pub fn codegen(
         #[allow(non_camel_case_types)]
         const #masks_name: [u32; 3] = [#(#mask_arr),*];
     ));
+
+    if uses_exceptions_with_resources {
+        mod_app.push(quote!(
+            #[doc(hidden)]
+            #[allow(non_camel_case_types)]
+            const __rtic_internal_V6_ERROR: () = rtic::export::v6_panic();
+        ));
+    }
 
     (mod_app, mod_resources)
 }

@@ -339,3 +339,13 @@ pub const fn create_mask<const N: usize>(list_of_shifts: [u32; N]) -> u32 {
 
     mask
 }
+
+#[cfg(not(armv6m))]
+pub const fn v6_panic() {
+    // For non-v6 all is fine
+}
+
+#[cfg(armv6m)]
+pub const fn v6_panic() {
+    panic!("Exceptions with shared resources are not allowed when compiling for thumbv6. Use local resources or `#[lock_free]` shared resources");
+}
