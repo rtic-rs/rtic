@@ -36,6 +36,7 @@ pub fn impl_mutex(
     };
 
     let device = &extra.device;
+    let masks_name = priority_masks_ident();
     quote!(
         #(#cfgs)*
         impl<'a> rtic::Mutex for #path<'a> {
@@ -52,7 +53,7 @@ pub fn impl_mutex(
                         #priority,
                         CEILING,
                         #device::NVIC_PRIO_BITS,
-                        &MASKS,
+                        &#masks_name,
                         f,
                     )
                 }
@@ -250,6 +251,10 @@ pub fn monotonic_ident(name: &str) -> Ident {
 
 pub fn static_shared_resource_ident(name: &Ident) -> Ident {
     mark_internal_name(&format!("shared_resource_{}", name))
+}
+
+pub fn priority_masks_ident() -> Ident {
+    mark_internal_name("MASKS")
 }
 
 pub fn static_local_resource_ident(name: &Ident) -> Ident {

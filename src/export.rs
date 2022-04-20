@@ -315,3 +315,27 @@ unsafe fn clear_enable_mask(mask: u32) {
 pub fn logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
 }
+
+#[cfg(not(armv6m))]
+pub const fn create_mask<const N: usize>(_: [u32; N]) -> u32 {
+    0
+}
+
+#[cfg(armv6m)]
+pub const fn create_mask<const N: usize>(list_of_shifts: [u32; N]) -> u32 {
+    let mut mask = 0;
+    let mut i = 0;
+
+    while i < N {
+        let shift = list_of_shifts[i];
+        i += 1;
+
+        if shift > 31 {
+            panic!("Generating masks for thumbv6 failed! Are you compiling for thumbv6 on an thumbv7 MCU?");
+        }
+
+        mask |= 1 << shift;
+    }
+
+    mask
+}
