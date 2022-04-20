@@ -7,6 +7,14 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+### Fixed
+
+- Generation of masks for the source masking scheduling for thumbv6
+
+### Changed
+
 ## [v1.1.1] - 2022-04-13
 
 ### Added

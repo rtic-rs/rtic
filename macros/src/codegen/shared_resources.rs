@@ -1,8 +1,8 @@
+use crate::{analyze::Analysis, check::Extra, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::{analyze::Ownership, ast::App};
-
-use crate::{analyze::Analysis, check::Extra, codegen::util};
+use std::collections::HashMap;
 
 /// Generates `static` variables and shared resource proxies
 pub fn codegen(
@@ -108,35 +108,71 @@ pub fn codegen(
     // Computing mapping of used interrupts to masks
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
-    use std::collections::HashMap;
-    let mut masks: HashMap<u8, _> = std::collections::HashMap::new();
+    let mut prio_to_masks = HashMap::new();
     let device = &extra.device;
-
-    for p in 0..3 {
-        masks.insert(p, quote!(0));
-    }
+    let mut uses_exceptions_with_resources = false;
 
     for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().flat_map(|task| {
         if !util::is_exception(&task.args.binds) {
             Some((&task.args.priority, &task.args.binds))
         } else {
-            // TODO: exceptions not implemented
+            // If any resource to the exception uses non-lock-free or non-local resources this is
+            // not allwed on thumbv6.
+            uses_exceptions_with_resources = uses_exceptions_with_resources
+                || task
+                    .args
+                    .shared_resources
+                    .iter()
+                    .map(|(ident, access)| {
+                        if access.is_exclusive() {
+                            if let Some(r) = app.shared_resources.get(ident) {
+                                !r.properties.lock_free
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        }
+                    })
+                    .any(|v| v);
+
             None
         }
     })) {
-        let name = quote!(#device::Interrupt::#name as u32);
-        if let Some(v) = masks.get_mut(&(priority - 1)) {
-            *v = quote!(#v | 1 << #name);
-        };
+        let v = prio_to_masks.entry(priority - 1).or_insert(Vec::new());
+        v.push(quote!(#device::Interrupt::#name as u32));
     }
 
-    let mut mask_arr: Vec<(_, _)> = masks.iter().collect();
-    mask_arr.sort_by_key(|(k, _v)| *k);
-    let mask_arr: Vec<_> = mask_arr.iter().map(|(_, v)| v).collect();
+    // Call rtic::export::create_mask([u32; N]), where the array is the list of shifts
 
+    let mut mask_arr = Vec::new();
+    // NOTE: 0..3 assumes max 4 priority levels according to M0 spec
+    for i in 0..3 {
+        let v = if let Some(v) = prio_to_masks.get(&i) {
+            v.clone()
+        } else {
+            Vec::new()
+        };
+
+        mask_arr.push(quote!(
+            rtic::export::create_mask([#(#v),*])
+        ));
+    }
+
+    let masks_name = util::priority_masks_ident();
     mod_app.push(quote!(
-        const MASKS: [u32; 3] = [#(#mask_arr),*];
+        #[doc(hidden)]
+        #[allow(non_camel_case_types)]
+        const #masks_name: [u32; 3] = [#(#mask_arr),*];
     ));
+
+    if uses_exceptions_with_resources {
+        mod_app.push(quote!(
+            #[doc(hidden)]
+            #[allow(non_camel_case_types)]
+            const __rtic_internal_V6_ERROR: () = rtic::export::v6_panic();
+        ));
+    }
 
     (mod_app, mod_resources)
 }
