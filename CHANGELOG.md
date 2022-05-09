@@ -11,11 +11,19 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+### Changed
+
+## [v1.1.2] - 2022-05-09
+
+### Added
+
+### Fixed
+
 - Generation of masks for the source masking scheduling for thumbv6
 
 ### Changed
 
-## [v1.1.1] - 2022-04-13
+## [v1.1.1] - 2022-04-13 - YANKED
 
 ### Added
 
@@ -25,7 +33,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
-## [v1.1.0] - 2022-04-13
+## [v1.1.0] - 2022-04-13 - YANKED
 
 ### Added
 
@@ -506,6 +514,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 - Initial release
 
 [Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.0...HEAD
+[v1.1.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.1...v1.1.2
+[v1.1.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.0...v1.1.1
 [v1.1.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.0...v1.1.0
 [v1.0.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.4...v1.0.0
 [v0.6.0-rc.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.3...v0.6.0-rc.4
