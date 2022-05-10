@@ -162,14 +162,14 @@ pub fn codegen(
     let masks_name = util::priority_masks_ident();
     mod_app.push(quote!(
         #[doc(hidden)]
-        #[allow(non_camel_case_types)]
+        #[allow(non_upper_case_globals)]
         const #masks_name: [u32; 3] = [#(#mask_arr),*];
     ));
 
     if uses_exceptions_with_resources {
         mod_app.push(quote!(
             #[doc(hidden)]
-            #[allow(non_camel_case_types)]
+            #[allow(non_upper_case_globals)]
             const __rtic_internal_V6_ERROR: () = rtic::export::v6_panic();
         ));
     }
