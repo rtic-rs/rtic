@@ -49,8 +49,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             Some((&task.args.priority, &task.args.binds))
         }
     })) {
+        let es = format!(
+            "Maximum priority used by interrupt vector '{}' is more than supported by hardware",
+            name
+        );
         // Compile time assert that this priority is supported by the device
-        stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+        stmts.push(quote!(
+            const _: () = assert!((1 << #nvic_prio_bits) >= #priority as usize, #es);
+        ));
 
         stmts.push(quote!(
             core.NVIC.set_priority(
@@ -72,8 +78,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             None
         }
     }) {
+        let es = format!(
+            "Maximum priority used by interrupt vector '{}' is more than supported by hardware",
+            name
+        );
         // Compile time assert that this priority is supported by the device
-        stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+        stmts.push(quote!(
+            const _: () = assert!((1 << #nvic_prio_bits) >= #priority as usize, #es);
+        ));
 
         stmts.push(quote!(core.SCB.set_priority(
             rtic::export::SystemHandler::#name,
@@ -90,8 +102,15 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         };
         let binds = &monotonic.args.binds;
 
+        let name = &monotonic.ident;
+        let es = format!(
+            "Maximum priority used by monotonic '{}' is more than supported by hardware",
+            name
+        );
         // Compile time assert that this priority is supported by the device
-        stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+        stmts.push(quote!(
+            const _: () = assert!((1 << #nvic_prio_bits) >= #priority as usize, #es);
+        ));
 
         let mono_type = &monotonic.ty;
 
