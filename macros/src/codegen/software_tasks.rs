@@ -27,7 +27,13 @@ pub fn codegen(
     let mut root = vec![];
     let mut user_tasks = vec![];
 
-    for (name, task) in &app.software_tasks {
+    // Async tasks
+    for (name, task) in app.software_tasks.iter().filter(|(_, task)| task.is_async) {
+        // todo
+    }
+
+    // Non-async tasks
+    for (name, task) in app.software_tasks.iter().filter(|(_, task)| !task.is_async) {
         let inputs = &task.inputs;
         let (_, _, _, input_ty) = util::regroup_inputs(inputs);
 
