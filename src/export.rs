@@ -66,7 +66,9 @@ impl Barrier {
     }
 
     pub fn wait(&self) {
-        while !self.inner.load(Ordering::Acquire) {}
+        while !self.inner.load(Ordering::Acquire) {
+            core::hint::spin_loop()
+        }
     }
 }
 
