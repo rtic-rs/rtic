@@ -55,7 +55,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () = assert!((1 << #nvic_prio_bits) >= #priority as usize, #es);
+            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
         ));
 
         stmts.push(quote!(
@@ -84,7 +84,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () = assert!((1 << #nvic_prio_bits) >= #priority as usize, #es);
+            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
         ));
 
         stmts.push(quote!(core.SCB.set_priority(
@@ -109,7 +109,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () = assert!((1 << #nvic_prio_bits) >= #priority as usize, #es);
+            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
         ));
 
         let mono_type = &monotonic.ty;
