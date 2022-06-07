@@ -8,6 +8,9 @@ pub use fake_temperature_sensor::FakeTemperatureSensor;
 pub use temperature_monitor::TemperatureMonitor;
 
 // Messages
+#[derive(Clone, Copy, Debug)]
+pub struct DoTemperatureRead;
+
 pub struct TemperatureAlert;
 
 #[derive(Clone, Debug, PartialEq)]

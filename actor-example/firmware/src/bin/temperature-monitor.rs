@@ -6,7 +6,8 @@ use firmware as _;
 #[rtic::app(device = nrf52840_hal::pac, dispatchers = [RADIO])]
 mod app {
     use actors::{
-        FakeTemperatureSensor, TemperatureAlert, TemperatureMonitor, TemperatureReadingCelsius,
+        DoTemperatureRead, FakeTemperatureSensor, TemperatureAlert, TemperatureMonitor,
+        TemperatureReadingCelsius,
     };
     use rtic_actor_traits::Receive;
     use systick_monotonic::*;
@@ -36,6 +37,9 @@ mod app {
 
     #[actors]
     struct Actors {
+        #[subscribe(DoTemperatureRead)]
+        temperature_sensor: FakeTemperatureSensor<Poster>,
+
         #[init(AlertHandler)]
         #[subscribe(TemperatureAlert)]
         alert_handler: AlertHandler,
@@ -50,7 +54,7 @@ mod app {
 
     #[local]
     struct Local {
-        temperature_sensor: FakeTemperatureSensor<Poster>,
+        poster: Poster,
     }
 
     #[monotonic(binds = SysTick, default = true)]
@@ -71,17 +75,20 @@ mod app {
 
         (
             Shared {},
-            Local { temperature_sensor },
+            Local { poster },
             init::Monotonics(mono),
             Actors {
                 temperature_monitor,
+                temperature_sensor,
             },
         )
     }
 
-    #[task(local = [temperature_sensor])]
+    #[task(local = [poster])]
     fn periodic(cx: periodic::Context) {
-        cx.local.temperature_sensor.read();
+        // input to the actor network
+        cx.local.poster.post(DoTemperatureRead).expect("OOM");
+
         periodic::spawn_after(1.secs()).expect("OOM");
     }
 
