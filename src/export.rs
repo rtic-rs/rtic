@@ -302,14 +302,14 @@ fn compute_mask(from_prio: u8, to_prio: u8, masks: &[u32; 3]) -> u32 {
 #[cfg(not(armv7m))]
 #[inline(always)]
 unsafe fn set_enable_mask(mask: u32) {
-    (*NVIC::ptr()).iser[0].write(mask)
+    (*NVIC::PTR).iser[0].write(mask)
 }
 
 // disables interrupts
 #[cfg(not(armv7m))]
 #[inline(always)]
 unsafe fn clear_enable_mask(mask: u32) {
-    (*NVIC::ptr()).icer[0].write(mask)
+    (*NVIC::PTR).icer[0].write(mask)
 }
 
 #[inline]
