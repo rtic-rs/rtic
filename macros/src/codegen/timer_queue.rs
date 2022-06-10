@@ -1,8 +1,7 @@
+use crate::{analyze::Analysis, check::Extra, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::ast::App;
-
-use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates timer queues and timer queue handlers
 #[allow(clippy::too_many_lines)]
@@ -67,8 +66,14 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 .iter()
                 .map(|(_name, task)| task.args.capacity as usize)
                 .sum();
-            let n = util::capacity_literal(cap);
-            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n>);
+            let n_task = util::capacity_literal(cap);
+            let n_worker: usize = app
+                .software_tasks
+                .iter()
+                .map(|(_name, task)| task.is_async as usize)
+                .sum();
+            let n_worker = util::capacity_literal(n_worker);
+            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n_task, #n_worker>);
 
             // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
@@ -76,8 +81,12 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[allow(non_upper_case_globals)]
-                static #tq: rtic::RacyCell<#tq_ty> =
-                    rtic::RacyCell::new(rtic::export::TimerQueue(rtic::export::SortedLinkedList::new_u16()));
+                static #tq: rtic::RacyCell<#tq_ty> = rtic::RacyCell::new(
+                    rtic::export::TimerQueue {
+                        task_queue: rtic::export::SortedLinkedList::new_u16(),
+                        waker_queue: rtic::export::SortedLinkedList::new_u16(),
+                    }
+                );
             ));
 
             let mono = util::monotonic_ident(&monotonic_name);
@@ -118,7 +127,9 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     quote!(
                         #(#cfgs)*
                         #t::#name => {
-                            rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).split().0.enqueue_unchecked((#rqt::#name, index)));
+                            rtic::export::interrupt::free(|_|
+                                (&mut *#rq.get_mut()).split().0.enqueue_unchecked((#rqt::#name, index))
+                            );
 
                             #pend
                         }
@@ -137,7 +148,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
-                    while let Some((task, index)) = rtic::export::interrupt::free(|_|
+                    while let Some(task_or_waker) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {
                             (&mut *#tq.get_mut()).dequeue(|| #disable_isr, mono)
                         } else {
@@ -146,8 +157,13 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                             core::hint::unreachable_unchecked()
                         })
                     {
-                        match task {
-                            #(#arms)*
+                        match task_or_waker {
+                            rtic::export::TaskOrWaker::Waker(waker) => waker.wake(),
+                            rtic::export::TaskOrWaker::Task((task, index)) => {
+                                match task {
+                                    #(#arms)*
+                                }
+                            }
                         }
                     }
 

@@ -12,6 +12,7 @@ mod init;
 mod local_resources;
 mod local_resources_struct;
 mod module;
+mod monotonic;
 mod post_init;
 mod pre_init;
 mod shared_resources;
@@ -95,6 +96,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let (mod_app_software_tasks, root_software_tasks, user_software_tasks) =
         software_tasks::codegen(app, analysis, extra);
 
+    let monotonics = monotonic::codegen(app, analysis, extra);
+
     let mod_app_dispatchers = dispatchers::codegen(app, analysis, extra);
     let mod_app_timer_queue = timer_queue::codegen(app, analysis, extra);
     let user_imports = &app.user_imports;
@@ -102,59 +105,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let name = &app.name;
     let device = &extra.device;
 
-    let monotonic_parts: Vec<_> = app
-        .monotonics
-        .iter()
-        .map(|(_, monotonic)| {
-            let name = &monotonic.ident;
-            let name_str = &name.to_string();
-            let ident = util::monotonic_ident(name_str);
-            let doc = &format!(
-                "This module holds the static implementation for `{}::now()`",
-                name_str
-            );
-
-            let default_monotonic = if monotonic.args.default {
-                quote!(pub use #name::now;)
-            } else {
-                quote!()
-            };
-
-            quote! {
-                #default_monotonic
-
-                #[doc = #doc]
-                #[allow(non_snake_case)]
-                pub mod #name {
-
-                    /// Read the current time from this monotonic
-                    pub fn now() -> <super::super::#name as rtic::Monotonic>::Instant {
-                        rtic::export::interrupt::free(|_| {
-                            use rtic::Monotonic as _;
-                            if let Some(m) = unsafe{ &mut *super::super::#ident.get_mut() } {
-                                m.now()
-                            } else {
-                                <super::super::#name as rtic::Monotonic>::zero()
-                            }
-                        })
-                    }
-                }
-            }
-        })
-        .collect();
-
-    let monotonics = if monotonic_parts.is_empty() {
-        quote!()
-    } else {
-        quote!(
-            pub use rtic::Monotonic as _;
-
-            /// Holds static methods for each monotonic.
-            pub mod monotonics {
-                #(#monotonic_parts)*
-            }
-        )
-    };
     let rt_err = util::rt_err_ident();
 
     quote!(

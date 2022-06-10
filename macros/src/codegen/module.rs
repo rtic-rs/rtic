@@ -54,14 +54,6 @@ pub fn codegen(
         Context::Idle | Context::HardwareTask(_) | Context::SoftwareTask(_) => {}
     }
 
-    // if ctxt.has_locals(app) {
-    //     let ident = util::locals_ident(ctxt, app);
-    //     module_items.push(quote!(
-    //         #[doc(inline)]
-    //         pub use super::#ident as Locals;
-    //     ));
-    // }
-
     if ctxt.has_local_resources(app) {
         let ident = util::local_resources_ident(ctxt, app);
         let lt = if local_resources_tick {
@@ -133,6 +125,7 @@ pub fn codegen(
         ));
 
         module_items.push(quote!(
+            #[doc(inline)]
             pub use super::#internal_monotonics_ident as Monotonics;
         ));
     }
@@ -193,6 +186,7 @@ pub fn codegen(
 
     module_items.push(quote!(
         #(#cfgs)*
+        #[doc(inline)]
         pub use super::#internal_context_name as Context;
     ));
 
@@ -225,6 +219,8 @@ pub fn codegen(
 
         #(#cfgs)*
         /// Spawns the task directly
+        #[allow(non_snake_case)]
+        #[doc(hidden)]
         pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
             let input = #tupled;
 
@@ -239,7 +235,6 @@ pub fn codegen(
                     rtic::export::interrupt::free(|_| {
                         (&mut *#rq.get_mut()).enqueue_unchecked((#t::#name, index));
                     });
-
                     rtic::pend(#device::#enum_::#interrupt);
 
                     Ok(())
@@ -252,6 +247,7 @@ pub fn codegen(
 
         module_items.push(quote!(
             #(#cfgs)*
+            #[doc(inline)]
             pub use super::#internal_spawn_ident as spawn;
         ));
 
@@ -294,15 +290,21 @@ pub fn codegen(
 
             if monotonic.args.default {
                 module_items.push(quote!(
+                    #[doc(inline)]
                     pub use #m::spawn_after;
+                    #[doc(inline)]
                     pub use #m::spawn_at;
+                    #[doc(inline)]
                     pub use #m::SpawnHandle;
                 ));
             }
             module_items.push(quote!(
                 pub mod #m {
+                    #[doc(inline)]
                     pub use super::super::#internal_spawn_after_ident as spawn_after;
+                    #[doc(inline)]
                     pub use super::super::#internal_spawn_at_ident as spawn_at;
+                    #[doc(inline)]
                     pub use super::super::#internal_spawn_handle_ident as SpawnHandle;
                 }
             ));
@@ -316,6 +318,7 @@ pub fn codegen(
                     marker: u32,
                 }
 
+                #(#cfgs)*
                 impl core::fmt::Debug for #internal_spawn_handle_ident {
                     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                         f.debug_struct(#spawn_handle_string).finish()
@@ -327,7 +330,7 @@ pub fn codegen(
                     pub fn cancel(self) -> Result<#ty, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
                             let tq = &mut *#tq.get_mut();
-                            if let Some((_task, index)) = tq.cancel_marker(self.marker) {
+                            if let Some((_task, index)) = tq.cancel_task_marker(self.marker) {
                                 // Get the message
                                 let msg = (&*#inputs
                                     .get())
@@ -362,10 +365,11 @@ pub fn codegen(
 
                             let tq = (&mut *#tq.get_mut());
 
-                            tq.update_marker(self.marker, marker, instant, || #pend).map(|_| #name::#m::SpawnHandle { marker })
+                            tq.update_task_marker(self.marker, marker, instant, || #pend).map(|_| #name::#m::SpawnHandle { marker })
                         })
                     }
                 }
+
 
                 #(#cfgs)*
                 /// Spawns the task after a set duration relative to the current time
@@ -407,10 +411,10 @@ pub fn codegen(
 
                             rtic::export::interrupt::free(|_| {
                                 let marker = #tq_marker.get().read();
-                                let nr = rtic::export::NotReady {
-                                    instant,
-                                    index,
+                                let nr = rtic::export::TaskNotReady {
                                     task: #t::#name,
+                                    index,
+                                    instant,
                                     marker,
                                 };
 
@@ -418,7 +422,7 @@ pub fn codegen(
 
                                 let tq = &mut *#tq.get_mut();
 
-                                tq.enqueue_unchecked(
+                                tq.enqueue_task_unchecked(
                                     nr,
                                     || #enable_interrupt,
                                     || #pend,

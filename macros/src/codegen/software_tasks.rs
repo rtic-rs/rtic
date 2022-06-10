@@ -27,13 +27,8 @@ pub fn codegen(
     let mut root = vec![];
     let mut user_tasks = vec![];
 
-    // Async tasks
-    for (name, task) in app.software_tasks.iter().filter(|(_, task)| task.is_async) {
-        // todo
-    }
-
-    // Non-async tasks
-    for (name, task) in app.software_tasks.iter().filter(|(_, task)| !task.is_async) {
+    // Any task
+    for (name, task) in app.software_tasks.iter() {
         let inputs = &task.inputs;
         let (_, _, _, input_ty) = util::regroup_inputs(inputs);
 
@@ -87,6 +82,7 @@ pub fn codegen(
 
         let uninit = mk_uninit();
         let inputs_ident = util::inputs_ident(name);
+
         mod_app.push(quote!(
             #uninit
             // /// Buffer that holds the inputs of a task
@@ -96,6 +92,18 @@ pub fn codegen(
             static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
                 rtic::RacyCell::new([#(#elems,)*]);
         ));
+        if task.is_async {
+            let executor_ident = util::executor_run_ident(name);
+            mod_app.push(quote!(
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
+                static #executor_ident: core::sync::atomic::AtomicBool =
+                    core::sync::atomic::AtomicBool::new(false);
+            ));
+        }
+
+        let inputs = &task.inputs;
 
         // `${task}Resources`
         let mut shared_needs_lt = false;
@@ -131,11 +139,17 @@ pub fn codegen(
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
+            let async_marker = if task.is_async {
+                quote!(async)
+            } else {
+                quote!()
+            };
+
             user_tasks.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                fn #name(#context: #name::Context #(,#inputs)*) {
+                #async_marker fn #name(#context: #name::Context #(,#inputs)*) {
                     use rtic::Mutex as _;
                     use rtic::mutex::prelude::*;
 

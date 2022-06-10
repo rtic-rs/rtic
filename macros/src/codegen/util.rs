@@ -67,6 +67,11 @@ pub fn inputs_ident(task: &Ident) -> Ident {
     mark_internal_name(&format!("{}_INPUTS", task))
 }
 
+/// Generates an identifier for the `EXECUTOR_RUN` atomics (`async` API)
+pub fn executor_run_ident(task: &Ident) -> Ident {
+    mark_internal_name(&format!("{}_EXECUTOR_RUN", task))
+}
+
 /// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
 pub fn monotonic_instants_ident(task: &Ident, monotonic: &Ident) -> Ident {
     mark_internal_name(&format!("{}_{}_INSTANTS", task, monotonic))
@@ -222,7 +227,7 @@ pub fn rq_ident(priority: u8) -> Ident {
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks
 pub fn schedule_t_ident() -> Ident {
-    Ident::new("SCHED_T", Span::call_site())
+    mark_internal_name("SCHED_T")
 }
 
 /// Generates an identifier for the `enum` of `spawn`-able tasks
@@ -230,7 +235,7 @@ pub fn schedule_t_ident() -> Ident {
 /// This identifier needs the same structure as the `RQ` identifier because there's one ready queue
 /// for each of these `T` enums
 pub fn spawn_t_ident(priority: u8) -> Ident {
-    Ident::new(&format!("P{}_T", priority), Span::call_site())
+    mark_internal_name(&format!("P{}_T", priority))
 }
 
 /// Suffixed identifier
