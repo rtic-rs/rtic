@@ -164,12 +164,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     #(#arms)*
                 }
             }
-
-            while let Some((task, index)) = retry_queue.pop() {
-                rtic::export::interrupt::free(|_| {
-                    (&mut *#rq.get_mut()).enqueue_unchecked((task, index));
-                });
-            }
         ));
 
         for (name, _task) in app.software_tasks.iter().filter_map(|(name, task)| {
@@ -185,13 +179,25 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             stmts.push(quote!(
                 if #executor_run_ident.load(core::sync::atomic::Ordering::Relaxed) {
                     #executor_run_ident.store(false, core::sync::atomic::Ordering::Relaxed);
-                    (&mut *#exec_name.get_mut()).poll(||  {
+                    if (&mut *#exec_name.get_mut()).poll(||  {
                         #executor_run_ident.store(true, core::sync::atomic::Ordering::Release);
                         rtic::pend(#device::#enum_::#interrupt);
-                    });
+                    }) && !retry_queue.is_empty() {
+                        // If the retry queue is not empty and the executor finished, restart this
+                        // dispatch to check if the executor should be restarted.
+                        rtic::pend(#device::#enum_::#interrupt);
+                    }
                 }
             ));
         }
+
+        stmts.push(quote!(
+            while let Some((task, index)) = retry_queue.pop() {
+                rtic::export::interrupt::free(|_| {
+                    (&mut *#rq.get_mut()).enqueue_unchecked((task, index));
+                });
+            }
+        ));
 
         let doc = format!("Interrupt handler to dispatch tasks at priority {}", level);
         let attribute = &interrupts[&level].1.attrs;

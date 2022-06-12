@@ -65,7 +65,7 @@ pub mod executor {
             self.task = Some(future);
         }
 
-        pub fn poll(&mut self, wake: fn()) {
+        pub fn poll(&mut self, wake: fn()) -> bool {
             if let Some(future) = &mut self.task {
                 unsafe {
                     let waker = Waker::from_raw(RawWaker::new(wake as *const (), &WAKER_VTABLE));
@@ -75,10 +75,13 @@ pub mod executor {
                     match future.poll(&mut cx) {
                         Poll::Ready(_) => {
                             self.task = None;
+                            true // Only true if we finished now
                         }
-                        Poll::Pending => {}
-                    };
+                        Poll::Pending => false,
+                    }
                 }
+            } else {
+                false
             }
         }
     }
