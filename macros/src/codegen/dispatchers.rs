@@ -94,7 +94,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                                 (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
 
                                 let priority = &rtic::export::Priority::new(PRIORITY);
-                                (&mut *#exec_name.get_mut()).spawn(#name(#name::Context::new(priority), #(,#pats)*));
+                                (&mut *#exec_name.get_mut()).spawn(#name(#name::Context::new(priority) #(,#pats)*));
                                 #executor_run_ident.store(true, core::sync::atomic::Ordering::Relaxed);
                             } else {
                                 retry_queue.push_unchecked((#t::#name, index));
