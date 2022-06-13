@@ -2,23 +2,18 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
 
-use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
-use systick_monotonic::*;
 
 // NOTES:
 //
 // - Async tasks cannot have `#[lock_free]` resources, as they can interleve and each async
 //   task can have a mutable reference stored.
-// - Spawning an async task equates to it being polled at least once.
-// - ...
+// - Spawning an async task equates to it being polled once.
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0, UART0], peripherals = true)]
 mod app {
-    use crate::*;
-
-    pub type AppInstant = <Systick<100> as rtic::Monotonic>::Instant;
-    pub type AppDuration = <Systick<100> as rtic::Monotonic>::Duration;
+    use cortex_m_semihosting::{debug, hprintln};
+    use systick_monotonic::*;
 
     #[shared]
     struct Shared {}
