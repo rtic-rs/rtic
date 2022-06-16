@@ -20,6 +20,7 @@ mod software_tasks;
 mod timer_queue;
 mod util;
 
+#[allow(clippy::too_many_lines)]
 pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut mod_app = vec![];
     let mut mains = vec![];
@@ -27,7 +28,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let mut user = vec![];
 
     // Generate the `main` function
-    let assertion_stmts = assertions::codegen(app, analysis);
+    let assertion_stmts = assertions::codegen(app, analysis, extra);
 
     let pre_init_stmts = pre_init::codegen(app, analysis, extra);
 
@@ -142,7 +143,9 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         })
         .collect();
 
-    let monotonics = if !monotonic_parts.is_empty() {
+    let monotonics = if monotonic_parts.is_empty() {
+        quote!()
+    } else {
         quote!(
             pub use rtic::Monotonic as _;
 
@@ -151,8 +154,6 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
                 #(#monotonic_parts)*
             }
         )
-    } else {
-        quote!()
     };
     let rt_err = util::rt_err_ident();
 

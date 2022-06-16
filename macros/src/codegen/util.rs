@@ -25,9 +25,9 @@ pub fn impl_mutex(
     cfgs: &[Attribute],
     resources_prefix: bool,
     name: &Ident,
-    ty: TokenStream2,
+    ty: &TokenStream2,
     ceiling: u8,
-    ptr: TokenStream2,
+    ptr: &TokenStream2,
 ) -> TokenStream2 {
     let (path, priority) = if resources_prefix {
         (quote!(shared_resources::#name), quote!(self.priority()))
@@ -36,6 +36,7 @@ pub fn impl_mutex(
     };
 
     let device = &extra.device;
+    let masks_name = priority_masks_ident();
     quote!(
         #(#cfgs)*
         impl<'a> rtic::Mutex for #path<'a> {
@@ -52,6 +53,7 @@ pub fn impl_mutex(
                         #priority,
                         CEILING,
                         #device::NVIC_PRIO_BITS,
+                        &#masks_name,
                         f,
                     )
                 }
@@ -117,11 +119,11 @@ fn link_section_index() -> usize {
     INDEX.fetch_add(1, Ordering::Relaxed)
 }
 
-// NOTE `None` means in shared memory
-pub fn link_section_uninit() -> Option<TokenStream2> {
+/// Add `link_section` attribute
+pub fn link_section_uninit() -> TokenStream2 {
     let section = format!(".uninit.rtic{}", link_section_index());
 
-    Some(quote!(#[link_section = #section]))
+    quote!(#[link_section = #section])
 }
 
 // Regroups the inputs of a task
@@ -249,6 +251,10 @@ pub fn monotonic_ident(name: &str) -> Ident {
 
 pub fn static_shared_resource_ident(name: &Ident) -> Ident {
     mark_internal_name(&format!("shared_resource_{}", name))
+}
+
+pub fn priority_masks_ident() -> Ident {
+    mark_internal_name("MASKS")
 }
 
 pub fn static_local_resource_ident(name: &Ident) -> Ident {

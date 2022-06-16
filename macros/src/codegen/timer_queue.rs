@@ -5,6 +5,7 @@ use rtic_syntax::ast::App;
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates timer queues and timer queue handlers
+#[allow(clippy::too_many_lines)]
 pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStream2> {
     let mut items = vec![];
 

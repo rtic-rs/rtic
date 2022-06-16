@@ -48,6 +48,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
         // stmts.push(quote!(#[doc = #doc]));
 
+        #[allow(clippy::cast_possible_truncation)]
         let idx = Index {
             index: i as u32,
             span: Span::call_site(),

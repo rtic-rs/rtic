@@ -78,7 +78,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                 pub __marker__: core::marker::PhantomData<&'a ()>
             ));
 
-            values.push(quote!(__marker__: core::marker::PhantomData))
+            values.push(quote!(__marker__: core::marker::PhantomData));
         }
     }
 

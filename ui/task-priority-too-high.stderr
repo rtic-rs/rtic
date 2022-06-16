@@ -1,7 +1,15 @@
+warning: unused variable: `cx`
+  --> ui/task-priority-too-high.rs:12:13
+   |
+12 |     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+   |             ^^ help: if this is intentional, prefix it with an underscore: `_cx`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
 error[E0080]: evaluation of constant value failed
- --> $DIR/task-priority-too-high.rs:3:1
+ --> ui/task-priority-too-high.rs:3:1
   |
 3 | #[rtic::app(device = lm3s6965)]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to compute `8_usize - 9_usize`, which would overflow
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at 'Maximum priority used by interrupt vector 'I2C0' is more than supported by hardware', $DIR/ui/task-priority-too-high.rs:3:1
   |
-  = note: this error originates in the attribute macro `rtic::app` (in Nightly builds, run with -Z macro-backtrace for more info)
+  = note: this error originates in the macro `$crate::panic::panic_2021` (in Nightly builds, run with -Z macro-backtrace for more info)

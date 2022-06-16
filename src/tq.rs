@@ -17,7 +17,7 @@ where
     /// # Safety
     ///
     /// Writing to memory with a transmute in order to enable
-    /// interrupts of the SysTick timer
+    /// interrupts of the ``SysTick`` timer
     ///
     /// Enqueue a task without checking if it is full
     #[inline]
@@ -33,11 +33,8 @@ where
     {
         // Check if the top contains a non-empty element and if that element is
         // greater than nr
-        let if_heap_max_greater_than_nr = self
-            .0
-            .peek()
-            .map(|head| nr.instant < head.instant)
-            .unwrap_or(true);
+        let if_heap_max_greater_than_nr =
+            self.0.peek().map_or(true, |head| nr.instant < head.instant);
 
         if if_heap_max_greater_than_nr {
             if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE && self.0.is_empty() {
@@ -92,7 +89,7 @@ where
         }
     }
 
-    /// Dequeue a task from the TimerQueue
+    /// Dequeue a task from the ``TimerQueue``
     pub fn dequeue<F>(&mut self, disable_interrupt: F, mono: &mut Mono) -> Option<(Task, u8)>
     where
         F: FnOnce(),

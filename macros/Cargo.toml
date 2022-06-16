@@ -6,13 +6,13 @@ authors = [
 categories = ["concurrency", "embedded", "no-std"]
 description = "Procedural macros of the cortex-m-rtic crate"
 documentation = "https://rtic-rs.github.io/cortex-m-rtic/api/cortex_m_rtic"
-edition = "2018"
+edition = "2021"
 keywords = ["arm", "cortex-m"]
 license = "MIT OR Apache-2.0"
 name = "cortex-m-rtic-macros"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/cortex-m-rtic"
-version = "1.0.0"
+version = "1.1.4"
 
 [lib]
 proc-macro = true
@@ -22,7 +22,7 @@ proc-macro2 = "1"
 proc-macro-error = "1"
 quote = "1"
 syn = "1"
-rtic-syntax = "1.0.0"
+rtic-syntax = "1.0.1"
 
 [features]
 debugprint = []

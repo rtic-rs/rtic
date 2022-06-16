@@ -41,16 +41,22 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
     // Unmask interrupts and set their priorities
-    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().flat_map(|task| {
-        if !util::is_exception(&task.args.binds) {
-            Some((&task.args.priority, &task.args.binds))
-        } else {
+    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {
+        if util::is_exception(&task.args.binds) {
             // We do exceptions in another pass
             None
+        } else {
+            Some((&task.args.priority, &task.args.binds))
         }
     })) {
+        let es = format!(
+            "Maximum priority used by interrupt vector '{}' is more than supported by hardware",
+            name
+        );
         // Compile time assert that this priority is supported by the device
-        stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+        stmts.push(quote!(
+            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
+        ));
 
         stmts.push(quote!(
             core.NVIC.set_priority(
@@ -72,8 +78,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             None
         }
     }) {
+        let es = format!(
+            "Maximum priority used by interrupt vector '{}' is more than supported by hardware",
+            name
+        );
         // Compile time assert that this priority is supported by the device
-        stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+        stmts.push(quote!(
+            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
+        ));
 
         stmts.push(quote!(core.SCB.set_priority(
             rtic::export::SystemHandler::#name,
@@ -90,8 +102,15 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         };
         let binds = &monotonic.args.binds;
 
+        let name = &monotonic.ident;
+        let es = format!(
+            "Maximum priority used by monotonic '{}' is more than supported by hardware",
+            name
+        );
         // Compile time assert that this priority is supported by the device
-        stmts.push(quote!(let _ = [(); ((1 << #nvic_prio_bits) - #priority as usize)];));
+        stmts.push(quote!(
+            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
+        ));
 
         let mono_type = &monotonic.ty;
 

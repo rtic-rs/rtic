@@ -3,33 +3,72 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
+
 ## [Unreleased]
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [v1.1.2] - 2022-05-09
+
+### Added
+
+### Fixed
+
+- Generation of masks for the source masking scheduling for thumbv6
+
+### Changed
+
+## [v1.1.1] - 2022-04-13 - YANKED
+
+### Added
+
+### Fixed
+
+- Fixed `marcro` version
+
+### Changed
+
+## [v1.1.0] - 2022-04-13 - YANKED
+
+### Added
+
+- Improve how CHANGELOG.md merges are handled
 - If current $stable and master version matches, dev-book redirects to $stable book
 - During deploy stage, merge master branch into current stable IFF cargo package version matches
 - Rework branch structure, release/vVERSION
 - Cargo clippy in CI
 - Use rust-cache Github Action
+- Support for NVIC based SPR based scheduling for armv6m.
 - CI changelog entry enforcer
 - `examples/periodic-at.rs`, an example of a periodic timer without accumulated drift.
-- `examples/periodic-at2.rs`, an example of a periodic process with two tasks, with offset timing. Here we depict two alternative usages of the timer type, explicit and trait based.
+- `examples/periodic-at2.rs`, an example of a periodic process with two tasks, with offset timing.
+  Here we depict two alternative usages of the timer type, explicit and trait based.
 - book: Update `Monotonic` tips.
 - rename lock types `{}_lock` (instead of `{}_that_needs_to_be_locked`)
 - change visibility of `app::shared_resources` module to pub
 
 ### Fixed
 
+- Re-export `rtic_core::prelude` as `rtic::mutex::prelude` to allow glob imports + Clippy
+- Fix all except `must_use` lints from clippy::pedantic
 - Fix dated migration docs for spawn
+- Remove obsolete action-rs tool-cache
 - Force mdBook to return error codes
 - Readded missing ramfunc output to book
+
+### Changed
+
+- Try to detect `target-dir` for rtic-expansion.rs
 
 ## [v1.0.0] - 2021-12-25
 
 ### Changed
 
-- Try to detect `target-dir` for rtic-expansion.rs
 - Bump RTIC dependencies also updated to v1.0.0
 - Edition 2021
 - Change default `idle` behaviour to be `NOP` instead of `WFI`
@@ -476,7 +515,10 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.0...HEAD
+[v1.1.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.1...v1.1.2
+[v1.1.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.0...v1.1.1
+[v1.1.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.0...v1.1.0
 [v1.0.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.4...v1.0.0
 [v0.6.0-rc.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.3...v0.6.0-rc.4
 [v0.6.0-rc.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v0.6.0-rc.2...v0.6.0-rc.3
