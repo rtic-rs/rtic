@@ -52,6 +52,8 @@ pub mod mutex {
 #[doc(hidden)]
 pub mod export;
 #[doc(hidden)]
+pub mod sll;
+#[doc(hidden)]
 mod tq;
 
 /// Sets the given `interrupt` as pending

@@ -1,20 +1,23 @@
-use crate::Monotonic;
+use crate::{
+    sll::{IntrusiveSortedLinkedList, Min as IsslMin, Node as IntrusiveNode},
+    Monotonic,
+};
 use core::cmp::Ordering;
 use core::task::Waker;
-use heapless::sorted_linked_list::{LinkedIndexU16, Min, SortedLinkedList};
+use heapless::sorted_linked_list::{LinkedIndexU16, Min as SllMin, SortedLinkedList};
 
-pub struct TimerQueue<Mono, Task, const N_TASK: usize, const N_WAKER: usize>
+pub struct TimerQueue<'a, Mono, Task, const N_TASK: usize>
 where
     Mono: Monotonic,
     Task: Copy,
 {
-    pub task_queue: SortedLinkedList<TaskNotReady<Mono, Task>, LinkedIndexU16, Min, N_TASK>,
-    pub waker_queue: SortedLinkedList<WakerNotReady<Mono>, LinkedIndexU16, Min, N_WAKER>,
+    pub task_queue: SortedLinkedList<TaskNotReady<Mono, Task>, LinkedIndexU16, SllMin, N_TASK>,
+    pub waker_queue: IntrusiveSortedLinkedList<'a, WakerNotReady<Mono>, IsslMin>,
 }
 
-impl<Mono, Task, const N_TASK: usize, const N_WAKER: usize> TimerQueue<Mono, Task, N_TASK, N_WAKER>
+impl<'a, Mono, Task, const N_TASK: usize> TimerQueue<'a, Mono, Task, N_TASK>
 where
-    Mono: Monotonic,
+    Mono: Monotonic + 'a,
     Task: Copy,
 {
     fn check_if_enable<F1, F2>(
@@ -70,17 +73,16 @@ where
     #[inline]
     pub fn enqueue_waker<F1, F2>(
         &mut self,
-        nr: WakerNotReady<Mono>,
+        nr: &'a mut IntrusiveNode<WakerNotReady<Mono>>,
         enable_interrupt: F1,
         pend_handler: F2,
         mono: Option<&mut Mono>,
-    ) -> Result<(), ()>
-    where
+    ) where
         F1: FnOnce(),
         F2: FnOnce(),
     {
-        self.check_if_enable(nr.instant, enable_interrupt, pend_handler, mono);
-        self.waker_queue.push(nr).map_err(|_| ())
+        self.check_if_enable(nr.val.instant, enable_interrupt, pend_handler, mono);
+        self.waker_queue.push(nr);
     }
 
     /// Check if all the timer queue is empty.
@@ -133,12 +135,12 @@ where
         &mut self,
         instant: Mono::Instant,
         mono: &mut Mono,
-    ) -> Option<TaskOrWaker<Task>> {
+    ) -> Option<(Task, u8)> {
         let now = mono.now();
         if instant <= now {
             // task became ready
             let nr = unsafe { self.task_queue.pop_unchecked() };
-            Some(TaskOrWaker::Task((nr.task, nr.index)))
+            Some((nr.task, nr.index))
         } else {
             // Set compare
             mono.set_compare(instant);
@@ -149,23 +151,18 @@ where
             // guard against this.
             if instant <= now {
                 let nr = unsafe { self.task_queue.pop_unchecked() };
-                Some(TaskOrWaker::Task((nr.task, nr.index)))
+                Some((nr.task, nr.index))
             } else {
                 None
             }
         }
     }
 
-    fn dequeue_waker_queue(
-        &mut self,
-        instant: Mono::Instant,
-        mono: &mut Mono,
-    ) -> Option<TaskOrWaker<Task>> {
+    fn dequeue_waker_queue(&mut self, instant: Mono::Instant, mono: &mut Mono) {
         let now = mono.now();
         if instant <= now {
-            // task became ready
-            let nr = unsafe { self.waker_queue.pop_unchecked() };
-            Some(TaskOrWaker::Waker(nr.waker))
+            // Task became ready, wake the waker
+            self.waker_queue.pop().map(|v| v.val.waker.wake_by_ref());
         } else {
             // Set compare
             mono.set_compare(instant);
@@ -175,16 +172,13 @@ where
             // read of now to the set of the compare, the time can overflow. This is to
             // guard against this.
             if instant <= now {
-                let nr = unsafe { self.waker_queue.pop_unchecked() };
-                Some(TaskOrWaker::Waker(nr.waker))
-            } else {
-                None
+                self.waker_queue.pop().map(|v| v.val.waker.wake_by_ref());
             }
         }
     }
 
     /// Dequeue a task from the ``TimerQueue``
-    pub fn dequeue<F>(&mut self, disable_interrupt: F, mono: &mut Mono) -> Option<TaskOrWaker<Task>>
+    pub fn dequeue<F>(&mut self, disable_interrupt: F, mono: &mut Mono) -> Option<(Task, u8)>
     where
         F: FnOnce(),
     {
@@ -228,14 +222,10 @@ where
         if dequeue_task {
             self.dequeue_task_queue(instant, mono)
         } else {
-            self.dequeue_waker_queue(instant, mono)
+            self.dequeue_waker_queue(instant, mono);
+            None
         }
     }
-}
-
-pub enum TaskOrWaker<Task> {
-    Task((Task, u8)),
-    Waker(Waker),
 }
 
 pub struct TaskNotReady<Mono, Task>

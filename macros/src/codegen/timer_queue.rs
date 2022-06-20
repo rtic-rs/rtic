@@ -67,13 +67,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 .map(|(_name, task)| task.args.capacity as usize)
                 .sum();
             let n_task = util::capacity_literal(cap);
-            let n_worker: usize = app
-                .software_tasks
-                .iter()
-                .map(|(_name, task)| task.is_async as usize)
-                .sum();
-            let n_worker = util::capacity_literal(n_worker);
-            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n_task, #n_worker>);
+            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n_task>);
 
             // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
@@ -84,7 +78,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 static #tq: rtic::RacyCell<#tq_ty> = rtic::RacyCell::new(
                     rtic::export::TimerQueue {
                         task_queue: rtic::export::SortedLinkedList::new_u16(),
-                        waker_queue: rtic::export::SortedLinkedList::new_u16(),
+                        waker_queue: rtic::export::IntrusiveSortedLinkedList::new(),
                     }
                 );
             ));
@@ -148,7 +142,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
-                    while let Some(task_or_waker) = rtic::export::interrupt::free(|_|
+                    while let Some((task, index)) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {
                             (&mut *#tq.get_mut()).dequeue(|| #disable_isr, mono)
                         } else {
@@ -157,13 +151,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                             core::hint::unreachable_unchecked()
                         })
                     {
-                        match task_or_waker {
-                            rtic::export::TaskOrWaker::Waker(waker) => waker.wake(),
-                            rtic::export::TaskOrWaker::Task((task, index)) => {
-                                match task {
-                                    #(#arms)*
-                                }
-                            }
+                        match task {
+                            #(#arms)*
                         }
                     }
 

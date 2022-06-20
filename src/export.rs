@@ -1,11 +1,13 @@
 #![allow(clippy::inline_always)]
+pub use crate::{
+    sll::{IntrusiveSortedLinkedList, Node as IntrusiveNode},
+    tq::{TaskNotReady, TimerQueue, WakerNotReady},
+};
+pub use bare_metal::CriticalSection;
 use core::{
     cell::Cell,
     sync::atomic::{AtomicBool, Ordering},
 };
-
-pub use crate::tq::{TaskNotReady, TaskOrWaker, TimerQueue, WakerNotReady};
-pub use bare_metal::CriticalSection;
 pub use cortex_m::{
     asm::nop,
     asm::wfi,

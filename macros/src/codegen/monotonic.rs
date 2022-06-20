@@ -60,7 +60,6 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
             #[doc = #doc]
             #[allow(non_snake_case)]
             pub mod #m {
-
                 /// Read the current time from this monotonic
                 pub fn now() -> <super::super::#m as rtic::Monotonic>::Instant {
                     rtic::export::interrupt::free(|_| {
@@ -73,39 +72,13 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                     })
                 }
 
-                fn enqueue_waker(
-                    instant: <super::super::#m as rtic::Monotonic>::Instant,
-                    waker: core::task::Waker
-                ) -> Result<u32, ()> {
-                    unsafe {
-                        rtic::export::interrupt::free(|_| {
-                            let marker = super::super::#tq_marker.get().read();
-                            super::super::#tq_marker.get_mut().write(marker.wrapping_add(1));
-
-                            let nr = rtic::export::WakerNotReady {
-                                waker,
-                                instant,
-                                marker,
-                            };
-
-                            let tq = &mut *super::super::#tq.get_mut();
-
-                            tq.enqueue_waker(
-                                nr,
-                                || #enable_interrupt,
-                                || #pend,
-                                (&mut *super::super::#m_ident.get_mut()).as_mut()).map(|_| marker)
-                        })
-                    }
-                }
-
                 /// Delay
                 #[inline(always)]
                 #[allow(non_snake_case)]
                 pub fn delay(duration: <super::super::#m as rtic::Monotonic>::Duration)
                     -> DelayFuture  {
                     let until = now() + duration;
-                    DelayFuture { until, tq_marker: None }
+                    DelayFuture { until, waker_storage: None }
                 }
 
                 /// Delay future.
@@ -113,11 +86,22 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                 #[allow(non_camel_case_types)]
                 pub struct DelayFuture {
                     until: <super::super::#m as rtic::Monotonic>::Instant,
-                    tq_marker: Option<u32>,
+                    waker_storage: Option<rtic::export::IntrusiveNode<rtic::export::WakerNotReady<super::super::#m>>>,
+                }
+                
+                impl Drop for DelayFuture {
+                    fn drop(&mut self) {
+                        if let Some(waker_storage) = &mut self.waker_storage {
+                            rtic::export::interrupt::free(|_| unsafe {
+                                let tq = &mut *super::super::#tq.get_mut();
+                                tq.cancel_waker_marker(waker_storage.val.marker);
+                            });
+                        }
+                    }
                 }
 
                 impl core::future::Future for DelayFuture {
-                    type Output = Result<(), ()>;
+                    type Output = ();
 
                     fn poll(
                         mut self: core::pin::Pin<&mut Self>,
@@ -125,22 +109,33 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                     ) -> core::task::Poll<Self::Output> {
                         let mut s = self.as_mut();
                         let now = now();
+                        let until = s.until;
+                        let is_ws_none = s.waker_storage.is_none();
 
-                        if now >= s.until {
-                            core::task::Poll::Ready(Ok(()))
-                        } else {
-                            if s.tq_marker.is_some() {
-                                core::task::Poll::Pending
-                            } else {
-                                match enqueue_waker(s.until, cx.waker().clone()) {
-                                    Ok(marker) => {
-                                        s.tq_marker = Some(marker);
-                                        core::task::Poll::Pending
-                                    },
-                                    Err(()) => core::task::Poll::Ready(Err(())),
-                                }
-                            }
+                        if now >= until {
+                            return core::task::Poll::Ready(());
+                        } else if is_ws_none {
+                            rtic::export::interrupt::free(|_| unsafe {
+                                let marker = super::super::#tq_marker.get().read();
+                                super::super::#tq_marker.get_mut().write(marker.wrapping_add(1));
+
+                                let nr = s.waker_storage.insert(rtic::export::IntrusiveNode::new(rtic::export::WakerNotReady {
+                                    waker: cx.waker().clone(),
+                                    instant: until,
+                                    marker,
+                                }));
+
+                                let tq = &mut *super::super::#tq.get_mut();
+
+                                tq.enqueue_waker(
+                                    core::mem::transmute(nr), // Transmute the reference to static
+                                    || #enable_interrupt,
+                                    || #pend,
+                                    (&mut *super::super::#m_ident.get_mut()).as_mut());
+                            });
                         }
+
+                        core::task::Poll::Pending
                     }
                 }
 
@@ -150,7 +145,18 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                 pub struct TimeoutFuture<F: core::future::Future> {
                     future: F,
                     until: <super::super::#m as rtic::Monotonic>::Instant,
-                    tq_marker: Option<u32>,
+                    waker_storage: Option<rtic::export::IntrusiveNode<rtic::export::WakerNotReady<super::super::#m>>>,
+                }
+
+                impl<F: core::future::Future> Drop for TimeoutFuture<F> {
+                    fn drop(&mut self) {
+                        if let Some(waker_storage) = &mut self.waker_storage {
+                            rtic::export::interrupt::free(|_| unsafe {
+                                let tq = &mut *super::super::#tq.get_mut();
+                                tq.cancel_waker_marker(waker_storage.val.marker);
+                            });
+                        }
+                    }
                 }
 
                 /// Timeout after
@@ -164,7 +170,7 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                     TimeoutFuture {
                         future,
                         until,
-                        tq_marker: None,
+                        waker_storage: None,
                     }
                 }
 
@@ -178,7 +184,7 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                     TimeoutFuture {
                         future,
                         until: instant,
-                        tq_marker: None,
+                        waker_storage: None,
                     }
                 }
 
@@ -186,46 +192,58 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                 where
                     F: core::future::Future,
                 {
-                    type Output = Result<Result<F::Output, super::TimeoutError>, ()>;
+                    type Output = Result<F::Output, super::TimeoutError>;
 
                     fn poll(
                         self: core::pin::Pin<&mut Self>,
                         cx: &mut core::task::Context<'_>
                     ) -> core::task::Poll<Self::Output> {
-                        let now = now();
-
                         // SAFETY: We don't move the underlying pinned value.
                         let mut s = unsafe { self.get_unchecked_mut() };
                         let future = unsafe { core::pin::Pin::new_unchecked(&mut s.future) };
+                        let now = now();
+                        let until = s.until;
+                        let is_ws_none = s.waker_storage.is_none();
 
                         match future.poll(cx) {
                             core::task::Poll::Ready(r) => {
-                                if let Some(marker) = s.tq_marker {
+                                if let Some(waker_storage) = &mut s.waker_storage {
                                     rtic::export::interrupt::free(|_| unsafe {
                                         let tq = &mut *super::super::#tq.get_mut();
-                                        tq.cancel_waker_marker(marker);
+                                        tq.cancel_waker_marker(waker_storage.val.marker);
                                     });
                                 }
 
-                                core::task::Poll::Ready(Ok(Ok(r)))
+                                return core::task::Poll::Ready(Ok(r));
                             }
                             core::task::Poll::Pending => {
-                                if now >= s.until {
+                                if now >= until {
                                     // Timeout
-                                    core::task::Poll::Ready(Ok(Err(super::TimeoutError)))
-                                } else if s.tq_marker.is_none() {
-                                    match enqueue_waker(s.until, cx.waker().clone()) {
-                                        Ok(marker) => {
-                                            s.tq_marker = Some(marker);
-                                            core::task::Poll::Pending
-                                        },
-                                        Err(()) => core::task::Poll::Ready(Err(())), // TQ full
-                                    }
-                                } else {
-                                    core::task::Poll::Pending
+                                    return core::task::Poll::Ready(Err(super::TimeoutError));
+                                } else if is_ws_none {
+                                    rtic::export::interrupt::free(|_| unsafe {
+                                        let marker = super::super::#tq_marker.get().read();
+                                        super::super::#tq_marker.get_mut().write(marker.wrapping_add(1));
+
+                                        let nr = s.waker_storage.insert(rtic::export::IntrusiveNode::new(rtic::export::WakerNotReady {
+                                            waker: cx.waker().clone(),
+                                            instant: until,
+                                            marker,
+                                        }));
+
+                                        let tq = &mut *super::super::#tq.get_mut();
+
+                                        tq.enqueue_waker(
+                                            core::mem::transmute(nr), // Transmute the reference to static
+                                            || #enable_interrupt,
+                                            || #pend,
+                                            (&mut *super::super::#m_ident.get_mut()).as_mut());
+                                    });
                                 }
                             }
                         }
+
+                        core::task::Poll::Pending
                     }
                 }
             }
