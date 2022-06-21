@@ -88,7 +88,7 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                     until: <super::super::#m as rtic::Monotonic>::Instant,
                     waker_storage: Option<rtic::export::IntrusiveNode<rtic::export::WakerNotReady<super::super::#m>>>,
                 }
-                
+
                 impl Drop for DelayFuture {
                     fn drop(&mut self) {
                         if let Some(waker_storage) = &mut self.waker_storage {

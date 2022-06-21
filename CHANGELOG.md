@@ -10,6 +10,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Added
 
 - Allow custom `link_section` attributes for late resources
+- Support for `async` tasks and idle
 
 ### Fixed
 
