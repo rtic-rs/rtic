@@ -162,7 +162,9 @@ where
         let now = mono.now();
         if instant <= now {
             // Task became ready, wake the waker
-            self.waker_queue.pop().map(|v| v.val.waker.wake_by_ref());
+            if let Some(v) = self.waker_queue.pop() {
+                v.val.waker.wake_by_ref()
+            }
         } else {
             // Set compare
             mono.set_compare(instant);
@@ -172,7 +174,9 @@ where
             // read of now to the set of the compare, the time can overflow. This is to
             // guard against this.
             if instant <= now {
-                self.waker_queue.pop().map(|v| v.val.waker.wake_by_ref());
+                if let Some(v) = self.waker_queue.pop() {
+                    v.val.waker.wake_by_ref()
+                }
             }
         }
     }

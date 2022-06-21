@@ -137,11 +137,12 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             }
         }
 
-        let n_executors: usize = app
+        let n_executors = app
             .software_tasks
             .iter()
             .map(|(_, task)| if task.is_async { 1 } else { 0 })
-            .sum();
+            .sum::<usize>()
+            .max(1);
 
         // TODO: This `retry_queue` comes from the current design of the dispatcher queue handling.
         // To remove this we would need to redesign how the dispatcher handles queues, and this can
@@ -152,11 +153,9 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         // `while let Some(...) = (&mut *#rq.get_mut())...` a few lines down. The current "hack" is
         // to just requeue the executor run if it should not have been dequeued. This needs however
         // to be done after the ready queue has been exhausted.
-        if n_executors > 0 {
-            stmts.push(quote!(
-                let mut retry_queue: rtic::export::Vec<_, #n_executors> = rtic::export::Vec::new();
-            ));
-        }
+        stmts.push(quote!(
+            let mut retry_queue: rtic::export::Vec<_, #n_executors> = rtic::export::Vec::new();
+        ));
 
         stmts.push(quote!(
             while let Some((task, index)) = (&mut *#rq.get_mut()).split().1.dequeue() {
