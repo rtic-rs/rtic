@@ -13,6 +13,34 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+## [v1.1.5] - 2022-06-23
+
+### Added
+
+### Fixed
+Bump rtic-syntax to 1.0.2
+fix ci: use SYST::PTR
+
+### Changed
+
+## [v1.1.4] - 2022-05-24
+
+### Added
+
+### Fixed
+Fix macros to Rust 2021
+
+### Changed
+
+## [v1.1.3] - 2022-05-24
+
+### Added
+
+### Fixed
+Fix clash with defmt
+
+### Changed
+
 ## [v1.1.2] - 2022-05-09
 
 ### Added
@@ -513,7 +541,10 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.5...HEAD
+[v1.1.5]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.4...v1.1.5
+[v1.1.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.3...v1.1.4
+[v1.1.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.2...v1.1.3
 [v1.1.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.1...v1.1.2
 [v1.1.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.0...v1.1.1
 [v1.1.0]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.0.0...v1.1.0
