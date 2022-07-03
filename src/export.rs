@@ -21,10 +21,43 @@ pub use rtic_monotonic as monotonic;
 pub type SCFQ<const N: usize> = Queue<u8, N>;
 pub type SCRQ<T, const N: usize> = Queue<(T, u8), N>;
 
-#[cfg(armv7m)]
+/// Mask is used to store interrupt masks on systems without a BASEPRI register (M0, M0+, M23).
+/// It needs to be large enough to cover all the relevant interrupts in use.
+/// For M0/M0+ there are only 32 interrupts so we only need one u32 value.
+/// For M23 there can be as many as 480 interrupts.
+/// Rather than providing space for all possible interrupts, we just detect the highest interrupt in
+/// use at compile time and allocate enough u32 chunks to cover them.
+#[derive(Copy, Clone)]
+pub struct Mask<const M: usize>([u32; M]);
+
+impl<const M: usize> core::ops::BitOrAssign for Mask<M> {
+    fn bitor_assign(&mut self, rhs: Self) {
+        for i in 0..M {
+            self.0[i] |= rhs.0[i];
+        }
+    }
+}
+
+#[cfg(not(have_basepri))]
+impl<const M: usize> Mask<M> {
+    /// Set a bit inside a Mask.
+    const fn set_bit(mut self, bit: u32) -> Self {
+        let block = bit / 32;
+
+        if block as usize >= M {
+            panic!("Generating masks for thumbv6/thumbv8m.base failed! Are you compiling for thumbv6 on an thumbv7 MCU or using an unsupported thumbv8m.base MCU?");
+        }
+
+        let offset = bit - (block * 32);
+        self.0[block as usize] |= 1 << offset;
+        self
+    }
+}
+
+#[cfg(have_basepri)]
 use cortex_m::register::basepri;
 
-#[cfg(armv7m)]
+#[cfg(have_basepri)]
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
 where
@@ -41,7 +74,7 @@ where
     }
 }
 
-#[cfg(not(armv7m))]
+#[cfg(not(have_basepri))]
 #[inline(always)]
 pub fn run<F>(_priority: u8, f: F)
 where
@@ -105,15 +138,15 @@ impl Priority {
 }
 
 /// Const helper to check architecture
-pub const fn is_armv6() -> bool {
-    #[cfg(not(armv6m))]
-    {
-        false
-    }
-
-    #[cfg(armv6m)]
+pub const fn have_basepri() -> bool {
+    #[cfg(have_basepri)]
     {
         true
+    }
+
+    #[cfg(not(have_basepri))]
+    {
+        false
     }
 }
 
@@ -172,14 +205,14 @@ where
 /// Total OH of per task is max 2 clock cycles, negligible in practice
 /// but can in theory be fixed.
 ///
-#[cfg(armv7m)]
+#[cfg(have_basepri)]
 #[inline(always)]
-pub unsafe fn lock<T, R>(
+pub unsafe fn lock<T, R, const M: usize>(
     ptr: *mut T,
     priority: &Priority,
     ceiling: u8,
     nvic_prio_bits: u8,
-    _mask: &[u32; 3],
+    _mask: &[Mask<M>; 3],
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
     let current = priority.get();
@@ -247,14 +280,14 @@ pub unsafe fn lock<T, R>(
 /// - Temporary lower exception priority
 ///
 /// These possible solutions are set goals for future work
-#[cfg(not(armv7m))]
+#[cfg(not(have_basepri))]
 #[inline(always)]
-pub unsafe fn lock<T, R>(
+pub unsafe fn lock<T, R, const M: usize>(
     ptr: *mut T,
     priority: &Priority,
     ceiling: u8,
     _nvic_prio_bits: u8,
-    masks: &[u32; 3],
+    masks: &[Mask<M>; 3],
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
     let current = priority.get();
@@ -288,28 +321,38 @@ pub unsafe fn lock<T, R>(
     }
 }
 
-#[cfg(not(armv7m))]
+#[cfg(not(have_basepri))]
 #[inline(always)]
-fn compute_mask(from_prio: u8, to_prio: u8, masks: &[u32; 3]) -> u32 {
-    let mut res = 0;
+fn compute_mask<const M: usize>(from_prio: u8, to_prio: u8, masks: &[Mask<M>; 3]) -> Mask<M> {
+    let mut res = Mask([0; M]);
     masks[from_prio as usize..to_prio as usize]
         .iter()
-        .for_each(|m| res |= m);
+        .for_each(|m| res |= *m);
     res
 }
 
 // enables interrupts
-#[cfg(not(armv7m))]
+#[cfg(not(have_basepri))]
 #[inline(always)]
-unsafe fn set_enable_mask(mask: u32) {
-    (*NVIC::PTR).iser[0].write(mask)
+unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>) {
+    for i in 0..M {
+        // This check should involve compile time constants and be optimized out.
+        if mask.0[i] != 0 {
+            (*NVIC::PTR).iser[i].write(mask.0[i]);
+        }
+    }
 }
 
 // disables interrupts
-#[cfg(not(armv7m))]
+#[cfg(not(have_basepri))]
 #[inline(always)]
-unsafe fn clear_enable_mask(mask: u32) {
-    (*NVIC::PTR).icer[0].write(mask)
+unsafe fn clear_enable_mask<const M: usize>(mask: Mask<M>) {
+    for i in 0..M {
+        // This check should involve compile time constants and be optimized out.
+        if mask.0[i] != 0 {
+            (*NVIC::PTR).icer[i].write(mask.0[i]);
+        }
+    }
 }
 
 #[inline]
@@ -318,36 +361,56 @@ pub fn logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
 }
 
-#[cfg(not(armv6m))]
-pub const fn create_mask<const N: usize>(_: [u32; N]) -> u32 {
-    0
+#[cfg(have_basepri)]
+pub const fn create_mask<const N: usize, const M: usize>(_: [u32; N]) -> Mask<M> {
+    Mask([0; M])
 }
 
-#[cfg(armv6m)]
-pub const fn create_mask<const N: usize>(list_of_shifts: [u32; N]) -> u32 {
-    let mut mask = 0;
+#[cfg(not(have_basepri))]
+pub const fn create_mask<const N: usize, const M: usize>(list_of_shifts: [u32; N]) -> Mask<M> {
+    let mut mask = Mask([0; M]);
     let mut i = 0;
 
     while i < N {
         let shift = list_of_shifts[i];
         i += 1;
-
-        if shift > 31 {
-            panic!("Generating masks for thumbv6 failed! Are you compiling for thumbv6 on an thumbv7 MCU?");
-        }
-
-        mask |= 1 << shift;
+        mask = mask.set_bit(shift);
     }
 
     mask
 }
 
-#[cfg(not(armv6m))]
-pub const fn v6_panic() {
+#[cfg(have_basepri)]
+pub const fn compute_mask_chunks<const L: usize>(_: [u32; L]) -> usize {
+    0
+}
+
+/// Compute the number of u32 chunks needed to store the Mask value.
+/// On M0, M0+ this should always end up being 1.
+/// On M23 we will pick a number that allows us to store the highest index used by the code.
+/// This means the amount of overhead will vary based on the actually interrupts used by the code.
+#[cfg(not(have_basepri))]
+pub const fn compute_mask_chunks<const L: usize>(ids: [u32; L]) -> usize {
+    let mut max: usize = 0;
+    let mut i = 0;
+
+    while i < L {
+        let id = ids[i] as usize;
+        i += 1;
+
+        if id > max {
+            max = id;
+        }
+    }
+    (max + 32) / 32
+}
+
+#[cfg(have_basepri)]
+pub const fn no_basepri_panic() {
     // For non-v6 all is fine
 }
 
-#[cfg(armv6m)]
-pub const fn v6_panic() {
-    panic!("Exceptions with shared resources are not allowed when compiling for thumbv6. Use local resources or `#[lock_free]` shared resources");
+#[cfg(not(have_basepri))]
+pub const fn no_basepri_panic() {
+    panic!("Exceptions with shared resources are not allowed when compiling for thumbv6 or thumbv8m.base. Use local resources or `#[lock_free]` shared resources");
 }
