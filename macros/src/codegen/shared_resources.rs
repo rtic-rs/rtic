@@ -29,8 +29,7 @@ pub fn codegen(
         // unless user specifies custom link section
         let section = if attrs.iter().any(|attr| attr.path.is_ident("link_section")) {
             None
-        }
-        else {
+        } else {
             Some(util::link_section_uninit())
         };
 
