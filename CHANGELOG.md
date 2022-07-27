@@ -13,6 +13,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Distinguish between thumbv8m.base and thumbv8m.main for basepri usage.
+
 ### Changed
 
 ## [v1.1.3] - 2022-06-23
