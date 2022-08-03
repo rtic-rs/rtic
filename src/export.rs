@@ -21,6 +21,60 @@ pub use heapless::BinaryHeap;
 pub use heapless::Vec;
 pub use rtic_monotonic as monotonic;
 
+pub mod idle_executor {
+    use core::{
+        future::Future,
+        pin::Pin,
+        task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
+    };
+
+    fn no_op(_: *const ()) {}
+    fn no_op_clone(_: *const ()) -> RawWaker {
+        noop_raw_waker()
+    }
+
+    static IDLE_WAKER_TABLE: RawWakerVTable = RawWakerVTable::new(no_op_clone, no_op, no_op, no_op);
+
+    #[inline]
+    fn noop_raw_waker() -> RawWaker {
+        RawWaker::new(core::ptr::null(), &IDLE_WAKER_TABLE)
+    }
+
+    pub struct IdleExecutor<T>
+    where
+        T: Future,
+    {
+        idle: T,
+    }
+
+    impl<T> IdleExecutor<T>
+    where
+        T: Future,
+    {
+        #[inline(always)]
+        pub fn new(idle: T) -> Self {
+            Self { idle }
+        }
+
+        #[inline(always)]
+        pub fn run(&mut self) -> ! {
+            let w = unsafe { Waker::from_raw(noop_raw_waker()) };
+            let mut ctxt = Context::from_waker(&w);
+            loop {
+                match unsafe { Pin::new_unchecked(&mut self.idle) }.poll(&mut ctxt) {
+                    Poll::Pending => {
+                        // All ok!
+                    }
+                    Poll::Ready(_) => {
+                        // The idle executor will never return
+                        unreachable!()
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub mod executor {
     use core::{
         future::Future,

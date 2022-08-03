@@ -63,10 +63,15 @@ pub fn codegen(
         let attrs = &idle.attrs;
         let context = &idle.context;
         let stmts = &idle.stmts;
+        let async_ = if idle.is_async {
+            quote!(async)
+        } else {
+            quote!()
+        };
         let user_idle = Some(quote!(
             #(#attrs)*
             #[allow(non_snake_case)]
-            fn #name(#context: #name::Context) -> ! {
+            #async_ fn #name(#context: #name::Context) -> ! {
                 use rtic::Mutex as _;
                 use rtic::mutex::prelude::*;
 
@@ -74,9 +79,16 @@ pub fn codegen(
             }
         ));
 
-        let call_idle = quote!(#name(
-            #name::Context::new(&rtic::export::Priority::new(0))
-        ));
+        let call_idle = if idle.is_async {
+            quote!(
+                let idle_task = #name(#name::Context::new(&rtic::export::Priority::new(0)));
+                rtic::export::idle_executor::IdleExecutor::new(idle_task).run();
+            )
+        } else {
+            quote!(#name(
+                #name::Context::new(&rtic::export::Priority::new(0))
+            ))
+        };
 
         (mod_app, root_idle, user_idle, call_idle)
     } else {
