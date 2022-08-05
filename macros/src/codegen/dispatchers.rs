@@ -10,6 +10,21 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
     let interrupts = &analysis.interrupts;
 
+    // Generate executor definition in global scope
+    for (name, task) in app.software_tasks.iter() {
+        if task.is_async {
+            let type_name = util::internal_task_ident(name, "F");
+            let exec_name = util::internal_task_ident(name, "EXEC");
+
+            items.push(quote!(
+                type #type_name = impl core::future::Future + 'static;
+                static #exec_name:
+                    rtic::RacyCell<rtic::export::executor::AsyncTaskExecutor<#type_name>> =
+                        rtic::RacyCell::new(rtic::export::executor::AsyncTaskExecutor::new());
+            ));
+        }
+    }
+
     for (&level, channel) in &analysis.channels {
         let mut stmts = vec![];
 
@@ -123,24 +138,17 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             })
             .collect::<Vec<_>>();
 
-        for (name, task) in app.software_tasks.iter() {
-            if task.is_async {
-                let type_name = util::internal_task_ident(name, "F");
-                let exec_name = util::internal_task_ident(name, "EXEC");
-
-                stmts.push(quote!(
-                    type #type_name = impl core::future::Future + 'static;
-                    static #exec_name:
-                        rtic::RacyCell<rtic::export::executor::AsyncTaskExecutor<#type_name>> =
-                            rtic::RacyCell::new(rtic::export::executor::AsyncTaskExecutor::new());
-                ));
-            }
-        }
-
-        let n_executors = app
-            .software_tasks
+        let n_executors = channel
+            .tasks
             .iter()
-            .map(|(_, task)| if task.is_async { 1 } else { 0 })
+            .map(|name| {
+                let task = &app.software_tasks[name];
+                if task.is_async {
+                    1
+                } else {
+                    0
+                }
+            })
             .sum::<usize>()
             .max(1);
 
@@ -165,9 +173,10 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             }
         ));
 
-        for (name, _task) in app.software_tasks.iter().filter_map(|(name, task)| {
+        for name in channel.tasks.iter().filter_map(|name| {
+            let task = &app.software_tasks[name];
             if task.is_async {
-                Some((name, task))
+                Some(name)
             } else {
                 None
             }

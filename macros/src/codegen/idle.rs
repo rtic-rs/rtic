@@ -80,6 +80,9 @@ pub fn codegen(
 
         (mod_app, root_idle, user_idle, call_idle)
     } else {
+        // TODO: No idle defined, check for 0-priority tasks and generate an executor if needed
+
+        //
         (
             vec![],
             vec![],

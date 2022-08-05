@@ -40,7 +40,11 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
         })
         .collect::<HashSet<_>>();
 
-    let need = priorities.len();
+    let need = priorities
+        .iter()
+        // Only count if not 0
+        .filter_map(|prio| if *prio > 0 { Some(prio) } else { None })
+        .count();
     let given = app.args.extern_interrupts.len();
     if need > given {
         let s = {
