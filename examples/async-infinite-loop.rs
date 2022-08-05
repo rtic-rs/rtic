@@ -38,7 +38,7 @@ mod app {
         }
     }
 
-    // Infinite loops are not allowed in RTIC, however in async tasks they are - in there is an
+    // Infinite loops are not allowed in RTIC, however in async tasks they are - if there is an
     // await inside the loop.
     #[task]
     async fn foo(_cx: foo::Context) {
