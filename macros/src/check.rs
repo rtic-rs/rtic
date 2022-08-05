@@ -43,7 +43,7 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
     let need = priorities
         .iter()
         // Only count if not 0
-        .filter_map(|prio| if *prio > 0 { Some(prio) } else { None })
+        .filter(|prio| **prio > 0)
         .count();
     let given = app.args.extern_interrupts.len();
     if need > given {

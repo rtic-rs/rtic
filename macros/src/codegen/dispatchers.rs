@@ -183,14 +183,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             }
         ));
 
-        for name in channel.tasks.iter().filter_map(|name| {
-            let task = &app.software_tasks[name];
-            if task.is_async {
-                Some(name)
-            } else {
-                None
-            }
-        }) {
+        for name in channel
+            .tasks
+            .iter()
+            .filter(|name| app.software_tasks[*name].is_async)
+        {
             let exec_name = util::internal_task_ident(name, "EXEC");
 
             let executor_run_ident = util::executor_run_ident(name);

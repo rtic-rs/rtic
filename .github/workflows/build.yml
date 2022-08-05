@@ -25,7 +25,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
           components: rustfmt
 
@@ -49,7 +49,7 @@ jobs:
           - thumbv6m-none-eabi
           - x86_64-unknown-linux-gnu
         toolchain:
-          - stable
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -82,12 +82,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust stable
+      - name: Install Rust nightly
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           target: x86_64-unknown-linux-gnu
           override: true
+          components: clippy
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
@@ -111,7 +112,7 @@ jobs:
           - thumbv7m-none-eabi
           - thumbv6m-none-eabi
         toolchain:
-          - stable
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -144,7 +145,7 @@ jobs:
           - thumbv7m-none-eabi
           - thumbv6m-none-eabi
         toolchain:
-          - stable
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -188,7 +189,7 @@ jobs:
         target:
           - x86_64-unknown-linux-gnu
         toolchain:
-          - stable
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -224,7 +225,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           target: x86_64-unknown-linux-gnu
           override: true
 
@@ -252,7 +253,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           target: x86_64-unknown-linux-gnu
           override: true
 
