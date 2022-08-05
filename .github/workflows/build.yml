@@ -225,7 +225,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           target: x86_64-unknown-linux-gnu
           override: true
 
@@ -253,7 +253,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           target: x86_64-unknown-linux-gnu
           override: true
 
