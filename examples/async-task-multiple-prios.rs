@@ -16,7 +16,10 @@ mod app {
     use systick_monotonic::*;
 
     #[shared]
-    struct Shared {}
+    struct Shared {
+        a: u32,
+        b: u32,
+    }
 
     #[local]
     struct Local {}
@@ -34,7 +37,7 @@ mod app {
         async_task2::spawn().ok();
 
         (
-            Shared {},
+            Shared { a: 0, b: 0 },
             Local {},
             init::Monotonics(Systick::new(cx.core.SYST, 12_000_000)),
         )
@@ -49,24 +52,24 @@ mod app {
         }
     }
 
-    #[task(priority = 1)]
+    #[task(priority = 1, shared = [a, b])]
     fn normal_task(_cx: normal_task::Context) {
         hprintln!("hello from normal 1").ok();
     }
 
-    #[task(priority = 1)]
+    #[task(priority = 1, shared = [a, b])]
     async fn async_task(_cx: async_task::Context) {
         hprintln!("hello from async 1").ok();
 
         debug::exit(debug::EXIT_SUCCESS);
     }
 
-    #[task(priority = 2)]
+    #[task(priority = 2, shared = [a, b])]
     fn normal_task2(_cx: normal_task2::Context) {
         hprintln!("hello from normal 2").ok();
     }
 
-    #[task(priority = 2)]
+    #[task(priority = 2, shared = [a, b])]
     async fn async_task2(_cx: async_task2::Context) {
         hprintln!("hello from async 2").ok();
     }

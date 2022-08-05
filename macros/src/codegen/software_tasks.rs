@@ -139,17 +139,24 @@ pub fn codegen(
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
-            let async_marker = if task.is_async {
-                quote!(async)
+            let (async_marker, context_lifetime) = if task.is_async {
+                (
+                    quote!(async),
+                    if shared_needs_lt || local_needs_lt {
+                        quote!(<'static>)
+                    } else {
+                        quote!()
+                    },
+                )
             } else {
-                quote!()
+                (quote!(), quote!())
             };
 
             user_tasks.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                #async_marker fn #name(#context: #name::Context #(,#inputs)*) {
+                #async_marker fn #name(#context: #name::Context #context_lifetime #(,#inputs)*) {
                     use rtic::Mutex as _;
                     use rtic::mutex::prelude::*;
 

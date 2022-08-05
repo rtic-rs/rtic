@@ -242,7 +242,7 @@ impl Priority {
     ///
     /// Will overwrite the current Priority
     #[inline(always)]
-    pub unsafe fn new(value: u8) -> Self {
+    pub const unsafe fn new(value: u8) -> Self {
         Priority {
             inner: Cell::new(value),
         }

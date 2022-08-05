@@ -10,17 +10,23 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
     let interrupts = &analysis.interrupts;
 
-    // Generate executor definition in global scope
+    // Generate executor definition and priority in global scope
     for (name, task) in app.software_tasks.iter() {
         if task.is_async {
             let type_name = util::internal_task_ident(name, "F");
             let exec_name = util::internal_task_ident(name, "EXEC");
+            let prio_name = util::internal_task_ident(name, "PRIORITY");
 
             items.push(quote!(
                 type #type_name = impl core::future::Future + 'static;
                 static #exec_name:
                     rtic::RacyCell<rtic::export::executor::AsyncTaskExecutor<#type_name>> =
                         rtic::RacyCell::new(rtic::export::executor::AsyncTaskExecutor::new());
+
+                // The executors priority, this can be any value - we will overwrite it when we
+                // start a task
+                static #prio_name: rtic::RacyCell<rtic::export::Priority> =
+                        unsafe { rtic::RacyCell::new(rtic::export::Priority::new(0)) };
             ));
         }
     }
@@ -92,6 +98,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                 let inputs = util::inputs_ident(name);
                 let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
                 let exec_name = util::internal_task_ident(name, "EXEC");
+                let prio_name = util::internal_task_ident(name, "PRIORITY");
 
                 if task.is_async {
                     let executor_run_ident = util::executor_run_ident(name);
@@ -108,7 +115,10 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                                     .read();
                                 (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
 
-                                let priority = &rtic::export::Priority::new(PRIORITY);
+                                // The async executor needs a static priority
+                                #prio_name.get_mut().write(rtic::export::Priority::new(PRIORITY));
+                                let priority: &'static _ = &*#prio_name.get();
+
                                 (&mut *#exec_name.get_mut()).spawn(#name(#name::Context::new(priority) #(,#pats)*));
                                 #executor_run_ident.store(true, core::sync::atomic::Ordering::Relaxed);
                             } else {
