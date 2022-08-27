@@ -9,7 +9,11 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- Allow custom `link_section` attributes for late resources
+
 ### Fixed
+
+- Distinguish between thumbv8m.base and thumbv8m.main for basepri usage.
 
 ### Changed
 

@@ -253,6 +253,11 @@ pub fn static_shared_resource_ident(name: &Ident) -> Ident {
     mark_internal_name(&format!("shared_resource_{}", name))
 }
 
+/// Generates an Ident for the number of 32 bit chunks used for Mask storage.
+pub fn priority_mask_chunks_ident() -> Ident {
+    mark_internal_name("MASK_CHUNKS")
+}
+
 pub fn priority_masks_ident() -> Ident {
     mark_internal_name("MASKS")
 }

@@ -22,15 +22,16 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     }
 
     let device = &extra.device;
-    let arm_v6_checks: Vec<_> = app
+    let chunks_name = util::priority_mask_chunks_ident();
+    let no_basepri_checks: Vec<_> = app
         .hardware_tasks
         .iter()
         .filter_map(|(_, task)| {
             if !util::is_exception(&task.args.binds) {
                 let interrupt_name = &task.args.binds;
                 Some(quote!(
-                    if (#device::Interrupt::#interrupt_name as u32) > 31 {
-                        ::core::panic!("An interrupt above value 31 is used while in armv6");
+                    if (#device::Interrupt::#interrupt_name as usize) >= (#chunks_name * 32) {
+                        ::core::panic!("An interrupt out of range is used while in armv6 or armv8m.base");
                     }
                 ))
             } else {
@@ -41,8 +42,8 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
     let const_check = quote! {
         const _CONST_CHECK: () = {
-            if rtic::export::is_armv6() {
-                #(#arm_v6_checks)*
+            if !rtic::export::have_basepri() {
+                #(#no_basepri_checks)*
             } else {
                 // TODO: Add armv7 checks here
             }

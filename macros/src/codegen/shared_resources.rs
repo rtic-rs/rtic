@@ -23,9 +23,15 @@ pub fn codegen(
         let ty = &res.ty;
         let mangled_name = &util::static_shared_resource_ident(name);
 
-        // late resources in `util::link_section_uninit`
-        let section = util::link_section_uninit();
         let attrs = &res.attrs;
+
+        // late resources in `util::link_section_uninit`
+        // unless user specifies custom link section
+        let section = if attrs.iter().any(|attr| attr.path.is_ident("link_section")) {
+            None
+        } else {
+            Some(util::link_section_uninit())
+        };
 
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
@@ -112,6 +118,8 @@ pub fn codegen(
     let device = &extra.device;
     let mut uses_exceptions_with_resources = false;
 
+    let mut mask_ids = Vec::new();
+
     for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().flat_map(|task| {
         if !util::is_exception(&task.args.binds) {
             Some((&task.args.priority, &task.args.binds))
@@ -141,12 +149,13 @@ pub fn codegen(
     })) {
         let v = prio_to_masks.entry(priority - 1).or_insert(Vec::new());
         v.push(quote!(#device::Interrupt::#name as u32));
+        mask_ids.push(quote!(#device::Interrupt::#name as u32));
     }
 
-    // Call rtic::export::create_mask([u32; N]), where the array is the list of shifts
+    // Call rtic::export::create_mask([Mask; N]), where the array is the list of shifts
 
     let mut mask_arr = Vec::new();
-    // NOTE: 0..3 assumes max 4 priority levels according to M0 spec
+    // NOTE: 0..3 assumes max 4 priority levels according to M0, M23 spec
     for i in 0..3 {
         let v = if let Some(v) = prio_to_masks.get(&i) {
             v.clone()
@@ -159,18 +168,26 @@ pub fn codegen(
         ));
     }
 
+    // Generate a constant for the number of chunks needed by Mask.
+    let chunks_name = util::priority_mask_chunks_ident();
+    mod_app.push(quote!(
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals)]
+        const #chunks_name: usize = rtic::export::compute_mask_chunks([#(#mask_ids),*]);
+    ));
+
     let masks_name = util::priority_masks_ident();
     mod_app.push(quote!(
         #[doc(hidden)]
         #[allow(non_upper_case_globals)]
-        const #masks_name: [u32; 3] = [#(#mask_arr),*];
+        const #masks_name: [rtic::export::Mask<#chunks_name>; 3] = [#(#mask_arr),*];
     ));
 
     if uses_exceptions_with_resources {
         mod_app.push(quote!(
             #[doc(hidden)]
             #[allow(non_upper_case_globals)]
-            const __rtic_internal_V6_ERROR: () = rtic::export::v6_panic();
+            const __rtic_internal_V6_ERROR: () = rtic::export::no_basepri_panic();
         ));
     }
 
