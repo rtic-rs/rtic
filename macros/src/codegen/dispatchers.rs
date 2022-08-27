@@ -18,13 +18,16 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             let prio_name = util::internal_task_ident(name, "PRIORITY");
 
             items.push(quote!(
+                #[allow(non_camel_case_types)]
                 type #type_name = impl core::future::Future + 'static;
+                #[allow(non_upper_case_globals)]
                 static #exec_name:
                     rtic::RacyCell<rtic::export::executor::AsyncTaskExecutor<#type_name>> =
                         rtic::RacyCell::new(rtic::export::executor::AsyncTaskExecutor::new());
 
                 // The executors priority, this can be any value - we will overwrite it when we
                 // start a task
+                #[allow(non_upper_case_globals)]
                 static #prio_name: rtic::RacyCell<rtic::export::Priority> =
                         unsafe { rtic::RacyCell::new(rtic::export::Priority::new(0)) };
             ));
