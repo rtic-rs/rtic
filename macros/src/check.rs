@@ -36,28 +36,39 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
         .iter()
         .map(|(name, task)| {
             first = Some(name);
-            task.args.priority
+            (task.args.priority, task.is_async)
         })
         .collect::<HashSet<_>>();
 
-    let need = priorities
+    let need_sync = priorities
         .iter()
-        // Only count if not 0
-        .filter(|prio| **prio > 0)
+        // Only count if not 0 and not async
+        .filter(|(prio, is_async)| *prio > 0 && !*is_async)
         .count();
+
+    let need_async = priorities
+        .iter()
+        // Only count if not 0 and async
+        .filter(|(prio, is_async)| *prio > 0 && *is_async)
+        .count();
+
     let given = app.args.extern_interrupts.len();
-    if need > given {
+    if need_sync + need_async > given {
         let s = {
             format!(
-                "not enough interrupts to dispatch \
-                    all software tasks (need: {}; given: {})",
-                need, given
+                "not enough interrupts to dispatch all software and async tasks \
+                 (need: {}; given: {}) - one interrupt is needed per priority and sync/async task",
+                need_sync + need_async,
+                given
             )
         };
 
         // If not enough tasks and first still is None, may cause
         // "custom attribute panicked" due to unwrap on None
-        return Err(parse::Error::new(first.unwrap().span(), &s));
+        return Err(parse::Error::new(
+            first.expect("RTIC-ICE: needed async + needed sync").span(),
+            &s,
+        ));
     }
 
     // Check that all exceptions are valid; only exceptions with configurable priorities are

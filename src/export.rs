@@ -145,6 +145,7 @@ pub mod executor {
 
 pub type SCFQ<const N: usize> = Queue<u8, N>;
 pub type SCRQ<T, const N: usize> = Queue<(T, u8), N>;
+pub type ASYNCRQ<T, const N: usize> = Queue<T, N>;
 
 /// Mask is used to store interrupt masks on systems without a BASEPRI register (M0, M0+, M23).
 /// It needs to be large enough to cover all the relevant interrupts in use.

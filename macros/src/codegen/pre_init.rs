@@ -15,6 +15,10 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
     // Populate the FreeQueue
     for (name, task) in &app.software_tasks {
+        if task.is_async {
+            continue;
+        }
+
         let cap = task.args.capacity;
         let fq_ident = util::fq_ident(name);
 
@@ -38,7 +42,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         stmts.push(quote!(let _ = #rt_err::#interrupt::#name;));
     }
 
-    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+    let interrupt_ids = analysis
+        .interrupts_normal
+        .iter()
+        .map(|(p, (id, _))| (p, id))
+        .chain(analysis.interrupts_async.iter().map(|(p, (id, _))| (p, id)));
 
     // Unmask interrupts and set their priorities
     for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {

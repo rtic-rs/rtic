@@ -10,7 +10,13 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let resources = match ctxt {
         Context::Init => unreachable!("Tried to generate shared resources struct for init"),
-        Context::Idle => &app.idle.as_ref().unwrap().args.shared_resources,
+        Context::Idle => {
+            &app.idle
+                .as_ref()
+                .expect("RTIC-ICE: unable to get idle name")
+                .args
+                .shared_resources
+        }
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.shared_resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.shared_resources,
     };

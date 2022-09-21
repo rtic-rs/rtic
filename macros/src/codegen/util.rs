@@ -184,7 +184,12 @@ pub fn regroup_inputs(
 pub fn get_task_name(ctxt: Context, app: &App) -> Ident {
     let s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::Idle => app
+            .idle
+            .as_ref()
+            .expect("RTIC-ICE: unable to find idle name")
+            .name
+            .to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -195,7 +200,12 @@ pub fn get_task_name(ctxt: Context, app: &App) -> Ident {
 pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::Idle => app
+            .idle
+            .as_ref()
+            .expect("RTIC-ICE: unable to find idle name")
+            .name
+            .to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -208,7 +218,12 @@ pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
 pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::Idle => app
+            .idle
+            .as_ref()
+            .expect("RTIC-ICE: unable to find idle name")
+            .name
+            .to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -223,6 +238,11 @@ pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
 /// The ready queues are SPSC queues
 pub fn rq_ident(priority: u8) -> Ident {
     mark_internal_name(&format!("P{}_RQ", priority))
+}
+
+/// Generates an identifier for a ready queue, async task version
+pub fn rq_async_ident(async_task_name: &Ident) -> Ident {
+    mark_internal_name(&format!("ASYNC_TACK_{}_RQ", async_task_name))
 }
 
 /// Generates an identifier for the `enum` of `schedule`-able tasks

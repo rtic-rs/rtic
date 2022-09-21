@@ -13,7 +13,13 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let resources = match ctxt {
         Context::Init => &app.init.args.local_resources,
-        Context::Idle => &app.idle.as_ref().unwrap().args.local_resources,
+        Context::Idle => {
+            &app.idle
+                .as_ref()
+                .expect("RTIC-ICE: unable to get idle name")
+                .args
+                .local_resources
+        }
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.local_resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.local_resources,
     };

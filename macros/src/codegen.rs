@@ -5,6 +5,7 @@ use rtic_syntax::ast::App;
 use crate::{analyze::Analysis, check::Extra};
 
 mod assertions;
+mod async_dispatchers;
 mod dispatchers;
 mod hardware_tasks;
 mod idle;
@@ -99,6 +100,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let monotonics = monotonic::codegen(app, analysis, extra);
 
     let mod_app_dispatchers = dispatchers::codegen(app, analysis, extra);
+    let mod_app_async_dispatchers = async_dispatchers::codegen(app, analysis, extra);
     let mod_app_timer_queue = timer_queue::codegen(app, analysis, extra);
     let user_imports = &app.user_imports;
     let user_code = &app.user_code;
@@ -149,6 +151,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             #(#mod_app_software_tasks)*
 
             #(#mod_app_dispatchers)*
+
+            #(#mod_app_async_dispatchers)*
 
             #(#mod_app_timer_queue)*
 

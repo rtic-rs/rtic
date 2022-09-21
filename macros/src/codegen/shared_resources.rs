@@ -112,7 +112,11 @@ pub fn codegen(
     };
 
     // Computing mapping of used interrupts to masks
-    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+    let interrupt_ids = analysis
+        .interrupts_normal
+        .iter()
+        .map(|(p, (id, _))| (p, id))
+        .chain(analysis.interrupts_async.iter().map(|(p, (id, _))| (p, id)));
 
     let mut prio_to_masks = HashMap::new();
     let device = &extra.device;
@@ -147,7 +151,7 @@ pub fn codegen(
             None
         }
     })) {
-        let v = prio_to_masks.entry(priority - 1).or_insert(Vec::new());
+        let v: &mut Vec<_> = prio_to_masks.entry(priority - 1).or_default();
         v.push(quote!(#device::Interrupt::#name as u32));
         mask_ids.push(quote!(#device::Interrupt::#name as u32));
     }

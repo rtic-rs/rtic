@@ -26,6 +26,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             let variants = app
                 .software_tasks
                 .iter()
+                .filter(|(_, task)| !task.is_async)
                 .map(|(name, task)| {
                     let cfgs = &task.cfgs;
 
@@ -103,6 +104,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             let arms = app
                 .software_tasks
                 .iter()
+                .filter(|(_, task)| !task.is_async)
                 .map(|(name, task)| {
                     let cfgs = &task.cfgs;
                     let priority = task.args.priority;
@@ -110,7 +112,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     let rqt = util::spawn_t_ident(priority);
 
                     // The interrupt that runs the task dispatcher
-                    let interrupt = &analysis.interrupts.get(&priority).expect("RTIC-ICE: interrupt not found").0;
+                    let interrupt = &analysis.interrupts_normal.get(&priority).expect("RTIC-ICE: interrupt not found").0;
 
                     let pend = {
                         quote!(

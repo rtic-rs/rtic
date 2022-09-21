@@ -36,38 +36,40 @@ pub fn codegen(
         let cap_lit = util::capacity_literal(cap as usize);
         let cap_lit_p1 = util::capacity_literal(cap as usize + 1);
 
-        // Create free queues and inputs / instants buffers
-        let fq = util::fq_ident(name);
+        if !task.is_async {
+            // Create free queues and inputs / instants buffers
+            let fq = util::fq_ident(name);
 
-        #[allow(clippy::redundant_closure)]
-        let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
-            (
-                quote!(rtic::export::SCFQ<#cap_lit_p1>),
-                quote!(rtic::export::Queue::new()),
-                Box::new(|| Some(util::link_section_uninit())),
-            )
-        };
-        mod_app.push(quote!(
-            // /// Queue version of a free-list that keeps track of empty slots in
-            // /// the following buffers
-            #[allow(non_camel_case_types)]
-            #[allow(non_upper_case_globals)]
-            #[doc(hidden)]
-            static #fq: rtic::RacyCell<#fq_ty> = rtic::RacyCell::new(#fq_expr);
-        ));
+            #[allow(clippy::redundant_closure)]
+            let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
+                (
+                    quote!(rtic::export::SCFQ<#cap_lit_p1>),
+                    quote!(rtic::export::Queue::new()),
+                    Box::new(|| Some(util::link_section_uninit())),
+                )
+            };
 
-        let elems = &(0..cap)
-            .map(|_| quote!(core::mem::MaybeUninit::uninit()))
-            .collect::<Vec<_>>();
-
-        for (_, monotonic) in &app.monotonics {
-            let instants = util::monotonic_instants_ident(name, &monotonic.ident);
-            let mono_type = &monotonic.ty;
-
-            let uninit = mk_uninit();
-            // For future use
-            // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             mod_app.push(quote!(
+                // /// Queue version of a free-list that keeps track of empty slots in
+                // /// the following buffers
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
+                static #fq: rtic::RacyCell<#fq_ty> = rtic::RacyCell::new(#fq_expr);
+            ));
+
+            let elems = &(0..cap)
+                .map(|_| quote!(core::mem::MaybeUninit::uninit()))
+                .collect::<Vec<_>>();
+
+            for (_, monotonic) in &app.monotonics {
+                let instants = util::monotonic_instants_ident(name, &monotonic.ident);
+                let mono_type = &monotonic.ty;
+
+                let uninit = mk_uninit();
+                // For future use
+                // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
+                mod_app.push(quote!(
                 #uninit
                 // /// Buffer that holds the instants associated to the inputs of a task
                 // #[doc = #doc]
@@ -78,20 +80,22 @@ pub fn codegen(
                     rtic::RacyCell<[core::mem::MaybeUninit<<#mono_type as rtic::Monotonic>::Instant>; #cap_lit]> =
                     rtic::RacyCell::new([#(#elems,)*]);
             ));
+            }
+
+            let uninit = mk_uninit();
+            let inputs_ident = util::inputs_ident(name);
+
+            // Buffer that holds the inputs of a task
+            mod_app.push(quote!(
+                #uninit
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
+                static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
+                    rtic::RacyCell::new([#(#elems,)*]);
+            ));
         }
 
-        let uninit = mk_uninit();
-        let inputs_ident = util::inputs_ident(name);
-
-        mod_app.push(quote!(
-            #uninit
-            // /// Buffer that holds the inputs of a task
-            #[allow(non_camel_case_types)]
-            #[allow(non_upper_case_globals)]
-            #[doc(hidden)]
-            static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
-                rtic::RacyCell::new([#(#elems,)*]);
-        ));
         if task.is_async {
             let executor_ident = util::executor_run_ident(name);
             mod_app.push(quote!(

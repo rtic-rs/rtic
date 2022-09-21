@@ -33,8 +33,8 @@ fn analyze() {
     .unwrap();
 
     let analysis = crate::analyze::app(analysis, &app);
-    let interrupts = &analysis.interrupts;
+    let interrupts = &analysis.interrupts_normal;
     assert_eq!(interrupts.len(), 2);
-    assert_eq!(interrupts[&2].0.to_string(), "B");
-    assert_eq!(interrupts[&1].0.to_string(), "A");
+    assert_eq!(interrupts[&2].0.to_string(), "A");
+    assert_eq!(interrupts[&1].0.to_string(), "B");
 }
