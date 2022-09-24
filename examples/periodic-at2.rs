@@ -28,7 +28,7 @@ mod app {
         // Initialize the monotonic (SysTick rate in QEMU is 12 MHz)
         let mut mono = Systick::new(systick, 12_000_000);
 
-        foo::spawn_after(1.secs(), mono.now()).unwrap();
+        foo::spawn_after(200.millis(), mono.now()).unwrap();
 
         (Shared {}, Local {}, init::Monotonics(mono))
     }
@@ -54,8 +54,8 @@ mod app {
     fn bar(_cx: bar::Context, instant: <MyMono as rtic_monotonic::Monotonic>::Instant) {
         hprintln!("bar {:?}", instant).ok();
 
-        // Spawn a new message with 1s offset to spawned time
-        let next_instant = instant + 1.secs();
+        // Spawn a new message with 200ms offset to spawned time
+        let next_instant = instant + 200.millis();
         foo::spawn_at(next_instant, next_instant).unwrap();
     }
 }

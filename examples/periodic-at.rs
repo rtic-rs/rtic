@@ -42,8 +42,8 @@ mod app {
             debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         }
 
-        // Periodic ever 1 seconds
-        let next_instant = instant + 1.secs();
+        // Periodic every 100 milliseconds
+        let next_instant = instant + 100.millis();
         foo::spawn_at(next_instant, next_instant).unwrap();
     }
 }
