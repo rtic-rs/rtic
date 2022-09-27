@@ -46,6 +46,8 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                 #[doc(inline)]
                 pub use #m::delay;
                 #[doc(inline)]
+                pub use #m::delay_until;
+                #[doc(inline)]
                 pub use #m::timeout_at;
                 #[doc(inline)]
                 pub use #m::timeout_after;
@@ -78,6 +80,15 @@ pub fn codegen(app: &App, _analysis: &Analysis, _extra: &Extra) -> TokenStream2 
                 pub fn delay(duration: <super::super::#m as rtic::Monotonic>::Duration)
                     -> DelayFuture  {
                     let until = now() + duration;
+                    DelayFuture { until, waker_storage: None }
+                }
+
+                /// Delay until a specific time
+                #[inline(always)]
+                #[allow(non_snake_case)]
+                pub fn delay_until(instant: <super::super::#m as rtic::Monotonic>::Instant)
+                    -> DelayFuture  {
+                    let until = instant;
                     DelayFuture { until, waker_storage: None }
                 }
 
