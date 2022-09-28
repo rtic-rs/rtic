@@ -28,9 +28,3 @@ Running the example will print `init` to the console and then exit the QEMU proc
 $ cargo run --target thumbv7m-none-eabi --example init
 {{#include ../../../../ci/expected/init.run}}
 ```
-
-> **NOTE**: You can choose target device by passing a target
-> triple to cargo (e.g. `cargo run --example init --target thumbv7m-none-eabi`) or
-> configure a default target in `.cargo/config.toml`.
->
-> For running the examples, we use a Cortex M3 emulated in QEMU, so the target is `thumbv7m-none-eabi`.

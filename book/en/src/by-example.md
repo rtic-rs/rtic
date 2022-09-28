@@ -30,3 +30,9 @@ Yields this output:
 ``` console
 {{#include ../../../ci/expected/locals.run}}
 ```
+
+> **NOTE**: You can choose target device by passing a target
+> triple to cargo (e.g. `cargo run --example init --target thumbv7m-none-eabi`) or
+> configure a default target in `.cargo/config.toml`.
+>
+> For running the examples, we use a Cortex M3 emulated in QEMU, so the target is `thumbv7m-none-eabi`.

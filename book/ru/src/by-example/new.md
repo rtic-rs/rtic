@@ -78,7 +78,7 @@ $ cargo add panic-semihosting
 5. Соберите его, загрузите в микроконтроллер и запустите.
 
 ``` console
-$ # ПРИМЕЧАНИЕ: Я раскомментировал опцию `runner` в `.cargo/config`
+$ # ПРИМЕЧАНИЕ: Я раскомментировал опцию `runner` в `.cargo/config.toml`
 $ cargo run
 {{#include ../../../../ci/expected/init.run}}
 ```
