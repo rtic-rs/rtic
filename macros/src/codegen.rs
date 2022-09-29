@@ -2,6 +2,9 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::ast::App;
 
+use std::fs::File;
+use std::io::prelude::*;
+
 use crate::{analyze::Analysis, check::Extra};
 
 mod assertions;
@@ -157,6 +160,12 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     };
     let rt_err = util::rt_err_ident();
 
+    println!("{:?}",user_software_tasks);
+    //println!("{:?}",root_software_tasks);
+    //println!("{:?}",mod_app_software_tasks);
+    
+
+
     quote!(
         /// The RTIC application module
         pub mod #name {
@@ -172,10 +181,28 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             /// User code end
 
             #(#user)*
-
+            
+            
+            ///
+            ///#user_hardware_tasks
+            /// ||||
+            /// \/\/ 
             #(#user_hardware_tasks)*
-
+            
+            /// /\/\ 
+            /// ||||
+            /// #user_hardware_tasks
+            ///
+            
+            ///
+            /// #user_software_tasks
+            /// ||||
+            /// \/\/ 
             #(#user_software_tasks)*
+            /// /\/\ 
+            /// ||||
+            /// #user_software_tasks
+            ///
 
             #(#root)*
 
@@ -185,7 +212,15 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
             #(#root_hardware_tasks)*
 
+            ///
+            /// #user_software_tasks
+            /// ||||
+            /// \/\/ 
             #(#root_software_tasks)*
+            /// /\/\ 
+            /// ||||
+            /// #user_software_tasks
+            ///
 
             /// app module
             #(#mod_app)*
@@ -196,7 +231,16 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
             #(#mod_app_hardware_tasks)*
 
+
+            ///
+            /// #user_software_tasks
+            /// ||||
+            /// \/\/ 
             #(#mod_app_software_tasks)*
+            /// /\/\ 
+            /// ||||
+            /// #user_software_tasks
+            ///
 
             #(#mod_app_dispatchers)*
 

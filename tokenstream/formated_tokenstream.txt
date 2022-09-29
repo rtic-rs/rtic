@@ -1,0 +1,194 @@
+[
+  TokenStream[
+    Punct{
+      ch: '#',
+      spacing: Alone,
+      span: #6 bytes(117..170) },
+    Group {
+      delimiter: Bracket,
+      stream: TokenStream [
+        Ident{
+          ident: "allow",
+          span: #6 bytes(117..170) },
+        Group {
+          delimiter: Parenthesis,
+          stream: TokenStream [
+            Ident{
+              ident: "non_snake_case",
+              span: #6 bytes(117..170) }],
+          span: #6 bytes(117..170) }],
+      span: #6 bytes(117..170) },
+    Ident {
+      ident: "fn",
+      span: #6 bytes(117..170) },
+    Ident {
+      ident: "foo",
+      span: #0 bytes(526..529) },
+    Group {
+      delimiter: Parenthesis,
+      stream: TokenStream [
+        Ident{
+          ident: "_",
+          span: #0 bytes(530..531) },
+        Punct {
+          ch: ':',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "foo",
+          span: #0 bytes(526..529) },
+        Punct {
+          ch: ':',
+          spacing: Joint,
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "Context",
+          span: #6 bytes(117..170) }],
+      span: #6 bytes(117..170) },
+    Group {
+      delimiter: Brace,
+      stream: TokenStream [
+        Ident{
+          ident: "use",
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "rtic",
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Joint,
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "Mutex",
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "as",
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "_",
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ';',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "use",
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "rtic",
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Joint,
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "mutex",
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Joint,
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "prelude",
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Joint,
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ':',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: '*',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Punct {
+          ch: ';',
+          spacing: Alone,
+          span: #6 bytes(117..170) },
+        Ident {
+          ident: "hprintln",
+          span: #0 bytes(557..565) },
+        Punct {
+          ch: '!',
+          spacing: Alone,
+          span: #0 bytes(565..566) },
+        Group {
+          delimiter: Parenthesis,
+          stream: TokenStream [
+            Literal{
+              kind: Str,
+              symbol: "foo",
+              suffix: None,
+              span: #0 bytes(567..572) }],
+          span: #0 bytes(566..573) },
+        Punct {
+          ch: '.',
+          spacing: Alone,
+          span: #0 bytes(573..574) },
+        Ident {
+          ident: "unwrap",
+          span: #0 bytes(574..580) },
+        Group {
+          delimiter: Parenthesis,
+          stream: TokenStream [
+            ],
+          span: #0 bytes(580..582) },
+        Punct {
+          ch: ';',
+          spacing: Alone,
+          span: #0 bytes(582..583) },
+        Ident {
+          ident: "debug",
+          span: #0 bytes(593..598) },
+        Punct {
+          ch: ':',
+          spacing: Joint,
+          span: #0 bytes(598..600) },
+        Punct {
+          ch: ':',
+          spacing: Alone,
+          span: #0 bytes(598..600) },
+        Ident {
+          ident: "exit",
+          span: #0 bytes(600..604) },
+        Group {
+          delimiter: Parenthesis,
+          stream: TokenStream [
+            Ident{
+              ident: "debug",
+              span: #0 bytes(605..610) },
+            Punct {
+              ch: ':',
+              spacing: Joint,
+              span: #0 bytes(610..612) },
+            Punct {
+              ch: ':',
+              spacing: Alone,
+              span: #0 bytes(610..612) },
+            Ident {
+              ident: "EXIT_SUCCESS",
+              span: #0 bytes(612..624) }],
+          span: #0 bytes(604..625) },
+        Punct {
+          ch: ';',
+          spacing: Alone,
+          span: #0 bytes(625..626) }],
+      span: #6 bytes(117..170) }]]
