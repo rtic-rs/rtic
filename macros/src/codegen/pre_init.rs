@@ -23,6 +23,18 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         ));
     }
 
+    for (actor_name, actor) in &app.actors {
+        for (subscription_index, subscription) in actor.subscriptions.iter().enumerate() {
+            let capacity = subscription.capacity;
+            let pseudo_task_name = util::actor_receive_task(actor_name, subscription_index);
+            let fq_ident = util::fq_ident(&pseudo_task_name);
+
+            stmts.push(quote!(
+                (0..#capacity).for_each(|i| (&mut *#fq_ident.get_mut()).enqueue_unchecked(i));
+            ));
+        }
+    }
+
     stmts.push(quote!(
         // To set the variable in cortex_m so the peripherals cannot be taken multiple times
         let mut core: rtic::export::Peripherals = rtic::export::Peripherals::steal().into();

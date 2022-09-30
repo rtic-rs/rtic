@@ -29,6 +29,7 @@ pub fn app(analysis: P<analyze::Analysis>, app: &App) -> P<Analysis> {
         .software_tasks
         .values()
         .map(|task| task.args.priority)
+        .chain(app.actors.values().map(|actor| actor.priority))
         .collect::<BTreeSet<_>>();
 
     // map from priorities to interrupts (holding name and attributes)

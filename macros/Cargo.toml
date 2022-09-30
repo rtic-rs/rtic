@@ -23,6 +23,8 @@ proc-macro-error = "1"
 quote = "1"
 syn = "1"
 rtic-syntax = "1.0.2"
+indexmap = "1.0.2"
 
 [features]
 debugprint = []
+memory-watermark = []

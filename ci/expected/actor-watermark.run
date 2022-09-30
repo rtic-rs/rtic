@@ -1,0 +1,9 @@
+Actor::receive was called
+Actor::receive was called
+[
+    Subscription {
+        capacity: 2,
+        message_type: "Message",
+        watermark: 2,
+    },
+]

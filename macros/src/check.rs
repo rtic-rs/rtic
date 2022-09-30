@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{cell::Cell, collections::HashSet};
 
 use proc_macro2::Span;
 use rtic_syntax::{analyze::Analysis, ast::App};
@@ -30,14 +30,18 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
 
     // Check that there are enough external interrupts to dispatch the software tasks and the timer
     // queue handler
-    let mut first = None;
+    let first = Cell::new(None);
     let priorities = app
         .software_tasks
         .iter()
         .map(|(name, task)| {
-            first = Some(name);
+            first.set(Some(name));
             task.args.priority
         })
+        .chain(app.actors.iter().map(|(name, ao)| {
+            first.set(Some(name));
+            ao.priority
+        }))
         .collect::<HashSet<_>>();
 
     let need = priorities.len();
@@ -46,14 +50,14 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
         let s = {
             format!(
                 "not enough interrupts to dispatch \
-                    all software tasks (need: {}; given: {})",
+                    all software tasks / actors (need: {}; given: {})",
                 need, given
             )
         };
 
-        // If not enough tasks and first still is None, may cause
+        // If not enough interrupts and `first` still is None, may cause
         // "custom attribute panicked" due to unwrap on None
-        return Err(parse::Error::new(first.unwrap().span(), &s));
+        return Err(parse::Error::new(first.get().unwrap().span(), &s));
     }
 
     // Check that all exceptions are valid; only exceptions with configurable priorities are

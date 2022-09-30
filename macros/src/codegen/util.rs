@@ -1,7 +1,7 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
-use quote::quote;
+use quote::{format_ident, quote};
 use rtic_syntax::{ast::App, Context};
 use syn::{Attribute, Ident, LitInt, PatType};
 
@@ -280,4 +280,28 @@ pub fn rt_err_ident() -> Ident {
         "you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml",
         Span::call_site(),
     )
+}
+
+pub fn actor_state_ident(name: &Ident) -> Ident {
+    mark_internal_name(&format!("actor_{}_state", name))
+}
+
+pub fn actor_receive_task(name: &Ident, subscription_index: usize) -> Ident {
+    format_ident!("{}_receive_{}", name, subscription_index)
+}
+
+pub fn internal_actor_receive_task(name: &Ident, subscription_index: usize) -> Ident {
+    mark_internal_name(&actor_receive_task(name, subscription_index).to_string())
+}
+
+pub fn actor_post(name: &Ident, subscription_index: usize) -> Ident {
+    mark_internal_name(&format!("{}_post_{}", name, subscription_index))
+}
+
+pub fn update_watermark(subscription_index: usize) -> Ident {
+    mark_internal_name(&format!("update_watermark{}", subscription_index))
+}
+
+pub fn watermark(subscription_index: usize) -> Ident {
+    mark_internal_name(&format!("watermark{}", subscription_index))
 }

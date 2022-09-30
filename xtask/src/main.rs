@@ -118,9 +118,11 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
+    const FEATURES: &str = "memory-watermark"; // required by actor-watermark
+
     arm_example(&CargoCommand::BuildAll {
         target,
-        features: None,
+        features: Some(FEATURES),
         mode: BuildMode::Release,
     })?;
 
@@ -128,7 +130,7 @@ fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
         let cmd = CargoCommand::Run {
             example,
             target,
-            features: None,
+            features: Some(FEATURES),
             mode: BuildMode::Release,
         };
 

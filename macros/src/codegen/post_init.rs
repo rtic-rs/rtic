@@ -43,6 +43,24 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         }
     }
 
+    // Initialize actors
+    for name in app.actors.iter().filter_map(|(name, actor)| {
+        if actor.init.is_none() {
+            Some(name)
+        } else {
+            None
+        }
+    }) {
+        let mangled_name = util::actor_state_ident(name);
+        stmts.push(quote!(
+            // Resource is a RacyCell<MaybeUninit<T>>
+            // - `get_mut_unchecked` to obtain `MaybeUninit<T>`
+            // - `as_mut_ptr` to obtain a raw pointer to `MaybeUninit<T>`
+            // - `write` the defined value for the late resource T
+            (&mut *#mangled_name.get_mut()).as_mut_ptr().write(actors.#name);
+        ))
+    }
+
     for (i, (monotonic, _)) in app.monotonics.iter().enumerate() {
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());

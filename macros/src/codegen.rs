@@ -4,6 +4,7 @@ use rtic_syntax::ast::App;
 
 use crate::{analyze::Analysis, check::Extra};
 
+mod actors;
 mod assertions;
 mod dispatchers;
 mod hardware_tasks;
@@ -83,6 +84,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             }
         }
     ));
+
+    let mod_app_actors = actors::codegen(app, analysis, extra);
 
     let (mod_app_shared_resources, mod_shared_resources) =
         shared_resources::codegen(app, analysis, extra);
@@ -201,6 +204,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             #(#mod_app_dispatchers)*
 
             #(#mod_app_timer_queue)*
+
+            #mod_app_actors
 
             #(#mains)*
         }

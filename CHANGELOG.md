@@ -76,6 +76,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 - `examples/periodic-at2.rs`, an example of a periodic process with two tasks, with offset timing.
   Here we depict two alternative usages of the timer type, explicit and trait based.
 - book: Update `Monotonic` tips.
+- actor API. for details see [RFC #52](https://github.com/rtic-rs/rfcs/pull/52)
 
 ### Fixed
 

@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::ast::App;
+use rtic_syntax::{analyze::Spawnee, ast::App};
 
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 
@@ -14,15 +14,25 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         let mut stmts = vec![];
 
         let variants = channel
-            .tasks
+            .spawnees
             .iter()
-            .map(|name| {
-                let cfgs = &app.software_tasks[name].cfgs;
+            .map(|spawnee| match spawnee {
+                Spawnee::Task { name } => {
+                    let cfgs = &app.software_tasks[name].cfgs;
 
-                quote!(
-                    #(#cfgs)*
-                    #name
-                )
+                    quote!(
+                        #(#cfgs)*
+                        #name
+                    )
+                }
+
+                Spawnee::Actor {
+                    name,
+                    subscription_index,
+                } => {
+                    let task_name = util::actor_receive_task(name, *subscription_index);
+                    quote!(#task_name)
+                }
             })
             .collect::<Vec<_>>();
 
@@ -65,32 +75,58 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         ));
 
         let arms = channel
-            .tasks
+            .spawnees
             .iter()
-            .map(|name| {
-                let task = &app.software_tasks[name];
-                let cfgs = &task.cfgs;
-                let fq = util::fq_ident(name);
-                let inputs = util::inputs_ident(name);
-                let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
+            .map(|spawnee| match spawnee {
+                Spawnee::Task { name } => {
+                    let task = &app.software_tasks[name];
+                    let cfgs = &task.cfgs;
+                    let fq = util::fq_ident(name);
+                    let inputs = util::inputs_ident(name);
+                    let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
 
-                quote!(
-                    #(#cfgs)*
-                    #t::#name => {
-                        let #tupled =
-                            (&*#inputs
-                            .get())
-                            .get_unchecked(usize::from(index))
-                            .as_ptr()
-                            .read();
-                        (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
-                        let priority = &rtic::export::Priority::new(PRIORITY);
-                        #name(
-                            #name::Context::new(priority)
-                            #(,#pats)*
-                        )
-                    }
-                )
+                    quote!(
+                        #(#cfgs)*
+                        #t::#name => {
+                            let #tupled =
+                                (&*#inputs
+                                .get())
+                                .get_unchecked(usize::from(index))
+                                .as_ptr()
+                                .read();
+                            (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
+                            let priority = &rtic::export::Priority::new(PRIORITY);
+                            #name(
+                                #name::Context::new(priority)
+                                #(,#pats)*
+                            )
+                        }
+                    )
+                }
+
+                Spawnee::Actor {
+                    name: actor_name,
+                    subscription_index,
+                } => {
+                    let task_name = util::actor_receive_task(actor_name, *subscription_index);
+                    let fq = util::fq_ident(&task_name);
+                    let inputs = util::inputs_ident(&task_name);
+                    let function_name =
+                        util::internal_actor_receive_task(actor_name, *subscription_index);
+
+                    quote!(
+                        #t::#task_name => {
+                            let input =
+                                (&*#inputs
+                                .get())
+                                .get_unchecked(usize::from(index))
+                                .as_ptr()
+                                .read();
+                            (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
+                            #function_name(input)
+                        }
+                    )
+                }
             })
             .collect::<Vec<_>>();
 
