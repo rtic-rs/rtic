@@ -136,8 +136,7 @@ where
         instant: Mono::Instant,
         mono: &mut Mono,
     ) -> Option<(Task, u8)> {
-        let now = mono.now();
-        if instant <= now {
+        if instant <= mono.now() {
             // task became ready
             let nr = unsafe { self.task_queue.pop_unchecked() };
             Some((nr.task, nr.index))
@@ -149,7 +148,7 @@ where
             // dequeue. If the monotonic is fast enough it can happen that from the
             // read of now to the set of the compare, the time can overflow. This is to
             // guard against this.
-            if instant <= now {
+            if instant <= mono.now() {
                 let nr = unsafe { self.task_queue.pop_unchecked() };
                 Some((nr.task, nr.index))
             } else {
@@ -158,12 +157,15 @@ where
         }
     }
 
-    fn dequeue_waker_queue(&mut self, instant: Mono::Instant, mono: &mut Mono) {
-        let now = mono.now();
-        if instant <= now {
+    fn dequeue_waker_queue(&mut self, instant: Mono::Instant, mono: &mut Mono) -> bool {
+        let mut did_wake = false;
+
+        if instant <= mono.now() {
             // Task became ready, wake the waker
             if let Some(v) = self.waker_queue.pop() {
-                v.val.waker.wake_by_ref()
+                v.val.waker.wake_by_ref();
+
+                did_wake = true;
             }
         } else {
             // Set compare
@@ -173,12 +175,16 @@ where
             // dequeue. If the monotonic is fast enough it can happen that from the
             // read of now to the set of the compare, the time can overflow. This is to
             // guard against this.
-            if instant <= now {
+            if instant <= mono.now() {
                 if let Some(v) = self.waker_queue.pop() {
-                    v.val.waker.wake_by_ref()
+                    v.val.waker.wake_by_ref();
+
+                    did_wake = true;
                 }
             }
         }
+
+        did_wake
     }
 
     /// Dequeue a task from the ``TimerQueue``
@@ -188,46 +194,49 @@ where
     {
         mono.clear_compare_flag();
 
-        let tq = self.task_queue.peek().map(|p| p.instant);
-        let wq = self.waker_queue.peek().map(|p| p.instant);
+        loop {
+            let tq = self.task_queue.peek().map(|p| p.instant);
+            let wq = self.waker_queue.peek().map(|p| p.instant);
 
-        let dequeue_task;
-        let instant;
+            let dequeue_task;
+            let instant;
 
-        match (tq, wq) {
-            (Some(tq_instant), Some(wq_instant)) => {
-                if tq_instant <= wq_instant {
+            match (tq, wq) {
+                (Some(tq_instant), Some(wq_instant)) => {
+                    if tq_instant <= wq_instant {
+                        dequeue_task = true;
+                        instant = tq_instant;
+                    } else {
+                        dequeue_task = false;
+                        instant = wq_instant;
+                    }
+                }
+                (Some(tq_instant), None) => {
                     dequeue_task = true;
                     instant = tq_instant;
-                } else {
+                }
+                (None, Some(wq_instant)) => {
                     dequeue_task = false;
                     instant = wq_instant;
                 }
-            }
-            (Some(tq_instant), None) => {
-                dequeue_task = true;
-                instant = tq_instant;
-            }
-            (None, Some(wq_instant)) => {
-                dequeue_task = false;
-                instant = wq_instant;
-            }
-            (None, None) => {
-                // The queue is empty, disable the interrupt.
-                if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
-                    disable_interrupt();
-                    mono.disable_timer();
+                (None, None) => {
+                    // The queue is empty, disable the interrupt.
+                    if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
+                        disable_interrupt();
+                        mono.disable_timer();
+                    }
+
+                    return None;
                 }
-
-                return None;
             }
-        }
 
-        if dequeue_task {
-            self.dequeue_task_queue(instant, mono)
-        } else {
-            self.dequeue_waker_queue(instant, mono);
-            None
+            if dequeue_task {
+                return self.dequeue_task_queue(instant, mono);
+            } else if !self.dequeue_waker_queue(instant, mono) {
+                return None;
+            } else {
+                // Run the dequeue again
+            }
         }
     }
 }
