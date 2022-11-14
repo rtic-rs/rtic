@@ -79,7 +79,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             ));
 
             stmts.push(quote!(
-                if !(&mut *#exec_name.get_mut()).is_running() {
+                if !(&*#exec_name.get()).is_running() {
                      if let Some(#tupled) = rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).dequeue()) {
 
                         // The async executor needs a static priority
