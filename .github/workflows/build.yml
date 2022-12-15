@@ -81,7 +81,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: cargo clippy
-        run: clippy
+        run: cargo clippy
 
   # Verify all examples, checks
   checkexamples:
