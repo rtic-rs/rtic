@@ -16,7 +16,7 @@ jobs:
   # Run cargo fmt --check, includes macros/
   style:
     name: style
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -41,7 +41,7 @@ jobs:
   # Compilation check
   check:
     name: check
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -77,7 +77,7 @@ jobs:
   # Clippy
   clippy:
     name: Cargo clippy
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -104,7 +104,7 @@ jobs:
   # Verify all examples, checks
   checkexamples:
     name: checkexamples
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -137,7 +137,7 @@ jobs:
   # Verify the example output with run-pass tests
   testexamples:
     name: testexamples
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -182,7 +182,7 @@ jobs:
   # Check the correctness of macros/ crate
   checkmacros:
     name: checkmacros
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -216,7 +216,7 @@ jobs:
   # Run the  macros test-suite
   testmacros:
     name: testmacros
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -244,7 +244,7 @@ jobs:
   # Run test suite
   tests:
     name: tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -271,7 +271,7 @@ jobs:
   # Build documentation, check links
   docs:
     name: docs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -318,7 +318,7 @@ jobs:
   # Build the books
   mdbook:
     name: mdbook
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -367,7 +367,7 @@ jobs:
   # This needs to run before book is built
   mergetostablebranch:
     name: If CI passes, merge master branch into release/vX
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       - style
       - check
@@ -408,7 +408,7 @@ jobs:
   # If all tests pass, then deploy stage is run
   deploy:
     name: deploy
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       mergetostablebranch
 
@@ -561,7 +561,7 @@ jobs:
       - tests
       - docs
       - mdbook
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Mark the job as a success
         run: exit 0
