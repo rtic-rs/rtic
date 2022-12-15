@@ -74,6 +74,9 @@ jobs:
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
+      - name: Add Rust component clippy
+        run: rustup component add clippy
+
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
