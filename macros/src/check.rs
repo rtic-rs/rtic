@@ -53,7 +53,7 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
 
         // If not enough tasks and first still is None, may cause
         // "custom attribute panicked" due to unwrap on None
-        return Err(parse::Error::new(first.unwrap().span(), &s));
+        return Err(parse::Error::new(first.unwrap().span(), s));
     }
 
     // Check that all exceptions are valid; only exceptions with configurable priorities are

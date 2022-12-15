@@ -147,6 +147,7 @@ pub fn codegen(
             None
         }
     })) {
+        #[allow(clippy::or_fun_call)]
         let v = prio_to_masks.entry(priority - 1).or_insert(Vec::new());
         v.push(quote!(#device::Interrupt::#name as u32));
         mask_ids.push(quote!(#device::Interrupt::#name as u32));
