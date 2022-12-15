@@ -58,7 +58,7 @@ jobs:
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: cargo check
         run: cargo check --target=${{ matrix.target }}
@@ -75,7 +75,7 @@ jobs:
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: cargo clippy
         run: clippy
@@ -107,7 +107,7 @@ jobs:
         run: rustup component add llvm-tools-preview
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Check the examples
         run: cargo check --examples --target=${{ matrix.target }}
@@ -143,7 +143,7 @@ jobs:
         run: cargo install cargo-binutils
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Install QEMU
         run: |
@@ -179,7 +179,7 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
@@ -196,7 +196,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
@@ -213,7 +213,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
