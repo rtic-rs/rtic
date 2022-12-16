@@ -1,6 +1,9 @@
 # Starting a new project
 
-A recommendation when starting a RTIC project from scratch is to follow RTIC's [`defmt-app-template`].
+A recommendation when starting a RTIC project from scratch on an ARMv7-M or ARMv8-M-main MCU is to 
+follow RTIC's [`defmt-app-template`]. For ARMv6-M or ARMv8-M-base, check out Section 4.? of
+this book for more information on hardware and implementation differences to be aware of before
+starting with RTIC.
 
 [`defmt-app-template`]: https://github.com/rtic-rs/defmt-app-template
 
