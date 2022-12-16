@@ -24,8 +24,6 @@ jobs:
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
-      - name: Add Rust component
-        run: rustup component add rustfmt
 
       - name: cargo fmt --check
         run:  cargo fmt --all -- --check
