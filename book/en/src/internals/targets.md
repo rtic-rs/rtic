@@ -1,7 +1,7 @@
 # Target Architecture
 
 While RTIC can currently target all Cortex-m devices there are some key architecure differences that 
-users should be aware. Namely the absence of hardware priority ceiling (BASEPRI) support in the 
+users should be aware of. Namely the absence of Base Priority Mask Register (`BASEPRI`) which lends itself exceptionally well to the hardware priority ceiling support used in RTIC, in the
 ARMv6-M and ARMv8-M-base architectures requires a few tweaks from RTIC to deliver the same 
 features. These differences result in two flavors of critical sections: priority ceiling, and source 
 masking. Table 1 below shows a list of Cortex-m processors and which type of critical section they 
