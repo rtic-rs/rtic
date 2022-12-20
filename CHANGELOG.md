@@ -13,6 +13,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Use native GHA rustup and cargo
 - Distinguish between thumbv8m.base and thumbv8m.main for basepri usage.
 
 ### Changed

@@ -21,22 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt
-
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
+
       - name: cargo fmt --check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run:  cargo fmt --all -- --check
 
   # Compilation check
   check:
@@ -54,25 +44,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          target: ${{ matrix.target }}
-          override: true
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (${{ matrix.target }})
+        run: rustup target add ${{ matrix.target }}
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: false
-          command: check
-          args: --target=${{ matrix.target }}
+        run: cargo check --target=${{ matrix.target }}
 
   # Clippy
   clippy:
@@ -82,24 +69,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-unknown-linux-gnu
-          override: true
-
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
+      - name: Add Rust component clippy
+        run: rustup component add clippy
+
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: false
-          command: clippy
+        run: cargo clippy
 
   # Verify all examples, checks
   checkexamples:
@@ -116,23 +96,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          target: ${{ matrix.target }}
-          override: true
-          components: llvm-tools-preview
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (${{ matrix.target }})
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Add Rust component llvm-tools-preview
+        run: rustup component add llvm-tools-preview
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Check the examples
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: false
-          command: check
-          args: --examples --target=${{ matrix.target }}
+        run: cargo check --examples --target=${{ matrix.target }}
 
   # Verify the example output with run-pass tests
   testexamples:
@@ -149,23 +128,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          target: ${{ matrix.target }}
-          override: true
-          components: llvm-tools-preview
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (${{ matrix.target }})
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Add Rust component llvm-tools-preview
+        run: rustup component add llvm-tools-preview
 
       # Use precompiled binutils
       - name: cargo install cargo-binutils
-        uses: actions-rs/install@v0.1
-        with:
-          crate: cargo-binutils
-          version: latest
+        run: cargo install cargo-binutils
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Install QEMU
         run: |
@@ -176,8 +155,7 @@ jobs:
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Run-pass tests
-        run:
-          cargo xtask --target ${{ matrix.target }}
+        run: cargo xtask --target ${{ matrix.target }}
 
   # Check the correctness of macros/ crate
   checkmacros:
@@ -193,25 +171,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust ${{ matrix.toolchain }} with target (${{ matrix.target }})
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          target: ${{ matrix.target }}
-          override: true
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (${{ matrix.target }})
+        run: rustup target add ${{ matrix.target }}
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: false
-          command: check
-          args: --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
+        run: cargo check --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
 
   # Run the  macros test-suite
   testmacros:
@@ -221,25 +196,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-unknown-linux-gnu
-          override: true
-
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: false
-          command: test
-          args: --manifest-path macros/Cargo.toml
+        run: cargo test --manifest-path macros/Cargo.toml
 
   # Run test suite
   tests:
@@ -249,24 +213,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-unknown-linux-gnu
-          override: true
-
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: false
-          command: test
-          args: --test tests
+      - name: Run cargo test
+        run: cargo test --test tests
 
   # Build documentation, check links
   docs:
