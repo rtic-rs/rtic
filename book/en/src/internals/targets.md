@@ -28,8 +28,10 @@ This implementation is covered in depth by Chapter 4.5 of this book.
 
 ## Source Masking
 
-Since there is no hardware support for a priority ceiling, RTIC must instead rely on the Nested 
-Vectored Interrupt Controller (NVIC) present in the core architecture. Consider Figure 1 below, 
+Without a `BASEPRI` register which allows for directly setting a priority ceiling in the Nested 
+Vectored Interrupt Controller (NVIC), RTIC must instead rely on disabling (masking) interrupts.
+
+Consider Figure 1 below, 
 showing two tasks A and B where A has higher priority but shares a resource with B. 
 
 #### *Figure 1: Shared Resources and Source Masking*
