@@ -51,7 +51,7 @@ showing two tasks A and B where A has higher priority but shares a resource with
 ```
 
 At time *t1*, task B locks the shared resource by selectively disabling all other tasks which share 
-the resource using the NVIC. In effect this raisis the virtual priority ceiling. Task A is one such
+the resource using the NVIC. In effect this raises the virtual priority ceiling. Task A is one such
 task that shares resources with task B. At time *t2*, task A is either spawned by task B or becomes 
 pending through an interrupt condition, but does not yet preempt task B even though it's priority is 
 greater. This is because the NVIC is preventing it from starting due to task A's source mask being 
