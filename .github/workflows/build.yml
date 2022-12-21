@@ -90,6 +90,8 @@ jobs:
         target:
           - thumbv7m-none-eabi
           - thumbv6m-none-eabi
+          - thumbv8m.base-none-eabi
+          - thumbv8m.main-none-eabi
         toolchain:
           - stable
     steps:

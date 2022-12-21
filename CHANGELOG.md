@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- CI: Check examples also for thumbv8.{base,main}
 - Allow custom `link_section` attributes for late resources
 
 ### Fixed
