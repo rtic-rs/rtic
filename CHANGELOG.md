@@ -18,6 +18,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Tuned redirect message for rtic.rs/meeting
+
 ## [v1.1.3] - 2022-06-23
 
 ### Added
