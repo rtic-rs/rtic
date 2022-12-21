@@ -18,6 +18,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- CI: Updated to checkout@v3
 - Tuned redirect message for rtic.rs/meeting
 
 ## [v1.1.3] - 2022-06-23
