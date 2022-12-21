@@ -429,6 +429,8 @@ jobs:
           # Redirect rtic.rs/meeting/index.html to hackmd
           mkdir $td/meeting
           sed "s|URL|https://hackmd.io/c_mFUZL-Q2C6614MlrrxOg|g" redirect.html > $td/meeting/index.html
+          sed -i "s|Page Redirection|RTIC Meeting|" $td/meeting/index.html
+          sed -i "s|If you|Redirecting to RTIC HackMD. If you|" $td/meeting/index.html
 
           # Redirect the main site to the stable release
           sed "s|URL|$stable|g" redirect.html > $td/index.html
