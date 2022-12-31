@@ -1,0 +1,11 @@
+error: Software task "foo" has priority 0, but `#[idle]` is defined. 0-priority software tasks are only allowed if there is no `#[idle]`.
+  --> ui/async-zero-prio-tasks.rs:15:8
+   |
+15 |     fn foo(_: foo::Context) {}
+   |        ^^^
+
+error: Software task "foo" has priority 0, but is not `async`. 0-priority software tasks must be `async`.
+  --> ui/async-zero-prio-tasks.rs:15:8
+   |
+15 |     fn foo(_: foo::Context) {}
+   |        ^^^

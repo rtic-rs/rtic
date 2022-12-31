@@ -1,11 +1,11 @@
+use crate::syntax::ast::App;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::ast::App;
 
-use crate::{analyze::Analysis, check::Extra, codegen::util};
+use crate::{analyze::Analysis, codegen::util};
 
 /// Generates code that runs before `#[init]`
-pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream2> {
+pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
     let rt_err = util::rt_err_ident();
@@ -15,12 +15,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
     // Populate the FreeQueue
     for (name, task) in &app.software_tasks {
+        if task.is_async {
+            continue;
+        }
+
         let cap = task.args.capacity;
-        let cfgs = &task.cfgs;
         let fq_ident = util::fq_ident(name);
 
         stmts.push(quote!(
-            #(#cfgs)*
             (0..#cap).for_each(|i| (&mut *#fq_ident.get_mut()).enqueue_unchecked(i));
         ));
     }
@@ -30,17 +32,21 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let mut core: rtic::export::Peripherals = rtic::export::Peripherals::steal().into();
     ));
 
-    let device = &extra.device;
+    let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
 
     // check that all dispatchers exists in the `Interrupt` enumeration regardless of whether
     // they are used or not
     let interrupt = util::interrupt_ident();
-    for name in app.args.extern_interrupts.keys() {
+    for name in app.args.dispatchers.keys() {
         stmts.push(quote!(let _ = #rt_err::#interrupt::#name;));
     }
 
-    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+    let interrupt_ids = analysis
+        .interrupts_normal
+        .iter()
+        .map(|(p, (id, _))| (p, id))
+        .chain(analysis.interrupts_async.iter().map(|(p, (id, _))| (p, id)));
 
     // Unmask interrupts and set their priorities
     for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {

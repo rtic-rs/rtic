@@ -1,0 +1,5 @@
+error: dispatcher interrupts can't be used as hardware tasks
+  --> $DIR/extern-interrupt-used.rs:14:20
+   |
+14 |     #[task(binds = EXTI0)]
+   |                    ^^^^^

@@ -1,0 +1,5 @@
+error: Lock free shared resource "e" is used by an async tasks, which is forbidden
+  --> ui/async-local-resouces.rs:26:36
+   |
+26 |     #[task(priority = 1, shared = [e])]
+   |                                    ^

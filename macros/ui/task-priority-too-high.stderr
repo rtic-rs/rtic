@@ -1,0 +1,5 @@
+error: this literal must be in the range 0...255
+ --> ui/task-priority-too-high.rs:5:23
+  |
+5 |     #[task(priority = 256)]
+  |                       ^^^

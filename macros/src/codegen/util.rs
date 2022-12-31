@@ -1,11 +1,9 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
 
+use crate::syntax::{ast::App, Context};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
 use syn::{Attribute, Ident, LitInt, PatType};
-
-use crate::check::Extra;
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
 
@@ -21,7 +19,7 @@ pub fn fq_ident(task: &Ident) -> Ident {
 
 /// Generates a `Mutex` implementation
 pub fn impl_mutex(
-    extra: &Extra,
+    app: &App,
     cfgs: &[Attribute],
     resources_prefix: bool,
     name: &Ident,
@@ -35,7 +33,7 @@ pub fn impl_mutex(
         (quote!(#name), quote!(self.priority))
     };
 
-    let device = &extra.device;
+    let device = &app.args.device;
     let masks_name = priority_masks_ident();
     quote!(
         #(#cfgs)*
@@ -65,6 +63,11 @@ pub fn impl_mutex(
 /// Generates an identifier for the `INPUTS` buffer (`spawn` & `schedule` API)
 pub fn inputs_ident(task: &Ident) -> Ident {
     mark_internal_name(&format!("{}_INPUTS", task))
+}
+
+/// Generates an identifier for the `EXECUTOR_RUN` atomics (`async` API)
+pub fn executor_run_ident(task: &Ident) -> Ident {
+    mark_internal_name(&format!("{}_EXECUTOR_RUN", task))
 }
 
 /// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
@@ -179,7 +182,12 @@ pub fn regroup_inputs(
 pub fn get_task_name(ctxt: Context, app: &App) -> Ident {
     let s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::Idle => app
+            .idle
+            .as_ref()
+            .expect("RTIC-ICE: unable to find idle name")
+            .name
+            .to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -190,7 +198,12 @@ pub fn get_task_name(ctxt: Context, app: &App) -> Ident {
 pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::Idle => app
+            .idle
+            .as_ref()
+            .expect("RTIC-ICE: unable to find idle name")
+            .name
+            .to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -203,7 +216,12 @@ pub fn shared_resources_ident(ctxt: Context, app: &App) -> Ident {
 pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
     let mut s = match ctxt {
         Context::Init => app.init.name.to_string(),
-        Context::Idle => app.idle.as_ref().unwrap().name.to_string(),
+        Context::Idle => app
+            .idle
+            .as_ref()
+            .expect("RTIC-ICE: unable to find idle name")
+            .name
+            .to_string(),
         Context::HardwareTask(ident) | Context::SoftwareTask(ident) => ident.to_string(),
     };
 
@@ -220,9 +238,14 @@ pub fn rq_ident(priority: u8) -> Ident {
     mark_internal_name(&format!("P{}_RQ", priority))
 }
 
+/// Generates an identifier for a ready queue, async task version
+pub fn rq_async_ident(async_task_name: &Ident) -> Ident {
+    mark_internal_name(&format!("ASYNC_TACK_{}_RQ", async_task_name))
+}
+
 /// Generates an identifier for the `enum` of `schedule`-able tasks
 pub fn schedule_t_ident() -> Ident {
-    Ident::new("SCHED_T", Span::call_site())
+    mark_internal_name("SCHED_T")
 }
 
 /// Generates an identifier for the `enum` of `spawn`-able tasks
@@ -230,7 +253,7 @@ pub fn schedule_t_ident() -> Ident {
 /// This identifier needs the same structure as the `RQ` identifier because there's one ready queue
 /// for each of these `T` enums
 pub fn spawn_t_ident(priority: u8) -> Ident {
-    Ident::new(&format!("P{}_T", priority), Span::call_site())
+    mark_internal_name(&format!("P{}_T", priority))
 }
 
 /// Suffixed identifier

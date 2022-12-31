@@ -1,21 +1,46 @@
 #![doc(
-    html_logo_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg",
-    html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg"
+    html_logo_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg",
+    html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg"
 )]
-//deny_warnings_placeholder_for_ci
 
-extern crate proc_macro;
+//deny_warnings_placeholder_for_ci
 
 use proc_macro::TokenStream;
 use std::{env, fs, path::Path};
 
-use rtic_syntax::Settings;
-
 mod analyze;
-mod check;
+mod bindings;
 mod codegen;
-#[cfg(test)]
-mod tests;
+mod syntax;
+
+// Used for mocking the API in testing
+#[doc(hidden)]
+#[proc_macro_attribute]
+pub fn mock_app(args: TokenStream, input: TokenStream) -> TokenStream {
+    let mut settings = syntax::Settings::default();
+    let mut rtic_args = vec![];
+    for arg in args.to_string().split(',') {
+        if arg.trim() == "parse_binds" {
+            settings.parse_binds = true;
+        } else if arg.trim() == "parse_extern_interrupt" {
+            settings.parse_extern_interrupt = true;
+        } else {
+            rtic_args.push(arg.to_string());
+        }
+    }
+
+    // rtic_args.push("device = mock".into());
+
+    let args = rtic_args.join(", ").parse();
+
+    println!("args: {:?}", args);
+
+    if let Err(e) = syntax::parse(args.unwrap(), input, settings) {
+        e.to_compile_error().into()
+    } else {
+        "fn main() {}".parse().unwrap()
+    }
+}
 
 /// Attribute used to declare a RTIC application
 ///
@@ -26,24 +51,19 @@ mod tests;
 /// Should never panic, cargo feeds a path which is later converted to a string
 #[proc_macro_attribute]
 pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
-    let mut settings = Settings::default();
+    let mut settings = syntax::Settings::default();
     settings.optimize_priorities = false;
     settings.parse_binds = true;
     settings.parse_extern_interrupt = true;
 
-    let (app, analysis) = match rtic_syntax::parse(args, input, settings) {
-        Err(e) => return e.to_compile_error().into(),
-        Ok(x) => x,
-    };
-
-    let extra = match check::app(&app, &analysis) {
+    let (app, analysis) = match syntax::parse(args, input, settings) {
         Err(e) => return e.to_compile_error().into(),
         Ok(x) => x,
     };
 
     let analysis = analyze::app(analysis, &app);
 
-    let ts = codegen::app(&app, &analysis, &extra);
+    let ts = codegen::app(&app, &analysis);
 
     // Default output path: <project_dir>/target/
     let mut out_dir = Path::new("target");
@@ -52,22 +72,7 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
     // TODO don't want to break builds if OUT_DIR is not set, is this ever the case?
     let out_str = env::var("OUT_DIR").unwrap_or_else(|_| "".to_string());
 
-    // Assuming we are building for a thumbv* target
-    let target_triple_prefix = "thumbv";
-
-    // Check for special scenario where default target/ directory is not present
-    //
-    // This is configurable in .cargo/config:
-    //
-    // [build]
-    // target-dir = "target"
-    #[cfg(feature = "debugprint")]
-    println!("OUT_DIR\n{:#?}", out_str);
-
-    if out_dir.exists() {
-        #[cfg(feature = "debugprint")]
-        println!("\ntarget/ exists\n");
-    } else {
+    if !out_dir.exists() {
         // Set out_dir to OUT_DIR
         out_dir = Path::new(&out_str);
 
@@ -81,16 +86,11 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         // If no "target" directory is found, <project_dir>/<out_dir_root> is used
         for path in out_dir.ancestors() {
             if let Some(dir) = path.components().last() {
-                if dir
-                    .as_os_str()
-                    .to_str()
-                    .unwrap()
-                    .starts_with(target_triple_prefix)
-                {
+                let dir = dir.as_os_str().to_str().unwrap();
+
+                if dir.starts_with("thumbv") || dir.starts_with("riscv") {
                     if let Some(out) = path.parent() {
                         out_dir = out;
-                        #[cfg(feature = "debugprint")]
-                        println!("{:#?}\n", out_dir);
                         break;
                     }
                     // If no parent, just use it
@@ -103,8 +103,6 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
 
     // Try to write the expanded code to disk
     if let Some(out_str) = out_dir.to_str() {
-        #[cfg(feature = "debugprint")]
-        println!("Write file:\n{}/rtic-expansion.rs\n", out_str);
         fs::write(format!("{}/rtic-expansion.rs", out_str), ts.to_string()).ok();
     }
 

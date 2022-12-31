@@ -1,0 +1,6 @@
+{
+    "name": "Build",
+    "description": "RTIC Test Suite",
+    "iconName": "rust",
+    "categories": ["Rust"]
+}

@@ -1,28 +1,41 @@
 [package]
 authors = [
   "The Real-Time Interrupt-driven Concurrency developers",
+  "Emil Fresk <emil.fresk@gmail.com>",
+  "Henrik Tjäder <henrik@tjaders.com>",
   "Jorge Aparicio <jorge@japaric.io>",
+  "Per Lindgren <per.lindgren@ltu.se>",
 ]
-categories = ["concurrency", "embedded", "no-std"]
-description = "Procedural macros of the cortex-m-rtic crate"
-documentation = "https://rtic-rs.github.io/cortex-m-rtic/api/cortex_m_rtic"
+categories = ["concurrency", "embedded", "no-std", "asynchronous"]
+description = "Procedural macros, syntax parsing, and codegen of the RTIC crate"
+documentation = "https://rtic-rs.github.io/rtic/api/rtic"
 edition = "2021"
-keywords = ["arm", "cortex-m"]
+keywords = ["arm", "cortex-m", "risc-v", "embedded", "async", "runtime", "futures", "await", "no-std", "rtos", "bare-metal"]
 license = "MIT OR Apache-2.0"
-name = "cortex-m-rtic-macros"
+name = "rtic-macros"
 readme = "../README.md"
-repository = "https://github.com/rtic-rs/cortex-m-rtic"
-version = "1.1.5"
+repository = "https://github.com/rtic-rs/rtic"
+
+version = "2.0.0-alpha.0"
 
 [lib]
 proc-macro = true
 
-[dependencies]
-proc-macro2 = "1"
-proc-macro-error = "1"
-quote = "1"
-syn = "1"
-rtic-syntax = "1.0.2"
-
-[features]
+[feature]
+default = []
 debugprint = []
+# list of supported codegen backends
+thumbv6 = []
+thumbv7 = []
+# riscv-clic = []
+# riscv-ch32 = []
+
+[dependencies]
+indexmap = "1.9.2"
+proc-macro2 = "1.0.49"
+proc-macro-error = "1.0.4"
+quote = "1.0.23"
+syn = { version = "1.0.107", features = ["extra-traits", "full"] }
+
+[dev-dependencies]
+trybuild = "1.0.73"

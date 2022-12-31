@@ -1,0 +1,17 @@
+error: Lock free shared resource "e1" is used by tasks at different priorities
+ --> $DIR/shared-lock-free.rs:9:9
+  |
+9 |         e1: u32,
+  |         ^^
+
+error: Shared resource "e1" is declared lock free but used by tasks at different priorities
+  --> $DIR/shared-lock-free.rs:30:36
+   |
+30 |     #[task(priority = 1, shared = [e1])]
+   |                                    ^^
+
+error: Shared resource "e1" is declared lock free but used by tasks at different priorities
+  --> $DIR/shared-lock-free.rs:36:36
+   |
+36 |     #[task(priority = 2, shared = [e1])]
+   |                                    ^^

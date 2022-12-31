@@ -1,0 +1,5 @@
+error: this type is already used by another monotonic
+ --> $DIR/monotonic-timer-collision.rs:9:18
+  |
+9 |     type Fast2 = hal::Tim1Monotonic;
+  |                  ^^^

@@ -1,0 +1,5 @@
+error: unexpected argument
+ --> $DIR/init-double-shared.rs:5:12
+  |
+5 |     #[init(shared = [A], shared = [B])]
+  |            ^^^^^^

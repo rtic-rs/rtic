@@ -1,18 +1,15 @@
-use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
-use rtic_syntax::{ast::App, Context};
-
+use crate::syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
-    check::Extra,
     codegen::{local_resources_struct, module, shared_resources_struct},
 };
+use proc_macro2::TokenStream as TokenStream2;
+use quote::quote;
 
 /// Generates support code for `#[idle]` functions
 pub fn codegen(
     app: &App,
     analysis: &Analysis,
-    extra: &Extra,
 ) -> (
     // mod_app_idle -- the `${idle}Resources` constructor
     Vec<TokenStream2>,
@@ -57,16 +54,13 @@ pub fn codegen(
             local_needs_lt,
             app,
             analysis,
-            extra,
         ));
-        let idle_doc = " User provided idle function".to_string();
 
         let attrs = &idle.attrs;
         let context = &idle.context;
         let stmts = &idle.stmts;
         let user_idle = Some(quote!(
             #(#attrs)*
-            #[doc = #idle_doc]
             #[allow(non_snake_case)]
             fn #name(#context: #name::Context) -> ! {
                 use rtic::Mutex as _;
@@ -82,6 +76,9 @@ pub fn codegen(
 
         (mod_app, root_idle, user_idle, call_idle)
     } else {
+        // TODO: No idle defined, check for 0-priority tasks and generate an executor if needed
+
+        //
         (
             vec![],
             vec![],

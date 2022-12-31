@@ -1,14 +1,13 @@
-use crate::{analyze::Analysis, check::Extra, codegen::util};
+use crate::syntax::{analyze::Ownership, ast::App};
+use crate::{analyze::Analysis, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{analyze::Ownership, ast::App};
 use std::collections::HashMap;
 
 /// Generates `static` variables and shared resource proxies
 pub fn codegen(
     app: &App,
     analysis: &Analysis,
-    extra: &Extra,
 ) -> (
     // mod_app -- the `static` variables behind the proxies
     Vec<TokenStream2>,
@@ -90,7 +89,7 @@ pub fn codegen(
             // let doc = format!(" RTIC internal ({} resource): {}:{}", doc, file!(), line!());
 
             mod_app.push(util::impl_mutex(
-                extra,
+                app,
                 cfgs,
                 true,
                 &shared_name,
@@ -112,10 +111,14 @@ pub fn codegen(
     };
 
     // Computing mapping of used interrupts to masks
-    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+    let interrupt_ids = analysis
+        .interrupts_normal
+        .iter()
+        .map(|(p, (id, _))| (p, id))
+        .chain(analysis.interrupts_async.iter().map(|(p, (id, _))| (p, id)));
 
     let mut prio_to_masks = HashMap::new();
-    let device = &extra.device;
+    let device = &app.args.device;
     let mut uses_exceptions_with_resources = false;
 
     let mut mask_ids = Vec::new();
@@ -147,8 +150,7 @@ pub fn codegen(
             None
         }
     })) {
-        #[allow(clippy::or_fun_call)]
-        let v = prio_to_masks.entry(priority - 1).or_insert(Vec::new());
+        let v: &mut Vec<_> = prio_to_masks.entry(priority - 1).or_default();
         v.push(quote!(#device::Interrupt::#name as u32));
         mask_ids.push(quote!(#device::Interrupt::#name as u32));
     }

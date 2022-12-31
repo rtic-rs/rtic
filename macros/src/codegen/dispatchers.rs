@@ -1,21 +1,31 @@
+use crate::syntax::ast::App;
+use crate::{analyze::Analysis, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::ast::App;
-
-use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates task dispatchers
-pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStream2> {
+pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     let mut items = vec![];
 
-    let interrupts = &analysis.interrupts;
+    let interrupts = &analysis.interrupts_normal;
 
     for (&level, channel) in &analysis.channels {
+        if channel
+            .tasks
+            .iter()
+            .map(|task_name| app.software_tasks[task_name].is_async)
+            .all(|is_async| is_async)
+        {
+            // check if all tasks are async, if so don't generate this.
+            continue;
+        }
+
         let mut stmts = vec![];
 
         let variants = channel
             .tasks
             .iter()
+            .filter(|name| !app.software_tasks[*name].is_async)
             .map(|name| {
                 let cfgs = &app.software_tasks[name].cfgs;
 
@@ -45,6 +55,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
 
         let n = util::capacity_literal(channel.capacity as usize + 1);
         let rq = util::rq_ident(level);
+        // let (_, _, _, input_ty) = util::regroup_inputs(inputs);
         let (rq_ty, rq_expr) = {
             (
                 quote!(rtic::export::SCRQ<#t, #n>),
@@ -64,6 +75,13 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             static #rq: rtic::RacyCell<#rq_ty> = rtic::RacyCell::new(#rq_expr);
         ));
 
+        let interrupt = util::suffixed(
+            &interrupts
+                .get(&level)
+                .expect("RTIC-ICE: Unable to get interrrupt")
+                .0
+                .to_string(),
+        );
         let arms = channel
             .tasks
             .iter()
@@ -74,23 +92,27 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 let inputs = util::inputs_ident(name);
                 let (_, tupled, pats, _) = util::regroup_inputs(&task.inputs);
 
-                quote!(
-                    #(#cfgs)*
-                    #t::#name => {
-                        let #tupled =
-                            (&*#inputs
-                            .get())
-                            .get_unchecked(usize::from(index))
-                            .as_ptr()
-                            .read();
-                        (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
-                        let priority = &rtic::export::Priority::new(PRIORITY);
-                        #name(
-                            #name::Context::new(priority)
-                            #(,#pats)*
-                        )
-                    }
-                )
+                if !task.is_async {
+                    quote!(
+                        #(#cfgs)*
+                        #t::#name => {
+                            let #tupled =
+                                (&*#inputs
+                                .get())
+                                .get_unchecked(usize::from(index))
+                                .as_ptr()
+                                .read();
+                            (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
+                            let priority = &rtic::export::Priority::new(PRIORITY);
+                            #name(
+                                #name::Context::new(priority)
+                                #(,#pats)*
+                            )
+                        }
+                    )
+                } else {
+                    quote!()
+                }
             })
             .collect::<Vec<_>>();
 
@@ -103,7 +125,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         ));
 
         let doc = format!("Interrupt handler to dispatch tasks at priority {}", level);
-        let interrupt = util::suffixed(&interrupts[&level].0.to_string());
         let attribute = &interrupts[&level].1.attrs;
         items.push(quote!(
             #[allow(non_snake_case)]

@@ -1,0 +1,5 @@
+error: this identifier has already been used
+  --> $DIR/task-init.rs:16:8
+   |
+16 |     fn foo(_: foo::Context) {}
+   |        ^^^

@@ -1,0 +1,5 @@
+error: this shared resource has NOT been declared
+  --> $DIR/shared-not-declared.rs:11:22
+   |
+11 |     #[task(shared = [A])]
+   |                      ^

@@ -1,18 +1,15 @@
-use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
-use rtic_syntax::{ast::App, Context};
-
+use crate::syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
-    check::Extra,
     codegen::{local_resources_struct, module, shared_resources_struct},
 };
+use proc_macro2::TokenStream as TokenStream2;
+use quote::quote;
 
 /// Generate support code for hardware tasks (`#[exception]`s and `#[interrupt]`s)
 pub fn codegen(
     app: &App,
     analysis: &Analysis,
-    extra: &Extra,
 ) -> (
     // mod_app_hardware_tasks -- interrupt handlers and `${task}Resources` constructors
     Vec<TokenStream2>,
@@ -33,12 +30,10 @@ pub fn codegen(
         let priority = task.args.priority;
         let cfgs = &task.cfgs;
         let attrs = &task.attrs;
-        let user_hardware_task_isr_doc = &format!(" User HW task ISR trampoline for {name}");
 
         mod_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
-            #[doc = #user_hardware_task_isr_doc]
             #(#attrs)*
             #(#cfgs)*
             unsafe fn #symbol() {
@@ -87,19 +82,14 @@ pub fn codegen(
             local_needs_lt,
             app,
             analysis,
-            extra,
         ));
 
-        let user_hardware_task_doc = &format!(" User HW task: {name}");
         if !task.is_extern {
             let attrs = &task.attrs;
-            let cfgs = &task.cfgs;
             let context = &task.context;
             let stmts = &task.stmts;
             user_tasks.push(quote!(
-                #[doc = #user_hardware_task_doc]
                 #(#attrs)*
-                #(#cfgs)*
                 #[allow(non_snake_case)]
                 fn #name(#context: #name::Context) {
                     use rtic::Mutex as _;

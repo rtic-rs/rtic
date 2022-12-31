@@ -1,7 +1,7 @@
-use crate::{analyze::Analysis, check::Extra, codegen::util};
+use crate::syntax::{ast::App, Context};
+use crate::{analyze::Analysis, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
 
 #[allow(clippy::too_many_lines)]
 pub fn codegen(
@@ -10,12 +10,13 @@ pub fn codegen(
     local_resources_tick: bool,
     app: &App,
     analysis: &Analysis,
-    extra: &Extra,
 ) -> TokenStream2 {
     let mut items = vec![];
     let mut module_items = vec![];
     let mut fields = vec![];
     let mut values = vec![];
+    // Used to copy task cfgs to the whole module
+    let mut task_cfgs = vec![];
 
     let name = ctxt.ident(app);
 
@@ -27,8 +28,8 @@ pub fn codegen(
                 pub core: rtic::export::Peripherals
             ));
 
-            if extra.peripherals {
-                let device = &extra.device;
+            if app.args.peripherals {
+                let device = &app.args.device;
 
                 fields.push(quote!(
                     /// Device peripherals
@@ -51,14 +52,6 @@ pub fn codegen(
 
         Context::Idle | Context::HardwareTask(_) | Context::SoftwareTask(_) => {}
     }
-
-    // if ctxt.has_locals(app) {
-    //     let ident = util::locals_ident(ctxt, app);
-    //     module_items.push(quote!(
-    //         #[doc(inline)]
-    //         pub use super::#ident as Locals;
-    //     ));
-    // }
 
     if ctxt.has_local_resources(app) {
         let ident = util::local_resources_ident(ctxt, app);
@@ -114,12 +107,8 @@ pub fn codegen(
             .monotonics
             .iter()
             .map(|(_, monotonic)| {
-                let cfgs = &monotonic.cfgs;
                 let mono = &monotonic.ty;
-                quote! {
-                    #(#cfgs)*
-                    pub #mono
-                }
+                quote! {#mono}
             })
             .collect();
 
@@ -130,7 +119,7 @@ pub fn codegen(
             #[allow(non_snake_case)]
             #[allow(non_camel_case_types)]
             pub struct #internal_monotonics_ident(
-                #(#monotonic_types),*
+                #(pub #monotonic_types),*
             );
         ));
 
@@ -141,10 +130,10 @@ pub fn codegen(
     }
 
     let doc = match ctxt {
-        Context::Idle => " Idle loop",
-        Context::Init => " Initialization function",
-        Context::HardwareTask(_) => " Hardware task",
-        Context::SoftwareTask(_) => " Software task",
+        Context::Idle => "Idle loop",
+        Context::Init => "Initialization function",
+        Context::HardwareTask(_) => "Hardware task",
+        Context::SoftwareTask(_) => "Software task",
     };
 
     let v = Vec::new();
@@ -175,8 +164,8 @@ pub fn codegen(
     let internal_context_name = util::internal_task_ident(name, "Context");
 
     items.push(quote!(
-        /// Execution context
         #(#cfgs)*
+        /// Execution context
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         pub struct #internal_context_name<#lt> {
@@ -185,7 +174,6 @@ pub fn codegen(
 
         #(#cfgs)*
         impl<#lt> #internal_context_name<#lt> {
-            #[doc(hidden)]
             #[inline(always)]
             pub unsafe fn new(#core #priority) -> Self {
                 #internal_context_name {
@@ -196,8 +184,8 @@ pub fn codegen(
     ));
 
     module_items.push(quote!(
-        #[doc(inline)]
         #(#cfgs)*
+        #[doc(inline)]
         pub use super::#internal_context_name as Context;
     ));
 
@@ -206,6 +194,8 @@ pub fn codegen(
         let priority = spawnee.args.priority;
         let t = util::spawn_t_ident(priority);
         let cfgs = &spawnee.cfgs;
+        // Store a copy of the task cfgs
+        task_cfgs = cfgs.clone();
         let (args, tupled, untupled, ty) = util::regroup_inputs(&spawnee.inputs);
         let args = &args;
         let tupled = &tupled;
@@ -213,112 +203,141 @@ pub fn codegen(
         let rq = util::rq_ident(priority);
         let inputs = util::inputs_ident(name);
 
-        let device = &extra.device;
+        let device = &app.args.device;
         let enum_ = util::interrupt_ident();
-        let interrupt = &analysis
-            .interrupts
-            .get(&priority)
-            .expect("RTIC-ICE: interrupt identifer not found")
-            .0;
+        let interrupt = if spawnee.is_async {
+            &analysis
+                .interrupts_async
+                .get(&priority)
+                .expect("RTIC-ICE: interrupt identifer not found")
+                .0
+        } else {
+            &analysis
+                .interrupts_normal
+                .get(&priority)
+                .expect("RTIC-ICE: interrupt identifer not found")
+                .0
+        };
 
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");
 
         // Spawn caller
-        items.push(quote!(
+        if spawnee.is_async {
+            let rq = util::rq_async_ident(name);
+            items.push(quote!(
 
-        /// Spawns the task directly
-        #(#cfgs)*
-        pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
-            let input = #tupled;
+            #(#cfgs)*
+            /// Spawns the task directly
+            #[allow(non_snake_case)]
+            #[doc(hidden)]
+            pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
+                let input = #tupled;
 
-            unsafe {
-                if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
-                    (&mut *#inputs
-                        .get_mut())
-                        .get_unchecked_mut(usize::from(index))
-                        .as_mut_ptr()
-                        .write(input);
+                unsafe {
+                    let r = rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).enqueue(input));
 
-                    rtic::export::interrupt::free(|_| {
-                        (&mut *#rq.get_mut()).enqueue_unchecked((#t::#name, index));
-                    });
+                    if r.is_ok() {
+                        rtic::pend(#device::#enum_::#interrupt);
+                    }
 
-                    rtic::pend(#device::#enum_::#interrupt);
-
-                    Ok(())
-                } else {
-                    Err(input)
+                    r
                 }
-            }
+            }));
+        } else {
+            items.push(quote!(
 
-        }));
+            #(#cfgs)*
+            /// Spawns the task directly
+            #[allow(non_snake_case)]
+            #[doc(hidden)]
+            pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
+                let input = #tupled;
+
+                unsafe {
+                    if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
+                        (&mut *#inputs
+                            .get_mut())
+                            .get_unchecked_mut(usize::from(index))
+                            .as_mut_ptr()
+                            .write(input);
+
+                        rtic::export::interrupt::free(|_| {
+                            (&mut *#rq.get_mut()).enqueue_unchecked((#t::#name, index));
+                        });
+                        rtic::pend(#device::#enum_::#interrupt);
+
+                        Ok(())
+                    } else {
+                        Err(input)
+                    }
+                }
+
+            }));
+        }
 
         module_items.push(quote!(
-            #[doc(inline)]
             #(#cfgs)*
+            #[doc(inline)]
             pub use super::#internal_spawn_ident as spawn;
         ));
 
         // Schedule caller
-        for (_, monotonic) in &app.monotonics {
-            let instants = util::monotonic_instants_ident(name, &monotonic.ident);
-            let monotonic_name = monotonic.ident.to_string();
+        if !spawnee.is_async {
+            for (_, monotonic) in &app.monotonics {
+                let instants = util::monotonic_instants_ident(name, &monotonic.ident);
+                let monotonic_name = monotonic.ident.to_string();
 
-            let tq = util::tq_ident(&monotonic.ident.to_string());
-            let t = util::schedule_t_ident();
-            let m = &monotonic.ident;
-            let cfgs = &monotonic.cfgs;
-            let m_ident = util::monotonic_ident(&monotonic_name);
-            let m_isr = &monotonic.args.binds;
-            let enum_ = util::interrupt_ident();
-            let spawn_handle_string = format!("{}::SpawnHandle", m);
+                let tq = util::tq_ident(&monotonic.ident.to_string());
+                let t = util::schedule_t_ident();
+                let m = &monotonic.ident;
+                let m_ident = util::monotonic_ident(&monotonic_name);
+                let m_isr = &monotonic.args.binds;
+                let enum_ = util::interrupt_ident();
+                let spawn_handle_string = format!("{}::SpawnHandle", m);
 
-            let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
-                (
-                    quote!(core::mem::transmute::<_, rtic::export::SYST>(()).enable_interrupt()),
-                    quote!(rtic::export::SCB::set_pendst()),
-                )
-            } else {
-                let rt_err = util::rt_err_ident();
-                (
-                    quote!(rtic::export::NVIC::unmask(#rt_err::#enum_::#m_isr)),
-                    quote!(rtic::pend(#rt_err::#enum_::#m_isr)),
-                )
-            };
+                let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
+                    (
+                        quote!(core::mem::transmute::<_, rtic::export::SYST>(()).enable_interrupt()),
+                        quote!(rtic::export::SCB::set_pendst()),
+                    )
+                } else {
+                    let rt_err = util::rt_err_ident();
+                    (
+                        quote!(rtic::export::NVIC::unmask(#rt_err::#enum_::#m_isr)),
+                        quote!(rtic::pend(#rt_err::#enum_::#m_isr)),
+                    )
+                };
 
-            let tq_marker = &util::timer_queue_marker_ident();
+                let tq_marker = &util::timer_queue_marker_ident();
 
-            // For future use
-            // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
-            // items.push(quote!(#[doc = #doc]));
-            let internal_spawn_handle_ident =
-                util::internal_monotonics_ident(name, m, "SpawnHandle");
-            let internal_spawn_at_ident = util::internal_monotonics_ident(name, m, "spawn_at");
-            let internal_spawn_after_ident =
-                util::internal_monotonics_ident(name, m, "spawn_after");
+                let internal_spawn_handle_ident =
+                    util::internal_monotonics_ident(name, m, "SpawnHandle");
+                let internal_spawn_at_ident = util::internal_monotonics_ident(name, m, "spawn_at");
+                let internal_spawn_after_ident =
+                    util::internal_monotonics_ident(name, m, "spawn_after");
 
-            if monotonic.args.default {
-                module_items.push(quote!(
-                    #(#cfgs)*
-                    pub use #m::spawn_after;
-                    #(#cfgs)*
-                    pub use #m::spawn_at;
-                    #(#cfgs)*
-                    pub use #m::SpawnHandle;
-                ));
-            }
-            module_items.push(quote!(
-                #[doc(hidden)]
-                #(#cfgs)*
-                pub mod #m {
-                    pub use super::super::#internal_spawn_after_ident as spawn_after;
-                    pub use super::super::#internal_spawn_at_ident as spawn_at;
-                    pub use super::super::#internal_spawn_handle_ident as SpawnHandle;
+                if monotonic.args.default {
+                    module_items.push(quote!(
+                        #[doc(inline)]
+                        pub use #m::spawn_after;
+                        #[doc(inline)]
+                        pub use #m::spawn_at;
+                        #[doc(inline)]
+                        pub use #m::SpawnHandle;
+                    ));
                 }
-            ));
+                module_items.push(quote!(
+                    pub mod #m {
+                        #[doc(inline)]
+                        pub use super::super::#internal_spawn_after_ident as spawn_after;
+                        #[doc(inline)]
+                        pub use super::super::#internal_spawn_at_ident as spawn_at;
+                        #[doc(inline)]
+                        pub use super::super::#internal_spawn_handle_ident as SpawnHandle;
+                    }
+                ));
 
-            items.push(quote!(
-                #[doc(hidden)]
+                items.push(quote!(
                 #(#cfgs)*
                 #[allow(non_snake_case)]
                 #[allow(non_camel_case_types)]
@@ -329,7 +348,6 @@ pub fn codegen(
 
                 #(#cfgs)*
                 impl core::fmt::Debug for #internal_spawn_handle_ident {
-                    #[doc(hidden)]
                     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                         f.debug_struct(#spawn_handle_string).finish()
                     }
@@ -340,7 +358,7 @@ pub fn codegen(
                     pub fn cancel(self) -> Result<#ty, ()> {
                         rtic::export::interrupt::free(|_| unsafe {
                             let tq = &mut *#tq.get_mut();
-                            if let Some((_task, index)) = tq.cancel_marker(self.marker) {
+                            if let Some((_task, index)) = tq.cancel_task_marker(self.marker) {
                                 // Get the message
                                 let msg = (&*#inputs
                                     .get())
@@ -357,9 +375,7 @@ pub fn codegen(
                         })
                     }
 
-                    /// Reschedule after 
                     #[inline]
-                    #(#cfgs)*
                     pub fn reschedule_after(
                         self,
                         duration: <#m as rtic::Monotonic>::Duration
@@ -367,8 +383,6 @@ pub fn codegen(
                         self.reschedule_at(monotonics::#m::now() + duration)
                     }
 
-                    /// Reschedule at 
-                    #(#cfgs)*
                     pub fn reschedule_at(
                         self,
                         instant: <#m as rtic::Monotonic>::Instant
@@ -379,16 +393,17 @@ pub fn codegen(
 
                             let tq = (&mut *#tq.get_mut());
 
-                            tq.update_marker(self.marker, marker, instant, || #pend).map(|_| #name::#m::SpawnHandle { marker })
+                            tq.update_task_marker(self.marker, marker, instant, || #pend).map(|_| #name::#m::SpawnHandle { marker })
                         })
                     }
                 }
 
+
+                #(#cfgs)*
                 /// Spawns the task after a set duration relative to the current time
                 ///
                 /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
                 /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
-                #(#cfgs)*
                 #[allow(non_snake_case)]
                 pub fn #internal_spawn_after_ident(
                     duration: <#m as rtic::Monotonic>::Duration
@@ -424,10 +439,10 @@ pub fn codegen(
 
                             rtic::export::interrupt::free(|_| {
                                 let marker = #tq_marker.get().read();
-                                let nr = rtic::export::NotReady {
-                                    instant,
-                                    index,
+                                let nr = rtic::export::TaskNotReady {
                                     task: #t::#name,
+                                    index,
+                                    instant,
                                     marker,
                                 };
 
@@ -435,7 +450,7 @@ pub fn codegen(
 
                                 let tq = &mut *#tq.get_mut();
 
-                                tq.enqueue_unchecked(
+                                tq.enqueue_task_unchecked(
                                     nr,
                                     || #enable_interrupt,
                                     || #pend,
@@ -449,6 +464,7 @@ pub fn codegen(
                     }
                 }
             ));
+            }
         }
     }
 
@@ -457,8 +473,9 @@ pub fn codegen(
     } else {
         quote!(
             #(#items)*
+
             #[allow(non_snake_case)]
-            #(#cfgs)*
+            #(#task_cfgs)*
             #[doc = #doc]
             pub mod #name {
                 #(#module_items)*

@@ -1,0 +1,5 @@
+error: this local resource has NOT been declared
+  --> $DIR/local-not-declared.rs:11:21
+   |
+11 |     #[task(local = [A])]
+   |                     ^

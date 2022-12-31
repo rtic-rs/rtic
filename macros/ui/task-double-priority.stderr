@@ -1,0 +1,5 @@
+error: argument appears more than once
+ --> $DIR/task-double-priority.rs:5:26
+  |
+5 |     #[task(priority = 1, priority = 2)]
+  |                          ^^^^^^^^

@@ -1,11 +1,10 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
 
 use crate::{
     analyze::Analysis,
-    check::Extra,
     codegen::{local_resources_struct, module},
+    syntax::{ast::App, Context},
 };
 
 type CodegenResult = (
@@ -24,7 +23,7 @@ type CodegenResult = (
 );
 
 /// Generates support code for `#[init]` functions
-pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
+pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
     let init = &app.init;
     let mut local_needs_lt = false;
     let name = &init.name;
@@ -65,27 +64,22 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
             )
         })
         .collect();
-
-    let shared_resources_doc = " RTIC shared resource struct".to_string();
-    let local_resources_doc = " RTIC local resource struct".to_string();
     root_init.push(quote! {
-        #[doc = #shared_resources_doc]
         struct #shared {
             #(#shared_resources)*
         }
 
-        #[doc = #local_resources_doc]
         struct #local {
             #(#local_resources)*
         }
     });
 
+    // let locals_pat = locals_pat.iter();
+
     let user_init_return = quote! {#shared, #local, #name::Monotonics};
-    let user_init_doc = " User provided init function".to_string();
 
     let user_init = quote!(
         #(#attrs)*
-        #[doc = #user_init_doc]
         #[inline(always)]
         #[allow(non_snake_case)]
         fn #name(#context: #name::Context) -> (#user_init_return) {
@@ -105,6 +99,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         mod_app = Some(constructor);
     }
 
+    // let locals_new = locals_new.iter();
     let call_init = quote! {
         let (shared_resources, local_resources, mut monotonics) = #name(#name::Context::new(core.into()));
     };
@@ -115,7 +110,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         local_needs_lt,
         app,
         analysis,
-        extra,
     ));
 
     (mod_app, root_init, user_init, call_init)

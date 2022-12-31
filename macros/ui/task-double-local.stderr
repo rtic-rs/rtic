@@ -1,0 +1,5 @@
+error: argument appears more than once
+ --> $DIR/task-double-local.rs:5:25
+  |
+5 |     #[task(local = [A], local = [B])]
+  |                         ^^^^^

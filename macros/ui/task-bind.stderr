@@ -1,0 +1,5 @@
+error: Unexpected bind in task argument. Binds are only parsed if Settings::parse_binds is set.
+ --> $DIR/task-bind.rs:5:12
+  |
+5 |     #[task(binds = UART0)]
+  |            ^^^^^

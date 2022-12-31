@@ -1,8 +1,7 @@
+use crate::syntax::ast::App;
+use crate::{analyze::Analysis, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::ast::App;
-
-use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates `local` variables and local resource proxies
 ///
@@ -10,7 +9,6 @@ use crate::{analyze::Analysis, check::Extra, codegen::util};
 pub fn codegen(
     app: &App,
     _analysis: &Analysis,
-    _extra: &Extra,
 ) -> (
     // mod_app -- the `static` variables behind the proxies
     Vec<TokenStream2>,

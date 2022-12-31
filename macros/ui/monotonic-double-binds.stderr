@@ -1,0 +1,5 @@
+error: argument appears more than once
+ --> $DIR/monotonic-double-binds.rs:5:31
+  |
+5 |     #[monotonic(binds = Tim1, binds = Tim2)]
+  |                               ^^^^^
