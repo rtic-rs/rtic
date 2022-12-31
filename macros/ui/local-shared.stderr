@@ -1,0 +1,11 @@
+error: Local resource "l1" is used by multiple tasks or collides with multiple definitions
+  --> $DIR/local-shared.rs:22:35
+   |
+22 |     #[task(priority = 1, local = [l1])]
+   |                                   ^^
+
+error: Local resource "l1" is used by multiple tasks or collides with multiple definitions
+  --> $DIR/local-shared.rs:26:35
+   |
+26 |     #[task(priority = 2, local = [l1])]
+   |                                   ^^

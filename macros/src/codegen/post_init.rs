@@ -1,6 +1,6 @@
+use crate::syntax::ast::App;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use rtic_syntax::ast::App;
 use syn::Index;
 
 use crate::{analyze::Analysis, codegen::util};
@@ -43,28 +43,21 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         }
     }
 
-    for (i, (monotonic_ident, monotonic)) in app.monotonics.iter().enumerate() {
+    for (i, (monotonic, _)) in app.monotonics.iter().enumerate() {
         // For future use
         // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
         // stmts.push(quote!(#[doc = #doc]));
-        let cfgs = &monotonic.cfgs;
 
         #[allow(clippy::cast_possible_truncation)]
         let idx = Index {
             index: i as u32,
             span: Span::call_site(),
         };
-        stmts.push(quote!(
-            #(#cfgs)*
-            monotonics.#idx.reset();
-        ));
+        stmts.push(quote!(monotonics.#idx.reset();));
 
         // Store the monotonic
-        let name = util::monotonic_ident(&monotonic_ident.to_string());
-        stmts.push(quote!(
-            #(#cfgs)*
-            #name.get_mut().write(Some(monotonics.#idx));
-        ));
+        let name = util::monotonic_ident(&monotonic.to_string());
+        stmts.push(quote!(#name.get_mut().write(Some(monotonics.#idx));));
     }
 
     // Enable the interrupts -- this completes the `init`-ialization phase

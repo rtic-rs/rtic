@@ -1,18 +1,18 @@
+use crate::syntax::ast::App;
+use crate::{analyze::Analysis, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::ast::App;
-
-use crate::{analyze::Analysis, check::Extra, codegen::util};
 
 /// Generates timer queues and timer queue handlers
 #[allow(clippy::too_many_lines)]
-pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStream2> {
+pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     let mut items = vec![];
 
     if !app.monotonics.is_empty() {
         // Generate the marker counter used to track for `cancel` and `reschedule`
         let tq_marker = util::timer_queue_marker_ident();
         items.push(quote!(
+            // #[doc = #doc]
             #[doc(hidden)]
             #[allow(non_camel_case_types)]
             #[allow(non_upper_case_globals)]
@@ -26,6 +26,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             let variants = app
                 .software_tasks
                 .iter()
+                .filter(|(_, task)| !task.is_async)
                 .map(|(name, task)| {
                     let cfgs = &task.cfgs;
 
@@ -55,7 +56,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         let tq = util::tq_ident(&monotonic_name);
         let t = util::schedule_t_ident();
         let mono_type = &monotonic.ty;
-        let cfgs = &monotonic.cfgs;
         let m_ident = util::monotonic_ident(&monotonic_name);
 
         // Static variables and resource proxy
@@ -67,8 +67,8 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 .iter()
                 .map(|(_name, task)| task.args.capacity as usize)
                 .sum();
-            let n = util::capacity_literal(cap);
-            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n>);
+            let n_task = util::capacity_literal(cap);
+            let tq_ty = quote!(rtic::export::TimerQueue<#mono_type, #t, #n_task>);
 
             // For future use
             // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
@@ -76,9 +76,12 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[allow(non_upper_case_globals)]
-                #(#cfgs)*
-                static #tq: rtic::RacyCell<#tq_ty> =
-                    rtic::RacyCell::new(rtic::export::TimerQueue(rtic::export::SortedLinkedList::new_u16()));
+                static #tq: rtic::RacyCell<#tq_ty> = rtic::RacyCell::new(
+                    rtic::export::TimerQueue {
+                        task_queue: rtic::export::SortedLinkedList::new_u16(),
+                        waker_queue: rtic::export::IntrusiveSortedLinkedList::new(),
+                    }
+                );
             ));
 
             let mono = util::monotonic_ident(&monotonic_name);
@@ -89,7 +92,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[allow(non_upper_case_globals)]
-                #(#cfgs)*
                 static #mono: rtic::RacyCell<Option<#mono_type>> = rtic::RacyCell::new(None);
             ));
         }
@@ -102,6 +104,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             let arms = app
                 .software_tasks
                 .iter()
+                .filter(|(_, task)| !task.is_async)
                 .map(|(name, task)| {
                     let cfgs = &task.cfgs;
                     let priority = task.args.priority;
@@ -109,7 +112,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     let rqt = util::spawn_t_ident(priority);
 
                     // The interrupt that runs the task dispatcher
-                    let interrupt = &analysis.interrupts.get(&priority).expect("RTIC-ICE: interrupt not found").0;
+                    let interrupt = &analysis.interrupts_normal.get(&priority).expect("RTIC-ICE: interrupt not found").0;
 
                     let pend = {
                         quote!(
@@ -120,7 +123,9 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     quote!(
                         #(#cfgs)*
                         #t::#name => {
-                            rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).split().0.enqueue_unchecked((#rqt::#name, index)));
+                            rtic::export::interrupt::free(|_|
+                                (&mut *#rq.get_mut()).split().0.enqueue_unchecked((#rqt::#name, index))
+                            );
 
                             #pend
                         }
@@ -128,7 +133,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 })
                 .collect::<Vec<_>>();
 
-            let cfgs = &monotonic.cfgs;
             let bound_interrupt = &monotonic.args.binds;
             let disable_isr = if &*bound_interrupt.to_string() == "SysTick" {
                 quote!(core::mem::transmute::<_, rtic::export::SYST>(()).disable_interrupt())
@@ -139,7 +143,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             items.push(quote!(
                 #[no_mangle]
                 #[allow(non_snake_case)]
-                #(#cfgs)*
                 unsafe fn #bound_interrupt() {
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {

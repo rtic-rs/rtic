@@ -1,0 +1,5 @@
+error: this task is defined multiple times
+ --> $DIR/task-interrupt.rs:9:8
+  |
+9 |     fn foo(_: foo::Context) {}
+  |        ^^^

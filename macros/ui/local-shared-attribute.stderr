@@ -1,0 +1,5 @@
+error: attributes are not supported here
+ --> $DIR/local-shared-attribute.rs:8:9
+  |
+8 |         #[test]
+  |         ^

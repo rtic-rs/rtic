@@ -1,0 +1,5 @@
+error: Monotonic does not support attributes other than `#[cfg]`
+ --> $DIR/monotonic-with-attrs.rs:5:7
+  |
+5 |     #[no_mangle]
+  |       ^^^^^^^^^

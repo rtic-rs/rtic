@@ -1,0 +1,5 @@
+error: this identifier has already been used
+  --> $DIR/task-idle.rs:12:8
+   |
+12 |     fn foo(_: foo::Context) {}
+   |        ^^^

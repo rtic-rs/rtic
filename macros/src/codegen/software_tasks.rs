@@ -1,17 +1,14 @@
-use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
-use rtic_syntax::{ast::App, Context};
-
+use crate::syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
-    check::Extra,
     codegen::{local_resources_struct, module, shared_resources_struct, util},
 };
+use proc_macro2::TokenStream as TokenStream2;
+use quote::quote;
 
 pub fn codegen(
     app: &App,
     analysis: &Analysis,
-    extra: &Extra,
 ) -> (
     // mod_app_software_tasks -- free queues, buffers and `${task}Resources` constructors
     Vec<TokenStream2>,
@@ -27,74 +24,87 @@ pub fn codegen(
     let mut root = vec![];
     let mut user_tasks = vec![];
 
-    for (name, task) in &app.software_tasks {
+    // Any task
+    for (name, task) in app.software_tasks.iter() {
         let inputs = &task.inputs;
-        let cfgs = &task.cfgs;
         let (_, _, _, input_ty) = util::regroup_inputs(inputs);
 
         let cap = task.args.capacity;
         let cap_lit = util::capacity_literal(cap as usize);
         let cap_lit_p1 = util::capacity_literal(cap as usize + 1);
 
-        // Create free queues and inputs / instants buffers
-        let fq = util::fq_ident(name);
+        if !task.is_async {
+            // Create free queues and inputs / instants buffers
+            let fq = util::fq_ident(name);
 
-        #[allow(clippy::redundant_closure)]
-        let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
-            (
-                quote!(rtic::export::SCFQ<#cap_lit_p1>),
-                quote!(rtic::export::Queue::new()),
-                Box::new(|| Some(util::link_section_uninit())),
-            )
-        };
-        mod_app.push(quote!(
-            // /// Queue version of a free-list that keeps track of empty slots in
-            // /// the following buffers
-            #(#cfgs)*
-            #[allow(non_camel_case_types)]
-            #[allow(non_upper_case_globals)]
-            #[doc(hidden)]
-            static #fq: rtic::RacyCell<#fq_ty> = rtic::RacyCell::new(#fq_expr);
-        ));
+            #[allow(clippy::redundant_closure)]
+            let (fq_ty, fq_expr, mk_uninit): (_, _, Box<dyn Fn() -> Option<_>>) = {
+                (
+                    quote!(rtic::export::SCFQ<#cap_lit_p1>),
+                    quote!(rtic::export::Queue::new()),
+                    Box::new(|| Some(util::link_section_uninit())),
+                )
+            };
 
-        let elems = &(0..cap)
-            .map(|_| quote!(core::mem::MaybeUninit::uninit()))
-            .collect::<Vec<_>>();
-
-        for (_, monotonic) in &app.monotonics {
-            let instants = util::monotonic_instants_ident(name, &monotonic.ident);
-            let mono_type = &monotonic.ty;
-            let cfgs = &monotonic.cfgs;
-
-            let uninit = mk_uninit();
-            // For future use
-            // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
             mod_app.push(quote!(
+                // /// Queue version of a free-list that keeps track of empty slots in
+                // /// the following buffers
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
+                static #fq: rtic::RacyCell<#fq_ty> = rtic::RacyCell::new(#fq_expr);
+            ));
+
+            let elems = &(0..cap)
+                .map(|_| quote!(core::mem::MaybeUninit::uninit()))
+                .collect::<Vec<_>>();
+
+            for (_, monotonic) in &app.monotonics {
+                let instants = util::monotonic_instants_ident(name, &monotonic.ident);
+                let mono_type = &monotonic.ty;
+
+                let uninit = mk_uninit();
+                // For future use
+                // let doc = format!(" RTIC internal: {}:{}", file!(), line!());
+                mod_app.push(quote!(
                 #uninit
                 // /// Buffer that holds the instants associated to the inputs of a task
                 // #[doc = #doc]
                 #[allow(non_camel_case_types)]
                 #[allow(non_upper_case_globals)]
                 #[doc(hidden)]
-                #(#cfgs)*
                 static #instants:
                     rtic::RacyCell<[core::mem::MaybeUninit<<#mono_type as rtic::Monotonic>::Instant>; #cap_lit]> =
                     rtic::RacyCell::new([#(#elems,)*]);
             ));
+            }
+
+            let uninit = mk_uninit();
+            let inputs_ident = util::inputs_ident(name);
+
+            // Buffer that holds the inputs of a task
+            mod_app.push(quote!(
+                #uninit
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
+                static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
+                    rtic::RacyCell::new([#(#elems,)*]);
+            ));
         }
 
-        let uninit = mk_uninit();
-        let inputs_ident = util::inputs_ident(name);
-        mod_app.push(quote!(
-            #uninit
-            // /// Buffer that holds the inputs of a task
-            #[allow(non_camel_case_types)]
-            #[allow(non_upper_case_globals)]
-            #[doc(hidden)]
-            #(#cfgs)*
-            static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
-                rtic::RacyCell::new([#(#elems,)*]);
-        ));
+        if task.is_async {
+            let executor_ident = util::executor_run_ident(name);
+            mod_app.push(quote!(
+                #[allow(non_camel_case_types)]
+                #[allow(non_upper_case_globals)]
+                #[doc(hidden)]
+                static #executor_ident: core::sync::atomic::AtomicBool =
+                    core::sync::atomic::AtomicBool::new(false);
+            ));
+        }
+
+        let inputs = &task.inputs;
 
         // `${task}Resources`
         let mut shared_needs_lt = false;
@@ -130,13 +140,24 @@ pub fn codegen(
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
-            let user_task_doc = format!(" User SW task {name}");
+            let (async_marker, context_lifetime) = if task.is_async {
+                (
+                    quote!(async),
+                    if shared_needs_lt || local_needs_lt {
+                        quote!(<'static>)
+                    } else {
+                        quote!()
+                    },
+                )
+            } else {
+                (quote!(), quote!())
+            };
+
             user_tasks.push(quote!(
-                #[doc = #user_task_doc]
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                fn #name(#context: #name::Context #(,#inputs)*) {
+                #async_marker fn #name(#context: #name::Context #context_lifetime #(,#inputs)*) {
                     use rtic::Mutex as _;
                     use rtic::mutex::prelude::*;
 
@@ -151,7 +172,6 @@ pub fn codegen(
             local_needs_lt,
             app,
             analysis,
-            extra,
         ));
     }
 

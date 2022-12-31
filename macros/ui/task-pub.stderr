@@ -1,0 +1,5 @@
+error: this task handler must have type signature `(async) fn(foo::Context, ..)`
+ --> ui/task-pub.rs:6:12
+  |
+6 |     pub fn foo(_: foo::Context) {}
+  |            ^^^

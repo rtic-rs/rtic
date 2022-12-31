@@ -1,0 +1,5 @@
+error: `#[monotonic(...)]` on a specific type must appear at most once
+ --> ui/monotonic-double.rs:9:10
+  |
+9 |     type Fast = hal::Tim1Monotonic;
+  |          ^^^^

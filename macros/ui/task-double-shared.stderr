@@ -1,0 +1,5 @@
+error: argument appears more than once
+ --> $DIR/task-double-shared.rs:5:26
+  |
+5 |     #[task(shared = [A], shared = [B])]
+  |                          ^^^^^^

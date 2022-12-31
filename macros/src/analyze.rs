@@ -1,17 +1,17 @@
 use core::ops;
 use std::collections::{BTreeMap, BTreeSet};
 
-use rtic_syntax::{
+use crate::syntax::{
     analyze::{self, Priority},
-    ast::{App, ExternInterrupt},
-    P,
+    ast::{App, Dispatcher},
 };
 use syn::Ident;
 
 /// Extend the upstream `Analysis` struct with our field
 pub struct Analysis {
-    parent: P<analyze::Analysis>,
-    pub interrupts: BTreeMap<Priority, (Ident, ExternInterrupt)>,
+    parent: analyze::Analysis,
+    pub interrupts_normal: BTreeMap<Priority, (Ident, Dispatcher)>,
+    pub interrupts_async: BTreeMap<Priority, (Ident, Dispatcher)>,
 }
 
 impl ops::Deref for Analysis {
@@ -23,25 +23,43 @@ impl ops::Deref for Analysis {
 }
 
 // Assign an interrupt to each priority level
-pub fn app(analysis: P<analyze::Analysis>, app: &App) -> P<Analysis> {
+pub fn app(analysis: analyze::Analysis, app: &App) -> Analysis {
+    let mut available_interrupt = app.args.dispatchers.clone();
+
     // the set of priorities (each priority only once)
     let priorities = app
         .software_tasks
         .values()
+        .filter(|task| !task.is_async)
+        .map(|task| task.args.priority)
+        .collect::<BTreeSet<_>>();
+
+    let priorities_async = app
+        .software_tasks
+        .values()
+        .filter(|task| task.is_async)
         .map(|task| task.args.priority)
         .collect::<BTreeSet<_>>();
 
     // map from priorities to interrupts (holding name and attributes)
-    let interrupts: BTreeMap<Priority, _> = priorities
+
+    let interrupts_normal: BTreeMap<Priority, _> = priorities
         .iter()
         .copied()
         .rev()
-        .zip(&app.args.extern_interrupts)
-        .map(|(p, (id, ext))| (p, (id.clone(), ext.clone())))
+        .map(|p| (p, available_interrupt.pop().expect("UNREACHABLE")))
         .collect();
 
-    P::new(Analysis {
+    let interrupts_async: BTreeMap<Priority, _> = priorities_async
+        .iter()
+        .copied()
+        .rev()
+        .map(|p| (p, available_interrupt.pop().expect("UNREACHABLE")))
+        .collect();
+
+    Analysis {
         parent: analysis,
-        interrupts,
-    })
+        interrupts_normal,
+        interrupts_async,
+    }
 }

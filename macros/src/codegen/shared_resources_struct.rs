@@ -1,6 +1,6 @@
+use crate::syntax::{ast::App, Context};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
 
 use crate::codegen::util;
 
@@ -10,22 +10,15 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let resources = match ctxt {
         Context::Init => unreachable!("Tried to generate shared resources struct for init"),
-        Context::Idle => &app.idle.as_ref().unwrap().args.shared_resources,
+        Context::Idle => {
+            &app.idle
+                .as_ref()
+                .expect("RTIC-ICE: unable to get idle name")
+                .args
+                .shared_resources
+        }
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.shared_resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.shared_resources,
-    };
-
-    let v = Vec::new();
-    let task_cfgs = match ctxt {
-        Context::HardwareTask(t) => {
-            &app.hardware_tasks[t].cfgs
-            // ...
-        }
-        Context::SoftwareTask(t) => {
-            &app.software_tasks[t].cfgs
-            // ...
-        }
-        _ => &v,
     };
 
     let mut fields = vec![];
@@ -57,18 +50,14 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                 quote!('a)
             };
 
-            let lock_free_resource_doc = format!(" Lock free resource `{name}`");
             fields.push(quote!(
-                #[doc = #lock_free_resource_doc]
                 #(#cfgs)*
                 pub #name: &#lt #mut_ #ty
             ));
         } else if access.is_shared() {
             lt = Some(quote!('a));
 
-            let shared_resource_doc = format!(" Shared resource `{name}`");
             fields.push(quote!(
-                #[doc = #shared_resource_doc]
                 #(#cfgs)*
                 pub #name: &'a #ty
             ));
@@ -76,16 +65,12 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             // Resource proxy
             lt = Some(quote!('a));
 
-            let resource_doc =
-                format!(" Resource proxy resource `{name}`. Use method `.lock()` to gain access");
             fields.push(quote!(
-                #[doc = #resource_doc]
                 #(#cfgs)*
                 pub #name: shared_resources::#shared_name<'a>
             ));
 
             values.push(quote!(
-                #[doc(hidden)]
                 #(#cfgs)*
                 #name: shared_resources::#shared_name::new(priority)
 
@@ -95,17 +80,13 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             continue;
         }
 
-        let resource_doc;
         let expr = if access.is_exclusive() {
-            resource_doc = format!(" Exclusive access resource `{name}`");
             quote!(&mut *(&mut *#mangled_name.get_mut()).as_mut_ptr())
         } else {
-            resource_doc = format!(" Non-exclusive access resource `{name}`");
             quote!(&*(&*#mangled_name.get()).as_ptr())
         };
 
         values.push(quote!(
-            #[doc = #resource_doc]
             #(#cfgs)*
             #name: #expr
         ));
@@ -125,13 +106,12 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         }
     }
 
-    let doc = format!(" Shared resources `{}` has access to", ctxt.ident(app));
+    let doc = format!("Shared resources `{}` has access to", ctxt.ident(app));
     let ident = util::shared_resources_ident(ctxt, app);
     let item = quote!(
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         #[doc = #doc]
-        #(#task_cfgs)*
         pub struct #ident<#lt> {
             #(#fields,)*
         }
@@ -143,9 +123,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
     let constructor = quote!(
-        #(#task_cfgs)*
         impl<#lt> #ident<#lt> {
-            #[doc(hidden)]
             #[inline(always)]
             pub unsafe fn new(#arg) -> Self {
                 #ident {

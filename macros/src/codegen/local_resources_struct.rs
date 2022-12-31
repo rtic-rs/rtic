@@ -1,9 +1,9 @@
-use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
-use rtic_syntax::{
+use crate::syntax::{
     ast::{App, TaskLocal},
     Context,
 };
+use proc_macro2::TokenStream as TokenStream2;
+use quote::quote;
 
 use crate::codegen::util;
 
@@ -13,7 +13,13 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
     let resources = match ctxt {
         Context::Init => &app.init.args.local_resources,
-        Context::Idle => &app.idle.as_ref().unwrap().args.local_resources,
+        Context::Idle => {
+            &app.idle
+                .as_ref()
+                .expect("RTIC-ICE: unable to get idle name")
+                .args
+                .local_resources
+        }
         Context::HardwareTask(name) => &app.hardware_tasks[name].args.local_resources,
         Context::SoftwareTask(name) => &app.software_tasks[name].args.local_resources,
     };
@@ -49,9 +55,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             util::declared_static_local_resource_ident(name, &task_name)
         };
 
-        let local_resource_doc = format!(" Local resource `{name}`");
         fields.push(quote!(
-            #[doc = #local_resource_doc]
             #(#cfgs)*
             pub #name: &#lt mut #ty
         ));
@@ -84,7 +88,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         }
     }
 
-    let doc = format!(" Local resources `{}` has access to", ctxt.ident(app));
+    let doc = format!("Local resources `{}` has access to", ctxt.ident(app));
     let ident = util::local_resources_ident(ctxt, app);
     let item = quote!(
         #[allow(non_snake_case)]
@@ -98,7 +102,6 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     let constructor = quote!(
         impl<#lt> #ident<#lt> {
             #[inline(always)]
-            #[doc(hidden)]
             pub unsafe fn new() -> Self {
                 #ident {
                     #(#values,)*

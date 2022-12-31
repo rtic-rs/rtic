@@ -1,0 +1,5 @@
+error: hardware tasks are not allowed to be spawned, `only_same_priority_spawn_please_fix_me` is only for software tasks
+ --> ui/task-interrupt-same-prio-spawn.rs:5:29
+  |
+5 |     #[task(binds = SysTick, only_same_priority_spawn_please_fix_me)]
+  |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

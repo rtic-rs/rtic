@@ -1,0 +1,5 @@
+error: the `#[init]` function must have signature `fn(init::Context) -> (Shared resources struct, Local resources struct, init::Monotonics)`
+  --> $DIR/init-no-context.rs:12:8
+   |
+12 |     fn init() -> (Shared, Local, init::Monotonics) {}
+   |        ^^^^

@@ -1,10 +1,11 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::ast::App;
 
-use crate::{analyze::Analysis, check::Extra};
+use crate::analyze::Analysis;
+use crate::syntax::ast::App;
 
 mod assertions;
+mod async_dispatchers;
 mod dispatchers;
 mod hardware_tasks;
 mod idle;
@@ -12,6 +13,7 @@ mod init;
 mod local_resources;
 mod local_resources_struct;
 mod module;
+mod monotonic;
 mod post_init;
 mod pre_init;
 mod shared_resources;
@@ -21,22 +23,22 @@ mod timer_queue;
 mod util;
 
 #[allow(clippy::too_many_lines)]
-pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
+pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut mod_app = vec![];
     let mut mains = vec![];
     let mut root = vec![];
     let mut user = vec![];
 
     // Generate the `main` function
-    let assertion_stmts = assertions::codegen(app, analysis, extra);
+    let assertion_stmts = assertions::codegen(app, analysis);
 
-    let pre_init_stmts = pre_init::codegen(app, analysis, extra);
+    let pre_init_stmts = pre_init::codegen(app, analysis);
 
-    let (mod_app_init, root_init, user_init, call_init) = init::codegen(app, analysis, extra);
+    let (mod_app_init, root_init, user_init, call_init) = init::codegen(app, analysis);
 
     let post_init_stmts = post_init::codegen(app, analysis);
 
-    let (mod_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis, extra);
+    let (mod_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis);
 
     user.push(quote!(
         #user_init
@@ -84,82 +86,25 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         }
     ));
 
-    let (mod_app_shared_resources, mod_shared_resources) =
-        shared_resources::codegen(app, analysis, extra);
-    let (mod_app_local_resources, mod_local_resources) =
-        local_resources::codegen(app, analysis, extra);
+    let (mod_app_shared_resources, mod_shared_resources) = shared_resources::codegen(app, analysis);
+    let (mod_app_local_resources, mod_local_resources) = local_resources::codegen(app, analysis);
 
     let (mod_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks) =
-        hardware_tasks::codegen(app, analysis, extra);
+        hardware_tasks::codegen(app, analysis);
 
     let (mod_app_software_tasks, root_software_tasks, user_software_tasks) =
-        software_tasks::codegen(app, analysis, extra);
+        software_tasks::codegen(app, analysis);
 
-    let mod_app_dispatchers = dispatchers::codegen(app, analysis, extra);
-    let mod_app_timer_queue = timer_queue::codegen(app, analysis, extra);
+    let monotonics = monotonic::codegen(app, analysis);
+
+    let mod_app_dispatchers = dispatchers::codegen(app, analysis);
+    let mod_app_async_dispatchers = async_dispatchers::codegen(app, analysis);
+    let mod_app_timer_queue = timer_queue::codegen(app, analysis);
     let user_imports = &app.user_imports;
     let user_code = &app.user_code;
     let name = &app.name;
-    let device = &extra.device;
+    let device = &app.args.device;
 
-    let monotonic_parts: Vec<_> = app
-        .monotonics
-        .iter()
-        .map(|(_, monotonic)| {
-            let name = &monotonic.ident;
-            let name_str = &name.to_string();
-            let cfgs = &monotonic.cfgs;
-            let ident = util::monotonic_ident(name_str);
-            let doc = &format!(
-                "This module holds the static implementation for `{}::now()`",
-                name_str
-            );
-
-            let default_monotonic = if monotonic.args.default {
-                quote!(
-                #(#cfgs)*
-                pub use #name::now;
-                )
-            } else {
-                quote!()
-            };
-
-            quote! {
-                #default_monotonic
-
-                #[doc = #doc]
-                #[allow(non_snake_case)]
-                #(#cfgs)*
-                pub mod #name {
-
-                    /// Read the current time from this monotonic
-                    pub fn now() -> <super::super::#name as rtic::Monotonic>::Instant {
-                        rtic::export::interrupt::free(|_| {
-                            use rtic::Monotonic as _;
-                            if let Some(m) = unsafe{ &mut *super::super::#ident.get_mut() } {
-                                m.now()
-                            } else {
-                                <super::super::#name as rtic::Monotonic>::zero()
-                            }
-                        })
-                    }
-                }
-            }
-        })
-        .collect();
-
-    let monotonics = if monotonic_parts.is_empty() {
-        quote!()
-    } else {
-        quote!(
-            pub use rtic::Monotonic as _;
-
-            /// Holds static methods for each monotonic.
-            pub mod monotonics {
-                #(#monotonic_parts)*
-            }
-        )
-    };
     let rt_err = util::rt_err_ident();
 
     quote!(
@@ -204,6 +149,8 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
             #(#mod_app_software_tasks)*
 
             #(#mod_app_dispatchers)*
+
+            #(#mod_app_async_dispatchers)*
 
             #(#mod_app_timer_queue)*
 

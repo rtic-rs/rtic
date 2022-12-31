@@ -1,0 +1,5 @@
+error: argument appears more than once
+ --> $DIR/monotonic-double-prio.rs:5:45
+  |
+5 |     #[monotonic(binds = Tim1, priority = 1, priority = 2)]
+  |                                             ^^^^^^^^

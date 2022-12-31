@@ -1,0 +1,5 @@
+error: this interrupt is already bound
+ --> $DIR/monotonic-binds-collision.rs:8:25
+  |
+8 |     #[monotonic(binds = Tim1)]
+  |                         ^^^^

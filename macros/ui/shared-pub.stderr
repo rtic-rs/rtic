@@ -1,0 +1,5 @@
+error: this field must have inherited / private visibility
+ --> $DIR/shared-pub.rs:7:13
+  |
+7 |         pub x: u32,
+  |             ^
