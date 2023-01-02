@@ -1,18 +1,12 @@
 use std::collections::HashSet;
 
-use proc_macro2::Span;
-use rtic_syntax::{analyze::Analysis, ast::App};
-use syn::{parse, Path};
+use crate::syntax::ast::App;
+use syn::parse;
 
-pub struct Extra {
-    pub device: Path,
-    pub peripherals: bool,
-}
-
-pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
+pub fn app(app: &App) -> parse::Result<()> {
     // Check that external (device-specific) interrupts are not named after known (Cortex-M)
     // exceptions
-    for name in app.args.extern_interrupts.keys() {
+    for name in app.args.dispatchers.keys() {
         let name_s = name.to_string();
 
         match &*name_s {
@@ -41,7 +35,7 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
         .collect::<HashSet<_>>();
 
     let need = priorities.len();
-    let given = app.args.extern_interrupts.len();
+    let given = app.args.dispatchers.len();
     if need > given {
         let s = {
             format!(
@@ -72,15 +66,5 @@ pub fn app(app: &App, _analysis: &Analysis) -> parse::Result<Extra> {
         }
     }
 
-    if let Some(device) = app.args.device.clone() {
-        Ok(Extra {
-            device,
-            peripherals: app.args.peripherals,
-        })
-    } else {
-        Err(parse::Error::new(
-            Span::call_site(),
-            "a `device` argument must be specified in `#[rtic::app]`",
-        ))
-    }
+    Ok(())
 }
