@@ -10,6 +10,7 @@ use std::{env, fs, path::Path};
 
 mod analyze;
 mod bindings;
+mod check;
 mod codegen;
 mod syntax;
 
@@ -60,6 +61,11 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
         Ok(x) => x,
     };
+
+    match check::app(&app) {
+        Err(e) => return e.to_compile_error().into(),
+        _ => {}
+    }
 
     let analysis = analyze::app(analysis, &app);
 
