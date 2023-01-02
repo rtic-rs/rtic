@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -20,7 +19,7 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        hprintln!("init");
+        hprintln!("init").unwrap();
         foo::spawn().unwrap();
 
         (Shared {}, Local {}, init::Monotonics())
@@ -28,7 +27,7 @@ mod app {
 
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo");
+        hprintln!("foo").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }

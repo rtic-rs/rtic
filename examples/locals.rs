@@ -2,8 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -18,11 +16,8 @@ mod app {
 
     #[local]
     struct Local {
-        /// Local foo
         local_to_foo: i64,
-        /// Local bar
         local_to_bar: i64,
-        /// Local idle
         local_to_idle: i64,
     }
 
@@ -50,7 +45,7 @@ mod app {
         let local_to_idle = cx.local.local_to_idle;
         *local_to_idle += 1;
 
-        hprintln!("idle: local_to_idle = {}", local_to_idle);
+        hprintln!("idle: local_to_idle = {}", local_to_idle).unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
@@ -74,7 +69,7 @@ mod app {
         // error: no `local_to_bar` field in `foo::LocalResources`
         // cx.local.local_to_bar += 1;
 
-        hprintln!("foo: local_to_foo = {}", local_to_foo);
+        hprintln!("foo: local_to_foo = {}", local_to_foo).unwrap();
     }
 
     // `local_to_bar` can only be accessed from this context
@@ -86,6 +81,6 @@ mod app {
         // error: no `local_to_foo` field in `bar::LocalResources`
         // cx.local.local_to_foo += 1;
 
-        hprintln!("bar: local_to_bar = {}", local_to_bar);
+        hprintln!("bar: local_to_bar = {}", local_to_bar).unwrap();
     }
 }

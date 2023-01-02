@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -33,22 +32,19 @@ mod app {
 
     #[task(binds = UART0, shared = [shared], local = [state: u32 = 0])]
     fn uart0(c: uart0::Context) {
-        hprintln!("UART0(STATE = {})", *c.local.state);
+        hprintln!("UART0(STATE = {})", *c.local.state).unwrap();
 
         // second argument has type `shared::shared`
         super::advance(c.local.state, c.shared.shared);
 
         rtic::pend(Interrupt::UART1);
 
-        // Exit moved after nop to ensure that rtic::pend gets
-        // to run before exiting
-        cortex_m::asm::nop();
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(binds = UART1, priority = 2, shared = [shared], local = [state: u32 = 0])]
     fn uart1(c: uart1::Context) {
-        hprintln!("UART1(STATE = {})", *c.local.state);
+        hprintln!("UART1(STATE = {})", *c.local.state).unwrap();
 
         // second argument has type `shared::shared`
         super::advance(c.local.state, c.shared.shared);
@@ -65,5 +61,5 @@ fn advance(state: &mut u32, mut shared: impl Mutex<T = u32>) {
         (old, *shared)
     });
 
-    hprintln!("shared: {} -> {}", old, new);
+    hprintln!("shared: {} -> {}", old, new).unwrap();
 }

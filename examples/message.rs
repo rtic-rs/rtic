@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -27,7 +26,7 @@ mod app {
 
     #[task(local = [count: u32 = 0])]
     fn foo(cx: foo::Context) {
-        hprintln!("foo");
+        hprintln!("foo").unwrap();
 
         bar::spawn(*cx.local.count).unwrap();
         *cx.local.count += 1;
@@ -35,14 +34,14 @@ mod app {
 
     #[task]
     fn bar(_: bar::Context, x: u32) {
-        hprintln!("bar({})", x);
+        hprintln!("bar({})", x).unwrap();
 
         baz::spawn(x + 1, x + 2).unwrap();
     }
 
     #[task]
     fn baz(_: baz::Context, x: u32, y: u32) {
-        hprintln!("baz({}, {})", x, y);
+        hprintln!("baz({}, {})", x, y).unwrap();
 
         if x + y > 4 {
             debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator

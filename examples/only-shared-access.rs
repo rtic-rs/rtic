@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -31,13 +30,13 @@ mod app {
     #[task(shared = [&key])]
     fn foo(cx: foo::Context) {
         let key: &u32 = cx.shared.key;
-        hprintln!("foo(key = {:#x})", key);
+        hprintln!("foo(key = {:#x})", key).unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(priority = 2, shared = [&key])]
     fn bar(cx: bar::Context) {
-        hprintln!("bar(key = {:#x})", cx.shared.key);
+        hprintln!("bar(key = {:#x})", cx.shared.key).unwrap();
     }
 }

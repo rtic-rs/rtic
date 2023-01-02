@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -29,21 +28,21 @@ mod app {
         // Initialize the monotonic (SysTick rate in QEMU is 12 MHz)
         let mono = Systick::new(systick, 12_000_000);
 
-        foo::spawn_after(1.secs()).unwrap();
+        foo::spawn_after(100.millis()).unwrap();
 
         (Shared {}, Local {}, init::Monotonics(mono))
     }
 
     #[task(local = [cnt: u32 = 0])]
     fn foo(cx: foo::Context) {
-        hprintln!("foo");
+        hprintln!("foo").ok();
         *cx.local.cnt += 1;
 
         if *cx.local.cnt == 4 {
             debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         }
 
-        // Periodic ever 1 seconds
-        foo::spawn_after(1.secs()).unwrap();
+        // Periodic every 100ms
+        foo::spawn_after(100.millis()).unwrap();
     }
 }

@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -74,7 +73,7 @@ mod app {
         // This task is only spawned once in `init`, hence this task will run
         // only once
 
-        hprintln!("foo");
+        hprintln!("foo").ok();
     }
 
     // Software task, also not bound to a hardware interrupt
@@ -82,7 +81,7 @@ mod app {
     // The resources `s1` and `s2` are shared between all other tasks.
     #[task(shared = [s1, s2], local = [l2])]
     fn bar(_: bar::Context) {
-        hprintln!("bar");
+        hprintln!("bar").ok();
 
         // Run `bar` once per second
         bar::spawn_after(1.secs()).unwrap();
@@ -98,6 +97,6 @@ mod app {
         // Note that RTIC does NOT clear the interrupt flag, this is up to the
         // user
 
-        hprintln!("UART0 interrupt!");
+        hprintln!("UART0 interrupt!").ok();
     }
 }

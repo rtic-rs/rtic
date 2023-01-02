@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -38,7 +37,7 @@ mod app {
         loop {
             // Lock-free access to the same underlying queue!
             if let Some(data) = c.local.c.dequeue() {
-                hprintln!("received message: {}", data);
+                hprintln!("received message: {}", data).unwrap();
 
                 // Run foo until data
                 if data == 3 {

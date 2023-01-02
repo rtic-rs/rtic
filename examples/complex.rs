@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -26,7 +25,7 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        hprintln!("init");
+        hprintln!("init").unwrap();
 
         (
             Shared {
@@ -41,31 +40,31 @@ mod app {
 
     #[idle(shared = [s2, s3])]
     fn idle(mut cx: idle::Context) -> ! {
-        hprintln!("idle p0 started");
+        hprintln!("idle p0 started").ok();
         rtic::pend(Interrupt::GPIOC);
         cx.shared.s3.lock(|s| {
-            hprintln!("idle enter lock s3 {}", s);
-            hprintln!("idle pend t0");
+            hprintln!("idle enter lock s3 {}", s).ok();
+            hprintln!("idle pend t0").ok();
             rtic::pend(Interrupt::GPIOA); // t0 p2, with shared ceiling 3
-            hprintln!("idle pend t1");
+            hprintln!("idle pend t1").ok();
             rtic::pend(Interrupt::GPIOB); // t1 p3, with shared ceiling 3
-            hprintln!("idle pend t2");
+            hprintln!("idle pend t2").ok();
             rtic::pend(Interrupt::GPIOC); // t2 p4, no sharing
-            hprintln!("idle still in lock s3 {}", s);
+            hprintln!("idle still in lock s3 {}", s).ok();
         });
-        hprintln!("\nback in idle");
+        hprintln!("\nback in idle").ok();
 
         cx.shared.s2.lock(|s| {
-            hprintln!("enter lock s2 {}", s);
-            hprintln!("idle pend t0");
+            hprintln!("enter lock s2 {}", s).ok();
+            hprintln!("idle pend t0").ok();
             rtic::pend(Interrupt::GPIOA); // t0 p2, with shared ceiling 2
-            hprintln!("idle pend t1");
+            hprintln!("idle pend t1").ok();
             rtic::pend(Interrupt::GPIOB); // t1 p3, no sharing
-            hprintln!("idle pend t2");
+            hprintln!("idle pend t2").ok();
             rtic::pend(Interrupt::GPIOC); // t2 p4, no sharing
-            hprintln!("idle still in lock s2 {}", s);
+            hprintln!("idle still in lock s2 {}", s).ok();
         });
-        hprintln!("\nidle exit");
+        hprintln!("\nidle exit").ok();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
@@ -83,8 +82,9 @@ mod app {
             "t0 p2 called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        );
-        hprintln!("t0 p2 exit");
+        )
+        .ok();
+        hprintln!("t0 p2 exit").ok();
     }
 
     #[task(binds = GPIOB, priority = 3, local = [times: u32 = 0], shared = [s3, s4])]
@@ -96,18 +96,19 @@ mod app {
             "t1 p3 called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        );
+        )
+        .ok();
 
         cx.shared.s4.lock(|s| {
-            hprintln!("t1 enter lock s4 {}", s);
-            hprintln!("t1 pend t0");
+            hprintln!("t1 enter lock s4 {}", s).ok();
+            hprintln!("t1 pend t0").ok();
             rtic::pend(Interrupt::GPIOA); // t0 p2, with shared ceiling 2
-            hprintln!("t1 pend t2");
+            hprintln!("t1 pend t2").ok();
             rtic::pend(Interrupt::GPIOC); // t2 p4, no sharing
-            hprintln!("t1 still in lock s4 {}", s);
+            hprintln!("t1 still in lock s4 {}", s).ok();
         });
 
-        hprintln!("t1 p3 exit");
+        hprintln!("t1 p3 exit").ok();
     }
 
     #[task(binds = GPIOC, priority = 4, local = [times: u32 = 0], shared = [s4])]
@@ -119,12 +120,13 @@ mod app {
             "t2 p4 called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        );
+        )
+        .unwrap();
 
         cx.shared.s4.lock(|s| {
-            hprintln!("enter lock s4 {}", s);
+            hprintln!("enter lock s4 {}", s).ok();
             *s += 1;
         });
-        hprintln!("t3 p4 exit");
+        hprintln!("t3 p4 exit").ok();
     }
 }

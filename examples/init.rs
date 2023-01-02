@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -33,7 +32,7 @@ mod app {
         // to indicate that this is a critical seciton
         let _cs_token: bare_metal::CriticalSection = cx.cs;
 
-        hprintln!("init");
+        hprintln!("init").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 

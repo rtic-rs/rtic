@@ -37,7 +37,6 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                 (&r.cfgs, &r.ty, false)
             }
             TaskLocal::Declared(r) => (&r.cfgs, &r.ty, true),
-            _ => unreachable!(),
         };
 
         has_cfgs |= !cfgs.is_empty();
