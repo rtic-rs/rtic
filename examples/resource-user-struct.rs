@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -56,7 +55,7 @@ mod app {
             *shared
         });
 
-        hprintln!("UART0: shared = {}", shared);
+        hprintln!("UART0: shared = {}", shared).unwrap();
     }
 
     // `shared` can be accessed from this context
@@ -67,6 +66,6 @@ mod app {
             *shared
         });
 
-        hprintln!("UART1: shared = {}", shared);
+        hprintln!("UART1: shared = {}", shared).unwrap();
     }
 }

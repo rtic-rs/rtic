@@ -47,6 +47,7 @@ impl<'a> CargoCommand<'a> {
                 mode,
             } => {
                 let mut args = vec![
+                    "+nightly",
                     self.name(),
                     "--example",
                     example,
@@ -69,7 +70,7 @@ impl<'a> CargoCommand<'a> {
                 features,
                 mode,
             } => {
-                let mut args = vec![self.name(), "--examples", "--target", target];
+                let mut args = vec!["+nightly", self.name(), "--examples", "--target", target];
 
                 if let Some(feature_name) = features {
                     args.extend_from_slice(&["--features", feature_name]);

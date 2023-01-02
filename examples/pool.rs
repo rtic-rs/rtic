@@ -2,8 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-// pool!() generates a struct without docs
-//#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -58,7 +56,7 @@ mod app {
 
     #[task]
     fn foo(_: foo::Context, x: Box<P>) {
-        hprintln!("foo({:?})", x.as_ptr());
+        hprintln!("foo({:?})", x.as_ptr()).unwrap();
 
         // explicitly return the block to the pool
         drop(x);
@@ -68,7 +66,7 @@ mod app {
 
     #[task(priority = 2)]
     fn bar(_: bar::Context, x: Box<P>) {
-        hprintln!("bar({:?})", x.as_ptr());
+        hprintln!("bar({:?})", x.as_ptr()).unwrap();
 
         // this is done automatically so we can omit the call to `drop`
         // drop(x);

@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -36,15 +35,15 @@ mod app {
 
     #[task(local = [cnt: u32 = 0])]
     fn foo(cx: foo::Context, instant: fugit::TimerInstantU64<100>) {
-        hprintln!("foo {:?}", instant);
+        hprintln!("foo {:?}", instant).ok();
         *cx.local.cnt += 1;
 
         if *cx.local.cnt == 4 {
             debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         }
 
-        // Periodic ever 1 seconds
-        let next_instant = instant + 1.secs();
+        // Periodic every 100 milliseconds
+        let next_instant = instant + 100.millis();
         foo::spawn_at(next_instant, next_instant).unwrap();
     }
 }

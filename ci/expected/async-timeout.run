@@ -1,0 +1,5 @@
+init
+hello from bar
+hello from foo
+foo no timeout
+bar timeout

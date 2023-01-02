@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -30,7 +29,7 @@ mod app {
     // when omitted priority is assumed to be `1`
     #[task(shared = [shared])]
     fn foo(mut c: foo::Context) {
-        hprintln!("A");
+        hprintln!("A").unwrap();
 
         // the lower priority task requires a critical section to access the data
         c.shared.shared.lock(|shared| {
@@ -40,7 +39,7 @@ mod app {
             // bar will *not* run right now due to the critical section
             bar::spawn().unwrap();
 
-            hprintln!("B - shared = {}", *shared);
+            hprintln!("B - shared = {}", *shared).unwrap();
 
             // baz does not contend for `shared` so it's allowed to run now
             baz::spawn().unwrap();
@@ -48,7 +47,7 @@ mod app {
 
         // critical section is over: bar can now start
 
-        hprintln!("E");
+        hprintln!("E").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
@@ -62,11 +61,11 @@ mod app {
             *shared
         });
 
-        hprintln!("D - shared = {}", shared);
+        hprintln!("D - shared = {}", shared).unwrap();
     }
 
     #[task(priority = 3)]
     fn baz(_: baz::Context) {
-        hprintln!("C");
+        hprintln!("C").unwrap();
     }
 }

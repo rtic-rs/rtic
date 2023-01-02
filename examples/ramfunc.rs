@@ -1,7 +1,6 @@
 //! examples/ramfunc.rs
 
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -34,7 +33,7 @@ mod app {
     #[inline(never)]
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo");
+        hprintln!("foo").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }

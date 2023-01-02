@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -20,7 +19,7 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        hprintln!("init");
+        hprintln!("init").unwrap();
 
         (Shared {}, Local {}, init::Monotonics())
     }
@@ -30,7 +29,7 @@ mod app {
         // Locals in idle have lifetime 'static
         let _x: &'static mut u32 = cx.local.x;
 
-        hprintln!("idle");
+        hprintln!("idle").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 

@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -82,19 +81,6 @@ mod app {
         // ..
     }
 
-    // The whole task should disappear,
-    // currently still present in the Tasks enum
-    #[cfg(never)]
-    #[task(binds = UART1, shared = [count])]
-    fn foo3(mut _cx: foo3::Context) {
-        #[cfg(debug_assertions)]
-        {
-            _cx.shared.count.lock(|count| *count += 10);
-
-            log::spawn(_cx.shared.count.lock(|count| *count)).unwrap();
-        }
-    }
-
     #[cfg(debug_assertions)]
     #[task(capacity = 2)]
     fn log(_: log::Context, n: u32) {
@@ -102,6 +88,7 @@ mod app {
             "foo has been called {} time{}",
             n,
             if n == 1 { "" } else { "s" }
-        );
+        )
+        .ok();
     }
 }

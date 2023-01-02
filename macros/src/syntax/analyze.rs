@@ -338,8 +338,8 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
     })
 }
 
-/// Priority ceiling
-pub type Ceiling = Option<u8>;
+// /// Priority ceiling
+// pub type Ceiling = Option<u8>;
 
 /// Task priority
 pub type Priority = u8;
@@ -427,22 +427,22 @@ pub enum Ownership {
     },
 }
 
-impl Ownership {
-    /// Whether this resource needs to a lock at this priority level
-    pub fn needs_lock(&self, priority: u8) -> bool {
-        match self {
-            Ownership::Owned { .. } | Ownership::CoOwned { .. } => false,
-
-            Ownership::Contended { ceiling } => {
-                debug_assert!(*ceiling >= priority);
-
-                priority < *ceiling
-            }
-        }
-    }
-
-    /// Whether this resource is exclusively owned
-    pub fn is_owned(&self) -> bool {
-        matches!(self, Ownership::Owned { .. })
-    }
-}
+// impl Ownership {
+//     /// Whether this resource needs to a lock at this priority level
+//     pub fn needs_lock(&self, priority: u8) -> bool {
+//         match self {
+//             Ownership::Owned { .. } | Ownership::CoOwned { .. } => false,
+//
+//             Ownership::Contended { ceiling } => {
+//                 debug_assert!(*ceiling >= priority);
+//
+//                 priority < *ceiling
+//             }
+//         }
+//     }
+//
+//     /// Whether this resource is exclusively owned
+//     pub fn is_owned(&self) -> bool {
+//         matches!(self, Ownership::Owned { .. })
+//     }
+// }

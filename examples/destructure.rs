@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -43,7 +42,7 @@ mod app {
         let b = cx.shared.b;
         let c = cx.shared.c;
 
-        hprintln!("foo: a = {}, b = {}, c = {}", a, b, c);
+        hprintln!("foo: a = {}, b = {}, c = {}", a, b, c).unwrap();
     }
 
     // De-structure-ing syntax
@@ -51,6 +50,6 @@ mod app {
     fn bar(cx: bar::Context) {
         let bar::SharedResources { a, b, c } = cx.shared;
 
-        hprintln!("bar: a = {}, b = {}, c = {}", a, b, c);
+        hprintln!("bar: a = {}, b = {}, c = {}", a, b, c).unwrap();
     }
 }

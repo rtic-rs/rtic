@@ -2,7 +2,6 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -27,31 +26,31 @@ mod app {
 
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo - start");
+        hprintln!("foo - start").unwrap();
 
         // spawns `bar` onto the task scheduler
         // `foo` and `bar` have the same priority so `bar` will not run until
         // after `foo` terminates
         bar::spawn().unwrap();
 
-        hprintln!("foo - middle");
+        hprintln!("foo - middle").unwrap();
 
         // spawns `baz` onto the task scheduler
         // `baz` has higher priority than `foo` so it immediately preempts `foo`
         baz::spawn().unwrap();
 
-        hprintln!("foo - end");
+        hprintln!("foo - end").unwrap();
     }
 
     #[task]
     fn bar(_: bar::Context) {
-        hprintln!("bar");
+        hprintln!("bar").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(priority = 2)]
     fn baz(_: baz::Context) {
-        hprintln!("baz");
+        hprintln!("baz").unwrap();
     }
 }

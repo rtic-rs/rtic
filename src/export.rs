@@ -1,11 +1,13 @@
 #![allow(clippy::inline_always)]
+pub use crate::{
+    sll::{IntrusiveSortedLinkedList, Node as IntrusiveNode},
+    tq::{TaskNotReady, TimerQueue, WakerNotReady},
+};
+pub use bare_metal::CriticalSection;
 use core::{
     cell::Cell,
     sync::atomic::{AtomicBool, Ordering},
 };
-
-pub use crate::tq::{NotReady, TimerQueue};
-pub use bare_metal::CriticalSection;
 pub use cortex_m::{
     asm::nop,
     asm::wfi,
@@ -16,10 +18,134 @@ pub use cortex_m::{
 pub use heapless::sorted_linked_list::SortedLinkedList;
 pub use heapless::spsc::Queue;
 pub use heapless::BinaryHeap;
+pub use heapless::Vec;
 pub use rtic_monotonic as monotonic;
+
+pub mod idle_executor {
+    use core::{
+        future::Future,
+        pin::Pin,
+        task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
+    };
+
+    fn no_op(_: *const ()) {}
+    fn no_op_clone(_: *const ()) -> RawWaker {
+        noop_raw_waker()
+    }
+
+    static IDLE_WAKER_TABLE: RawWakerVTable = RawWakerVTable::new(no_op_clone, no_op, no_op, no_op);
+
+    #[inline]
+    fn noop_raw_waker() -> RawWaker {
+        RawWaker::new(core::ptr::null(), &IDLE_WAKER_TABLE)
+    }
+
+    pub struct IdleExecutor<T>
+    where
+        T: Future,
+    {
+        idle: T,
+    }
+
+    impl<T> IdleExecutor<T>
+    where
+        T: Future,
+    {
+        #[inline(always)]
+        pub fn new(idle: T) -> Self {
+            Self { idle }
+        }
+
+        #[inline(always)]
+        pub fn run(&mut self) -> ! {
+            let w = unsafe { Waker::from_raw(noop_raw_waker()) };
+            let mut ctxt = Context::from_waker(&w);
+            loop {
+                match unsafe { Pin::new_unchecked(&mut self.idle) }.poll(&mut ctxt) {
+                    Poll::Pending => {
+                        // All ok!
+                    }
+                    Poll::Ready(_) => {
+                        // The idle executor will never return
+                        unreachable!()
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub mod executor {
+    use core::{
+        future::Future,
+        mem,
+        pin::Pin,
+        task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
+    };
+
+    static WAKER_VTABLE: RawWakerVTable =
+        RawWakerVTable::new(waker_clone, waker_wake, waker_wake, waker_drop);
+
+    unsafe fn waker_clone(p: *const ()) -> RawWaker {
+        RawWaker::new(p, &WAKER_VTABLE)
+    }
+
+    unsafe fn waker_wake(p: *const ()) {
+        // The only thing we need from a waker is the function to call to pend the async
+        // dispatcher.
+        let f: fn() = mem::transmute(p);
+        f();
+    }
+
+    unsafe fn waker_drop(_: *const ()) {
+        // nop
+    }
+
+    //============
+    // AsyncTaskExecutor
+
+    pub struct AsyncTaskExecutor<F: Future + 'static> {
+        task: Option<F>,
+    }
+
+    impl<F: Future + 'static> AsyncTaskExecutor<F> {
+        pub const fn new() -> Self {
+            Self { task: None }
+        }
+
+        pub fn is_running(&self) -> bool {
+            self.task.is_some()
+        }
+
+        pub fn spawn(&mut self, future: F) {
+            self.task = Some(future);
+        }
+
+        pub fn poll(&mut self, wake: fn()) -> bool {
+            if let Some(future) = &mut self.task {
+                unsafe {
+                    let waker = Waker::from_raw(RawWaker::new(wake as *const (), &WAKER_VTABLE));
+                    let mut cx = Context::from_waker(&waker);
+                    let future = Pin::new_unchecked(future);
+
+                    match future.poll(&mut cx) {
+                        Poll::Ready(_) => {
+                            self.task = None;
+                            true // Only true if we finished now
+                        }
+                        Poll::Pending => false,
+                    }
+                }
+            } else {
+                false
+            }
+        }
+    }
+}
 
 pub type SCFQ<const N: usize> = Queue<u8, N>;
 pub type SCRQ<T, const N: usize> = Queue<(T, u8), N>;
+pub type ASYNCRQ<T, const N: usize> = Queue<T, N>;
 
 /// Mask is used to store interrupt masks on systems without a BASEPRI register (M0, M0+, M23).
 /// It needs to be large enough to cover all the relevant interrupts in use.
@@ -117,7 +243,7 @@ impl Priority {
     ///
     /// Will overwrite the current Priority
     #[inline(always)]
-    pub unsafe fn new(value: u8) -> Self {
+    pub const unsafe fn new(value: u8) -> Self {
         Priority {
             inner: Cell::new(value),
         }

@@ -1,7 +1,6 @@
 #[allow(unused_extern_crates)]
 extern crate proc_macro;
 
-use core::ops;
 use proc_macro::TokenStream;
 
 use indexmap::{IndexMap, IndexSet};
@@ -22,26 +21,6 @@ pub type Map<T> = IndexMap<Ident, T>;
 
 /// An order set
 pub type Set<T> = IndexSet<T>;
-
-/// Immutable pointer
-pub struct P<T> {
-    ptr: Box<T>,
-}
-
-impl<T> P<T> {
-    /// Boxes `x` making the value immutable
-    pub fn new(x: T) -> P<T> {
-        P { ptr: Box::new(x) }
-    }
-}
-
-impl<T> ops::Deref for P<T> {
-    type Target = T;
-
-    fn deref(&self) -> &T {
-        &self.ptr
-    }
-}
 
 /// Execution context
 #[derive(Clone, Copy)]
