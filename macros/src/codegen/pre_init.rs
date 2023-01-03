@@ -13,20 +13,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     // Disable interrupts -- `init` must run with interrupts disabled
     stmts.push(quote!(rtic::export::interrupt::disable();));
 
-    // Populate the FreeQueue
-    for (name, task) in &app.software_tasks {
-        if task.is_async {
-            continue;
-        }
-
-        let cap = task.args.capacity;
-        let fq_ident = util::fq_ident(name);
-
-        stmts.push(quote!(
-            (0..#cap).for_each(|i| (&mut *#fq_ident.get_mut()).enqueue_unchecked(i));
-        ));
-    }
-
     stmts.push(quote!(
         // To set the variable in cortex_m so the peripherals cannot be taken multiple times
         let mut core: rtic::export::Peripherals = rtic::export::Peripherals::steal().into();
@@ -42,11 +28,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         stmts.push(quote!(let _ = #rt_err::#interrupt::#name;));
     }
 
-    let interrupt_ids = analysis
-        .interrupts_normal
-        .iter()
-        .map(|(p, (id, _))| (p, id))
-        .chain(analysis.interrupts_async.iter().map(|(p, (id, _))| (p, id)));
+    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
     // Unmask interrupts and set their priorities
     for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {
@@ -101,53 +83,5 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         );));
     }
 
-    // Initialize monotonic's interrupts
-    for (_, monotonic) in &app.monotonics {
-        let priority = if let Some(prio) = monotonic.args.priority {
-            quote! { #prio }
-        } else {
-            quote! { (1 << #nvic_prio_bits) }
-        };
-        let binds = &monotonic.args.binds;
-
-        let name = &monotonic.ident;
-        let es = format!(
-            "Maximum priority used by monotonic '{}' is more than supported by hardware",
-            name
-        );
-        // Compile time assert that this priority is supported by the device
-        stmts.push(quote!(
-            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
-        ));
-
-        let mono_type = &monotonic.ty;
-
-        if &*binds.to_string() == "SysTick" {
-            stmts.push(quote!(
-                core.SCB.set_priority(
-                    rtic::export::SystemHandler::SysTick,
-                    rtic::export::logical2hw(#priority, #nvic_prio_bits),
-                );
-
-                // Always enable monotonic interrupts if they should never be off
-                if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
-                    core::mem::transmute::<_, rtic::export::SYST>(())
-                        .enable_interrupt();
-                }
-            ));
-        } else {
-            stmts.push(quote!(
-                core.NVIC.set_priority(
-                    #rt_err::#interrupt::#binds,
-                    rtic::export::logical2hw(#priority, #nvic_prio_bits),
-                );
-
-                // Always enable monotonic interrupts if they should never be off
-                if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
-                    rtic::export::NVIC::unmask(#rt_err::#interrupt::#binds);
-                }
-            ));
-        }
-    }
     stmts
 }

@@ -10,8 +10,7 @@ use syn::Ident;
 /// Extend the upstream `Analysis` struct with our field
 pub struct Analysis {
     parent: analyze::Analysis,
-    pub interrupts_normal: BTreeMap<Priority, (Ident, Dispatcher)>,
-    pub interrupts_async: BTreeMap<Priority, (Ident, Dispatcher)>,
+    pub interrupts: BTreeMap<Priority, (Ident, Dispatcher)>,
 }
 
 impl ops::Deref for Analysis {
@@ -30,27 +29,12 @@ pub fn app(analysis: analyze::Analysis, app: &App) -> Analysis {
     let priorities = app
         .software_tasks
         .values()
-        .filter(|task| !task.is_async)
-        .map(|task| task.args.priority)
-        .collect::<BTreeSet<_>>();
-
-    let priorities_async = app
-        .software_tasks
-        .values()
-        .filter(|task| task.is_async)
         .map(|task| task.args.priority)
         .collect::<BTreeSet<_>>();
 
     // map from priorities to interrupts (holding name and attributes)
 
-    let interrupts_normal: BTreeMap<Priority, _> = priorities
-        .iter()
-        .copied()
-        .rev()
-        .map(|p| (p, available_interrupt.pop().expect("UNREACHABLE")))
-        .collect();
-
-    let interrupts_async: BTreeMap<Priority, _> = priorities_async
+    let interrupts: BTreeMap<Priority, _> = priorities
         .iter()
         .copied()
         .rev()
@@ -59,7 +43,6 @@ pub fn app(analysis: analyze::Analysis, app: &App) -> Analysis {
 
     Analysis {
         parent: analysis,
-        interrupts_normal,
-        interrupts_async,
+        interrupts,
     }
 }

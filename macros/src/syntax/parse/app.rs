@@ -5,14 +5,14 @@ use proc_macro2::TokenStream as TokenStream2;
 use syn::{
     parse::{self, ParseStream, Parser},
     spanned::Spanned,
-    Expr, ExprArray, Fields, ForeignItem, Ident, Item, LitBool, Path, Token, Type, Visibility,
+    Expr, ExprArray, Fields, ForeignItem, Ident, Item, LitBool, Path, Token, Visibility,
 };
 
 use super::Input;
 use crate::syntax::{
     ast::{
         App, AppArgs, Dispatcher, Dispatchers, HardwareTask, Idle, IdleArgs, Init, InitArgs,
-        LocalResource, Monotonic, MonotonicArgs, SharedResource, SoftwareTask,
+        LocalResource, SharedResource, SoftwareTask,
     },
     parse::{self as syntax_parse, util},
     Either, Map, Set,
@@ -150,7 +150,6 @@ impl App {
         let mut shared_resources = Map::new();
         let mut local_resources_ident = None;
         let mut local_resources = Map::new();
-        let mut monotonics = Map::new();
         let mut hardware_tasks = Map::new();
         let mut software_tasks = Map::new();
         let mut user_imports = vec![];
@@ -158,7 +157,6 @@ impl App {
 
         let mut seen_idents = HashSet::<Ident>::new();
         let mut bindings = HashSet::<Ident>::new();
-        let mut monotonic_types = HashSet::<Type>::new();
 
         let mut check_binding = |ident: &Ident| {
             if bindings.contains(ident) {
@@ -181,19 +179,6 @@ impl App {
                 ));
             } else {
                 seen_idents.insert(ident.clone());
-            }
-
-            Ok(())
-        };
-
-        let mut check_monotonic = |ty: &Type| {
-            if monotonic_types.contains(ty) {
-                return Err(parse::Error::new(
-                    ty.span(),
-                    "this type is already used by another monotonic",
-                ));
-            } else {
-                monotonic_types.insert(ty.clone());
             }
 
             Ok(())
@@ -448,44 +433,6 @@ impl App {
                     // Store the user provided use-statements
                     user_imports.push(itemuse_.clone());
                 }
-                Item::Type(ref mut type_item) => {
-                    // Match types with the attribute #[monotonic]
-                    if let Some(pos) = type_item
-                        .attrs
-                        .iter()
-                        .position(|attr| util::attr_eq(attr, "monotonic"))
-                    {
-                        let span = type_item.ident.span();
-
-                        if monotonics.contains_key(&type_item.ident) {
-                            return Err(parse::Error::new(
-                                span,
-                                "`#[monotonic(...)]` on a specific type must appear at most once",
-                            ));
-                        }
-
-                        if type_item.vis != Visibility::Inherited {
-                            return Err(parse::Error::new(
-                                type_item.span(),
-                                "this item must have inherited / private visibility",
-                            ));
-                        }
-
-                        check_monotonic(&*type_item.ty)?;
-
-                        let m = type_item.attrs.remove(pos);
-                        let args = MonotonicArgs::parse(m)?;
-
-                        check_binding(&args.binds)?;
-
-                        let monotonic = Monotonic::parse(args, type_item, span)?;
-
-                        monotonics.insert(type_item.ident.clone(), monotonic);
-                    }
-
-                    // All types are passed on
-                    user_code.push(item.clone());
-                }
                 _ => {
                     // Anything else within the module should not make any difference
                     user_code.push(item.clone());
@@ -524,7 +471,6 @@ impl App {
             name: input.ident,
             init,
             idle,
-            monotonics,
             shared_resources,
             local_resources,
             user_imports,

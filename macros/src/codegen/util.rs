@@ -3,19 +3,9 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use crate::syntax::{ast::App, Context};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{Attribute, Ident, LitInt, PatType};
+use syn::{Attribute, Ident};
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
-
-/// Turns `capacity` into an unsuffixed integer literal
-pub fn capacity_literal(capacity: usize) -> LitInt {
-    LitInt::new(&capacity.to_string(), Span::call_site())
-}
-
-/// Identifier for the free queue
-pub fn fq_ident(task: &Ident) -> Ident {
-    mark_internal_name(&format!("{}_FQ", task))
-}
 
 /// Generates a `Mutex` implementation
 pub fn impl_mutex(
@@ -60,28 +50,14 @@ pub fn impl_mutex(
     )
 }
 
-/// Generates an identifier for the `INPUTS` buffer (`spawn` & `schedule` API)
-pub fn inputs_ident(task: &Ident) -> Ident {
-    mark_internal_name(&format!("{}_INPUTS", task))
-}
-
 /// Generates an identifier for the `EXECUTOR_RUN` atomics (`async` API)
 pub fn executor_run_ident(task: &Ident) -> Ident {
     mark_internal_name(&format!("{}_EXECUTOR_RUN", task))
 }
 
-/// Generates an identifier for the `INSTANTS` buffer (`schedule` API)
-pub fn monotonic_instants_ident(task: &Ident, monotonic: &Ident) -> Ident {
-    mark_internal_name(&format!("{}_{}_INSTANTS", task, monotonic))
-}
-
 pub fn interrupt_ident() -> Ident {
     let span = Span::call_site();
     Ident::new("interrupt", span)
-}
-
-pub fn timer_queue_marker_ident() -> Ident {
-    mark_internal_name("TIMER_QUEUE_MARKER")
 }
 
 /// Whether `name` is an exception with configurable priority
@@ -106,11 +82,6 @@ pub fn mark_internal_name(name: &str) -> Ident {
     Ident::new(&format!("{}_{}", RTIC_INTERNAL, name), Span::call_site())
 }
 
-/// Generate an internal identifier for monotonics
-pub fn internal_monotonics_ident(task: &Ident, monotonic: &Ident, ident_name: &str) -> Ident {
-    mark_internal_name(&format!("{}_{}_{}", task, monotonic, ident_name,))
-}
-
 /// Generate an internal identifier for tasks
 pub fn internal_task_ident(task: &Ident, ident_name: &str) -> Ident {
     mark_internal_name(&format!("{}_{}", task, ident_name))
@@ -127,55 +98,6 @@ pub fn link_section_uninit() -> TokenStream2 {
     let section = format!(".uninit.rtic{}", link_section_index());
 
     quote!(#[link_section = #section])
-}
-
-// Regroups the inputs of a task
-//
-// `inputs` could be &[`input: Foo`] OR &[`mut x: i32`, `ref y: i64`]
-pub fn regroup_inputs(
-    inputs: &[PatType],
-) -> (
-    // args e.g. &[`_0`],  &[`_0: i32`, `_1: i64`]
-    Vec<TokenStream2>,
-    // tupled e.g. `_0`, `(_0, _1)`
-    TokenStream2,
-    // untupled e.g. &[`_0`], &[`_0`, `_1`]
-    Vec<TokenStream2>,
-    // ty e.g. `Foo`, `(i32, i64)`
-    TokenStream2,
-) {
-    if inputs.len() == 1 {
-        let ty = &inputs[0].ty;
-
-        (
-            vec![quote!(_0: #ty)],
-            quote!(_0),
-            vec![quote!(_0)],
-            quote!(#ty),
-        )
-    } else {
-        let mut args = vec![];
-        let mut pats = vec![];
-        let mut tys = vec![];
-
-        for (i, input) in inputs.iter().enumerate() {
-            let i = Ident::new(&format!("_{}", i), Span::call_site());
-            let ty = &input.ty;
-
-            args.push(quote!(#i: #ty));
-
-            pats.push(quote!(#i));
-
-            tys.push(quote!(#ty));
-        }
-
-        let tupled = {
-            let pats = pats.clone();
-            quote!((#(#pats,)*))
-        };
-        let ty = quote!((#(#tys,)*));
-        (args, tupled, pats, ty)
-    }
 }
 
 /// Get the ident for the name of the task
@@ -230,46 +152,15 @@ pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
     mark_internal_name(&s)
 }
 
-/// Generates an identifier for a ready queue
-///
-/// There may be several task dispatchers, one for each priority level.
-/// The ready queues are SPSC queues
-pub fn rq_ident(priority: u8) -> Ident {
-    mark_internal_name(&format!("P{}_RQ", priority))
-}
-
 /// Generates an identifier for a ready queue, async task version
 pub fn rq_async_ident(async_task_name: &Ident) -> Ident {
     mark_internal_name(&format!("ASYNC_TACK_{}_RQ", async_task_name))
-}
-
-/// Generates an identifier for the `enum` of `schedule`-able tasks
-pub fn schedule_t_ident() -> Ident {
-    mark_internal_name("SCHED_T")
-}
-
-/// Generates an identifier for the `enum` of `spawn`-able tasks
-///
-/// This identifier needs the same structure as the `RQ` identifier because there's one ready queue
-/// for each of these `T` enums
-pub fn spawn_t_ident(priority: u8) -> Ident {
-    mark_internal_name(&format!("P{}_T", priority))
 }
 
 /// Suffixed identifier
 pub fn suffixed(name: &str) -> Ident {
     let span = Span::call_site();
     Ident::new(name, span)
-}
-
-/// Generates an identifier for a timer queue
-pub fn tq_ident(name: &str) -> Ident {
-    mark_internal_name(&format!("TQ_{}", name))
-}
-
-/// Generates an identifier for monotonic timer storage
-pub fn monotonic_ident(name: &str) -> Ident {
-    mark_internal_name(&format!("MONOTONIC_STORAGE_{}", name))
 }
 
 pub fn static_shared_resource_ident(name: &Ident) -> Ident {

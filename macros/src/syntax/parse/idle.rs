@@ -21,16 +21,14 @@ impl Idle {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
-                if rest.is_empty() {
-                    return Ok(Idle {
-                        args,
-                        attrs: item.attrs,
-                        context,
-                        name: item.sig.ident,
-                        stmts: item.block.stmts,
-                    });
-                }
+            if let Some(context) = util::parse_inputs(item.sig.inputs, &name) {
+                return Ok(Idle {
+                    args,
+                    attrs: item.attrs,
+                    context,
+                    name: item.sig.ident,
+                    stmts: item.block.stmts,
+                });
             }
         }
 

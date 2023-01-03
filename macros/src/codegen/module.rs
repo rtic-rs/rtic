@@ -102,33 +102,6 @@ pub fn codegen(
         values.push(quote!(shared: #name::SharedResources::new(#priority)));
     }
 
-    if let Context::Init = ctxt {
-        let monotonic_types: Vec<_> = app
-            .monotonics
-            .iter()
-            .map(|(_, monotonic)| {
-                let mono = &monotonic.ty;
-                quote! {#mono}
-            })
-            .collect();
-
-        let internal_monotonics_ident = util::mark_internal_name("Monotonics");
-
-        items.push(quote!(
-            /// Monotonics used by the system
-            #[allow(non_snake_case)]
-            #[allow(non_camel_case_types)]
-            pub struct #internal_monotonics_ident(
-                #(pub #monotonic_types),*
-            );
-        ));
-
-        module_items.push(quote!(
-            #[doc(inline)]
-            pub use super::#internal_monotonics_ident as Monotonics;
-        ));
-    }
-
     let doc = match ctxt {
         Context::Idle => "Idle loop",
         Context::Init => "Initialization function",
@@ -192,280 +165,45 @@ pub fn codegen(
     if let Context::SoftwareTask(..) = ctxt {
         let spawnee = &app.software_tasks[name];
         let priority = spawnee.args.priority;
-        let t = util::spawn_t_ident(priority);
         let cfgs = &spawnee.cfgs;
         // Store a copy of the task cfgs
         task_cfgs = cfgs.clone();
-        let (args, tupled, untupled, ty) = util::regroup_inputs(&spawnee.inputs);
-        let args = &args;
-        let tupled = &tupled;
-        let fq = util::fq_ident(name);
-        let rq = util::rq_ident(priority);
-        let inputs = util::inputs_ident(name);
 
         let device = &app.args.device;
         let enum_ = util::interrupt_ident();
-        let interrupt = if spawnee.is_async {
-            &analysis
-                .interrupts_async
-                .get(&priority)
-                .expect("RTIC-ICE: interrupt identifer not found")
-                .0
-        } else {
-            &analysis
-                .interrupts_normal
-                .get(&priority)
-                .expect("RTIC-ICE: interrupt identifer not found")
-                .0
-        };
+        let interrupt = &analysis
+            .interrupts
+            .get(&priority)
+            .expect("RTIC-ICE: interrupt identifer not found")
+            .0;
 
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");
 
         // Spawn caller
-        if spawnee.is_async {
-            let rq = util::rq_async_ident(name);
-            items.push(quote!(
+        let rq = util::rq_async_ident(name);
+        items.push(quote!(
 
-            #(#cfgs)*
-            /// Spawns the task directly
-            #[allow(non_snake_case)]
-            #[doc(hidden)]
-            pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
-                let input = #tupled;
+        #(#cfgs)*
+        /// Spawns the task directly
+        #[allow(non_snake_case)]
+        #[doc(hidden)]
+        pub fn #internal_spawn_ident() -> Result<(), ()> {
+            unsafe {
+                let r = rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).enqueue(()));
 
-                unsafe {
-                    let r = rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).enqueue(input));
-
-                    if r.is_ok() {
-                        rtic::pend(#device::#enum_::#interrupt);
-                    }
-
-                    r
-                }
-            }));
-        } else {
-            items.push(quote!(
-
-            #(#cfgs)*
-            /// Spawns the task directly
-            #[allow(non_snake_case)]
-            #[doc(hidden)]
-            pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
-                let input = #tupled;
-
-                unsafe {
-                    if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
-                        (&mut *#inputs
-                            .get_mut())
-                            .get_unchecked_mut(usize::from(index))
-                            .as_mut_ptr()
-                            .write(input);
-
-                        rtic::export::interrupt::free(|_| {
-                            (&mut *#rq.get_mut()).enqueue_unchecked((#t::#name, index));
-                        });
-                        rtic::pend(#device::#enum_::#interrupt);
-
-                        Ok(())
-                    } else {
-                        Err(input)
-                    }
+                if r.is_ok() {
+                    rtic::pend(#device::#enum_::#interrupt);
                 }
 
-            }));
-        }
+                r
+            }
+        }));
 
         module_items.push(quote!(
             #(#cfgs)*
             #[doc(inline)]
             pub use super::#internal_spawn_ident as spawn;
         ));
-
-        // Schedule caller
-        if !spawnee.is_async {
-            for (_, monotonic) in &app.monotonics {
-                let instants = util::monotonic_instants_ident(name, &monotonic.ident);
-                let monotonic_name = monotonic.ident.to_string();
-
-                let tq = util::tq_ident(&monotonic.ident.to_string());
-                let t = util::schedule_t_ident();
-                let m = &monotonic.ident;
-                let m_ident = util::monotonic_ident(&monotonic_name);
-                let m_isr = &monotonic.args.binds;
-                let enum_ = util::interrupt_ident();
-                let spawn_handle_string = format!("{}::SpawnHandle", m);
-
-                let (enable_interrupt, pend) = if &*m_isr.to_string() == "SysTick" {
-                    (
-                        quote!(core::mem::transmute::<_, rtic::export::SYST>(()).enable_interrupt()),
-                        quote!(rtic::export::SCB::set_pendst()),
-                    )
-                } else {
-                    let rt_err = util::rt_err_ident();
-                    (
-                        quote!(rtic::export::NVIC::unmask(#rt_err::#enum_::#m_isr)),
-                        quote!(rtic::pend(#rt_err::#enum_::#m_isr)),
-                    )
-                };
-
-                let tq_marker = &util::timer_queue_marker_ident();
-
-                let internal_spawn_handle_ident =
-                    util::internal_monotonics_ident(name, m, "SpawnHandle");
-                let internal_spawn_at_ident = util::internal_monotonics_ident(name, m, "spawn_at");
-                let internal_spawn_after_ident =
-                    util::internal_monotonics_ident(name, m, "spawn_after");
-
-                if monotonic.args.default {
-                    module_items.push(quote!(
-                        #[doc(inline)]
-                        pub use #m::spawn_after;
-                        #[doc(inline)]
-                        pub use #m::spawn_at;
-                        #[doc(inline)]
-                        pub use #m::SpawnHandle;
-                    ));
-                }
-                module_items.push(quote!(
-                    pub mod #m {
-                        #[doc(inline)]
-                        pub use super::super::#internal_spawn_after_ident as spawn_after;
-                        #[doc(inline)]
-                        pub use super::super::#internal_spawn_at_ident as spawn_at;
-                        #[doc(inline)]
-                        pub use super::super::#internal_spawn_handle_ident as SpawnHandle;
-                    }
-                ));
-
-                items.push(quote!(
-                #(#cfgs)*
-                #[allow(non_snake_case)]
-                #[allow(non_camel_case_types)]
-                pub struct #internal_spawn_handle_ident {
-                    #[doc(hidden)]
-                    marker: u32,
-                }
-
-                #(#cfgs)*
-                impl core::fmt::Debug for #internal_spawn_handle_ident {
-                    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                        f.debug_struct(#spawn_handle_string).finish()
-                    }
-                }
-
-                #(#cfgs)*
-                impl #internal_spawn_handle_ident {
-                    pub fn cancel(self) -> Result<#ty, ()> {
-                        rtic::export::interrupt::free(|_| unsafe {
-                            let tq = &mut *#tq.get_mut();
-                            if let Some((_task, index)) = tq.cancel_task_marker(self.marker) {
-                                // Get the message
-                                let msg = (&*#inputs
-                                    .get())
-                                    .get_unchecked(usize::from(index))
-                                    .as_ptr()
-                                    .read();
-                                // Return the index to the free queue
-                                (&mut *#fq.get_mut()).split().0.enqueue_unchecked(index);
-
-                                Ok(msg)
-                            } else {
-                                Err(())
-                            }
-                        })
-                    }
-
-                    #[inline]
-                    pub fn reschedule_after(
-                        self,
-                        duration: <#m as rtic::Monotonic>::Duration
-                    ) -> Result<Self, ()> {
-                        self.reschedule_at(monotonics::#m::now() + duration)
-                    }
-
-                    pub fn reschedule_at(
-                        self,
-                        instant: <#m as rtic::Monotonic>::Instant
-                    ) -> Result<Self, ()> {
-                        rtic::export::interrupt::free(|_| unsafe {
-                            let marker = #tq_marker.get().read();
-                            #tq_marker.get_mut().write(marker.wrapping_add(1));
-
-                            let tq = (&mut *#tq.get_mut());
-
-                            tq.update_task_marker(self.marker, marker, instant, || #pend).map(|_| #name::#m::SpawnHandle { marker })
-                        })
-                    }
-                }
-
-
-                #(#cfgs)*
-                /// Spawns the task after a set duration relative to the current time
-                ///
-                /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
-                /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
-                #[allow(non_snake_case)]
-                pub fn #internal_spawn_after_ident(
-                    duration: <#m as rtic::Monotonic>::Duration
-                    #(,#args)*
-                ) -> Result<#name::#m::SpawnHandle, #ty>
-                {
-                    let instant = monotonics::#m::now();
-
-                    #internal_spawn_at_ident(instant + duration #(,#untupled)*)
-                }
-
-                #(#cfgs)*
-                /// Spawns the task at a fixed time instant
-                #[allow(non_snake_case)]
-                pub fn #internal_spawn_at_ident(
-                    instant: <#m as rtic::Monotonic>::Instant
-                    #(,#args)*
-                ) -> Result<#name::#m::SpawnHandle, #ty> {
-                    unsafe {
-                        let input = #tupled;
-                        if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
-                            (&mut *#inputs
-                                .get_mut())
-                                .get_unchecked_mut(usize::from(index))
-                                .as_mut_ptr()
-                                .write(input);
-
-                            (&mut *#instants
-                                .get_mut())
-                                .get_unchecked_mut(usize::from(index))
-                                .as_mut_ptr()
-                                .write(instant);
-
-                            rtic::export::interrupt::free(|_| {
-                                let marker = #tq_marker.get().read();
-                                let nr = rtic::export::TaskNotReady {
-                                    task: #t::#name,
-                                    index,
-                                    instant,
-                                    marker,
-                                };
-
-                                #tq_marker.get_mut().write(#tq_marker.get().read().wrapping_add(1));
-
-                                let tq = &mut *#tq.get_mut();
-
-                                tq.enqueue_task_unchecked(
-                                    nr,
-                                    || #enable_interrupt,
-                                    || #pend,
-                                    (&mut *#m_ident.get_mut()).as_mut());
-
-                                Ok(#name::#m::SpawnHandle { marker })
-                            })
-                        } else {
-                            Err(input)
-                        }
-                    }
-                }
-            ));
-            }
-        }
     }
 
     if items.is_empty() {

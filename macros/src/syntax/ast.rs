@@ -1,6 +1,6 @@
 //! Abstract Syntax Tree
 
-use syn::{Attribute, Expr, Ident, Item, ItemUse, Pat, PatType, Path, Stmt, Type};
+use syn::{Attribute, Expr, Ident, Item, ItemUse, Pat, Path, Stmt, Type};
 
 use crate::syntax::Map;
 
@@ -20,9 +20,6 @@ pub struct App {
     /// The `#[idle]` function
     pub idle: Option<Idle>,
 
-    /// Monotonic clocks
-    pub monotonics: Map<Monotonic>,
-
     /// Resources shared between tasks defined in `#[shared]`
     pub shared_resources: Map<SharedResource>,
 
@@ -38,7 +35,7 @@ pub struct App {
     /// Hardware tasks: `#[task(binds = ..)]`s
     pub hardware_tasks: Map<HardwareTask>,
 
-    /// Software tasks: `#[task]`
+    /// Async software tasks: `#[task]`
     pub software_tasks: Map<SoftwareTask>,
 }
 
@@ -192,38 +189,7 @@ pub struct LocalResource {
     pub ty: Box<Type>,
 }
 
-/// Monotonic
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct Monotonic {
-    /// `#[cfg]` attributes like `#[cfg(debug_assertions)]`
-    pub cfgs: Vec<Attribute>,
-
-    /// The identifier of the monotonic
-    pub ident: Ident,
-
-    /// The type of this monotonic
-    pub ty: Box<Type>,
-
-    /// Monotonic args
-    pub args: MonotonicArgs,
-}
-
-/// Monotonic metadata
-#[derive(Debug)]
-#[non_exhaustive]
-pub struct MonotonicArgs {
-    /// The interrupt or exception that this monotonic is bound to
-    pub binds: Ident,
-
-    /// The priority of this monotonic
-    pub priority: Option<u8>,
-
-    /// If this is the default monotonic
-    pub default: bool,
-}
-
-/// A software task
+/// An async software task
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct SoftwareTask {
@@ -239,26 +205,17 @@ pub struct SoftwareTask {
     /// The context argument
     pub context: Box<Pat>,
 
-    /// The inputs of this software task
-    pub inputs: Vec<PatType>,
-
     /// The statements that make up the task handler
     pub stmts: Vec<Stmt>,
 
     /// The task is declared externally
     pub is_extern: bool,
-
-    /// If the task is marked as `async`
-    pub is_async: bool,
 }
 
 /// Software task metadata
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct SoftwareTaskArgs {
-    /// The task capacity: the maximum number of pending messages that can be queued
-    pub capacity: u8,
-
     /// The priority of this task
     pub priority: u8,
 
@@ -275,7 +232,6 @@ pub struct SoftwareTaskArgs {
 impl Default for SoftwareTaskArgs {
     fn default() -> Self {
         Self {
-            capacity: 1,
             priority: 1,
             local_resources: LocalResources::new(),
             shared_resources: SharedResources::new(),

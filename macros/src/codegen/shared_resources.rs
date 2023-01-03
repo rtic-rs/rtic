@@ -111,11 +111,7 @@ pub fn codegen(
     };
 
     // Computing mapping of used interrupts to masks
-    let interrupt_ids = analysis
-        .interrupts_normal
-        .iter()
-        .map(|(p, (id, _))| (p, id))
-        .chain(analysis.interrupts_async.iter().map(|(p, (id, _))| (p, id)));
+    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
     let mut prio_to_masks = HashMap::new();
     let device = &app.args.device;

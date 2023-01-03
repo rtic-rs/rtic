@@ -16,19 +16,11 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
     type TaskName = String;
     type Priority = u8;
 
-    // The task list is a Tuple (Name, Shared Resources, Local Resources, Priority, IsAsync)
-    let task_resources_list: Vec<(TaskName, Vec<&Ident>, &LocalResources, Priority, bool)> =
+    // The task list is a Tuple (Name, Shared Resources, Local Resources, Priority)
+    let task_resources_list: Vec<(TaskName, Vec<&Ident>, &LocalResources, Priority)> =
         Some(&app.init)
             .iter()
-            .map(|ht| {
-                (
-                    "init".to_string(),
-                    Vec::new(),
-                    &ht.args.local_resources,
-                    0,
-                    false,
-                )
-            })
+            .map(|ht| ("init".to_string(), Vec::new(), &ht.args.local_resources, 0))
             .chain(app.idle.iter().map(|ht| {
                 (
                     "idle".to_string(),
@@ -39,7 +31,6 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
                         .collect::<Vec<_>>(),
                     &ht.args.local_resources,
                     0,
-                    false,
                 )
             }))
             .chain(app.software_tasks.iter().map(|(name, ht)| {
@@ -52,7 +43,6 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
                         .collect::<Vec<_>>(),
                     &ht.args.local_resources,
                     ht.args.priority,
-                    ht.is_async,
                 )
             }))
             .chain(app.hardware_tasks.iter().map(|(name, ht)| {
@@ -65,7 +55,6 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
                         .collect::<Vec<_>>(),
                     &ht.args.local_resources,
                     ht.args.priority,
-                    false,
                 )
             }))
             .collect();
@@ -84,21 +73,20 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
 
     // Check that lock_free resources are correct
     for lf_res in lock_free.iter() {
-        for (task, tr, _, priority, is_async) in task_resources_list.iter() {
+        for (task, tr, _, priority) in task_resources_list.iter() {
             for r in tr {
                 // Get all uses of resources annotated lock_free
                 if lf_res == r {
                     // lock_free resources are not allowed in async tasks
-                    if *is_async {
-                        error.push(syn::Error::new(
+                    error.push(syn::Error::new(
                             r.span(),
                             format!(
                                 "Lock free shared resource {:?} is used by an async tasks, which is forbidden",
                                 r.to_string(),
                             ),
                         ));
-                    }
 
+                    // TODO: Should this be removed?
                     // HashMap returns the previous existing object if old.key == new.key
                     if let Some(lf_res) = lf_hash.insert(r.to_string(), (task, r, priority)) {
                         // Check if priority differ, if it does, append to
@@ -150,7 +138,7 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
 
     // Check that local resources are not shared
     for lr in local {
-        for (task, _, local_resources, _, _) in task_resources_list.iter() {
+        for (task, _, local_resources, _) in task_resources_list.iter() {
             for (name, res) in local_resources.iter() {
                 // Get all uses of resources annotated lock_free
                 if lr == name {
@@ -193,18 +181,7 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
                 error.push(syn::Error::new(
                     name.span(),
                     format!(
-                        "Software task {:?} has priority 0, but `#[idle]` is defined. 0-priority software tasks are only allowed if there is no `#[idle]`.",
-                        name.to_string(),
-                    )
-                ));
-            }
-
-            // 0-priority tasks must be async
-            if !task.is_async {
-                error.push(syn::Error::new(
-                    name.span(),
-                    format!(
-                        "Software task {:?} has priority 0, but is not `async`. 0-priority software tasks must be `async`.",
+                        "Async task {:?} has priority 0, but `#[idle]` is defined. 0-priority async tasks are only allowed if there is no `#[idle]`.",
                         name.to_string(),
                     )
                 ));
@@ -263,7 +240,7 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
     // Create the list of used local resource Idents
     let mut used_local_resource = IndexSet::new();
 
-    for (_, _, locals, _, _) in task_resources_list {
+    for (_, _, locals, _) in task_resources_list {
         for (local, _) in locals {
             used_local_resource.insert(local.clone());
         }
@@ -307,26 +284,10 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
 
         let channel = channels.entry(spawnee_prio).or_default();
         channel.tasks.insert(name.clone());
-
-        if !spawnee.args.only_same_priority_spawn {
-            // Require `Send` if the task can be spawned from other priorities
-            spawnee.inputs.iter().for_each(|input| {
-                send_types.insert(input.ty.clone());
-            });
-        }
     }
 
     // No channel should ever be empty
     debug_assert!(channels.values().all(|channel| !channel.tasks.is_empty()));
-
-    // Compute channel capacities
-    for channel in channels.values_mut() {
-        channel.capacity = channel
-            .tasks
-            .iter()
-            .map(|name| app.software_tasks[name].args.capacity)
-            .sum();
-    }
 
     Ok(Analysis {
         channels,
