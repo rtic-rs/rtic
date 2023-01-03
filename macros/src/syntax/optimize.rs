@@ -1,6 +1,6 @@
 use std::collections::{BTreeSet, HashMap};
 
-use crate::syntax::{ast::App, Settings};
+use crate::syntax::ast::App;
 
 pub fn app(app: &mut App, settings: &Settings) {
     // "compress" priorities
