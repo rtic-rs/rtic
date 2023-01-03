@@ -347,7 +347,7 @@ jobs:
           echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_ENV
 
-      - uses: everlytic/branch-merge@1.1.2
+      - uses: everlytic/branch-merge@1.1.5
         with:
           github_token: ${{ github.token }}
           source_ref: 'master'
