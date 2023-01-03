@@ -16,11 +16,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         stmts.push(quote!(rtic::export::assert_sync::<#ty>();));
     }
 
-    for (_, monotonic) in &app.monotonics {
-        let ty = &monotonic.ty;
-        stmts.push(quote!(rtic::export::assert_monotonic::<#ty>();));
-    }
-
     let device = &app.args.device;
     let chunks_name = util::priority_mask_chunks_ident();
     let no_basepri_checks: Vec<_> = app

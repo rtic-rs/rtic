@@ -6,20 +6,20 @@ use crate::syntax::ast::App;
 
 mod assertions;
 mod async_dispatchers;
-mod dispatchers;
+// mod dispatchers;
 mod hardware_tasks;
 mod idle;
 mod init;
 mod local_resources;
 mod local_resources_struct;
 mod module;
-mod monotonic;
+// mod monotonic;
 mod post_init;
 mod pre_init;
 mod shared_resources;
 mod shared_resources_struct;
-mod software_tasks;
-mod timer_queue;
+// mod software_tasks;
+// mod timer_queue;
 mod util;
 
 #[allow(clippy::too_many_lines)]
@@ -92,14 +92,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
     let (mod_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks) =
         hardware_tasks::codegen(app, analysis);
 
-    let (mod_app_software_tasks, root_software_tasks, user_software_tasks) =
-        software_tasks::codegen(app, analysis);
-
-    let monotonics = monotonic::codegen(app, analysis);
-
-    let mod_app_dispatchers = dispatchers::codegen(app, analysis);
     let mod_app_async_dispatchers = async_dispatchers::codegen(app, analysis);
-    let mod_app_timer_queue = timer_queue::codegen(app, analysis);
     let user_imports = &app.user_imports;
     let user_code = &app.user_code;
     let name = &app.name;
@@ -113,8 +106,6 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
             /// Always include the device crate which contains the vector table
             use #device as #rt_err;
 
-            #monotonics
-
             #(#user_imports)*
 
             /// User code from within the module
@@ -125,8 +116,6 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
 
             #(#user_hardware_tasks)*
 
-            #(#user_software_tasks)*
-
             #(#root)*
 
             #mod_shared_resources
@@ -135,9 +124,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
 
             #(#root_hardware_tasks)*
 
-            #(#root_software_tasks)*
-
-            /// App module
+            /// app module
             #(#mod_app)*
 
             #(#mod_app_shared_resources)*
@@ -146,13 +133,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
 
             #(#mod_app_hardware_tasks)*
 
-            #(#mod_app_software_tasks)*
-
-            #(#mod_app_dispatchers)*
-
             #(#mod_app_async_dispatchers)*
-
-            #(#mod_app_timer_queue)*
 
             #(#mains)*
         }

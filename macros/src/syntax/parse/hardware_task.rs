@@ -23,19 +23,17 @@ impl HardwareTask {
         }
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
-                if rest.is_empty() {
-                    let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
+            if let Some(context) = util::parse_inputs(item.sig.inputs, &name) {
+                let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
 
-                    return Ok(HardwareTask {
-                        args,
-                        cfgs,
-                        attrs,
-                        context,
-                        stmts: item.block.stmts,
-                        is_extern: false,
-                    });
-                }
+                return Ok(HardwareTask {
+                    args,
+                    cfgs,
+                    attrs,
+                    context,
+                    stmts: item.block.stmts,
+                    is_extern: false,
+                });
             }
         }
 
@@ -69,19 +67,17 @@ impl HardwareTask {
         }
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
-                if rest.is_empty() {
-                    let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
+            if let Some(context) = util::parse_inputs(item.sig.inputs, &name) {
+                let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
 
-                    return Ok(HardwareTask {
-                        args,
-                        cfgs,
-                        attrs,
-                        context,
-                        stmts: Vec::<Stmt>::new(),
-                        is_extern: true,
-                    });
-                }
+                return Ok(HardwareTask {
+                    args,
+                    cfgs,
+                    attrs,
+                    context,
+                    stmts: Vec::<Stmt>::new(),
+                    is_extern: true,
+                });
             }
         }
 

@@ -2,7 +2,6 @@ mod app;
 mod hardware_task;
 mod idle;
 mod init;
-mod monotonic;
 mod resource;
 mod software_task;
 mod util;
@@ -11,15 +10,12 @@ use proc_macro2::TokenStream as TokenStream2;
 use syn::{
     braced, parenthesized,
     parse::{self, Parse, ParseStream, Parser},
-    token::{self, Brace},
-    Ident, Item, LitBool, LitInt, Path, Token,
+    token::Brace,
+    Ident, Item, LitInt, Token,
 };
 
 use crate::syntax::{
-    ast::{
-        App, AppArgs, HardwareTaskArgs, IdleArgs, InitArgs, MonotonicArgs, SoftwareTaskArgs,
-        TaskLocal,
-    },
+    ast::{App, AppArgs, HardwareTaskArgs, IdleArgs, InitArgs, SoftwareTaskArgs, TaskLocal},
     Either,
 };
 
@@ -388,122 +384,11 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
             })
         } else {
             Either::Right(SoftwareTaskArgs {
-                capacity: capacity.unwrap_or(1),
                 priority,
                 shared_resources,
                 local_resources,
                 only_same_priority_spawn,
             })
-        })
-    })
-    .parse2(tokens)
-}
-
-fn monotonic_args(path: Path, tokens: TokenStream2) -> parse::Result<MonotonicArgs> {
-    (|input: ParseStream<'_>| -> parse::Result<MonotonicArgs> {
-        let mut binds = None;
-        let mut priority = None;
-        let mut default = None;
-
-        if !input.peek(token::Paren) {
-            return Err(parse::Error::new(
-                path.segments.first().unwrap().ident.span(),
-                "expected opening ( in #[monotonic( ... )]",
-            ));
-        }
-
-        let content;
-        parenthesized!(content in input);
-
-        if !content.is_empty() {
-            loop {
-                // Parse identifier name
-                let ident: Ident = content.parse()?;
-                // Handle equal sign
-                let _: Token![=] = content.parse()?;
-
-                match &*ident.to_string() {
-                    "binds" => {
-                        if binds.is_some() {
-                            return Err(parse::Error::new(
-                                ident.span(),
-                                "argument appears more than once",
-                            ));
-                        }
-                        // Parse identifier name
-                        let ident = content.parse()?;
-
-                        binds = Some(ident);
-                    }
-
-                    "priority" => {
-                        if priority.is_some() {
-                            return Err(parse::Error::new(
-                                ident.span(),
-                                "argument appears more than once",
-                            ));
-                        }
-
-                        // #lit
-                        let lit: LitInt = content.parse()?;
-
-                        if !lit.suffix().is_empty() {
-                            return Err(parse::Error::new(
-                                lit.span(),
-                                "this literal must be unsuffixed",
-                            ));
-                        }
-
-                        let value = lit.base10_parse::<u8>().ok();
-                        if value.is_none() || value == Some(0) {
-                            return Err(parse::Error::new(
-                                lit.span(),
-                                "this literal must be in the range 1...255",
-                            ));
-                        }
-
-                        priority = Some(value.unwrap());
-                    }
-
-                    "default" => {
-                        if default.is_some() {
-                            return Err(parse::Error::new(
-                                ident.span(),
-                                "argument appears more than once",
-                            ));
-                        }
-
-                        let lit: LitBool = content.parse()?;
-                        default = Some(lit.value);
-                    }
-
-                    _ => {
-                        return Err(parse::Error::new(ident.span(), "unexpected argument"));
-                    }
-                }
-                if content.is_empty() {
-                    break;
-                }
-
-                // Handle comma: ,
-                let _: Token![,] = content.parse()?;
-            }
-        }
-
-        let binds = if let Some(r) = binds {
-            r
-        } else {
-            return Err(parse::Error::new(
-                content.span(),
-                "`binds = ...` is missing",
-            ));
-        };
-        let default = default.unwrap_or(false);
-
-        Ok(MonotonicArgs {
-            binds,
-            priority,
-            default,
         })
     })
     .parse2(tokens)
