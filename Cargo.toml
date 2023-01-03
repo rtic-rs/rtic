@@ -37,7 +37,7 @@ systick-monotonic = "1.0.0"
 
 [dev-dependencies.panic-semihosting]
 features = ["exit"]
-version = "0.5.2"
+version = "0.6.0"
 
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
 trybuild = "1"
