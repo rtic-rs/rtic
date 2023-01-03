@@ -13,7 +13,6 @@ mod accessors;
 pub mod analyze;
 pub mod ast;
 mod check;
-mod optimize;
 mod parse;
 
 /// An ordered map keyed by identifier
@@ -31,10 +30,10 @@ pub enum Context<'a> {
     /// The `init`-ialization function
     Init,
 
-    /// A software task: `#[task]`
+    /// A async software task
     SoftwareTask(&'a Ident),
 
-    /// A hardware task: `#[exception]` or `#[interrupt]`
+    /// A hardware task
     HardwareTask(&'a Ident),
 }
 
@@ -93,36 +92,21 @@ impl<'a> Context<'a> {
     }
 }
 
-/// Parser and optimizer configuration
-#[derive(Default)]
-#[non_exhaustive]
-pub struct Settings {
-    /// Whether to accept the `binds` argument in `#[task]` or not
-    pub parse_binds: bool,
-    /// Whether to parse `extern` interrupts (functions) or not
-    pub parse_extern_interrupt: bool,
-    /// Whether to "compress" priorities or not
-    pub optimize_priorities: bool,
-}
-
 /// Parses the input of the `#[app]` attribute
 pub fn parse(
     args: TokenStream,
     input: TokenStream,
-    settings: Settings,
 ) -> Result<(ast::App, analyze::Analysis), syn::parse::Error> {
-    parse2(args.into(), input.into(), settings)
+    parse2(args.into(), input.into())
 }
 
 /// `proc_macro2::TokenStream` version of `parse`
 pub fn parse2(
     args: TokenStream2,
     input: TokenStream2,
-    settings: Settings,
 ) -> Result<(ast::App, analyze::Analysis), syn::parse::Error> {
-    let mut app = parse::app(args, input, &settings)?;
+    let app = parse::app(args, input)?;
     check::app(&app)?;
-    optimize::app(&mut app, &settings);
 
     match analyze::app(&app) {
         Err(e) => Err(e),

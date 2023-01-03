@@ -1,6 +1,6 @@
 #![no_main]
 
-#[rtic_macros::mock_app(parse_extern_interrupt, parse_binds, device = mock, dispatchers = [EXTI0])]
+#[rtic_macros::mock_app(device = mock, dispatchers = [EXTI0])]
 mod app {
     #[shared]
     struct Shared {}

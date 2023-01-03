@@ -20,15 +20,15 @@ use crate::syntax::{
         App, AppArgs, HardwareTaskArgs, IdleArgs, InitArgs, MonotonicArgs, SoftwareTaskArgs,
         TaskLocal,
     },
-    Either, Settings,
+    Either,
 };
 
 // Parse the app, both app arguments and body (input)
-pub fn app(args: TokenStream2, input: TokenStream2, settings: &Settings) -> parse::Result<App> {
+pub fn app(args: TokenStream2, input: TokenStream2) -> parse::Result<App> {
     let args = AppArgs::parse(args)?;
     let input: Input = syn::parse2(input)?;
 
-    App::parse(args, input, settings)
+    App::parse(args, input)
 }
 
 pub(crate) struct Input {
@@ -188,10 +188,7 @@ fn idle_args(tokens: TokenStream2) -> parse::Result<IdleArgs> {
     .parse2(tokens)
 }
 
-fn task_args(
-    tokens: TokenStream2,
-    settings: &Settings,
-) -> parse::Result<Either<HardwareTaskArgs, SoftwareTaskArgs>> {
+fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, SoftwareTaskArgs>> {
     (|input: ParseStream<'_>| -> parse::Result<Either<HardwareTaskArgs, SoftwareTaskArgs>> {
         if input.is_empty() {
             return Ok(Either::Right(SoftwareTaskArgs::default()));
@@ -242,14 +239,7 @@ fn task_args(
             let _: Token![=] = content.parse()?;
 
             match &*ident_s {
-                "binds" if !settings.parse_binds => {
-                    return Err(parse::Error::new(
-                        ident.span(),
-                        "Unexpected bind in task argument. Binds are only parsed if Settings::parse_binds is set.",
-                    ));
-                }
-
-                "binds" if settings.parse_binds => {
+                "binds" => {
                     if binds.is_some() {
                         return Err(parse::Error::new(
                             ident.span(),

@@ -18,25 +18,7 @@ mod syntax;
 #[doc(hidden)]
 #[proc_macro_attribute]
 pub fn mock_app(args: TokenStream, input: TokenStream) -> TokenStream {
-    let mut settings = syntax::Settings::default();
-    let mut rtic_args = vec![];
-    for arg in args.to_string().split(',') {
-        if arg.trim() == "parse_binds" {
-            settings.parse_binds = true;
-        } else if arg.trim() == "parse_extern_interrupt" {
-            settings.parse_extern_interrupt = true;
-        } else {
-            rtic_args.push(arg.to_string());
-        }
-    }
-
-    // rtic_args.push("device = mock".into());
-
-    let args = rtic_args.join(", ").parse();
-
-    println!("args: {:?}", args);
-
-    if let Err(e) = syntax::parse(args.unwrap(), input, settings) {
+    if let Err(e) = syntax::parse(args, input) {
         e.to_compile_error().into()
     } else {
         "fn main() {}".parse().unwrap()
@@ -52,12 +34,7 @@ pub fn mock_app(args: TokenStream, input: TokenStream) -> TokenStream {
 /// Should never panic, cargo feeds a path which is later converted to a string
 #[proc_macro_attribute]
 pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
-    let mut settings = syntax::Settings::default();
-    settings.optimize_priorities = false;
-    settings.parse_binds = true;
-    settings.parse_extern_interrupt = true;
-
-    let (app, analysis) = match syntax::parse(args, input, settings) {
+    let (app, analysis) = match syntax::parse(args, input) {
         Err(e) => return e.to_compile_error().into(),
         Ok(x) => x,
     };

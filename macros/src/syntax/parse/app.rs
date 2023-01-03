@@ -15,7 +15,7 @@ use crate::syntax::{
         LocalResource, Monotonic, MonotonicArgs, SharedResource, SoftwareTask,
     },
     parse::{self as syntax_parse, util},
-    Either, Map, Set, Settings,
+    Either, Map, Set,
 };
 
 impl AppArgs {
@@ -142,7 +142,7 @@ impl AppArgs {
 }
 
 impl App {
-    pub(crate) fn parse(args: AppArgs, input: Input, settings: &Settings) -> parse::Result<Self> {
+    pub(crate) fn parse(args: AppArgs, input: Input) -> parse::Result<Self> {
         let mut init = None;
         let mut idle = None;
 
@@ -253,7 +253,7 @@ impl App {
                             ));
                         }
 
-                        match syntax_parse::task_args(item.attrs.remove(pos).tokens, settings)? {
+                        match syntax_parse::task_args(item.attrs.remove(pos).tokens)? {
                             Either::Left(args) => {
                                 check_binding(&args.binds)?;
                                 check_ident(&item.sig.ident)?;
@@ -410,10 +410,7 @@ impl App {
                                     ));
                                 }
 
-                                match syntax_parse::task_args(
-                                    item.attrs.remove(pos).tokens,
-                                    settings,
-                                )? {
+                                match syntax_parse::task_args(item.attrs.remove(pos).tokens)? {
                                     Either::Left(args) => {
                                         check_binding(&args.binds)?;
                                         check_ident(&item.sig.ident)?;
