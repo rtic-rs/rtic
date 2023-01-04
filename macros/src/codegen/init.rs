@@ -76,7 +76,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
 
     // let locals_pat = locals_pat.iter();
 
-    let user_init_return = quote! {#shared, #local, #name::Monotonics};
+    let user_init_return = quote! {#shared, #local};
 
     let user_init = quote!(
         #(#attrs)*
@@ -99,9 +99,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
         mod_app = Some(constructor);
     }
 
-    // let locals_new = locals_new.iter();
     let call_init = quote! {
-        let (shared_resources, local_resources, mut monotonics) = #name(#name::Context::new(core.into()));
+        let (shared_resources, local_resources) = #name(#name::Context::new(core.into()));
     };
 
     root_init.push(module::codegen(

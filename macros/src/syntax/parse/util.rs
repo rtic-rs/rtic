@@ -277,18 +277,18 @@ fn extract_init_resource_name_ident(ty: Type) -> Result<Ident, ()> {
 }
 
 /// Checks Init's return type, return the user provided types for analysis
-pub fn type_is_init_return(ty: &ReturnType, name: &str) -> Result<(Ident, Ident), ()> {
+pub fn type_is_init_return(ty: &ReturnType) -> Result<(Ident, Ident), ()> {
     match ty {
         ReturnType::Default => Err(()),
 
         ReturnType::Type(_, ty) => match &**ty {
             Type::Tuple(t) => {
                 // return should be:
-                // fn -> (User's #[shared] struct, User's #[local] struct, {name}::Monotonics)
+                // fn -> (User's #[shared] struct, User's #[local] struct)
                 //
                 // We check the length and the last one here, analysis checks that the user
                 // provided structs are correct.
-                if t.elems.len() == 3 && type_is_path(&t.elems[2], &[name, "Monotonics"]) {
+                if t.elems.len() == 2 {
                     return Ok((
                         extract_init_resource_name_ident(t.elems[0].clone())?,
                         extract_init_resource_name_ident(t.elems[1].clone())?,

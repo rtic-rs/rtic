@@ -6,20 +6,17 @@ use crate::syntax::ast::App;
 
 mod assertions;
 mod async_dispatchers;
-// mod dispatchers;
 mod hardware_tasks;
 mod idle;
 mod init;
 mod local_resources;
 mod local_resources_struct;
 mod module;
-// mod monotonic;
 mod post_init;
 mod pre_init;
 mod shared_resources;
 mod shared_resources_struct;
 mod software_tasks;
-// mod timer_queue;
 mod util;
 
 #[allow(clippy::too_many_lines)]
