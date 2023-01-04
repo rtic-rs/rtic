@@ -4,7 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    labels:
+      - "skip-changelog"
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
       interval: "weekly"
+    labels:
+      - "skip-changelog"
