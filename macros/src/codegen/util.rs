@@ -154,7 +154,7 @@ pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
 
 /// Generates an identifier for a ready queue, async task version
 pub fn rq_async_ident(async_task_name: &Ident) -> Ident {
-    mark_internal_name(&format!("ASYNC_TACK_{}_RQ", async_task_name))
+    mark_internal_name(&format!("ASYNC_TASK_{}_RQ", async_task_name))
 }
 
 /// Suffixed identifier

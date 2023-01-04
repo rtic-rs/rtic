@@ -183,13 +183,14 @@ pub fn codegen(
         #[doc(hidden)]
         pub fn #internal_spawn_ident() -> Result<(), ()> {
             unsafe {
-                let r = rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).enqueue(()));
-
-                if r.is_ok() {
+                // TODO: Fix this to be compare and swap
+                if #rq.load(core::sync::atomic::Ordering::Acquire) {
+                    Err(())
+                } else {
+                    #rq.store(true, core::sync::atomic::Ordering::Release);
                     rtic::pend(#device::#enum_::#interrupt);
+                    Ok(())
                 }
-
-                r
             }
         }));
 
