@@ -45,23 +45,20 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
             let executor_run_ident = util::executor_run_ident(name);
 
             let rq = util::rq_async_ident(name);
-            let (rq_ty, rq_expr) = {
-                (
-                    quote!(rtic::export::ASYNCRQ<(), 2>), // TODO: This needs updating to a counter instead of a queue
-                    quote!(rtic::export::Queue::new()),
-                )
-            };
 
             items.push(quote!(
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[allow(non_upper_case_globals)]
-                static #rq: rtic::RacyCell<#rq_ty> = rtic::RacyCell::new(#rq_expr);
+                static #rq: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
             ));
 
             stmts.push(quote!(
                 if !(&*#exec_name.get()).is_running() {
-                     if let Some(()) = rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).dequeue()) {
+                    // TODO Fix this to be compare and swap
+                    if #rq.load(core::sync::atomic::Ordering::Relaxed) {
+                         #rq.store(false, core::sync::atomic::Ordering::Relaxed);
+
 
                         // The async executor needs a static priority
                         #prio_name.get_mut().write(rtic::export::Priority::new(PRIORITY));
@@ -77,7 +74,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
                     if (&mut *#exec_name.get_mut()).poll(||  {
                         #executor_run_ident.store(true, core::sync::atomic::Ordering::Release);
                         rtic::pend(#device::#enum_::#interrupt);
-                    }) && !rtic::export::interrupt::free(|_| (&*#rq.get_mut()).is_empty()) {
+                    }) && #rq.load(core::sync::atomic::Ordering::Relaxed) {
                         // If the ready queue is not empty and the executor finished, restart this
                         // dispatch to check if the executor should be restarted.
                         rtic::pend(#device::#enum_::#interrupt);
