@@ -111,14 +111,8 @@ pub fn codegen(
 
     let v = Vec::new();
     let cfgs = match ctxt {
-        Context::HardwareTask(t) => {
-            &app.hardware_tasks[t].cfgs
-            // ...
-        }
-        Context::SoftwareTask(t) => {
-            &app.software_tasks[t].cfgs
-            // ...
-        }
+        Context::HardwareTask(t) => &app.hardware_tasks[t].cfgs,
+        Context::SoftwareTask(t) => &app.software_tasks[t].cfgs,
         _ => &v,
     };
 

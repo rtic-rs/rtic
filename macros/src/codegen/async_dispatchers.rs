@@ -101,7 +101,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
                 const PRIORITY: u8 = #level;
 
                 rtic::export::run(PRIORITY, || {
+                    // Have the acquire/release semantics outside the checks to no overdo it
+                    core::sync::atomic::fence(core::sync::atomic::Ordering::Acquire);
+
                     #(#stmts)*
+
+                    core::sync::atomic::fence(core::sync::atomic::Ordering::Release);
                 });
             }
         ));
