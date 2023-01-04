@@ -23,7 +23,7 @@ impl Init {
 
         if valid_signature {
             if let Ok((user_shared_struct, user_local_struct)) =
-                util::type_is_init_return(&item.sig.output, &name)
+                util::type_is_init_return(&item.sig.output)
             {
                 if let Some(context) = util::parse_inputs(item.sig.inputs, &name) {
                     return Ok(Init {
@@ -42,7 +42,7 @@ impl Init {
         Err(parse::Error::new(
             span,
             &format!(
-                "the `#[init]` function must have signature `fn({}::Context) -> (Shared resources struct, Local resources struct, {0}::Monotonics)`",
+                "the `#[init]` function must have signature `fn({}::Context) -> (Shared resources struct, Local resources struct)`",
                 name
             ),
         ))
