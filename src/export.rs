@@ -1,8 +1,3 @@
-#![allow(clippy::inline_always)]
-pub use crate::{
-    sll::{IntrusiveSortedLinkedList, Node as IntrusiveNode},
-    tq::{TaskNotReady, TimerQueue, WakerNotReady},
-};
 pub use bare_metal::CriticalSection;
 use core::{
     cell::Cell,
