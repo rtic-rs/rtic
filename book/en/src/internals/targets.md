@@ -19,13 +19,13 @@ Table 1 below shows a list of Cortex-m processors and which type of critical sec
 
 | Processor  | Architecture | Priority Ceiling | Source Masking |
 | :--------- | :----------: | :--------------: | :------------: |
-| Cortex-M0  | ARMv6-M      |                  |     &#2713     |
-| Cortex-M0+ | ARMv6-M      |                  |     &#2713     |
-| Cortex-M3  | ARMv7-M      |      &#2713      |                |
-| Cortex-M4  | ARMv7-M      |      &#2713      |                |
-| Cortex-M7  | ARMv7-M      |      &#2713      |                |
-| Cortex-M23 | ARMv8-M-base |                  |     &#2713     |
-| Cortex-M33 | ARMv8-M-main |      &#2713      |                |
+| Cortex-M0  | ARMv6-M      |                  |        ✓       |
+| Cortex-M0+ | ARMv6-M      |                  |        ✓       |
+| Cortex-M3  | ARMv7-M      |         ✓        |                |
+| Cortex-M4  | ARMv7-M      |         ✓        |                |
+| Cortex-M7  | ARMv7-M      |         ✓        |                |
+| Cortex-M23 | ARMv8-M-base |                  |        ✓       |
+| Cortex-M33 | ARMv8-M-main |         ✓        |                |
 
 ## Priority Ceiling
 
