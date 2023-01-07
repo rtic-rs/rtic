@@ -27,34 +27,12 @@ mod main;
 
 #[allow(clippy::too_many_lines)]
 pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
-    let mut mod_app = vec![];
-    let mut root = vec![];
-    let mut user = vec![];
-
     // Generate the `main` function
     let main = main::codegen(app, analysis);
 
     let (mod_app_init, root_init, user_init) = init::codegen(app, analysis);
 
     let (mod_app_idle, root_idle, user_idle) = idle::codegen(app, analysis);
-
-    user.push(quote!(
-        #user_init
-
-        #user_idle
-    ));
-
-    root.push(quote!(
-        #(#root_init)*
-
-        #(#root_idle)*
-    ));
-
-    mod_app.push(quote!(
-        #mod_app_init
-
-        #(#mod_app_idle)*
-    ));
 
     let (mod_app_shared_resources, mod_shared_resources) = shared_resources::codegen(app, analysis);
     let (mod_app_local_resources, mod_local_resources) = local_resources::codegen(app, analysis);
@@ -85,13 +63,21 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
             #(#user_code)*
             /// User code end
 
-            #(#user)*
-
             #(#user_hardware_tasks)*
 
             #(#user_software_tasks)*
 
-            #(#root)*
+            #mod_app_init
+
+            #(#root_init)*
+
+            #user_init
+
+            #(#mod_app_idle)*
+
+            #(#root_idle)*
+
+            #user_idle
 
             #mod_shared_resources
 
@@ -100,9 +86,6 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
             #(#root_hardware_tasks)*
 
             #(#root_software_tasks)*
-
-            /// app module
-            #(#mod_app)*
 
             #(#mod_app_shared_resources)*
 
