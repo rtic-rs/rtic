@@ -25,7 +25,6 @@ type CodegenResult = (
 /// Generates support code for `#[init]` functions
 pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
     let init = &app.init;
-    let mut local_needs_lt = false;
     let name = &init.name;
 
     let mut root_init = vec![];
