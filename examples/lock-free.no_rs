@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -21,14 +22,14 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         foo::spawn().unwrap();
 
-        (Shared { counter: 0 }, Local {}, init::Monotonics())
+        (Shared { counter: 0 }, Local {})
     }
 
     #[task(shared = [counter])] // <- same priority
-    fn foo(c: foo::Context) {
+    async fn foo(c: foo::Context) {
         bar::spawn().unwrap();
 
         *c.shared.counter += 1; // <- no lock API required
@@ -37,7 +38,7 @@ mod app {
     }
 
     #[task(shared = [counter])] // <- same priority
-    fn bar(c: bar::Context) {
+    async fn bar(c: bar::Context) {
         foo::spawn().unwrap();
 
         *c.shared.counter += 1; // <- no lock API required
