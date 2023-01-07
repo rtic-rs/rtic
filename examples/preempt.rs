@@ -2,6 +2,7 @@
 
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 use rtic::app;
@@ -17,14 +18,14 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         foo::spawn().unwrap();
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
     #[task(priority = 1)]
-    fn foo(_: foo::Context) {
+    async fn foo(_: foo::Context) {
         hprintln!("foo - start").unwrap();
         baz::spawn().unwrap();
         hprintln!("foo - end").unwrap();
@@ -32,12 +33,12 @@ mod app {
     }
 
     #[task(priority = 2)]
-    fn bar(_: bar::Context) {
+    async fn bar(_: bar::Context) {
         hprintln!(" bar").unwrap();
     }
 
     #[task(priority = 2)]
-    fn baz(_: baz::Context) {
+    async fn baz(_: baz::Context) {
         hprintln!(" baz - start").unwrap();
         bar::spawn().unwrap();
         hprintln!(" baz - end").unwrap();

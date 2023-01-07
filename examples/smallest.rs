@@ -17,8 +17,8 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 }

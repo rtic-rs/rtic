@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -18,14 +19,14 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         let _: Result<(), ()> = foo::spawn();
         let _: Result<(), u32> = bar::spawn(0);
         let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
     #[idle]
@@ -54,15 +55,15 @@ mod app {
     }
 
     #[task]
-    fn foo(_: foo::Context) {
+    async fn foo(_: foo::Context) {
         let _: Result<(), ()> = foo::spawn();
         let _: Result<(), u32> = bar::spawn(0);
         let _: Result<(), (u32, u32)> = baz::spawn(0, 1);
     }
 
     #[task]
-    fn bar(_: bar::Context, _x: u32) {}
+    async fn bar(_: bar::Context, _x: u32) {}
 
     #[task]
-    fn baz(_: baz::Context, _x: u32, _y: u32) {}
+    async fn baz(_: baz::Context, _x: u32, _y: u32) {}
 }

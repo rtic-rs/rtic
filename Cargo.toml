@@ -49,10 +49,7 @@ codegen-units = 1
 lto = true
 
 [workspace]
-members = [
-  "macros",
-  "xtask",
-]
+members = ["macros", "xtask"]
 
 # do not optimize proc-macro deps or build scripts
 [profile.dev.build-override]
@@ -76,6 +73,6 @@ lm3s6965 = { git = "https://github.com/japaric/lm3s6965" }
 [features]
 test-critical-section = ["cortex-m/critical-section-single-core"]
 
-[[example]]
-name = "pool"
-required-features = ["test-critical-section"]
+# [[example]]
+# name = "pool"
+# required-features = ["test-critical-section"]

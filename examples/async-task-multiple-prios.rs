@@ -6,14 +6,13 @@ use panic_semihosting as _;
 
 // NOTES:
 //
-// - Async tasks cannot have `#[lock_free]` resources, as they can interleve and each async
+// - Async tasks cannot have `#[lock_free]` resources, as they can interleave and each async
 //   task can have a mutable reference stored.
 // - Spawning an async task equates to it being polled once.
 
-#[rtic::app(device = lm3s6965, dispatchers = [SSI0, QEI0, UART0, UART1], peripherals = true)]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0, QEI0])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use systick_monotonic::*;
 
     #[shared]
     struct Shared {
@@ -24,53 +23,71 @@ mod app {
     #[local]
     struct Local {}
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<100>;
-
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         hprintln!("init").unwrap();
 
-        normal_task::spawn().ok();
-        async_task::spawn().ok();
-        normal_task2::spawn().ok();
+        async_task1::spawn().ok();
         async_task2::spawn().ok();
+        async_task3::spawn().ok();
+        async_task4::spawn().ok();
 
-        (
-            Shared { a: 0, b: 0 },
-            Local {},
-            init::Monotonics(Systick::new(cx.core.SYST, 12_000_000)),
-        )
+        (Shared { a: 0, b: 0 }, Local {})
     }
 
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        // debug::exit(debug::EXIT_SUCCESS);
         loop {
-            // hprintln!("idle");
-            cortex_m::asm::wfi(); // put the MCU in sleep mode until interrupt occurs
+            hprintln!("idle");
+            debug::exit(debug::EXIT_SUCCESS);
         }
     }
 
     #[task(priority = 1, shared = [a, b])]
-    fn normal_task(_cx: normal_task::Context) {
-        hprintln!("hello from normal 1").ok();
+    async fn async_task1(mut cx: async_task1::Context) {
+        hprintln!(
+            "hello from async 1 a {}",
+            cx.shared.a.lock(|a| {
+                *a += 1;
+                *a
+            })
+        )
+        .ok();
     }
 
     #[task(priority = 1, shared = [a, b])]
-    async fn async_task(_cx: async_task::Context) {
-        hprintln!("hello from async 1").ok();
-
-        debug::exit(debug::EXIT_SUCCESS);
+    async fn async_task2(mut cx: async_task2::Context) {
+        hprintln!(
+            "hello from async 2 a {}",
+            cx.shared.a.lock(|a| {
+                *a += 1;
+                *a
+            })
+        )
+        .ok();
     }
 
     #[task(priority = 2, shared = [a, b])]
-    fn normal_task2(_cx: normal_task2::Context) {
-        hprintln!("hello from normal 2").ok();
+    async fn async_task3(mut cx: async_task3::Context) {
+        hprintln!(
+            "hello from async 3 a {}",
+            cx.shared.a.lock(|a| {
+                *a += 1;
+                *a
+            })
+        )
+        .ok();
     }
 
     #[task(priority = 2, shared = [a, b])]
-    async fn async_task2(_cx: async_task2::Context) {
-        hprintln!("hello from async 2").ok();
+    async fn async_task4(mut cx: async_task4::Context) {
+        hprintln!(
+            "hello from async 4 a {}",
+            cx.shared.a.lock(|a| {
+                *a += 1;
+                *a
+            })
+        )
+        .ok();
     }
 }

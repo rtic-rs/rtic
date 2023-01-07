@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -20,15 +21,15 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         foo::spawn().unwrap();
         bar::spawn().unwrap();
 
-        (Shared { key: 0xdeadbeef }, Local {}, init::Monotonics())
+        (Shared { key: 0xdeadbeef }, Local {})
     }
 
     #[task(shared = [&key])]
-    fn foo(cx: foo::Context) {
+    async fn foo(cx: foo::Context) {
         let key: &u32 = cx.shared.key;
         hprintln!("foo(key = {:#x})", key).unwrap();
 
@@ -36,7 +37,7 @@ mod app {
     }
 
     #[task(priority = 2, shared = [&key])]
-    fn bar(cx: bar::Context) {
+    async fn bar(cx: bar::Context) {
         hprintln!("bar(key = {:#x})", cx.shared.key).unwrap();
     }
 }

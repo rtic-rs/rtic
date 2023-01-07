@@ -23,11 +23,11 @@ mod app {
     struct Local {}
 
     #[init(local = [q: Queue<u32, 5> = Queue::new()])]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         let (p, c) = cx.local.q.split();
 
         // Initialization of shared resources
-        (Shared { p, c }, Local {}, init::Monotonics())
+        (Shared { p, c }, Local {})
     }
 
     #[idle(shared = [c])]

@@ -27,14 +27,13 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         (
             Shared {
                 x: NotSend { _0: PhantomData },
                 y: None,
             },
             Local {},
-            init::Monotonics(),
         )
     }
 

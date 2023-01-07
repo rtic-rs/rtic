@@ -31,17 +31,17 @@ mod app {
     struct Local {}
 
     #[init(local = [memory: [u8; 512] = [0; 512]])]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         // Increase the capacity of the memory pool by ~4
         P::grow(cx.local.memory);
 
         rtic::pend(Interrupt::I2C0);
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
     #[task(binds = I2C0, priority = 2)]
-    fn i2c0(_: i2c0::Context) {
+    async fn i2c0(_: i2c0::Context) {
         // claim a memory block, initialize it and ..
         let x = P::alloc().unwrap().init([0u8; 128]);
 
@@ -55,7 +55,7 @@ mod app {
     }
 
     #[task]
-    fn foo(_: foo::Context, x: Box<P>) {
+    async fn foo(_: foo::Context, x: Box<P>) {
         hprintln!("foo({:?})", x.as_ptr()).unwrap();
 
         // explicitly return the block to the pool
@@ -65,7 +65,7 @@ mod app {
     }
 
     #[task(priority = 2)]
-    fn bar(_: bar::Context, x: Box<P>) {
+    async fn bar(_: bar::Context, x: Box<P>) {
         hprintln!("bar({:?})", x.as_ptr()).unwrap();
 
         // this is done automatically so we can omit the call to `drop`

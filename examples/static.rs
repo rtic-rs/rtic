@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -22,14 +23,14 @@ mod app {
     }
 
     #[init(local = [q: Queue<u32, 5> = Queue::new()])]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         // q has 'static life-time so after the split and return of `init`
         // it will continue to exist and be allocated
         let (p, c) = cx.local.q.split();
 
         foo::spawn().unwrap();
 
-        (Shared {}, Local { p, c }, init::Monotonics())
+        (Shared {}, Local { p, c })
     }
 
     #[idle(local = [c])]
@@ -50,7 +51,7 @@ mod app {
     }
 
     #[task(local = [p, state: u32 = 0])]
-    fn foo(c: foo::Context) {
+    async fn foo(c: foo::Context) {
         *c.local.state += 1;
 
         // Lock-free access to the same underlying queue!

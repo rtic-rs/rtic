@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -18,14 +19,14 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         foo::spawn().unwrap();
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
     #[task]
-    fn foo(_: foo::Context) {
+    async fn foo(_: foo::Context) {
         hprintln!("foo - start").unwrap();
 
         // spawns `bar` onto the task scheduler
@@ -43,14 +44,14 @@ mod app {
     }
 
     #[task]
-    fn bar(_: bar::Context) {
+    async fn bar(_: bar::Context) {
         hprintln!("bar").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(priority = 2)]
-    fn baz(_: baz::Context) {
+    async fn baz(_: baz::Context) {
         hprintln!("baz").unwrap();
     }
 }

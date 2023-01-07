@@ -5,6 +5,7 @@
 
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -20,11 +21,12 @@ impl BigStruct {
     }
 }
 
-#[rtic::app(device = lm3s6965)]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use super::BigStruct;
     use core::mem::MaybeUninit;
-    use cortex_m_semihosting::debug;
+    use cortex_m_semihosting::{debug, hprintln};
+    use lm3s6965::Interrupt;
 
     #[shared]
     struct Shared {
@@ -35,25 +37,43 @@ mod app {
     struct Local {}
 
     #[init(local = [bs: MaybeUninit<BigStruct> = MaybeUninit::uninit()])]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         let big_struct = unsafe {
             // write directly into the static storage
             cx.local.bs.as_mut_ptr().write(BigStruct::new());
             &mut *cx.local.bs.as_mut_ptr()
         };
 
-        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
-
+        rtic::pend(Interrupt::UART0);
+        async_task::spawn().unwrap();
         (
             Shared {
                 // assign the reference so we can use the resource
                 big_struct,
             },
             Local {},
-            init::Monotonics(),
         )
     }
 
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
+        loop {
+            hprintln!("idle");
+            debug::exit(debug::EXIT_SUCCESS);
+        }
+    }
+
     #[task(binds = UART0, shared = [big_struct])]
-    fn task(_: task::Context) {}
+    fn uart0(mut cx: uart0::Context) {
+        cx.shared
+            .big_struct
+            .lock(|b| hprintln!("uart0 data:{:?}", &b.data[0..5]).unwrap());
+    }
+
+    #[task(shared = [big_struct], priority = 2)]
+    async fn async_task(mut cx: async_task::Context) {
+        cx.shared
+            .big_struct
+            .lock(|b| hprintln!("async_task data:{:?}", &b.data[0..5]).unwrap());
+    }
 }
