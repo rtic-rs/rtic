@@ -18,14 +18,14 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(mut cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(mut cx: init::Context) -> (Shared, Local) {
         hprintln!("init").unwrap();
 
         // Set the ARM SLEEPONEXIT bit to go to sleep after handling interrupts
         // See https://developer.arm.com/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
         cx.core.SCB.set_sleepdeep();
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
     #[idle(local = [x: u32 = 0])]
