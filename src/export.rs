@@ -237,7 +237,7 @@ pub unsafe fn lock<T, R, const M: usize>(
         let current = basepri::read();
         basepri::write(logical2hw(ceiling, nvic_prio_bits));
         let r = f(&mut *ptr);
-        basepri::write(logical2hw(current, nvic_prio_bits));
+        basepri::write(current);
         r
     }
 }
