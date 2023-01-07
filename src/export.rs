@@ -1,8 +1,5 @@
 pub use bare_metal::CriticalSection;
-use core::{
-    cell::Cell,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use core::sync::atomic::{AtomicBool, Ordering};
 pub use cortex_m::{
     asm::nop,
     asm::wfi,
