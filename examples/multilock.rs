@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -22,7 +23,7 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         locks::spawn().unwrap();
 
         (
@@ -32,13 +33,12 @@ mod app {
                 shared3: 0,
             },
             Local {},
-            init::Monotonics(),
         )
     }
 
     // when omitted priority is assumed to be `1`
     #[task(shared = [shared1, shared2, shared3])]
-    fn locks(c: locks::Context) {
+    async fn locks(c: locks::Context) {
         let s1 = c.shared.shared1;
         let s2 = c.shared.shared2;
         let s3 = c.shared.shared3;
