@@ -18,10 +18,10 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         hprintln!("init").unwrap();
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
     #[idle(local = [x: u32 = 0])]

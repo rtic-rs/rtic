@@ -18,7 +18,7 @@ mod app {
     struct Local {}
 
     #[init(local = [x: u32 = 0])]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         // Cortex-M peripherals
         let _core: cortex_m::Peripherals = cx.core;
 
@@ -36,6 +36,6 @@ mod app {
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 }
