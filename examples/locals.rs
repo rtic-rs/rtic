@@ -1,5 +1,6 @@
 //! examples/locals.rs
 
+#![feature(type_alias_impl_trait)]
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
@@ -23,7 +24,7 @@ mod app {
 
     // `#[init]` cannot access locals from the `#[local]` struct as they are initialized here.
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         foo::spawn().unwrap();
         bar::spawn().unwrap();
 
@@ -35,7 +36,6 @@ mod app {
                 local_to_bar: 0,
                 local_to_idle: 0,
             },
-            init::Monotonics(),
         )
     }
 
@@ -62,7 +62,7 @@ mod app {
 
     // `local_to_foo` can only be accessed from this context
     #[task(local = [local_to_foo])]
-    fn foo(cx: foo::Context) {
+    async fn foo(cx: foo::Context) {
         let local_to_foo = cx.local.local_to_foo;
         *local_to_foo += 1;
 
@@ -74,7 +74,7 @@ mod app {
 
     // `local_to_bar` can only be accessed from this context
     #[task(local = [local_to_bar])]
-    fn bar(cx: bar::Context) {
+    async fn bar(cx: bar::Context) {
         let local_to_bar = cx.local.local_to_bar;
         *local_to_bar += 1;
 
