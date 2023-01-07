@@ -5,15 +5,7 @@ use quote::quote;
 use std::collections::HashMap;
 
 /// Generates `static` variables and shared resource proxies
-pub fn codegen(
-    app: &App,
-    analysis: &Analysis,
-) -> (
-    // mod_app -- the `static` variables behind the proxies
-    Vec<TokenStream2>,
-    // mod_resources -- the `resources` module
-    TokenStream2,
-) {
+pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut mod_app = vec![];
     let mut mod_resources = vec![];
 
@@ -183,5 +175,9 @@ pub fn codegen(
         ));
     }
 
-    (mod_app, mod_resources)
+    quote!(
+        #(#mod_app)*
+
+        #mod_resources
+    )
 }

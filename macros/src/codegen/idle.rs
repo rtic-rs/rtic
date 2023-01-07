@@ -7,20 +7,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
 /// Generates support code for `#[idle]` functions
-pub fn codegen(
-    app: &App,
-    analysis: &Analysis,
-) -> (
-    // mod_app_idle -- the `${idle}Resources` constructor
-    Vec<TokenStream2>,
-    // root_idle -- items that must be placed in the root of the crate:
-    // - the `${idle}Locals` struct
-    // - the `${idle}Resources` struct
-    // - the `${idle}` module, which contains types like `${idle}::Context`
-    Vec<TokenStream2>,
-    // user_idle
-    Option<TokenStream2>,
-) {
+pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     if let Some(idle) = &app.idle {
         let mut mod_app = vec![];
         let mut root_idle = vec![];
@@ -58,10 +45,14 @@ pub fn codegen(
             }
         ));
 
-        (mod_app, root_idle, user_idle)
-    } else {
-        // TODO: No idle defined, check for 0-priority tasks and generate an executor if needed
+        quote!(
+            #(#mod_app)*
 
-        (vec![], vec![], None)
+            #(#root_idle)*
+
+            #user_idle
+        )
+    } else {
+        quote!()
     }
 }

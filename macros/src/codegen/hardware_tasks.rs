@@ -7,20 +7,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
 /// Generate support code for hardware tasks (`#[exception]`s and `#[interrupt]`s)
-pub fn codegen(
-    app: &App,
-    analysis: &Analysis,
-) -> (
-    // mod_app_hardware_tasks -- interrupt handlers and `${task}Resources` constructors
-    Vec<TokenStream2>,
-    // root_hardware_tasks -- items that must be placed in the root of the crate:
-    // - `${task}Locals` structs
-    // - `${task}Resources` structs
-    // - `${task}` modules
-    Vec<TokenStream2>,
-    // user_hardware_tasks -- the `#[task]` functions written by the user
-    Vec<TokenStream2>,
-) {
+pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut mod_app = vec![];
     let mut root = vec![];
     let mut user_tasks = vec![];
@@ -90,5 +77,11 @@ pub fn codegen(
         }
     }
 
-    (mod_app, root, user_tasks)
+    quote!(
+        #(#mod_app)*
+
+        #(#root)*
+
+        #(#user_tasks)*
+    )
 }
