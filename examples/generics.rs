@@ -23,11 +23,11 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         rtic::pend(Interrupt::UART0);
         rtic::pend(Interrupt::UART1);
 
-        (Shared { shared: 0 }, Local {}, init::Monotonics())
+        (Shared { shared: 0 }, Local {})
     }
 
     #[task(binds = UART0, shared = [shared], local = [state: u32 = 0])]

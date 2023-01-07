@@ -19,16 +19,12 @@ mod app {
     type MyMono = Systick<100>;
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         hprintln!("init").unwrap();
 
         foo::spawn().ok();
 
-        (
-            Shared {},
-            Local {},
-            init::Monotonics(Systick::new(cx.core.SYST, 12_000_000)),
-        )
+        (Shared {}, Local {})
     }
 
     #[idle]

@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -18,15 +19,15 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         hprintln!("init").unwrap();
         foo::spawn().unwrap();
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
     #[task]
-    fn foo(_: foo::Context) {
+    async fn foo(_: foo::Context) {
         hprintln!("foo").unwrap();
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator

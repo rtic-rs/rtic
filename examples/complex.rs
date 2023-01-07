@@ -24,7 +24,7 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         hprintln!("init").unwrap();
 
         (
@@ -34,7 +34,6 @@ mod app {
                 s4: 0,
             },
             Local {},
-            init::Monotonics(),
         )
     }
 

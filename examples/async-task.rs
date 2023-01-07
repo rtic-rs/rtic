@@ -34,9 +34,9 @@ mod app {
 
     #[idle(shared = [a])]
     fn idle(_: idle::Context) -> ! {
-        // debug::exit(debug::EXIT_SUCCESS);
         loop {
-            // hprintln!("idle");
+            hprintln!("idle");
+            debug::exit(debug::EXIT_SUCCESS);
             cortex_m::asm::wfi(); // put the MCU in sleep mode until interrupt occurs
         }
     }
@@ -51,8 +51,6 @@ mod app {
     async fn async_task(cx: async_task::Context) {
         let async_task::SharedResources { a: _, .. } = cx.shared;
         hprintln!("hello from async").ok();
-
-        debug::exit(debug::EXIT_SUCCESS);
     }
 
     #[task(priority = 2, shared = [a])]

@@ -4,17 +4,16 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 
 // Free function implementing the spawnable task `foo`.
-fn foo(_c: app::foo::Context, x: i32, y: u32) {
-    hprintln!("foo {}, {}", x, y).unwrap();
-    if x == 2 {
-        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
-    }
-    app::foo::spawn(2, 3).unwrap();
+// Notice, you need to indicate an anonymous lifetime <'a_>
+async fn foo(_c: app::foo::Context<'_>) {
+    hprintln!("foo").unwrap();
+    debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 }
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
@@ -28,14 +27,14 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        foo::spawn(1, 2).unwrap();
+    fn init(_: init::Context) -> (Shared, Local) {
+        foo::spawn().unwrap();
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
     extern "Rust" {
         #[task()]
-        fn foo(_c: foo::Context, _x: i32, _y: u32);
+        async fn foo(_c: foo::Context);
     }
 }
