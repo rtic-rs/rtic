@@ -6,20 +6,7 @@ use crate::{
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
-pub fn codegen(
-    app: &App,
-    analysis: &Analysis,
-) -> (
-    // mod_app_software_tasks -- free queues, buffers and `${task}Resources` constructors
-    Vec<TokenStream2>,
-    // root_software_tasks -- items that must be placed in the root of the crate:
-    // - `${task}Locals` structs
-    // - `${task}Resources` structs
-    // - `${task}` modules
-    Vec<TokenStream2>,
-    // user_software_tasks -- the `#[task]` functions written by the user
-    Vec<TokenStream2>,
-) {
+pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut mod_app = vec![];
     let mut root = vec![];
     let mut user_tasks = vec![];
@@ -78,5 +65,11 @@ pub fn codegen(
         root.push(module::codegen(Context::SoftwareTask(name), app, analysis));
     }
 
-    (mod_app, root, user_tasks)
+    quote!(
+        #(#mod_app)*
+
+        #(#root)*
+
+        #(#user_tasks)*
+    )
 }

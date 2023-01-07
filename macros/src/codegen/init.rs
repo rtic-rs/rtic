@@ -7,21 +7,8 @@ use crate::{
     syntax::{ast::App, Context},
 };
 
-type CodegenResult = (
-    // mod_app_idle -- the `${init}Resources` constructor
-    Option<TokenStream2>,
-    // root_init -- items that must be placed in the root of the crate:
-    // - the `${init}Locals` struct
-    // - the `${init}Resources` struct
-    // - the `${init}LateResources` struct
-    // - the `${init}` module, which contains types like `${init}::Context`
-    Vec<TokenStream2>,
-    // user_init -- the `#[init]` function written by the user
-    TokenStream2,
-);
-
 /// Generates support code for `#[init]` functions
-pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
+pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let init = &app.init;
     let name = &init.name;
 
@@ -98,5 +85,11 @@ pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
 
     root_init.push(module::codegen(Context::Init, app, analysis));
 
-    (mod_app, root_init, user_init)
+    quote!(
+        #mod_app
+
+        #(#root_init)*
+
+        #user_init
+    )
 }

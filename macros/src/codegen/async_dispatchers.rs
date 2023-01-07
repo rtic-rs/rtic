@@ -4,7 +4,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
 /// Generates task dispatchers
-pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
+pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut items = vec![];
 
     let interrupts = &analysis.interrupts;
@@ -96,5 +96,5 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         ));
     }
 
-    items
+    quote!(#(#items)*)
 }

@@ -6,17 +6,8 @@ use quote::quote;
 /// Generates `local` variables and local resource proxies
 ///
 /// I.e. the `static` variables and theirs proxies.
-pub fn codegen(
-    app: &App,
-    _analysis: &Analysis,
-) -> (
-    // mod_app -- the `static` variables behind the proxies
-    Vec<TokenStream2>,
-    // mod_resources -- the `resources` module
-    TokenStream2,
-) {
+pub fn codegen(app: &App, _analysis: &Analysis) -> TokenStream2 {
     let mut mod_app = vec![];
-    // let mut mod_resources: _ = vec![];
 
     // All local resources declared in the `#[local]' struct
     for (name, res) in &app.local_resources {
@@ -70,5 +61,5 @@ pub fn codegen(
         ));
     }
 
-    (mod_app, TokenStream2::new())
+    quote!(#(#mod_app)*)
 }

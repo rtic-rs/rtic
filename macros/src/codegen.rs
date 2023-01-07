@@ -29,21 +29,14 @@ mod main;
 pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
     // Generate the `main` function
     let main = main::codegen(app, analysis);
+    let init_codegen = init::codegen(app, analysis);
+    let idle_codegen = idle::codegen(app, analysis);
+    let shared_resources_codegen = shared_resources::codegen(app, analysis);
+    let local_resources_codegen = local_resources::codegen(app, analysis);
+    let hardware_tasks_codegen = hardware_tasks::codegen(app, analysis);
+    let software_tasks_codegen = software_tasks::codegen(app, analysis);
+    let async_dispatchers_codegen = async_dispatchers::codegen(app, analysis);
 
-    let (mod_app_init, root_init, user_init) = init::codegen(app, analysis);
-
-    let (mod_app_idle, root_idle, user_idle) = idle::codegen(app, analysis);
-
-    let (mod_app_shared_resources, mod_shared_resources) = shared_resources::codegen(app, analysis);
-    let (mod_app_local_resources, mod_local_resources) = local_resources::codegen(app, analysis);
-
-    let (mod_app_hardware_tasks, root_hardware_tasks, user_hardware_tasks) =
-        hardware_tasks::codegen(app, analysis);
-
-    let (mod_app_software_tasks, root_software_tasks, user_software_tasks) =
-        software_tasks::codegen(app, analysis);
-
-    let mod_app_async_dispatchers = async_dispatchers::codegen(app, analysis);
     let user_imports = &app.user_imports;
     let user_code = &app.user_code;
     let name = &app.name;
@@ -59,43 +52,22 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
 
             #(#user_imports)*
 
-            /// User code from within the module
             #(#user_code)*
             /// User code end
 
-            #(#user_hardware_tasks)*
+            #init_codegen
 
-            #(#user_software_tasks)*
+            #idle_codegen
 
-            #mod_app_init
+            #hardware_tasks_codegen
 
-            #(#root_init)*
+            #software_tasks_codegen
 
-            #user_init
+            #shared_resources_codegen
 
-            #(#mod_app_idle)*
+            #local_resources_codegen
 
-            #(#root_idle)*
-
-            #user_idle
-
-            #mod_shared_resources
-
-            #mod_local_resources
-
-            #(#root_hardware_tasks)*
-
-            #(#root_software_tasks)*
-
-            #(#mod_app_shared_resources)*
-
-            #(#mod_app_local_resources)*
-
-            #(#mod_app_hardware_tasks)*
-
-            #(#mod_app_software_tasks)*
-
-            #(#mod_app_async_dispatchers)*
+            #async_dispatchers_codegen
 
             #main
         }
