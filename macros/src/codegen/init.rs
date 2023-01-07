@@ -18,8 +18,6 @@ type CodegenResult = (
     Vec<TokenStream2>,
     // user_init -- the `#[init]` function written by the user
     TokenStream2,
-    // call_init -- the call to the user `#[init]`
-    TokenStream2,
 );
 
 /// Generates support code for `#[init]` functions
@@ -63,6 +61,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
             )
         })
         .collect();
+
     root_init.push(quote! {
         struct #shared {
             #(#shared_resources)*
@@ -97,11 +96,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
         mod_app = Some(constructor);
     }
 
-    let call_init = quote! {
-        let (shared_resources, local_resources) = #name(#name::Context::new(core.into()));
-    };
-
     root_init.push(module::codegen(Context::Init, app, analysis));
 
-    (mod_app, root_init, user_init, call_init)
+    (mod_app, root_init, user_init)
 }
