@@ -6,8 +6,6 @@ use crate::codegen::util;
 
 /// Generate shared resources structs
 pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
-    let mut lt = None;
-
     let resources = match ctxt {
         Context::Init => unreachable!("Tried to generate shared resources struct for init"),
         Context::Idle => {
@@ -23,13 +21,11 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
 
     let mut fields = vec![];
     let mut values = vec![];
-    let mut has_cfgs = false;
 
     for (name, access) in resources {
         let res = app.shared_resources.get(name).expect("UNREACHABLE");
 
         let cfgs = &res.cfgs;
-        has_cfgs |= !cfgs.is_empty();
 
         // access hold if the resource is [x] (exclusive) or [&x] (shared)
         let mut_ = if access.is_exclusive() {
@@ -46,7 +42,6 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
             let lt = if ctxt.runs_once() {
                 quote!('static)
             } else {
-                lt = Some(quote!('a));
                 quote!('a)
             };
 
@@ -55,16 +50,11 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
                 pub #name: &#lt #mut_ #ty
             ));
         } else if access.is_shared() {
-            lt = Some(quote!('a));
-
             fields.push(quote!(
                 #(#cfgs)*
                 pub #name: &'a #ty
             ));
         } else {
-            // Resource proxy
-            lt = Some(quote!('a));
-
             fields.push(quote!(
                 #(#cfgs)*
                 pub #name: shared_resources::#shared_name<'a>
@@ -92,17 +82,12 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
         ));
     }
 
-    if lt.is_some() {
-        // The struct could end up empty due to `cfg`s leading to an error due to `'a` being unused
-        if has_cfgs {
-            fields.push(quote!(
-                #[doc(hidden)]
-                pub __marker__: core::marker::PhantomData<&'a ()>
-            ));
+    fields.push(quote!(
+        #[doc(hidden)]
+        pub __rtic_internal_marker: core::marker::PhantomData<&'a ()>
+    ));
 
-            values.push(quote!(__marker__: core::marker::PhantomData));
-        }
-    }
+    values.push(quote!(__rtic_internal_marker: core::marker::PhantomData));
 
     let doc = format!("Shared resources `{}` has access to", ctxt.ident(app));
     let ident = util::shared_resources_ident(ctxt, app);
@@ -110,13 +95,13 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         #[doc = #doc]
-        pub struct #ident<#lt> {
+        pub struct #ident<'a> {
             #(#fields,)*
         }
     );
 
     let constructor = quote!(
-        impl<#lt> #ident<#lt> {
+        impl<'a> #ident<'a> {
             #[inline(always)]
             pub unsafe fn new() -> Self {
                 #ident {
