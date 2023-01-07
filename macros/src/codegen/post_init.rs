@@ -1,8 +1,6 @@
-use crate::syntax::ast::App;
+use crate::{analyze::Analysis, codegen::util, syntax::ast::App};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-
-use crate::{analyze::Analysis, codegen::util};
 
 /// Generates code that runs after `#[init]` returns
 pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {

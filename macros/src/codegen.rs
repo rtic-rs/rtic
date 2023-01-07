@@ -19,6 +19,8 @@ mod shared_resources_struct;
 mod software_tasks;
 mod util;
 
+mod main;
+
 // TODO: organize codegen to actual parts of code
 // so `main::codegen` generates ALL the code for `fn main`,
 // `software_tasks::codegen` generates ALL the code for software tasks etc...
@@ -26,20 +28,15 @@ mod util;
 #[allow(clippy::too_many_lines)]
 pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut mod_app = vec![];
-    let mut mains = vec![];
     let mut root = vec![];
     let mut user = vec![];
 
     // Generate the `main` function
-    let assertion_stmts = assertions::codegen(app, analysis);
+    let main = main::codegen(app, analysis);
 
-    let pre_init_stmts = pre_init::codegen(app, analysis);
+    let (mod_app_init, root_init, user_init) = init::codegen(app, analysis);
 
-    let (mod_app_init, root_init, user_init, call_init) = init::codegen(app, analysis);
-
-    let post_init_stmts = post_init::codegen(app, analysis);
-
-    let (mod_app_idle, root_idle, user_idle, call_idle) = idle::codegen(app, analysis);
+    let (mod_app_idle, root_idle, user_idle) = idle::codegen(app, analysis);
 
     user.push(quote!(
         #user_init
@@ -57,34 +54,6 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
         #mod_app_init
 
         #(#mod_app_idle)*
-    ));
-
-    let main = util::suffixed("main");
-    mains.push(quote!(
-        #[doc(hidden)]
-        mod rtic_ext {
-            use super::*;
-            #[no_mangle]
-            unsafe extern "C" fn #main() -> ! {
-                #(#assertion_stmts)*
-
-                #(#pre_init_stmts)*
-
-                #[inline(never)]
-                fn __rtic_init_resources<F>(f: F) where F: FnOnce() {
-                    f();
-                }
-
-                // Wrap late_init_stmts in a function to ensure that stack space is reclaimed.
-                __rtic_init_resources(||{
-                    #call_init
-
-                    #(#post_init_stmts)*
-                });
-
-                #call_idle
-            }
-        }
     ));
 
     let (mod_app_shared_resources, mod_shared_resources) = shared_resources::codegen(app, analysis);
@@ -145,7 +114,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
 
             #(#mod_app_async_dispatchers)*
 
-            #(#mains)*
+            #main
         }
     )
 }

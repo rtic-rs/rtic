@@ -20,8 +20,6 @@ pub fn codegen(
     Vec<TokenStream2>,
     // user_idle
     Option<TokenStream2>,
-    // call_idle
-    TokenStream2,
 ) {
     if let Some(idle) = &app.idle {
         let mut mod_app = vec![];
@@ -60,22 +58,10 @@ pub fn codegen(
             }
         ));
 
-        let call_idle = quote!(#name(
-            #name::Context::new()
-        ));
-
-        (mod_app, root_idle, user_idle, call_idle)
+        (mod_app, root_idle, user_idle)
     } else {
         // TODO: No idle defined, check for 0-priority tasks and generate an executor if needed
-        unimplemented!();
 
-        // (
-        //     vec![],
-        //     vec![],
-        //     None,
-        //     quote!(loop {
-        //         rtic::export::nop()
-        //     }),
-        // )
+        (vec![], vec![], None)
     }
 }
