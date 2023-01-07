@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -20,15 +21,15 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         foo::spawn().unwrap();
 
-        (Shared { shared: 0 }, Local {}, init::Monotonics())
+        (Shared { shared: 0 }, Local {})
     }
 
     // when omitted priority is assumed to be `1`
     #[task(shared = [shared])]
-    fn foo(mut c: foo::Context) {
+    async fn foo(mut c: foo::Context) {
         hprintln!("A").unwrap();
 
         // the lower priority task requires a critical section to access the data
@@ -53,7 +54,7 @@ mod app {
     }
 
     #[task(priority = 2, shared = [shared])]
-    fn bar(mut c: bar::Context) {
+    async fn bar(mut c: bar::Context) {
         // the higher priority task does still need a critical section
         let shared = c.shared.shared.lock(|shared| {
             *shared += 1;
@@ -65,7 +66,7 @@ mod app {
     }
 
     #[task(priority = 3)]
-    fn baz(_: baz::Context) {
+    async fn baz(_: baz::Context) {
         hprintln!("C").unwrap();
     }
 }
