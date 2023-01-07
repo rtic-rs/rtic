@@ -13,7 +13,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     for (name, _) in app.software_tasks.iter() {
         let type_name = util::internal_task_ident(name, "F");
         let exec_name = util::internal_task_ident(name, "EXEC");
-        let prio_name = util::internal_task_ident(name, "PRIORITY");
 
         items.push(quote!(
             #[allow(non_camel_case_types)]
@@ -22,12 +21,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
             static #exec_name:
                 rtic::RacyCell<rtic::export::executor::AsyncTaskExecutor<#type_name>> =
                     rtic::RacyCell::new(rtic::export::executor::AsyncTaskExecutor::new());
-
-            // The executors priority, this can be any value - we will overwrite it when we
-            // start a task
-            #[allow(non_upper_case_globals)]
-            static #prio_name: rtic::RacyCell<rtic::export::Priority> =
-                    unsafe { rtic::RacyCell::new(rtic::export::Priority::new(0)) };
         ));
     }
 
@@ -39,7 +32,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
 
         for name in channel.tasks.iter() {
             let exec_name = util::internal_task_ident(name, "EXEC");
-            let prio_name = util::internal_task_ident(name, "PRIORITY");
             // let task = &app.software_tasks[name];
             // let cfgs = &task.cfgs;
             let executor_run_ident = util::executor_run_ident(name);
@@ -57,14 +49,9 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
                 if !(&*#exec_name.get()).is_running() {
                     // TODO Fix this to be compare and swap
                     if #rq.load(core::sync::atomic::Ordering::Relaxed) {
-                         #rq.store(false, core::sync::atomic::Ordering::Relaxed);
+                        #rq.store(false, core::sync::atomic::Ordering::Relaxed);
 
-
-                        // The async executor needs a static priority
-                        #prio_name.get_mut().write(rtic::export::Priority::new(PRIORITY));
-                        let priority: &'static _ = &*#prio_name.get();
-
-                        (&mut *#exec_name.get_mut()).spawn(#name(#name::Context::new(priority)));
+                        (&mut *#exec_name.get_mut()).spawn(#name(#name::Context::new()));
                         #executor_run_ident.store(true, core::sync::atomic::Ordering::Relaxed);
                     }
                 }

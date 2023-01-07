@@ -4,13 +4,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
 #[allow(clippy::too_many_lines)]
-pub fn codegen(
-    ctxt: Context,
-    shared_resources_tick: bool,
-    local_resources_tick: bool,
-    app: &App,
-    analysis: &Analysis,
-) -> TokenStream2 {
+pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut items = vec![];
     let mut module_items = vec![];
     let mut fields = vec![];
@@ -20,7 +14,6 @@ pub fn codegen(
 
     let name = ctxt.ident(app);
 
-    let mut lt = None;
     match ctxt {
         Context::Init => {
             fields.push(quote!(
@@ -39,10 +32,9 @@ pub fn codegen(
                 values.push(quote!(device: #device::Peripherals::steal()));
             }
 
-            lt = Some(quote!('a));
             fields.push(quote!(
                 /// Critical section token for init
-                pub cs: rtic::export::CriticalSection<#lt>
+                pub cs: rtic::export::CriticalSection<'a>
             ));
 
             values.push(quote!(cs: rtic::export::CriticalSection::new()));
@@ -55,12 +47,6 @@ pub fn codegen(
 
     if ctxt.has_local_resources(app) {
         let ident = util::local_resources_ident(ctxt, app);
-        let lt = if local_resources_tick {
-            lt = Some(quote!('a));
-            Some(quote!('a))
-        } else {
-            None
-        };
 
         module_items.push(quote!(
             #[doc(inline)]
@@ -69,7 +55,7 @@ pub fn codegen(
 
         fields.push(quote!(
             /// Local Resources this task has access to
-            pub local: #name::LocalResources<#lt>
+            pub local: #name::LocalResources<'a>
         ));
 
         values.push(quote!(local: #name::LocalResources::new()));
@@ -77,12 +63,6 @@ pub fn codegen(
 
     if ctxt.has_shared_resources(app) {
         let ident = util::shared_resources_ident(ctxt, app);
-        let lt = if shared_resources_tick {
-            lt = Some(quote!('a));
-            Some(quote!('a))
-        } else {
-            None
-        };
 
         module_items.push(quote!(
             #[doc(inline)]
@@ -91,15 +71,10 @@ pub fn codegen(
 
         fields.push(quote!(
             /// Shared Resources this task has access to
-            pub shared: #name::SharedResources<#lt>
+            pub shared: #name::SharedResources<'a>
         ));
 
-        let priority = if ctxt.is_init() {
-            None
-        } else {
-            Some(quote!(priority))
-        };
-        values.push(quote!(shared: #name::SharedResources::new(#priority)));
+        values.push(quote!(shared: #name::SharedResources::new()));
     }
 
     let doc = match ctxt {
@@ -122,12 +97,6 @@ pub fn codegen(
         None
     };
 
-    let priority = if ctxt.is_init() {
-        None
-    } else {
-        Some(quote!(priority: &#lt rtic::export::Priority))
-    };
-
     let internal_context_name = util::internal_task_ident(name, "Context");
 
     items.push(quote!(
@@ -135,15 +104,18 @@ pub fn codegen(
         /// Execution context
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
-        pub struct #internal_context_name<#lt> {
+        pub struct #internal_context_name<'a> {
+            #[doc(hidden)]
+            __rtic_internal_p: ::core::marker::PhantomData<&'a ()>,
             #(#fields,)*
         }
 
         #(#cfgs)*
-        impl<#lt> #internal_context_name<#lt> {
+        impl<'a> #internal_context_name<'a> {
             #[inline(always)]
-            pub unsafe fn new(#core #priority) -> Self {
+            pub unsafe fn new(#core) -> Self {
                 #internal_context_name {
+                    __rtic_internal_p: ::core::marker::PhantomData,
                     #(#values,)*
                 }
             }

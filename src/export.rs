@@ -163,38 +163,6 @@ impl Barrier {
     }
 }
 
-// Newtype over `Cell` that forbids mutation through a shared reference
-pub struct Priority {
-    inner: Cell<u8>,
-}
-
-impl Priority {
-    /// Create a new Priority
-    ///
-    /// # Safety
-    ///
-    /// Will overwrite the current Priority
-    #[inline(always)]
-    pub const unsafe fn new(value: u8) -> Self {
-        Priority {
-            inner: Cell::new(value),
-        }
-    }
-
-    /// Change the current priority to `value`
-    // These two methods are used by `lock` (see below) but can't be used from the RTIC application
-    #[inline(always)]
-    fn set(&self, value: u8) {
-        self.inner.set(value);
-    }
-
-    /// Get the current priority
-    #[inline(always)]
-    fn get(&self) -> u8 {
-        self.inner.get()
-    }
-}
-
 /// Const helper to check architecture
 pub const fn have_basepri() -> bool {
     #[cfg(have_basepri)]
@@ -260,30 +228,20 @@ where
 #[inline(always)]
 pub unsafe fn lock<T, R, const M: usize>(
     ptr: *mut T,
-    priority: &Priority,
     ceiling: u8,
     nvic_prio_bits: u8,
     _mask: &[Mask<M>; 3],
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
-    let current = priority.get();
-
-    if current < ceiling {
-        if ceiling == (1 << nvic_prio_bits) {
-            priority.set(u8::max_value());
-            let r = interrupt::free(|_| f(&mut *ptr));
-            priority.set(current);
-            r
-        } else {
-            priority.set(ceiling);
-            basepri::write(logical2hw(ceiling, nvic_prio_bits));
-            let r = f(&mut *ptr);
-            basepri::write(logical2hw(current, nvic_prio_bits));
-            priority.set(current);
-            r
-        }
+    if ceiling == (1 << nvic_prio_bits) {
+        let r = interrupt::free(|_| f(&mut *ptr));
+        r
     } else {
-        f(&mut *ptr)
+        let current = basepri::read();
+        basepri::write(logical2hw(ceiling, nvic_prio_bits));
+        let r = f(&mut *ptr);
+        basepri::write(logical2hw(current, nvic_prio_bits));
+        r
     }
 }
 
@@ -335,40 +293,29 @@ pub unsafe fn lock<T, R, const M: usize>(
 #[inline(always)]
 pub unsafe fn lock<T, R, const M: usize>(
     ptr: *mut T,
-    priority: &Priority,
     ceiling: u8,
     _nvic_prio_bits: u8,
     masks: &[Mask<M>; 3],
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
-    let current = priority.get();
-    if current < ceiling {
-        if ceiling >= 4 {
-            // safe to manipulate outside critical section
-            priority.set(ceiling);
-            // execute closure under protection of raised system ceiling
-            let r = interrupt::free(|_| f(&mut *ptr));
-            // safe to manipulate outside critical section
-            priority.set(current);
-            r
-        } else {
-            // safe to manipulate outside critical section
-            priority.set(ceiling);
-            let mask = compute_mask(current, ceiling, masks);
-            clear_enable_mask(mask);
-
-            // execute closure under protection of raised system ceiling
-            let r = f(&mut *ptr);
-
-            set_enable_mask(mask);
-
-            // safe to manipulate outside critical section
-            priority.set(current);
-            r
-        }
+    if ceiling >= 4 {
+        // safe to manipulate outside critical section
+        // execute closure under protection of raised system ceiling
+        let r = interrupt::free(|_| f(&mut *ptr));
+        // safe to manipulate outside critical section
+        r
     } else {
-        // execute closure without raising system ceiling
-        f(&mut *ptr)
+        // safe to manipulate outside critical section
+        let mask = compute_mask(0, ceiling, masks);
+        clear_enable_mask(mask);
+
+        // execute closure under protection of raised system ceiling
+        let r = f(&mut *ptr);
+
+        set_enable_mask(mask);
+
+        // safe to manipulate outside critical section
+        r
     }
 }
 

@@ -57,19 +57,14 @@ pub fn codegen(
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
                 pub struct #shared_name<'a> {
-                    priority: &'a Priority,
+                    __rtic_internal_p: ::core::marker::PhantomData<&'a ()>,
                 }
 
                 #(#cfgs)*
                 impl<'a> #shared_name<'a> {
                     #[inline(always)]
-                    pub unsafe fn new(priority: &'a Priority) -> Self {
-                        #shared_name { priority }
-                    }
-
-                    #[inline(always)]
-                    pub unsafe fn priority(&self) -> &Priority {
-                        self.priority
+                    pub unsafe fn new() -> Self {
+                        #shared_name { __rtic_internal_p: ::core::marker::PhantomData }
                     }
                 }
             ));
@@ -104,8 +99,6 @@ pub fn codegen(
         quote!()
     } else {
         quote!(mod shared_resources {
-            use rtic::export::Priority;
-
             #(#mod_resources)*
         })
     };

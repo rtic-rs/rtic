@@ -41,22 +41,16 @@ pub fn codegen(
 
                 rtic::export::run(PRIORITY, || {
                     #name(
-                        #name::Context::new(&rtic::export::Priority::new(PRIORITY))
+                        #name::Context::new()
                     )
                 });
             }
         ));
 
-        let mut shared_needs_lt = false;
-        let mut local_needs_lt = false;
-
         // `${task}Locals`
         if !task.args.local_resources.is_empty() {
-            let (item, constructor) = local_resources_struct::codegen(
-                Context::HardwareTask(name),
-                &mut local_needs_lt,
-                app,
-            );
+            let (item, constructor) =
+                local_resources_struct::codegen(Context::HardwareTask(name), app);
 
             root.push(item);
 
@@ -65,24 +59,19 @@ pub fn codegen(
 
         // `${task}Resources`
         if !task.args.shared_resources.is_empty() {
-            let (item, constructor) = shared_resources_struct::codegen(
-                Context::HardwareTask(name),
-                &mut shared_needs_lt,
-                app,
-            );
+            let (item, constructor) =
+                shared_resources_struct::codegen(Context::HardwareTask(name), app);
 
             root.push(item);
 
             mod_app.push(constructor);
         }
 
-        root.push(module::codegen(
-            Context::HardwareTask(name),
-            shared_needs_lt,
-            local_needs_lt,
-            app,
-            analysis,
-        ));
+        // Module generation...
+
+        root.push(module::codegen(Context::HardwareTask(name), app, analysis));
+
+        // End module generation
 
         if !task.is_extern {
             let attrs = &task.attrs;

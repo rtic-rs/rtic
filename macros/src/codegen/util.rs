@@ -17,10 +17,10 @@ pub fn impl_mutex(
     ceiling: u8,
     ptr: &TokenStream2,
 ) -> TokenStream2 {
-    let (path, priority) = if resources_prefix {
-        (quote!(shared_resources::#name), quote!(self.priority()))
+    let path = if resources_prefix {
+        quote!(shared_resources::#name)
     } else {
-        (quote!(#name), quote!(self.priority))
+        quote!(#name)
     };
 
     let device = &app.args.device;
@@ -38,7 +38,6 @@ pub fn impl_mutex(
                 unsafe {
                     rtic::export::lock(
                         #ptr,
-                        #priority,
                         CEILING,
                         #device::NVIC_PRIO_BITS,
                         &#masks_name,

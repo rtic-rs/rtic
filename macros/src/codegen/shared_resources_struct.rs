@@ -5,7 +5,7 @@ use quote::quote;
 use crate::codegen::util;
 
 /// Generate shared resources structs
-pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, TokenStream2) {
+pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
     let mut lt = None;
 
     let resources = match ctxt {
@@ -72,7 +72,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
 
             values.push(quote!(
                 #(#cfgs)*
-                #name: shared_resources::#shared_name::new(priority)
+                #name: shared_resources::#shared_name::new()
 
             ));
 
@@ -93,8 +93,6 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     }
 
     if lt.is_some() {
-        *needs_lt = true;
-
         // The struct could end up empty due to `cfg`s leading to an error due to `'a` being unused
         if has_cfgs {
             fields.push(quote!(
@@ -117,15 +115,10 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         }
     );
 
-    let arg = if ctxt.is_init() {
-        None
-    } else {
-        Some(quote!(priority: &#lt rtic::export::Priority))
-    };
     let constructor = quote!(
         impl<#lt> #ident<#lt> {
             #[inline(always)]
-            pub unsafe fn new(#arg) -> Self {
+            pub unsafe fn new() -> Self {
                 #ident {
                     #(#values,)*
                 }
