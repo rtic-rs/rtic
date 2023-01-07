@@ -24,37 +24,27 @@ pub fn codegen(
     TokenStream2,
 ) {
     if let Some(idle) = &app.idle {
-        let mut shared_needs_lt = false;
-        let mut local_needs_lt = false;
         let mut mod_app = vec![];
         let mut root_idle = vec![];
 
         let name = &idle.name;
 
         if !idle.args.shared_resources.is_empty() {
-            let (item, constructor) =
-                shared_resources_struct::codegen(Context::Idle, &mut shared_needs_lt, app);
+            let (item, constructor) = shared_resources_struct::codegen(Context::Idle, app);
 
             root_idle.push(item);
             mod_app.push(constructor);
         }
 
         if !idle.args.local_resources.is_empty() {
-            let (item, constructor) =
-                local_resources_struct::codegen(Context::Idle, &mut local_needs_lt, app);
+            let (item, constructor) = local_resources_struct::codegen(Context::Idle, app);
 
             root_idle.push(item);
 
             mod_app.push(constructor);
         }
 
-        root_idle.push(module::codegen(
-            Context::Idle,
-            shared_needs_lt,
-            local_needs_lt,
-            app,
-            analysis,
-        ));
+        root_idle.push(module::codegen(Context::Idle, app, analysis));
 
         let attrs = &idle.attrs;
         let context = &idle.context;
@@ -71,7 +61,7 @@ pub fn codegen(
         ));
 
         let call_idle = quote!(#name(
-            #name::Context::new(&rtic::export::Priority::new(0))
+            #name::Context::new()
         ));
 
         (mod_app, root_idle, user_idle, call_idle)

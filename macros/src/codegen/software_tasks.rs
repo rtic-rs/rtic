@@ -36,16 +36,11 @@ pub fn codegen(
         ));
 
         // `${task}Resources`
-        let mut shared_needs_lt = false;
-        let mut local_needs_lt = false;
 
         // `${task}Locals`
         if !task.args.local_resources.is_empty() {
-            let (item, constructor) = local_resources_struct::codegen(
-                Context::SoftwareTask(name),
-                &mut local_needs_lt,
-                app,
-            );
+            let (item, constructor) =
+                local_resources_struct::codegen(Context::SoftwareTask(name), app);
 
             root.push(item);
 
@@ -53,11 +48,8 @@ pub fn codegen(
         }
 
         if !task.args.shared_resources.is_empty() {
-            let (item, constructor) = shared_resources_struct::codegen(
-                Context::SoftwareTask(name),
-                &mut shared_needs_lt,
-                app,
-            );
+            let (item, constructor) =
+                shared_resources_struct::codegen(Context::SoftwareTask(name), app);
 
             root.push(item);
 
@@ -69,17 +61,12 @@ pub fn codegen(
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
-            let context_lifetime = if shared_needs_lt || local_needs_lt {
-                quote!(<'static>)
-            } else {
-                quote!()
-            };
 
             user_tasks.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                async fn #name(#context: #name::Context #context_lifetime) {
+                async fn #name(#context: #name::Context<'static>) {
                     use rtic::Mutex as _;
                     use rtic::mutex::prelude::*;
 
@@ -88,13 +75,7 @@ pub fn codegen(
             ));
         }
 
-        root.push(module::codegen(
-            Context::SoftwareTask(name),
-            shared_needs_lt,
-            local_needs_lt,
-            app,
-            analysis,
-        ));
+        root.push(module::codegen(Context::SoftwareTask(name), app, analysis));
     }
 
     (mod_app, root, user_tasks)

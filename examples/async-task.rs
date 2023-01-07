@@ -15,7 +15,9 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
     #[shared]
-    struct Shared {}
+    struct Shared {
+        a: u32,
+    }
 
     #[local]
     struct Local {}
@@ -25,11 +27,12 @@ mod app {
         hprintln!("init").unwrap();
 
         async_task::spawn().unwrap();
+        async_task2::spawn().unwrap();
 
-        (Shared {}, Local {})
+        (Shared { a: 0 }, Local {})
     }
 
-    #[idle]
+    #[idle(shared = [a])]
     fn idle(_: idle::Context) -> ! {
         // debug::exit(debug::EXIT_SUCCESS);
         loop {
@@ -38,10 +41,23 @@ mod app {
         }
     }
 
-    #[task]
-    async fn async_task(_cx: async_task::Context) {
+    #[task(binds = UART1, shared = [a])]
+    fn hw_task(cx: hw_task::Context) {
+        let hw_task::SharedResources { a } = cx.shared;
+        hprintln!("hello from hw").ok();
+    }
+
+    #[task(shared = [a])]
+    async fn async_task(cx: async_task::Context) {
+        let async_task::SharedResources { a } = cx.shared;
         hprintln!("hello from async").ok();
 
         debug::exit(debug::EXIT_SUCCESS);
+    }
+
+    #[task(priority = 2, shared = [a])]
+    async fn async_task2(cx: async_task2::Context) {
+        let async_task2::SharedResources { a } = cx.shared;
+        hprintln!("hello from async2").ok();
     }
 }

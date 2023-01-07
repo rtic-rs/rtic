@@ -91,8 +91,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
 
     // `${task}Locals`
     if !init.args.local_resources.is_empty() {
-        let (item, constructor) =
-            local_resources_struct::codegen(Context::Init, &mut local_needs_lt, app);
+        let (item, constructor) = local_resources_struct::codegen(Context::Init, app);
 
         root_init.push(item);
 
@@ -103,13 +102,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> CodegenResult {
         let (shared_resources, local_resources) = #name(#name::Context::new(core.into()));
     };
 
-    root_init.push(module::codegen(
-        Context::Init,
-        false,
-        local_needs_lt,
-        app,
-        analysis,
-    ));
+    root_init.push(module::codegen(Context::Init, app, analysis));
 
     (mod_app, root_init, user_init, call_init)
 }

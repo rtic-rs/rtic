@@ -8,7 +8,7 @@ use quote::quote;
 use crate::codegen::util;
 
 /// Generates local resources structs
-pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, TokenStream2) {
+pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
     let mut lt = None;
 
     let resources = match ctxt {
@@ -74,16 +74,14 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     }
 
     if lt.is_some() {
-        *needs_lt = true;
-
         // The struct could end up empty due to `cfg`s leading to an error due to `'a` being unused
         if has_cfgs {
             fields.push(quote!(
                 #[doc(hidden)]
-                pub __marker__: core::marker::PhantomData<&'a ()>
+                pub __rtic_internal_marker: ::core::marker::PhantomData<&'a ()>
             ));
 
-            values.push(quote!(__marker__: core::marker::PhantomData));
+            values.push(quote!(__rtic_internal_marker: ::core::marker::PhantomData));
         }
     }
 

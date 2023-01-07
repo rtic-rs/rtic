@@ -19,6 +19,10 @@ mod shared_resources_struct;
 mod software_tasks;
 mod util;
 
+// TODO: organize codegen to actual parts of code
+// so `main::codegen` generates ALL the code for `fn main`,
+// `software_tasks::codegen` generates ALL the code for software tasks etc...
+
 #[allow(clippy::too_many_lines)]
 pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
     let mut mod_app = vec![];
