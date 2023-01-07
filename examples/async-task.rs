@@ -43,13 +43,13 @@ mod app {
 
     #[task(binds = UART1, shared = [a])]
     fn hw_task(cx: hw_task::Context) {
-        let hw_task::SharedResources { a } = cx.shared;
+        let hw_task::SharedResources { a, .. } = cx.shared;
         hprintln!("hello from hw").ok();
     }
 
     #[task(shared = [a])]
     async fn async_task(cx: async_task::Context) {
-        let async_task::SharedResources { a } = cx.shared;
+        let async_task::SharedResources { a, .. } = cx.shared;
         hprintln!("hello from async").ok();
 
         debug::exit(debug::EXIT_SUCCESS);
@@ -57,7 +57,7 @@ mod app {
 
     #[task(priority = 2, shared = [a])]
     async fn async_task2(cx: async_task2::Context) {
-        let async_task2::SharedResources { a } = cx.shared;
+        let async_task2::SharedResources { a, .. } = cx.shared;
         hprintln!("hello from async2").ok();
     }
 }
