@@ -1,7 +1,7 @@
 warning: unused variable: `cx`
   --> ui/task-priority-too-high.rs:12:13
    |
-12 |     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+12 |     fn init(cx: init::Context) -> (Shared, Local) {
    |             ^^ help: if this is intentional, prefix it with an underscore: `_cx`
    |
    = note: `#[warn(unused_variables)]` on by default

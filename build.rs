@@ -18,9 +18,7 @@ fn main() {
     } else if target.starts_with("thumb")
         && !(target.starts_with("thumbv6m") | target.starts_with("thumbv8m.base"))
     {
-        panic!(
-            "Unknown target '{target}'. Need to update BASEPRI logic in build.rs."
-        );
+        panic!("Unknown target '{target}'. Need to update BASEPRI logic in build.rs.");
     }
 
     println!("cargo:rerun-if-changed=build.rs");

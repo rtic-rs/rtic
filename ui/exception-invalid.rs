@@ -9,8 +9,8 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        (Shared {}, Local {}, init::Monotonics())
+    fn init(cx: init::Context) -> (Shared, Local) {
+        (Shared {}, Local {})
     }
 
     #[task(binds = NonMaskableInt)]
