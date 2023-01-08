@@ -23,14 +23,14 @@ mod app {
     fn init(_: init::Context) -> (Shared, Local) {
         rtic::pend(Interrupt::UART0);
 
-        hprintln!("init").unwrap();
+        hprintln!("init");
 
         (Shared {}, Local {})
     }
 
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        hprintln!("idle").unwrap();
+        hprintln!("idle");
 
         rtic::pend(Interrupt::UART0);
 
@@ -49,7 +49,6 @@ mod app {
             "foo called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        )
-        .unwrap();
+        );
     }
 }

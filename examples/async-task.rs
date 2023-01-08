@@ -24,7 +24,7 @@ mod app {
 
     #[init]
     fn init(_cx: init::Context) -> (Shared, Local) {
-        hprintln!("init").unwrap();
+        hprintln!("init");
 
         async_task::spawn().unwrap();
         async_task2::spawn().unwrap();
@@ -44,18 +44,18 @@ mod app {
     #[task(binds = UART1, shared = [a])]
     fn hw_task(cx: hw_task::Context) {
         let hw_task::SharedResources { a: _, .. } = cx.shared;
-        hprintln!("hello from hw").ok();
+        hprintln!("hello from hw");
     }
 
     #[task(shared = [a])]
     async fn async_task(cx: async_task::Context) {
         let async_task::SharedResources { a: _, .. } = cx.shared;
-        hprintln!("hello from async").ok();
+        hprintln!("hello from async");
     }
 
     #[task(priority = 2, shared = [a])]
     async fn async_task2(cx: async_task2::Context) {
         let async_task2::SharedResources { a: _, .. } = cx.shared;
-        hprintln!("hello from async2").ok();
+        hprintln!("hello from async2");
     }
 }

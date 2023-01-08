@@ -26,21 +26,21 @@ mod app {
 
     #[task(priority = 1)]
     async fn foo(_: foo::Context) {
-        hprintln!("foo - start").unwrap();
+        hprintln!("foo - start");
         baz::spawn().unwrap();
-        hprintln!("foo - end").unwrap();
+        hprintln!("foo - end");
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(priority = 2)]
     async fn bar(_: bar::Context) {
-        hprintln!(" bar").unwrap();
+        hprintln!(" bar");
     }
 
     #[task(priority = 2)]
     async fn baz(_: baz::Context) {
-        hprintln!(" baz - start").unwrap();
+        hprintln!(" baz - start");
         bar::spawn().unwrap();
-        hprintln!(" baz - end").unwrap();
+        hprintln!(" baz - end");
     }
 }
