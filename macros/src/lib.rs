@@ -39,9 +39,8 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         Ok(x) => x,
     };
 
-    match check::app(&app) {
-        Err(e) => return e.to_compile_error().into(),
-        _ => {}
+    if let Err(e) = check::app(&app) {
+        return e.to_compile_error().into();
     }
 
     let analysis = analyze::app(analysis, &app);
@@ -86,7 +85,7 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
 
     // Try to write the expanded code to disk
     if let Some(out_str) = out_dir.to_str() {
-        fs::write(format!("{}/rtic-expansion.rs", out_str), ts.to_string()).ok();
+        fs::write(format!("{out_str}/rtic-expansion.rs"), ts.to_string()).ok();
     }
 
     ts.into()

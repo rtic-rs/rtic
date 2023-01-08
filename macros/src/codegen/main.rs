@@ -15,15 +15,13 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let call_idle = if let Some(idle) = &app.idle {
         let name = &idle.name;
         quote!(#name(#name::Context::new()))
+    } else if analysis.channels.get(&0).is_some() {
+        let dispatcher = util::zero_prio_dispatcher_ident();
+        quote!(#dispatcher();)
     } else {
-        if analysis.channels.get(&0).is_some() {
-            let dispatcher = util::zero_prio_dispatcher_ident();
-            quote!(#dispatcher();)
-        } else {
-            quote!(loop {
-                rtic::export::nop()
-            })
-        }
+        quote!(loop {
+            rtic::export::nop()
+        })
     };
 
     let main = util::suffixed("main");

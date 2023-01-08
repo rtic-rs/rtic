@@ -51,7 +51,7 @@ pub fn impl_mutex(
 
 /// Generates an identifier for the `EXECUTOR_RUN` atomics (`async` API)
 pub fn executor_run_ident(task: &Ident) -> Ident {
-    mark_internal_name(&format!("{}_EXECUTOR_RUN", task))
+    mark_internal_name(&format!("{task}_EXECUTOR_RUN"))
 }
 
 pub fn interrupt_ident() -> Ident {
@@ -78,12 +78,12 @@ pub fn is_exception(name: &Ident) -> bool {
 
 /// Mark a name as internal
 pub fn mark_internal_name(name: &str) -> Ident {
-    Ident::new(&format!("{}_{}", RTIC_INTERNAL, name), Span::call_site())
+    Ident::new(&format!("{RTIC_INTERNAL}_{name}"), Span::call_site())
 }
 
 /// Generate an internal identifier for tasks
 pub fn internal_task_ident(task: &Ident, ident_name: &str) -> Ident {
-    mark_internal_name(&format!("{}_{}", task, ident_name))
+    mark_internal_name(&format!("{task}_{ident_name}"))
 }
 
 fn link_section_index() -> usize {
@@ -153,7 +153,7 @@ pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
 
 /// Generates an identifier for a ready queue, async task version
 pub fn rq_async_ident(async_task_name: &Ident) -> Ident {
-    mark_internal_name(&format!("ASYNC_TASK_{}_RQ", async_task_name))
+    mark_internal_name(&format!("ASYNC_TASK_{async_task_name}_RQ"))
 }
 
 /// Suffixed identifier
@@ -163,7 +163,7 @@ pub fn suffixed(name: &str) -> Ident {
 }
 
 pub fn static_shared_resource_ident(name: &Ident) -> Ident {
-    mark_internal_name(&format!("shared_resource_{}", name))
+    mark_internal_name(&format!("shared_resource_{name}"))
 }
 
 /// Generates an Ident for the number of 32 bit chunks used for Mask storage.
@@ -176,15 +176,15 @@ pub fn priority_masks_ident() -> Ident {
 }
 
 pub fn static_local_resource_ident(name: &Ident) -> Ident {
-    mark_internal_name(&format!("local_resource_{}", name))
+    mark_internal_name(&format!("local_resource_{name}"))
 }
 
 pub fn declared_static_local_resource_ident(name: &Ident, task_name: &Ident) -> Ident {
-    mark_internal_name(&format!("local_{}_{}", task_name, name))
+    mark_internal_name(&format!("local_{task_name}_{name}"))
 }
 
 pub fn need_to_lock_ident(name: &Ident) -> Ident {
-    Ident::new(&format!("{}_that_needs_to_be_locked", name), name.span())
+    Ident::new(&format!("{name}_that_needs_to_be_locked"), name.span())
 }
 
 pub fn zero_prio_dispatcher_ident() -> Ident {

@@ -234,17 +234,13 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
 pub fn parse_inputs(inputs: Punctuated<FnArg, Token![,]>, name: &str) -> Option<Box<Pat>> {
     let mut inputs = inputs.into_iter();
 
-    match inputs.next() {
-        Some(FnArg::Typed(first)) => {
-            if type_is_path(&first.ty, &[name, "Context"]) {
-                // No more inputs
-                if inputs.next().is_none() {
-                    return Some(first.pat);
-                }
+    if let Some(FnArg::Typed(first)) = inputs.next() {
+        if type_is_path(&first.ty, &[name, "Context"]) {
+            // No more inputs
+            if inputs.next().is_none() {
+                return Some(first.pat);
             }
         }
-
-        _ => {}
     }
 
     None

@@ -298,9 +298,9 @@ pub unsafe fn lock<T, R, const M: usize>(
     if ceiling >= 4 {
         // safe to manipulate outside critical section
         // execute closure under protection of raised system ceiling
-        let r = interrupt::free(|_| f(&mut *ptr));
+        
         // safe to manipulate outside critical section
-        r
+        interrupt::free(|_| f(&mut *ptr))
     } else {
         // safe to manipulate outside critical section
         let mask = compute_mask(0, ceiling, masks);
