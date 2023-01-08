@@ -45,7 +45,7 @@ mod app {
         let local_to_idle = cx.local.local_to_idle;
         *local_to_idle += 1;
 
-        hprintln!("idle: local_to_idle = {}", local_to_idle).unwrap();
+        hprintln!("idle: local_to_idle = {}", local_to_idle);
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 
@@ -69,7 +69,7 @@ mod app {
         // error: no `local_to_bar` field in `foo::LocalResources`
         // cx.local.local_to_bar += 1;
 
-        hprintln!("foo: local_to_foo = {}", local_to_foo).unwrap();
+        hprintln!("foo: local_to_foo = {}", local_to_foo);
     }
 
     // `local_to_bar` can only be accessed from this context
@@ -81,6 +81,6 @@ mod app {
         // error: no `local_to_foo` field in `bar::LocalResources`
         // cx.local.local_to_foo += 1;
 
-        hprintln!("bar: local_to_bar = {}", local_to_bar).unwrap();
+        hprintln!("bar: local_to_bar = {}", local_to_bar);
     }
 }

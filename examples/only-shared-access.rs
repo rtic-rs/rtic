@@ -31,13 +31,13 @@ mod app {
     #[task(shared = [&key])]
     async fn foo(cx: foo::Context) {
         let key: &u32 = cx.shared.key;
-        hprintln!("foo(key = {:#x})", key).unwrap();
+        hprintln!("foo(key = {:#x})", key);
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(priority = 2, shared = [&key])]
     async fn bar(cx: bar::Context) {
-        hprintln!("bar(key = {:#x})", cx.shared.key).unwrap();
+        hprintln!("bar(key = {:#x})", cx.shared.key);
     }
 }

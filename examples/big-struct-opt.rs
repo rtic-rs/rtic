@@ -67,13 +67,13 @@ mod app {
     fn uart0(mut cx: uart0::Context) {
         cx.shared
             .big_struct
-            .lock(|b| hprintln!("uart0 data:{:?}", &b.data[0..5]).unwrap());
+            .lock(|b| hprintln!("uart0 data:{:?}", &b.data[0..5]));
     }
 
     #[task(shared = [big_struct], priority = 2)]
     async fn async_task(mut cx: async_task::Context) {
         cx.shared
             .big_struct
-            .lock(|b| hprintln!("async_task data:{:?}", &b.data[0..5]).unwrap());
+            .lock(|b| hprintln!("async_task data:{:?}", &b.data[0..5]));
     }
 }

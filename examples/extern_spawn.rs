@@ -12,7 +12,7 @@ use panic_semihosting as _;
 // Free function implementing the spawnable task `foo`.
 // Notice, you need to indicate an anonymous lifetime <'a_>
 async fn foo(_c: app::foo::Context<'_>) {
-    hprintln!("foo").unwrap();
+    hprintln!("foo");
     debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
 }
 

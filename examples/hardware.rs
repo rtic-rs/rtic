@@ -24,7 +24,7 @@ mod app {
         // `init` returns because interrupts are disabled
         rtic::pend(Interrupt::UART0); // equivalent to NVIC::pend
 
-        hprintln!("init").unwrap();
+        hprintln!("init");
 
         (Shared {}, Local {})
     }
@@ -33,7 +33,7 @@ mod app {
     fn idle(_: idle::Context) -> ! {
         // interrupts are enabled again; the `UART0` handler runs at this point
 
-        hprintln!("idle").unwrap();
+        hprintln!("idle");
 
         rtic::pend(Interrupt::UART0);
 
@@ -53,7 +53,6 @@ mod app {
             "UART0 called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        )
-        .unwrap();
+        );
     }
 }

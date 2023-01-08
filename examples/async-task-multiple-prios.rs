@@ -24,8 +24,8 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local) {
-        hprintln!("init").unwrap();
+    fn init(_: init::Context) -> (Shared, Local) {
+        hprintln!("init");
 
         async_task1::spawn().ok();
         async_task2::spawn().ok();
@@ -51,8 +51,7 @@ mod app {
                 *a += 1;
                 *a
             })
-        )
-        .ok();
+        );
     }
 
     #[task(priority = 1, shared = [a, b])]
@@ -63,8 +62,7 @@ mod app {
                 *a += 1;
                 *a
             })
-        )
-        .ok();
+        );
     }
 
     #[task(priority = 2, shared = [a, b])]
@@ -75,8 +73,7 @@ mod app {
                 *a += 1;
                 *a
             })
-        )
-        .ok();
+        );
     }
 
     #[task(priority = 2, shared = [a, b])]
@@ -87,7 +84,6 @@ mod app {
                 *a += 1;
                 *a
             })
-        )
-        .ok();
+        );
     }
 }

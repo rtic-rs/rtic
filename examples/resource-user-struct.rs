@@ -55,7 +55,7 @@ mod app {
             *shared
         });
 
-        hprintln!("UART0: shared = {}", shared).unwrap();
+        hprintln!("UART0: shared = {}", shared);
     }
 
     // `shared` can be accessed from this context
@@ -66,6 +66,6 @@ mod app {
             *shared
         });
 
-        hprintln!("UART1: shared = {}", shared).unwrap();
+        hprintln!("UART1: shared = {}", shared);
     }
 }

@@ -32,7 +32,7 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local) {
-        hprintln!("init").unwrap();
+        hprintln!("init");
 
         foo::spawn().unwrap();
         bar::spawn().unwrap();
@@ -56,12 +56,12 @@ mod app {
     #[task(shared = [&shared])]
     async fn foo(c: foo::Context) {
         let shared: &NotSync = c.shared.shared;
-        hprintln!("foo a {}", shared.data).unwrap();
+        hprintln!("foo a {}", shared.data);
     }
 
     #[task(shared = [&shared])]
     async fn bar(c: bar::Context) {
         let shared: &NotSync = c.shared.shared;
-        hprintln!("foo a {}", shared.data).unwrap();
+        hprintln!("foo a {}", shared.data);
     }
 }
