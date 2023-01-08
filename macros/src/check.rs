@@ -32,6 +32,7 @@ pub fn app(app: &App) -> parse::Result<()> {
             first = Some(name);
             task.args.priority
         })
+        .filter(|prio| *prio > 0)
         .collect::<HashSet<_>>();
 
     let need = priorities.len();

@@ -187,6 +187,10 @@ pub fn need_to_lock_ident(name: &Ident) -> Ident {
     Ident::new(&format!("{}_that_needs_to_be_locked", name), name.span())
 }
 
+pub fn zero_prio_dispatcher_ident() -> Ident {
+    Ident::new("__rtic_internal_async_0_prio_dispatcher", Span::call_site())
+}
+
 /// The name to get better RT flag errors
 pub fn rt_err_ident() -> Ident {
     Ident::new(

@@ -16,11 +16,14 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         let name = &idle.name;
         quote!(#name(#name::Context::new()))
     } else {
-        // TODO: No idle defined, check for 0-priority tasks and generate an executor if needed
-
-        quote!(loop {
-            rtic::export::nop()
-        })
+        if analysis.channels.get(&0).is_some() {
+            let dispatcher = util::zero_prio_dispatcher_ident();
+            quote!(#dispatcher();)
+        } else {
+            quote!(loop {
+                rtic::export::nop()
+            })
+        }
     };
 
     let main = util::suffixed("main");

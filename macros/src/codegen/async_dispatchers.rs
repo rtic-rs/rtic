@@ -26,9 +26,22 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     for (&level, channel) in &analysis.channels {
         let mut stmts = vec![];
-        let device = &app.args.device;
-        let enum_ = util::interrupt_ident();
-        let interrupt = util::suffixed(&interrupts[&level].0.to_string());
+
+        let dispatcher_name = if level > 0 {
+            util::suffixed(&interrupts.get(&level).expect("UNREACHABLE").0.to_string())
+        } else {
+            util::zero_prio_dispatcher_ident()
+        };
+
+        let pend_interrupt = if level > 0 {
+            let device = &app.args.device;
+            let enum_ = util::interrupt_ident();
+
+            quote!(rtic::pend(#device::#enum_::#dispatcher_name);)
+        } else {
+            // For 0 priority tasks we don't need to pend anything
+            quote!()
+        };
 
         for name in channel.tasks.iter() {
             let exec_name = util::internal_task_ident(name, "EXEC");
@@ -60,40 +73,56 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                     #executor_run_ident.store(false, core::sync::atomic::Ordering::Relaxed);
                     if (&mut *#exec_name.get_mut()).poll(||  {
                         #executor_run_ident.store(true, core::sync::atomic::Ordering::Release);
-                        rtic::pend(#device::#enum_::#interrupt);
+                        #pend_interrupt
                     }) && #rq.load(core::sync::atomic::Ordering::Relaxed) {
                         // If the ready queue is not empty and the executor finished, restart this
                         // dispatch to check if the executor should be restarted.
-                        rtic::pend(#device::#enum_::#interrupt);
+                        #pend_interrupt
                     }
                 }
             ));
         }
 
-        let doc = format!(
-            "Interrupt handler to dispatch async tasks at priority {}",
-            level
-        );
-        let attribute = &interrupts[&level].1.attrs;
-        items.push(quote!(
-            #[allow(non_snake_case)]
-            #[doc = #doc]
-            #[no_mangle]
-            #(#attribute)*
-            unsafe fn #interrupt() {
-                /// The priority of this interrupt handler
-                const PRIORITY: u8 = #level;
+        if level > 0 {
+            let doc = format!(
+                "Interrupt handler to dispatch async tasks at priority {}",
+                level
+            );
+            let attribute = &interrupts.get(&level).expect("UNREACHABLE").1.attrs;
+            items.push(quote!(
+                #[allow(non_snake_case)]
+                #[doc = #doc]
+                #[no_mangle]
+                #(#attribute)*
+                unsafe fn #dispatcher_name() {
+                    /// The priority of this interrupt handler
+                    const PRIORITY: u8 = #level;
 
-                rtic::export::run(PRIORITY, || {
-                    // Have the acquire/release semantics outside the checks to no overdo it
-                    core::sync::atomic::fence(core::sync::atomic::Ordering::Acquire);
+                    rtic::export::run(PRIORITY, || {
+                        // Have the acquire/release semantics outside the checks to no overdo it
+                        core::sync::atomic::fence(core::sync::atomic::Ordering::Acquire);
 
-                    #(#stmts)*
+                        #(#stmts)*
 
-                    core::sync::atomic::fence(core::sync::atomic::Ordering::Release);
-                });
-            }
-        ));
+                        core::sync::atomic::fence(core::sync::atomic::Ordering::Release);
+                    });
+                }
+            ));
+        } else {
+            items.push(quote!(
+                #[allow(non_snake_case)]
+                unsafe fn #dispatcher_name() -> ! {
+                    loop {
+                        // Have the acquire/release semantics outside the checks to no overdo it
+                        core::sync::atomic::fence(core::sync::atomic::Ordering::Acquire);
+
+                        #(#stmts)*
+
+                        core::sync::atomic::fence(core::sync::atomic::Ordering::Release);
+                    }
+                }
+            ));
+        }
     }
 
     quote!(#(#items)*)

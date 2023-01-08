@@ -36,6 +36,7 @@ pub fn app(analysis: analyze::Analysis, app: &App) -> Analysis {
 
     let interrupts: BTreeMap<Priority, _> = priorities
         .iter()
+        .filter(|prio| **prio > 0) // 0 prio tasks are run in main
         .copied()
         .rev()
         .map(|p| (p, available_interrupt.pop().expect("UNREACHABLE")))
