@@ -13,17 +13,17 @@ use crate::syntax::{
 
 pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
     // Collect all tasks into a vector
-    type TaskName = String;
+    type TaskName = Ident;
     type Priority = u8;
 
     // The task list is a Tuple (Name, Shared Resources, Local Resources, Priority)
     let task_resources_list: Vec<(TaskName, Vec<&Ident>, &LocalResources, Priority)> =
         Some(&app.init)
             .iter()
-            .map(|ht| ("init".to_string(), Vec::new(), &ht.args.local_resources, 0))
+            .map(|ht| (ht.name.clone(), Vec::new(), &ht.args.local_resources, 0))
             .chain(app.idle.iter().map(|ht| {
                 (
-                    "idle".to_string(),
+                    ht.name.clone(),
                     ht.args
                         .shared_resources
                         .iter()
@@ -35,7 +35,7 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
             }))
             .chain(app.software_tasks.iter().map(|(name, ht)| {
                 (
-                    name.to_string(),
+                    name.clone(),
                     ht.args
                         .shared_resources
                         .iter()
@@ -47,7 +47,7 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
             }))
             .chain(app.hardware_tasks.iter().map(|(name, ht)| {
                 (
-                    name.to_string(),
+                    name.clone(),
                     ht.args
                         .shared_resources
                         .iter()
@@ -77,16 +77,17 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
             for r in tr {
                 // Get all uses of resources annotated lock_free
                 if lf_res == r {
-                    // lock_free resources are not allowed in async tasks
-                    error.push(syn::Error::new(
+                    // Check so async tasks do not use lock free resources
+                    if app.software_tasks.get(task).is_some() {
+                        error.push(syn::Error::new(
                             r.span(),
                             format!(
                                 "Lock free shared resource {:?} is used by an async tasks, which is forbidden",
                                 r.to_string(),
                             ),
                         ));
+                    }
 
-                    // TODO: Should this be removed?
                     // HashMap returns the previous existing object if old.key == new.key
                     if let Some(lf_res) = lf_hash.insert(r.to_string(), (task, r, priority)) {
                         // Check if priority differ, if it does, append to
@@ -95,6 +96,7 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
                             lf_res_with_error.push(lf_res.1);
                             lf_res_with_error.push(r);
                         }
+
                         // If the resource already violates lock free properties
                         if lf_res_with_error.contains(&r) {
                             lf_res_with_error.push(lf_res.1);
