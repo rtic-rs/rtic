@@ -9,9 +9,9 @@ mod app {
     struct Local {}
 
     #[init]
-    fn foo(_: foo::Context) -> (Shared, Local, foo::Monotonics) {}
+    fn foo(_: foo::Context) -> (Shared, Local) {}
 
     // name collides with `#[idle]` function
     #[task]
-    fn foo(_: foo::Context) {}
+    async fn foo(_: foo::Context) {}
 }

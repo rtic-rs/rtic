@@ -1,5 +1,5 @@
 error: this identifier has already been used
-  --> $DIR/task-idle.rs:12:8
+  --> ui/task-idle.rs:12:14
    |
-12 |     fn foo(_: foo::Context) {}
-   |        ^^^
+12 |     async fn foo(_: foo::Context) {}
+   |              ^^^

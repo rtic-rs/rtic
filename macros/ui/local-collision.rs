@@ -11,11 +11,11 @@ mod app {
     }
 
     #[task(local = [a])]
-    fn foo(_: foo::Context) {}
+    async fn foo(_: foo::Context) {}
 
     #[task(local = [a: u8 = 3])]
-    fn bar(_: bar::Context) {}
+    async fn bar(_: bar::Context) {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {}
+    fn init(_: init::Context) -> (Shared, Local) {}
 }

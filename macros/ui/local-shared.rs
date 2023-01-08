@@ -12,7 +12,7 @@ mod app {
     }
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {}
+    fn init(_: init::Context) -> (Shared, Local) {}
 
     // l2 ok
     #[idle(local = [l2])]
@@ -20,9 +20,9 @@ mod app {
 
     // l1 rejected (not local)
     #[task(priority = 1, local = [l1])]
-    fn uart0(cx: uart0::Context) {}
+    async fn uart0(cx: uart0::Context) {}
 
     // l1 rejected (not lock_free)
     #[task(priority = 2, local = [l1])]
-    fn uart1(cx: uart1::Context) {}
+    async fn uart1(cx: uart1::Context) {}
 }
