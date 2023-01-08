@@ -39,6 +39,7 @@ mod app {
 
         rtic::pend(Interrupt::UART1);
 
+        cortex_m::asm::nop();
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
