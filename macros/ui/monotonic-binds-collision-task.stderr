@@ -1,5 +1,0 @@
-error: this interrupt is already bound
- --> $DIR/monotonic-binds-collision-task.rs:8:20
-  |
-8 |     #[task(binds = Tim1)]
-  |                    ^^^^

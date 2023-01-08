@@ -9,5 +9,5 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init() -> (Shared, Local, init::Monotonics) {}
+    fn init() -> (Shared, Local) {}
 }

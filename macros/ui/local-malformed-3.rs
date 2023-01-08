@@ -9,8 +9,8 @@ mod app {
     struct Local {}
 
     #[task(local = [a: u32 =])]
-    fn foo(_: foo::Context) {}
+    async fn foo(_: foo::Context) {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {}
+    fn init(_: init::Context) -> (Shared, Local) {}
 }

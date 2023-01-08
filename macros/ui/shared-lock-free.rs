@@ -17,7 +17,7 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {}
+    fn init(_: init::Context) -> (Shared, Local) {}
 
     // e2 ok
     #[idle(shared = [e2])]
@@ -27,12 +27,12 @@ mod app {
     }
 
     // e1 rejected (not lock_free)
-    #[task(priority = 1, shared = [e1])]
+    #[task(binds = UART0, priority = 1, shared = [e1])]
     fn uart0(cx: uart0::Context) {
         *cx.resources.e1 += 10;
     }
 
     // e1 rejected (not lock_free)
-    #[task(priority = 2, shared = [e1])]
+    #[task(binds = UART1, priority = 2, shared = [e1])]
     fn uart1(cx: uart1::Context) {}
 }

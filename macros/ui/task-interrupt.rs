@@ -6,5 +6,5 @@ mod app {
     fn foo(_: foo::Context) {}
 
     #[task]
-    fn foo(_: foo::Context) {}
+    async fn foo(_: foo::Context) {}
 }

@@ -1,5 +1,0 @@
-error: expected opening ( in #[monotonic( ... )]
- --> ui/monotonic-no-paran.rs:5:7
-  |
-5 |     #[monotonic]
-  |       ^^^^^^^^^

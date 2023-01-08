@@ -1,5 +1,5 @@
 error: this interrupt is already bound
- --> $DIR/interrupt-double.rs:8:20
+ --> ui/interrupt-double.rs:8:20
   |
 8 |     #[task(binds = UART0)]
   |                    ^^^^^

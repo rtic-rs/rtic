@@ -1,17 +1,17 @@
 error: Local resource "a" is used by multiple tasks or collides with multiple definitions
-  --> $DIR/local-collision-2.rs:10:9
+  --> ui/local-collision-2.rs:10:9
    |
 10 |         a: u32,
    |         ^
 
 error: Local resource "a" is used by multiple tasks or collides with multiple definitions
-  --> $DIR/local-collision-2.rs:18:21
+  --> ui/local-collision-2.rs:16:21
    |
-18 |     #[init(local = [a: u16 = 2])]
+16 |     #[init(local = [a: u16 = 2])]
    |                     ^
 
 error: Local resource "a" is used by multiple tasks or collides with multiple definitions
-  --> $DIR/local-collision-2.rs:15:21
+  --> ui/local-collision-2.rs:13:21
    |
-15 |     #[task(local = [a: u8 = 3])]
+13 |     #[task(local = [a: u8 = 3])]
    |                     ^

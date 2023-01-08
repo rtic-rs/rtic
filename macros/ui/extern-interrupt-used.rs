@@ -9,7 +9,7 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {}
+    fn init(_: init::Context) -> (Shared, Local) {}
 
     #[task(binds = EXTI0)]
     fn foo(_: foo::Context) {}

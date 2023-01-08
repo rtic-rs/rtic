@@ -9,5 +9,5 @@ mod app {
 
     // name collides with `#[idle]` function
     #[task]
-    fn foo(_: foo::Context) {}
+    async fn foo(_: foo::Context) {}
 }

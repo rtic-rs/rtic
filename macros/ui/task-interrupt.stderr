@@ -1,5 +1,5 @@
 error: this task is defined multiple times
- --> $DIR/task-interrupt.rs:9:8
+ --> ui/task-interrupt.rs:9:14
   |
-9 |     fn foo(_: foo::Context) {}
-  |        ^^^
+9 |     async fn foo(_: foo::Context) {}
+  |              ^^^

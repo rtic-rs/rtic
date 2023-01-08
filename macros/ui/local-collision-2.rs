@@ -10,12 +10,9 @@ mod app {
         a: u32,
     }
 
-    fn bar(_: bar::Context) {}
-
     #[task(local = [a: u8 = 3])]
-    fn bar(_: bar::Context) {}
+    async fn bar(_: bar::Context) {}
 
     #[init(local = [a: u16 = 2])]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {}
+    fn init(_: init::Context) -> (Shared, Local) {}
 }
-
