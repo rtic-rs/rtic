@@ -29,7 +29,7 @@ mod app {
         let _x: &'static mut u32 = cx.local.x;
 
         // Access to the critical section token,
-        // to indicate that this is a critical seciton
+        // to indicate that this is a critical section
         let _cs_token: bare_metal::CriticalSection = cx.cs;
 
         hprintln!("init").unwrap();
