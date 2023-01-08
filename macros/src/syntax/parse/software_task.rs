@@ -33,9 +33,7 @@ impl SoftwareTask {
 
         Err(parse::Error::new(
             span,
-            format!(
-                "this task handler must have type signature `async fn({name}::Context)`"
-            ),
+            format!("this task handler must have type signature `async fn({name}::Context)`"),
         ))
     }
 }
@@ -70,9 +68,7 @@ impl SoftwareTask {
 
         Err(parse::Error::new(
             span,
-            format!(
-                "this task handler must have type signature `async fn({name}::Context)`"
-            ),
+            format!("this task handler must have type signature `async fn({name}::Context)`"),
         ))
     }
 }

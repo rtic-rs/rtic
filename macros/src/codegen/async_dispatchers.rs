@@ -84,9 +84,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         }
 
         if level > 0 {
-            let doc = format!(
-                "Interrupt handler to dispatch async tasks at priority {level}"
-            );
+            let doc = format!("Interrupt handler to dispatch async tasks at priority {level}");
             let attribute = &interrupts.get(&level).expect("UNREACHABLE").1.attrs;
             items.push(quote!(
                 #[allow(non_snake_case)]
