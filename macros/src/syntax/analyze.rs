@@ -248,33 +248,34 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
         }
     }
 
-    // Most shared resources need to be `Send`
+    // Most shared resources need to be `Send`, only 0 prio does not need it
     let mut send_types = SendTypes::new();
-    let owned_by_idle = Ownership::Owned { priority: 0 };
+
     for (name, res) in app.shared_resources.iter() {
-        // Handle not owned by idle
         if ownerships
             .get(name)
-            .map(|ownership| *ownership != owned_by_idle)
+            .map(|ownership| match *ownership {
+                Ownership::Owned { priority: ceiling }
+                | Ownership::CoOwned { priority: ceiling }
+                | Ownership::Contended { ceiling } => ceiling != 0,
+            })
             .unwrap_or(false)
         {
             send_types.insert(res.ty.clone());
         }
     }
 
-    // Most local resources need to be `Send` as well
+    // Most local resources need to be `Send` as well, only 0 prio does not need it
     for (name, res) in app.local_resources.iter() {
-        if let Some(idle) = &app.idle {
-            // Only Send if not in idle or not at idle prio
-            if idle.args.local_resources.get(name).is_none()
-                && !ownerships
-                    .get(name)
-                    .map(|ownership| *ownership != owned_by_idle)
-                    .unwrap_or(false)
-            {
-                send_types.insert(res.ty.clone());
-            }
-        } else {
+        if ownerships
+            .get(name)
+            .map(|ownership| match *ownership {
+                Ownership::Owned { priority: ceiling }
+                | Ownership::CoOwned { priority: ceiling }
+                | Ownership::Contended { ceiling } => ceiling != 0,
+            })
+            .unwrap_or(false)
+        {
             send_types.insert(res.ty.clone());
         }
     }
