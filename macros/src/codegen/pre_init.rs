@@ -40,8 +40,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         }
     })) {
         let es = format!(
-            "Maximum priority used by interrupt vector '{}' is more than supported by hardware",
-            name
+            "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
@@ -69,8 +68,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
         }
     }) {
         let es = format!(
-            "Maximum priority used by interrupt vector '{}' is more than supported by hardware",
-            name
+            "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(

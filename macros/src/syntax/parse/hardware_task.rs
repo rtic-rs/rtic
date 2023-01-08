@@ -39,9 +39,8 @@ impl HardwareTask {
 
         Err(parse::Error::new(
             span,
-            &format!(
-                "this task handler must have type signature `fn({}::Context)`",
-                name
+            format!(
+                "this task handler must have type signature `fn({name}::Context)`"
             ),
         ))
     }
@@ -83,9 +82,8 @@ impl HardwareTask {
 
         Err(parse::Error::new(
             span,
-            &format!(
-                "this task handler must have type signature `fn({}::Context)`",
-                name
+            format!(
+                "this task handler must have type signature `fn({name}::Context)`"
             ),
         ))
     }

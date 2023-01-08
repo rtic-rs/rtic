@@ -450,8 +450,7 @@ impl App {
             return Err(parse::Error::new(
                 init.user_shared_struct.span(),
                 format!(
-                    "This name and the one defined on `#[shared]` are not the same. Should this be `{}`?",
-                    shared_resources_ident
+                    "This name and the one defined on `#[shared]` are not the same. Should this be `{shared_resources_ident}`?"
                 ),
             ));
         }
@@ -460,8 +459,7 @@ impl App {
             return Err(parse::Error::new(
                 init.user_local_struct.span(),
                 format!(
-                    "This name and the one defined on `#[local]` are not the same. Should this be `{}`?",
-                    local_resources_ident
+                    "This name and the one defined on `#[local]` are not the same. Should this be `{local_resources_ident}`?"
                 ),
             ));
         }

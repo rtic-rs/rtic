@@ -41,8 +41,7 @@ pub fn app(app: &App) -> parse::Result<()> {
         let s = {
             format!(
                 "not enough interrupts to dispatch \
-                    all software tasks (need: {}; given: {})",
-                need, given
+                    all software tasks (need: {need}; given: {given})"
             )
         };
 

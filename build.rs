@@ -19,8 +19,7 @@ fn main() {
         && !(target.starts_with("thumbv6m") | target.starts_with("thumbv8m.base"))
     {
         panic!(
-            "Unknown target '{}'. Need to update BASEPRI logic in build.rs.",
-            target
+            "Unknown target '{target}'. Need to update BASEPRI logic in build.rs."
         );
     }
 
