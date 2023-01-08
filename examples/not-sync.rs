@@ -62,6 +62,6 @@ mod app {
     #[task(shared = [&shared])]
     async fn bar(c: bar::Context) {
         let shared: &NotSync = c.shared.shared;
-        hprintln!("foo a {}", shared.data);
+        hprintln!("bar a {}", shared.data);
     }
 }

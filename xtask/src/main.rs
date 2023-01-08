@@ -87,11 +87,13 @@ fn main() -> anyhow::Result<()> {
     let targets = [ARMV7M, ARMV6M];
 
     let examples: Vec<_> = std::fs::read_dir("./examples")?
-        .filter_map(|path| {
-            path.map(|p| p.path().file_stem().unwrap().to_str().unwrap().to_string())
-                .ok()
-        })
+        .filter_map(|p| p.ok())
+        .map(|p| p.path())
+        .filter(|p| p.display().to_string().ends_with(".rs"))
+        .map(|path| path.file_stem().unwrap().to_str().unwrap().to_string())
         .collect();
+
+    println!("examples: {examples:?}");
 
     let opts = Options::from_args();
     let target = &opts.target;
