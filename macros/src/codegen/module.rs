@@ -140,7 +140,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         let interrupt = &analysis
             .interrupts
             .get(&priority)
-            .expect("RTIC-ICE: interrupt identifer not found")
+            .expect("RTIC-ICE: interrupt identifier not found")
             .0;
 
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");

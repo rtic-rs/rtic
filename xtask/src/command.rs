@@ -136,7 +136,7 @@ pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
     })
 }
 
-/// Check if `run` was sucessful.
+/// Check if `run` was successful.
 /// returns Ok in case the run went as expected,
 /// Err otherwise
 pub fn run_successful(run: &RunResult, expected_output_file: String) -> Result<(), TestRunError> {
