@@ -98,6 +98,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
     };
 
     let internal_context_name = util::internal_task_ident(name, "Context");
+    let exec_name = util::internal_task_ident(name, "EXEC");
 
     items.push(quote!(
         #(#cfgs)*
@@ -147,25 +148,25 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");
 
         // Spawn caller
-        let rq = util::rq_async_ident(name);
         items.push(quote!(
-
-        #(#cfgs)*
-        /// Spawns the task directly
-        #[allow(non_snake_case)]
-        #[doc(hidden)]
-        pub fn #internal_spawn_ident() -> Result<(), ()> {
-            unsafe {
-                // TODO: Fix this to be compare and swap
-                if #rq.load(core::sync::atomic::Ordering::Acquire) {
-                    Err(())
-                } else {
-                    #rq.store(true, core::sync::atomic::Ordering::Release);
+            #(#cfgs)*
+            /// Spawns the task directly
+            #[allow(non_snake_case)]
+            #[doc(hidden)]
+            pub fn #internal_spawn_ident() -> Result<(), ()> {
+                if #exec_name.try_reserve() {
+                    unsafe {
+                        // TODO: Add args here
+                        #exec_name.spawn_unchecked(#name(#name::Context::new()));
+                    }
                     #pend_interrupt
+
                     Ok(())
+                } else {
+                    Err(())
                 }
             }
-        }));
+        ));
 
         module_items.push(quote!(
             #(#cfgs)*

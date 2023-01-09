@@ -49,11 +49,6 @@ pub fn impl_mutex(
     )
 }
 
-/// Generates an identifier for the `EXECUTOR_RUN` atomics (`async` API)
-pub fn executor_run_ident(task: &Ident) -> Ident {
-    mark_internal_name(&format!("{task}_EXECUTOR_RUN"))
-}
-
 pub fn interrupt_ident() -> Ident {
     let span = Span::call_site();
     Ident::new("interrupt", span)
@@ -149,11 +144,6 @@ pub fn local_resources_ident(ctxt: Context, app: &App) -> Ident {
     s.push_str("LocalResources");
 
     mark_internal_name(&s)
-}
-
-/// Generates an identifier for a ready queue, async task version
-pub fn rq_async_ident(async_task_name: &Ident) -> Ident {
-    mark_internal_name(&format!("ASYNC_TASK_{async_task_name}_RQ"))
 }
 
 /// Suffixed identifier
