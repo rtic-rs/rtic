@@ -8,73 +8,7 @@ pub use cortex_m::{
     Peripherals,
 };
 
-pub mod executor {
-    use core::{
-        future::Future,
-        mem,
-        pin::Pin,
-        task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
-    };
-
-    static WAKER_VTABLE: RawWakerVTable =
-        RawWakerVTable::new(waker_clone, waker_wake, waker_wake, waker_drop);
-
-    unsafe fn waker_clone(p: *const ()) -> RawWaker {
-        RawWaker::new(p, &WAKER_VTABLE)
-    }
-
-    unsafe fn waker_wake(p: *const ()) {
-        // The only thing we need from a waker is the function to call to pend the async
-        // dispatcher.
-        let f: fn() = mem::transmute(p);
-        f();
-    }
-
-    unsafe fn waker_drop(_: *const ()) {
-        // nop
-    }
-
-    //============
-    // AsyncTaskExecutor
-
-    pub struct AsyncTaskExecutor<F: Future + 'static> {
-        task: Option<F>,
-    }
-
-    impl<F: Future + 'static> AsyncTaskExecutor<F> {
-        pub const fn new() -> Self {
-            Self { task: None }
-        }
-
-        pub fn is_running(&self) -> bool {
-            self.task.is_some()
-        }
-
-        pub fn spawn(&mut self, future: F) {
-            self.task = Some(future);
-        }
-
-        pub fn poll(&mut self, wake: fn()) -> bool {
-            if let Some(future) = &mut self.task {
-                unsafe {
-                    let waker = Waker::from_raw(RawWaker::new(wake as *const (), &WAKER_VTABLE));
-                    let mut cx = Context::from_waker(&waker);
-                    let future = Pin::new_unchecked(future);
-
-                    match future.poll(&mut cx) {
-                        Poll::Ready(_) => {
-                            self.task = None;
-                            true // Only true if we finished now
-                        }
-                        Poll::Pending => false,
-                    }
-                }
-            } else {
-                false
-            }
-        }
-    }
-}
+pub mod executor;
 
 /// Mask is used to store interrupt masks on systems without a BASEPRI register (M0, M0+, M23).
 /// It needs to be large enough to cover all the relevant interrupts in use.
