@@ -1,9 +1,9 @@
+use super::atomic::{AtomicBool, Ordering};
 use core::{
     cell::UnsafeCell,
     future::Future,
     mem::{self, MaybeUninit},
     pin::Pin,
-    sync::atomic::{AtomicBool, Ordering},
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
@@ -53,9 +53,11 @@ impl<F: Future> AsyncTaskExecutor<F> {
         self.running.load(Ordering::Relaxed)
     }
 
-    /// Checks if a waker has pended the executor.
-    pub fn is_pending(&self) -> bool {
-        self.pending.load(Ordering::Relaxed)
+    /// Checks if a waker has pended the executor and simultaneously clears the flag.
+    pub fn check_and_clear_pending(&self) -> bool {
+        self.pending
+            .compare_exchange(true, false, Ordering::Relaxed, Ordering::Relaxed)
+            .is_ok()
     }
 
     // Used by wakers to indicate that the executor needs to run.
@@ -80,6 +82,7 @@ impl<F: Future> AsyncTaskExecutor<F> {
         debug_assert!(self.running.load(Ordering::Relaxed));
 
         self.task.get().write(MaybeUninit::new(future));
+        self.set_pending();
     }
 
     /// Poll the future in the executor.

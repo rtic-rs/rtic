@@ -1,7 +1,7 @@
 use crate::syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
-    codegen::{local_resources_struct, module, shared_resources_struct, util},
+    codegen::{local_resources_struct, module, shared_resources_struct},
 };
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -13,18 +13,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     // Any task
     for (name, task) in app.software_tasks.iter() {
-        let executor_ident = util::executor_run_ident(name);
-        mod_app.push(quote!(
-            #[allow(non_camel_case_types)]
-            #[allow(non_upper_case_globals)]
-            #[doc(hidden)]
-            static #executor_ident: core::sync::atomic::AtomicBool =
-                core::sync::atomic::AtomicBool::new(false);
-        ));
-
-        // `${task}Resources`
-
-        // `${task}Locals`
         if !task.args.local_resources.is_empty() {
             let (item, constructor) =
                 local_resources_struct::codegen(Context::SoftwareTask(name), app);

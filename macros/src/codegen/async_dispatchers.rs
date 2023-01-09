@@ -16,11 +16,10 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
         items.push(quote!(
             #[allow(non_camel_case_types)]
-            type #type_name = impl core::future::Future + 'static;
+            type #type_name = impl core::future::Future;
             #[allow(non_upper_case_globals)]
-            static #exec_name:
-                rtic::RacyCell<rtic::export::executor::AsyncTaskExecutor<#type_name>> =
-                    rtic::RacyCell::new(rtic::export::executor::AsyncTaskExecutor::new());
+            static #exec_name: rtic::export::executor::AsyncTaskExecutor<#type_name> =
+                rtic::export::executor::AsyncTaskExecutor::new();
         ));
     }
 
@@ -47,38 +46,13 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let exec_name = util::internal_task_ident(name, "EXEC");
             // let task = &app.software_tasks[name];
             // let cfgs = &task.cfgs;
-            let executor_run_ident = util::executor_run_ident(name);
-
-            let rq = util::rq_async_ident(name);
-
-            items.push(quote!(
-                #[doc(hidden)]
-                #[allow(non_camel_case_types)]
-                #[allow(non_upper_case_globals)]
-                static #rq: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
-            ));
 
             stmts.push(quote!(
-                if !(&*#exec_name.get()).is_running() {
-                    // TODO Fix this to be compare and swap
-                    if #rq.load(core::sync::atomic::Ordering::Relaxed) {
-                        #rq.store(false, core::sync::atomic::Ordering::Relaxed);
-
-                        (&mut *#exec_name.get_mut()).spawn(#name(#name::Context::new()));
-                        #executor_run_ident.store(true, core::sync::atomic::Ordering::Relaxed);
-                    }
-                }
-
-                if #executor_run_ident.load(core::sync::atomic::Ordering::Relaxed) {
-                    #executor_run_ident.store(false, core::sync::atomic::Ordering::Relaxed);
-                    if (&mut *#exec_name.get_mut()).poll(||  {
-                        #executor_run_ident.store(true, core::sync::atomic::Ordering::Release);
+                if #exec_name.check_and_clear_pending() {
+                    #exec_name.poll(|| {
+                        #exec_name.set_pending();
                         #pend_interrupt
-                    }) && #rq.load(core::sync::atomic::Ordering::Relaxed) {
-                        // If the ready queue is not empty and the executor finished, restart this
-                        // dispatch to check if the executor should be restarted.
-                        #pend_interrupt
-                    }
+                    });
                 }
             ));
         }
@@ -96,12 +70,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                     const PRIORITY: u8 = #level;
 
                     rtic::export::run(PRIORITY, || {
-                        // Have the acquire/release semantics outside the checks to no overdo it
-                        core::sync::atomic::fence(core::sync::atomic::Ordering::Acquire);
-
                         #(#stmts)*
-
-                        core::sync::atomic::fence(core::sync::atomic::Ordering::Release);
                     });
                 }
             ));
@@ -110,12 +79,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 #[allow(non_snake_case)]
                 unsafe fn #dispatcher_name() -> ! {
                     loop {
-                        // Have the acquire/release semantics outside the checks to no overdo it
-                        core::sync::atomic::fence(core::sync::atomic::Ordering::Acquire);
-
                         #(#stmts)*
-
-                        core::sync::atomic::fence(core::sync::atomic::Ordering::Release);
                     }
                 }
             ));

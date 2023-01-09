@@ -1,5 +1,4 @@
 pub use bare_metal::CriticalSection;
-use core::sync::atomic::{AtomicBool, Ordering};
 pub use cortex_m::{
     asm::nop,
     asm::wfi,
@@ -7,6 +6,8 @@ pub use cortex_m::{
     peripheral::{scb::SystemHandler, DWT, NVIC, SCB, SYST},
     Peripherals,
 };
+//pub use portable_atomic as atomic;
+pub use atomic_polyfill as atomic;
 
 pub mod executor;
 
@@ -70,28 +71,6 @@ where
     F: FnOnce(),
 {
     f();
-}
-
-pub struct Barrier {
-    inner: AtomicBool,
-}
-
-impl Barrier {
-    pub const fn new() -> Self {
-        Barrier {
-            inner: AtomicBool::new(false),
-        }
-    }
-
-    pub fn release(&self) {
-        self.inner.store(true, Ordering::Release);
-    }
-
-    pub fn wait(&self) {
-        while !self.inner.load(Ordering::Acquire) {
-            core::hint::spin_loop()
-        }
-    }
 }
 
 /// Const helper to check architecture
