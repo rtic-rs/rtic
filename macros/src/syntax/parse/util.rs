@@ -3,8 +3,8 @@ use syn::{
     parse::{self, ParseStream},
     punctuated::Punctuated,
     spanned::Spanned,
-    Abi, AttrStyle, Attribute, Expr, FnArg, ForeignItemFn, Ident, ItemFn, Pat, Path, PathArguments,
-    ReturnType, Token, Type, Visibility,
+    Abi, AttrStyle, Attribute, Expr, FnArg, ForeignItemFn, Ident, ItemFn, Pat, PatType, Path,
+    PathArguments, ReturnType, Token, Type, Visibility,
 };
 
 use crate::syntax::{
@@ -231,19 +231,29 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
     Ok(resources)
 }
 
-pub fn parse_inputs(inputs: Punctuated<FnArg, Token![,]>, name: &str) -> Option<Box<Pat>> {
+type ParseInputResult = Option<(Box<Pat>, Result<Vec<PatType>, FnArg>)>;
+
+pub fn parse_inputs(inputs: Punctuated<FnArg, Token![,]>, name: &str) -> ParseInputResult {
     let mut inputs = inputs.into_iter();
 
-    if let Some(FnArg::Typed(first)) = inputs.next() {
-        if type_is_path(&first.ty, &[name, "Context"]) {
-            // No more inputs
-            if inputs.next().is_none() {
-                return Some(first.pat);
+    match inputs.next() {
+        Some(FnArg::Typed(first)) => {
+            if type_is_path(&first.ty, &[name, "Context"]) {
+                let rest = inputs
+                    .map(|arg| match arg {
+                        FnArg::Typed(arg) => Ok(arg),
+                        _ => Err(arg),
+                    })
+                    .collect::<Result<Vec<_>, _>>();
+
+                Some((first.pat, rest))
+            } else {
+                None
             }
         }
-    }
 
-    None
+        _ => None,
+    }
 }
 
 pub fn type_is_bottom(ty: &ReturnType) -> bool {

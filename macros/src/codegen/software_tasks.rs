@@ -36,12 +36,13 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
+            let inputs = &task.inputs;
 
             user_tasks.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                async fn #name(#context: #name::Context<'static>) {
+                async fn #name<'a>(#context: #name::Context<'a> #(,#inputs)*) {
                     use rtic::Mutex as _;
                     use rtic::mutex::prelude::*;
 

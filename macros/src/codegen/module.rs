@@ -146,6 +146,8 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         };
 
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");
+        let (input_args, input_tupled, input_untupled, input_ty) =
+            util::regroup_inputs(&spawnee.inputs);
 
         // Spawn caller
         items.push(quote!(
@@ -153,17 +155,18 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             /// Spawns the task directly
             #[allow(non_snake_case)]
             #[doc(hidden)]
-            pub fn #internal_spawn_ident() -> Result<(), ()> {
+            pub fn #internal_spawn_ident(#(#input_args,)*) -> Result<(), #input_ty> {
                 if #exec_name.try_reserve() {
+                    // This unsafe is protected by `try_reserve`, see its documentation for details
                     unsafe {
-                        // TODO: Add args here
-                        #exec_name.spawn_unchecked(#name(#name::Context::new()));
+                        #exec_name.spawn_unchecked(#name(#name::Context::new() #(,#input_untupled)*));
                     }
+
                     #pend_interrupt
 
                     Ok(())
                 } else {
-                    Err(())
+                    Err(#input_tupled)
                 }
             }
         ));

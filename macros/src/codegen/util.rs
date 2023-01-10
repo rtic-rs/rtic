@@ -1,9 +1,8 @@
-use core::sync::atomic::{AtomicUsize, Ordering};
-
 use crate::syntax::{ast::App, Context};
+use core::sync::atomic::{AtomicUsize, Ordering};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{Attribute, Ident};
+use syn::{Attribute, Ident, PatType};
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
 
@@ -92,6 +91,55 @@ pub fn link_section_uninit() -> TokenStream2 {
     let section = format!(".uninit.rtic{}", link_section_index());
 
     quote!(#[link_section = #section])
+}
+
+/// Regroups the inputs of a task
+///
+/// `inputs` could be &[`input: Foo`] OR &[`mut x: i32`, `ref y: i64`]
+pub fn regroup_inputs(
+    inputs: &[PatType],
+) -> (
+    // args e.g. &[`_0`],  &[`_0: i32`, `_1: i64`]
+    Vec<TokenStream2>,
+    // tupled e.g. `_0`, `(_0, _1)`
+    TokenStream2,
+    // untupled e.g. &[`_0`], &[`_0`, `_1`]
+    Vec<TokenStream2>,
+    // ty e.g. `Foo`, `(i32, i64)`
+    TokenStream2,
+) {
+    if inputs.len() == 1 {
+        let ty = &inputs[0].ty;
+
+        (
+            vec![quote!(_0: #ty)],
+            quote!(_0),
+            vec![quote!(_0)],
+            quote!(#ty),
+        )
+    } else {
+        let mut args = vec![];
+        let mut pats = vec![];
+        let mut tys = vec![];
+
+        for (i, input) in inputs.iter().enumerate() {
+            let i = Ident::new(&format!("_{}", i), Span::call_site());
+            let ty = &input.ty;
+
+            args.push(quote!(#i: #ty));
+
+            pats.push(quote!(#i));
+
+            tys.push(quote!(#ty));
+        }
+
+        let tupled = {
+            let pats = pats.clone();
+            quote!((#(#pats,)*))
+        };
+        let ty = quote!((#(#tys,)*));
+        (args, tupled, pats, ty)
+    }
 }
 
 /// Get the ident for the name of the task

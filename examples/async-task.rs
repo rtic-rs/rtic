@@ -27,6 +27,7 @@ mod app {
         hprintln!("init");
 
         async_task::spawn().unwrap();
+        async_task_args::spawn(1, 2).unwrap();
         async_task2::spawn().unwrap();
 
         (Shared { a: 0 }, Local {})
@@ -51,6 +52,11 @@ mod app {
     async fn async_task(cx: async_task::Context) {
         let async_task::SharedResources { a: _, .. } = cx.shared;
         hprintln!("hello from async");
+    }
+
+    #[task]
+    async fn async_task_args(_cx: async_task_args::Context, a: u32, b: i32) {
+        hprintln!("hello from async with args a: {}, b: {}", a, b);
     }
 
     #[task(priority = 2, shared = [a])]

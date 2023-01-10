@@ -25,16 +25,18 @@ impl Init {
             if let Ok((user_shared_struct, user_local_struct)) =
                 util::type_is_init_return(&item.sig.output)
             {
-                if let Some(context) = util::parse_inputs(item.sig.inputs, &name) {
-                    return Ok(Init {
-                        args,
-                        attrs: item.attrs,
-                        context,
-                        name: item.sig.ident,
-                        stmts: item.block.stmts,
-                        user_shared_struct,
-                        user_local_struct,
-                    });
+                if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+                    if rest.is_empty() {
+                        return Ok(Init {
+                            args,
+                            attrs: item.attrs,
+                            context,
+                            name: item.sig.ident,
+                            stmts: item.block.stmts,
+                            user_shared_struct,
+                            user_local_struct,
+                        });
+                    }
                 }
             }
         }
