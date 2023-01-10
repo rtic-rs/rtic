@@ -1,4 +1,4 @@
-error: this task handler must have type signature `async fn(foo::Context)`
+error: this task handler must have type signature `async fn(foo::Context, ..)`
  --> ui/task-divergent.rs:6:14
   |
 6 |     async fn foo(_: foo::Context) -> ! {

@@ -1,6 +1,6 @@
 //! Abstract Syntax Tree
 
-use syn::{Attribute, Expr, Ident, Item, ItemUse, Pat, Path, Stmt, Type};
+use syn::{Attribute, Expr, Ident, Item, ItemUse, Pat, PatType, Path, Stmt, Type};
 
 use crate::syntax::Map;
 
@@ -204,6 +204,9 @@ pub struct SoftwareTask {
 
     /// The context argument
     pub context: Box<Pat>,
+
+    /// The inputs of this software task
+    pub inputs: Vec<PatType>,
 
     /// The statements that make up the task handler
     pub stmts: Vec<Stmt>,

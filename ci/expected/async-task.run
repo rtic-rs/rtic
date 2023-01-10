@@ -1,4 +1,5 @@
 init
 hello from async2
 hello from async
+hello from async with args a: 1, b: 2
 idle

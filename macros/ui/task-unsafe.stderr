@@ -1,4 +1,4 @@
-error: this task handler must have type signature `async fn(foo::Context)`
+error: this task handler must have type signature `async fn(foo::Context, ..)`
  --> ui/task-unsafe.rs:6:21
   |
 6 |     async unsafe fn foo(_: foo::Context) {}
