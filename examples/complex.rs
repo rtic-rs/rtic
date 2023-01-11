@@ -82,8 +82,7 @@ mod app {
             "t0 p2 called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        )
-        .ok();
+        );
         hprintln!("t0 p2 exit");
     }
 
@@ -96,8 +95,7 @@ mod app {
             "t1 p3 called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        )
-        .ok();
+        );
 
         cx.shared.s4.lock(|s| {
             hprintln!("t1 enter lock s4 {}", s);
@@ -120,8 +118,7 @@ mod app {
             "t2 p4 called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        )
-        .unwrap();
+        );
 
         cx.shared.s4.lock(|s| {
             hprintln!("enter lock s4 {}", s);

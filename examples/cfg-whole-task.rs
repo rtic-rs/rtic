@@ -88,7 +88,6 @@ mod app {
             "foo has been called {} time{}",
             n,
             if n == 1 { "" } else { "s" }
-        )
-        .ok();
+        );
     }
 }

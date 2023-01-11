@@ -49,7 +49,6 @@ mod app {
             "foo called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        )
-        .unwrap();
+        );
     }
 }

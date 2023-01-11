@@ -53,7 +53,6 @@ mod app {
             "UART0 called {} time{}",
             *cx.local.times,
             if *cx.local.times > 1 { "s" } else { "" }
-        )
-        .unwrap();
+        );
     }
 }
