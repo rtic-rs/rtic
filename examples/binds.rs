@@ -23,14 +23,14 @@ mod app {
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
 
-        hprintln!("init").unwrap();
+        hprintln!("init");
 
         (Shared {}, Local {}, init::Monotonics())
     }
 
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        hprintln!("idle").unwrap();
+        hprintln!("idle");
 
         rtic::pend(Interrupt::UART0);
 

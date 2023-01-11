@@ -34,7 +34,7 @@ mod app {
     fn idle(mut c: idle::Context) -> ! {
         loop {
             if let Some(byte) = c.shared.c.lock(|c| c.dequeue()) {
-                hprintln!("received message: {}", byte).unwrap();
+                hprintln!("received message: {}", byte);
 
                 debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
             } else {

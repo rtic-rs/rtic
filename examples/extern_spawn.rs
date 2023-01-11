@@ -10,7 +10,7 @@ use panic_semihosting as _;
 
 // Free function implementing the spawnable task `foo`.
 fn foo(_c: app::foo::Context, x: i32, y: u32) {
-    hprintln!("foo {}, {}", x, y).unwrap();
+    hprintln!("foo {}, {}", x, y);
     if x == 2 {
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }

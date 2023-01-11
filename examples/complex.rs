@@ -25,7 +25,7 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        hprintln!("init").unwrap();
+        hprintln!("init");
 
         (
             Shared {
