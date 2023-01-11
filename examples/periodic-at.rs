@@ -35,7 +35,7 @@ mod app {
 
     #[task(local = [cnt: u32 = 0])]
     fn foo(cx: foo::Context, instant: fugit::TimerInstantU64<100>) {
-        hprintln!("foo {:?}", instant).ok();
+        hprintln!("foo {:?}", instant);
         *cx.local.cnt += 1;
 
         if *cx.local.cnt == 4 {

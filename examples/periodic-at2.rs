@@ -36,7 +36,7 @@ mod app {
     // Using the explicit type of the timer implementation
     #[task(local = [cnt: u32 = 0])]
     fn foo(cx: foo::Context, instant: fugit::TimerInstantU64<100>) {
-        hprintln!("foo {:?}", instant).ok();
+        hprintln!("foo {:?}", instant);
         *cx.local.cnt += 1;
 
         if *cx.local.cnt == 4 {
@@ -52,7 +52,7 @@ mod app {
     // This remains agnostic to the timer implementation
     #[task(local = [cnt: u32 = 0])]
     fn bar(_cx: bar::Context, instant: <MyMono as rtic_monotonic::Monotonic>::Instant) {
-        hprintln!("bar {:?}", instant).ok();
+        hprintln!("bar {:?}", instant);
 
         // Spawn a new message with 1s offset to spawned time
         let next_instant = instant + 1.secs();

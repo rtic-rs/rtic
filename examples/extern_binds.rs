@@ -10,7 +10,7 @@ use panic_semihosting as _;
 
 // Free function implementing the interrupt bound task `foo`.
 fn foo(_: app::foo::Context) {
-    hprintln!("foo called").ok();
+    hprintln!("foo called");
 }
 
 #[rtic::app(device = lm3s6965)]
