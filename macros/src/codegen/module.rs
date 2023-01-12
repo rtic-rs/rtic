@@ -156,11 +156,8 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             #[allow(non_snake_case)]
             #[doc(hidden)]
             pub fn #internal_spawn_ident(#(#input_args,)*) -> Result<(), #input_ty> {
-                if #exec_name.try_reserve() {
-                    // This unsafe is protected by `try_reserve`, see its documentation for details
-                    unsafe {
-                        #exec_name.spawn_unchecked(#name(#name::Context::new() #(,#input_untupled)*));
-                    }
+
+                if #exec_name.spawn(|| #name(unsafe { #name::Context::new() } #(,#input_untupled)*) ) {
 
                     #pend_interrupt
 
@@ -168,6 +165,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                 } else {
                     Err(#input_tupled)
                 }
+
             }
         ));
 
