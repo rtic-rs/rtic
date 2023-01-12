@@ -30,7 +30,7 @@ unsafe fn waker_drop(_: *const ()) {
 
 /// Executor for an async task.
 pub struct AsyncTaskExecutor<F: Future> {
-    // `task` is proteced by the `running` flag.
+    // `task` is protected by the `running` flag.
     task: UnsafeCell<MaybeUninit<F>>,
     running: AtomicBool,
     pending: AtomicBool,
@@ -40,6 +40,7 @@ unsafe impl<F: Future> Sync for AsyncTaskExecutor<F> {}
 
 impl<F: Future> AsyncTaskExecutor<F> {
     /// Create a new executor.
+    #[inline(always)]
     pub const fn new() -> Self {
         Self {
             task: UnsafeCell::new(MaybeUninit::uninit()),
@@ -49,45 +50,51 @@ impl<F: Future> AsyncTaskExecutor<F> {
     }
 
     /// Check if there is an active task in the executor.
+    #[inline(always)]
     pub fn is_running(&self) -> bool {
         self.running.load(Ordering::Relaxed)
     }
 
     /// Checks if a waker has pended the executor and simultaneously clears the flag.
-    pub fn check_and_clear_pending(&self) -> bool {
+    #[inline(always)]
+    fn check_and_clear_pending(&self) -> bool {
+        // Ordering::Acquire to enforce that update of task is visible to poll
         self.pending
-            .compare_exchange(true, false, Ordering::Relaxed, Ordering::Relaxed)
+            .compare_exchange(true, false, Ordering::Acquire, Ordering::Relaxed)
             .is_ok()
     }
 
     // Used by wakers to indicate that the executor needs to run.
+    #[inline(always)]
     pub fn set_pending(&self) {
         self.pending.store(true, Ordering::Release);
     }
 
-    /// Try to reserve the executor for a future.
-    /// Used in conjunction with `spawn_unchecked` to reserve the executor before spawning.
-    ///
-    /// This could have been joined with `spawn_unchecked` for a complete safe API, however the
-    /// codegen needs to see if the reserve fails so it can give back input parameters. If spawning
-    /// was done within the same call the input parameters would be lost and could not be returned.
-    pub fn try_reserve(&self) -> bool {
-        self.running
+    /// Spawn a future
+    #[inline(always)]
+    pub fn spawn(&self, future: impl Fn() -> F) -> bool {
+        // Try to reserve the executor for a future.
+        if self
+            .running
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Relaxed)
             .is_ok()
-    }
+        {
+            // This unsafe is protected by `running` being false and the atomic setting it to true.
+            unsafe {
+                self.task.get().write(MaybeUninit::new(future()));
+            }
+            self.set_pending();
 
-    /// Spawn a future, only valid to do after `try_reserve` succeeds.
-    pub unsafe fn spawn_unchecked(&self, future: F) {
-        debug_assert!(self.running.load(Ordering::Relaxed));
-
-        self.task.get().write(MaybeUninit::new(future));
-        self.set_pending();
+            true
+        } else {
+            false
+        }
     }
 
     /// Poll the future in the executor.
+    #[inline(always)]
     pub fn poll(&self, wake: fn()) {
-        if self.is_running() {
+        if self.is_running() && self.check_and_clear_pending() {
             let waker = unsafe { Waker::from_raw(RawWaker::new(wake as *const (), &WAKER_VTABLE)) };
             let mut cx = Context::from_waker(&waker);
             let future = unsafe { Pin::new_unchecked(&mut *(self.task.get() as *mut F)) };

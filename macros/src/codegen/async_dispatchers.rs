@@ -44,16 +44,15 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
         for name in channel.tasks.iter() {
             let exec_name = util::internal_task_ident(name, "EXEC");
+            // TODO: Fix cfg
             // let task = &app.software_tasks[name];
             // let cfgs = &task.cfgs;
 
             stmts.push(quote!(
-                if #exec_name.check_and_clear_pending() {
-                    #exec_name.poll(|| {
-                        #exec_name.set_pending();
-                        #pend_interrupt
-                    });
-                }
+                #exec_name.poll(|| {
+                    #exec_name.set_pending();
+                    #pend_interrupt
+                });
             ));
         }
 
