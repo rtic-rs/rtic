@@ -48,7 +48,7 @@ mod app {
             *s2 += 1;
             *s3 += 1;
 
-            hprintln!("Multiple locks, s1: {}, s2: {}, s3: {}", *s1, *s2, *s3).unwrap();
+            hprintln!("Multiple locks, s1: {}, s2: {}, s3: {}", *s1, *s2, *s3);
         });
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator

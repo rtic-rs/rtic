@@ -35,7 +35,7 @@ mod app {
 
     #[task(local = [cnt: u32 = 0])]
     fn foo(cx: foo::Context) {
-        hprintln!("foo").ok();
+        hprintln!("foo");
         *cx.local.cnt += 1;
 
         if *cx.local.cnt == 4 {

@@ -28,7 +28,7 @@ mod app {
         // Initialize the monotonic (SysTick rate in QEMU is 12 MHz)
         let mono = Systick::new(systick, 12_000_000);
 
-        hprintln!("init").ok();
+        hprintln!("init");
 
         // Schedule `foo` to run 1 second in the future
         foo::spawn_after(1.secs()).unwrap();
@@ -42,7 +42,7 @@ mod app {
 
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo").ok();
+        hprintln!("foo");
 
         // Schedule `bar` to run 2 seconds in the future (1 second after foo runs)
         bar::spawn_after(1.secs()).unwrap();
@@ -50,7 +50,7 @@ mod app {
 
     #[task]
     fn bar(_: bar::Context) {
-        hprintln!("bar").ok();
+        hprintln!("bar");
 
         // Schedule `baz` to run 1 seconds from now, but with a specific time instant.
         baz::spawn_at(monotonics::now() + 1.secs()).unwrap();
@@ -58,7 +58,7 @@ mod app {
 
     #[task]
     fn baz(_: baz::Context) {
-        hprintln!("baz").ok();
+        hprintln!("baz");
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 }

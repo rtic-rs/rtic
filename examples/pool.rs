@@ -56,7 +56,7 @@ mod app {
 
     #[task]
     fn foo(_: foo::Context, x: Box<P>) {
-        hprintln!("foo({:?})", x.as_ptr()).unwrap();
+        hprintln!("foo({:?})", x.as_ptr());
 
         // explicitly return the block to the pool
         drop(x);
@@ -66,7 +66,7 @@ mod app {
 
     #[task(priority = 2)]
     fn bar(_: bar::Context, x: Box<P>) {
-        hprintln!("bar({:?})", x.as_ptr()).unwrap();
+        hprintln!("bar({:?})", x.as_ptr());
 
         // this is done automatically so we can omit the call to `drop`
         // drop(x);

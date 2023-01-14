@@ -10,7 +10,7 @@ use panic_semihosting as _;
 
 // Free function implementing the interrupt bound task `foo`.
 fn foo(_: app::foo::Context) {
-    hprintln!("foo called").ok();
+    hprintln!("foo called");
 }
 
 #[rtic::app(device = lm3s6965)]
@@ -29,21 +29,22 @@ mod app {
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
         rtic::pend(Interrupt::UART0);
 
-        hprintln!("init").unwrap();
+        hprintln!("init");
 
         (Shared {}, Local {}, init::Monotonics())
     }
 
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        hprintln!("idle").unwrap();
+        hprintln!("idle");
 
         rtic::pend(Interrupt::UART0);
 
-        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
-
         loop {
             cortex_m::asm::nop();
+            // Exit moved after nop to ensure that rtic::pend gets
+            // to run before exiting
+            debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         }
     }
 

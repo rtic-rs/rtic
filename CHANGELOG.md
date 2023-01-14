@@ -19,6 +19,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Updated dev-dependency cortex-m-semihosting to v0.5
 - CI: Updated to setup-python@v4
 - CI: Updated to checkout@v3
 - Tuned redirect message for rtic.rs/meeting

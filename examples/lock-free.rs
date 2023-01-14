@@ -33,7 +33,7 @@ mod app {
 
         *c.shared.counter += 1; // <- no lock API required
         let counter = *c.shared.counter;
-        hprintln!("  foo = {}", counter).unwrap();
+        hprintln!("  foo = {}", counter);
     }
 
     #[task(shared = [counter])] // <- same priority
@@ -42,7 +42,7 @@ mod app {
 
         *c.shared.counter += 1; // <- no lock API required
         let counter = *c.shared.counter;
-        hprintln!("  bar = {}", counter).unwrap();
+        hprintln!("  bar = {}", counter);
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }

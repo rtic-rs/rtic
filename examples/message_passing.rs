@@ -29,7 +29,7 @@ mod app {
 
     #[task(capacity = 3)]
     fn foo(_c: foo::Context, x: i32, y: u32) {
-        hprintln!("foo {}, {}", x, y).unwrap();
+        hprintln!("foo {}, {}", x, y);
         if x == 2 {
             debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         }

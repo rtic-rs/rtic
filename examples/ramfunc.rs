@@ -33,7 +33,7 @@ mod app {
     #[inline(never)]
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo").unwrap();
+        hprintln!("foo");
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }

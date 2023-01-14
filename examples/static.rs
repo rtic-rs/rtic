@@ -37,7 +37,7 @@ mod app {
         loop {
             // Lock-free access to the same underlying queue!
             if let Some(data) = c.local.c.dequeue() {
-                hprintln!("received message: {}", data).unwrap();
+                hprintln!("received message: {}", data);
 
                 // Run foo until data
                 if data == 3 {
