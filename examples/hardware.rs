@@ -37,10 +37,11 @@ mod app {
 
         rtic::pend(Interrupt::UART0);
 
-        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
-
         loop {
+            // Exit moved after nop to ensure that rtic::pend gets
+            // to run before exiting
             cortex_m::asm::nop();
+            debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
         }
     }
 
