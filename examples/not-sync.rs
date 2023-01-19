@@ -2,6 +2,7 @@
 
 // #![deny(unsafe_code)]
 #![deny(warnings)]
+#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 #![feature(type_alias_impl_trait)]
@@ -9,6 +10,7 @@
 use core::marker::PhantomData;
 use panic_semihosting as _;
 
+/// Not sync
 pub struct NotSync {
     _0: PhantomData<*const ()>,
     data: u32,

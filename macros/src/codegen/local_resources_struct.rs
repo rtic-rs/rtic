@@ -50,6 +50,7 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
 
         fields.push(quote!(
             #(#cfgs)*
+            #[allow(missing_docs)]
             pub #name: &#lt mut #ty
         ));
 
@@ -88,6 +89,7 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
     let constructor = quote!(
         impl<'a> #ident<'a> {
             #[inline(always)]
+            #[allow(missing_docs)]
             pub unsafe fn new() -> Self {
                 #ident {
                     #(#values,)*
