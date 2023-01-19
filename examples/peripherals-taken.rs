@@ -1,5 +1,8 @@
+//! examples/peripherals-taken.rs
+
 #![deny(unsafe_code)]
 #![deny(warnings)]
+#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 

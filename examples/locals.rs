@@ -2,6 +2,7 @@
 
 #![feature(type_alias_impl_trait)]
 #![deny(unsafe_code)]
+#![deny(missing_docs)]
 #![deny(warnings)]
 #![no_main]
 #![no_std]

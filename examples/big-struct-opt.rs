@@ -6,6 +6,7 @@
 #![no_main]
 #![no_std]
 #![feature(type_alias_impl_trait)]
+#![deny(missing_docs)]
 
 use panic_semihosting as _;
 

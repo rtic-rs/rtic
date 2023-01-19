@@ -1,7 +1,8 @@
 //! [compile-pass] check that `#[cfg]` attributes applied on resources work
-//!
+
 #![no_main]
 #![no_std]
+#![deny(missing_docs)]
 
 use panic_semihosting as _;
 

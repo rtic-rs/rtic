@@ -1,9 +1,11 @@
 //! examples/ramfunc.rs
 
 #![deny(warnings)]
+#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 #![feature(type_alias_impl_trait)]
+
 use panic_semihosting as _;
 
 #[rtic::app(

@@ -2,11 +2,12 @@
 
 #![no_main]
 #![no_std]
+#![deny(missing_docs)]
 
 use core::marker::PhantomData;
-
 use panic_semihosting as _;
 
+/// Not send
 pub struct NotSend {
     _0: PhantomData<*const ()>,
 }

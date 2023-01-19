@@ -1,10 +1,14 @@
+//! examples/zero-prio-task.rs
+
 #![no_main]
 #![no_std]
 #![feature(type_alias_impl_trait)]
+#![deny(missing_docs)]
 
 use core::marker::PhantomData;
 use panic_semihosting as _;
 
+/// Does not impl send
 pub struct NotSend {
     _0: PhantomData<*const ()>,
 }

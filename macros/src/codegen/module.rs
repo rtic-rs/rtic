@@ -114,6 +114,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         #(#cfgs)*
         impl<'a> #internal_context_name<'a> {
             #[inline(always)]
+            #[allow(missing_docs)]
             pub unsafe fn new(#core) -> Self {
                 #internal_context_name {
                     __rtic_internal_p: ::core::marker::PhantomData,

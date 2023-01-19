@@ -2,6 +2,7 @@
 
 #![no_main]
 #![no_std]
+#![deny(missing_docs)]
 
 use panic_semihosting as _; // panic handler
 use rtic::app;

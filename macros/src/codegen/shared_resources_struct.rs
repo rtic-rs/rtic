@@ -47,16 +47,19 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
 
             fields.push(quote!(
                 #(#cfgs)*
+                #[allow(missing_docs)]
                 pub #name: &#lt #mut_ #ty
             ));
         } else if access.is_shared() {
             fields.push(quote!(
                 #(#cfgs)*
+                #[allow(missing_docs)]
                 pub #name: &'a #ty
             ));
         } else {
             fields.push(quote!(
                 #(#cfgs)*
+                #[allow(missing_docs)]
                 pub #name: shared_resources::#shared_name<'a>
             ));
 
@@ -103,6 +106,7 @@ pub fn codegen(ctxt: Context, app: &App) -> (TokenStream2, TokenStream2) {
     let constructor = quote!(
         impl<'a> #ident<'a> {
             #[inline(always)]
+            #[allow(missing_docs)]
             pub unsafe fn new() -> Self {
                 #ident {
                     #(#values,)*
