@@ -1,6 +1,7 @@
 //! examples/ramfunc.rs
 
 #![deny(warnings)]
+#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 

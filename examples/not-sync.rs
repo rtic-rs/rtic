@@ -2,13 +2,16 @@
 
 // #![deny(unsafe_code)]
 #![deny(warnings)]
+#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
 use core::marker::PhantomData;
 use panic_semihosting as _;
 
+/// Not sync
 pub struct NotSync {
+    /// Phantom action
     _0: PhantomData<*const ()>,
 }
 
@@ -22,6 +25,7 @@ mod app {
 
     #[shared]
     struct Shared {
+        /// This resource is not Sync
         shared: NotSync,
     }
 
