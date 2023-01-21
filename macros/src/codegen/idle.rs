@@ -59,7 +59,7 @@ pub fn codegen(
             analysis,
             extra,
         ));
-        let idle_doc = &format!(" User provided idle function");
+        let idle_doc = " User provided idle function".to_string();
 
         let attrs = &idle.attrs;
         let context = &idle.context;
