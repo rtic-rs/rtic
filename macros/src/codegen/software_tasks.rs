@@ -125,7 +125,9 @@ pub fn codegen(
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
+            let user_task_doc = format!(" User SW task {name}");
             user_tasks.push(quote!(
+                #[doc = #user_task_doc]
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]

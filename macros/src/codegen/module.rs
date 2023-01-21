@@ -133,15 +133,16 @@ pub fn codegen(
         ));
 
         module_items.push(quote!(
+            #[doc(inline)]
             pub use super::#internal_monotonics_ident as Monotonics;
         ));
     }
 
     let doc = match ctxt {
-        Context::Idle => "Idle loop",
-        Context::Init => "Initialization function",
-        Context::HardwareTask(_) => "Hardware task",
-        Context::SoftwareTask(_) => "Software task",
+        Context::Idle => " Idle loop",
+        Context::Init => " Initialization function",
+        Context::HardwareTask(_) => " Hardware task",
+        Context::SoftwareTask(_) => " Software task",
     };
 
     let v = Vec::new();
@@ -172,8 +173,8 @@ pub fn codegen(
     let internal_context_name = util::internal_task_ident(name, "Context");
 
     items.push(quote!(
-        #(#cfgs)*
         /// Execution context
+        #(#cfgs)*
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         pub struct #internal_context_name<#lt> {
@@ -182,6 +183,7 @@ pub fn codegen(
 
         #(#cfgs)*
         impl<#lt> #internal_context_name<#lt> {
+            #[doc(hidden)]
             #[inline(always)]
             pub unsafe fn new(#core #priority) -> Self {
                 #internal_context_name {
@@ -192,6 +194,7 @@ pub fn codegen(
     ));
 
     module_items.push(quote!(
+        #[doc(inline)]
         #(#cfgs)*
         pub use super::#internal_context_name as Context;
     ));
@@ -251,6 +254,7 @@ pub fn codegen(
         }));
 
         module_items.push(quote!(
+            #[doc(inline)]
             #(#cfgs)*
             pub use super::#internal_spawn_ident as spawn;
         ));
@@ -300,6 +304,7 @@ pub fn codegen(
                 ));
             }
             module_items.push(quote!(
+                #[doc(hidden)]
                 pub mod #m {
                     pub use super::super::#internal_spawn_after_ident as spawn_after;
                     pub use super::super::#internal_spawn_at_ident as spawn_at;
@@ -308,6 +313,7 @@ pub fn codegen(
             ));
 
             items.push(quote!(
+                #[doc(hidden)]
                 #(#cfgs)*
                 #[allow(non_snake_case)]
                 #[allow(non_camel_case_types)]
@@ -317,6 +323,7 @@ pub fn codegen(
                 }
 
                 impl core::fmt::Debug for #internal_spawn_handle_ident {
+                    #[doc(hidden)]
                     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                         f.debug_struct(#spawn_handle_string).finish()
                     }
@@ -344,6 +351,7 @@ pub fn codegen(
                         })
                     }
 
+                    /// Reschedule after 
                     #[inline]
                     pub fn reschedule_after(
                         self,
@@ -352,6 +360,7 @@ pub fn codegen(
                         self.reschedule_at(monotonics::#m::now() + duration)
                     }
 
+                    /// Reschedule at 
                     pub fn reschedule_at(
                         self,
                         instant: <#m as rtic::Monotonic>::Instant

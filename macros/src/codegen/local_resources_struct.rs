@@ -49,7 +49,9 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             util::declared_static_local_resource_ident(name, &task_name)
         };
 
+        let local_resource_doc = format!(" Local resource `{name}`");
         fields.push(quote!(
+            #[doc = #local_resource_doc]
             #(#cfgs)*
             pub #name: &#lt mut #ty
         ));
@@ -82,7 +84,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         }
     }
 
-    let doc = format!("Local resources `{}` has access to", ctxt.ident(app));
+    let doc = format!(" Local resources `{}` has access to", ctxt.ident(app));
     let ident = util::local_resources_ident(ctxt, app);
     let item = quote!(
         #[allow(non_snake_case)]
@@ -96,6 +98,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     let constructor = quote!(
         impl<#lt> #ident<#lt> {
             #[inline(always)]
+            #[doc(hidden)]
             pub unsafe fn new() -> Self {
                 #ident {
                     #(#values,)*

@@ -65,22 +65,27 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
             )
         })
         .collect();
+
+    let shared_resources_doc = &format!(" RTIC shared resource struct");
+    let local_resources_doc = &format!(" RTIC local resource struct");
     root_init.push(quote! {
+        #[doc = #shared_resources_doc]
         struct #shared {
             #(#shared_resources)*
         }
 
+        #[doc = #local_resources_doc]
         struct #local {
             #(#local_resources)*
         }
     });
 
-    // let locals_pat = locals_pat.iter();
-
     let user_init_return = quote! {#shared, #local, #name::Monotonics};
+    let user_init_doc = &format!(" User provided init function");
 
     let user_init = quote!(
         #(#attrs)*
+        #[doc = #user_init_doc]
         #[inline(always)]
         #[allow(non_snake_case)]
         fn #name(#context: #name::Context) -> (#user_init_return) {
@@ -100,7 +105,6 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> CodegenResult {
         mod_app = Some(constructor);
     }
 
-    // let locals_new = locals_new.iter();
     let call_init = quote! {
         let (shared_resources, local_resources, mut monotonics) = #name(#name::Context::new(core.into()));
     };

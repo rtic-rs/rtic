@@ -33,10 +33,12 @@ pub fn codegen(
         let priority = task.args.priority;
         let cfgs = &task.cfgs;
         let attrs = &task.attrs;
+        let user_hardware_task_isr_doc = &format!(" User HW task ISR trampoline for {name}");
 
         mod_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
+            #[doc = #user_hardware_task_isr_doc]
             #(#attrs)*
             #(#cfgs)*
             unsafe fn #symbol() {
@@ -88,11 +90,13 @@ pub fn codegen(
             extra,
         ));
 
+        let user_hardware_task_doc = &format!(" User HW task: {name}");
         if !task.is_extern {
             let attrs = &task.attrs;
             let context = &task.context;
             let stmts = &task.stmts;
             user_tasks.push(quote!(
+                #[doc = #user_hardware_task_doc]
                 #(#attrs)*
                 #[allow(non_snake_case)]
                 fn #name(#context: #name::Context) {

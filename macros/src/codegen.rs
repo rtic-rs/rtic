@@ -187,7 +187,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
             #(#root_software_tasks)*
 
-            /// app module
+            /// App module
             #(#mod_app)*
 
             #(#mod_app_shared_resources)*
