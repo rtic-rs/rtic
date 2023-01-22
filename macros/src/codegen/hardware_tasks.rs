@@ -93,11 +93,13 @@ pub fn codegen(
         let user_hardware_task_doc = &format!(" User HW task: {name}");
         if !task.is_extern {
             let attrs = &task.attrs;
+            let cfgs = &task.cfgs;
             let context = &task.context;
             let stmts = &task.stmts;
             user_tasks.push(quote!(
                 #[doc = #user_hardware_task_doc]
                 #(#attrs)*
+                #(#cfgs)*
                 #[allow(non_snake_case)]
                 fn #name(#context: #name::Context) {
                     use rtic::Mutex as _;

@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- CFG: Support #[cfg] on HW task, cleanup for SW tasks
 - CFG: Slightly improved support for #[cfg] on Monotonics
 - CI: Check examples also for thumbv8.{base,main}
 - Allow custom `link_section` attributes for late resources

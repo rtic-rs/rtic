@@ -16,9 +16,11 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     // Populate the FreeQueue
     for (name, task) in &app.software_tasks {
         let cap = task.args.capacity;
+        let cfgs = &task.cfgs;
         let fq_ident = util::fq_ident(name);
 
         stmts.push(quote!(
+            #(#cfgs)*
             (0..#cap).for_each(|i| (&mut *#fq_ident.get_mut()).enqueue_unchecked(i));
         ));
     }

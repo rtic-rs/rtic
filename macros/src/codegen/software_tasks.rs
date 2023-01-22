@@ -29,6 +29,7 @@ pub fn codegen(
 
     for (name, task) in &app.software_tasks {
         let inputs = &task.inputs;
+        let cfgs = &task.cfgs;
         let (_, _, _, input_ty) = util::regroup_inputs(inputs);
 
         let cap = task.args.capacity;
@@ -49,6 +50,7 @@ pub fn codegen(
         mod_app.push(quote!(
             // /// Queue version of a free-list that keeps track of empty slots in
             // /// the following buffers
+            #(#cfgs)*
             #[allow(non_camel_case_types)]
             #[allow(non_upper_case_globals)]
             #[doc(hidden)]
@@ -89,6 +91,7 @@ pub fn codegen(
             #[allow(non_camel_case_types)]
             #[allow(non_upper_case_globals)]
             #[doc(hidden)]
+            #(#cfgs)*
             static #inputs_ident: rtic::RacyCell<[core::mem::MaybeUninit<#input_ty>; #cap_lit]> =
                 rtic::RacyCell::new([#(#elems,)*]);
         ));

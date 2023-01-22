@@ -15,6 +15,19 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         Context::SoftwareTask(name) => &app.software_tasks[name].args.shared_resources,
     };
 
+    let v = Vec::new();
+    let task_cfgs = match ctxt {
+        Context::HardwareTask(t) => {
+            &app.hardware_tasks[t].cfgs
+            // ...
+        }
+        Context::SoftwareTask(t) => {
+            &app.software_tasks[t].cfgs
+            // ...
+        }
+        _ => &v,
+    };
+
     let mut fields = vec![];
     let mut values = vec![];
     let mut has_cfgs = false;
@@ -118,6 +131,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         #[doc = #doc]
+        #(#task_cfgs)*
         pub struct #ident<#lt> {
             #(#fields,)*
         }
@@ -129,6 +143,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         Some(quote!(priority: &#lt rtic::export::Priority))
     };
     let constructor = quote!(
+        #(#task_cfgs)*
         impl<#lt> #ident<#lt> {
             #[doc(hidden)]
             #[inline(always)]
