@@ -2,6 +2,7 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
+#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -15,7 +16,9 @@ mod app {
 
     #[shared]
     struct Shared {
+        /// Producer
         p: Producer<'static, u32, 5>,
+        /// Consumer
         c: Consumer<'static, u32, 5>,
     }
 

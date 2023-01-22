@@ -44,14 +44,18 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
                 quote!('a)
             };
 
+            let lock_free_resource_doc = format!(" Lock free resource `{name}`");
             fields.push(quote!(
+                #[doc = #lock_free_resource_doc]
                 #(#cfgs)*
                 pub #name: &#lt #mut_ #ty
             ));
         } else if access.is_shared() {
             lt = Some(quote!('a));
 
+            let shared_resource_doc = format!(" Shared resource `{name}`");
             fields.push(quote!(
+                #[doc = #shared_resource_doc]
                 #(#cfgs)*
                 pub #name: &'a #ty
             ));
@@ -59,12 +63,16 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             // Resource proxy
             lt = Some(quote!('a));
 
+            let resource_doc =
+                format!(" Resource proxy resource `{name}`. Use method `.lock()` to gain access");
             fields.push(quote!(
+                #[doc = #resource_doc]
                 #(#cfgs)*
                 pub #name: shared_resources::#shared_name<'a>
             ));
 
             values.push(quote!(
+                #[doc(hidden)]
                 #(#cfgs)*
                 #name: shared_resources::#shared_name::new(priority)
 
@@ -74,13 +82,17 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
             continue;
         }
 
+        let resource_doc;
         let expr = if access.is_exclusive() {
+            resource_doc = format!(" Exclusive access resource `{name}`");
             quote!(&mut *(&mut *#mangled_name.get_mut()).as_mut_ptr())
         } else {
+            resource_doc = format!(" Non-exclusive access resource `{name}`");
             quote!(&*(&*#mangled_name.get()).as_ptr())
         };
 
         values.push(quote!(
+            #[doc = #resource_doc]
             #(#cfgs)*
             #name: #expr
         ));
@@ -100,7 +112,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
         }
     }
 
-    let doc = format!("Shared resources `{}` has access to", ctxt.ident(app));
+    let doc = format!(" Shared resources `{}` has access to", ctxt.ident(app));
     let ident = util::shared_resources_ident(ctxt, app);
     let item = quote!(
         #[allow(non_snake_case)]
@@ -118,6 +130,7 @@ pub fn codegen(ctxt: Context, needs_lt: &mut bool, app: &App) -> (TokenStream2, 
     };
     let constructor = quote!(
         impl<#lt> #ident<#lt> {
+            #[doc(hidden)]
             #[inline(always)]
             pub unsafe fn new(#arg) -> Self {
                 #ident {

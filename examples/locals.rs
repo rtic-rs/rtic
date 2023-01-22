@@ -2,6 +2,8 @@
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
+#![deny(missing_docs)]
+#![deny(missing_docs)]
 #![no_main]
 #![no_std]
 
@@ -16,8 +18,11 @@ mod app {
 
     #[local]
     struct Local {
+        /// Local foo
         local_to_foo: i64,
+        /// Local bar
         local_to_bar: i64,
+        /// Local idle
         local_to_idle: i64,
     }
 

@@ -59,12 +59,14 @@ pub fn codegen(
             analysis,
             extra,
         ));
+        let idle_doc = " User provided idle function".to_string();
 
         let attrs = &idle.attrs;
         let context = &idle.context;
         let stmts = &idle.stmts;
         let user_idle = Some(quote!(
             #(#attrs)*
+            #[doc = #idle_doc]
             #[allow(non_snake_case)]
             fn #name(#context: #name::Context) -> ! {
                 use rtic::Mutex as _;
