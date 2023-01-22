@@ -13,7 +13,6 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         // Generate the marker counter used to track for `cancel` and `reschedule`
         let tq_marker = util::timer_queue_marker_ident();
         items.push(quote!(
-            // #[doc = #doc]
             #[doc(hidden)]
             #[allow(non_camel_case_types)]
             #[allow(non_upper_case_globals)]
@@ -56,6 +55,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         let tq = util::tq_ident(&monotonic_name);
         let t = util::schedule_t_ident();
         let mono_type = &monotonic.ty;
+        let cfgs = &monotonic.cfgs;
         let m_ident = util::monotonic_ident(&monotonic_name);
 
         // Static variables and resource proxy
@@ -76,6 +76,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[allow(non_upper_case_globals)]
+                #(#cfgs)*
                 static #tq: rtic::RacyCell<#tq_ty> =
                     rtic::RacyCell::new(rtic::export::TimerQueue(rtic::export::SortedLinkedList::new_u16()));
             ));
@@ -88,6 +89,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[doc(hidden)]
                 #[allow(non_camel_case_types)]
                 #[allow(non_upper_case_globals)]
+                #(#cfgs)*
                 static #mono: rtic::RacyCell<Option<#mono_type>> = rtic::RacyCell::new(None);
             ));
         }
@@ -126,6 +128,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 })
                 .collect::<Vec<_>>();
 
+            let cfgs = &monotonic.cfgs;
             let bound_interrupt = &monotonic.args.binds;
             let disable_isr = if &*bound_interrupt.to_string() == "SysTick" {
                 quote!(core::mem::transmute::<_, rtic::export::SYST>(()).disable_interrupt())
@@ -136,6 +139,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             items.push(quote!(
                 #[no_mangle]
                 #[allow(non_snake_case)]
+                #(#cfgs)*
                 unsafe fn #bound_interrupt() {
                     while let Some((task, index)) = rtic::export::interrupt::free(|_|
                         if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {
