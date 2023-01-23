@@ -1,138 +1,336 @@
+//! Crate
+
 #![no_std]
+#![no_main]
+#![deny(missing_docs)]
+#![allow(incomplete_features)]
+#![feature(async_fn_in_trait)]
 
-use core::sync::atomic::{AtomicU32, Ordering};
-use core::{cmp::Ordering, task::Waker};
-use cortex_m::peripheral::{syst::SystClkSource, SYST};
-pub use fugit::{self, ExtU64};
-pub use rtic_monotonic::Monotonic;
+pub mod monotonic;
 
-mod sll;
-use sll::{IntrusiveSortedLinkedList, Min as IsslMin, Node as IntrusiveNode};
+use core::future::{poll_fn, Future};
+use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use core::task::{Poll, Waker};
+use futures_util::{
+    future::{select, Either},
+    pin_mut,
+};
+pub use monotonic::Monotonic;
 
-pub struct Timer {
-    cnt: AtomicU32,
-    // queue: IntrusiveSortedLinkedList<'static, WakerNotReady<Mono>, IsslMin>,
+mod linked_list;
+
+use linked_list::{Link, LinkedList};
+
+/// Holds a waker and at which time instant this waker shall be awoken.
+struct WaitingWaker<Mono: Monotonic> {
+    waker: Waker,
+    release_at: Mono::Instant,
 }
 
-#[allow(non_snake_case)]
-#[no_mangle]
-fn SysTick() {
-    // ..
-    let cnt = unsafe {
-        static mut CNT: u32 = 0;
-        &mut CNT
-    };
-
-    *cnt = cnt.wrapping_add(1);
-}
-
-/// Systick implementing `rtic_monotonic::Monotonic` which runs at a
-/// settable rate using the `TIMER_HZ` parameter.
-pub struct Systick<const TIMER_HZ: u32> {
-    systick: SYST,
-    cnt: u64,
-}
-
-impl<const TIMER_HZ: u32> Systick<TIMER_HZ> {
-    /// Provide a new `Monotonic` based on SysTick.
-    ///
-    /// The `sysclk` parameter is the speed at which SysTick runs at. This value should come from
-    /// the clock generation function of the used HAL.
-    ///
-    /// Notice that the actual rate of the timer is a best approximation based on the given
-    /// `sysclk` and `TIMER_HZ`.
-    pub fn new(mut systick: SYST, sysclk: u32) -> Self {
-        // + TIMER_HZ / 2 provides round to nearest instead of round to 0.
-        // - 1 as the counter range is inclusive [0, reload]
-        let reload = (sysclk + TIMER_HZ / 2) / TIMER_HZ - 1;
-
-        assert!(reload <= 0x00ff_ffff);
-        assert!(reload > 0);
-
-        systick.disable_counter();
-        systick.set_clock_source(SystClkSource::Core);
-        systick.set_reload(reload);
-
-        Systick { systick, cnt: 0 }
-    }
-}
-
-impl<const TIMER_HZ: u32> Monotonic for Systick<TIMER_HZ> {
-    const DISABLE_INTERRUPT_ON_EMPTY_QUEUE: bool = false;
-
-    type Instant = fugit::TimerInstantU64<TIMER_HZ>;
-    type Duration = fugit::TimerDurationU64<TIMER_HZ>;
-
-    fn now(&mut self) -> Self::Instant {
-        if self.systick.has_wrapped() {
-            self.cnt = self.cnt.wrapping_add(1);
-        }
-
-        Self::Instant::from_ticks(self.cnt)
-    }
-
-    unsafe fn reset(&mut self) {
-        self.systick.clear_current();
-        self.systick.enable_counter();
-    }
-
-    #[inline(always)]
-    fn set_compare(&mut self, _val: Self::Instant) {
-        // No need to do something here, we get interrupts anyway.
-    }
-
-    #[inline(always)]
-    fn clear_compare_flag(&mut self) {
-        // NOOP with SysTick interrupt
-    }
-
-    #[inline(always)]
-    fn zero() -> Self::Instant {
-        Self::Instant::from_ticks(0)
-    }
-
-    #[inline(always)]
-    fn on_interrupt(&mut self) {
-        if self.systick.has_wrapped() {
-            self.cnt = self.cnt.wrapping_add(1);
+impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
+    fn clone(&self) -> Self {
+        Self {
+            waker: self.waker.clone(),
+            release_at: self.release_at,
         }
     }
 }
 
-struct WakerNotReady<Mono>
-where
-    Mono: Monotonic,
-{
-    pub waker: Waker,
-    pub instant: Mono::Instant,
-    pub marker: u32,
-}
-
-impl<Mono> Eq for WakerNotReady<Mono> where Mono: Monotonic {}
-
-impl<Mono> Ord for WakerNotReady<Mono>
-where
-    Mono: Monotonic,
-{
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.instant.cmp(&other.instant)
-    }
-}
-
-impl<Mono> PartialEq for WakerNotReady<Mono>
-where
-    Mono: Monotonic,
-{
+impl<Mono: Monotonic> PartialEq for WaitingWaker<Mono> {
     fn eq(&self, other: &Self) -> bool {
-        self.instant == other.instant
+        self.release_at == other.release_at
     }
 }
 
-impl<Mono> PartialOrd for WakerNotReady<Mono>
-where
-    Mono: Monotonic,
-{
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+impl<Mono: Monotonic> PartialOrd for WaitingWaker<Mono> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        self.release_at.partial_cmp(&other.release_at)
     }
 }
+
+/// A generic timer queue for async executors.
+///
+/// # Blocking
+///
+/// The internal priority queue uses global critical sections to manage access. This means that
+/// `await`ing a delay will cause a lock of the entire system for O(n) time. In practice the lock
+/// duration is ~10 clock cycles per element in the queue.
+///
+/// # Safety
+///
+/// This timer queue is based on an intrusive linked list, and by extension the links are strored
+/// on the async stacks of callers. The links are deallocated on `drop` or when the wait is
+/// complete.
+///
+/// Do not call `mem::forget` on an awaited future, or there will be dragons!
+pub struct TimerQueue<Mono: Monotonic> {
+    queue: LinkedList<WaitingWaker<Mono>>,
+    initialized: AtomicBool,
+}
+
+/// This indicates that there was a timeout.
+pub struct TimeoutError;
+
+impl<Mono: Monotonic> TimerQueue<Mono> {
+    /// Make a new queue.
+    pub const fn new() -> Self {
+        Self {
+            queue: LinkedList::new(),
+            initialized: AtomicBool::new(false),
+        }
+    }
+
+    /// Forwards the `Monotonic::now()` method.
+    #[inline(always)]
+    pub fn now(&self) -> Mono::Instant {
+        Mono::now()
+    }
+
+    /// Takes the initialized monotonic to initialize the TimerQueue.
+    pub fn initialize(&self, monotonic: Mono) {
+        self.initialized.store(true, Ordering::SeqCst);
+
+        // Don't run drop on `Mono`
+        core::mem::forget(monotonic);
+    }
+
+    /// Call this in the interrupt handler of the hardware timer supporting the `Monotonic`
+    ///
+    /// # Safety
+    ///
+    /// It's always safe to call, but it must only be called from the interrupt of the
+    /// monotonic timer for correct operation.
+    pub unsafe fn on_monotonic_interrupt(&self) {
+        Mono::clear_compare_flag();
+        Mono::on_interrupt();
+
+        loop {
+            let mut release_at = None;
+            let head = self.queue.pop_if(|head| {
+                release_at = Some(head.release_at);
+
+                Mono::now() >= head.release_at
+            });
+
+            match (head, release_at) {
+                (Some(link), _) => {
+                    link.waker.wake();
+                }
+                (None, Some(instant)) => {
+                    Mono::enable_timer();
+                    Mono::set_compare(instant);
+
+                    if Mono::now() >= instant {
+                        // The time for the next instant passed while handling it,
+                        // continue dequeueing
+                        continue;
+                    }
+
+                    break;
+                }
+                (None, None) => {
+                    // Queue is empty
+                    Mono::disable_timer();
+
+                    break;
+                }
+            }
+        }
+    }
+
+    /// Timeout at a specific time.
+    pub async fn timeout_at<F: Future>(
+        &self,
+        instant: Mono::Instant,
+        future: F,
+    ) -> Result<F::Output, TimeoutError> {
+        let delay = self.delay_until(instant);
+
+        pin_mut!(future);
+        pin_mut!(delay);
+
+        match select(future, delay).await {
+            Either::Left((r, _)) => Ok(r),
+            Either::Right(_) => Err(TimeoutError),
+        }
+    }
+
+    /// Timeout after a specific duration.
+    #[inline]
+    pub async fn timeout_after<F: Future>(
+        &self,
+        duration: Mono::Duration,
+        future: F,
+    ) -> Result<F::Output, TimeoutError> {
+        self.timeout_at(Mono::now() + duration, future).await
+    }
+
+    /// Delay for some duration of time.
+    #[inline]
+    pub async fn delay(&self, duration: Mono::Duration) {
+        let now = Mono::now();
+
+        self.delay_until(now + duration).await;
+    }
+
+    /// Delay to some specific time instant.
+    pub async fn delay_until(&self, instant: Mono::Instant) {
+        if !self.initialized.load(Ordering::Relaxed) {
+            panic!(
+                "The timer queue is not initialized with a monotonic, you need to run `initialize`"
+            );
+        }
+
+        let mut first_run = true;
+        let queue = &self.queue;
+        let mut link = Link::new(WaitingWaker {
+            waker: poll_fn(|cx| Poll::Ready(cx.waker().clone())).await,
+            release_at: instant,
+        });
+
+        let marker = &AtomicUsize::new(0);
+
+        let dropper = OnDrop::new(|| {
+            queue.delete(marker.load(Ordering::Relaxed));
+        });
+
+        poll_fn(|_| {
+            if Mono::now() >= instant {
+                return Poll::Ready(());
+            }
+
+            if first_run {
+                first_run = false;
+                let (was_empty, addr) = queue.insert(&mut link);
+                marker.store(addr, Ordering::Relaxed);
+
+                if was_empty {
+                    // Pend the monotonic handler if the queue was empty to setup the timer.
+                    Mono::pend_interrupt();
+                }
+            }
+
+            Poll::Pending
+        })
+        .await;
+
+        // Make sure that our link is deleted from the list before we drop this stack
+        drop(dropper);
+    }
+}
+
+struct OnDrop<F: FnOnce()> {
+    f: core::mem::MaybeUninit<F>,
+}
+
+impl<F: FnOnce()> OnDrop<F> {
+    pub fn new(f: F) -> Self {
+        Self {
+            f: core::mem::MaybeUninit::new(f),
+        }
+    }
+
+    #[allow(unused)]
+    pub fn defuse(self) {
+        core::mem::forget(self)
+    }
+}
+
+impl<F: FnOnce()> Drop for OnDrop<F> {
+    fn drop(&mut self) {
+        unsafe { self.f.as_ptr().read()() }
+    }
+}
+
+// -------- Test program ---------
+//
+//
+// use systick_monotonic::{Systick, TimerQueue};
+//
+// // same panicking *behavior* as `panic-probe` but doesn't print a panic message
+// // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
+// #[defmt::panic_handler]
+// fn panic() -> ! {
+//     cortex_m::asm::udf()
+// }
+//
+// /// Terminates the application and makes `probe-run` exit with exit-code = 0
+// pub fn exit() -> ! {
+//     loop {
+//         cortex_m::asm::bkpt();
+//     }
+// }
+//
+// defmt::timestamp!("{=u64:us}", {
+//     let time_us: fugit::MicrosDurationU32 = MONO.now().duration_since_epoch().convert();
+//
+//     time_us.ticks() as u64
+// });
+//
+// make_systick_timer_queue!(MONO, Systick<1_000>);
+//
+// #[rtic::app(
+//     device = nrf52832_hal::pac,
+//     dispatchers = [SWI0_EGU0, SWI1_EGU1, SWI2_EGU2, SWI3_EGU3, SWI4_EGU4, SWI5_EGU5],
+// )]
+// mod app {
+//     use super::{Systick, MONO};
+//     use fugit::ExtU32;
+//
+//     #[shared]
+//     struct Shared {}
+//
+//     #[local]
+//     struct Local {}
+//
+//     #[init]
+//     fn init(cx: init::Context) -> (Shared, Local) {
+//         defmt::println!("init");
+//
+//         let systick = Systick::start(cx.core.SYST, 64_000_000);
+//
+//         defmt::println!("initializing monotonic");
+//
+//         MONO.initialize(systick);
+//
+//         async_task::spawn().ok();
+//         async_task2::spawn().ok();
+//         async_task3::spawn().ok();
+//
+//         (Shared {}, Local {})
+//     }
+//
+//     #[idle]
+//     fn idle(_: idle::Context) -> ! {
+//         defmt::println!("idle");
+//
+//         loop {
+//             core::hint::spin_loop();
+//         }
+//     }
+//
+//     #[task]
+//     async fn async_task(_: async_task::Context) {
+//         loop {
+//             defmt::println!("async task waiting for 1 second");
+//             MONO.delay(1.secs()).await;
+//         }
+//     }
+//
+//     #[task]
+//     async fn async_task2(_: async_task2::Context) {
+//         loop {
+//             defmt::println!("    async task 2 waiting for 0.5 second");
+//             MONO.delay(500.millis()).await;
+//         }
+//     }
+//
+//     #[task]
+//     async fn async_task3(_: async_task3::Context) {
+//         loop {
+//             defmt::println!("        async task 3 waiting for 0.2 second");
+//             MONO.delay(200.millis()).await;
+//         }
+//     }
+// }
+//

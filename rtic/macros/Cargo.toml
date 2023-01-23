@@ -21,7 +21,7 @@ version = "2.0.0-alpha.0"
 [lib]
 proc-macro = true
 
-[feature]
+[features]
 default = []
 debugprint = []
 # list of supported codegen backends
