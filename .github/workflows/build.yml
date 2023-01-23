@@ -22,10 +22,11 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Fail on warnings
+        working-directory: ./rtic
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
-
       - name: cargo fmt --check
+        working-directory: ./rtic
         run:  cargo fmt --all -- --check
 
   # Compilation check
@@ -45,20 +46,24 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Rust ${{ matrix.toolchain }}
+        working-directory: ./rtic
         run: |
           rustup set profile minimal
           rustup override set ${{ matrix.toolchain }}
 
       - name: Configure Rust target (${{ matrix.target }})
+        working-directory: ./rtic
         run: rustup target add ${{ matrix.target }}
 
       - name: Fail on warnings
+        working-directory: ./rtic
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: cargo check
+        working-directory: ./rtic
         run: cargo check --target=${{ matrix.target }}
 
   # Clippy
@@ -70,15 +75,18 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Fail on warnings
+        working-directory: ./rtic
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Add Rust component clippy
+        working-directory: ./rtic
         run: rustup component add clippy
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: cargo clippy
+        working-directory: ./rtic
         run: cargo clippy
 
   # Verify all examples, checks
@@ -113,6 +121,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Check the examples
+        working-directory: ./rtic
         run: cargo check --examples --target=${{ matrix.target }}
 
   # Verify the example output with run-pass tests
@@ -154,9 +163,11 @@ jobs:
           sudo apt install -y qemu-system-arm
 
       - name: Fail on warnings
+        working-directory: ./rtic
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Run-pass tests
+        working-directory: ./rtic
         run: cargo xtask --target ${{ matrix.target }}
 
   # Check the correctness of macros/ crate
@@ -185,9 +196,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
+        working-directory: ./rtic
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: cargo check
+        working-directory: ./rtic
         run: cargo check --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
 
   # Run the  macros test-suite
@@ -202,9 +215,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
+        working-directory: ./rtic
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: cargo check
+        working-directory: ./rtic
         run: cargo test --manifest-path macros/Cargo.toml
 
   # Run test suite
@@ -219,9 +234,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Fail on warnings
+        working-directory: ./rtic
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
 
       - name: Run cargo test
+        working-directory: ./rtic
         run: cargo test --test tests
 
 #  # Build documentation, check links
