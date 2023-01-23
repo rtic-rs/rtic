@@ -1,5 +1,5 @@
 [package]
-name = "rtic-timer"
+name = "rtic-time"
 version = "1.0.0"
 edition = "2021"
 

@@ -6,6 +6,6 @@
 #![allow(incomplete_features)]
 #![feature(async_fn_in_trait)]
 
-pub use rtic_timer::{Monotonic, TimeoutError, TimerQueue};
+pub use rtic_time::{Monotonic, TimeoutError, TimerQueue};
 
 pub mod systick_monotonic;

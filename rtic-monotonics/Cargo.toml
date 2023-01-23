@@ -1,5 +1,5 @@
 [package]
-name = "rtic-timer"
+name = "rtic-monotonics"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,4 +9,4 @@ edition = "2021"
 cortex-m = { version = "0.7.6" }
 embedded-hal-async = "0.2.0-alpha.0"
 fugit = { version = "0.3.6", features = ["defmt"] }
-rtic-timer = { version = "1.0.0", path = "../rtic-timer" }
+rtic-time = { version = "1.0.0", path = "../rtic-time" }
