@@ -1,0 +1,7 @@
+**/*.rs.bk
+.#*
+.gdb_history
+/*/book
+/target
+Cargo.lock
+*.hex
