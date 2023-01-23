@@ -18,10 +18,28 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Check that changelog updated
+      - name: Check that changelog updated (rtic)
         uses: dangoslen/changelog-enforcer@v3
         with:
-          changeLogPath: CHANGELOG.md
+          changeLogPath: ./rtic/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that changelog updated (rtic-timer)
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic-timer/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that changelog updated (rtic-monotonics)
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic-monotonics/CHANGELOG.md
           skipLabels: 'needs-changelog, skip-changelog'
           missingUpdateErrorMessage: 'Please add a changelog entry in the CHANGELOG.md file.'
         env:
