@@ -5,7 +5,7 @@ use core::sync::atomic::{AtomicPtr, Ordering};
 use critical_section as cs;
 
 /// A sorted linked list for the timer queue.
-pub struct LinkedList<T> {
+pub(crate) struct LinkedList<T> {
     head: AtomicPtr<Link<T>>,
 }
 
@@ -156,7 +156,7 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
 
 /// A link in the linked list.
 pub struct Link<T> {
-    val: T,
+    pub(crate) val: T,
     next: AtomicPtr<Link<T>>,
     _up: PhantomPinned,
 }

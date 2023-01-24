@@ -6,9 +6,8 @@
 #![allow(incomplete_features)]
 #![feature(async_fn_in_trait)]
 
-pub mod monotonic;
-
 use core::future::{poll_fn, Future};
+use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use core::task::{Poll, Waker};
 use futures_util::{
@@ -18,20 +17,25 @@ use futures_util::{
 pub use monotonic::Monotonic;
 
 mod linked_list;
+mod monotonic;
 
 use linked_list::{Link, LinkedList};
 
 /// Holds a waker and at which time instant this waker shall be awoken.
 struct WaitingWaker<Mono: Monotonic> {
-    waker: Waker,
+    // This is alway initialized when used, we create this struct on the async stack and then
+    // initialize the waker field in the `poll_fn` closure (we then know the waker)
+    waker: MaybeUninit<Waker>,
     release_at: Mono::Instant,
+    was_poped: AtomicBool,
 }
 
 impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
     fn clone(&self) -> Self {
         Self {
-            waker: self.waker.clone(),
+            waker: MaybeUninit::new(unsafe { self.waker.assume_init_ref() }.clone()),
             release_at: self.release_at,
+            was_poped: AtomicBool::new(self.was_poped.load(Ordering::Relaxed)),
         }
     }
 }
@@ -109,12 +113,15 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             let head = self.queue.pop_if(|head| {
                 release_at = Some(head.release_at);
 
-                Mono::now() >= head.release_at
+                let should_pop = Mono::now() >= head.release_at;
+                head.was_poped.store(should_pop, Ordering::Relaxed);
+
+                should_pop
             });
 
             match (head, release_at) {
                 (Some(link), _) => {
-                    link.waker.wake();
+                    link.waker.assume_init().wake();
                 }
                 (None, Some(instant)) => {
                     Mono::enable_timer();
@@ -181,26 +188,28 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             );
         }
 
-        let mut first_run = true;
-        let queue = &self.queue;
         let mut link = Link::new(WaitingWaker {
-            waker: poll_fn(|cx| Poll::Ready(cx.waker().clone())).await,
+            waker: MaybeUninit::uninit(),
             release_at: instant,
+            was_poped: AtomicBool::new(false),
         });
 
+        let mut first_run = true;
+        let queue = &self.queue;
         let marker = &AtomicUsize::new(0);
 
         let dropper = OnDrop::new(|| {
             queue.delete(marker.load(Ordering::Relaxed));
         });
 
-        poll_fn(|_| {
+        poll_fn(|cx| {
             if Mono::now() >= instant {
                 return Poll::Ready(());
             }
 
             if first_run {
                 first_run = false;
+                link.val.waker.write(cx.waker().clone());
                 let (was_empty, addr) = queue.insert(&mut link);
                 marker.store(addr, Ordering::Relaxed);
 
@@ -214,8 +223,13 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
         })
         .await;
 
-        // Make sure that our link is deleted from the list before we drop this stack
-        drop(dropper);
+        if link.val.was_poped.load(Ordering::Relaxed) {
+            // If it was poped from the queue there is no need to run delete
+            dropper.defuse();
+        } else {
+            // Make sure that our link is deleted from the list before we drop this stack
+            drop(dropper);
+        }
     }
 }
 
@@ -241,96 +255,3 @@ impl<F: FnOnce()> Drop for OnDrop<F> {
         unsafe { self.f.as_ptr().read()() }
     }
 }
-
-// -------- Test program ---------
-//
-//
-// use systick_monotonic::{Systick, TimerQueue};
-//
-// // same panicking *behavior* as `panic-probe` but doesn't print a panic message
-// // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
-// #[defmt::panic_handler]
-// fn panic() -> ! {
-//     cortex_m::asm::udf()
-// }
-//
-// /// Terminates the application and makes `probe-run` exit with exit-code = 0
-// pub fn exit() -> ! {
-//     loop {
-//         cortex_m::asm::bkpt();
-//     }
-// }
-//
-// defmt::timestamp!("{=u64:us}", {
-//     let time_us: fugit::MicrosDurationU32 = MONO.now().duration_since_epoch().convert();
-//
-//     time_us.ticks() as u64
-// });
-//
-// make_systick_timer_queue!(MONO, Systick<1_000>);
-//
-// #[rtic::app(
-//     device = nrf52832_hal::pac,
-//     dispatchers = [SWI0_EGU0, SWI1_EGU1, SWI2_EGU2, SWI3_EGU3, SWI4_EGU4, SWI5_EGU5],
-// )]
-// mod app {
-//     use super::{Systick, MONO};
-//     use fugit::ExtU32;
-//
-//     #[shared]
-//     struct Shared {}
-//
-//     #[local]
-//     struct Local {}
-//
-//     #[init]
-//     fn init(cx: init::Context) -> (Shared, Local) {
-//         defmt::println!("init");
-//
-//         let systick = Systick::start(cx.core.SYST, 64_000_000);
-//
-//         defmt::println!("initializing monotonic");
-//
-//         MONO.initialize(systick);
-//
-//         async_task::spawn().ok();
-//         async_task2::spawn().ok();
-//         async_task3::spawn().ok();
-//
-//         (Shared {}, Local {})
-//     }
-//
-//     #[idle]
-//     fn idle(_: idle::Context) -> ! {
-//         defmt::println!("idle");
-//
-//         loop {
-//             core::hint::spin_loop();
-//         }
-//     }
-//
-//     #[task]
-//     async fn async_task(_: async_task::Context) {
-//         loop {
-//             defmt::println!("async task waiting for 1 second");
-//             MONO.delay(1.secs()).await;
-//         }
-//     }
-//
-//     #[task]
-//     async fn async_task2(_: async_task2::Context) {
-//         loop {
-//             defmt::println!("    async task 2 waiting for 0.5 second");
-//             MONO.delay(500.millis()).await;
-//         }
-//     }
-//
-//     #[task]
-//     async fn async_task3(_: async_task3::Context) {
-//         loop {
-//             defmt::println!("        async task 3 waiting for 0.2 second");
-//             MONO.delay(200.millis()).await;
-//         }
-//     }
-// }
-//
