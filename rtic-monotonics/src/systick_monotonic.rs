@@ -10,11 +10,12 @@ use cortex_m::peripheral::SYST;
 use embedded_hal_async::delay::DelayUs;
 use fugit::ExtU32;
 
-/// Systick implementing `rtic_monotonic::Monotonic` which runs at a
-/// settable rate using the `TIMER_HZ` parameter.
-pub struct Systick<const TIMER_HZ: u32>;
+const TIMER_HZ: u32 = 1_000;
 
-impl<const TIMER_HZ: u32> Systick<TIMER_HZ> {
+/// Systick implementing `rtic_monotonic::Monotonic` which runs at 1 kHz.
+pub struct Systick;
+
+impl Systick {
     /// Start a `Monotonic` based on SysTick.
     ///
     /// The `sysclk` parameter is the speed at which SysTick runs at. This value should come from
@@ -49,7 +50,7 @@ impl<const TIMER_HZ: u32> Systick<TIMER_HZ> {
 
 static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
 
-impl<const TIMER_HZ: u32> Monotonic for Systick<TIMER_HZ> {
+impl Monotonic for Systick {
     type Instant = fugit::TimerInstantU32<TIMER_HZ>;
     type Duration = fugit::TimerDurationU32<TIMER_HZ>;
 
@@ -87,17 +88,17 @@ impl<const TIMER_HZ: u32> Monotonic for Systick<TIMER_HZ> {
 }
 
 /// Timer queue wrapper to implement traits on
-pub struct SystickTimerQueue<const TIMER_HZ: u32>(TimerQueue<Systick<TIMER_HZ>>);
+pub struct SystickTimerQueue(TimerQueue<Systick>);
 
-impl<const TIMER_HZ: u32> SystickTimerQueue<TIMER_HZ> {
+impl SystickTimerQueue {
     /// Create a new timer queue.
     pub const fn new() -> Self {
         Self(TimerQueue::new())
     }
 }
 
-impl<const TIMER_HZ: u32> Deref for SystickTimerQueue<TIMER_HZ> {
-    type Target = TimerQueue<Systick<TIMER_HZ>>;
+impl Deref for SystickTimerQueue {
+    type Target = TimerQueue<Systick>;
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
@@ -105,7 +106,7 @@ impl<const TIMER_HZ: u32> Deref for SystickTimerQueue<TIMER_HZ> {
     }
 }
 
-impl<const TIMER_HZ: u32> DelayUs for SystickTimerQueue<TIMER_HZ> {
+impl DelayUs for SystickTimerQueue {
     type Error = core::convert::Infallible;
 
     async fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
@@ -122,8 +123,8 @@ impl<const TIMER_HZ: u32> DelayUs for SystickTimerQueue<TIMER_HZ> {
 /// Register the Systick interrupt and crate a timer queue with a specific name and speed.
 #[macro_export]
 macro_rules! make_systick_timer_queue {
-    ($timer_queue_name:ident, $systick_speed:expr) => {
-        static $timer_queue_name: SystickTimerQueue<$systick_speed> = SystickTimerQueue::new();
+    ($timer_queue_name:ident) => {
+        static $timer_queue_name: SystickTimerQueue = SystickTimerQueue::new();
 
         #[no_mangle]
         #[allow(non_snake_case)]
