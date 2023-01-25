@@ -62,6 +62,7 @@ pub fn codegen(
         for (_, monotonic) in &app.monotonics {
             let instants = util::monotonic_instants_ident(name, &monotonic.ident);
             let mono_type = &monotonic.ty;
+            let cfgs = &monotonic.cfgs;
 
             let uninit = mk_uninit();
             // For future use
@@ -73,6 +74,7 @@ pub fn codegen(
                 #[allow(non_camel_case_types)]
                 #[allow(non_upper_case_globals)]
                 #[doc(hidden)]
+                #(#cfgs)*
                 static #instants:
                     rtic::RacyCell<[core::mem::MaybeUninit<<#mono_type as rtic::Monotonic>::Instant>; #cap_lit]> =
                     rtic::RacyCell::new([#(#elems,)*]);

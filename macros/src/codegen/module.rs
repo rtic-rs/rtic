@@ -116,8 +116,12 @@ pub fn codegen(
             .monotonics
             .iter()
             .map(|(_, monotonic)| {
+                let cfgs = &monotonic.cfgs;
                 let mono = &monotonic.ty;
-                quote! {#mono}
+                quote! {
+                    #(#cfgs)*
+                    pub #mono
+                }
             })
             .collect();
 
@@ -128,7 +132,7 @@ pub fn codegen(
             #[allow(non_snake_case)]
             #[allow(non_camel_case_types)]
             pub struct #internal_monotonics_ident(
-                #(pub #monotonic_types),*
+                #(#monotonic_types),*
             );
         ));
 
@@ -226,8 +230,8 @@ pub fn codegen(
         // Spawn caller
         items.push(quote!(
 
-        #(#cfgs)*
         /// Spawns the task directly
+        #(#cfgs)*
         pub fn #internal_spawn_ident(#(#args,)*) -> Result<(), #ty> {
             let input = #tupled;
 
@@ -267,6 +271,7 @@ pub fn codegen(
             let tq = util::tq_ident(&monotonic.ident.to_string());
             let t = util::schedule_t_ident();
             let m = &monotonic.ident;
+            let cfgs = &monotonic.cfgs;
             let m_ident = util::monotonic_ident(&monotonic_name);
             let m_isr = &monotonic.args.binds;
             let enum_ = util::interrupt_ident();
@@ -298,13 +303,17 @@ pub fn codegen(
 
             if monotonic.args.default {
                 module_items.push(quote!(
+                    #(#cfgs)*
                     pub use #m::spawn_after;
+                    #(#cfgs)*
                     pub use #m::spawn_at;
+                    #(#cfgs)*
                     pub use #m::SpawnHandle;
                 ));
             }
             module_items.push(quote!(
                 #[doc(hidden)]
+                #(#cfgs)*
                 pub mod #m {
                     pub use super::super::#internal_spawn_after_ident as spawn_after;
                     pub use super::super::#internal_spawn_at_ident as spawn_at;
@@ -322,6 +331,7 @@ pub fn codegen(
                     marker: u32,
                 }
 
+                #(#cfgs)*
                 impl core::fmt::Debug for #internal_spawn_handle_ident {
                     #[doc(hidden)]
                     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -353,6 +363,7 @@ pub fn codegen(
 
                     /// Reschedule after 
                     #[inline]
+                    #(#cfgs)*
                     pub fn reschedule_after(
                         self,
                         duration: <#m as rtic::Monotonic>::Duration
@@ -361,6 +372,7 @@ pub fn codegen(
                     }
 
                     /// Reschedule at 
+                    #(#cfgs)*
                     pub fn reschedule_at(
                         self,
                         instant: <#m as rtic::Monotonic>::Instant
@@ -376,11 +388,11 @@ pub fn codegen(
                     }
                 }
 
-                #(#cfgs)*
                 /// Spawns the task after a set duration relative to the current time
                 ///
                 /// This will use the time `Instant::new(0)` as baseline if called in `#[init]`,
                 /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
+                #(#cfgs)*
                 #[allow(non_snake_case)]
                 pub fn #internal_spawn_after_ident(
                     duration: <#m as rtic::Monotonic>::Duration
