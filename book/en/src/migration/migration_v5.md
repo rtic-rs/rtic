@@ -368,3 +368,5 @@ Both software and hardware tasks can now be defined external to the `mod app`.
 Previously this was possible only by implementing a trampoline calling out the task implementation.
 
 See examples `examples/extern_binds.rs` and `examples/extern_spawn.rs`.
+
+This enables breaking apps into multiple files.

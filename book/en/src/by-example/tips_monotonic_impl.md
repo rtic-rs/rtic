@@ -11,7 +11,7 @@ Moreover, the relation between time and timers used for scheduling was difficult
 
 For RTIC 1.0 we instead assume the user has a time library, e.g. [`fugit`] or [`embedded_time`],
 as the basis for all time-based operations when implementing `Monotonic`.
-This makes it much easier to correctly implement the `Monotonic` trait allowing the use of
+These libraries make it much easier to correctly implement the `Monotonic` trait, allowing the use of
 almost any timer in the system for scheduling.
 
 The trait documents the requirements for each method,

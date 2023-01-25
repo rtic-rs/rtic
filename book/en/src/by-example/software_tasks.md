@@ -2,29 +2,33 @@
 
 The RTIC concept of a software task shares a lot with that of [hardware tasks](./hardware_tasks.md)
 with the core difference that a software task is not explicitly bound to a specific
-interrupt vector, but rather a “dispatcher” interrupt vector running
-at the same priority as the software task.
+interrupt vector, but rather bound to a “dispatcher” interrupt vector running
+at the intended priority of the software task (see below).
 
-Thus, software tasks are tasks which are not directly assigned to a specific interrupt vector.
+Thus, software tasks are tasks which are not *directly* bound to an interrupt vector.
 
-The `#[task]` attribute used on a function declare it as a software tasks.
-Observe the absence of a `binds = InterruptName` argument to the attribute.
-The static method `task_name::spawn()` spawns (starts) a software task and
-given that there are no higher priority tasks running the task will start executing directly.
+The `#[task]` attributes used on a function determine if it is
+software tasks, specifically the absence of a `binds = InterruptName`
+argument to the attribute definition.
 
-All software tasks at the same priority level shares an interrupt handler acting as a dispatcher.
-What differentiates software and hardware tasks are the dispatcher versus bound interrupt vector.
+The static method `task_name::spawn()` spawns (schedules) a software
+task by registering it with a specific dispatcher.  If there are no
+higher priority tasks available to the scheduler (which serves a set
+of dispatchers), the task will start executing directly.
 
-The interrupt vectors used as dispatchers can not be used by hardware tasks.
+All software tasks at the same priority level share an interrupt handler bound to their dispatcher.
+What differentiates software and hardware tasks is the usage of either a dispatcher or a bound interrupt vector.
 
-A list of “free” (not in use by hardware tasks) and usable interrupts allows the framework
-to dispatch software tasks.
+The interrupt vectors used as dispatchers cannot be used by hardware tasks.
 
-This list of dispatchers, `dispatchers = [FreeInterrupt1, FreeInterrupt2, ...]` is an
+Availability of a set of “free” (not in use by hardware tasks) and usable interrupt vectors allows the framework
+to dispatch software tasks via dedicated interrupt handlers.
+
+This set of dispatchers, `dispatchers = [FreeInterrupt1, FreeInterrupt2, ...]` is an
 argument to the `#[app]` attribute.
 
-Each interrupt vector acting as dispatcher gets assigned to one priority level meaning that
-the list of dispatchers need to cover all priority levels used by software tasks.
+Each interrupt vector acting as dispatcher gets assigned to a unique priority level meaning that
+the list of dispatchers needs to cover all priority levels used by software tasks.
 
 Example: The `dispatchers =` argument needs to have at least 3 entries for an application using
 three different priorities for software tasks.

@@ -15,6 +15,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Fixed
 
 - Attempt to handle docs generation enabling `deny(missing_docs)`
+- Book: Editorial review
 - Use native GHA rustup and cargo
 - Distinguish between thumbv8m.base and thumbv8m.main for basepri usage.
 
