@@ -29,7 +29,9 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         .filter_map(|(_, task)| {
             if !util::is_exception(&task.args.binds) {
                 let interrupt_name = &task.args.binds;
+                let cfgs = &task.cfgs;
                 Some(quote!(
+                    #(#cfgs)*
                     if (#device::Interrupt::#interrupt_name as usize) >= (#chunks_name * 32) {
                         ::core::panic!("An interrupt out of range is used while in armv6 or armv8m.base");
                     }
