@@ -7,7 +7,6 @@
 #![feature(async_fn_in_trait)]
 
 use core::future::{poll_fn, Future};
-use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use core::task::{Poll, Waker};
 use futures_util::{
@@ -23,9 +22,7 @@ use linked_list::{Link, LinkedList};
 
 /// Holds a waker and at which time instant this waker shall be awoken.
 struct WaitingWaker<Mono: Monotonic> {
-    // This is alway initialized when used, we create this struct on the async stack and then
-    // initialize the waker field in the `poll_fn` closure (we then know the waker)
-    waker: MaybeUninit<Waker>,
+    waker: Waker,
     release_at: Mono::Instant,
     was_poped: AtomicBool,
 }
@@ -33,7 +30,7 @@ struct WaitingWaker<Mono: Monotonic> {
 impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
     fn clone(&self) -> Self {
         Self {
-            waker: MaybeUninit::new(unsafe { self.waker.assume_init_ref() }.clone()),
+            waker: self.waker.clone(),
             release_at: self.release_at,
             was_poped: AtomicBool::new(self.was_poped.load(Ordering::Relaxed)),
         }
@@ -121,7 +118,7 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
 
             match (head, release_at) {
                 (Some(link), _) => {
-                    link.waker.assume_init().wake();
+                    link.waker.wake();
                 }
                 (None, Some(instant)) => {
                     Mono::enable_timer();
@@ -188,13 +185,8 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             );
         }
 
-        let mut link = Link::new(WaitingWaker {
-            waker: MaybeUninit::uninit(),
-            release_at: instant,
-            was_poped: AtomicBool::new(false),
-        });
+        let mut link = None;
 
-        let mut first_run = true;
         let queue = &self.queue;
         let marker = &AtomicUsize::new(0);
 
@@ -207,10 +199,14 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
                 return Poll::Ready(());
             }
 
-            if first_run {
-                first_run = false;
-                link.val.waker.write(cx.waker().clone());
-                let (was_empty, addr) = queue.insert(&mut link);
+            if link.is_none() {
+                let mut link_ref = link.insert(Link::new(WaitingWaker {
+                    waker: cx.waker().clone(),
+                    release_at: instant,
+                    was_poped: AtomicBool::new(false),
+                }));
+
+                let (was_empty, addr) = queue.insert(&mut link_ref);
                 marker.store(addr, Ordering::Relaxed);
 
                 if was_empty {
@@ -223,9 +219,11 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
         })
         .await;
 
-        if link.val.was_poped.load(Ordering::Relaxed) {
-            // If it was poped from the queue there is no need to run delete
-            dropper.defuse();
+        if let Some(link) = link {
+            if link.val.was_poped.load(Ordering::Relaxed) {
+                // If it was poped from the queue there is no need to run delete
+                dropper.defuse();
+            }
         } else {
             // Make sure that our link is deleted from the list before we drop this stack
             drop(dropper);
