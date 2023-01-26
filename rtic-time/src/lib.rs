@@ -1,7 +1,6 @@
 //! Crate
 
 #![no_std]
-#![no_main]
 #![deny(missing_docs)]
 #![allow(incomplete_features)]
 #![feature(async_fn_in_trait)]
