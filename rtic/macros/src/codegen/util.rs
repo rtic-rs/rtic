@@ -123,7 +123,7 @@ pub fn regroup_inputs(
         let mut tys = vec![];
 
         for (i, input) in inputs.iter().enumerate() {
-            let i = Ident::new(&format!("_{}", i), Span::call_site());
+            let i = Ident::new(&format!("_{i}"), Span::call_site());
             let ty = &input.ty;
 
             args.push(quote!(#i: #ty));
