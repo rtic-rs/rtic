@@ -367,9 +367,6 @@ pub type SyncTypes = Set<Box<Type>>;
 /// A channel used to send messages
 #[derive(Debug, Default)]
 pub struct Channel {
-    /// The channel capacity
-    pub capacity: u8,
-
     /// Tasks that can be spawned on this channel
     pub tasks: BTreeSet<Task>,
 }

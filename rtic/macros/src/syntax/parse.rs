@@ -191,7 +191,6 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
         }
 
         let mut binds = None;
-        let mut capacity = None;
         let mut priority = None;
         let mut shared_resources = None;
         let mut local_resources = None;
@@ -220,53 +219,10 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                         ));
                     }
 
-                    if capacity.is_some() {
-                        return Err(parse::Error::new(
-                            ident.span(),
-                            "hardware tasks can't use the `capacity` argument",
-                        ));
-                    }
-
                     // Parse identifier name
                     let ident = content.parse()?;
 
                     binds = Some(ident);
-                }
-
-                "capacity" => {
-                    if capacity.is_some() {
-                        return Err(parse::Error::new(
-                            ident.span(),
-                            "argument appears more than once",
-                        ));
-                    }
-
-                    if binds.is_some() {
-                        return Err(parse::Error::new(
-                            ident.span(),
-                            "hardware tasks can't use the `capacity` argument",
-                        ));
-                    }
-
-                    // #lit
-                    let lit: LitInt = content.parse()?;
-
-                    if !lit.suffix().is_empty() {
-                        return Err(parse::Error::new(
-                            lit.span(),
-                            "this literal must be unsuffixed",
-                        ));
-                    }
-
-                    let value = lit.base10_parse::<u8>().ok();
-                    if value.is_none() || value == Some(0) {
-                        return Err(parse::Error::new(
-                            lit.span(),
-                            "this literal must be in the range 1...255",
-                        ));
-                    }
-
-                    capacity = Some(value.unwrap());
                 }
 
                 "priority" => {
