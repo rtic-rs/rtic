@@ -18,29 +18,49 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Check that changelog updated (rtic)
-        uses: dangoslen/changelog-enforcer@v3
+      - name: Check which component is modified 
+        uses: dorny/paths-filter@v2
+        id: changes
         with:
-          changeLogPath: ./rtic/CHANGELOG.md
-          skipLabels: 'needs-changelog, skip-changelog'
-          missingUpdateErrorMessage: 'Please add a changelog entry in the CHANGELOG.md file.'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            rtic:
+              - 'rtic/**'
+            rtic-timer:
+              - 'rtic-timer/**'
+            rtic-monotonics:
+              - 'rtic-monotonics/**'
 
-      - name: Check that changelog updated (rtic-timer)
-        uses: dangoslen/changelog-enforcer@v3
-        with:
-          changeLogPath: ./rtic-timer/CHANGELOG.md
-          skipLabels: 'needs-changelog, skip-changelog'
-          missingUpdateErrorMessage: 'Please add a changelog entry in the CHANGELOG.md file.'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # run only if some file in matching folder was changed
+      - if: steps.changes.outputs.rtic == 'true'
+        steps:
 
-      - name: Check that changelog updated (rtic-monotonics)
-        uses: dangoslen/changelog-enforcer@v3
-        with:
-          changeLogPath: ./rtic-monotonics/CHANGELOG.md
-          skipLabels: 'needs-changelog, skip-changelog'
-          missingUpdateErrorMessage: 'Please add a changelog entry in the CHANGELOG.md file.'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - name: Check that changelog updated (rtic)
+          uses: dangoslen/changelog-enforcer@v3
+          with:
+            changeLogPath: ./rtic/CHANGELOG.md
+            skipLabels: 'needs-changelog, skip-changelog'
+            missingUpdateErrorMessage: 'Please add a changelog entry in the rtic/CHANGELOG.md file.'
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - if: steps.changes.outputs.rtic-timer == 'true'
+        steps:
+        - name: Check that changelog updated (rtic-timer)
+          uses: dangoslen/changelog-enforcer@v3
+          with:
+            changeLogPath: ./rtic-timer/CHANGELOG.md
+            skipLabels: 'needs-changelog, skip-changelog'
+            missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-timer/CHANGELOG.md file.'
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - if: steps.changes.outputs.rtic-monotonics == 'true'
+        steps:
+        - name: Check that changelog updated (rtic-monotonics)
+          uses: dangoslen/changelog-enforcer@v3
+          with:
+            changeLogPath: ./rtic-monotonics/CHANGELOG.md
+            skipLabels: 'needs-changelog, skip-changelog'
+            missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-monotonics/CHANGELOG.md file.'
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
