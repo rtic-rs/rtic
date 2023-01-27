@@ -25,8 +25,8 @@ jobs:
           filters: |
             rtic:
               - 'rtic/**'
-            rtic-timer:
-              - 'rtic-timer/**'
+            rtic-time:
+              - 'rtic-time/**'
             rtic-monotonics:
               - 'rtic-monotonics/**'
 
@@ -40,13 +40,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check that changelog updated (rtic-timer)
-        if: steps.changes.outputs.rtic-timer == 'true'
+      - name: Check that changelog updated (rtic-time)
+        if: steps.changes.outputs.rtic-time == 'true'
         uses: dangoslen/changelog-enforcer@v3
         with:
-          changeLogPath: ./rtic-timer/CHANGELOG.md
+          changeLogPath: ./rtic-time/CHANGELOG.md
           skipLabels: 'needs-changelog, skip-changelog'
-          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-timer/CHANGELOG.md file.'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-time/CHANGELOG.md file.'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
