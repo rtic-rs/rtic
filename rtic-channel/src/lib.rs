@@ -2,6 +2,7 @@
 
 #![no_std]
 #![deny(missing_docs)]
+//deny_warnings_placeholder_for_ci
 
 use core::{
     cell::UnsafeCell,
