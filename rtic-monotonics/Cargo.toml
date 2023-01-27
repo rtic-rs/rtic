@@ -10,3 +10,4 @@ cortex-m = { version = "0.7.6" }
 embedded-hal-async = "0.2.0-alpha.0"
 fugit = { version = "0.3.6", features = ["defmt"] }
 rtic-time = { version = "1.0.0", path = "../rtic-time" }
+atomic-polyfill = "1"

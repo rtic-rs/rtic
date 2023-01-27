@@ -2,13 +2,11 @@
 
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
-use core::{
-    ops::Deref,
-    sync::atomic::{AtomicU32, Ordering},
-};
+use atomic_polyfill::{AtomicU32, Ordering};
+use core::ops::Deref;
 use cortex_m::peripheral::SYST;
 use embedded_hal_async::delay::DelayUs;
-use fugit::ExtU32;
+pub use fugit::ExtU32;
 
 const TIMER_HZ: u32 = 1_000;
 
