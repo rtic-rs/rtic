@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -18,20 +19,16 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(_: init::Context) -> (Shared, Local) {
         foo::spawn(1, 1).unwrap();
-        foo::spawn(1, 2).unwrap();
-        foo::spawn(2, 3).unwrap();
         assert!(foo::spawn(1, 4).is_err()); // The capacity of `foo` is reached
 
-        (Shared {}, Local {}, init::Monotonics())
+        (Shared {}, Local {})
     }
 
-    #[task(capacity = 3)]
-    fn foo(_c: foo::Context, x: i32, y: u32) {
-        hprintln!("foo {}, {}", x, y).unwrap();
-        if x == 2 {
-            debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
-        }
+    #[task]
+    async fn foo(_c: foo::Context, x: i32, y: u32) {
+        hprintln!("foo {}, {}", x, y);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 }

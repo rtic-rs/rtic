@@ -67,7 +67,7 @@ impl<T, const N: usize> Channel<T, N> {
     /// Split the queue into a `Sender`/`Receiver` pair.
     pub fn split<'a>(&'a mut self) -> (Sender<'a, T, N>, Receiver<'a, T, N>) {
         // Fill free queue
-        for idx in 0..(N - 1) as u8 {
+        for idx in 0..N as u8 {
             debug_assert!(!self.freeq.get_mut().is_full());
 
             // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue.
@@ -114,10 +114,25 @@ macro_rules! make_channel {
 /// Error state for when the receiver has been dropped.
 pub struct NoReceiver<T>(pub T);
 
+impl<T> core::fmt::Debug for NoReceiver<T>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "NoReceiver({:?})", self.0)
+    }
+}
+
 /// A `Sender` can send to the channel and can be cloned.
 pub struct Sender<'a, T, const N: usize>(&'a Channel<T, N>);
 
 unsafe impl<'a, T, const N: usize> Send for Sender<'a, T, N> {}
+
+impl<'a, T, const N: usize> core::fmt::Debug for Sender<'a, T, N> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Sender")
+    }
+}
 
 impl<'a, T, const N: usize> Sender<'a, T, N> {
     #[inline(always)]
@@ -204,7 +219,7 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
                 // Return the index
                 Poll::Ready(Ok(idx))
             } else {
-                return Poll::Pending;
+                Poll::Pending
             }
         })
         .await;
@@ -267,16 +282,29 @@ impl<'a, T, const N: usize> Clone for Sender<'a, T, N> {
 /// A receiver of the channel. There can only be one receiver at any time.
 pub struct Receiver<'a, T, const N: usize>(&'a Channel<T, N>);
 
+unsafe impl<'a, T, const N: usize> Send for Receiver<'a, T, N> {}
+
+impl<'a, T, const N: usize> core::fmt::Debug for Receiver<'a, T, N> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Receiver")
+    }
+}
+
 /// Error state for when all senders has been dropped.
 pub struct NoSender;
+
+impl core::fmt::Debug for NoSender {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "NoSender")
+    }
+}
 
 impl<'a, T, const N: usize> Receiver<'a, T, N> {
     /// Receives a value if there is one in the channel, non-blocking.
     /// Note; this does not check if the channel is closed.
     pub fn try_recv(&mut self) -> Option<T> {
         // Try to get a ready slot.
-        let ready_slot =
-            critical_section::with(|cs| self.0.access(cs).readyq.pop_front().map(|rs| rs));
+        let ready_slot = critical_section::with(|cs| self.0.access(cs).readyq.pop_front());
 
         if let Some(rs) = ready_slot {
             // Read the value from the slots, note; this memcpy is not under a critical section.

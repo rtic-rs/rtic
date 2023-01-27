@@ -157,14 +157,17 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             #[allow(non_snake_case)]
             #[doc(hidden)]
             pub fn #internal_spawn_ident(#(#input_args,)*) -> Result<(), #input_ty> {
+                // SAFETY: If `try_allocate` suceeds one must call `spawn`, which we do.
+                unsafe {
+                    if #exec_name.try_allocate() {
+                        let f = #name(unsafe { #name::Context::new() } #(,#input_untupled)*);
+                        #exec_name.spawn(f);
+                        #pend_interrupt
 
-                if #exec_name.spawn(|| #name(unsafe { #name::Context::new() } #(,#input_untupled)*) ) {
-
-                    #pend_interrupt
-
-                    Ok(())
-                } else {
-                    Err(#input_tupled)
+                        Ok(())
+                    } else {
+                        Err(#input_tupled)
+                    }
                 }
 
             }

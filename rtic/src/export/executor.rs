@@ -70,25 +70,23 @@ impl<F: Future> AsyncTaskExecutor<F> {
         self.pending.store(true, Ordering::Release);
     }
 
-    /// Spawn a future
+    /// Allocate the executor. To use with `spawn`.
     #[inline(always)]
-    pub fn spawn(&self, future: impl Fn() -> F) -> bool {
+    pub unsafe fn try_allocate(&self) -> bool {
         // Try to reserve the executor for a future.
-        if self
-            .running
+        self.running
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Relaxed)
             .is_ok()
-        {
-            // This unsafe is protected by `running` being false and the atomic setting it to true.
-            unsafe {
-                self.task.get().write(MaybeUninit::new(future()));
-            }
-            self.set_pending();
+    }
 
-            true
-        } else {
-            false
+    /// Spawn a future
+    #[inline(always)]
+    pub unsafe fn spawn(&self, future: F) {
+        // This unsafe is protected by `running` being false and the atomic setting it to true.
+        unsafe {
+            self.task.get().write(MaybeUninit::new(future));
         }
+        self.set_pending();
     }
 
     /// Poll the future in the executor.

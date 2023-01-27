@@ -1,6 +1,5 @@
 //! ...
 
-use core::cell::UnsafeCell;
 use core::marker::PhantomPinned;
 use core::ptr::null_mut;
 use core::sync::atomic::{AtomicPtr, Ordering};
@@ -8,27 +7,6 @@ use core::task::Waker;
 use critical_section as cs;
 
 pub type WaitQueue = LinkedList<Waker>;
-
-struct MyLinkPtr<T>(UnsafeCell<*mut Link<T>>);
-
-impl<T> MyLinkPtr<T> {
-    #[inline(always)]
-    fn new(val: *mut Link<T>) -> Self {
-        Self(UnsafeCell::new(val))
-    }
-
-    /// SAFETY: Only use this in a critical section, and don't forget them barriers.
-    #[inline(always)]
-    unsafe fn load_relaxed(&self) -> *mut Link<T> {
-        unsafe { *self.0.get() }
-    }
-
-    /// SAFETY: Only use this in a critical section, and don't forget them barriers.
-    #[inline(always)]
-    unsafe fn store_relaxed(&self, val: *mut Link<T>) {
-        unsafe { self.0.get().write(val) }
-    }
-}
 
 /// A FIFO linked list for a wait queue.
 pub struct LinkedList<T> {
