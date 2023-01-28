@@ -522,96 +522,100 @@ jobs:
         working-directory: ./rtic-time
         run: cargo test --test tests
 
-#  # Build documentation, check links
-#  docs:
-#    name: docs
-#    runs-on: ubuntu-22.04
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#
-#      - name: Cache pip installed linkchecker
-#        uses: actions/cache@v3
-#        with:
-#          path: ~/.cache/pip
-#          key: ${{ runner.os }}-pip
-#          restore-keys: |
-#            ${{ runner.os }}-pip-
-#
-#      - name: Set up Python 3.x
-#        uses: actions/setup-python@v4
-#        with:
-#        # Semantic version range syntax or exact version of a Python version
-#          python-version: '3.x'
-#
-#      # You can test your matrix by printing the current Python version
-#      - name: Display Python version
-#        run: python -c "import sys; print(sys.version)"
-#
-#      - name: Install dependencies
-#        run: pip install git+https://github.com/linkchecker/linkchecker.git
-#
-#      - name: Remove cargo-config
-#        run: rm -f .cargo/config
-#
-#      - name: Fail on warnings
-#        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
-#
-#      - name: Build docs
-#        run: cargo doc
-#
-#      - name: Check links
-#        run: |
-#          td=$(mktemp -d)
-#          cp -r target/doc $td/api
-#          linkchecker $td/api/rtic/
-#          linkchecker $td/api/cortex_m_rtic_macros/
-#
-#  # Build the books
-#  mdbook:
-#    name: mdbook
-#    runs-on: ubuntu-22.04
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#      - name: Set up Python 3.x
-#        uses: actions/setup-python@v4
-#        with:
-#        # Semantic version range syntax or exact version of a Python version
-#          python-version: '3.x'
-#
-#      # You can test your matrix by printing the current Python version
-#      - name: Display Python version
-#        run: python -c "import sys; print(sys.version)"
-#
-#      - name: Install dependencies
-#        run: pip install git+https://github.com/linkchecker/linkchecker.git
-#
-#      - name: mdBook Action
-#        uses: peaceiris/actions-mdbook@v1
-#        with:
-#          mdbook-version: 'latest'
-#
-#      - name: Build book in English
-#        shell: 'script --return --quiet --command "bash {0}"'
-#        run: cd book/en && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
-#
-#      - name: Build book in Russian
-#        shell: 'script --return --quiet --command "bash {0}"'
-#        run: cd book/ru && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then echo "Russian book needs updating!"; else exit 0; fi
-#
-#      - name: Check links
-#        run: |
-#          td=$(mktemp -d)
-#          mkdir $td/book
-#          cp -r book/en/book $td/book/en
-#          cp -r book/ru/book $td/book/ru
-#          cp LICENSE-* $td/book/en
-#          cp LICENSE-* $td/book/ru
-#
-#          linkchecker $td/book/en/
-#          linkchecker $td/book/ru/
-#
+  # Build documentation, check links
+  docs:
+    name: docs
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache pip installed linkchecker
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+        # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install dependencies
+        run: pip install git+https://github.com/linkchecker/linkchecker.git
+
+      - name: Remove cargo-config
+        working-directory: ./rtic
+        run: rm -f .cargo/config
+
+      - name: Fail on warnings
+        working-directory: ./rtic
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+
+      - name: Build docs
+        working-directory: ./rtic
+        run: cargo doc
+
+      - name: Check links
+        working-directory: ./rtic
+        run: |
+          td=$(mktemp -d)
+          cp -r target/doc $td/api
+          linkchecker $td/api/rtic/
+          linkchecker $td/api/rtic_macros/
+
+  # Build the books
+  mdbook:
+    name: mdbook
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+        # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install dependencies
+        run: pip install git+https://github.com/linkchecker/linkchecker.git
+
+      - name: mdBook Action
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: 'latest'
+
+      - name: Build book in English
+        shell: 'script --return --quiet --command "bash {0}"'
+        run: cd book/en && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
+
+      - name: Build book in Russian
+        shell: 'script --return --quiet --command "bash {0}"'
+        run: cd book/ru && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then echo "Russian book needs updating!"; else exit 0; fi
+
+      - name: Check links
+        run: |
+          td=$(mktemp -d)
+          mkdir $td/book
+          cp -r book/en/book $td/book/en
+          cp -r book/ru/book $td/book/ru
+          cp LICENSE-* $td/book/en
+          cp LICENSE-* $td/book/ru
+
+          linkchecker $td/book/en/
+          linkchecker $td/book/ru/
+
 #  # Update stable branch
 #  #
 #  # This needs to run before book is built
