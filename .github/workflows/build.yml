@@ -15,7 +15,7 @@ env:
 jobs:
   # Run cargo fmt --check, includes macros/
   style:
-    name: cargo fmt
+    name: cargo fmt rtic
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -77,7 +77,7 @@ jobs:
 
   # Compilation check
   check:
-    name: check
+    name: check rtic
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -112,9 +112,120 @@ jobs:
         working-directory: ./rtic
         run: cargo check --target=${{ matrix.target }}
 
+  # Compilation check
+  checkchannel:
+    name: check rtic-channel
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+          - thumbv6m-none-eabi
+          - x86_64-unknown-linux-gnu
+        toolchain:
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust ${{ matrix.toolchain }}
+        working-directory: ./rtic-channel
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (${{ matrix.target }})
+        working-directory: ./rtic-channel
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Fail on warnings
+        working-directory: ./rtic-channel
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo check
+        working-directory: ./rtic-channel
+        run: cargo check --target=${{ matrix.target }}
+
+  # Compilation check
+  checkmonotonics:
+    name: check rtic-monotonics
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+          - thumbv6m-none-eabi
+          - x86_64-unknown-linux-gnu
+        toolchain:
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust ${{ matrix.toolchain }}
+        working-directory: ./rtic-monotonics
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (${{ matrix.target }})
+        working-directory: ./rtic-monotonics
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Fail on warnings
+        working-directory: ./rtic-monotonics
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo check
+        working-directory: ./rtic-monotonics
+        run: cargo check --target=${{ matrix.target }}
+
+  # Compilation check
+  checktime:
+    name: check rtic-time
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7m-none-eabi
+          - thumbv6m-none-eabi
+          - x86_64-unknown-linux-gnu
+        toolchain:
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust ${{ matrix.toolchain }}
+        working-directory: ./rtic-time
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (${{ matrix.target }})
+        working-directory: ./rtic-time
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Fail on warnings
+        working-directory: ./rtic-time
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo check
+        working-directory: ./rtic-time
+        run: cargo check --target=${{ matrix.target }}
+
   # Clippy
   clippy:
-    name: Cargo clippy
+    name: Cargo clippy rtic
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -337,7 +448,7 @@ jobs:
 
   # Run test suite
   tests:
-    name: tests
+    name: tests rtic
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -352,6 +463,63 @@ jobs:
 
       - name: Run cargo test
         working-directory: ./rtic
+        run: cargo test --test tests
+
+  # Run test suite
+  testschannel:
+    name: tests rtic-channel
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Fail on warnings
+        working-directory: ./rtic-channel
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+
+      - name: Run cargo test
+        working-directory: ./rtic-channel
+        run: cargo test --test tests
+
+  # Run test suite
+  testsmonotonics:
+    name: tests rtic-monotonics
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Fail on warnings
+        working-directory: ./rtic-monotonics
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+
+      - name: Run cargo test
+        working-directory: ./rtic-monotonics
+        run: cargo test --test tests
+
+  # Run test suite
+  teststime:
+    name: tests rtic-time
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Fail on warnings
+        working-directory: ./rtic-time
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+
+      - name: Run cargo test
+        working-directory: ./rtic-time
         run: cargo test --test tests
 
 #  # Build documentation, check links
