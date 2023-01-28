@@ -1,6 +1,7 @@
 //! ...
 
 use core::marker::PhantomPinned;
+use core::pin::Pin;
 use core::sync::atomic::{AtomicPtr, Ordering};
 use critical_section as cs;
 
@@ -92,8 +93,10 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
 
     /// Insert a new link into the linked list.
     /// The return is (was_empty, address), where the address of the link is for use with `delete`.
-    pub fn insert(&self, val: &mut Link<T>) -> (bool, usize) {
+    pub fn insert(&self, val: Pin<&mut Link<T>>) -> (bool, usize) {
         cs::with(|_| {
+            // SAFETY: This datastructure does not move the underlying value.
+            let val = unsafe { val.get_unchecked_mut() };
             let addr = val as *const _ as usize;
 
             // Make sure all previous writes are visible
