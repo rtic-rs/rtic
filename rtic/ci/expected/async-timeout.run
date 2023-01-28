@@ -1,5 +1,16 @@
 init
-hello from bar
-hello from foo
-foo no timeout
-bar timeout
+the hal takes a duration of Duration { ticks: 450 }
+timeout
+the hal takes a duration of Duration { ticks: 450 }
+hal returned 5
+the hal takes a duration of Duration { ticks: 450 }
+hal returned 5
+now is Instant { ticks: 2102 }, timeout at Instant { ticks: 2602 }
+the hal takes a duration of Duration { ticks: 350 }
+hal returned 5 at time Instant { ticks: 2452 }
+now is Instant { ticks: 3102 }, timeout at Instant { ticks: 3602 }
+the hal takes a duration of Duration { ticks: 450 }
+hal returned 5 at time Instant { ticks: 3552 }
+now is Instant { ticks: 4102 }, timeout at Instant { ticks: 4602 }
+the hal takes a duration of Duration { ticks: 550 }
+timeout
