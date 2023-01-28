@@ -8,6 +8,7 @@ use core::{
     cell::UnsafeCell,
     future::poll_fn,
     mem::MaybeUninit,
+    pin::Pin,
     ptr,
     task::{Poll, Waker},
 };
@@ -177,10 +178,11 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
     pub async fn send(&mut self, val: T) -> Result<(), NoReceiver<T>> {
         if self.is_closed() {}
 
-        let mut __hidden_link: Option<wait_queue::Link<Waker>> = None;
+        let mut link_ptr: Option<wait_queue::Link<Waker>> = None;
 
-        // Make this future `Drop`-safe
-        let link_ptr = &mut __hidden_link as *mut Option<wait_queue::Link<Waker>>;
+        // Make this future `Drop`-safe, also shadow the original definition so we can't abuse it.
+        let link_ptr = &mut link_ptr as *mut Option<wait_queue::Link<Waker>>;
+
         let dropper = OnDrop::new(|| {
             // SAFETY: We only run this closure and dereference the pointer if we have
             // exited the `poll_fn` below in the `drop(dropper)` call. The other dereference
@@ -198,12 +200,18 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
             //  Do all this in one critical section, else there can be race conditions
             let queue_idx = critical_section::with(|cs| {
                 if !self.0.wait_queue.is_empty() || self.0.access(cs).freeq.is_empty() {
-                    // SAFETY: This pointer is only dereferenced here and on drop of the future.
+                    // SAFETY: This pointer is only dereferenced here and on drop of the future
+                    // which happens outside this `poll_fn`'s stack frame.
                     let link = unsafe { &mut *link_ptr };
                     if link.is_none() {
                         // Place the link in the wait queue on first run.
                         let link_ref = link.insert(wait_queue::Link::new(cx.waker().clone()));
-                        self.0.wait_queue.push(link_ref);
+
+                        // SAFETY: The address to the link is stable as it is hidden behind
+                        // `link_ptr`, and `link_ptr` shadows the original making it unmovable.
+                        self.0
+                            .wait_queue
+                            .push(unsafe { Pin::new_unchecked(link_ref) });
                     }
 
                     return None;

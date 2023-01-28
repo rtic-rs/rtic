@@ -1,6 +1,7 @@
 //! ...
 
 use core::marker::PhantomPinned;
+use core::pin::Pin;
 use core::ptr::null_mut;
 use core::sync::atomic::{AtomicPtr, Ordering};
 use core::task::Waker;
@@ -65,12 +66,15 @@ impl<T: Clone> LinkedList<T> {
     }
 
     /// Put an element at the back of the queue.
-    pub fn push(&self, link: &mut Link<T>) {
+    pub fn push(&self, link: Pin<&mut Link<T>>) {
         cs::with(|_| {
             // Make sure all previous writes are visible
             core::sync::atomic::fence(Ordering::SeqCst);
 
             let tail = self.tail.load(Self::R);
+
+            // SAFETY: This datastructure does not move the underlying value.
+            let link = unsafe { link.get_unchecked_mut() };
 
             if let Some(tail_ref) = unsafe { tail.as_ref() } {
                 // Queue is not empty
@@ -221,11 +225,11 @@ mod tests {
         let mut i4 = Link::new(13);
         let mut i5 = Link::new(14);
 
-        wq.push(&mut i1);
-        wq.push(&mut i2);
-        wq.push(&mut i3);
-        wq.push(&mut i4);
-        wq.push(&mut i5);
+        wq.push(unsafe { Pin::new_unchecked(&mut i1) });
+        wq.push(unsafe { Pin::new_unchecked(&mut i2) });
+        wq.push(unsafe { Pin::new_unchecked(&mut i3) });
+        wq.push(unsafe { Pin::new_unchecked(&mut i4) });
+        wq.push(unsafe { Pin::new_unchecked(&mut i5) });
 
         wq.print();
 

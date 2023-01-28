@@ -7,6 +7,7 @@
 #![feature(async_fn_in_trait)]
 
 use core::future::{poll_fn, Future};
+use core::pin::Pin;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use core::task::{Poll, Waker};
 use futures_util::{
@@ -185,7 +186,10 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             );
         }
 
-        let mut link = None;
+        let mut link_ptr: Option<linked_list::Link<WaitingWaker<Mono>>> = None;
+
+        // Make this future `Drop`-safe, also shadow the original definition so we can't abuse it.
+        let link_ptr = &mut link_ptr as *mut Option<linked_list::Link<WaitingWaker<Mono>>>;
 
         let queue = &self.queue;
         let marker = &AtomicUsize::new(0);
@@ -199,6 +203,9 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
                 return Poll::Ready(());
             }
 
+            // SAFETY: This pointer is only dereferenced here and on drop of the future
+            // which happens outside this `poll_fn`'s stack frame.
+            let link = unsafe { &mut *link_ptr };
             if link.is_none() {
                 let mut link_ref = link.insert(Link::new(WaitingWaker {
                     waker: cx.waker().clone(),
@@ -206,7 +213,9 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
                     was_poped: AtomicBool::new(false),
                 }));
 
-                let (was_empty, addr) = queue.insert(&mut link_ref);
+                // SAFETY: The address to the link is stable as it is defined outside this stack
+                // frame.
+                let (was_empty, addr) = queue.insert(unsafe { Pin::new_unchecked(&mut link_ref) });
                 marker.store(addr, Ordering::Relaxed);
 
                 if was_empty {
@@ -219,7 +228,10 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
         })
         .await;
 
-        if let Some(link) = link {
+        // SAFETY: We only run this and dereference the pointer if we have
+        // exited the `poll_fn` below in the `drop(dropper)` call. The other dereference
+        // of this pointer is in the `poll_fn`.
+        if let Some(link) = unsafe { &mut *link_ptr } {
             if link.val.was_poped.load(Ordering::Relaxed) {
                 // If it was poped from the queue there is no need to run delete
                 dropper.defuse();
