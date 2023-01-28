@@ -10,7 +10,19 @@ categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "Real-Time Interrupt-driven Concurrency (RTIC): a concurrency framework for building real-time systems"
 documentation = "https://rtic.rs/"
 edition = "2021"
-keywords = ["arm", "cortex-m", "risc-v", "embedded", "async", "runtime", "futures", "await", "no-std", "rtos", "bare-metal"]
+keywords = [
+  "arm",
+  "cortex-m",
+  "risc-v",
+  "embedded",
+  "async",
+  "runtime",
+  "futures",
+  "await",
+  "no-std",
+  "rtos",
+  "bare-metal",
+]
 license = "MIT OR Apache-2.0"
 name = "rtic"
 readme = "README.md"
@@ -31,6 +43,7 @@ bare-metal = "1.0.0"
 #portable-atomic = { version = "0.3.19" }
 atomic-polyfill = "1"
 
+
 [build-dependencies]
 version_check = "0.9"
 
@@ -41,6 +54,11 @@ systick-monotonic = "1.0.0"
 rtic-time = { path = "../rtic-time" }
 rtic-channel = { path = "../rtic-channel" }
 rtic-monotonics = { path = "../rtic-monotonics" }
+
+[dev-dependencies.futures]
+version = "0.3.26"
+default-features = false
+features = ["async-await"]
 
 [dev-dependencies.panic-semihosting]
 features = ["exit"]

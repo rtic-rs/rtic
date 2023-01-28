@@ -1,4 +1,4 @@
-//! examples/async-channel.rs
+//! examples/async-channel-done.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
@@ -19,7 +19,7 @@ mod app {
     #[local]
     struct Local {}
 
-    const CAPACITY: usize = 5;
+    const CAPACITY: usize = 1;
     #[init]
     fn init(_: init::Context) -> (Shared, Local) {
         let (s, r) = make_channel!(u32, CAPACITY);
@@ -46,17 +46,20 @@ mod app {
     async fn sender1(_c: sender1::Context, mut sender: Sender<'static, u32, CAPACITY>) {
         hprintln!("Sender 1 sending: 1");
         sender.send(1).await.unwrap();
+        hprintln!("Sender 1 done");
     }
 
     #[task]
     async fn sender2(_c: sender2::Context, mut sender: Sender<'static, u32, CAPACITY>) {
         hprintln!("Sender 2 sending: 2");
         sender.send(2).await.unwrap();
+        hprintln!("Sender 2 done");
     }
 
     #[task]
     async fn sender3(_c: sender3::Context, mut sender: Sender<'static, u32, CAPACITY>) {
         hprintln!("Sender 3 sending: 3");
         sender.send(3).await.unwrap();
+        hprintln!("Sender 3 done");
     }
 }
