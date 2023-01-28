@@ -482,7 +482,7 @@ jobs:
 
       - name: Run cargo test
         working-directory: ./rtic-channel
-        run: cargo test --test tests
+        run: cargo test --features testing
 
   # Run test suite
   testsmonotonics:

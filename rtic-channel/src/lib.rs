@@ -140,7 +140,7 @@ struct LinkPtr(*mut Option<wait_queue::Link<Waker>>);
 
 impl LinkPtr {
     /// This will dereference the pointer stored within and give out an `&mut`.
-    unsafe fn get(&self) -> &mut Option<wait_queue::Link<Waker>> {
+    unsafe fn get(&mut self) -> &mut Option<wait_queue::Link<Waker>> {
         &mut *self.0
     }
 }
@@ -203,9 +203,9 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
         let mut link_ptr: Option<wait_queue::Link<Waker>> = None;
 
         // Make this future `Drop`-safe, also shadow the original definition so we can't abuse it.
-        let link_ptr = LinkPtr(&mut link_ptr as *mut Option<wait_queue::Link<Waker>>);
+        let mut link_ptr = LinkPtr(&mut link_ptr as *mut Option<wait_queue::Link<Waker>>);
 
-        let link_ptr2 = link_ptr.clone();
+        let mut link_ptr2 = link_ptr.clone();
         let dropper = OnDrop::new(|| {
             // SAFETY: We only run this closure and dereference the pointer if we have
             // exited the `poll_fn` below in the `drop(dropper)` call. The other dereference
@@ -532,7 +532,7 @@ mod tests {
 
     #[tokio::test]
     async fn stress_channel() {
-        const NUM_RUNS: usize = 1_000;
+        const NUM_RUNS: usize = 1_000000;
         const QUEUE_SIZE: usize = 10;
 
         let (s, mut r) = make_channel!(u32, QUEUE_SIZE);
