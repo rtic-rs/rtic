@@ -1,10 +1,5 @@
 //! Real-Time Interrupt-driven Concurrency (RTIC) framework for ARM Cortex-M microcontrollers.
 //!
-//! **IMPORTANT**: This crate is published as [`cortex-m-rtic`] on crates.io but the name of the
-//! library is `rtic`.
-//!
-//! [`cortex-m-rtic`]: https://crates.io/crates/cortex-m-rtic
-//!
 //! The user level documentation can be found [here].
 //!
 //! [here]: https://rtic.rs
@@ -32,8 +27,8 @@
 #![deny(rust_2018_idioms)]
 #![no_std]
 #![doc(
-    html_logo_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg",
-    html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/cortex-m-rtic/master/book/en/src/RTIC.svg"
+    html_logo_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg",
+    html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg"
 )]
 //deny_warnings_placeholder_for_ci
 #![allow(clippy::inline_always)]
