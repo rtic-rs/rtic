@@ -73,6 +73,26 @@ pub struct TimerQueue<Mono: Monotonic> {
 /// This indicates that there was a timeout.
 pub struct TimeoutError;
 
+/// This is needed to make the async closure in `delay_until` accept that we "share"
+/// the link possible between threads.
+struct LinkPtr<Mono: Monotonic>(*mut Option<linked_list::Link<WaitingWaker<Mono>>>);
+
+impl<Mono: Monotonic> Clone for LinkPtr<Mono> {
+    fn clone(&self) -> Self {
+        LinkPtr(self.0)
+    }
+}
+
+impl<Mono: Monotonic> LinkPtr<Mono> {
+    /// This will dereference the pointer stored within and give out an `&mut`.
+    unsafe fn get(&mut self) -> &mut Option<linked_list::Link<WaitingWaker<Mono>>> {
+        &mut *self.0
+    }
+}
+
+unsafe impl<Mono: Monotonic> Send for LinkPtr<Mono> {}
+unsafe impl<Mono: Monotonic> Sync for LinkPtr<Mono> {}
+
 impl<Mono: Monotonic> TimerQueue<Mono> {
     /// Make a new queue.
     pub const fn new() -> Self {
@@ -189,7 +209,9 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
         let mut link_ptr: Option<linked_list::Link<WaitingWaker<Mono>>> = None;
 
         // Make this future `Drop`-safe, also shadow the original definition so we can't abuse it.
-        let link_ptr = &mut link_ptr as *mut Option<linked_list::Link<WaitingWaker<Mono>>>;
+        let mut link_ptr =
+            LinkPtr(&mut link_ptr as *mut Option<linked_list::Link<WaitingWaker<Mono>>>);
+        let mut link_ptr2 = link_ptr.clone();
 
         let queue = &self.queue;
         let marker = &AtomicUsize::new(0);
@@ -205,7 +227,7 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
 
             // SAFETY: This pointer is only dereferenced here and on drop of the future
             // which happens outside this `poll_fn`'s stack frame.
-            let link = unsafe { &mut *link_ptr };
+            let link = unsafe { link_ptr2.get() };
             if link.is_none() {
                 let mut link_ref = link.insert(Link::new(WaitingWaker {
                     waker: cx.waker().clone(),
@@ -231,7 +253,7 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
         // SAFETY: We only run this and dereference the pointer if we have
         // exited the `poll_fn` below in the `drop(dropper)` call. The other dereference
         // of this pointer is in the `poll_fn`.
-        if let Some(link) = unsafe { &mut *link_ptr } {
+        if let Some(link) = unsafe { link_ptr.get() } {
             if link.val.was_poped.load(Ordering::Relaxed) {
                 // If it was poped from the queue there is no need to run delete
                 dropper.defuse();

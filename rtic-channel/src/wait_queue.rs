@@ -105,8 +105,6 @@ pub struct Link<T> {
     _up: PhantomPinned,
 }
 
-unsafe impl<T> Send for Link<T> {}
-
 impl<T: Clone> Link<T> {
     const R: Ordering = Ordering::Relaxed;
 
