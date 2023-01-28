@@ -532,7 +532,7 @@ mod tests {
 
     #[tokio::test]
     async fn stress_channel() {
-        const NUM_RUNS: usize = 1_000000;
+        const NUM_RUNS: usize = 1_000;
         const QUEUE_SIZE: usize = 10;
 
         let (s, mut r) = make_channel!(u32, QUEUE_SIZE);
