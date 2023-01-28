@@ -3,7 +3,7 @@
 use core::marker::PhantomPinned;
 use core::pin::Pin;
 use core::ptr::null_mut;
-use core::sync::atomic::{AtomicPtr, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicPtr, Ordering};
 use core::task::Waker;
 use critical_section as cs;
 
@@ -57,6 +57,7 @@ impl<T: Clone> LinkedList<T> {
                 // Clear the pointers in the node.
                 head_ref.next.store(null_mut(), Self::R);
                 head_ref.prev.store(null_mut(), Self::R);
+                head_ref.is_poped.store(true, Self::R);
 
                 return Some(head_val);
             }
@@ -100,8 +101,11 @@ pub struct Link<T> {
     pub(crate) val: T,
     next: AtomicPtr<Link<T>>,
     prev: AtomicPtr<Link<T>>,
+    is_poped: AtomicBool,
     _up: PhantomPinned,
 }
+
+unsafe impl<T> Send for Link<T> {}
 
 impl<T: Clone> Link<T> {
     const R: Ordering = Ordering::Relaxed;
@@ -112,8 +116,13 @@ impl<T: Clone> Link<T> {
             val,
             next: AtomicPtr::new(null_mut()),
             prev: AtomicPtr::new(null_mut()),
+            is_poped: AtomicBool::new(false),
             _up: PhantomPinned,
         }
+    }
+
+    pub fn is_poped(&self) -> bool {
+        self.is_poped.load(Self::R)
     }
 
     pub fn remove_from_list(&mut self, list: &LinkedList<T>) {
@@ -123,6 +132,7 @@ impl<T: Clone> Link<T> {
 
             let prev = self.prev.load(Self::R);
             let next = self.next.load(Self::R);
+            self.is_poped.store(true, Self::R);
 
             match unsafe { (prev.as_ref(), next.as_ref()) } {
                 (None, None) => {
@@ -217,7 +227,7 @@ mod tests {
 
     #[test]
     fn linked_list() {
-        let mut wq = LinkedList::<u32>::new();
+        let wq = LinkedList::<u32>::new();
 
         let mut i1 = Link::new(10);
         let mut i2 = Link::new(11);
