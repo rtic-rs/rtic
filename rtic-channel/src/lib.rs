@@ -66,7 +66,7 @@ impl<T, const N: usize> Channel<T, N> {
     }
 
     /// Split the queue into a `Sender`/`Receiver` pair.
-    pub fn split<'a>(&'a mut self) -> (Sender<'a, T, N>, Receiver<'a, T, N>) {
+    pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
         // Fill free queue
         for idx in 0..N as u8 {
             debug_assert!(!self.freeq.get_mut().is_full());
