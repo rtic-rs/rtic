@@ -1,7 +1,2 @@
-**/*.rs.bk
-.#*
-.gdb_history
-/*/book
-/target
-Cargo.lock
-*.hex
+# Make sure that mdbook output in repo-root/book/<language>/book is ignored
+*/book
