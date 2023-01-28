@@ -58,8 +58,8 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         out_dir = Path::new(&out_str);
 
         // Default build path, annotated below:
-        // $(pwd)/target/thumbv7em-none-eabihf/debug/build/cortex-m-rtic-<HASH>/out/
-        // <project_dir>/<target-dir>/<TARGET>/debug/build/cortex-m-rtic-<HASH>/out/
+        // $(pwd)/target/thumbv7em-none-eabihf/debug/build/rtic-<HASH>/out/
+        // <project_dir>/<target-dir>/<TARGET>/debug/build/rtic-<HASH>/out/
         //
         // traverse up to first occurrence of TARGET, approximated with starts_with("thumbv")
         // and use the parent() of this path
