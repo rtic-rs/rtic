@@ -135,27 +135,28 @@ jobs:
         working-directory: ./rtic
         run: cargo clippy
 
-  clippytime:
-    name: Cargo clippy rtic-time
+  clippychannel:
+    name: Cargo clippy rtic-channel
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Fail on warnings
-        working-directory: ./rtic-time
+        working-directory: ./rtic-channel
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
 
       - name: Add Rust component clippy
-        working-directory: ./rtic-time
+        working-directory: ./rtic-channel
         run: rustup component add clippy
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: cargo clippy
-        working-directory: ./rtic-time
+        working-directory: ./rtic-channel
         run: cargo clippy
+
 
   clippymonotonics:
     name: Cargo clippy rtic-monotonics
@@ -178,27 +179,27 @@ jobs:
       - name: cargo clippy
         working-directory: ./rtic-monotonics
         run: cargo clippy
-
-  clippychannel:
-    name: Cargo clippy rtic-channel
+  
+  clippytime:
+    name: Cargo clippy rtic-time
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Fail on warnings
-        working-directory: ./rtic-channel
+        working-directory: ./rtic-time
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
 
       - name: Add Rust component clippy
-        working-directory: ./rtic-channel
+        working-directory: ./rtic-time
         run: rustup component add clippy
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: cargo clippy
-        working-directory: ./rtic-channel
+        working-directory: ./rtic-time
         run: cargo clippy
 
   # Verify all examples, checks
