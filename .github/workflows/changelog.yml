@@ -25,6 +25,8 @@ jobs:
           filters: |
             rtic:
               - 'rtic/**'
+            rtic-channel:
+              - 'rtic-channel/**'
             rtic-time:
               - 'rtic-time/**'
             rtic-monotonics:
@@ -37,6 +39,16 @@ jobs:
           changeLogPath: ./rtic/CHANGELOG.md
           skipLabels: 'needs-changelog, skip-changelog'
           missingUpdateErrorMessage: 'Please add a changelog entry in the rtic/CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that changelog updated (rtic-channel)
+        if: steps.changes.outputs.rtic-channel == 'true'
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic-channel/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-channel/CHANGELOG.md file.'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
