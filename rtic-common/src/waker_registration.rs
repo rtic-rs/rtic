@@ -1,3 +1,5 @@
+//! Waker registration utility.
+
 use core::cell::UnsafeCell;
 use core::task::Waker;
 

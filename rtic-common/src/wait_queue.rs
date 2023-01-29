@@ -7,6 +7,7 @@ use core::sync::atomic::{AtomicBool, AtomicPtr, Ordering};
 use core::task::Waker;
 use critical_section as cs;
 
+/// A helper definition of a wait queue.
 pub type WaitQueue = LinkedList<Waker>;
 
 /// A FIFO linked list for a wait queue.
@@ -119,10 +120,12 @@ impl<T: Clone> Link<T> {
         }
     }
 
+    /// Return true if this link has been poped from the list.
     pub fn is_poped(&self) -> bool {
         self.is_poped.load(Self::R)
     }
 
+    /// Remove this link from a linked list.
     pub fn remove_from_list(&mut self, list: &LinkedList<T>) {
         cs::with(|_| {
             // Make sure all previous writes are visible
