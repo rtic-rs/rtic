@@ -14,11 +14,8 @@ use core::{
     task::{Poll, Waker},
 };
 use heapless::Deque;
-use wait_queue::WaitQueue;
-use waker_registration::CriticalSectionWakerRegistration as WakerRegistration;
-
-mod wait_queue;
-mod waker_registration;
+use rtic_common::wait_queue::{Link, WaitQueue};
+use rtic_common::waker_registration::CriticalSectionWakerRegistration as WakerRegistration;
 
 /// An MPSC channel for use in no-alloc systems. `N` sets the size of the queue.
 ///
@@ -136,11 +133,11 @@ unsafe impl<'a, T, const N: usize> Send for Sender<'a, T, N> {}
 /// This is needed to make the async closure in `send` accept that we "share"
 /// the link possible between threads.
 #[derive(Clone)]
-struct LinkPtr(*mut Option<wait_queue::Link<Waker>>);
+struct LinkPtr(*mut Option<Link<Waker>>);
 
 impl LinkPtr {
     /// This will dereference the pointer stored within and give out an `&mut`.
-    unsafe fn get(&mut self) -> &mut Option<wait_queue::Link<Waker>> {
+    unsafe fn get(&mut self) -> &mut Option<Link<Waker>> {
         &mut *self.0
     }
 }
@@ -200,10 +197,10 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
     /// Send a value. If there is no place left in the queue this will wait until there is.
     /// If the receiver does not exist this will return an error.
     pub async fn send(&mut self, val: T) -> Result<(), NoReceiver<T>> {
-        let mut link_ptr: Option<wait_queue::Link<Waker>> = None;
+        let mut link_ptr: Option<Link<Waker>> = None;
 
         // Make this future `Drop`-safe, also shadow the original definition so we can't abuse it.
-        let mut link_ptr = LinkPtr(&mut link_ptr as *mut Option<wait_queue::Link<Waker>>);
+        let mut link_ptr = LinkPtr(&mut link_ptr as *mut Option<Link<Waker>>);
 
         let mut link_ptr2 = link_ptr.clone();
         let dropper = OnDrop::new(|| {
@@ -236,7 +233,7 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
                         }
                     } else {
                         // Place the link in the wait queue on first run.
-                        let link_ref = link.insert(wait_queue::Link::new(cx.waker().clone()));
+                        let link_ref = link.insert(Link::new(cx.waker().clone()));
 
                         // SAFETY: The address to the link is stable as it is hidden behind
                         // `link_ptr`, and `link_ptr` shadows the original making it unmovable.
