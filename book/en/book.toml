@@ -4,6 +4,10 @@ multilingual = false
 src = "src"
 title = "Real-Time Interrupt-driven Concurrency"
 
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
 [output.html]
 git-repository-url = "https://github.com/rtic-rs/cortex-m-rtic"
 git-repository-icon = "fa-github"
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
