@@ -684,6 +684,9 @@ jobs:
       - name: Install dependencies
         run: pip install git+https://github.com/linkchecker/linkchecker.git
 
+      - name: Install mdbook-mermaid
+        run: cargo install mdbook-mermaid
+
       - name: mdBook Action
         uses: peaceiris/actions-mdbook@v1
         with:
@@ -773,6 +776,9 @@ jobs:
 #      # You can test your matrix by printing the current Python version
 #      - name: Display Python version
 #        run: python -c "import sys; print(sys.version)"
+#
+#      - name: Install mdbook-mermaid
+#        run: cargo install mdbook-mermaid
 #
 #      - name: mdBook Action
 #        uses: peaceiris/actions-mdbook@v1
