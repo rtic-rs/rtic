@@ -14,8 +14,11 @@ use core::{
     task::{Poll, Waker},
 };
 use heapless::Deque;
-use rtic_common::wait_queue::{Link, WaitQueue};
 use rtic_common::waker_registration::CriticalSectionWakerRegistration as WakerRegistration;
+use rtic_common::{
+    dropper::OnDrop,
+    wait_queue::{Link, WaitQueue},
+};
 
 /// An MPSC channel for use in no-alloc systems. `N` sets the size of the queue.
 ///
@@ -414,29 +417,6 @@ impl<'a, T, const N: usize> Drop for Receiver<'a, T, N> {
         while let Some(waker) = self.0.wait_queue.pop() {
             waker.wake();
         }
-    }
-}
-
-struct OnDrop<F: FnOnce()> {
-    f: core::mem::MaybeUninit<F>,
-}
-
-impl<F: FnOnce()> OnDrop<F> {
-    pub fn new(f: F) -> Self {
-        Self {
-            f: core::mem::MaybeUninit::new(f),
-        }
-    }
-
-    #[allow(unused)]
-    pub fn defuse(self) {
-        core::mem::forget(self)
-    }
-}
-
-impl<F: FnOnce()> Drop for OnDrop<F> {
-    fn drop(&mut self) {
-        unsafe { self.f.as_ptr().read()() }
     }
 }
 

@@ -1,0 +1,18 @@
+[package]
+name = "rtic-arbiter"
+version = "1.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+critical-section = "1"
+rtic-common = { version = "1.0.0", path = "../rtic-common" }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros", "time"] }
+
+
+[features]
+default = []
+testing = ["critical-section/std", "rtic-common/testing"]
