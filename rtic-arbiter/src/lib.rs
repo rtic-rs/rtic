@@ -36,6 +36,9 @@ pub struct Arbiter<T> {
     taken: AtomicBool,
 }
 
+unsafe impl<T> Send for Arbiter<T> {}
+unsafe impl<T> Sync for Arbiter<T> {}
+
 impl<T> Arbiter<T> {
     /// Create a new arbiter.
     pub const fn new(inner: T) -> Self {
@@ -171,5 +174,25 @@ extern crate std;
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
+    use super::*;
+
+    #[tokio::test]
+    async fn stress_channel() {
+        const NUM_RUNS: usize = 100_000;
+
+        static ARB: Arbiter<usize> = Arbiter::new(0);
+        let mut v = std::vec::Vec::new();
+
+        for _ in 0..NUM_RUNS {
+            v.push(tokio::spawn(async move {
+                *ARB.access().await += 1;
+            }));
+        }
+
+        for v in v {
+            v.await.unwrap();
+        }
+
+        assert_eq!(*ARB.access().await, NUM_RUNS)
+    }
 }
