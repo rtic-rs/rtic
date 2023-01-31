@@ -14,7 +14,7 @@ env:
 
 jobs:
   # Run cargo fmt --check, includes macros/
-  style:
+  stylertic:
     name: cargo fmt rtic
     runs-on: ubuntu-22.04
     steps:
@@ -91,7 +91,7 @@ jobs:
 
 
   # Compilation check
-  check:
+  checkrtic:
     name: check rtic
     runs-on: ubuntu-22.04
     strategy:
@@ -276,7 +276,7 @@ jobs:
         run: cargo check --target=${{ matrix.target }}
 
   # Clippy
-  clippy:
+  clippyrtic:
     name: Cargo clippy rtic
     runs-on: ubuntu-22.04
     steps:
@@ -389,7 +389,7 @@ jobs:
 
   # Verify all examples, checks
   checkexamples:
-    name: checkexamples
+    name: Cargo check --examples
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -424,7 +424,7 @@ jobs:
 
   # Verify the example output with run-pass tests
   testexamples:
-    name: testexamples
+    name: Cargo xtask, test examples in QEMU
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -470,7 +470,7 @@ jobs:
 
   # Check the correctness of macros/ crate
   checkmacros:
-    name: checkmacros
+    name: Cargo check rtic-macros
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -503,7 +503,7 @@ jobs:
 
   # Run the  macros test-suite
   testmacros:
-    name: testmacros
+    name: Cargo test rtic-macros
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -521,7 +521,7 @@ jobs:
         run: cargo test --manifest-path macros/Cargo.toml
 
   # Run test suite
-  tests:
+  testsrtic:
     name: tests rtic
     runs-on: ubuntu-22.04
     steps:
@@ -617,7 +617,7 @@ jobs:
 
   # Build documentation, check links
   docs:
-    name: docs
+    name: Cargo docs, check links
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -666,7 +666,7 @@ jobs:
 
   # Build the books
   mdbook:
-    name: mdbook
+    name: mdbook, check links
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -903,20 +903,33 @@ jobs:
   ci-success:
     name: ci
     if: github.event_name == 'push' && success()
-    needs:
-      - style
-      - check
-      - clippy
-      - clippytime
-      - clippymonotonics
+   needs:
+      - stylertic
+      - stylearbiter
+      - stylechannel
+      - stylemonotonics
+      - styletime
+      - checkrtic
+      - checkarbiter
+      - checkchannel
+      - checkmonotonics
+      - checktime
+      - clippyrtic
+      - clippyarbiter
       - clippychannel
+      - clippymonotonics
+      - clippytime
       - checkexamples
       - testexamples
       - checkmacros
       - testmacros
-      - tests
-#      - docs
-#      - mdbook
+      - testsrtic
+      - testsarbiter
+      - testschannel
+      - testsmonotonics
+      - teststime
+      - docs
+      - mdbook
     runs-on: ubuntu-22.04
     steps:
       - name: Mark the job as a success
