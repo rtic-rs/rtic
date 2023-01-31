@@ -142,8 +142,8 @@ where
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            TrySendError::NoReceiver(v) => write!(f, "NoReceiver({:?})", v),
-            TrySendError::Full(v) => write!(f, "Full({:?})", v),
+            TrySendError::NoReceiver(v) => write!(f, "NoReceiver({v:?})"),
+            TrySendError::Full(v) => write!(f, "Full({v:?})"),
         }
     }
 }
@@ -401,12 +401,10 @@ impl<'a, T, const N: usize> Receiver<'a, T, N> {
             }
 
             Ok(r)
+        } else if self.is_closed() {
+            Err(ReceiveError::NoSender)
         } else {
-            if self.is_closed() {
-                Err(ReceiveError::NoSender)
-            } else {
-                Err(ReceiveError::Empty)
-            }
+            Err(ReceiveError::Empty)
         }
     }
 

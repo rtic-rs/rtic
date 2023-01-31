@@ -14,12 +14,12 @@ use futures_util::{
     future::{select, Either},
     pin_mut,
 };
+use linked_list::{Link, LinkedList};
 pub use monotonic::Monotonic;
+use rtic_common::dropper::OnDrop;
 
 mod linked_list;
 mod monotonic;
-
-use linked_list::{Link, LinkedList};
 
 /// Holds a waker and at which time instant this waker shall be awoken.
 struct WaitingWaker<Mono: Monotonic> {
@@ -262,28 +262,5 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             // Make sure that our link is deleted from the list before we drop this stack
             drop(dropper);
         }
-    }
-}
-
-struct OnDrop<F: FnOnce()> {
-    f: core::mem::MaybeUninit<F>,
-}
-
-impl<F: FnOnce()> OnDrop<F> {
-    pub fn new(f: F) -> Self {
-        Self {
-            f: core::mem::MaybeUninit::new(f),
-        }
-    }
-
-    #[allow(unused)]
-    pub fn defuse(self) {
-        core::mem::forget(self)
-    }
-}
-
-impl<F: FnOnce()> Drop for OnDrop<F> {
-    fn drop(&mut self) {
-        unsafe { self.f.as_ptr().read()() }
     }
 }
