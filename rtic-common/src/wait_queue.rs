@@ -58,7 +58,7 @@ impl<T: Clone> LinkedList<T> {
                 // Clear the pointers in the node.
                 head_ref.next.store(null_mut(), Self::R);
                 head_ref.prev.store(null_mut(), Self::R);
-                head_ref.is_poped.store(true, Self::R);
+                head_ref.is_popped.store(true, Self::R);
 
                 return Some(head_val);
             }
@@ -102,7 +102,7 @@ pub struct Link<T> {
     pub(crate) val: T,
     next: AtomicPtr<Link<T>>,
     prev: AtomicPtr<Link<T>>,
-    is_poped: AtomicBool,
+    is_popped: AtomicBool,
     _up: PhantomPinned,
 }
 
@@ -115,14 +115,14 @@ impl<T: Clone> Link<T> {
             val,
             next: AtomicPtr::new(null_mut()),
             prev: AtomicPtr::new(null_mut()),
-            is_poped: AtomicBool::new(false),
+            is_popped: AtomicBool::new(false),
             _up: PhantomPinned,
         }
     }
 
     /// Return true if this link has been poped from the list.
-    pub fn is_poped(&self) -> bool {
-        self.is_poped.load(Self::R)
+    pub fn is_popped(&self) -> bool {
+        self.is_popped.load(Self::R)
     }
 
     /// Remove this link from a linked list.
@@ -133,7 +133,7 @@ impl<T: Clone> Link<T> {
 
             let prev = self.prev.load(Self::R);
             let next = self.next.load(Self::R);
-            self.is_poped.store(true, Self::R);
+            self.is_popped.store(true, Self::R);
 
             match unsafe { (prev.as_ref(), next.as_ref()) } {
                 (None, None) => {

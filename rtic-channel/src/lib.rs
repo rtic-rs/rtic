@@ -267,7 +267,7 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
                     // which happens outside this `poll_fn`'s stack frame.
                     let link = unsafe { link_ptr.get() };
                     if let Some(link) = link {
-                        if !link.is_poped() {
+                        if !link.is_popped() {
                             return None;
                         } else {
                             // Fall through to dequeue
