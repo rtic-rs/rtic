@@ -33,8 +33,6 @@ mod app {
     async fn receiver(_c: receiver::Context, mut receiver: Receiver<'static, u32, CAPACITY>) {
         hprintln!("Receiver got: {:?}", receiver.recv().await);
 
-        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator    
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
-    
-
 }
