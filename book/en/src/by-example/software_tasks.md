@@ -1,7 +1,7 @@
 # Software tasks & spawn
 
-The RTIC concept of a *software* task shares a lot with that of [hardware tasks](./hardware_tasks.md) with the core difference that a software task is not explicitly bound to a specific
-interrupt vector, but rather to a “dispatcher” interrupt vector running at the same priority as the software task.
+The RTIC concept of a software task shares a lot with that of [hardware tasks](./hardware_tasks.md) with the core difference that a software task is not explicitly bound to a specific
+interrupt vector, but rather bound to a “dispatcher” interrupt vector running at the intended priority of the software task (see below).
 
 Similarly to *hardware* tasks, the `#[task]` attribute used on a function declare it as a task. The absence of a `binds = InterruptName` argument to the attribute declares the function as a *software task*. 
 
@@ -94,6 +94,3 @@ $ cargo run --target thumbv7m-none-eabi --example zero-prio-task
 ---
 
 Application side safety: Technically, the RTIC framework ensures that `poll` is never executed on any *software* task with *completed* future, thus adhering to the soundness rules of async Rust.
-
-
-

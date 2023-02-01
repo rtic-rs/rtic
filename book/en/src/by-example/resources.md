@@ -15,11 +15,11 @@ further discussed in [Monotonic & `spawn_{at/after}`](./monotonic.md). -->
 
 ## `#[local]` resources
 
-`#[local]` resources accessible only to a single task. This task is given unique access to the resource without the use of locks or critical sections.
+`#[local]` resources are locally accessible to a specific task, meaning that only that task can access the resource and does so without locks or critical sections. This allows for the resources, commonly drivers or large objects, to be initialized in `#[init]` and then be passed to a specific task.
 
-This allows for the resources, commonly drivers or large objects, to be initialized in `#[init]` and then be passed to a specific task. (Thus, a task `#[local]` resource can only be accessed by one single task.) Attempting to assign the same `#[local]` resource to more than one task is a compile-time error.
+Thus, a task `#[local]` resource can only be accessed by one singular task. Attempting to assign the same `#[local]` resource to more than one task is a compile-time error.
 
-Types of `#[local]` resources must implement [`Send`] trait as they are being sent from `init` to the target task and thus crossing the *thread* boundary.
+Types of `#[local]` resources must implement a [`Send`] trait as they are being sent from `init` to a target task, crossing a thread boundary.
 
 [`Send`]: https://doc.rust-lang.org/stable/core/marker/trait.Send.html
 
@@ -36,9 +36,11 @@ $ cargo run --target thumbv7m-none-eabi --example locals
 {{#include ../../../../rtic/ci/expected/locals.run}}
 ```
 
+Local resources in `#[init]` and `#[idle]` have `'static` lifetimes. This is safe since both tasks are not re-entrant.
+
 ### Task local initialized resources
 
-A special use-case of local resources are the ones specified directly in the task declaration, `#[task(local = [my_var: TYPE = INITIAL_VALUE, ...])]`. This allows for creating locals which do no need to be initialized in `#[init]`. Moreover, local resources in `#[init]` and `#[idle]` have `'static` lifetimes, this is safe since both are not re-entrant.
+Local resources can also be specified directly in the resource claim like so: `#[task(local = [my_var: TYPE = INITIAL_VALUE, ...])]`; this allows for creating locals which do no need to be initialized in `#[init]`.
 
 Types of `#[task(local = [..])]` resources have to be neither [`Send`] nor [`Sync`] as they are not crossing any thread boundary.
 
@@ -69,7 +71,7 @@ The critical section created by the `lock` API is based on dynamic priorities: i
 [icpp]: https://en.wikipedia.org/wiki/Priority_ceiling_protocol
 [srp]: https://en.wikipedia.org/wiki/Stack_Resource_Policy
 
-In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for the `shared` resource and need to lock the resource for accessing the data. The highest priority handler, which do not access the `shared` resource, is free to preempt the critical section created by the lowest priority handler.
+In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for a `shared` resource and need to succeed in locking the resource in order to access its data. The highest priority handler, which does not access the `shared` resource, is free to preempt a critical section created by the lowest priority handler.
 
 ``` rust
 {{#include ../../../../rtic/examples/lock.rs}}

@@ -15,7 +15,7 @@ Omitting the `priority` argument the task priority defaults to `1`. The `idle` t
 The highest static priority task takes precedence when more than one task are ready to execute.
 
 The following scenario demonstrates task prioritization:
-Spawning a higher priority task A during execution of a lower priority task B pends task A. Task A has higher priority thus preempting task B which gets suspended until task A completes execution. Thus, when task A completes task B resumes execution.
+Spawning a higher priority task A during execution of a lower priority task B suspends task B. Task A has higher priority thus preempting task B which gets suspended until task A completes execution. Thus, when task A completes task B resumes execution.
 
 ```text
 Task Priority
@@ -45,6 +45,8 @@ $ cargo run --target thumbv7m-none-eabi --example preempt
 Note that the task `bar` does *not* preempt task `baz` because its priority is the *same* as `baz`'s. The higher priority task `bar` runs before `foo` when `baz`returns. When `bar` returns `foo` can resume.
 
 One more note about priorities: choosing a priority higher than what the device supports will result in a compilation error. The error is cryptic due to limitations in the Rust language, if `priority = 9` for task `uart0_interrupt` in `example/common.rs` this looks like:
+
+The error is cryptic due to limitations in the Rust language if `priority = 9` for task `uart0_interrupt` in `example/common.rs` this looks like:
 
 ```text
    error[E0080]: evaluation of constant value failed
