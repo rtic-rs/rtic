@@ -2,7 +2,7 @@
 
 Channels can be used to communicate data between running *software* tasks. The channel is essentially a wait queue, allowing tasks with multiple producers and a single receiver. A channel is constructed in the `init` task and backed by statically allocated memory. Send and receive endpoints are distributed to *software* tasks:
 
-```rust
+``` rust
 ...
 const CAPACITY: usize = 5;
 #[init]
@@ -20,7 +20,7 @@ In this case the channel holds data of `u32` type with a capacity of 5  elements
 
 The `send` method post a message on the channel as shown below:
 
-```rust
+``` rust
 #[task]
 async fn sender1(_c: sender1::Context, mut sender: Sender<'static, u32, CAPACITY>) {
     hprintln!("Sender 1 sending: 1");
@@ -32,7 +32,7 @@ async fn sender1(_c: sender1::Context, mut sender: Sender<'static, u32, CAPACITY
 
 The receiver can `await` incoming messages:
 
-```rust
+``` rust
 #[task]
 async fn receiver(_c: receiver::Context, mut receiver: Receiver<'static, u32, CAPACITY>) {
     while let Ok(val) = receiver.recv().await {
@@ -42,6 +42,8 @@ async fn receiver(_c: receiver::Context, mut receiver: Receiver<'static, u32, CA
 }
 ```
 
+Channels are implemented using a small (global) *Critical Section* (CS) for protection against race-conditions. The user must provide an CS implementation. Compiling the examples given the `--features test-critical-section` gives one possible implementation. 
+
 For a complete example:
 
 ``` rust
@@ -50,6 +52,9 @@ For a complete example:
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example async-channel --features test-critical-section 
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/async-channel.run}}
 ```
 
@@ -79,7 +84,10 @@ In case all senders have been dropped `await` on an empty receiver channel resul
 ```
 
 ``` console
-$ cargo run --target thumbv7m-none-eabi --example async-channel-no-sender --features test-critical-section  
+$ cargo run --target thumbv7m-none-eabi --example async-channel-no-sender --features test-critical-section 
+```
+
+``` console 
 {{#include ../../../../rtic/ci/expected/async-channel-no-sender.run}}
 ```
 
@@ -93,6 +101,9 @@ The resulting error returns the data back to the sender, allowing the sender to 
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example async-channel-no-receiver --features test-critical-section 
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/async-channel-no-receiver.run}}
 ```
 
@@ -107,6 +118,9 @@ In cases you wish the sender to proceed even in case the channel is full. To tha
 ```
 
 ``` console
-$ cargo run --target thumbv7m-none-eabi --example async-channel-try --features test-critical-section 
+$ cargo run --target thumbv7m-none-eabi --example async-channel-try --features test-critical-section
+```
+
+``` console 
 {{#include ../../../../rtic/ci/expected/async-channel-try.run}}
 ```

@@ -29,6 +29,9 @@ See the following example:
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example spawn
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/spawn.run}}
 ```
 You may `spawn` a *software* task again, given that it has run-to-completion (returned). 
@@ -43,6 +46,9 @@ Technically the async executor will `poll` the `foo` *future* which in this case
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example spawn_loop
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/spawn_loop.run}}
 ```
 
@@ -56,6 +62,9 @@ Technically, a `spawn` to a *future* that is not in *completed* state is conside
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example spawn_err
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/spawn_err.run}}
 ```
 
@@ -68,6 +77,9 @@ You can also pass arguments at spawn as follows.
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example spawn_arguments
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/spawn_arguments.run}}
 ```
 
@@ -86,6 +98,9 @@ Conceptually, one can see such tasks as running in the `main` thread of the appl
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example zero-prio-task
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/zero-prio-task.run}}
 ```
 

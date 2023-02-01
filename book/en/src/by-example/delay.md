@@ -4,7 +4,7 @@ A convenient way to express *miniminal* timing requirements is by means of delay
 
 This can be achieved by instantiating a monotonic timer:
 
-```rust
+``` rust
 ...
 rtic_monotonics::make_systick_timer_queue!(TIMER);
 
@@ -17,7 +17,7 @@ fn init(cx: init::Context) -> (Shared, Local) {
 
 A *software* task can `await` the delay to expire:
 
-```rust
+``` rust
 #[task]
 async fn foo(_cx: foo::Context) {
     ...
@@ -27,6 +27,8 @@ async fn foo(_cx: foo::Context) {
 
 Technically, the timer queue is implemented as a list based priority queue, where list-nodes are statically allocated as part of the underlying task `Future`. Thus, the timer queue is infallible at run-time (its size and allocation is determined at compile time).
 
+Similarly the channels implementation, the timer-queue implementation relies on a global *Critical Section* (CS) for race protection. For the examples a CS implementation is provided by adding `--features test-critical-section` to the build options.
+
 For a complete example:
 
 ``` rust
@@ -35,6 +37,9 @@ For a complete example:
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example async-delay --features test-critical-section 
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/async-delay.run}}
 ```
 
@@ -112,5 +117,8 @@ The complete example:
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example async-timeout --features test-critical-section 
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/async-timeout.run}}
 ```

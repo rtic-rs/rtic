@@ -25,5 +25,8 @@ The example below demonstrates the use of the `#[task(binds = InterruptName)]` a
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example hardware
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/hardware.run}}
 ```

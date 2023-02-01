@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use heapless::{
     pool,
@@ -41,7 +42,7 @@ mod app {
     }
 
     #[task(binds = I2C0, priority = 2)]
-    async fn i2c0(_: i2c0::Context) {
+    fn i2c0(_: i2c0::Context) {
         // claim a memory block, initialize it and ..
         let x = P::alloc().unwrap().init([0u8; 128]);
 
@@ -56,7 +57,7 @@ mod app {
 
     #[task]
     async fn foo(_: foo::Context, x: Box<P>) {
-        hprintln!("foo({:?})", x.as_ptr()).unwrap();
+        hprintln!("foo({:?})", x.as_ptr());
 
         // explicitly return the block to the pool
         drop(x);
@@ -66,7 +67,7 @@ mod app {
 
     #[task(priority = 2)]
     async fn bar(_: bar::Context, x: Box<P>) {
-        hprintln!("bar({:?})", x.as_ptr()).unwrap();
+        hprintln!("bar({:?})", x.as_ptr());
 
         // this is done automatically so we can omit the call to `drop`
         // drop(x);
