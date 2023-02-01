@@ -24,5 +24,8 @@ Running the example will print `init` to the console and then exit the QEMU proc
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example init
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/init.run}}
 ```

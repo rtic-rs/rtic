@@ -17,6 +17,9 @@ The example below shows that `idle` runs after `init`.
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example idle
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/idle.run}}
 ```
 
@@ -41,6 +44,9 @@ The following example shows how to enable sleep by setting the
 
 ``` console
 $ cargo run --target thumbv7m-none-eabi --example idle-wfi
+```
+
+``` console
 {{#include ../../../../rtic/ci/expected/idle-wfi.run}}
 ```
 

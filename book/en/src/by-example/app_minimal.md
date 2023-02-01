@@ -11,6 +11,9 @@ RTIC is designed with resource efficiency in mind. RTIC itself does not rely on 
 For a minimal example you can expect something like:
 ``` console
 $ cargo size --example smallest --target thumbv7m-none-eabi --release
+```
+
+``` console
 Finished release [optimized] target(s) in 0.07s
    text    data     bss     dec     hex filename
     924       0       0     924     39c smallest
