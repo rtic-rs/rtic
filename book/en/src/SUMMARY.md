@@ -10,7 +10,7 @@
   - [The init task](./by-example/app_init.md)
   - [The idle task](./by-example/app_idle.md)
   - [Channel based communication](./by-example/channel.md)
-  - [Tasks with delay](./by-example/delay.md)
+  - [Delay and Timeout](./by-example/delay.md)
   - [Starting a new project](./by-example/starting_a_project.md)
   - [The minimal app](./by-example/app_minimal.md)
   - [Tips & Tricks](./by-example/tips.md)
