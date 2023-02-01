@@ -1,7 +1,10 @@
 [package]
 name = "rtic-monotonics"
-version = "0.1.0"
+version = "1.0.0-alpha.0"
 edition = "2021"
+categories = ["concurrency", "embedded", "no-std", "asynchronous"]
+description = "rtic-monotonics lib TODO"
+license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,5 +12,5 @@ edition = "2021"
 cortex-m = { version = "0.7.6" }
 embedded-hal-async = "0.2.0-alpha.0"
 fugit = { version = "0.3.6", features = ["defmt"] }
-rtic-time = { version = "1.0.0", path = "../rtic-time" }
+rtic-time = { version = "1.0.0-alpha.0", path = "../rtic-time" }
 atomic-polyfill = "1"
