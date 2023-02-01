@@ -58,9 +58,9 @@ $ cargo run --target thumbv7m-none-eabi --example async-channel --features test-
 {{#include ../../../../rtic/ci/expected/async-channel.run}}
 ```
 
-Also sender endpoint can be awaited. In case there the channel capacity has not been reached, `await` the sender can progress immediately, while in the case the capacity is reached, the sender is blocked until there is free space in the queue. In this way data is never lost.
+Also sender endpoint can be awaited. In case the channel capacity has not yet been reached, `await`-ing the sender can progress immediately, while in the case the capacity is reached, the sender is blocked until there is free space in the queue. In this way data is never lost.
 
-In the below example the `CAPACITY` has been reduced to 1, forcing sender tasks to wait until the data in the channel has been received.
+In the following example the `CAPACITY` has been reduced to 1, forcing sender tasks to wait until the data in the channel has been received.
 
 ``` rust
 {{#include ../../../../rtic/examples/async-channel-done.rs}}
@@ -77,7 +77,7 @@ $ cargo run --target thumbv7m-none-eabi --example async-channel-done --features 
 
 ## Error handling
 
-In case all senders have been dropped `await` on an empty receiver channel results in an error. This allows to gracefully implement different types of shutdown operations.
+In case all senders have been dropped `await`-ing on an empty receiver channel results in an error. This allows to gracefully implement different types of shutdown operations.
 
 ``` rust
 {{#include ../../../../rtic/examples/async-channel-no-sender.rs}}
@@ -91,7 +91,7 @@ $ cargo run --target thumbv7m-none-eabi --example async-channel-no-sender --feat
 {{#include ../../../../rtic/ci/expected/async-channel-no-sender.run}}
 ```
 
-Similarly, `await` on a send channel results in an error in case the receiver has been dropped. This allows to gracefully implement application level error handling.
+Similarly, `await`-ing on a send channel results in an error in case the receiver has been dropped. This allows to gracefully implement application level error handling.
 
 The resulting error returns the data back to the sender, allowing the sender to take appropriate action (e.g., storing the data to later retry sending it).
 

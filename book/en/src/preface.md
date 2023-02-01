@@ -16,7 +16,7 @@ This book contains user level documentation for the Real-Time Interrupt-driven C
 
 <!--[Russian]: ../ru/index.html-->
 
-This is the documentation of v2.0.x (pre-release) of RTIC 2.
+This is the documentation for RTIC v2.x. 
 
 ## RTIC - The Past, current and Future
 
@@ -27,11 +27,11 @@ The RTIC framework takes the outset from real-time systems research at Luleå Un
 [Timber]: https://timber-lang.org/
 [RTFM-SRP]: https://www.diva-portal.org/smash/get/diva2:1005680/FULLTEXT01.pdf
 [RTFM-core]: https://ltu.diva-portal.org/smash/get/diva2:1013248/FULLTEXT01.pdf
-[AbstractTimer]: https://ltu.diva-portal.org/smash/get/diva2:1013030/FULLTEXT01.pdf
+[Abstract Timer]: https://ltu.diva-portal.org/smash/get/diva2:1013030/FULLTEXT01.pdf
 
 ## Stack Resource Policy based Scheduling
 
-Stack Resource Policy (SRP) based concurrency and resource management is at heart of the RTIC framework. The [SRP] model itself extends on [Priority Inheritance Protocols], and provides a set of outstanding properties for single core scheduling. To name a few:
+[Stack Resource Policy (SRP)][SRP] based concurrency and resource management is at heart of the RTIC framework. The SRP model itself extends on [Priority Inheritance Protocols], and provides a set of outstanding properties for single core scheduling. To name a few:
 
 - preemptive deadlock and race-free scheduling
 - resource efficiency
@@ -68,7 +68,7 @@ graph LR
 
 ## RTIC the hardware accelerated real-time scheduler
 
-SRP itself is compatible both to dynamic and static priority scheduling. For the implementation of RTIC we leverage on the underlying hardware for accelerated static priority scheduling.
+SRP itself is compatible with both dynamic and static priority scheduling. For the implementation of RTIC we leverage on the underlying hardware for accelerated static priority scheduling.
 
 In the case of the `ARM Cortex-M` architecture, each interrupt vector entry `v[i]` is associated a function pointer (`v[i].fn`), and a static priority (`v[i].priority`), an enabled- (`v[i].enabled`) and a pending-bit (`v[i].pending`). 
 
@@ -84,7 +84,7 @@ The SPR model for single-core static scheduling on the other hand states that a 
 
 The similarities are striking and it is not by chance/luck/coincidence. The hardware was cleverly designed with real-time scheduling in mind. 
 
-In order to map the SRP scheduling onto the hardware we need to have a closer look on the system ceiling (𝜫). Under SRP 𝜫 is computed as the maximum priority ceiling of the currently held resources, and will thus change dynamically during the system operation.
+In order to map the SRP scheduling onto the hardware we need to take a closer look at the system ceiling (𝜫). Under SRP 𝜫 is computed as the maximum priority ceiling of the currently held resources, and will thus change dynamically during the system operation.
 
 ## Example
 
@@ -99,7 +99,7 @@ The mapping of static priority SRP based scheduling to the Cortex M hardware is 
 
 ## Example
 
-For the running example, a snapshot of the ARM Cortex M [NVIC] may have the following configuration (after task `A` has been pended for execution.)
+For the running example, a snapshot of the ARM Cortex M [Nested Vectored Interrupt Controller (NVIC)][NVIC] may have the following configuration (after task `A` has been pended for execution.)
 
 | Index | Fn  | Priority | Enabled | Pended |
 | ----- | --- | -------- | ------- | ------ |
