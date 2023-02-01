@@ -903,7 +903,7 @@ jobs:
   ci-success:
     name: ci
     if: github.event_name == 'push' && success()
-   needs:
+    needs:
       - stylertic
       - stylearbiter
       - stylechannel
