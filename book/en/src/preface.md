@@ -1,7 +1,7 @@
 <div align="center"><img width="300" height="300" src="RTIC.svg"></div>
 <div style="font-size: 6em; font-weight: bolder;" align="center">RTIC</div>
 
-<h1 align="center">The Embedded Rust RTOS</h1>
+<h1 align="center">The hardware accelerated Rust RTOS</h1>
 
 <p align="center">A concurrency framework for building real-time systems</p>
 
