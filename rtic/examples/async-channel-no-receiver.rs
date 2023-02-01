@@ -29,12 +29,9 @@ mod app {
         (Shared {}, Local {})
     }
 
-    
     #[task]
     async fn sender1(_c: sender1::Context, mut sender: Sender<'static, u32, CAPACITY>) {
-
         hprintln!("Sender 1 sending: 1 {:?}", sender.send(1).await);
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
-
 }

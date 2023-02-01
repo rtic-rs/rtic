@@ -44,5 +44,4 @@ mod app {
         hprintln!("Sender 1 try sending: 2 {:?}", sender.try_send(2));
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
-
 }
