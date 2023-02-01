@@ -1,5 +1,11 @@
 [book]
-authors = ["Jorge Aparicio, Per Lindgren and The Real-Time Interrupt-driven Concurrency developers"]
+authors = [
+  "The Real-Time Interrupt-driven Concurrency developers",
+  "Emil Fresk <emil.fresk@gmail.com>",
+  "Henrik Tjäder <henrik@tjaders.com>",
+  "Jorge Aparicio <jorge@japaric.io>",
+  "Per Lindgren <per.lindgren@ltu.se>",
+]
 multilingual = false
 src = "src"
 title = "Real-Time Interrupt-driven Concurrency"
