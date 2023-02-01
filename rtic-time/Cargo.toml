@@ -1,7 +1,15 @@
 [package]
 name = "rtic-time"
 version = "1.0.0-alpha.0"
+
 edition = "2021"
+authors = [
+  "The Real-Time Interrupt-driven Concurrency developers",
+  "Emil Fresk <emil.fresk@gmail.com>",
+  "Henrik Tjäder <henrik@tjaders.com>",
+  "Jorge Aparicio <jorge@japaric.io>",
+  "Per Lindgren <per.lindgren@ltu.se>",
+]
 categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "rtic-time lib TODO"
 license = "MIT OR Apache-2.0"
