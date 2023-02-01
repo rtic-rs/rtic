@@ -10,7 +10,9 @@ It provides a minimal set of required mechanisms for safe sharing of mutable res
 
 Comparing RTIC to traditional a Real-Time Operating System (RTOS) is hard. Firstly, a traditional RTOS typically comes with no guarantees regarding system safety, even the most hardened kernels like the formally verified [seL4] kernel. Their claims to integrity, confidentiality, and availability regards only the kernel itself (under additional assumptions its configuration and environment). They even state: 
 
-"An OS kernel, verified or not, does not automatically make a system secure. In fact, any system, no matter how secure, can be used in insecure ways."
+"An OS kernel, verified or not, does not automatically make a system secure. In fact, any system, no matter how secure, can be used in insecure ways." - [seL4 FAQ][sel4faq]
+
+[sel4faq]: https://docs.sel4.systems/projects/sel4/frequently-asked-questions.html
 
 [seL4]: https://sel4.systems/
 
