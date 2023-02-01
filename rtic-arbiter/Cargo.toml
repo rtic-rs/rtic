@@ -1,13 +1,16 @@
 [package]
 name = "rtic-arbiter"
-version = "1.0.0"
+version = "1.0.0-alpha.0"
 edition = "2021"
+categories = ["concurrency", "embedded", "no-std", "asynchronous"]
+description = "rtic-arbiter lib TODO"
+license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 critical-section = "1"
-rtic-common = { version = "1.0.0", path = "../rtic-common" }
+rtic-common = { version = "1.0.0-alpha.0", path = "../rtic-common" }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "macros", "time"] }
