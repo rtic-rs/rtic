@@ -13,7 +13,7 @@ edition = "2021"
 keywords = ["arm", "cortex-m", "risc-v", "embedded", "async", "runtime", "futures", "await", "no-std", "rtos", "bare-metal"]
 license = "MIT OR Apache-2.0"
 name = "rtic-macros"
-readme = "../README.md"
+readme = "../../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
 version = "2.0.0-alpha.0"

@@ -25,7 +25,7 @@ keywords = [
 ]
 license = "MIT OR Apache-2.0"
 name = "rtic"
-readme = "README.md"
+readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
 version = "2.0.0-alpha.0"
