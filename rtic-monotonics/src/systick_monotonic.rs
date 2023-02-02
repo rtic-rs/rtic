@@ -8,7 +8,14 @@ use cortex_m::peripheral::SYST;
 use embedded_hal_async::delay::DelayUs;
 pub use fugit::ExtU32;
 
+#[cfg(feature = "systick_100hz")]
+const TIMER_HZ: u32 = 100;
+
+#[cfg(feature = "systick_1khz")]
 const TIMER_HZ: u32 = 1_000;
+
+#[cfg(feature = "systick_10khz")]
+const TIMER_HZ: u32 = 10_000;
 
 /// Systick implementing `rtic_monotonic::Monotonic` which runs at 1 kHz.
 pub struct Systick;
