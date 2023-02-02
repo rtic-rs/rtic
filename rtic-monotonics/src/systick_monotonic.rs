@@ -3,7 +3,7 @@
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
-use core::ops::Deref;
+use core::future::Future;
 use cortex_m::peripheral::SYST;
 use embedded_hal_async::delay::DelayUs;
 pub use fugit::ExtU32;
@@ -30,8 +30,7 @@ impl Systick {
     /// `sysclk` and `TIMER_HZ`.
     ///
     /// Note: Give the return value to `TimerQueue::initialize()` to initialize the timer queue.
-    #[must_use]
-    pub fn start(mut systick: cortex_m::peripheral::SYST, sysclk: u32) -> Self {
+    pub fn start(mut systick: cortex_m::peripheral::SYST, sysclk: u32) {
         // + TIMER_HZ / 2 provides round to nearest instead of round to 0.
         // - 1 as the counter range is inclusive [0, reload]
         let reload = (sysclk + TIMER_HZ / 2) / TIMER_HZ - 1;
@@ -45,7 +44,7 @@ impl Systick {
         systick.enable_interrupt();
         systick.enable_counter();
 
-        Systick {}
+        SYSTICK_TIMER_QUEUE.initialize(Systick {});
     }
 
     fn systick() -> SYST {
@@ -54,6 +53,44 @@ impl Systick {
 }
 
 static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
+static SYSTICK_TIMER_QUEUE: TimerQueue<Systick> = TimerQueue::new();
+
+// Forward timerqueue interface
+impl Systick {
+    /// Used to access the underlying timer queue
+    #[doc(hidden)]
+    pub fn __tq() -> &'static TimerQueue<Systick> {
+        &SYSTICK_TIMER_QUEUE
+    }
+
+    /// Timeout at a specific time.
+    pub async fn timeout_at<F: Future>(
+        instant: <Self as Monotonic>::Instant,
+        future: F,
+    ) -> Result<F::Output, TimeoutError> {
+        SYSTICK_TIMER_QUEUE.timeout_at(instant, future).await
+    }
+
+    /// Timeout after a specific duration.
+    #[inline]
+    pub async fn timeout_after<F: Future>(
+        duration: <Self as Monotonic>::Duration,
+        future: F,
+    ) -> Result<F::Output, TimeoutError> {
+        SYSTICK_TIMER_QUEUE.timeout_after(duration, future).await
+    }
+
+    /// Delay for some duration of time.
+    #[inline]
+    pub async fn delay(duration: <Self as Monotonic>::Duration) {
+        SYSTICK_TIMER_QUEUE.delay(duration).await;
+    }
+
+    /// Delay to some specific time instant.
+    pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
+        SYSTICK_TIMER_QUEUE.delay_until(instant).await;
+    }
+}
 
 impl Monotonic for Systick {
     type Instant = fugit::TimerInstantU32<TIMER_HZ>;
@@ -92,49 +129,28 @@ impl Monotonic for Systick {
     fn disable_timer() {}
 }
 
-/// Timer queue wrapper to implement traits on
-pub struct SystickTimerQueue(TimerQueue<Systick>);
-
-impl SystickTimerQueue {
-    /// Create a new timer queue.
-    pub const fn new() -> Self {
-        Self(TimerQueue::new())
-    }
-}
-
-impl Deref for SystickTimerQueue {
-    type Target = TimerQueue<Systick>;
-
-    #[inline(always)]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DelayUs for SystickTimerQueue {
+impl DelayUs for Systick {
     type Error = core::convert::Infallible;
 
     async fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
-        self.delay(us.micros()).await;
+        SYSTICK_TIMER_QUEUE.delay(us.micros()).await;
         Ok(())
     }
 
     async fn delay_ms(&mut self, ms: u32) -> Result<(), Self::Error> {
-        self.delay(ms.millis()).await;
+        SYSTICK_TIMER_QUEUE.delay(ms.millis()).await;
         Ok(())
     }
 }
 
-/// Register the Systick interrupt and crate a timer queue with a specific name and speed.
+/// Register the Systick interrupt for the monotonic.
 #[macro_export]
-macro_rules! make_systick_timer_queue {
-    ($timer_queue_name:ident) => {
-        static $timer_queue_name: SystickTimerQueue = SystickTimerQueue::new();
-
+macro_rules! make_systick_handler {
+    () => {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn SysTick() {
-            $timer_queue_name.on_monotonic_interrupt();
+            Systick::__tq().on_monotonic_interrupt();
         }
     };
 }

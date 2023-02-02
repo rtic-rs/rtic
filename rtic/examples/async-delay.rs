@@ -11,7 +11,7 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
     use rtic_monotonics::systick_monotonic::*;
 
-    rtic_monotonics::make_systick_timer_queue!(TIMER);
+    rtic_monotonics::make_systick_handler!();
 
     #[shared]
     struct Shared {}
@@ -23,8 +23,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         hprintln!("init");
 
-        let systick = Systick::start(cx.core.SYST, 12_000_000);
-        TIMER.initialize(systick);
+        Systick::start(cx.core.SYST, 12_000_000);
 
         foo::spawn().ok();
         bar::spawn().ok();
@@ -45,21 +44,21 @@ mod app {
     #[task]
     async fn foo(_cx: foo::Context) {
         hprintln!("hello from foo");
-        TIMER.delay(100.millis()).await;
+        Systick::delay(100.millis()).await;
         hprintln!("bye from foo");
     }
 
     #[task]
     async fn bar(_cx: bar::Context) {
         hprintln!("hello from bar");
-        TIMER.delay(200.millis()).await;
+        Systick::delay(200.millis()).await;
         hprintln!("bye from bar");
     }
 
     #[task]
     async fn baz(_cx: baz::Context) {
         hprintln!("hello from baz");
-        TIMER.delay(300.millis()).await;
+        Systick::delay(300.millis()).await;
         hprintln!("bye from baz");
 
         debug::exit(debug::EXIT_SUCCESS);
