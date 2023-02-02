@@ -61,11 +61,11 @@ mod app {
 
         // do this 3 times
         for n in 0..3 {
-            // exact point in time without drift
+            // absolute point in time without drift
             instant += 1000.millis();
             Systick::delay_until(instant).await;
 
-            // exact point it time for timeout
+            // absolute point it time for timeout
             let timeout = instant + 500.millis();
             hprintln!("now is {:?}, timeout at {:?}", Systick::now(), timeout);
 
