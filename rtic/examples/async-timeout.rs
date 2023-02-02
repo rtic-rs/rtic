@@ -1,5 +1,5 @@
-// examples/async-timeout.rs
-//
+//! examples/async-timeout.rs
+
 #![no_main]
 #![no_std]
 #![deny(warnings)]
