@@ -36,7 +36,7 @@
 use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
 pub use rtic_core::{prelude as mutex_prelude, Exclusive, Mutex};
 pub use rtic_macros::app;
-pub use rtic_monotonic::{self, Monotonic};
+// pub use rtic_monotonic::{self, Monotonic};
 
 /// module `mutex::prelude` provides `Mutex` and multi-lock variants. Recommended over `mutex_prelude`
 pub mod mutex {

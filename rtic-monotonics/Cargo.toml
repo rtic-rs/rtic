@@ -22,3 +22,10 @@ embedded-hal-async = "0.2.0-alpha.0"
 fugit = { version = "0.3.6", features = ["defmt"] }
 rtic-time = { version = "1.0.0-alpha.0", path = "../rtic-time" }
 atomic-polyfill = "1"
+
+[features]
+default = ["systick_1khz"]
+
+systick_100hz = []
+systick_1khz = []
+systick_10khz = []

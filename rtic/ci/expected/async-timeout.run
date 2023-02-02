@@ -1,16 +1,16 @@
 init
-the hal takes a duration of Duration { ticks: 450 }
+the hal takes a duration of Duration { ticks: 45 }
 timeout
-the hal takes a duration of Duration { ticks: 450 }
+the hal takes a duration of Duration { ticks: 45 }
 hal returned 5
-the hal takes a duration of Duration { ticks: 450 }
+the hal takes a duration of Duration { ticks: 45 }
 hal returned 5
-now is Instant { ticks: 2102 }, timeout at Instant { ticks: 2602 }
-the hal takes a duration of Duration { ticks: 350 }
-hal returned 5 at time Instant { ticks: 2452 }
-now is Instant { ticks: 3102 }, timeout at Instant { ticks: 3602 }
-the hal takes a duration of Duration { ticks: 450 }
-hal returned 5 at time Instant { ticks: 3552 }
-now is Instant { ticks: 4102 }, timeout at Instant { ticks: 4602 }
-the hal takes a duration of Duration { ticks: 550 }
+now is Instant { ticks: 210 }, timeout at Instant { ticks: 260 }
+the hal takes a duration of Duration { ticks: 35 }
+hal returned 5 at time Instant { ticks: 245 }
+now is Instant { ticks: 310 }, timeout at Instant { ticks: 360 }
+the hal takes a duration of Duration { ticks: 45 }
+hal returned 5 at time Instant { ticks: 355 }
+now is Instant { ticks: 410 }, timeout at Instant { ticks: 460 }
+the hal takes a duration of Duration { ticks: 55 }
 timeout
