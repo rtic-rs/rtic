@@ -2,8 +2,10 @@
 
 #![no_main]
 #![no_std]
-#![feature(type_alias_impl_trait)]
+#![deny(warnings)]
+#![deny(unsafe_code)]
 #![deny(missing_docs)]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
