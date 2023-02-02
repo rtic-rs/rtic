@@ -1,10 +1,10 @@
 //! examples/init.rs
 
-#![deny(unsafe_code)]
-#![deny(warnings)]
-#![deny(missing_docs)]
 #![no_main]
 #![no_std]
+#![deny(warnings)]
+#![deny(unsafe_code)]
+#![deny(missing_docs)]
 
 use panic_semihosting as _;
 

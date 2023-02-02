@@ -1,9 +1,8 @@
 //! examples/pool.rs
 
-#![deny(unsafe_code)]
-#![deny(warnings)]
 #![no_main]
 #![no_std]
+#![deny(warnings)]
 #![feature(type_alias_impl_trait)]
 
 use heapless::{
