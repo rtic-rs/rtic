@@ -2,6 +2,8 @@
 //
 #![no_main]
 #![no_std]
+#![deny(warnings)]
+#![deny(missing_docs)]
 #![feature(type_alias_impl_trait)]
 
 use cortex_m_semihosting::{debug, hprintln};
