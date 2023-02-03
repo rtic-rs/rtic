@@ -10,13 +10,21 @@
 This book contains user level documentation for the Real-Time Interrupt-driven Concurrency
 (RTIC) framework. The API reference is available [here](../../api/).
 
-<!-- Formerly known as Real-Time For the Masses. -->
-
-<!--There is a translation of this book in [Russian].-->
-
-<!--[Russian]: ../ru/index.html-->
-
 This is the documentation for RTIC v2.x. 
+
+{{#include ../../../README.md:59}} 
+
+Older releases:
+[RTIC v1.x](/1.0) | [RTIC v0.5.x (unsupported)](/0.5) | [RTFM v0.4.x (unsupported)](/0.4) 
+
+{{#include ../../../README.md:7:12}}
+
+## Is RTIC an RTOS?
+
+A common question is whether RTIC is an RTOS or not, and depending on your background the answer may vary. From RTIC's developers point of view; RTIC is a hardware accelerated RTOS that utilizes the hardware such as the NVIC on Cortex-M MCUs, CLIC on RISC-V etc. to perform scheduling, rather than the more classical software kernel.
+
+Another common view from the community is that RTIC is a concurrency framework as there
+is no software kernel and that it relies on external HALs.
 
 ## RTIC - The Past, current and Future
 
@@ -40,7 +48,7 @@ The RTIC framework takes the outset from real-time systems research at Luleå Un
 - predictable scheduling, with bounded priority inversion by a single (named) critical section
 - theoretical underpinning amenable to static analysis (e.g., for task response times and overall schedulability)
 
-SRP comes with a set of system wide requirements:
+SRP comes with a set of system-wide requirements:
 - each task is associated a static priority,
 - tasks execute on a single-core,  
 - tasks must be run-to-completion, and
@@ -122,21 +130,21 @@ In this way RTIC fuses SRP based preemptive scheduling with a zero-cost hardware
 
 Given that the approach is dead simple, how come SRP and hardware accelerated scheduling is not adopted by any other mainstream RTOS?
 
-The answer is simple, the commonly adopted threading model does not lend itself well to static analysis - there is no known way to extract the task/resource dependencies from the source code at compile time (thus ceilings cannot be efficiently computed and the LIFO resource locking requirement cannot be ensured). Thus SRP based scheduling is in the general case out of reach for any thread based RTOS. 
+The answer is simple, the commonly adopted threading model does not lend itself well to static analysis - there is no known way to extract the task/resource dependencies from the source code at compile time (thus ceilings cannot be efficiently computed and the LIFO resource locking requirement cannot be ensured). Thus, SRP based scheduling is in the general case out of reach for any thread based RTOS. 
 
 ## RTIC into the Future
 
 Asynchronous programming in various forms are getting increased popularity and language support. Rust natively provides an `async`/`await` API for cooperative multitasking and the compiler generates the necessary boilerplate for storing and retrieving execution contexts (i.e., managing the set of local variables that spans each `await`). 
 
-The Rust standard library provides collections for dynamically allocated data-structures (useful to manage execution contexts at run-time. However, in the setting of resource constrained real-time systems, dynamic allocations are problematic (both regarding performance and reliability - Rust runs into a *panic* on an out-of-memory condition). Thus, static allocation is king!
+The Rust standard library provides collections for dynamically allocated data-structures which are useful to manage execution contexts at run-time. However, in the setting of resource constrained real-time systems, dynamic allocations are problematic (both regarding performance and reliability - Rust runs into a *panic* on an out-of-memory condition). Thus, static allocation is the preferable approach!
 
-RTIC provides a mechanism for `async`/`await` that relies solely on static allocations. However, the implementation relies on the `#![feature(type_alias_impl_trait)]` (TAIT) which is undergoing stabilization (thus RTIC 2.0.x currently requires a *nightly* toolchain). Technically, using TAIT, the compiler determines the size of each execution context allowing static allocation.
+RTIC provides a mechanism for `async`/`await` that relies solely on static allocations. However, the implementation relies on the `#![feature(type_alias_impl_trait)]` (TAIT) which is undergoing stabilization (thus RTIC v2.x currently requires a *nightly* toolchain). Technically, using TAIT, the compiler determines the size of each execution context allowing static allocation.
 
 From a modelling perspective `async/await` lifts the run-to-completion requirement of SRP, and each section of code between two yield points (`await`s) can be seen as an individual task. The compiler will reject any attempt to `await` while holding a resource (not doing so would break the strict LIFO requirement on resource usage under SRP).
 
-So with the technical stuff out of the way, what does `async/await` bring to the RTIC table?
+So with the technical stuff out of the way, what does `async/await` bring to the table?
 
-The answer is - improved ergonomics! In cases you want a task to perform a sequence of requests (and await their results in order to progress). Without `async`/`await` the programmer would be forced to split the task into individual sub-tasks and maintain some sort of state encoding (and manually progress by selecting sub-task). Using `async/await` each yield point (`await`) essentially represents a state, and the progression mechanism is built automatically for you at compile time by means of `Futures`. 
+The answer is - improved ergonomics! A recurring use case is to have task perform a sequence of requests and then await their results in order to progress. Without `async`/`await` the programmer would be forced to split the task into individual sub-tasks and maintain some sort of state encoding (and manually progress by selecting sub-task). Using `async/await` each yield point (`await`) essentially represents a state, and the progression mechanism is built automatically for you at compile time by means of `Futures`. 
 
 Rust `async`/`await` support is still incomplete and/or under development (e.g., there are no stable way to express `async` closures, precluding use in iterator patterns). Nevertheless, Rust `async`/`await` is production ready and covers most common use cases. 
 
@@ -144,7 +152,7 @@ An important property is that futures are composable, thus you can await either,
 
 ## RTIC the model
 
-An RTIC `app` is a declarative and executable system model for single-core applications, defining a set of (`local` and `shared`) resources operated on by a set of  (`init`, `idle`, *hardware* and *software*) tasks. In short the `init` task runs before any other task returning a set of resources (`local` and `shared`). Tasks run preemptively based on their associated static priority, `idle` has the lowest priority (and can be used for background work, and/or to put the system to sleep until woken by some event). Hardware tasks are bound to underlying hardware interrupts, while software tasks are scheduled by asynchronous executors (one for each software task priority). 
+An RTIC `app` is a declarative and executable system model for single-core applications, defining a set of (`local` and `shared`) resources operated on by a set of (`init`, `idle`, *hardware* and *software*) tasks. In short the `init` task runs before any other task returning a set of resources (`local` and `shared`). Tasks run preemptively based on their associated static priority, `idle` has the lowest priority (and can be used for background work, and/or to put the system to sleep until woken by some event). Hardware tasks are bound to underlying hardware interrupts, while software tasks are scheduled by asynchronous executors (one for each software task priority). 
 
 At compile time the task/resource model is analyzed under SRP and executable code generated with the following outstanding properties:
 
@@ -152,18 +160,4 @@ At compile time the task/resource model is analyzed under SRP and executable cod
   - hardware task scheduling is performed directly by the hardware, and
   - software task scheduling is performed by auto generated async executors tailored to the application.
 
-The RTIC API design ensures that both SRP requirements and Rust soundness rules are upheld at all times, thus the executable model is correct by construction. Overall, the generated code infers no additional overhead in comparison to a hand-written implementation, thus in Rust terms RTIC offers a zero-cost abstraction to concurrency.
-
-<!--
-
-For the documentation older versions, see;
-
-* v1.0.x go [here](/1.0).
-* v0.5.x go [here](/0.5).
-* v0.4.x go [here](/0.4). -->
-
-<!-- 
-{{#include ../../../README.md:7:47}}
-
-{{#include ../../../README.md:48:}} 
--->
+The RTIC API design ensures that both SRP requirements and Rust soundness rules are upheld at all times, thus the executable model is correct by construction. Overall, the generated code infers no additional overhead in comparison to a handwritten implementation, thus in Rust terms RTIC offers a zero-cost abstraction to concurrency.
