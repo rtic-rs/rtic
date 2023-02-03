@@ -13,7 +13,10 @@ title = "Real-Time Interrupt-driven Concurrency"
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
 
+[preprocessor.wavedrom]
+command = "mdbook-wavedrom"
+
 [output.html]
 git-repository-url = "https://github.com/rtic-rs/cortex-m-rtic"
 git-repository-icon = "fa-github"
-additional-js = ["mermaid.min.js", "mermaid-init.js"]
+additional-js = ["mermaid.min.js", "mermaid-init.js", "wavedrom.min.js", "wavedrome-default.js"]
