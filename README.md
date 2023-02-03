@@ -1,11 +1,11 @@
 # Real-Time Interrupt-driven Concurrency
 
+> The hardware accelerated Rust RTOS
+
 A concurrency framework for building real-time systems.
 
-Formerly known as Real-Time For the Masses.
-
-[![crates.io](https://img.shields.io/crates/v/cortex-m-rtic)](https://crates.io/crates/cortex-m-rtic)
-[![docs.rs](https://docs.rs/cortex-m-rtic/badge.svg)](https://docs.rs/cortex-m-rtic)
+[![crates.io](https://img.shields.io/crates/v/rtic)](https://crates.io/crates/rtic)
+[![docs.rs](https://docs.rs/rtic/badge.svg)](https://docs.rs/rtic)
 [![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)](https://rtic.rs/)
 [![matrix](https://img.shields.io/matrix/rtic:matrix.org)](https://matrix.to/#/#rtic:matrix.org)
 [![Meeting notes](https://hackmd.io/badge.svg)](https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH)
@@ -24,7 +24,7 @@ Formerly known as Real-Time For the Masses.
 
 - Support for prioritization of tasks and, thus, **preemptive multitasking**.
 
-- **Efficient and data race free memory sharing** through fine grained *priority
+- **Efficient and data race free memory sharing** through fine-grained *priority
   based* critical sections [^1].
 
 - **Deadlock free execution** guaranteed at compile time. This is a stronger
@@ -44,16 +44,6 @@ Formerly known as Real-Time For the Masses.
 - This task model is amenable to known WCET (Worst Case Execution Time) analysis
   and scheduling analysis techniques.
 
-### Crate `cortex-m` 0.6 vs 0.7 in RTIC 0.5.x
-
-The crate `cortex-m` 0.7 started using trait `InterruptNumber` for interrupts instead of `Nr` from `bare-metal`. In order to preserve backwards compatibility, RTIC 0.5.x will keep using `cortex-m` 0.6 by default. `cortex-m` 0.7 can be enabled using the feature `cortex-m-7` and disabling default features:
-
-```
-cortex-m-rtic = { version = "0.5.8", default-features = false, features = ["cortex-m-7"] }
-```
-
-RTIC 1.0.0 already uses `cortex-m` 0.7 by default.
-
 ## [User documentation](https://rtic.rs)
 
 Documentation for the [development version](https://rtic.rs/dev).
@@ -68,10 +58,10 @@ Documentation for the [development version](https://rtic.rs/dev).
 
 Join us and talk about RTIC in the [Matrix room][matrix-room].
 
-Weekly meeting notes can be found over at [HackMD][hackmd]
+Weekly meeting minutes can be found over at [RTIC HackMD][hackmd]
 
 [matrix-room]: https://matrix.to/#/#rtic:matrix.org
-[hackmd]: https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH
+[hackmd]: rtic.rs/meeting
 
 ## Contributing
 
