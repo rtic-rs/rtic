@@ -116,7 +116,7 @@ fn main() -> anyhow::Result<()> {
 
     let targets = [ARMV7M, ARMV6M];
 
-    let mut examples: Vec<_> = std::fs::read_dir("./examples")?
+    let mut examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
         .filter_map(|p| p.ok())
         .map(|p| p.path())
         .filter(|p| p.display().to_string().ends_with(".rs"))
@@ -207,7 +207,7 @@ fn arm_example(command: &CargoCommand) -> anyhow::Result<()> {
     match *command {
         CargoCommand::Run { example, .. } => {
             let run_file = format!("{example}.run");
-            let expected_output_file = ["ci", "expected", &run_file]
+            let expected_output_file = ["rtic", "ci", "expected", &run_file]
                 .iter()
                 .collect::<PathBuf>()
                 .into_os_string()
