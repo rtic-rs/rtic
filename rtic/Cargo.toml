@@ -38,7 +38,7 @@ cortex-m = "0.7.0"
 bare-metal = "1.0.0"
 #portable-atomic = { version = "0.3.19" }
 atomic-polyfill = "1"
-rtic-macros = { path = "./macros", version = "2.0.0-alpha.0" }
+rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.0" }
 rtic-core = "1"
 
 
@@ -64,32 +64,6 @@ version = "0.6.0"
 
 [target.x86_64-unknown-linux-gnu.dev-dependencies]
 trybuild = "1"
-
-[profile.release]
-codegen-units = 1
-lto = true
-
-[workspace]
-members = ["macros", "xtask"]
-
-# do not optimize proc-macro deps or build scripts
-[profile.dev.build-override]
-codegen-units = 16
-debug = false
-debug-assertions = false
-opt-level = 0
-overflow-checks = false
-
-
-[profile.release.build-override]
-codegen-units = 16
-debug = false
-debug-assertions = false
-opt-level = 0
-overflow-checks = false
-
-[patch.crates-io]
-lm3s6965 = { git = "https://github.com/japaric/lm3s6965" }
 
 [features]
 test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick_100hz"]
