@@ -26,18 +26,24 @@ struct Options {
     /// For which ARM target to build: v7 or v6
     ///
     /// The permissible targets are:
+    /// * all
     ///
     /// * thumbv6m-none-eabi
     ///
     /// * thumbv7m-none-eabi
     #[structopt(short, long)]
     target: String,
+    /// Example to run, by default all examples are run
+    ///
+    /// Example: `cargo xtask --target <..> --example complex`
+    #[structopt(short, long)]
+    example: Option<String>,
     /// Enables also running `cargo size` on the selected examples
     ///
     /// To pass options to `cargo size`, add `--` and then the following
     /// arguments will be passed on
     ///
-    /// Example: `cargo xtask --target thumbv7m-none-eabi -s -- -A`
+    /// Example: `cargo xtask --target <..> -s -- -A`
     #[structopt(short, long)]
     size: bool,
     /// Options to pass to `cargo size`
@@ -110,7 +116,7 @@ fn main() -> anyhow::Result<()> {
 
     let targets = [ARMV7M, ARMV6M];
 
-    let examples: Vec<_> = std::fs::read_dir("./examples")?
+    let mut examples: Vec<_> = std::fs::read_dir("./examples")?
         .filter_map(|p| p.ok())
         .map(|p| p.path())
         .filter(|p| p.display().to_string().ends_with(".rs"))
@@ -123,7 +129,22 @@ fn main() -> anyhow::Result<()> {
     let target = &opts.target;
     let check_size = opts.size;
     let size_arguments = &opts.sizearguments;
+    let example = opts.example;
 
+    if let Some(example) = example {
+        if examples.contains(&example) {
+            println!("\nTesting example: {example}");
+            // If we managed to filter, set the examples to test to only this one
+            examples = vec![example]
+        } else {
+            eprintln!(
+                "\nThe example you specified is not available. Available examples are:\
+                    \n{examples:#?}\n\
+             By default all examples are tested.",
+            );
+            process::exit(1);
+        }
+    }
     init_build_dir()?;
 
     if target == "all" {
