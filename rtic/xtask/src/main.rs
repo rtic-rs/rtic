@@ -23,8 +23,34 @@ const ARMV7M: &str = "thumbv7m-none-eabi";
 
 #[derive(Debug, StructOpt)]
 struct Options {
+    /// For which ARM target to build: v7 or v6
+    ///
+    /// The permissible targets are:
+    ///
+    /// * thumbv6m-none-eabi
+    ///
+    /// * thumbv7m-none-eabi
     #[structopt(short, long)]
     target: String,
+    /// Enables also running `cargo size` on the selected examples
+    ///
+    /// To pass options to `cargo size`, add `--` and then the following
+    /// arguments will be passed on
+    ///
+    /// Example: `cargo xtask --target thumbv7m-none-eabi -s -- -A`
+    #[structopt(short, long)]
+    size: bool,
+    /// Options to pass to `cargo size`
+    #[structopt(subcommand)]
+    sizearguments: Option<Sizearguments>,
+}
+
+#[derive(Clone, Debug, PartialEq, StructOpt)]
+pub enum Sizearguments {
+    // `external_subcommand` tells structopt to put
+    // all the extra arguments into this Vec
+    #[structopt(external_subcommand)]
+    Other(Vec<String>),
 }
 
 #[derive(Debug, Clone)]
@@ -46,16 +72,14 @@ impl fmt::Display for TestRunError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TestRunError::FileCmpError { expected, got } => {
-                writeln!(f, "Differing output in files.")?;
-                writeln!(f, "")?;
+                writeln!(f, "Differing output in files.\n")?;
                 writeln!(f, "Expected:")?;
-                writeln!(f, "{}", expected)?;
-                writeln!(f, "")?;
+                writeln!(f, "{expected}\n")?;
                 writeln!(f, "Got:")?;
-                write!(f, "{}", got)
+                write!(f, "{got}")
             }
             TestRunError::FileError { file } => {
-                write!(f, "File error on: {}", file)
+                write!(f, "File error on: {file}")
             }
             TestRunError::CommandError(e) => {
                 write!(
@@ -65,7 +89,7 @@ impl fmt::Display for TestRunError {
                 )
             }
             TestRunError::PathConversionError(p) => {
-                write!(f, "Can't convert path from `OsString` to `String`: {:?}", p)
+                write!(f, "Can't convert path from `OsString` to `String`: {p:?}")
             }
             TestRunError::IncompatibleCommand => {
                 write!(f, "Can't run that command in this context")
@@ -80,8 +104,8 @@ fn main() -> anyhow::Result<()> {
     // if there's an `xtask` folder, we're *probably* at the root of this repo (we can't just
     // check the name of `env::current_dir()` because people might clone it into a different name)
     let probably_running_from_repo_root = Path::new("./xtask").exists();
-    if probably_running_from_repo_root == false {
-        bail!("xtasks can only be executed from the root of the `cortex-m-rtic` repository");
+    if !probably_running_from_repo_root {
+        bail!("xtasks can only be executed from the root of the `rtic` repository");
     }
 
     let targets = [ARMV7M, ARMV6M];
@@ -97,21 +121,22 @@ fn main() -> anyhow::Result<()> {
 
     let opts = Options::from_args();
     let target = &opts.target;
+    let check_size = opts.size;
+    let size_arguments = &opts.sizearguments;
 
     init_build_dir()?;
 
     if target == "all" {
         for t in targets {
-            run_test(t, &examples)?;
+            run_test(t, &examples, check_size, size_arguments)?;
         }
     } else if targets.contains(&target.as_str()) {
-        run_test(&target, &examples)?;
+        run_test(target, &examples, check_size, size_arguments)?;
     } else {
         eprintln!(
             "The target you specified is not available. Available targets are:\
-                    \n{:?}\n\
+                    \n{targets:?}\n\
                     as well as `all` (testing on all of the above)",
-            targets
         );
         process::exit(1);
     }
@@ -119,7 +144,12 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
+fn run_test(
+    target: &str,
+    examples: &[String],
+    check_size: bool,
+    size_arguments: &Option<Sizearguments>,
+) -> anyhow::Result<()> {
     arm_example(&CargoCommand::BuildAll {
         target,
         features: None,
@@ -136,6 +166,17 @@ fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
 
         arm_example(&cmd)?;
     }
+    if check_size {
+        for example in examples {
+            arm_example(&CargoCommand::Size {
+                example,
+                target,
+                features: None,
+                mode: BuildMode::Release,
+                arguments: size_arguments.clone(),
+            })?;
+        }
+    }
 
     Ok(())
 }
@@ -144,33 +185,35 @@ fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
 fn arm_example(command: &CargoCommand) -> anyhow::Result<()> {
     match *command {
         CargoCommand::Run { example, .. } => {
-            let run_file = format!("{}.run", example);
+            let run_file = format!("{example}.run");
             let expected_output_file = ["ci", "expected", &run_file]
                 .iter()
                 .collect::<PathBuf>()
                 .into_os_string()
                 .into_string()
-                .map_err(|e| TestRunError::PathConversionError(e))?;
+                .map_err(TestRunError::PathConversionError)?;
 
             // command is either build or run
-            let cargo_run_result = run_command(&command)?;
+            let cargo_run_result = run_command(command)?;
             println!("{}", cargo_run_result.output);
 
-            match &command {
-                CargoCommand::Run { .. } => {
-                    run_successful(&cargo_run_result, expected_output_file)?;
-                }
-                _ => (),
+            if let CargoCommand::Run { .. } = &command {
+                run_successful(&cargo_run_result, expected_output_file)?;
             }
 
             Ok(())
         }
         CargoCommand::BuildAll { .. } => {
             // command is either build or run
-            let cargo_run_result = run_command(&command)?;
+            let cargo_run_result = run_command(command)?;
             println!("{}", cargo_run_result.output);
 
             Ok(())
-        } // _ => Err(anyhow::Error::new(TestRunError::IncompatibleCommand)),
+        }
+        CargoCommand::Size { .. } => {
+            let cargo_run_result = run_command(command)?;
+            println!("{}", cargo_run_result.output);
+            Ok(())
+        }
     }
 }

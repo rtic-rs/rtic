@@ -1,3 +1,4 @@
+use crate::Sizearguments;
 use crate::{RunResult, TestRunError};
 use core::fmt;
 use os_pipe::pipe;
@@ -23,17 +24,20 @@ pub enum CargoCommand<'a> {
         features: Option<&'a str>,
         mode: BuildMode,
     },
-    // Size {
-    //     example_paths: Vec<&'a Path>,
-    // },
-    // Clean,
+    Size {
+        example: &'a str,
+        target: &'a str,
+        features: Option<&'a str>,
+        mode: BuildMode,
+        arguments: Option<Sizearguments>,
+    },
 }
 
 impl<'a> CargoCommand<'a> {
     fn name(&self) -> &str {
         match self {
             CargoCommand::Run { .. } => "run",
-            // CargoCommand::Size { example_paths: _ } => "rust-size",
+            CargoCommand::Size { .. } => "size",
             CargoCommand::BuildAll { .. } => "build",
         }
     }
@@ -87,24 +91,49 @@ impl<'a> CargoCommand<'a> {
                     args.push(flag);
                 }
                 args
-            } // CargoCommand::Size { example_paths } => {
-              //     example_paths.iter().map(|p| p.to_str().unwrap()).collect()
-              // }
+            }
+            CargoCommand::Size {
+                example,
+                target,
+                features,
+                mode,
+                arguments,
+            } => {
+                let mut args = vec![
+                    "+nightly",
+                    self.name(),
+                    "--example",
+                    example,
+                    "--target",
+                    target,
+                    "--features",
+                    "test-critical-section",
+                ];
+                if let Some(feature_name) = features {
+                    args.extend_from_slice(&["--features", feature_name]);
+                }
+                if let Some(flag) = mode.to_flag() {
+                    args.push(flag);
+                }
+                if let Some(Sizearguments::Other(arguments)) = arguments {
+                    // Arguments to cargo size must be passed after "--"
+                    args.extend_from_slice(&["--"]);
+                    for arg in arguments {
+                        args.extend_from_slice(&[arg.as_str()]);
+                    }
+                }
+                args
+            }
         }
     }
 
     pub fn command(&self) -> &str {
-        match self {
-            // we need to cheat a little here:
-            // `cargo size` can't be ran on multiple files, so we're using `rust-size` instead –
-            // which isn't a command that starts wizh `cargo`. So we're sneakily swapping them out :)
-            // CargoCommand::Size { .. } => "rust-size",
-            _ => "cargo",
-        }
+        "cargo"
     }
 }
 
 impl BuildMode {
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_flag(&self) -> Option<&str> {
         match self {
             BuildMode::Release => Some("--release"),
@@ -120,7 +149,7 @@ impl fmt::Display for BuildMode {
             BuildMode::Debug => "debug",
         };
 
-        write!(f, "{}", cmd)
+        write!(f, "{cmd}")
     }
 }
 
