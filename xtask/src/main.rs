@@ -32,10 +32,10 @@ struct Options {
     ///
     /// * thumbv7m-none-eabi
     #[structopt(short, long)]
-    target: String,
+    target: Option<String>,
     /// Example to run, by default all examples are run
     ///
-    /// Example: `cargo xtask --target <..> --example complex`
+    /// Example: `cargo xtask --example complex`
     #[structopt(short, long)]
     example: Option<String>,
     /// Enables also running `cargo size` on the selected examples
@@ -43,7 +43,7 @@ struct Options {
     /// To pass options to `cargo size`, add `--` and then the following
     /// arguments will be passed on
     ///
-    /// Example: `cargo xtask --target <..> -s -- -A`
+    /// Example: `cargo xtask -s -- -A`
     #[structopt(short, long)]
     size: bool,
     /// Options to pass to `cargo size`
@@ -147,19 +147,24 @@ fn main() -> anyhow::Result<()> {
     }
     init_build_dir()?;
 
-    if target == "all" {
-        for t in targets {
-            run_test(t, &examples, check_size, size_arguments)?;
+    match target {
+        None => {
+            for t in targets {
+                println!("Testing all targets: {targets:?}");
+                run_test(t, &examples, check_size, size_arguments)?;
+            }
         }
-    } else if targets.contains(&target.as_str()) {
-        run_test(target, &examples, check_size, size_arguments)?;
-    } else {
-        eprintln!(
-            "The target you specified is not available. Available targets are:\
-                    \n{targets:?}\n\
-                    as well as `all` (testing on all of the above)",
-        );
-        process::exit(1);
+        Some(target) => {
+            if targets.contains(&target.as_str()) {
+                run_test(target, &examples, check_size, size_arguments)?;
+            } else {
+                eprintln!(
+                    "The target you specified is not available. Available targets are:\
+                            \n{targets:?}\n",
+                );
+                process::exit(1);
+            }
+        }
     }
 
     Ok(())
