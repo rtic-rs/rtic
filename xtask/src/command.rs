@@ -1,8 +1,11 @@
-use crate::Sizearguments;
-use crate::{RunResult, TestRunError};
+use crate::{debug, RunResult, Sizearguments, TestRunError};
 use core::fmt;
 use os_pipe::pipe;
-use std::{fs::File, io::Read, process::Command};
+use std::{
+    fs::File,
+    io::Read,
+    process::{Command, Stdio},
+};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -14,17 +17,32 @@ pub enum BuildMode {
 #[derive(Debug)]
 pub enum CargoCommand<'a> {
     Run {
+        cargoarg: &'a Option<&'a str>,
+        example: &'a str,
+        target: &'a str,
+        features: Option<&'a str>,
+        mode: BuildMode,
+    },
+    Build {
+        cargoarg: &'a Option<&'a str>,
         example: &'a str,
         target: &'a str,
         features: Option<&'a str>,
         mode: BuildMode,
     },
     BuildAll {
+        cargoarg: &'a Option<&'a str>,
         target: &'a str,
         features: Option<&'a str>,
         mode: BuildMode,
     },
+    CheckAll {
+        cargoarg: &'a Option<&'a str>,
+        target: &'a str,
+        features: Option<&'a str>,
+    },
     Size {
+        cargoarg: &'a Option<&'a str>,
         example: &'a str,
         target: &'a str,
         features: Option<&'a str>,
@@ -37,32 +55,30 @@ impl<'a> CargoCommand<'a> {
     fn name(&self) -> &str {
         match self {
             CargoCommand::Run { .. } => "run",
+            CargoCommand::Build { .. } => "build",
             CargoCommand::Size { .. } => "size",
             CargoCommand::BuildAll { .. } => "build",
+            CargoCommand::CheckAll { .. } => "check",
         }
     }
 
     pub fn args(&self) -> Vec<&str> {
         match self {
             CargoCommand::Run {
+                cargoarg,
                 example,
                 target,
                 features,
                 mode,
             } => {
-                let mut args = vec![
-                    "+nightly",
-                    self.name(),
-                    "--example",
-                    example,
-                    "--target",
-                    target,
-                    "--features",
-                    "test-critical-section",
-                ];
+                let mut args = vec!["+nightly"];
+                if let Some(cargoarg) = cargoarg {
+                    args.extend_from_slice(&[cargoarg]);
+                }
+                args.extend_from_slice(&[self.name(), "--example", example, "--target", target]);
 
-                if let Some(feature_name) = features {
-                    args.extend_from_slice(&["--features", feature_name]);
+                if let Some(feature) = features {
+                    args.extend_from_slice(&["--features", feature]);
                 }
                 if let Some(flag) = mode.to_flag() {
                     args.push(flag);
@@ -70,22 +86,56 @@ impl<'a> CargoCommand<'a> {
                 args
             }
             CargoCommand::BuildAll {
+                cargoarg,
                 target,
                 features,
                 mode,
             } => {
-                let mut args = vec![
-                    "+nightly",
-                    self.name(),
-                    "--examples",
-                    "--target",
-                    target,
-                    "--features",
-                    "test-critical-section",
-                ];
+                let mut args = vec!["+nightly"];
+                if let Some(cargoarg) = cargoarg {
+                    args.extend_from_slice(&[cargoarg]);
+                }
+                args.extend_from_slice(&[self.name(), "--examples", "--target", target]);
 
-                if let Some(feature_name) = features {
-                    args.extend_from_slice(&["--features", feature_name]);
+                if let Some(feature) = features {
+                    args.extend_from_slice(&["--features", feature]);
+                }
+                if let Some(flag) = mode.to_flag() {
+                    args.push(flag);
+                }
+                args
+            }
+            CargoCommand::CheckAll {
+                cargoarg,
+                target,
+                features,
+            } => {
+                let mut args = vec!["+nightly"];
+                if let Some(cargoarg) = cargoarg {
+                    args.extend_from_slice(&[cargoarg]);
+                }
+                args.extend_from_slice(&[self.name(), "--examples", "--target", target]);
+
+                if let Some(feature) = features {
+                    args.extend_from_slice(&["--features", feature]);
+                }
+                args
+            }
+            CargoCommand::Build {
+                cargoarg,
+                example,
+                target,
+                features,
+                mode,
+            } => {
+                let mut args = vec!["+nightly"];
+                if let Some(cargoarg) = cargoarg {
+                    args.extend_from_slice(&[cargoarg]);
+                }
+                args.extend_from_slice(&[self.name(), "--example", example, "--target", target]);
+
+                if let Some(feature) = features {
+                    args.extend_from_slice(&["--features", feature]);
                 }
                 if let Some(flag) = mode.to_flag() {
                     args.push(flag);
@@ -93,22 +143,19 @@ impl<'a> CargoCommand<'a> {
                 args
             }
             CargoCommand::Size {
+                cargoarg,
                 example,
                 target,
                 features,
                 mode,
                 arguments,
             } => {
-                let mut args = vec![
-                    "+nightly",
-                    self.name(),
-                    "--example",
-                    example,
-                    "--target",
-                    target,
-                    "--features",
-                    "test-critical-section",
-                ];
+                let mut args = vec!["+nightly"];
+                if let Some(cargoarg) = cargoarg {
+                    args.extend_from_slice(&[cargoarg]);
+                }
+                args.extend_from_slice(&[self.name(), "--example", example, "--target", target]);
+
                 if let Some(feature_name) = features {
                     args.extend_from_slice(&["--features", feature_name]);
                 }
@@ -155,11 +202,13 @@ impl fmt::Display for BuildMode {
 
 pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
     let (mut reader, writer) = pipe()?;
-    println!("👟 {} {}", command.command(), command.args().join(" "));
+    debug!("👟 {} {}", command.command(), command.args().join(" "));
 
     let mut handle = Command::new(command.command())
         .args(command.args())
         .stdout(writer)
+        // Throw away stderr, TODO
+        .stderr(Stdio::null())
         .spawn()?;
 
     // retrieve output and clean up
@@ -176,16 +225,16 @@ pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
 /// Check if `run` was successful.
 /// returns Ok in case the run went as expected,
 /// Err otherwise
-pub fn run_successful(run: &RunResult, expected_output_file: String) -> Result<(), TestRunError> {
+pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(), TestRunError> {
     let mut file_handle =
-        File::open(expected_output_file.clone()).map_err(|_| TestRunError::FileError {
-            file: expected_output_file.clone(),
+        File::open(expected_output_file).map_err(|_| TestRunError::FileError {
+            file: expected_output_file.to_owned(),
         })?;
     let mut expected_output = String::new();
     file_handle
         .read_to_string(&mut expected_output)
         .map_err(|_| TestRunError::FileError {
-            file: expected_output_file.clone(),
+            file: expected_output_file.to_owned(),
         })?;
 
     if expected_output != run.output {
