@@ -1,6 +1,12 @@
 [workspace]
 members = [
     "rtic",
+    "rtic-macros",
+    "rtic-channel",
+    "rtic-common",
+    "rtic-macros",
+    "rtic-monotonics",
+    "rtic-time",
     "xtask",
 ]
 
