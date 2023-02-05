@@ -26,6 +26,8 @@ use crate::{
 
 const ARMV6M: &str = "thumbv6m-none-eabi";
 const ARMV7M: &str = "thumbv7m-none-eabi";
+const ARMV8MBASE: &str = "thumbv8m.base-none-eabi";
+const ARMV8MMAIN: &str = "thumbv8m.main-none-eabi";
 
 const DEFAULT_FEATURES: Option<&str> = Some("test-critical-section");
 
@@ -40,6 +42,8 @@ struct Cli {
     ///
     /// thumbv6m-none-eabi
     /// thumbv7m-none-eabi
+    /// thumbv8m.base-none-eabi
+    /// thumbv8m.main-none-eabi
     #[arg(short, long)]
     target: Option<String>,
 
@@ -166,10 +170,18 @@ fn main() -> anyhow::Result<()> {
     if !probably_running_from_repo_root {
         bail!("xtasks can only be executed from the root of the `rtic` repository");
     }
+    for entry in std::fs::read_dir(".").unwrap() {
 
-    let mut targets: Vec<String> = [ARMV7M.to_owned(), ARMV6M.to_owned()].to_vec();
 
-    let mut examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
+    let mut targets: Vec<String> = [
+        ARMV7M.to_owned(),
+        ARMV6M.to_owned(),
+        ARMV8MBASE.to_owned(),
+        ARMV8MMAIN.to_owned(),
+    ]
+    .to_vec();
+
+    let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
         .filter_map(|p| p.ok())
         .map(|p| p.path())
         .filter(|p| p.display().to_string().ends_with(".rs"))
