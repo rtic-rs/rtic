@@ -4,6 +4,7 @@ mod command;
 use anyhow::bail;
 use clap::{Parser, Subcommand};
 use core::fmt;
+use rayon::prelude::*;
 use std::{
     error::Error,
     ffi::OsString,
@@ -308,7 +309,7 @@ fn run_test(
     examples: &[String],
     overwrite: bool,
 ) -> anyhow::Result<()> {
-    for example in examples {
+    examples.into_par_iter().for_each(|example| {
         let cmd = CargoCommand::Build {
             cargoarg: &Some("--quiet"),
             example,
@@ -316,7 +317,7 @@ fn run_test(
             features: DEFAULT_FEATURES,
             mode: BuildMode::Release,
         };
-        arm_example(&cmd, false)?;
+        arm_example(&cmd, false).unwrap();
 
         let cmd = CargoCommand::Run {
             cargoarg,
@@ -326,8 +327,8 @@ fn run_test(
             mode: BuildMode::Release,
         };
 
-        arm_example(&cmd, overwrite)?;
-    }
+        arm_example(&cmd, overwrite).unwrap();
+    });
 
     Ok(())
 }
@@ -338,7 +339,7 @@ fn build_and_check_size(
     examples: &[String],
     size_arguments: &Option<Sizearguments>,
 ) -> anyhow::Result<()> {
-    for example in examples {
+    examples.into_par_iter().for_each(|example| {
         // Make sure the requested example(s) are built
         let cmd = CargoCommand::Build {
             cargoarg: &Some("--quiet"),
@@ -347,7 +348,7 @@ fn build_and_check_size(
             features: DEFAULT_FEATURES,
             mode: BuildMode::Release,
         };
-        arm_example(&cmd, false)?;
+        arm_example(&cmd, false).unwrap();
 
         let cmd = CargoCommand::Size {
             cargoarg,
@@ -357,8 +358,8 @@ fn build_and_check_size(
             mode: BuildMode::Release,
             arguments: size_arguments.clone(),
         };
-        arm_example(&cmd, false)?;
-    }
+        arm_example(&cmd, false).unwrap();
+    });
 
     Ok(())
 }
