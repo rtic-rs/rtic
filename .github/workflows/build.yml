@@ -106,11 +106,19 @@ jobs:
 
 
   # Compilation check
-  checkrtic:
+  check:
     name: check rtic
     runs-on: ubuntu-22.04
     strategy:
       matrix:
+        package:
+          - rtic
+          - rtic-arbiter
+          - rtic-channel
+          - rtic-common
+          - rtic-macros
+          - rtic-monotonics
+          - rtic-time
         target:
           - thumbv7m-none-eabi
           - thumbv6m-none-eabi
@@ -122,208 +130,21 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Rust ${{ matrix.toolchain }}
-        working-directory: ./rtic
         run: |
           rustup set profile minimal
           rustup override set ${{ matrix.toolchain }}
 
       - name: Configure Rust target (${{ matrix.target }})
-        working-directory: ./rtic
         run: rustup target add ${{ matrix.target }}
 
       - name: Fail on warnings
-        working-directory: ./rtic
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' ${{ matrix.package }}/src/lib.rs
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: cargo check
-        working-directory: ./rtic
-        run: cargo check --target=${{ matrix.target }}
-
-  # Compilation check
-  checkrticmacros:
-    name: check rtic-macros
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - nightly
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install Rust ${{ matrix.toolchain }}
-        working-directory: ./rtic-macros
-        run: |
-          rustup set profile minimal
-          rustup override set ${{ matrix.toolchain }}
-
-      - name: Configure Rust target (${{ matrix.target }})
-        working-directory: ./rtic-macros
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Fail on warnings
-        working-directory: ./rtic-macros
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo check
-        working-directory: ./rtic-macros
-        run: cargo check --target=${{ matrix.target }}
-
-  # Compilation check
-  checkarbiter:
-    name: check rtic-arbiter
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        target:
-          - thumbv7m-none-eabi
-          - thumbv6m-none-eabi
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - nightly
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install Rust ${{ matrix.toolchain }}
-        working-directory: ./rtic-arbiter
-        run: |
-          rustup set profile minimal
-          rustup override set ${{ matrix.toolchain }}
-
-      - name: Configure Rust target (${{ matrix.target }})
-        working-directory: ./rtic-arbiter
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Fail on warnings
-        working-directory: ./rtic-arbiter
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo check
-        working-directory: ./rtic-arbiter
-        run: cargo check --target=${{ matrix.target }}
-
-  # Compilation check
-  checkchannel:
-    name: check rtic-channel
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        target:
-          - thumbv7m-none-eabi
-          - thumbv6m-none-eabi
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - nightly
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install Rust ${{ matrix.toolchain }}
-        working-directory: ./rtic-channel
-        run: |
-          rustup set profile minimal
-          rustup override set ${{ matrix.toolchain }}
-
-      - name: Configure Rust target (${{ matrix.target }})
-        working-directory: ./rtic-channel
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Fail on warnings
-        working-directory: ./rtic-channel
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo check
-        working-directory: ./rtic-channel
-        run: cargo check --target=${{ matrix.target }}
-
-  # Compilation check
-  checkmonotonics:
-    name: check rtic-monotonics
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        target:
-          - thumbv7m-none-eabi
-          - thumbv6m-none-eabi
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - nightly
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install Rust ${{ matrix.toolchain }}
-        working-directory: ./rtic-monotonics
-        run: |
-          rustup set profile minimal
-          rustup override set ${{ matrix.toolchain }}
-
-      - name: Configure Rust target (${{ matrix.target }})
-        working-directory: ./rtic-monotonics
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Fail on warnings
-        working-directory: ./rtic-monotonics
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo check
-        working-directory: ./rtic-monotonics
-        run: cargo check --target=${{ matrix.target }}
-
-  # Compilation check
-  checktime:
-    name: check rtic-time
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        target:
-          - thumbv7m-none-eabi
-          - thumbv6m-none-eabi
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - nightly
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install Rust ${{ matrix.toolchain }}
-        working-directory: ./rtic-time
-        run: |
-          rustup set profile minimal
-          rustup override set ${{ matrix.toolchain }}
-
-      - name: Configure Rust target (${{ matrix.target }})
-        working-directory: ./rtic-time
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Fail on warnings
-        working-directory: ./rtic-time
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo check
-        working-directory: ./rtic-time
-        run: cargo check --target=${{ matrix.target }}
+        run: cargo xtask --verbose --target=${{ matrix.target }} check ${{ matrix.package }}
 
   # Clippy
   clippyrtic:
@@ -948,12 +769,7 @@ jobs:
       - stylechannel
       - stylemonotonics
       - styletime
-      - checkrtic
-      - checkrticmacros
-      - checkarbiter
-      - checkchannel
-      - checkmonotonics
-      - checktime
+      - check
       - clippyrtic
       - clippyrticmacros
       - clippyarbiter
