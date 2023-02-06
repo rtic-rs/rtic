@@ -130,19 +130,23 @@ pub enum TestRunError {
     CommandError(RunResult),
     IncompatibleCommand,
 }
+use diffy::{create_patch, PatchFormatter};
 
 impl fmt::Display for TestRunError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TestRunError::FileCmpError { expected, got } => {
+                let patch = create_patch(expected, got);
                 writeln!(f, "Differing output in files.\n")?;
-                writeln!(f, "Expected:")?;
-                writeln!(f, "{expected}\n")?;
-                writeln!(f, "Got:")?;
-                write!(f, "{got}")
+                let pf = PatchFormatter::new().with_color();
+                writeln!(f, "{}", pf.fmt_patch(&patch))?;
+                write!(
+                    f,
+                    "See flag --overwrite-expected to create/update expected output."
+                )
             }
             TestRunError::FileError { file } => {
-                write!(f, "File error on: {file}\nSee flag overwrite.")
+                write!(f, "File error on: {file}\nSee flag --overwrite-expected to create/update expected output.")
             }
             TestRunError::CommandError(e) => {
                 write!(
@@ -403,6 +407,7 @@ fn arm_example(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
                             file: expected_output_file.clone(),
                         }
                     })?;
+                    info!("Flag --overwrite-expected enabled");
                     info!("Creating/updating file: {expected_output_file}");
                     file_handle.write_all(cargo_run_result.output.as_bytes())?;
                 };
