@@ -380,7 +380,7 @@ jobs:
         run: cargo test --test tests
 
   # Run the  macros test-suite
-  testsrticmacros:
+  testsmacros:
     name: tests rtic-macros
     runs-on: ubuntu-22.04
     steps:
@@ -779,7 +779,7 @@ jobs:
       - checkexamples
       - testexamples
       - testsrtic
-      - testrticmacros
+      - testsmacros
       - testsarbiter
       - testschannel
       - testsmonotonics
