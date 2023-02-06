@@ -2,7 +2,7 @@ mod build;
 mod command;
 
 use anyhow::bail;
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use core::fmt;
 use rayon::prelude::*;
 use std::{
@@ -24,6 +24,8 @@ use crate::{
     command::{run_command, run_successful, BuildMode, CargoCommand},
 };
 
+// x86_64-unknown-linux-gnu
+const _X86_64: &str = "x86_64-unknown-linux-gnu";
 const ARMV6M: &str = "thumbv6m-none-eabi";
 const ARMV7M: &str = "thumbv7m-none-eabi";
 const ARMV8MBASE: &str = "thumbv8m.base-none-eabi";
@@ -35,10 +37,14 @@ const DEFAULT_FEATURES: Option<&str> = Some("test-critical-section");
 #[command(author, version, about, long_about = None)]
 /// RTIC xtask powered testing toolbox
 struct Cli {
-    /// For which ARM target to build: v7 or v6
+    /// For which target to build
     ///
-    /// Defaults to all targets if omitted.
-    /// The permissible targets are:
+    /// Defaults to these targets if omitted:
+    ///
+    /// thumbv6m-none-eabi
+    /// thumbv7m-none-eabi
+    ///
+    /// The valid targets are:
     ///
     /// thumbv6m-none-eabi
     /// thumbv7m-none-eabi
@@ -47,9 +53,9 @@ struct Cli {
     #[arg(short, long)]
     target: Option<String>,
 
-    /// List of comma separated examples to run, all others are excluded
+    /// List of comma separated examples to include, all others are excluded
     ///
-    /// If omitted all examples are run
+    /// If omitted all examples are included
     ///
     /// Example: `cargo xtask --example complex,spawn,init`
     /// would include complex, spawn and init
@@ -58,7 +64,7 @@ struct Cli {
 
     /// List of comma separated examples to exclude, all others are included
     ///
-    /// If omitted all examples are run
+    /// If omitted all examples are included
     ///
     /// Example: `cargo xtask --excludeexample complex,spawn,init`
     /// would exclude complex, spawn and init
@@ -69,11 +75,9 @@ struct Cli {
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
 
-    /// Subcommand picking which kind of operation
-    ///
-    /// If omitted run all tests
+    /// Subcommand selecting operation
     #[command(subcommand)]
-    command: Option<Commands>,
+    command: Commands,
 }
 
 #[derive(Debug, Subcommand)]
@@ -89,17 +93,51 @@ enum Commands {
     /// Run examples in QEMU and compare against expected output
     ///
     /// Example runtime output is matched against `rtic/ci/expected/`
-    Qemu {
-        /// If expected output is missing or mismatching, recreate the file
-        ///
-        /// This overwrites only missing or mismatching
-        #[arg(long)]
-        overwrite_expected: bool,
-    },
+    ///
+    /// Requires that an ARM target is selected
+    Qemu(QemuAndRun),
+
+    /// Run examples through embedded-ci and compare against expected output
+    ///
+    /// unimplemented!() For now TODO, equal to Qemu
+    ///
+    /// Example runtime output is matched against `rtic/ci/expected/`
+    ///
+    /// Requires that an ARM target is selected
+    Run(QemuAndRun),
+
     /// Build all examples
-    Build,
-    /// Check all examples
-    Check,
+    ExampleBuild,
+
+    /// Check all packages
+    ExampleCheck,
+
+    /// Build all examples
+    Build(Package),
+
+    /// Check all packages
+    Check(Package),
+
+    /// Run clippy
+    Clippy(Package),
+}
+
+#[derive(Args, Debug)]
+/// Restrict to package, or run on whole workspace
+struct Package {
+    /// For which package/workspace member to operate
+    ///
+    /// If omitted, work on all
+    package: Option<String>,
+}
+
+#[derive(Args, Debug)]
+struct QemuAndRun {
+    /// If expected output is missing or mismatching, recreate the file
+    ///
+    /// This overwrites only missing or mismatching
+    #[arg(long)]
+    overwrite_expected: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -174,16 +212,8 @@ fn main() -> anyhow::Result<()> {
     if !probably_running_from_repo_root {
         bail!("xtasks can only be executed from the root of the `rtic` repository");
     }
-    for entry in std::fs::read_dir(".").unwrap() {
 
-
-    let mut targets: Vec<String> = [
-        ARMV7M.to_owned(),
-        ARMV6M.to_owned(),
-        ARMV8MBASE.to_owned(),
-        ARMV8MMAIN.to_owned(),
-    ]
-    .to_vec();
+    let mut targets: Vec<String> = [ARMV7M.to_owned(), ARMV6M.to_owned()].to_vec();
 
     let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
         .filter_map(|p| p.ok())
@@ -206,27 +236,14 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     trace!("default logging level: {0}", cli.verbose);
-    trace!("examples: {examples:?}");
 
     let target = cli.target;
-    let example = cli.example;
-
-    if let Some(example) = example {
-        if examples.contains(&example) {
-            info!("Testing example: {example}");
-            // If we managed to filter, set the examples to test to only this one
-            examples = vec![example]
-        } else {
-            error!(
-                "\nThe example you specified is not available. Available examples are:\
-                    \n{examples:#?}\n\
-             By default if example flag is emitted, all examples are tested.",
-            );
-            process::exit(1);
-        }
-    }
     if let Some(target) = target {
-        if targets.contains(&target) {
+        let mut targets_extended = targets.clone();
+        targets_extended.push(ARMV8MBASE.to_owned());
+        targets_extended.push(ARMV8MMAIN.to_owned());
+
+        if targets_extended.contains(&target) {
             debug!("\nTesting target: {target}");
             // If we managed to filter, set the targets to test to only this one
             targets = vec![target]
@@ -240,66 +257,129 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
+    let example = cli.example;
+    let exampleexclude = cli.exampleexclude;
+
+    let examples_to_run = {
+        let mut examples_to_run = examples.clone();
+
+        if let Some(example) = example {
+            examples_to_run = examples.clone();
+            let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
+            // From the list of all examples, remove all not listed as included
+            for ex in examples_to_exclude {
+                examples_to_run.retain(|x| *x.as_str() == *ex);
+            }
+        };
+
+        if let Some(example) = exampleexclude {
+            examples_to_run = examples.clone();
+            let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
+            // From the list of all examples, remove all those listed as excluded
+            for ex in examples_to_exclude {
+                examples_to_run.retain(|x| *x.as_str() != *ex);
+            }
+        };
+
+        if log_enabled!(Level::Trace) {
+            trace!("All examples:\n{examples:?} number: {}", examples.len());
+            trace!(
+                "examples_to_run:\n{examples_to_run:?} number: {}",
+                examples_to_run.len()
+            );
+        }
+
+        if examples_to_run.is_empty() {
+            error!(
+                "\nThe example(s) you specified is not available. Available examples are:\
+                    \n{examples:#?}\n\
+             By default if example flag is emitted, all examples are tested.",
+            );
+            process::exit(1);
+        } else {
+        }
+        examples_to_run
+    };
+
     init_build_dir()?;
     #[allow(clippy::if_same_then_else)]
     let cargoarg = if log_enabled!(Level::Trace) {
-        Some("-vv")
-    } else if log_enabled!(Level::Debug) {
         Some("-v")
+    } else if log_enabled!(Level::Debug) {
+        None
     } else if log_enabled!(Level::Info) {
         None
     } else if log_enabled!(Level::Warn) || log_enabled!(Level::Error) {
-        Some("--quiet")
+        None
     } else {
         // Off case
         Some("--quiet")
     };
 
     match cli.command {
-        Some(Commands::Size(arguments)) => {
+        Commands::Size(arguments) => {
             debug!("Measuring on target(s): {targets:?}");
+            // x86_64 target not valid
             for t in &targets {
                 info!("Measuring for target: {t:?}");
-                build_and_check_size(&cargoarg, t, &examples, &arguments.sizearguments)?;
+                build_and_check_size(&cargoarg, t, &examples_to_run, &arguments.sizearguments)?;
             }
         }
-        Some(Commands::Qemu {
-            overwrite_expected: overwrite,
-        }) => {
-            debug!("Testing on target(s): {targets:?}");
+        Commands::Qemu(args) | Commands::Run(args) => {
+            debug!("Running on target(s): {targets:?}");
+            // x86_64 target not valid
             for t in &targets {
                 info!("Testing for target: {t:?}");
-                run_test(&cargoarg, t, &examples, overwrite)?;
+                run_test(&cargoarg, t, &examples_to_run, args.overwrite_expected)?;
             }
         }
-        Some(Commands::Build) => {
+        Commands::ExampleBuild => {
             debug!("Building for target(s): {targets:?}");
             for t in &targets {
                 info!("Building for target: {t:?}");
-                build_all(&cargoarg, t)?;
+                example_build(&cargoarg, t, &examples_to_run)?;
             }
         }
-        Some(Commands::Check) => {
+        Commands::ExampleCheck => {
             debug!("Checking on target(s): {targets:?}");
             for t in &targets {
                 info!("Checking on target: {t:?}");
-                check_all(&cargoarg, t)?;
+                example_check(&cargoarg, t, &examples_to_run)?;
             }
         }
-        None => {
-            todo!();
+        Commands::Build(args) => {
+            debug!("Building for target(s): {targets:?}");
+            for t in &targets {
+                info!("Building for target: {t:?}");
+                cargo_build(&cargoarg, &args, t)?;
+            }
+        }
+        Commands::Check(args) => {
+            debug!("Checking on target(s): {targets:?}");
+            for t in &targets {
+                info!("Checking on target: {t:?}");
+                cargo_check(&cargoarg, &args, t)?;
+            }
+        }
+        Commands::Clippy(args) => {
+            debug!("Clippy on target(s): {targets:?}");
+            for t in &targets {
+                info!("Running clippy on target: {t:?}");
+                cargo_clippy(&cargoarg, &args, t)?;
+            }
         }
     }
 
     Ok(())
 }
 
-fn build_all(cargoarg: &Option<&str>, target: &str) -> anyhow::Result<()> {
-    arm_example(
-        &CargoCommand::BuildAll {
+fn cargo_build(cargoarg: &Option<&str>, package: &Package, target: &str) -> anyhow::Result<()> {
+    command_parser(
+        &CargoCommand::Build {
             cargoarg,
+            package: package_filter(package),
             target,
-            features: DEFAULT_FEATURES,
+            features: None,
             mode: BuildMode::Release,
         },
         false,
@@ -307,12 +387,26 @@ fn build_all(cargoarg: &Option<&str>, target: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn check_all(cargoarg: &Option<&str>, target: &str) -> anyhow::Result<()> {
-    arm_example(
-        &CargoCommand::CheckAll {
+fn cargo_check(cargoarg: &Option<&str>, package: &Package, target: &str) -> anyhow::Result<()> {
+    command_parser(
+        &CargoCommand::Check {
             cargoarg,
+            package: package_filter(package),
             target,
-            features: DEFAULT_FEATURES,
+            features: None,
+        },
+        false,
+    )?;
+    Ok(())
+}
+
+fn cargo_clippy(cargoarg: &Option<&str>, package: &Package, target: &str) -> anyhow::Result<()> {
+    command_parser(
+        &CargoCommand::Clippy {
+            cargoarg,
+            package: package_filter(package),
+            target,
+            features: None,
         },
         false,
     )?;
@@ -326,16 +420,18 @@ fn run_test(
     overwrite: bool,
 ) -> anyhow::Result<()> {
     examples.into_par_iter().for_each(|example| {
-        let cmd = CargoCommand::Build {
+        let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
             target,
             features: DEFAULT_FEATURES,
             mode: BuildMode::Release,
         };
-        arm_example(&cmd, false).unwrap();
+        if let Err(err) = command_parser(&cmd, false) {
+            error!("{err}");
+        }
 
-        let cmd = CargoCommand::Run {
+        let cmd = CargoCommand::Qemu {
             cargoarg,
             example,
             target,
@@ -343,7 +439,44 @@ fn run_test(
             mode: BuildMode::Release,
         };
 
-        arm_example(&cmd, overwrite).unwrap();
+        if let Err(err) = command_parser(&cmd, overwrite) {
+            error!("{err}");
+        }
+    });
+
+    Ok(())
+}
+fn example_check(cargoarg: &Option<&str>, target: &str, examples: &[String]) -> anyhow::Result<()> {
+    examples.into_par_iter().for_each(|example| {
+        let cmd = CargoCommand::ExampleCheck {
+            cargoarg,
+            example,
+            target,
+            features: DEFAULT_FEATURES,
+            mode: BuildMode::Release,
+        };
+
+        if let Err(err) = command_parser(&cmd, overwrite) {
+            error!("{err}");
+        }
+    });
+
+    Ok(())
+}
+
+fn example_build(cargoarg: &Option<&str>, target: &str, examples: &[String]) -> anyhow::Result<()> {
+    examples.into_par_iter().for_each(|example| {
+        let cmd = CargoCommand::ExampleBuild {
+            cargoarg,
+            example,
+            target,
+            features: DEFAULT_FEATURES,
+            mode: BuildMode::Release,
+        };
+
+        if let Err(err) = command_parser(&cmd, overwrite) {
+            error!("{err}");
+        }
     });
 
     Ok(())
@@ -357,16 +490,18 @@ fn build_and_check_size(
 ) -> anyhow::Result<()> {
     examples.into_par_iter().for_each(|example| {
         // Make sure the requested example(s) are built
-        let cmd = CargoCommand::Build {
+        let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
             target,
             features: DEFAULT_FEATURES,
             mode: BuildMode::Release,
         };
-        arm_example(&cmd, false).unwrap();
+        if let Err(err) = command_parser(&cmd, false) {
+            error!("{err}");
+        }
 
-        let cmd = CargoCommand::Size {
+        let cmd = CargoCommand::ExampleSize {
             cargoarg,
             example,
             target,
@@ -374,16 +509,52 @@ fn build_and_check_size(
             mode: BuildMode::Release,
             arguments: size_arguments.clone(),
         };
-        arm_example(&cmd, false).unwrap();
+        if let Err(err) = command_parser(&cmd, false) {
+            error!("{err}");
+        }
     });
 
     Ok(())
 }
 
+fn package_filter(package: &Package) -> Vec<String> {
+    // TODO Parse Cargo.toml workspace definition instead?
+    let packages: Vec<String> = [
+        "rtic".to_owned(),
+        "rtic-macros".to_owned(),
+        "rtic-channel".to_owned(),
+        "rtic-common".to_owned(),
+        "rtic-macros".to_owned(),
+        "rtic-monotonics".to_owned(),
+        "rtic-time".to_owned(),
+    ]
+    .to_vec();
+
+    let package_selected;
+
+    if let Some(package) = package.package.clone() {
+        if packages.contains(&package) {
+            debug!("\nTesting package: {package}");
+            // If we managed to filter, set the packages to test to only this one
+            package_selected = vec![package]
+        } else {
+            error!(
+                "\nThe package you specified is not available. Available packages are:\
+                    \n{packages:#?}\n\
+             By default all packages are tested.",
+            );
+            process::exit(1);
+        }
+    } else {
+        package_selected = packages;
+    }
+    package_selected
+}
+
 // run example binary `example`
-fn arm_example(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
+fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
     match *command {
-        CargoCommand::Run { example, .. } => {
+        CargoCommand::Qemu { example, .. } | CargoCommand::Run { example, .. } => {
             let run_file = format!("{example}.run");
             let expected_output_file = ["rtic", "ci", "expected", &run_file]
                 .iter()
@@ -393,6 +564,7 @@ fn arm_example(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
                 .map_err(TestRunError::PathConversionError)?;
 
             // cargo run <..>
+            info!("Running example: {example}");
             let cargo_run_result = run_command(command)?;
             info!("{}", cargo_run_result.output);
 
@@ -416,39 +588,17 @@ fn arm_example(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
             }
             Ok(())
         }
-        CargoCommand::Build { .. } => {
-            // cargo run <..>
-            let cargo_build_result = run_command(command)?;
-            if !cargo_build_result.output.is_empty() {
-                info!("{}", cargo_build_result.output);
+        CargoCommand::ExampleBuild { .. }
+        | CargoCommand::ExampleCheck { .. }
+        | CargoCommand::Build { .. }
+        | CargoCommand::Check { .. }
+        | CargoCommand::Clippy { .. }
+        | CargoCommand::ExampleSize { .. } => {
+            let cargo_result = run_command(command)?;
+            if !cargo_result.output.is_empty() {
+                info!("{}", cargo_result.output);
             }
 
-            Ok(())
-        }
-        CargoCommand::BuildAll { .. } => {
-            // cargo build --examples
-            let cargo_build_result = run_command(command)?;
-            if !cargo_build_result.output.is_empty() {
-                info!("{}", cargo_build_result.output);
-            }
-
-            Ok(())
-        }
-        CargoCommand::CheckAll { .. } => {
-            // cargo check --examples
-            let cargo_check_result = run_command(command)?;
-            if !cargo_check_result.output.is_empty() {
-                info!("{}", cargo_check_result.output);
-            }
-
-            Ok(())
-        }
-        CargoCommand::Size { .. } => {
-            // cargo size
-            let cargo_size_result = run_command(command)?;
-            if !cargo_size_result.output.is_empty() {
-                info!("{}", cargo_size_result.output);
-            }
             Ok(())
         }
     }
