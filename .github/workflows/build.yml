@@ -107,7 +107,7 @@ jobs:
 
   # Compilation check
   check:
-    name: check rtic
+    name: check
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -143,8 +143,7 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: cargo check
-        run: cargo xtask --verbose --target=${{ matrix.target }} check ${{ matrix.package }}
+      - run: cargo xtask --verbose --target=${{ matrix.target }} check ${{ matrix.package }}
 
   # Clippy
   clippyrtic:
