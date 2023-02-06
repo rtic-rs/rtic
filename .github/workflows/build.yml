@@ -537,8 +537,7 @@ jobs:
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
 
       - name: Run-pass tests
-        working-directory: ./rtic
-        run: cargo xtask --target ${{ matrix.target }}
+        run: cargo xtask --verbose --target ${{ matrix.target }} qemu 
 
   # Run test suite
   testsrtic:
