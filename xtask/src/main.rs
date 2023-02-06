@@ -521,7 +521,7 @@ fn package_filter(package: &Package) -> Vec<String> {
     // TODO Parse Cargo.toml workspace definition instead?
     let packages: Vec<String> = [
         "rtic".to_owned(),
-        "rtic-macros".to_owned(),
+        "rtic-arbiter".to_owned(),
         "rtic-channel".to_owned(),
         "rtic-common".to_owned(),
         "rtic-macros".to_owned(),
