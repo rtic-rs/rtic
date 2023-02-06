@@ -11,3 +11,4 @@ clap = { version = "4", features = ["derive"] }
 env_logger = "0.10.0"
 log = "0.4.17"
 rayon = "1.6.1"
+diffy = "0.3.0"
