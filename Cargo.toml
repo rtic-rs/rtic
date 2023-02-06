@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "rtic",
-    "rtic-macros",
+    "rtic-arbiter",
     "rtic-channel",
     "rtic-common",
     "rtic-macros",
