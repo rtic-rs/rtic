@@ -456,7 +456,7 @@ fn example_check(cargoarg: &Option<&str>, target: &str, examples: &[String]) -> 
             mode: BuildMode::Release,
         };
 
-        if let Err(err) = command_parser(&cmd, overwrite) {
+        if let Err(err) = command_parser(&cmd, false) {
             error!("{err}");
         }
     });
@@ -474,7 +474,7 @@ fn example_build(cargoarg: &Option<&str>, target: &str, examples: &[String]) -> 
             mode: BuildMode::Release,
         };
 
-        if let Err(err) = command_parser(&cmd, overwrite) {
+        if let Err(err) = command_parser(&cmd, false) {
             error!("{err}");
         }
     });
