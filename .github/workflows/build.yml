@@ -418,14 +418,14 @@ jobs:
         run: |
           td=$(mktemp -d)
           cp -r target/doc $td/api
-          linkchecker $td/api/rtic
+          linkchecker $td/api/rtic/
           linkchecker $td/api/rtic_macros/
-          linkchecker $td/api/rtic-arbiter/
-          linkchecker $td/api/rtic-channel/
-          linkchecker $td/api/rtic-common/
-          linkchecker $td/api/rtic-macros/
-          linkchecker $td/api/rtic-monotonics/
-          linkchecker $td/api/rtic-time/
+          linkchecker $td/api/rtic_arbiter/
+          linkchecker $td/api/rtic_channel/
+          linkchecker $td/api/rtic_common/
+          linkchecker $td/api/rtic_macros/
+          linkchecker $td/api/rtic_monotonics/
+          linkchecker $td/api/rtic_time/
 
   # Build the books
   mdbook:
