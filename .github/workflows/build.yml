@@ -222,7 +222,7 @@ jobs:
 
   # Verify the example output with run-pass tests
   testexamples:
-    name: test examples in QEMU
+    name: QEMU run
     runs-on: ubuntu-22.04
     strategy:
       matrix:
