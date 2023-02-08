@@ -178,7 +178,7 @@ jobs:
         run: rustup component add clippy
 
       - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' ${{ matrix.package }}/src/lib.rs
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)]\n#![deny(clippy::all)],' ${{ matrix.package }}/src/lib.rs
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
