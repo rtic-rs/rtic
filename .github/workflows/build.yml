@@ -187,7 +187,7 @@ jobs:
 
   # Verify all examples, checks
   checkexamples:
-    name: Cargo check --examples
+    name: check examples
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -204,21 +204,21 @@ jobs:
 
       - name: Install Rust ${{ matrix.toolchain }}
         run: |
-          rustup set profile minimal
           rustup override set ${{ matrix.toolchain }}
 
       - name: Configure Rust target (${{ matrix.target }})
         run: rustup target add ${{ matrix.target }}
 
-      - name: Add Rust component llvm-tools-preview
-        run: rustup component add llvm-tools-preview
-
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: Check the examples
-        working-directory: ./rtic
-        run: cargo check --examples --target=${{ matrix.target }}
+        if: ${{ matrix.target == 'thumbv8m.base-none-eabi' }}
+        run: cargo xtask --verbose --target ${{ matrix.target }} --exampleexclude pool example-check
+
+      - name: Check the examples
+        if: ${{ matrix.target != 'thumbv8m.base-none-eabi' }}
+        run: cargo xtask --verbose --target ${{ matrix.target }} example-check
 
   # Verify the example output with run-pass tests
   testexamples:
