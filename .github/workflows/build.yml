@@ -143,140 +143,47 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - run: cargo xtask --verbose check ${{ matrix.package }}
-
   # Clippy
-  clippyrtic:
+  clippy:
     name: Cargo clippy rtic
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        package:
+          - rtic
+          - rtic-arbiter
+          - rtic-channel
+          - rtic-common
+          - rtic-macros
+          - rtic-monotonics
+          - rtic-time
+        toolchain:
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Fail on warnings
-        working-directory: ./rtic
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (v6, v7, v8.b v8.m)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
+          rustup target add thumbv8m.base-none-eabi
+          rustup target add thumbv8m.main-none-eabi
 
       - name: Add Rust component clippy
-        working-directory: ./rtic
         run: rustup component add clippy
+
+      - name: Fail on warnings
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' ${{ matrix.package }}/src/lib.rs
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: cargo clippy
-        working-directory: ./rtic
-        run: cargo clippy
-
-  clippyrticmacros:
-    name: Cargo clippy rtic-macros
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-macros
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Add Rust component clippy
-        working-directory: ./rtic-macros
-        run: rustup component add clippy
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo clippy
-        working-directory: ./rtic-macros
-        run: cargo clippy
-
-  clippyarbiter:
-    name: Cargo clippy rtic-arbiter
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-arbiter
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Add Rust component clippy
-        working-directory: ./rtic-arbiter
-        run: rustup component add clippy
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo clippy
-        working-directory: ./rtic-arbiter
-        run: cargo clippy
-
-  clippychannel:
-    name: Cargo clippy rtic-channel
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-channel
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Add Rust component clippy
-        working-directory: ./rtic-channel
-        run: rustup component add clippy
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo clippy
-        working-directory: ./rtic-channel
-        run: cargo clippy
-
-
-  clippymonotonics:
-    name: Cargo clippy rtic-monotonics
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-monotonics
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Add Rust component clippy
-        working-directory: ./rtic-monotonics
-        run: rustup component add clippy
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo clippy
-        working-directory: ./rtic-monotonics
-        run: cargo clippy
-  
-  clippytime:
-    name: Cargo clippy rtic-time
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-time
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Add Rust component clippy
-        working-directory: ./rtic-time
-        run: rustup component add clippy
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: cargo clippy
-        working-directory: ./rtic-time
-        run: cargo clippy
+      - run: cargo xtask --verbose clippy ${{ matrix.package }}
 
   # Verify all examples, checks
   checkexamples:
@@ -768,12 +675,7 @@ jobs:
       - stylemonotonics
       - styletime
       - check
-      - clippyrtic
-      - clippyrticmacros
-      - clippyarbiter
-      - clippychannel
-      - clippymonotonics
-      - clippytime
+      - clippy
       - checkexamples
       - testexamples
       - testsrtic
