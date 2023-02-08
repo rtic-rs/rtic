@@ -119,11 +119,6 @@ jobs:
           - rtic-macros
           - rtic-monotonics
           - rtic-time
-        target:
-          - thumbv7m-none-eabi
-          - thumbv6m-none-eabi
-          - thumbv8m.base-none-eabi
-          - thumbv8m.main-none-eabi
         toolchain:
           - nightly
     steps:
@@ -132,11 +127,14 @@ jobs:
 
       - name: Install Rust ${{ matrix.toolchain }}
         run: |
-          rustup set profile minimal
           rustup override set ${{ matrix.toolchain }}
 
-      - name: Configure Rust target (${{ matrix.target }})
-        run: rustup target add ${{ matrix.target }}
+      - name: Configure Rust target (v6, v7, v8.b v8.m)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
+          rustup target add thumbv8m.base-none-eabi
+          rustup target add thumbv8m.main-none-eabi
 
       - name: Fail on warnings
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' ${{ matrix.package }}/src/lib.rs
@@ -144,7 +142,7 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --verbose --target=${{ matrix.target }} check ${{ matrix.package }}
+      - run: cargo xtask --verbose check ${{ matrix.package }}
 
   # Clippy
   clippyrtic:
