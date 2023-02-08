@@ -1,4 +1,4 @@
-use crate::{debug, info, RunResult, Sizearguments, TestRunError};
+use crate::{debug, RunResult, Sizearguments, TestRunError};
 use core::fmt;
 use os_pipe::pipe;
 use std::{fs::File, io::Read, process::Command};
@@ -315,19 +315,17 @@ pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
         .spawn()?;
 
     // retrieve output and clean up
-    let mut output = String::new();
-    reader.read_to_string(&mut output)?;
+    let mut stdout = String::new();
+    reader.read_to_string(&mut stdout)?;
     let exit_status = handle.wait()?;
 
-    let mut error_output = String::new();
-    error_reader.read_to_string(&mut error_output)?;
-    if !error_output.is_empty() {
-        info!("{error_output}");
-    }
+    let mut stderr = String::new();
+    error_reader.read_to_string(&mut stderr)?;
 
     Ok(RunResult {
         exit_status,
-        output,
+        stdout,
+        stderr,
     })
 }
 
@@ -346,10 +344,10 @@ pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(),
             file: expected_output_file.to_owned(),
         })?;
 
-    if expected_output != run.output {
+    if expected_output != run.stdout {
         Err(TestRunError::FileCmpError {
             expected: expected_output.clone(),
-            got: run.output.clone(),
+            got: run.stdout.clone(),
         })
     } else if !run.exit_status.success() {
         Err(TestRunError::CommandError(run.clone()))

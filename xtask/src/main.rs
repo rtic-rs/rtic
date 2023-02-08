@@ -17,6 +17,7 @@ use std::{
 };
 
 use env_logger::Env;
+use exitcode;
 use log::{debug, error, info, log_enabled, trace, Level};
 
 use crate::{
@@ -157,7 +158,8 @@ pub enum Sizearguments {
 #[derive(Debug, Clone)]
 pub struct RunResult {
     exit_status: ExitStatus,
-    output: String,
+    stdout: String,
+    stderr: String,
 }
 
 #[derive(Debug)]
@@ -190,7 +192,7 @@ impl fmt::Display for TestRunError {
                 write!(
                     f,
                     "Command failed with exit status {}: {}",
-                    e.exit_status, e.output
+                    e.exit_status, e.stdout
                 )
             }
             TestRunError::PathConversionError(p) => {
@@ -253,7 +255,7 @@ fn main() -> anyhow::Result<()> {
                     \n{targets:#?}\n\
              By default all targets are tested.",
             );
-            process::exit(1);
+            process::exit(exitcode::USAGE);
         }
     }
 
@@ -295,7 +297,7 @@ fn main() -> anyhow::Result<()> {
                     \n{examples:#?}\n\
              By default if example flag is emitted, all examples are tested.",
             );
-            process::exit(1);
+            process::exit(exitcode::USAGE);
         } else {
         }
         examples_to_run
@@ -543,7 +545,7 @@ fn package_filter(package: &Package) -> Vec<String> {
                     \n{packages:#?}\n\
              By default all packages are tested.",
             );
-            process::exit(1);
+            process::exit(exitcode::USAGE);
         }
     } else {
         package_selected = packages;
@@ -566,7 +568,7 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
             // cargo run <..>
             info!("Running example: {example}");
             let cargo_run_result = run_command(command)?;
-            info!("{}", cargo_run_result.output);
+            info!("{}", cargo_run_result.stdout);
 
             // Create a file for the expected output if it does not exist or mismatches
             if overwrite {
@@ -581,7 +583,7 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
                     })?;
                     info!("Flag --overwrite-expected enabled");
                     info!("Creating/updating file: {expected_output_file}");
-                    file_handle.write_all(cargo_run_result.output.as_bytes())?;
+                    file_handle.write_all(cargo_run_result.stdout.as_bytes())?;
                 };
             } else {
                 run_successful(&cargo_run_result, &expected_output_file)?;
@@ -595,8 +597,24 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
         | CargoCommand::Clippy { .. }
         | CargoCommand::ExampleSize { .. } => {
             let cargo_result = run_command(command)?;
-            if !cargo_result.output.is_empty() {
-                info!("{}", cargo_result.output);
+            if let Some(exit_code) = cargo_result.exit_status.code() {
+                if exit_code != exitcode::OK {
+                    error!("Exit code from command: {exit_code}");
+                    if !cargo_result.stdout.is_empty() {
+                        info!("{}", cargo_result.stdout);
+                    }
+                    if !cargo_result.stderr.is_empty() {
+                        error!("{}", cargo_result.stderr);
+                    }
+                    process::exit(exit_code);
+                } else {
+                    if !cargo_result.stdout.is_empty() {
+                        info!("{}", cargo_result.stdout);
+                    }
+                    if !cargo_result.stderr.is_empty() {
+                        info!("{}", cargo_result.stderr);
+                    }
+                }
             }
 
             Ok(())
