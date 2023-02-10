@@ -23,7 +23,12 @@ fugit = { version = "0.3.6", features = ["defmt"] }
 rtic-time = { version = "1.0.0-alpha.0", path = "../rtic-time" }
 atomic-polyfill = "1"
 cfg-if = "1.0.0"
+rp2040-pac = { version = ">=0.2.0,<0.5", optional = true }
 
 [features]
+default = []
+
 systick_100hz = []
 systick_10khz = []
+
+rp2040 = ["dep:rp2040-pac"]
