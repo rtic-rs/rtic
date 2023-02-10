@@ -9,4 +9,7 @@
 
 pub use rtic_time::{Monotonic, TimeoutError, TimerQueue};
 
-pub mod systick_monotonic;
+pub mod systick;
+
+#[cfg(feature = "rp2040")]
+pub mod rp2040;
