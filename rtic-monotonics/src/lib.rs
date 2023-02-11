@@ -9,6 +9,7 @@
 
 pub use rtic_time::{Monotonic, TimeoutError, TimerQueue};
 
+#[cfg(feature = "cortex_m_sytick")]
 pub mod systick;
 
 #[cfg(feature = "rp2040")]
