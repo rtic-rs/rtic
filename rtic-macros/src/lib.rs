@@ -8,7 +8,6 @@ use proc_macro::TokenStream;
 use std::{env, fs, path::Path};
 
 mod analyze;
-mod bindings;
 mod check;
 mod codegen;
 mod syntax;
@@ -38,7 +37,7 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         Ok(x) => x,
     };
 
-    if let Err(e) = check::app(&app) {
+    if let Err(e) = check::app(&app, &analysis) {
         return e.to_compile_error().into();
     }
 

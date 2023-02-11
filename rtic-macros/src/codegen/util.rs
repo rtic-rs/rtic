@@ -6,68 +6,9 @@ use syn::{Attribute, Ident, PatType};
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
 
-/// Generates a `Mutex` implementation
-pub fn impl_mutex(
-    app: &App,
-    cfgs: &[Attribute],
-    resources_prefix: bool,
-    name: &Ident,
-    ty: &TokenStream2,
-    ceiling: u8,
-    ptr: &TokenStream2,
-) -> TokenStream2 {
-    let path = if resources_prefix {
-        quote!(shared_resources::#name)
-    } else {
-        quote!(#name)
-    };
-
-    let device = &app.args.device;
-    let masks_name = priority_masks_ident();
-    quote!(
-        #(#cfgs)*
-        impl<'a> rtic::Mutex for #path<'a> {
-            type T = #ty;
-
-            #[inline(always)]
-            fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
-                /// Priority ceiling
-                const CEILING: u8 = #ceiling;
-
-                unsafe {
-                    rtic::export::lock(
-                        #ptr,
-                        CEILING,
-                        #device::NVIC_PRIO_BITS,
-                        &#masks_name,
-                        f,
-                    )
-                }
-            }
-        }
-    )
-}
-
 pub fn interrupt_ident() -> Ident {
     let span = Span::call_site();
     Ident::new("interrupt", span)
-}
-
-/// Whether `name` is an exception with configurable priority
-pub fn is_exception(name: &Ident) -> bool {
-    let s = name.to_string();
-
-    matches!(
-        &*s,
-        "MemoryManagement"
-            | "BusFault"
-            | "UsageFault"
-            | "SecureFault"
-            | "SVCall"
-            | "DebugMonitor"
-            | "PendSV"
-            | "SysTick"
-    )
 }
 
 /// Mark a name as internal
@@ -202,15 +143,6 @@ pub fn suffixed(name: &str) -> Ident {
 
 pub fn static_shared_resource_ident(name: &Ident) -> Ident {
     mark_internal_name(&format!("shared_resource_{name}"))
-}
-
-/// Generates an Ident for the number of 32 bit chunks used for Mask storage.
-pub fn priority_mask_chunks_ident() -> Ident {
-    mark_internal_name("MASK_CHUNKS")
-}
-
-pub fn priority_masks_ident() -> Ident {
-    mark_internal_name("MASKS")
 }
 
 pub fn static_local_resource_ident(name: &Ident) -> Ident {

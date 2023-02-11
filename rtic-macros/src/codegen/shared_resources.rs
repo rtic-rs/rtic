@@ -2,7 +2,8 @@ use crate::syntax::{analyze::Ownership, ast::App};
 use crate::{analyze::Analysis, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use std::collections::HashMap;
+
+use super::bindings::impl_mutex;
 
 /// Generates `static` variables and shared resource proxies
 pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
@@ -75,8 +76,9 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             // For future use
             // let doc = format!(" RTIC internal ({} resource): {}:{}", doc, file!(), line!());
 
-            mod_app.push(util::impl_mutex(
+            mod_app.push(impl_mutex(
                 app,
+                analysis,
                 cfgs,
                 true,
                 &shared_name,
@@ -94,86 +96,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             #(#mod_resources)*
         })
     };
-
-    // Computing mapping of used interrupts to masks
-    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
-
-    let mut prio_to_masks = HashMap::new();
-    let device = &app.args.device;
-    let mut uses_exceptions_with_resources = false;
-
-    let mut mask_ids = Vec::new();
-
-    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().flat_map(|task| {
-        if !util::is_exception(&task.args.binds) {
-            Some((&task.args.priority, &task.args.binds))
-        } else {
-            // If any resource to the exception uses non-lock-free or non-local resources this is
-            // not allwed on thumbv6.
-            uses_exceptions_with_resources = uses_exceptions_with_resources
-                || task
-                    .args
-                    .shared_resources
-                    .iter()
-                    .map(|(ident, access)| {
-                        if access.is_exclusive() {
-                            if let Some(r) = app.shared_resources.get(ident) {
-                                !r.properties.lock_free
-                            } else {
-                                false
-                            }
-                        } else {
-                            false
-                        }
-                    })
-                    .any(|v| v);
-
-            None
-        }
-    })) {
-        let v: &mut Vec<_> = prio_to_masks.entry(priority - 1).or_default();
-        v.push(quote!(#device::Interrupt::#name as u32));
-        mask_ids.push(quote!(#device::Interrupt::#name as u32));
-    }
-
-    // Call rtic::export::create_mask([Mask; N]), where the array is the list of shifts
-
-    let mut mask_arr = Vec::new();
-    // NOTE: 0..3 assumes max 4 priority levels according to M0, M23 spec
-    for i in 0..3 {
-        let v = if let Some(v) = prio_to_masks.get(&i) {
-            v.clone()
-        } else {
-            Vec::new()
-        };
-
-        mask_arr.push(quote!(
-            rtic::export::create_mask([#(#v),*])
-        ));
-    }
-
-    // Generate a constant for the number of chunks needed by Mask.
-    let chunks_name = util::priority_mask_chunks_ident();
-    mod_app.push(quote!(
-        #[doc(hidden)]
-        #[allow(non_upper_case_globals)]
-        const #chunks_name: usize = rtic::export::compute_mask_chunks([#(#mask_ids),*]);
-    ));
-
-    let masks_name = util::priority_masks_ident();
-    mod_app.push(quote!(
-        #[doc(hidden)]
-        #[allow(non_upper_case_globals)]
-        const #masks_name: [rtic::export::Mask<#chunks_name>; 3] = [#(#mask_arr),*];
-    ));
-
-    if uses_exceptions_with_resources {
-        mod_app.push(quote!(
-            #[doc(hidden)]
-            #[allow(non_upper_case_globals)]
-            const __rtic_internal_V6_ERROR: () = rtic::export::no_basepri_panic();
-        ));
-    }
 
     quote!(
         #(#mod_app)*

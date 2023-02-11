@@ -4,6 +4,8 @@ use quote::quote;
 use crate::analyze::Analysis;
 use crate::syntax::ast::App;
 
+pub mod bindings;
+
 mod assertions;
 mod async_dispatchers;
 mod hardware_tasks;

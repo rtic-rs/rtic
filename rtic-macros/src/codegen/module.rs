@@ -17,7 +17,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
     match ctxt {
         Context::Init => {
             fields.push(quote!(
-                /// Core (Cortex-M) peripherals
+                /// Core peripherals
                 pub core: rtic::export::Peripherals
             ));
 
@@ -25,7 +25,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                 let device = &app.args.device;
 
                 fields.push(quote!(
-                    /// Device peripherals
+                    /// Device peripherals (PAC)
                     pub device: #device::Peripherals
                 ));
 
