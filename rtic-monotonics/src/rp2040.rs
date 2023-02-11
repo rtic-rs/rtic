@@ -106,7 +106,7 @@ impl Monotonic for Timer {
     }
 
     fn pend_interrupt() {
-        cortex_m::peripheral::NVIC::pend(Interrupt::TIMER_IRQ_0);
+        rp2040_pac::NVIC::pend(Interrupt::TIMER_IRQ_0);
     }
 
     fn on_interrupt() {}
