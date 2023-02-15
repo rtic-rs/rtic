@@ -5,7 +5,6 @@ pub use super::{TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
 use cortex_m::peripheral::SYST;
-use embedded_hal_async::delay::DelayUs;
 pub use fugit::ExtU32;
 
 // Features should be additive, here systick_100hz gets picked if both
@@ -136,7 +135,8 @@ impl Monotonic for Systick {
     fn disable_timer() {}
 }
 
-impl DelayUs for Systick {
+#[cfg(feature = "embedded-hal-async")]
+impl embedded_hal_async::delay::DelayUs for Systick {
     type Error = core::convert::Infallible;
 
     async fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {

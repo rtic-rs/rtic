@@ -3,7 +3,6 @@
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
 use core::future::Future;
-use embedded_hal_async::delay::DelayUs;
 pub use fugit::ExtU64;
 use rp2040_pac::{timer, Interrupt, RESETS, TIMER};
 
@@ -116,7 +115,8 @@ impl Monotonic for Timer {
     fn disable_timer() {}
 }
 
-impl DelayUs for Timer {
+#[cfg(feature = "embedded-hal-async")]
+impl embedded_hal_async::delay::DelayUs for Timer {
     type Error = core::convert::Infallible;
 
     async fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
