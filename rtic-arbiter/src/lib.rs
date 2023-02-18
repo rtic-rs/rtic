@@ -54,7 +54,8 @@ impl<T> Arbiter<T> {
     pub async fn access(&self) -> ExclusiveAccess<'_, T> {
         let mut link_ptr: Option<Link<Waker>> = None;
 
-        // Make this future `Drop`-safe, also shadow the original definition so we can't abuse it.
+        // Make this future `Drop`-safe.
+        // SAFETY(link_ptr): Shadow the original definition of `link_ptr` so we can't abuse it.
         let mut link_ptr = LinkPtr(&mut link_ptr as *mut Option<Link<Waker>>);
 
         let mut link_ptr2 = link_ptr.clone();
@@ -89,10 +90,13 @@ impl<T> Arbiter<T> {
                     // Place the link in the wait queue on first run.
                     let link_ref = link.insert(Link::new(cx.waker().clone()));
 
-                    // SAFETY: The address to the link is stable as it is hidden behind
-                    // `link_ptr`, and `link_ptr` shadows the original making it unmovable.
-                    self.wait_queue
-                        .push(unsafe { Pin::new_unchecked(link_ref) });
+                    // SAFETY(new_unchecked): The address to the link is stable as it is defined
+                    // outside this stack frame.
+                    // SAFETY(push): `link_ref` lifetime comes from `link_ptr` that is shadowed,
+                    // and  we make sure in `dropper` that the link is removed from the queue
+                    // before dropping `link_ptr` AND `dropper` makes sure that the shadowed
+                    // `link_ptr` lives until the end of the stack frame.
+                    unsafe { self.wait_queue.push(Pin::new_unchecked(link_ref)) };
                 }
 
                 Poll::Pending

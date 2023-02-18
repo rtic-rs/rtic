@@ -68,7 +68,9 @@ impl<T: Clone> LinkedList<T> {
     }
 
     /// Put an element at the back of the queue.
-    pub fn push(&self, link: Pin<&mut Link<T>>) {
+    ///
+    /// SAFETY: The link must live until it is removed from the queue.
+    pub unsafe fn push(&self, link: Pin<&Link<T>>) {
         cs::with(|_| {
             // Make sure all previous writes are visible
             core::sync::atomic::fence(Ordering::SeqCst);
@@ -76,17 +78,17 @@ impl<T: Clone> LinkedList<T> {
             let tail = self.tail.load(Self::R);
 
             // SAFETY: This datastructure does not move the underlying value.
-            let link = unsafe { link.get_unchecked_mut() };
+            let link = link.get_ref();
 
             if let Some(tail_ref) = unsafe { tail.as_ref() } {
                 // Queue is not empty
                 link.prev.store(tail, Self::R);
-                self.tail.store(link, Self::R);
-                tail_ref.next.store(link, Self::R);
+                self.tail.store(link as *const _ as *mut _, Self::R);
+                tail_ref.next.store(link as *const _ as *mut _, Self::R);
             } else {
                 // Queue is empty
-                self.tail.store(link, Self::R);
-                self.head.store(link, Self::R);
+                self.tail.store(link as *const _ as *mut _, Self::R);
+                self.head.store(link as *const _ as *mut _, Self::R);
             }
         });
     }
@@ -126,7 +128,7 @@ impl<T: Clone> Link<T> {
     }
 
     /// Remove this link from a linked list.
-    pub fn remove_from_list(&mut self, list: &LinkedList<T>) {
+    pub fn remove_from_list(&self, list: &LinkedList<T>) {
         cs::with(|_| {
             // Make sure all previous writes are visible
             core::sync::atomic::fence(Ordering::SeqCst);
@@ -230,17 +232,17 @@ mod tests {
     fn linked_list() {
         let wq = LinkedList::<u32>::new();
 
-        let mut i1 = Link::new(10);
-        let mut i2 = Link::new(11);
-        let mut i3 = Link::new(12);
-        let mut i4 = Link::new(13);
-        let mut i5 = Link::new(14);
+        let i1 = Link::new(10);
+        let i2 = Link::new(11);
+        let i3 = Link::new(12);
+        let i4 = Link::new(13);
+        let i5 = Link::new(14);
 
-        wq.push(unsafe { Pin::new_unchecked(&mut i1) });
-        wq.push(unsafe { Pin::new_unchecked(&mut i2) });
-        wq.push(unsafe { Pin::new_unchecked(&mut i3) });
-        wq.push(unsafe { Pin::new_unchecked(&mut i4) });
-        wq.push(unsafe { Pin::new_unchecked(&mut i5) });
+        unsafe { wq.push(Pin::new_unchecked(&i1)) };
+        unsafe { wq.push(Pin::new_unchecked(&i2)) };
+        unsafe { wq.push(Pin::new_unchecked(&i3)) };
+        unsafe { wq.push(Pin::new_unchecked(&i4)) };
+        unsafe { wq.push(Pin::new_unchecked(&i5)) };
 
         wq.print();
 

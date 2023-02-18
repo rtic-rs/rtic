@@ -93,10 +93,12 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
 
     /// Insert a new link into the linked list.
     /// The return is (was_empty, address), where the address of the link is for use with `delete`.
-    pub fn insert(&self, val: Pin<&mut Link<T>>) -> (bool, usize) {
+    ///
+    /// SAFETY: The pinned link must live until it is removed from this list.
+    pub unsafe fn insert(&self, val: Pin<&Link<T>>) -> (bool, usize) {
         cs::with(|_| {
             // SAFETY: This datastructure does not move the underlying value.
-            let val = unsafe { val.get_unchecked_mut() };
+            let val = val.get_ref();
             let addr = val as *const _ as usize;
 
             // Make sure all previous writes are visible
@@ -111,7 +113,8 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
             let head_ref = if let Some(head_ref) = unsafe { head.as_ref() } {
                 head_ref
             } else {
-                self.head.store(val, Ordering::Relaxed);
+                self.head
+                    .store(val as *const _ as *mut _, Ordering::Relaxed);
                 return (true, addr);
             };
 
@@ -121,7 +124,8 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
                 val.next.store(head, Ordering::Relaxed);
 
                 // `val` is now first in the queue
-                self.head.store(val, Ordering::Relaxed);
+                self.head
+                    .store(val as *const _ as *mut _, Ordering::Relaxed);
 
                 return (false, addr);
             }
@@ -139,7 +143,8 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
                     val.next.store(next, Ordering::Relaxed);
 
                     // Insert `val`
-                    curr.next.store(val, Ordering::Relaxed);
+                    curr.next
+                        .store(val as *const _ as *mut _, Ordering::Relaxed);
 
                     return (false, addr);
                 }
@@ -150,7 +155,8 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
             }
 
             // No next, write link to last position in list
-            curr.next.store(val, Ordering::Relaxed);
+            curr.next
+                .store(val as *const _ as *mut _, Ordering::Relaxed);
 
             (false, addr)
         })

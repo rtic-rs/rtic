@@ -208,7 +208,8 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
 
         let mut link_ptr: Option<linked_list::Link<WaitingWaker<Mono>>> = None;
 
-        // Make this future `Drop`-safe, also shadow the original definition so we can't abuse it.
+        // Make this future `Drop`-safe
+        // SAFETY(link_ptr): Shadow the original definition of `link_ptr` so we can't abuse it.
         let mut link_ptr =
             LinkPtr(&mut link_ptr as *mut Option<linked_list::Link<WaitingWaker<Mono>>>);
         let mut link_ptr2 = link_ptr.clone();
@@ -226,18 +227,24 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             }
 
             // SAFETY: This pointer is only dereferenced here and on drop of the future
-            // which happens outside this `poll_fn`'s stack frame.
+            // which happens outside this `poll_fn`'s stack frame, so this mutable access cannot
+            // happen at the same time as `dropper` runs.
             let link = unsafe { link_ptr2.get() };
             if link.is_none() {
-                let mut link_ref = link.insert(Link::new(WaitingWaker {
+                let link_ref = link.insert(Link::new(WaitingWaker {
                     waker: cx.waker().clone(),
                     release_at: instant,
                     was_poped: AtomicBool::new(false),
                 }));
 
-                // SAFETY: The address to the link is stable as it is defined outside this stack
-                // frame.
-                let (was_empty, addr) = queue.insert(unsafe { Pin::new_unchecked(&mut link_ref) });
+                // SAFETY(new_unchecked): The address to the link is stable as it is defined
+                //outside this stack frame.
+                // SAFETY(insert): `link_ref` lifetime comes from `link_ptr` that is shadowed, and
+                // we make sure in `dropper` that the link is removed from the queue before
+                // dropping `link_ptr` AND `dropper` makes sure that the shadowed `link_ptr` lives
+                // until the end of the stack frame.
+                let (was_empty, addr) = unsafe { queue.insert(Pin::new_unchecked(&link_ref)) };
+
                 marker.store(addr, Ordering::Relaxed);
 
                 if was_empty {
