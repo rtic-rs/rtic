@@ -26,10 +26,13 @@ default = []
 debugprint = []
 
 # list of supported codegen backends
-thumbv6 = []
-thumbv7 = []
-# riscv-clic = []
-# riscv-ch32 = []
+cortex_m_source_masking = []
+cortex_m_basepri = []
+# riscv_clic = []
+# riscv_ch32 = []
+
+# backend API test
+test_template = []
 
 [dependencies]
 indexmap = "1.9.2"

@@ -9,7 +9,7 @@
 
 use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
-use rtic_monotonics::systick_monotonic::*;
+use rtic_monotonics::systick::*;
 
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0, UART0], peripherals = true)]
 mod app {

@@ -157,7 +157,7 @@ macro_rules! make_systick_handler {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn SysTick() {
-            Systick::__tq().on_monotonic_interrupt();
+            rtic_monotonics::systick::Systick::__tq().on_monotonic_interrupt();
         }
     };
 }

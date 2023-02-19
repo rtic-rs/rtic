@@ -2,7 +2,7 @@ use crate::syntax::{ast::App, Context};
 use core::sync::atomic::{AtomicUsize, Ordering};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{Attribute, Ident, PatType};
+use syn::{Ident, PatType};
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
 

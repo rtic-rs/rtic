@@ -40,10 +40,7 @@ bare-metal = "1.0.0"
 atomic-polyfill = "1"
 rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.0" }
 rtic-core = "1"
-
-
-[build-dependencies]
-version_check = "0.9"
+critical-section = "1"
 
 [dev-dependencies]
 heapless = "0.7.7"
@@ -66,6 +63,17 @@ version = "0.6.0"
 trybuild = "1"
 
 [features]
+default = []
+
+thumbv6 = ["rtic-macros/cortex_m_source_masking"]
+thumbv7 = ["rtic-macros/cortex_m_basepri"]
+thumbv8_base = ["rtic-macros/cortex_m_source_masking"]
+thumbv8_main = ["rtic-macros/cortex_m_basepri"]
+# riscv_clic = ["rtic-macros/riscv_clic"]
+# riscv_ch32 = ["rtic-macros/riscv_ch32"]
+# riscv_esp32c3 = ["rtic-macros/riscv_esp32c3"]
+
+# needed for testing
 test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick_100hz"]
 
 # [[example]]

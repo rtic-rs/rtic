@@ -59,14 +59,14 @@ where
 /// but can in theory be fixed.
 ///
 #[inline(always)]
-pub unsafe fn lock<T, R, const M: usize>(
+pub unsafe fn lock<T, R>(
     ptr: *mut T,
     ceiling: u8,
     nvic_prio_bits: u8,
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
     if ceiling == (1 << nvic_prio_bits) {
-        let r = interrupt::free(|_| f(&mut *ptr));
+        let r = critical_section::with(|_| f(&mut *ptr));
         r
     } else {
         let current = basepri::read();

@@ -8,8 +8,9 @@ use quote::quote;
 use std::collections::HashSet;
 use syn::{parse, Attribute, Ident};
 
-// TODO: This should be feature gated
-// pub use basepri::*;
+#[cfg(feature = "cortex_m_basepri")]
+pub use basepri::*;
+#[cfg(feature = "cortex_m_source_masking")]
 pub use source_masking::*;
 
 /// Whether `name` is an exception with configurable priority
@@ -29,7 +30,8 @@ fn is_exception(name: &Ident) -> bool {
     )
 }
 
-pub mod source_masking {
+#[cfg(feature = "cortex_m_source_masking")]
+mod source_masking {
     use super::*;
     use std::collections::HashMap;
 
@@ -87,14 +89,6 @@ pub mod source_masking {
             ));
         }
 
-        // if uses_exceptions_with_resources {
-        //     mod_app.push(quote!(
-        //         #[doc(hidden)]
-        //         #[allow(non_upper_case_globals)]
-        //         const __rtic_internal_V6_ERROR: () = rtic::export::no_basepri_panic();
-        //     ));
-        // }
-
         quote!(
             #(#cfgs)*
             impl<'a> rtic::Mutex for #path<'a> {
@@ -121,38 +115,12 @@ pub mod source_masking {
     }
 
     pub fn extra_assertions(_: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
-        // let device = &app.args.device;
-        // let no_basepri_checks: Vec<_> = app
-        // .hardware_tasks
-        // .iter()
-        // .filter_map(|(_, task)| {
-        //     if !is_exception(&task.args.binds) {
-        //         let interrupt_name = &task.args.binds;
-        //         Some(quote!(
-        //             if (#device::Interrupt::#interrupt_name as usize) >= (#chunks_name * 32) {
-        //                 ::core::panic!("An interrupt out of range is used while in armv6 or armv8m.base");
-        //             }
-        //         ))
-        //     } else {
-        //         None
-        //     }
-        // })
-        // .collect();
-
-        // let const_check = quote! {
-        //     const _CONST_CHECK: () = {
-        //         #(#no_basepri_checks)*
-        //     };
-
-        //     let _ = _CONST_CHECK;
-        // };
-
-        // vec![const_check]
         vec![]
     }
 }
 
-pub mod basepri {
+#[cfg(feature = "cortex_m_basepri")]
+mod basepri {
     use super::*;
 
     /// Generates a `Mutex` implementation
@@ -245,7 +213,7 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
         stmts.push(quote!(
             core.NVIC.set_priority(
                 #rt_err::#interrupt::#name,
-                rtic::export::logical2hw(#priority, #nvic_prio_bits),
+                rtic::export::cortex_logical2hw(#priority, #nvic_prio_bits),
             );
         ));
 
@@ -272,7 +240,7 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
 
         stmts.push(quote!(core.SCB.set_priority(
             rtic::export::SystemHandler::#name,
-            rtic::export::logical2hw(#priority, #nvic_prio_bits),
+            rtic::export::cortex_logical2hw(#priority, #nvic_prio_bits),
         );));
     }
 

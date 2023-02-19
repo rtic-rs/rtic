@@ -126,7 +126,7 @@ pub unsafe fn lock<T, R, const M: usize>(
         // execute closure under protection of raised system ceiling
 
         // safe to manipulate outside critical section
-        interrupt::free(|_| f(&mut *ptr))
+        critical_section::with(|_| f(&mut *ptr))
     } else {
         // safe to manipulate outside critical section
         let mask = compute_mask(0, ceiling, masks);
@@ -164,6 +164,7 @@ pub const fn compute_mask<const M: usize>(
         idx += 1;
     }
 
+    // old code (non const)
     // masks[from_prio as usize..to_prio as usize]
     //     .iter()
     //     .for_each(|m| res |= *m);
