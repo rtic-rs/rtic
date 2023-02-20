@@ -65,13 +65,13 @@ trybuild = "1"
 [features]
 default = []
 
-thumbv6 = ["rtic-macros/cortex_m_source_masking"]
-thumbv7 = ["rtic-macros/cortex_m_basepri"]
-thumbv8_base = ["rtic-macros/cortex_m_source_masking"]
-thumbv8_main = ["rtic-macros/cortex_m_basepri"]
-# riscv_clic = ["rtic-macros/riscv_clic"]
-# riscv_ch32 = ["rtic-macros/riscv_ch32"]
-# riscv_esp32c3 = ["rtic-macros/riscv_esp32c3"]
+thumbv6-backend = ["rtic-macros/cortex-m-source-masking"]
+thumbv7-backend = ["rtic-macros/cortex-m-basepri"]
+thumbv8base-backend = ["rtic-macros/cortex-m-source-masking"]
+thumbv8main-backend = ["rtic-macros/cortex-m-basepri"]
+# riscv-clic-backend = ["rtic-macros/riscv-clic"]
+# riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
+# riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
 
 # needed for testing
 test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick_100hz"]

@@ -55,10 +55,10 @@ impl Backends {
 
     fn to_rtic_feature(&self) -> &str {
         match self {
-            Backends::Thumbv6 => "thumbv6",
-            Backends::Thumbv7 => "thumbv7",
-            Backends::Thumbv8Base => "thumbv8_base",
-            Backends::Thumbv8Main => "thumbv8_main",
+            Backends::Thumbv6 => "thumbv6-backend",
+            Backends::Thumbv7 => "thumbv7-backend",
+            Backends::Thumbv8Base => "thumbv8base-backend",
+            Backends::Thumbv8Main => "thumbv8main-backend",
         }
     }
 }

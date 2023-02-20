@@ -8,9 +8,9 @@ use quote::quote;
 use std::collections::HashSet;
 use syn::{parse, Attribute, Ident};
 
-#[cfg(feature = "cortex_m_basepri")]
+#[cfg(feature = "cortex-m-basepri")]
 pub use basepri::*;
-#[cfg(feature = "cortex_m_source_masking")]
+#[cfg(feature = "cortex-m-source-masking")]
 pub use source_masking::*;
 
 /// Whether `name` is an exception with configurable priority
@@ -30,7 +30,7 @@ fn is_exception(name: &Ident) -> bool {
     )
 }
 
-#[cfg(feature = "cortex_m_source_masking")]
+#[cfg(feature = "cortex-m-source-masking")]
 mod source_masking {
     use super::*;
     use std::collections::HashMap;
@@ -119,7 +119,7 @@ mod source_masking {
     }
 }
 
-#[cfg(feature = "cortex_m_basepri")]
+#[cfg(feature = "cortex-m-basepri")]
 mod basepri {
     use super::*;
 

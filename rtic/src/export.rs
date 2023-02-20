@@ -6,18 +6,18 @@ pub mod executor;
 
 #[cfg(all(
     cortex_m_basepri,
-    not(any(feature = "thumbv7", feature = "thumbv8_main"))
+    not(any(feature = "thumbv7-backend", feature = "thumbv8main-backend"))
 ))]
 compile_error!(
-    "Building for Cortex-M with basepri, but 'thumbv7' or 'thumbv8_main' backend not selected"
+    "Building for Cortex-M with basepri, but 'thumbv7-backend' or 'thumbv8main-backend' backend not selected"
 );
 
 #[cfg(all(
     cortex_m_source_masking,
-    not(any(feature = "thumbv6", feature = "thumbv8_base"))
+    not(any(feature = "thumbv6-backend", feature = "thumbv8base-backend"))
 ))]
 compile_error!(
-    "Building for Cortex-M with source masking, but 'thumbv6' or 'thumbv8_base' backend not selected"
+    "Building for Cortex-M with source masking, but 'thumbv6-backend' or 'thumbv8base-backend' backend not selected"
 );
 
 #[cfg(cortex_m_basepri)]
