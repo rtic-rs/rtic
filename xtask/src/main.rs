@@ -32,27 +32,44 @@ const ARMV7M: &str = "thumbv7m-none-eabi";
 const ARMV8MBASE: &str = "thumbv8m.base-none-eabi";
 const ARMV8MMAIN: &str = "thumbv8m.main-none-eabi";
 
-const DEFAULT_FEATURES: Option<&str> = Some("test-critical-section");
+const DEFAULT_FEATURES: &str = "test-critical-section";
+
+#[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
+enum Backends {
+    Thumbv6,
+    #[default]
+    Thumbv7,
+    Thumbv8Base,
+    Thumbv8Main,
+}
+
+impl Backends {
+    fn to_target(&self) -> &str {
+        match self {
+            Backends::Thumbv6 => ARMV6M,
+            Backends::Thumbv7 => ARMV7M,
+            Backends::Thumbv8Base => ARMV8MBASE,
+            Backends::Thumbv8Main => ARMV8MMAIN,
+        }
+    }
+
+    fn to_rtic_feature(&self) -> &str {
+        match self {
+            Backends::Thumbv6 => "thumbv6",
+            Backends::Thumbv7 => "thumbv7",
+            Backends::Thumbv8Base => "thumbv8_base",
+            Backends::Thumbv8Main => "thumbv8_main",
+        }
+    }
+}
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 /// RTIC xtask powered testing toolbox
 struct Cli {
-    /// For which target to build
-    ///
-    /// Defaults to these targets if omitted:
-    ///
-    /// thumbv6m-none-eabi
-    /// thumbv7m-none-eabi
-    ///
-    /// The valid targets are:
-    ///
-    /// thumbv6m-none-eabi
-    /// thumbv7m-none-eabi
-    /// thumbv8m.base-none-eabi
-    /// thumbv8m.main-none-eabi
-    #[arg(short, long)]
-    target: Option<String>,
+    /// For which backend to build
+    #[arg(value_enum, short, long)]
+    backend: Backends,
 
     /// List of comma separated examples to include, all others are excluded
     ///
@@ -215,8 +232,6 @@ fn main() -> anyhow::Result<()> {
         bail!("xtasks can only be executed from the root of the `rtic` repository");
     }
 
-    let mut targets: Vec<String> = [ARMV7M.to_owned(), ARMV6M.to_owned()].to_vec();
-
     let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
         .filter_map(|p| p.ok())
         .map(|p| p.path())
@@ -239,25 +254,7 @@ fn main() -> anyhow::Result<()> {
 
     trace!("default logging level: {0}", cli.verbose);
 
-    let target = cli.target;
-    if let Some(target) = target {
-        let mut targets_extended = targets.clone();
-        targets_extended.push(ARMV8MBASE.to_owned());
-        targets_extended.push(ARMV8MMAIN.to_owned());
-
-        if targets_extended.contains(&target) {
-            debug!("\nTesting target: {target}");
-            // If we managed to filter, set the targets to test to only this one
-            targets = vec![target]
-        } else {
-            error!(
-                "\nThe target you specified is not available. Available targets are:\
-                    \n{targets:#?}\n\
-             By default all targets are tested.",
-            );
-            process::exit(exitcode::USAGE);
-        }
-    }
+    let backend = cli.backend;
 
     let example = cli.example;
     let exampleexclude = cli.exampleexclude;
@@ -320,67 +317,60 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Size(arguments) => {
-            debug!("Measuring on target(s): {targets:?}");
             // x86_64 target not valid
-            for t in &targets {
-                info!("Measuring for target: {t:?}");
-                build_and_check_size(&cargoarg, t, &examples_to_run, &arguments.sizearguments)?;
-            }
+            info!("Measuring for backend: {backend:?}");
+            build_and_check_size(
+                &cargoarg,
+                backend,
+                &examples_to_run,
+                &arguments.sizearguments,
+            )?;
         }
         Commands::Qemu(args) | Commands::Run(args) => {
-            debug!("Running on target(s): {targets:?}");
             // x86_64 target not valid
-            for t in &targets {
-                info!("Testing for target: {t:?}");
-                run_test(&cargoarg, t, &examples_to_run, args.overwrite_expected)?;
-            }
+            info!("Testing for backend: {backend:?}");
+            run_test(
+                &cargoarg,
+                backend,
+                &examples_to_run,
+                args.overwrite_expected,
+            )?;
         }
         Commands::ExampleBuild => {
-            debug!("Building for target(s): {targets:?}");
-            for t in &targets {
-                info!("Building for target: {t:?}");
-                example_build(&cargoarg, t, &examples_to_run)?;
-            }
+            info!("Building for backend: {backend:?}");
+            example_build(&cargoarg, backend, &examples_to_run)?;
         }
         Commands::ExampleCheck => {
-            debug!("Checking on target(s): {targets:?}");
-            for t in &targets {
-                info!("Checking on target: {t:?}");
-                example_check(&cargoarg, t, &examples_to_run)?;
-            }
+            info!("Checking on backend: {backend:?}");
+            example_check(&cargoarg, backend, &examples_to_run)?;
         }
         Commands::Build(args) => {
-            debug!("Building for target(s): {targets:?}");
-            for t in &targets {
-                info!("Building for target: {t:?}");
-                cargo_build(&cargoarg, &args, t)?;
-            }
+            info!("Building for backend: {backend:?}");
+            cargo_build(&cargoarg, &args, backend)?;
         }
         Commands::Check(args) => {
-            debug!("Checking on target(s): {targets:?}");
-            for t in &targets {
-                info!("Checking on target: {t:?}");
-                cargo_check(&cargoarg, &args, t)?;
-            }
+            info!("Checking on backend: {backend:?}");
+            cargo_check(&cargoarg, &args, backend)?;
         }
         Commands::Clippy(args) => {
-            debug!("Clippy on target(s): {targets:?}");
-            for t in &targets {
-                info!("Running clippy on target: {t:?}");
-                cargo_clippy(&cargoarg, &args, t)?;
-            }
+            info!("Running clippy on backend: {backend:?}");
+            cargo_clippy(&cargoarg, &args, backend)?;
         }
     }
 
     Ok(())
 }
 
-fn cargo_build(cargoarg: &Option<&str>, package: &Package, target: &str) -> anyhow::Result<()> {
+fn cargo_build(
+    cargoarg: &Option<&str>,
+    package: &Package,
+    backend: Backends,
+) -> anyhow::Result<()> {
     command_parser(
         &CargoCommand::Build {
             cargoarg,
             package: package_filter(package),
-            target,
+            target: backend.to_target(),
             features: None,
             mode: BuildMode::Release,
         },
@@ -389,12 +379,16 @@ fn cargo_build(cargoarg: &Option<&str>, package: &Package, target: &str) -> anyh
     Ok(())
 }
 
-fn cargo_check(cargoarg: &Option<&str>, package: &Package, target: &str) -> anyhow::Result<()> {
+fn cargo_check(
+    cargoarg: &Option<&str>,
+    package: &Package,
+    backend: Backends,
+) -> anyhow::Result<()> {
     command_parser(
         &CargoCommand::Check {
             cargoarg,
             package: package_filter(package),
-            target,
+            target: backend.to_target(),
             features: None,
         },
         false,
@@ -402,12 +396,16 @@ fn cargo_check(cargoarg: &Option<&str>, package: &Package, target: &str) -> anyh
     Ok(())
 }
 
-fn cargo_clippy(cargoarg: &Option<&str>, package: &Package, target: &str) -> anyhow::Result<()> {
+fn cargo_clippy(
+    cargoarg: &Option<&str>,
+    package: &Package,
+    backend: Backends,
+) -> anyhow::Result<()> {
     command_parser(
         &CargoCommand::Clippy {
             cargoarg,
             package: package_filter(package),
-            target,
+            target: backend.to_target(),
             features: None,
         },
         false,
@@ -417,16 +415,19 @@ fn cargo_clippy(cargoarg: &Option<&str>, package: &Package, target: &str) -> any
 
 fn run_test(
     cargoarg: &Option<&str>,
-    target: &str,
+    backend: Backends,
     examples: &[String],
     overwrite: bool,
 ) -> anyhow::Result<()> {
+    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+    let features: Option<&str> = Some(&s);
+
     examples.into_par_iter().for_each(|example| {
         let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
-            target,
-            features: DEFAULT_FEATURES,
+            target: backend.to_target(),
+            features,
             mode: BuildMode::Release,
         };
         if let Err(err) = command_parser(&cmd, false) {
@@ -436,8 +437,8 @@ fn run_test(
         let cmd = CargoCommand::Qemu {
             cargoarg,
             example,
-            target,
-            features: DEFAULT_FEATURES,
+            target: backend.to_target(),
+            features,
             mode: BuildMode::Release,
         };
 
@@ -448,13 +449,20 @@ fn run_test(
 
     Ok(())
 }
-fn example_check(cargoarg: &Option<&str>, target: &str, examples: &[String]) -> anyhow::Result<()> {
+fn example_check(
+    cargoarg: &Option<&str>,
+    backend: Backends,
+    examples: &[String],
+) -> anyhow::Result<()> {
+    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+    let features: Option<&str> = Some(&s);
+
     examples.into_par_iter().for_each(|example| {
         let cmd = CargoCommand::ExampleCheck {
             cargoarg,
             example,
-            target,
-            features: DEFAULT_FEATURES,
+            target: backend.to_target(),
+            features,
             mode: BuildMode::Release,
         };
 
@@ -466,13 +474,20 @@ fn example_check(cargoarg: &Option<&str>, target: &str, examples: &[String]) -> 
     Ok(())
 }
 
-fn example_build(cargoarg: &Option<&str>, target: &str, examples: &[String]) -> anyhow::Result<()> {
+fn example_build(
+    cargoarg: &Option<&str>,
+    backend: Backends,
+    examples: &[String],
+) -> anyhow::Result<()> {
+    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+    let features: Option<&str> = Some(&s);
+
     examples.into_par_iter().for_each(|example| {
         let cmd = CargoCommand::ExampleBuild {
             cargoarg,
             example,
-            target,
-            features: DEFAULT_FEATURES,
+            target: backend.to_target(),
+            features,
             mode: BuildMode::Release,
         };
 
@@ -486,17 +501,20 @@ fn example_build(cargoarg: &Option<&str>, target: &str, examples: &[String]) -> 
 
 fn build_and_check_size(
     cargoarg: &Option<&str>,
-    target: &str,
+    backend: Backends,
     examples: &[String],
     size_arguments: &Option<Sizearguments>,
 ) -> anyhow::Result<()> {
+    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+    let features: Option<&str> = Some(&s);
+
     examples.into_par_iter().for_each(|example| {
         // Make sure the requested example(s) are built
         let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
-            target,
-            features: DEFAULT_FEATURES,
+            target: backend.to_target(),
+            features,
             mode: BuildMode::Release,
         };
         if let Err(err) = command_parser(&cmd, false) {
@@ -506,8 +524,8 @@ fn build_and_check_size(
         let cmd = CargoCommand::ExampleSize {
             cargoarg,
             example,
-            target,
-            features: DEFAULT_FEATURES,
+            target: backend.to_target(),
+            features,
             mode: BuildMode::Release,
             arguments: size_arguments.clone(),
         };
