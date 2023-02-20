@@ -1,7 +1,10 @@
 use crate::syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
-    codegen::{local_resources_struct, module, shared_resources_struct},
+    codegen::{
+        bindings::{interrupt_entry, interrupt_exit},
+        local_resources_struct, module, shared_resources_struct,
+    },
 };
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -17,6 +20,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         let priority = task.args.priority;
         let cfgs = &task.cfgs;
         let attrs = &task.attrs;
+        let entry_stmts = interrupt_entry(app, analysis);
+        let exit_stmts = interrupt_exit(app, analysis);
 
         mod_app.push(quote!(
             #[allow(non_snake_case)]
@@ -24,6 +29,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             #(#attrs)*
             #(#cfgs)*
             unsafe fn #symbol() {
+                #(#entry_stmts)*
+
                 const PRIORITY: u8 = #priority;
 
                 rtic::export::run(PRIORITY, || {
@@ -31,6 +38,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                         #name::Context::new()
                     )
                 });
+
+                #(#exit_stmts)*
             }
         ));
 

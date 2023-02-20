@@ -1,5 +1,11 @@
 use crate::syntax::ast::App;
-use crate::{analyze::Analysis, codegen::util};
+use crate::{
+    analyze::Analysis,
+    codegen::{
+        bindings::{interrupt_entry, interrupt_exit},
+        util,
+    },
+};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
@@ -59,18 +65,25 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         if level > 0 {
             let doc = format!("Interrupt handler to dispatch async tasks at priority {level}");
             let attribute = &interrupts.get(&level).expect("UNREACHABLE").1.attrs;
+            let entry_stmts = interrupt_entry(app, analysis);
+            let exit_stmts = interrupt_exit(app, analysis);
+
             items.push(quote!(
                 #[allow(non_snake_case)]
                 #[doc = #doc]
                 #[no_mangle]
                 #(#attribute)*
                 unsafe fn #dispatcher_name() {
+                    #(#entry_stmts)*
+
                     /// The priority of this interrupt handler
                     const PRIORITY: u8 = #level;
 
                     rtic::export::run(PRIORITY, || {
                         #(#stmts)*
                     });
+
+                    #(#exit_stmts)*
                 }
             ));
         } else {

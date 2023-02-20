@@ -312,3 +312,11 @@ pub fn architecture_specific_analysis(app: &App, _: &SyntaxAnalysis) -> parse::R
 
     Ok(())
 }
+
+pub fn interrupt_entry(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    vec![]
+}
+
+pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    vec![]
+}
