@@ -1,7 +1,7 @@
 # Target Architecture
 
-While RTIC can currently target all Cortex-m devices there are some key architecure differences that 
-users should be aware of. Namely the absence of Base Priority Mask Register (`BASEPRI`) which lends
+While RTIC can currently target all Cortex-m devices there are some key architecture differences that 
+users should be aware of. Namely, the absence of Base Priority Mask Register (`BASEPRI`) which lends
 itself exceptionally well to the hardware priority ceiling support used in RTIC, in the ARMv6-M and
 ARMv8-M-base architectures, which forces RTIC to use source masking instead. For each implementation
 of lock and a detailed commentary of pros and cons, see the implementation of
@@ -29,7 +29,7 @@ Table 1 below shows a list of Cortex-m processors and which type of critical sec
 
 ## Priority Ceiling
 
-This implementation is covered in depth by the [Critical Sections][critical_sections] page of this book.
+This is covered by the [Resources][resources] page of this book.
 
 ## Source Masking
 
@@ -55,17 +55,14 @@ with B.
 ```
 
 At time *t1*, task B locks the shared resource by selectively disabling (using the NVIC) all other
-tasks which have a priority equal to or less than any task which shares resouces with B. In effect
-this creates a virtual priority ceiling, miroring the `BASEPRI` approach described in the
-[Critical Sections][critical_Sections] page. Task A is one such task that shares resources with
+tasks which have a priority equal to or less than any task which shares resources with B. In effect
+this creates a virtual priority ceiling, mirroring the `BASEPRI` approach. Task A is one such task that shares resources with
 task B. At time *t2*, task A is either spawned by task B or becomes pending through an interrupt
 condition, but does not yet preempt task B even though its priority is greater. This is because the
-NVIC is preventing it from starting due to task A being being disabled. At time *t3*, task B
+NVIC is preventing it from starting due to task A being disabled. At time *t3*, task B
 releases the lock by re-enabling the tasks in the NVIC. Because task A was pending and has a higher
 priority than task B, it immediately preempts task B and is free to use the shared resource without
 risk of data race conditions. At time *t4*, task A completes and returns the execution context to B.
 
 Since source masking relies on use of the NVIC, core exception sources such as HardFault, SVCall,
 PendSV, and SysTick cannot share data with other tasks.
-
-[critical_sections]: https://github.com/rtic-rs/cortex-m-rtic/blob/master/book/en/src/internals/critical-sections.md
