@@ -1,7 +1,7 @@
 #[cfg(not(any(
     feature = "cortex-m-source-masking",
     feature = "cortex-m-basepri",
-    feaute = "test-template"
+    feature = "test-template"
 )))]
 compile_error!("No backend selected");
 
@@ -9,7 +9,7 @@ compile_error!("No backend selected");
 pub use cortex::*;
 
 #[cfg(feature = "test-template")]
-pub use cortex::*;
+pub use template::*;
 
 #[cfg(any(feature = "cortex-m-source-masking", feature = "cortex-m-basepri"))]
 mod cortex;
