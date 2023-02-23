@@ -26,8 +26,9 @@
 <!-- - [Migration Guides](./migration.md)
   - [v0.5.x to v1.0.x](./migration/migration_v5.md)
   - [v0.4.x to v0.5.x](./migration/migration_v4.md)
-  - [RTFM to RTIC](./migration/migration_rtic.md)
-- [Under the hood](./internals.md) -->
+  - [RTFM to RTIC](./migration/migration_rtic.md) -->
+- [Under the hood](./internals.md)
+  - [Cortex-M architectures](./internals/targets.md)
   <!--- [Interrupt configuration](./internals/interrupt-configuration.md)-->
   <!--- [Non-reentrancy](./internals/non-reentrancy.md)-->
   <!--- [Access control](./internals/access.md)-->
