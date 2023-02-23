@@ -13,9 +13,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Run cargo fmt --check
-  stylertic:
-    name: cargo fmt rtic
+  # Run cargo xtask format-check
+  formatcheck:
+    name: cargo fmt
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -25,85 +25,8 @@ jobs:
         working-directory: ./rtic
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
 
-      - name: cargo fmt --check
-        working-directory: ./rtic
-        run:  cargo fmt --all -- --check
-
-  stylerticmacros:
-    name: cargo fmt rtic-macros
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-macros
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: cargo fmt --check
-        working-directory: ./rtic-macros
-        run:  cargo fmt --all -- --check
-
-  stylearbiter:
-    name: cargo fmt rtic-arbiter
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-arbiter
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: cargo fmt --check
-        working-directory: ./rtic-arbiter
-        run:  cargo fmt --all -- --check
-
-  stylechannel:
-    name: cargo fmt rtic-channel
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-channel
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: cargo fmt --check
-        working-directory: ./rtic-channel
-        run:  cargo fmt --all -- --check
-
-  stylemonotonics:
-    name: cargo fmt rtic-monotonics
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-monotonics
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: cargo fmt --check
-        working-directory: ./rtic-monotonics
-        run:  cargo fmt --all -- --check
-
-  styletime:
-    name: cargo fmt rtic-time 
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Fail on warnings
-        working-directory: ./rtic-time
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: cargo fmt --check
-        working-directory: ./rtic-time
-        run:  cargo fmt --all -- --check
-
+      - name: cargo xtask format-check
+        run:  cargo xtask format-check
 
   # Compilation check
   check:
@@ -673,12 +596,7 @@ jobs:
     name: ci
     if: github.event_name == 'push' && success()
     needs:
-      - stylertic
-      - stylerticmacros
-      - stylearbiter
-      - stylechannel
-      - stylemonotonics
-      - styletime
+      - formatcheck
       - check
       - clippy
       - checkexamples
