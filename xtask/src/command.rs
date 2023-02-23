@@ -61,6 +61,11 @@ pub enum CargoCommand<'a> {
         target: &'a str,
         features: Option<&'a str>,
     },
+    Format {
+        cargoarg: &'a Option<&'a str>,
+        package: Vec<String>,
+        check_only: bool,
+    },
     ExampleSize {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
@@ -79,8 +84,8 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::ExampleBuild { .. } | CargoCommand::Build { .. } => "build",
             CargoCommand::ExampleSize { .. } => "size",
             CargoCommand::Clippy { .. } => "clippy",
+            CargoCommand::Format { .. } => "fmt",
             // TODO
-            // CargoCommand::Fmt { .. } => "fmt",
             // CargoCommand::Test { .. } => "test",
             // CargoCommand::Doc { .. } => "doc",
         }
@@ -201,6 +206,27 @@ impl<'a> CargoCommand<'a> {
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
                 }
+                args
+            }
+            CargoCommand::Format {
+                cargoarg,
+                package,
+                check_only,
+            } => {
+                let mut args = vec!["+nightly", self.name()];
+                if let Some(cargoarg) = cargoarg {
+                    args.extend_from_slice(&[cargoarg]);
+                }
+
+                if !package.is_empty() {
+                    for package in package {
+                        args.extend_from_slice(&["--package", package]);
+                    }
+                }
+                if *check_only {
+                    args.extend_from_slice(&["--check"]);
+                }
+
                 args
             }
             CargoCommand::ExampleBuild {

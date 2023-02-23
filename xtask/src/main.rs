@@ -136,6 +136,12 @@ enum Commands {
     /// Check all packages
     Check(Package),
 
+    /// Check formatting
+    FormatCheck(Package),
+
+    /// Format code
+    Format(Package),
+
     /// Run clippy
     Clippy(Package),
 }
@@ -360,6 +366,16 @@ fn main() -> anyhow::Result<()> {
             info!("Running clippy on backend: {backend:?}");
             cargo_clippy(&cargoarg, &args, backend)?;
         }
+        Commands::FormatCheck(args) => {
+            info!("Running cargo fmt: {args:?}");
+            let check_only = true;
+            cargo_format(&cargoarg, &args, check_only)?;
+        }
+        Commands::Format(args) => {
+            info!("Running cargo fmt --check: {args:?}");
+            let check_only = false;
+            cargo_format(&cargoarg, &args, check_only)?;
+        }
     }
 
     Ok(())
@@ -415,6 +431,22 @@ fn cargo_clippy(
             package: package_filter(package),
             target: backend.to_target(),
             features: None,
+        },
+        false,
+    )?;
+    Ok(())
+}
+
+fn cargo_format(
+    cargoarg: &Option<&str>,
+    package: &Package,
+    check_only: bool,
+) -> anyhow::Result<()> {
+    command_parser(
+        &CargoCommand::Format {
+            cargoarg,
+            package: package_filter(package),
+            check_only,
         },
         false,
     )?;
@@ -621,6 +653,7 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
         | CargoCommand::Build { .. }
         | CargoCommand::Check { .. }
         | CargoCommand::Clippy { .. }
+        | CargoCommand::Format { .. }
         | CargoCommand::ExampleSize { .. } => {
             let cargo_result = run_command(command)?;
             if let Some(exit_code) = cargo_result.exit_status.code() {
