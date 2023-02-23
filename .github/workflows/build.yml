@@ -22,8 +22,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Fail on warnings
-        working-directory: ./rtic
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
       - name: cargo xtask format-check
         run:  cargo xtask format-check
