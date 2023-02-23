@@ -69,7 +69,7 @@ impl Backends {
 struct Cli {
     /// For which backend to build
     #[arg(value_enum, short, long)]
-    backend: Backends,
+    backend: Option<Backends>,
 
     /// List of comma separated examples to include, all others are excluded
     ///
@@ -254,7 +254,11 @@ fn main() -> anyhow::Result<()> {
 
     trace!("default logging level: {0}", cli.verbose);
 
-    let backend = cli.backend;
+    let backend = if let Some(backend) = cli.backend {
+        backend
+    } else {
+        Backends::default()
+    };
 
     let example = cli.example;
     let exampleexclude = cli.exampleexclude;
@@ -366,12 +370,14 @@ fn cargo_build(
     package: &Package,
     backend: Backends,
 ) -> anyhow::Result<()> {
+    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+    let features: Option<&str> = Some(&s);
     command_parser(
         &CargoCommand::Build {
             cargoarg,
             package: package_filter(package),
             target: backend.to_target(),
-            features: None,
+            features,
             mode: BuildMode::Release,
         },
         false,
@@ -384,12 +390,14 @@ fn cargo_check(
     package: &Package,
     backend: Backends,
 ) -> anyhow::Result<()> {
+    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+    let features: Option<&str> = Some(&s);
     command_parser(
         &CargoCommand::Check {
             cargoarg,
             package: package_filter(package),
             target: backend.to_target(),
-            features: None,
+            features,
         },
         false,
     )?;
