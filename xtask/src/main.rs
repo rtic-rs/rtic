@@ -315,7 +315,7 @@ fn main() -> anyhow::Result<()> {
 
     init_build_dir()?;
     #[allow(clippy::if_same_then_else)]
-    let cargoarg = if log_enabled!(Level::Trace) {
+    let cargologlevel = if log_enabled!(Level::Trace) {
         Some("-v")
     } else if log_enabled!(Level::Debug) {
         None
@@ -332,38 +332,38 @@ fn main() -> anyhow::Result<()> {
         Commands::FormatCheck(args) => {
             info!("Running cargo fmt: {args:?}");
             let check_only = true;
-            cargo_format(&cargoarg, &args, check_only)?;
+            cargo_format(&cargologlevel, &args, check_only)?;
         }
         Commands::Format(args) => {
             info!("Running cargo fmt --check: {args:?}");
             let check_only = false;
-            cargo_format(&cargoarg, &args, check_only)?;
+            cargo_format(&cargologlevel, &args, check_only)?;
         }
         Commands::Clippy(args) => {
             info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(&cargoarg, &args, backend)?;
+            cargo_clippy(&cargologlevel, &args, backend)?;
         }
         Commands::Check(args) => {
             info!("Checking on backend: {backend:?}");
-            cargo_check(&cargoarg, &args, backend)?;
+            cargo(&cli.command, &cargologlevel, &args, backend)?;
         }
         Commands::Build(args) => {
             info!("Building for backend: {backend:?}");
-            cargo_build(&cargoarg, &args, backend)?;
+            cargo_build(&cargologlevel, &args, backend)?;
         }
         Commands::ExampleCheck => {
             info!("Checking on backend: {backend:?}");
-            example_check(&cargoarg, backend, &examples_to_run)?;
+            example_check(&cargologlevel, backend, &examples_to_run)?;
         }
         Commands::ExampleBuild => {
             info!("Building for backend: {backend:?}");
-            example_build(&cargoarg, backend, &examples_to_run)?;
+            example_build(&cargologlevel, backend, &examples_to_run)?;
         }
         Commands::Size(arguments) => {
             // x86_64 target not valid
             info!("Measuring for backend: {backend:?}");
             build_and_check_size(
-                &cargoarg,
+                &cargologlevel,
                 backend,
                 &examples_to_run,
                 &arguments.sizearguments,
@@ -373,7 +373,7 @@ fn main() -> anyhow::Result<()> {
             // x86_64 target not valid
             info!("Testing for backend: {backend:?}");
             run_test(
-                &cargoarg,
+                &cargologlevel,
                 backend,
                 &examples_to_run,
                 args.overwrite_expected,
@@ -381,7 +381,7 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Doc => {
             info!("Running cargo doc on backend: {backend:?}");
-            cargo_doc(&cargoarg, backend)?;
+            cargo_doc(&cargologlevel, backend)?;
         }
     }
 
