@@ -63,6 +63,13 @@ impl Backends {
     }
 }
 
+#[derive(Copy, Clone, Default, Debug)]
+enum BuildOrCheck {
+    #[default]
+    Check,
+    Build,
+}
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 /// RTIC xtask powered testing toolbox
@@ -345,19 +352,29 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Check(args) => {
             info!("Checking on backend: {backend:?}");
-            cargo(&cli.command, &cargologlevel, &args, backend)?;
+            cargo(BuildOrCheck::Check, &cargologlevel, &args, backend)?;
         }
         Commands::Build(args) => {
             info!("Building for backend: {backend:?}");
-            cargo_build(&cargologlevel, &args, backend)?;
+            cargo(BuildOrCheck::Build, &cargologlevel, &args, backend)?;
         }
         Commands::ExampleCheck => {
             info!("Checking on backend: {backend:?}");
-            example_check(&cargologlevel, backend, &examples_to_run)?;
+            cargo_example(
+                BuildOrCheck::Check,
+                &cargologlevel,
+                backend,
+                &examples_to_run,
+            )?;
         }
         Commands::ExampleBuild => {
             info!("Building for backend: {backend:?}");
-            example_build(&cargologlevel, backend, &examples_to_run)?;
+            cargo_example(
+                BuildOrCheck::Build,
+                &cargologlevel,
+                backend,
+                &examples_to_run,
+            )?;
         }
         Commands::Size(arguments) => {
             // x86_64 target not valid
@@ -388,75 +405,74 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn cargo_build(
+fn cargo(
+    operation: BuildOrCheck,
     cargoarg: &Option<&str>,
     package: &Package,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    let packages_to_check = package_filter(package);
-    if packages_to_check.contains(&"rtic".to_owned()) {
-        // rtic crate has features which needs special handling
-        let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-        let features: Option<&str> = Some(&s);
-
-        command_parser(
-            &CargoCommand::Build {
-                cargoarg,
-                package: packages_to_check,
-                target: backend.to_target(),
-                features,
-                mode: BuildMode::Release,
-            },
-            false,
-        )?;
+    // rtic crate has features which needs special handling
+    let rtic_features = &format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+    let features: Option<&str>;
+    let packages = package_filter(package);
+    features = if packages.contains(&"rtic".to_owned()) {
+        Some(&rtic_features)
     } else {
-        command_parser(
-            &CargoCommand::Build {
-                cargoarg,
-                package: package_filter(package),
-                target: backend.to_target(),
-                features: None,
-                mode: BuildMode::Release,
-            },
-            false,
-        )?;
-    }
+        None
+    };
+
+    let command = match operation {
+        BuildOrCheck::Check => CargoCommand::Check {
+            cargoarg,
+            package: packages,
+            target: backend.to_target(),
+            features,
+            mode: BuildMode::Release,
+        },
+        BuildOrCheck::Build => CargoCommand::Build {
+            cargoarg,
+            package: packages,
+            target: backend.to_target(),
+            features,
+            mode: BuildMode::Release,
+        },
+    };
+    command_parser(&command, false)?;
     Ok(())
 }
 
-fn cargo_check(
+fn cargo_example(
+    operation: BuildOrCheck,
     cargoarg: &Option<&str>,
-    package: &Package,
     backend: Backends,
+    examples: &[String],
 ) -> anyhow::Result<()> {
-    let packages_to_check = package_filter(package);
-    if packages_to_check.contains(&"rtic".to_owned()) {
-        // rtic crate has features which needs special handling
-        let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-        let features: Option<&str> = Some(&s);
+    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+    let features: Option<&str> = Some(&s);
 
-        command_parser(
-            &CargoCommand::Check {
+    examples.into_par_iter().for_each(|example| {
+        let command = match operation {
+            BuildOrCheck::Check => CargoCommand::ExampleCheck {
                 cargoarg,
-                package: package_filter(package),
+                example,
                 target: backend.to_target(),
                 features,
                 mode: BuildMode::Release,
             },
-            false,
-        )?;
-    } else {
-        command_parser(
-            &CargoCommand::Check {
+            BuildOrCheck::Build => CargoCommand::ExampleBuild {
                 cargoarg,
-                package: package_filter(package),
+                example,
                 target: backend.to_target(),
-                features: None,
+                features,
                 mode: BuildMode::Release,
             },
-            false,
-        )?;
-    }
+        };
+
+        if let Err(err) = command_parser(&command, false) {
+            error!("{err}");
+        }
+    });
+
     Ok(())
 }
 
@@ -548,55 +564,6 @@ fn run_test(
         };
 
         if let Err(err) = command_parser(&cmd, overwrite) {
-            error!("{err}");
-        }
-    });
-
-    Ok(())
-}
-fn example_check(
-    cargoarg: &Option<&str>,
-    backend: Backends,
-    examples: &[String],
-) -> anyhow::Result<()> {
-    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-    let features: Option<&str> = Some(&s);
-
-    examples.into_par_iter().for_each(|example| {
-        let cmd = CargoCommand::ExampleCheck {
-            cargoarg,
-            example,
-            target: backend.to_target(),
-            features,
-            mode: BuildMode::Release,
-        };
-
-        if let Err(err) = command_parser(&cmd, false) {
-            error!("{err}");
-        }
-    });
-
-    Ok(())
-}
-
-fn example_build(
-    cargoarg: &Option<&str>,
-    backend: Backends,
-    examples: &[String],
-) -> anyhow::Result<()> {
-    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-    let features: Option<&str> = Some(&s);
-
-    examples.into_par_iter().for_each(|example| {
-        let cmd = CargoCommand::ExampleBuild {
-            cargoarg,
-            example,
-            target: backend.to_target(),
-            features,
-            mode: BuildMode::Release,
-        };
-
-        if let Err(err) = command_parser(&cmd, false) {
             error!("{err}");
         }
     });
