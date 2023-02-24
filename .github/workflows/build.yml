@@ -353,9 +353,21 @@ jobs:
           lychee --offline --format detailed $td/api/rtic_monotonics/
           lychee --offline --format detailed $td/api/rtic_time/
 
+      - name: Archive the API docs
+        run: |
+          cp -r target/doc apidocs
+          tar -cf apidocs.tar apidocs
+
+      - name: Store the API docs
+        uses: actions/upload-artifact@v3
+        with:
+          name: apidocs
+          path: apidocs.tar
+
   # Build the books
   mdbook:
     name: build mdbook
+    needs: docs
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -380,12 +392,21 @@ jobs:
         shell: 'script --return --quiet --command "bash {0}"'
         run: cd book/en && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
 
+      - name: Download built API docs
+        uses: actions/download-artifact@v3
+        with:
+          name: apidocs
+
+      - name: Extract the API docs
+        run: tar -xf apidocs 
+
       - name: Check links
         run: |
           td=$(mktemp -d)
           mkdir $td/book
           cp -r book/en/book $td/book/en
           cp LICENSE-* $td/book/en
+          cp -r apidocs/ $td/api
 
           lychee --offline --format detailed $td/book/en/
 
