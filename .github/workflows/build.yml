@@ -344,14 +344,14 @@ jobs:
         run: |
           td=$(mktemp -d)
           cp -r target/doc $td/api
-          lychee --offline $td/api/rtic/
-          lychee --offline $td/api/rtic_macros/
-          lychee --offline $td/api/rtic_arbiter/
-          lychee --offline $td/api/rtic_channel/
-          lychee --offline $td/api/rtic_common/
-          lychee --offline $td/api/rtic_macros/
-          lychee --offline $td/api/rtic_monotonics/
-          lychee --offline $td/api/rtic_time/
+          lychee --offline --format detailed $td/api/rtic/
+          lychee --offline --format detailed $td/api/rtic_macros/
+          lychee --offline --format detailed $td/api/rtic_arbiter/
+          lychee --offline --format detailed $td/api/rtic_channel/
+          lychee --offline --format detailed $td/api/rtic_common/
+          lychee --offline --format detailed $td/api/rtic_macros/
+          lychee --offline --format detailed $td/api/rtic_monotonics/
+          lychee --offline --format detailed $td/api/rtic_time/
 
   # Build the books
   mdbook:
@@ -387,7 +387,7 @@ jobs:
           cp -r book/en/book $td/book/en
           cp LICENSE-* $td/book/en
 
-          lychee --offline $td/book/en/
+          lychee --offline --format detailed $td/book/en/
 
 #  # Update stable branch
 #  #
