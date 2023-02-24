@@ -173,7 +173,9 @@ jobs:
 
       # Use precompiled binutils
       - name: Install cargo-binutils
-        uses: taiki-e/install-action@cargo-binutils
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binutils
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
@@ -327,7 +329,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install lychee
-        uses: taiki-e/install-action@lychee
+        uses: taiki-e/install-action@v2
+        with:
+          tool: lychee
 
       - name: Remove cargo-config
         run: rm -f .cargo/config
@@ -358,10 +362,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install lychee
-        uses: taiki-e/install-action@lychee
+        uses: taiki-e/install-action@v2
+        with:
+          tool: lychee
 
       - name: Install mdbook-mermaid
-        uses: taiki-e/install-action@mdbook-mermaid
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook-mermaid
 
       - name: mdBook Action
         uses: peaceiris/actions-mdbook@v1
@@ -444,11 +452,15 @@ jobs:
 #      - uses: actions/checkout@v3
 #
 #     - name: Install lychee
-#       uses: taiki-e/install-action@lychee
+#       uses: taiki-e/install-action@v2
+#       with:
+#         tool: lychee
 #
 #      - name: Install mdbook-mermaid
-#        uses: taiki-e/install-action@mdbook-mermaid
-#
+#        uses: taiki-e/install-action@v2
+#        with:
+#          tool: mdbook-mermaid
+# 
 #      - name: mdBook Action
 #        uses: peaceiris/actions-mdbook@v1
 #        with:
