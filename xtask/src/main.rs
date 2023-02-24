@@ -386,18 +386,34 @@ fn cargo_build(
     package: &Package,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-    let features: Option<&str> = Some(&s);
-    command_parser(
-        &CargoCommand::Build {
-            cargoarg,
-            package: package_filter(package),
-            target: backend.to_target(),
-            features,
-            mode: BuildMode::Release,
-        },
-        false,
-    )?;
+    let packages_to_check = package_filter(package);
+    if packages_to_check.contains(&"rtic".to_owned()) {
+        // rtic crate has features which needs special handling
+        let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+        let features: Option<&str> = Some(&s);
+
+        command_parser(
+            &CargoCommand::Build {
+                cargoarg,
+                package: packages_to_check,
+                target: backend.to_target(),
+                features,
+                mode: BuildMode::Release,
+            },
+            false,
+        )?;
+    } else {
+        command_parser(
+            &CargoCommand::Build {
+                cargoarg,
+                package: package_filter(package),
+                target: backend.to_target(),
+                features: None,
+                mode: BuildMode::Release,
+            },
+            false,
+        )?;
+    }
     Ok(())
 }
 
@@ -406,17 +422,32 @@ fn cargo_check(
     package: &Package,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-    let features: Option<&str> = Some(&s);
-    command_parser(
-        &CargoCommand::Check {
-            cargoarg,
-            package: package_filter(package),
-            target: backend.to_target(),
-            features,
-        },
-        false,
-    )?;
+    let packages_to_check = package_filter(package);
+    if packages_to_check.contains(&"rtic".to_owned()) {
+        // rtic crate has features which needs special handling
+        let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+        let features: Option<&str> = Some(&s);
+
+        command_parser(
+            &CargoCommand::Check {
+                cargoarg,
+                package: package_filter(package),
+                target: backend.to_target(),
+                features,
+            },
+            false,
+        )?;
+    } else {
+        command_parser(
+            &CargoCommand::Check {
+                cargoarg,
+                package: package_filter(package),
+                target: backend.to_target(),
+                features: None,
+            },
+            false,
+        )?;
+    }
     Ok(())
 }
 
@@ -425,15 +456,32 @@ fn cargo_clippy(
     package: &Package,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    command_parser(
-        &CargoCommand::Clippy {
-            cargoarg,
-            package: package_filter(package),
-            target: backend.to_target(),
-            features: None,
-        },
-        false,
-    )?;
+    let packages_to_check = package_filter(package);
+    if packages_to_check.contains(&"rtic".to_owned()) {
+        // rtic crate has features which needs special handling
+        let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
+        let features: Option<&str> = Some(&s);
+
+        command_parser(
+            &CargoCommand::Clippy {
+                cargoarg,
+                package: package_filter(package),
+                target: backend.to_target(),
+                features,
+            },
+            false,
+        )?;
+    } else {
+        command_parser(
+            &CargoCommand::Clippy {
+                cargoarg,
+                package: package_filter(package),
+                target: backend.to_target(),
+                features: None,
+            },
+            false,
+        )?;
+    }
     Ok(())
 }
 
