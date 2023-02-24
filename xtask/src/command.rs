@@ -71,6 +71,9 @@ pub enum CargoCommand<'a> {
         cargoarg: &'a Option<&'a str>,
         features: Option<&'a str>,
     },
+    Book {
+        mdbookarg: &'a Option<&'a str>,
+    },
     ExampleSize {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
@@ -91,6 +94,24 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Clippy { .. } => "clippy",
             CargoCommand::Format { .. } => "fmt",
             CargoCommand::Doc { .. } => "doc",
+            CargoCommand::Book { .. } => "build",
+            // TODO
+            // CargoCommand::Test { .. } => "test",
+        }
+    }
+    pub fn command(&self) -> &str {
+        match self {
+            CargoCommand::Run { .. }
+            | CargoCommand::Qemu { .. }
+            | CargoCommand::ExampleCheck { .. }
+            | CargoCommand::Check { .. }
+            | CargoCommand::ExampleBuild { .. }
+            | CargoCommand::Build { .. }
+            | CargoCommand::ExampleSize { .. }
+            | CargoCommand::Clippy { .. }
+            | CargoCommand::Format { .. }
+            | CargoCommand::Doc { .. } => "cargo",
+            CargoCommand::Book { .. } => "mdbook",
             // TODO
             // CargoCommand::Test { .. } => "test",
         }
@@ -230,6 +251,18 @@ impl<'a> CargoCommand<'a> {
                 }
                 args
             }
+            CargoCommand::Book { mdbookarg } => {
+                let mut args = vec![];
+
+                args.extend_from_slice(&[self.name()]);
+
+                if let Some(arg) = mdbookarg {
+                    args.extend_from_slice(&[arg]);
+                }
+
+                args.extend_from_slice(&["book/en"]);
+                args
+            }
             CargoCommand::Format {
                 cargoarg,
                 package,
@@ -323,10 +356,6 @@ impl<'a> CargoCommand<'a> {
                 args
             }
         }
-    }
-
-    pub fn command(&self) -> &str {
-        "cargo"
     }
 }
 

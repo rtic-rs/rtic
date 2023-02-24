@@ -154,6 +154,9 @@ enum Commands {
 
     /// Build docs
     Doc,
+
+    /// Build books with mdbook
+    Book,
 }
 
 #[derive(Args, Debug)]
@@ -400,6 +403,10 @@ fn main() -> anyhow::Result<()> {
             info!("Running cargo doc on backend: {backend:?}");
             cargo_doc(&cargologlevel, backend)?;
         }
+        Commands::Book => {
+            info!("Running mdbook build");
+            cargo_book(&cargologlevel)?;
+        }
     }
 
     Ok(())
@@ -531,6 +538,16 @@ fn cargo_doc(cargoarg: &Option<&str>, backend: Backends) -> anyhow::Result<()> {
     let features: Option<&str> = Some(&s);
 
     command_parser(&CargoCommand::Doc { cargoarg, features }, false)?;
+    Ok(())
+}
+
+fn cargo_book(cargoarg: &Option<&str>) -> anyhow::Result<()> {
+    command_parser(
+        &CargoCommand::Book {
+            mdbookarg: cargoarg,
+        },
+        false,
+    )?;
     Ok(())
 }
 
@@ -680,13 +697,14 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
             }
             Ok(())
         }
-        CargoCommand::ExampleBuild { .. }
+        CargoCommand::Format { .. }
         | CargoCommand::ExampleCheck { .. }
-        | CargoCommand::Build { .. }
+        | CargoCommand::ExampleBuild { .. }
         | CargoCommand::Check { .. }
+        | CargoCommand::Build { .. }
         | CargoCommand::Clippy { .. }
         | CargoCommand::Doc { .. }
-        | CargoCommand::Format { .. }
+        | CargoCommand::Book { .. }
         | CargoCommand::ExampleSize { .. } => {
             let cargo_result = run_command(command)?;
             if let Some(exit_code) = cargo_result.exit_status.code() {
