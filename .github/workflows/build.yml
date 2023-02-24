@@ -475,6 +475,8 @@ jobs:
 #    runs-on: ubuntu-22.04
 #    needs:
 #      mergetostablebranch
+#      docs      
+#      mdbook
 #
 #    # Only run this when pushing to master branch
 #    if: github.ref == 'refs/heads/master'
@@ -509,6 +511,7 @@ jobs:
 #      - name: Remove cargo-config
 #        run: rm -f .cargo/config
 #
+#      # TODO: Download API docs artifacts instead
 #      - name: Build docs
 #        run: cargo doc
 #
@@ -558,6 +561,7 @@ jobs:
 #          fi
 #
 #          # Build books
+#          # TODO: Download books artifacts instead
 #          for lang in ${langs[@]}; do
 #              ( cd book/$lang &&
 #                if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
