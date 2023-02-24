@@ -33,14 +33,11 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        package:
-          - rtic
-          - rtic-arbiter
-          - rtic-channel
-          - rtic-common
-          - rtic-macros
-          - rtic-monotonics
-          - rtic-time
+        backend:
+          - thumbv7
+          - thumbv6
+          - thumbv8-base
+          - thumbv8-main
         toolchain:
           - nightly
     steps:
@@ -59,26 +56,22 @@ jobs:
           rustup target add thumbv8m.main-none-eabi
 
       - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' ${{ matrix.package }}/src/lib.rs
+        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --verbose check ${{ matrix.package }}
+      - run: cargo xtask --verbose --backend ${{ matrix.backend }} check 
   # Clippy
   clippy:
-    name: Cargo clippy rtic
+    name: clippy
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        package:
-          - rtic
-          - rtic-arbiter
-          - rtic-channel
-          - rtic-common
-          - rtic-macros
-          - rtic-monotonics
-          - rtic-time
+          - thumbv7
+          - thumbv6
+          - thumbv8-base
+          - thumbv8-main
         toolchain:
           - nightly
     steps:
@@ -100,12 +93,12 @@ jobs:
         run: rustup component add clippy
 
       - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)]\n#![deny(clippy::all)],' ${{ matrix.package }}/src/lib.rs
+        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --verbose clippy ${{ matrix.package }}
+      - run: cargo xtask --verbose --backend ${{ matrix.backend }} clippy
 
   # Verify all examples, checks
   checkexamples:
