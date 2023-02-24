@@ -68,6 +68,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
+        backend:
           - thumbv7
           - thumbv6
           - thumbv8-base
@@ -132,11 +133,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Check the examples
-        if: ${{ matrix.backend == 'thumbv8m-base' }}
+        if: ${{ matrix.backend == 'thumbv8-base' }}
         run: cargo xtask --verbose --backend ${{ matrix.backend }} --exampleexclude pool example-check
 
       - name: Check the examples
-        if: ${{ matrix.backend != 'thumbv8m-base' }}
+        if: ${{ matrix.backend != 'thumbv8-base' }}
         run: cargo xtask --verbose --backend ${{ matrix.backend }} example-check
 
   # Verify the example output with run-pass tests
@@ -190,6 +191,14 @@ jobs:
   testsrtic:
     name: tests rtic
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        backend:
+          - thumbv7
+          - thumbv6
+          - thumbv8-base
+          - thumbv8-main
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -203,12 +212,18 @@ jobs:
 
       - name: Run cargo test
         working-directory: ./rtic
-        run: cargo test --test tests
+        run: cargo test --features ${{ matrix.backend }} --test ui
 
-  # Run the  macros test-suite
+  # Run the macros test-suite
   testsmacros:
     name: tests rtic-macros
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        backend:
+          - cortex-m-source-masking
+          - cortex-m-basepri
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -222,7 +237,7 @@ jobs:
 
       - name: cargo check
         working-directory: ./rtic-macros
-        run: cargo test
+        run: cargo test --features ${{ matrix.backend }} 
 
   # Run test suite
   testsarbiter:
@@ -298,7 +313,7 @@ jobs:
 
       - name: Run cargo test
         working-directory: ./rtic-time
-        run: cargo test --test tests
+        run: cargo test
 
   # Build documentation, check links
   docs:
