@@ -144,6 +144,9 @@ enum Commands {
 
     /// Run clippy
     Clippy(Package),
+
+    /// Build docs
+    Doc,
 }
 
 #[derive(Args, Debug)]
@@ -366,6 +369,10 @@ fn main() -> anyhow::Result<()> {
             info!("Running clippy on backend: {backend:?}");
             cargo_clippy(&cargoarg, &args, backend)?;
         }
+        Commands::Doc => {
+            info!("Running cargo doc on backend: {backend:?}");
+            cargo_doc(&cargoarg, backend)?;
+        }
         Commands::FormatCheck(args) => {
             info!("Running cargo fmt: {args:?}");
             let check_only = true;
@@ -498,6 +505,14 @@ fn cargo_format(
         },
         false,
     )?;
+    Ok(())
+}
+
+fn cargo_doc(cargoarg: &Option<&str>, backend: Backends) -> anyhow::Result<()> {
+    let s = format!("{}", backend.to_rtic_feature());
+    let features: Option<&str> = Some(&s);
+
+    command_parser(&CargoCommand::Doc { cargoarg, features }, false)?;
     Ok(())
 }
 
@@ -701,6 +716,7 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
         | CargoCommand::Build { .. }
         | CargoCommand::Check { .. }
         | CargoCommand::Clippy { .. }
+        | CargoCommand::Doc { .. }
         | CargoCommand::Format { .. }
         | CargoCommand::ExampleSize { .. } => {
             let cargo_result = run_command(command)?;
