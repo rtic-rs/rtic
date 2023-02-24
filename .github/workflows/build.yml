@@ -380,21 +380,14 @@ jobs:
         shell: 'script --return --quiet --command "bash {0}"'
         run: cd book/en && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
 
-      - name: Build book in Russian
-        shell: 'script --return --quiet --command "bash {0}"'
-        run: cd book/ru && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then echo "Russian book needs updating!"; else exit 0; fi
-
       - name: Check links
         run: |
           td=$(mktemp -d)
           mkdir $td/book
           cp -r book/en/book $td/book/en
-          cp -r book/ru/book $td/book/ru
           cp LICENSE-* $td/book/en
-          cp LICENSE-* $td/book/ru
 
           lychee --offline $td/book/en/
-          lychee --offline $td/book/ru/
 
 #  # Update stable branch
 #  #
@@ -485,7 +478,7 @@ jobs:
 #      - name: Build books
 #        shell: 'script --return --quiet --command "bash {0}"'
 #        run: |
-#          langs=( en ru )
+#          langs=( en )
 #          devver=( dev )
 #          # The latest stable must be the first element in the array
 #          vers=( "1" "0.5" "0.4"  )
