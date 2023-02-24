@@ -54,6 +54,7 @@ pub enum CargoCommand<'a> {
         package: Vec<String>,
         target: &'a str,
         features: Option<&'a str>,
+        mode: BuildMode,
     },
     Clippy {
         cargoarg: &'a Option<&'a str>,
@@ -172,6 +173,7 @@ impl<'a> CargoCommand<'a> {
                 package,
                 target,
                 features,
+                mode,
             } => {
                 let mut args = vec!["+nightly"];
                 if let Some(cargoarg) = cargoarg {
@@ -186,6 +188,9 @@ impl<'a> CargoCommand<'a> {
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
+                }
+                if let Some(flag) = mode.to_flag() {
+                    args.push(flag);
                 }
                 args
             }

@@ -67,7 +67,7 @@ impl Backends {
 #[command(author, version, about, long_about = None)]
 /// RTIC xtask powered testing toolbox
 struct Cli {
-    /// For which backend to build
+    /// For which backend to build (defaults to thumbv7)
     #[arg(value_enum, short, long)]
     backend: Option<Backends>,
 
@@ -100,6 +100,27 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Check formatting
+    FormatCheck(Package),
+
+    /// Format code
+    Format(Package),
+
+    /// Run clippy
+    Clippy(Package),
+
+    /// Check all packages
+    Check(Package),
+
+    /// Build all packages
+    Build(Package),
+
+    /// Check all examples
+    ExampleCheck,
+
+    /// Build all examples
+    ExampleBuild,
+
     /// Run `cargo size` on selected or all examples
     ///
     /// To pass options to `cargo size`, add `--` and then the following
@@ -123,27 +144,6 @@ enum Commands {
     ///
     /// Requires that an ARM target is selected
     Run(QemuAndRun),
-
-    /// Build all examples
-    ExampleBuild,
-
-    /// Check all packages
-    ExampleCheck,
-
-    /// Build all examples
-    Build(Package),
-
-    /// Check all packages
-    Check(Package),
-
-    /// Check formatting
-    FormatCheck(Package),
-
-    /// Format code
-    Format(Package),
-
-    /// Run clippy
-    Clippy(Package),
 
     /// Build docs
     Doc,
@@ -329,6 +329,36 @@ fn main() -> anyhow::Result<()> {
     };
 
     match cli.command {
+        Commands::FormatCheck(args) => {
+            info!("Running cargo fmt: {args:?}");
+            let check_only = true;
+            cargo_format(&cargoarg, &args, check_only)?;
+        }
+        Commands::Format(args) => {
+            info!("Running cargo fmt --check: {args:?}");
+            let check_only = false;
+            cargo_format(&cargoarg, &args, check_only)?;
+        }
+        Commands::Clippy(args) => {
+            info!("Running clippy on backend: {backend:?}");
+            cargo_clippy(&cargoarg, &args, backend)?;
+        }
+        Commands::Check(args) => {
+            info!("Checking on backend: {backend:?}");
+            cargo_check(&cargoarg, &args, backend)?;
+        }
+        Commands::Build(args) => {
+            info!("Building for backend: {backend:?}");
+            cargo_build(&cargoarg, &args, backend)?;
+        }
+        Commands::ExampleCheck => {
+            info!("Checking on backend: {backend:?}");
+            example_check(&cargoarg, backend, &examples_to_run)?;
+        }
+        Commands::ExampleBuild => {
+            info!("Building for backend: {backend:?}");
+            example_build(&cargoarg, backend, &examples_to_run)?;
+        }
         Commands::Size(arguments) => {
             // x86_64 target not valid
             info!("Measuring for backend: {backend:?}");
@@ -349,39 +379,9 @@ fn main() -> anyhow::Result<()> {
                 args.overwrite_expected,
             )?;
         }
-        Commands::ExampleBuild => {
-            info!("Building for backend: {backend:?}");
-            example_build(&cargoarg, backend, &examples_to_run)?;
-        }
-        Commands::ExampleCheck => {
-            info!("Checking on backend: {backend:?}");
-            example_check(&cargoarg, backend, &examples_to_run)?;
-        }
-        Commands::Build(args) => {
-            info!("Building for backend: {backend:?}");
-            cargo_build(&cargoarg, &args, backend)?;
-        }
-        Commands::Check(args) => {
-            info!("Checking on backend: {backend:?}");
-            cargo_check(&cargoarg, &args, backend)?;
-        }
-        Commands::Clippy(args) => {
-            info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(&cargoarg, &args, backend)?;
-        }
         Commands::Doc => {
             info!("Running cargo doc on backend: {backend:?}");
             cargo_doc(&cargoarg, backend)?;
-        }
-        Commands::FormatCheck(args) => {
-            info!("Running cargo fmt: {args:?}");
-            let check_only = true;
-            cargo_format(&cargoarg, &args, check_only)?;
-        }
-        Commands::Format(args) => {
-            info!("Running cargo fmt --check: {args:?}");
-            let check_only = false;
-            cargo_format(&cargoarg, &args, check_only)?;
         }
     }
 
@@ -441,6 +441,7 @@ fn cargo_check(
                 package: package_filter(package),
                 target: backend.to_target(),
                 features,
+                mode: BuildMode::Release,
             },
             false,
         )?;
@@ -451,6 +452,7 @@ fn cargo_check(
                 package: package_filter(package),
                 target: backend.to_target(),
                 features: None,
+                mode: BuildMode::Release,
             },
             false,
         )?;
