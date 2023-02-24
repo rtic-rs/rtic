@@ -6,9 +6,9 @@ All RTIC applications use the [`app`] attribute (`#[app(..)]`). This attribute o
 
 The `app` attribute will expand into a suitable entry point and thus replaces the use of the [`cortex_m_rt::entry`] attribute.
 
-[`app`]: ../../../api/cortex_m_rtic_macros/attr.app.html
+[`app`]: ../../../api/rtic_macros/attr.app.html
 [`svd2rust`]: https://crates.io/crates/svd2rust
-[`cortex_m_rt::entry`]: ../../../api/cortex_m_rt_macros/attr.entry.html
+[`cortex_m_rt::entry`]: https://docs.rs/cortex-m-rt-macros/latest/cortex_m_rt_macros/attr.entry.html
 
 ## Structure and zero-cost concurrency
 
