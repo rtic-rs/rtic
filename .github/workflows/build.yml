@@ -197,10 +197,10 @@ jobs:
     strategy:
       matrix:
         backend:
-          - thumbv7
-          - thumbv6
-          - thumbv8-base
-          - thumbv8-main
+          - thumbv7-backend
+          - thumbv6-backend
+          - thumbv8base-backend
+          - thumbv8main-backend
 
     steps:
       - name: Checkout
