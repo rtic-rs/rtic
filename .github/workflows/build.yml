@@ -398,7 +398,7 @@ jobs:
           name: apidocs
 
       - name: Extract the API docs
-        run: tar -xf apidocs 
+        run: tar -xf apidocs.tar 
 
       - name: Check links
         run: |
