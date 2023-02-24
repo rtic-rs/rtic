@@ -320,32 +320,14 @@ jobs:
 
   # Build documentation, check links
   docs:
-    name: Cargo docs, check links
+    name: Build docs
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Cache pip installed linkchecker
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
-        with:
-        # Semantic version range syntax or exact version of a Python version
-          python-version: '3.x'
-
-      # You can test your matrix by printing the current Python version
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install dependencies
-        run: pip install git+https://github.com/linkchecker/linkchecker.git
+      - name: Install lychee
+        run: cargo install lychee
 
       - name: Remove cargo-config
         run: rm -f .cargo/config
@@ -358,34 +340,25 @@ jobs:
         run: |
           td=$(mktemp -d)
           cp -r target/doc $td/api
-          linkchecker $td/api/rtic/
-          linkchecker $td/api/rtic_macros/
-          linkchecker $td/api/rtic_arbiter/
-          linkchecker $td/api/rtic_channel/
-          linkchecker $td/api/rtic_common/
-          linkchecker $td/api/rtic_macros/
-          linkchecker $td/api/rtic_monotonics/
-          linkchecker $td/api/rtic_time/
+          lychee --offline $td/api/rtic/
+          lychee --offline $td/api/rtic_macros/
+          lychee --offline $td/api/rtic_arbiter/
+          lychee --offline $td/api/rtic_channel/
+          lychee --offline $td/api/rtic_common/
+          lychee --offline $td/api/rtic_macros/
+          lychee --offline $td/api/rtic_monotonics/
+          lychee --offline $td/api/rtic_time/
 
   # Build the books
   mdbook:
-    name: mdbook, check links
+    name: build mdbook
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
-        with:
-        # Semantic version range syntax or exact version of a Python version
-          python-version: '3.x'
 
-      # You can test your matrix by printing the current Python version
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install dependencies
-        run: pip install git+https://github.com/linkchecker/linkchecker.git
+      - name: Install lychee
+        run: cargo install lychee
 
       - name: Install mdbook-mermaid
         run: cargo install mdbook-mermaid
@@ -412,8 +385,8 @@ jobs:
           cp LICENSE-* $td/book/en
           cp LICENSE-* $td/book/ru
 
-          linkchecker $td/book/en/
-          linkchecker $td/book/ru/
+          lychee --offline $td/book/en/
+          lychee --offline $td/book/ru/
 
 #  # Update stable branch
 #  #
