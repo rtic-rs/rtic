@@ -24,6 +24,9 @@ jobs:
       - name: Fail on warnings
         run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
       - name: cargo xtask format-check
         run:  cargo xtask format-check
 
