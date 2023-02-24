@@ -340,7 +340,8 @@ jobs:
         run: rm -f .cargo/config
 
       - name: Build docs
-        run: cargo doc
+        # TODO: Any difference between backends?
+        run: cargo doc --features thumbv7-backend
 
       - name: Check links
         run: |
