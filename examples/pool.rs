@@ -20,7 +20,7 @@ pool!(P: [u8; 128]);
 #[app(device = lm3s6965, dispatchers = [SSI0, QEI0])]
 mod app {
     use crate::{Box, Pool};
-    use cortex_m_semihosting::{debug, hprintln};
+    use cortex_m_semihosting::debug;
     use lm3s6965::Interrupt;
 
     // Import the memory pool into scope
@@ -57,19 +57,15 @@ mod app {
     }
 
     #[task]
-    fn foo(_: foo::Context, x: Box<P>) {
-        hprintln!("foo({:?})", x.as_ptr());
-
+    fn foo(_: foo::Context, _x: Box<P>) {
         // explicitly return the block to the pool
-        drop(x);
+        drop(_x);
 
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
     }
 
     #[task(priority = 2)]
-    fn bar(_: bar::Context, x: Box<P>) {
-        hprintln!("bar({:?})", x.as_ptr());
-
+    fn bar(_: bar::Context, _x: Box<P>) {
         // this is done automatically so we can omit the call to `drop`
         // drop(x);
     }
