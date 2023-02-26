@@ -9,6 +9,14 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [v1.1.4] - 2023-02-26
+
+### Added
+
 - CFG: Support #[cfg] on HW task, cleanup for SW tasks
 - CFG: Slightly improved support for #[cfg] on Monotonics
 - CI: Check examples also for thumbv8.{base,main}
@@ -551,7 +559,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.4...HEAD
+[v1.1.4]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.3...v1.1.4
 [v1.1.3]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.2...v1.1.3
 [v1.1.2]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.1...v1.1.2
 [v1.1.1]: https://github.com/rtic-rs/cortex-m-rtic/compare/v1.1.0...v1.1.1
