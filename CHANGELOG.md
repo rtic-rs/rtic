@@ -109,6 +109,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Try to detect `target-dir` for rtic-expansion.rs
 
+### Changed
+
+- `spawn_after` now takes an `Into<Duration>` instead of bare `Duration`
+
 ## [v1.0.0] - 2021-12-25
 
 ### Changed

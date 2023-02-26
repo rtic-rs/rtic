@@ -390,14 +390,15 @@ pub fn codegen(
                 /// so if you use a non-resetable timer use `spawn_at` when in `#[init]`
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                pub fn #internal_spawn_after_ident(
-                    duration: <#m as rtic::Monotonic>::Duration
+                pub fn #internal_spawn_after_ident<D>(
+                    duration: D
                     #(,#args)*
                 ) -> Result<#name::#m::SpawnHandle, #ty>
+                where D: Into<<#m as rtic::Monotonic>::Duration>
                 {
                     let instant = monotonics::#m::now();
 
-                    #internal_spawn_at_ident(instant + duration #(,#untupled)*)
+                    #internal_spawn_at_ident(instant + duration.into() #(,#untupled)*)
                 }
 
                 #(#cfgs)*
