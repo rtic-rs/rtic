@@ -65,6 +65,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - run: cargo xtask --verbose --backend ${{ matrix.backend }} check 
+
   # Clippy
   clippy:
     name: clippy
@@ -193,8 +194,8 @@ jobs:
         run: cargo xtask --verbose --backend ${{ matrix.backend }} qemu 
 
   # Run test suite
-  testsrtic:
-    name: tests rtic
+  tests:
+    name: tests
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -203,6 +204,14 @@ jobs:
           - thumbv6-backend
           - thumbv8base-backend
           - thumbv8main-backend
+        package:
+          - rtic
+          - rtic-arbiter
+          - rtic-channel
+          - rtic-common
+          - rtic-macros
+          - rtic-monotonics
+          - rtic-time
 
     steps:
       - name: Checkout
@@ -211,114 +220,18 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Configure Rust target (v6, v7, v8.b v8.m)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
+          rustup target add thumbv8m.base-none-eabi
+          rustup target add thumbv8m.main-none-eabi
+
       - name: Fail on warnings
-        working-directory: ./rtic
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
+        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
       - name: Run cargo test
-        working-directory: ./rtic
-        run: cargo test --features ${{ matrix.backend }} --test ui
-
-  # Run the macros test-suite
-  testsmacros:
-    name: tests rtic-macros
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        backend:
-          - cortex-m-source-masking
-          - cortex-m-basepri
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Fail on warnings
-        working-directory: ./rtic-macros
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: cargo check
-        working-directory: ./rtic-macros
-        run: cargo test --features ${{ matrix.backend }} 
-
-  # Run test suite
-  testsarbiter:
-    name: tests rtic-arbiter
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Fail on warnings
-        working-directory: ./rtic-arbiter
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Run cargo test
-        working-directory: ./rtic-arbiter
-        run: cargo test --features testing
-
-  # Run test suite
-  testschannel:
-    name: tests rtic-channel
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Fail on warnings
-        working-directory: ./rtic-channel
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Run cargo test
-        working-directory: ./rtic-channel
-        run: cargo test --features testing
-
-  # Run test suite
-  testsmonotonics:
-    name: tests rtic-monotonics
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Fail on warnings
-        working-directory: ./rtic-monotonics
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Run cargo test
-        working-directory: ./rtic-monotonics
-        run: cargo test --test tests
-
-  # Run test suite
-  teststime:
-    name: tests rtic-time
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Fail on warnings
-        working-directory: ./rtic-time
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
-      - name: Run cargo test
-        working-directory: ./rtic-time
-        run: cargo test
+        run: cargo xtask --verbose --backend ${{ matrix.backend }} test ${{ matrix.package }}
 
   # Build documentation, check links
   docs:
@@ -624,12 +537,7 @@ jobs:
       - clippy
       - checkexamples
       - testexamples
-      - testsrtic
-      - testsmacros
-      - testsarbiter
-      - testschannel
-      - testsmonotonics
-      - teststime
+      - tests
       - docs
       - mdbook
     runs-on: ubuntu-22.04

@@ -17,7 +17,6 @@ use std::{
 };
 
 use env_logger::Env;
-use exitcode;
 use log::{debug, error, info, log_enabled, trace, Level};
 
 use crate::{
@@ -33,6 +32,88 @@ const ARMV8MBASE: &str = "thumbv8m.base-none-eabi";
 const ARMV8MMAIN: &str = "thumbv8m.main-none-eabi";
 
 const DEFAULT_FEATURES: &str = "test-critical-section";
+
+#[derive(clap::ValueEnum, Copy, Clone, Debug)]
+pub enum Package {
+    Rtic,
+    RticArbiter,
+    RticChannel,
+    RticCommon,
+    RticMacros,
+    RticMonotonics,
+    RticTime,
+}
+
+impl fmt::Display for Package {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl Package {
+    fn to_string(&self) -> &str {
+        match self {
+            Package::Rtic => "rtic",
+            Package::RticArbiter => "rtic-arbiter",
+            Package::RticChannel => "rtic-channel",
+            Package::RticCommon => "rtic-common",
+            Package::RticMacros => "rtic-macros",
+            Package::RticMonotonics => "rtic-monotonics",
+            Package::RticTime => "rtic-time",
+        }
+    }
+}
+
+struct TestMetadata {}
+
+impl TestMetadata {
+    fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
+        match package {
+            Package::Rtic => {
+                let features = Some(format!(
+                    "{},{}",
+                    DEFAULT_FEATURES,
+                    backend.to_rtic_feature(),
+                ));
+                CargoCommand::Test {
+                    package: Some(package),
+                    features,
+                    test: Some("ui".to_owned()),
+                }
+            }
+            Package::RticMacros => CargoCommand::Test {
+                package: Some(package),
+                features: Some(backend.to_rtic_macros_feature().to_owned()),
+                test: None,
+            },
+            Package::RticArbiter => CargoCommand::Test {
+                package: Some(package),
+                features: Some("testing".to_owned()),
+                test: None,
+            },
+            Package::RticChannel => CargoCommand::Test {
+                package: Some(package),
+                features: Some("testing".to_owned()),
+                test: None,
+            },
+            Package::RticCommon => CargoCommand::Test {
+                package: Some(package),
+                features: Some("testing".to_owned()),
+                test: None,
+            },
+            Package::RticMonotonics => CargoCommand::Test {
+                package: Some(package),
+                features: None,
+                test: Some("tests".to_owned()),
+            },
+            Package::RticTime => CargoCommand::Test {
+                package: Some(package),
+                features: None,
+                test: None,
+            },
+        }
+    }
+}
 
 #[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
 enum Backends {
@@ -59,6 +140,14 @@ impl Backends {
             Backends::Thumbv7 => "thumbv7-backend",
             Backends::Thumbv8Base => "thumbv8base-backend",
             Backends::Thumbv8Main => "thumbv8main-backend",
+        }
+    }
+    fn to_rtic_macros_feature(&self) -> &str {
+        match self {
+            Backends::Thumbv6 => "cortex-m-source-masking",
+            Backends::Thumbv7 => "cortex-m-basepri",
+            Backends::Thumbv8Base => "cortex-m-source-masking",
+            Backends::Thumbv8Main => "cortex-m-basepri",
         }
     }
 }
@@ -108,19 +197,19 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     /// Check formatting
-    FormatCheck(Package),
+    FormatCheck(PackageOpt),
 
     /// Format code
-    Format(Package),
+    Format(PackageOpt),
 
     /// Run clippy
-    Clippy(Package),
+    Clippy(PackageOpt),
 
     /// Check all packages
-    Check(Package),
+    Check(PackageOpt),
 
     /// Build all packages
-    Build(Package),
+    Build(PackageOpt),
 
     /// Check all examples
     ExampleCheck,
@@ -155,17 +244,20 @@ enum Commands {
     /// Build docs
     Doc,
 
+    /// Run tests
+    Test(PackageOpt),
+
     /// Build books with mdbook
     Book,
 }
 
 #[derive(Args, Debug)]
 /// Restrict to package, or run on whole workspace
-struct Package {
+struct PackageOpt {
     /// For which package/workspace member to operate
     ///
     /// If omitted, work on all
-    package: Option<String>,
+    package: Option<Package>,
 }
 
 #[derive(Args, Debug)]
@@ -379,14 +471,14 @@ fn main() -> anyhow::Result<()> {
                 &examples_to_run,
             )?;
         }
-        Commands::Size(arguments) => {
+        Commands::Size(args) => {
             // x86_64 target not valid
             info!("Measuring for backend: {backend:?}");
             build_and_check_size(
                 &cargologlevel,
                 backend,
                 &examples_to_run,
-                &arguments.sizearguments,
+                &args.sizearguments,
             )?;
         }
         Commands::Qemu(args) | Commands::Run(args) => {
@@ -403,6 +495,10 @@ fn main() -> anyhow::Result<()> {
             info!("Running cargo doc on backend: {backend:?}");
             cargo_doc(&cargologlevel, backend)?;
         }
+        Commands::Test(args) => {
+            info!("Running cargo test on backend: {backend:?}");
+            cargo_test(&args, backend)?;
+        }
         Commands::Book => {
             info!("Running mdbook build");
             cargo_book(&cargologlevel)?;
@@ -415,30 +511,22 @@ fn main() -> anyhow::Result<()> {
 fn cargo(
     operation: BuildOrCheck,
     cargoarg: &Option<&str>,
-    package: &Package,
+    package: &PackageOpt,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    // rtic crate has features which needs special handling
-    let rtic_features = &format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-    let features: Option<&str>;
-    let packages = package_filter(package);
-    features = if packages.contains(&"rtic".to_owned()) {
-        Some(&rtic_features)
-    } else {
-        None
-    };
+    let features = package_feature_extractor(package, backend);
 
     let command = match operation {
         BuildOrCheck::Check => CargoCommand::Check {
             cargoarg,
-            package: packages,
+            package: package.package,
             target: backend.to_target(),
             features,
             mode: BuildMode::Release,
         },
         BuildOrCheck::Build => CargoCommand::Build {
             cargoarg,
-            package: packages,
+            package: package.package,
             target: backend.to_target(),
             features,
             mode: BuildMode::Release,
@@ -454,10 +542,13 @@ fn cargo_example(
     backend: Backends,
     examples: &[String],
 ) -> anyhow::Result<()> {
-    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-    let features: Option<&str> = Some(&s);
-
     examples.into_par_iter().for_each(|example| {
+        let features = Some(format!(
+            "{},{}",
+            DEFAULT_FEATURES,
+            backend.to_rtic_feature()
+        ));
+
         let command = match operation {
             BuildOrCheck::Check => CargoCommand::ExampleCheck {
                 cargoarg,
@@ -485,47 +576,31 @@ fn cargo_example(
 
 fn cargo_clippy(
     cargoarg: &Option<&str>,
-    package: &Package,
+    package: &PackageOpt,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    let packages_to_check = package_filter(package);
-    if packages_to_check.contains(&"rtic".to_owned()) {
-        // rtic crate has features which needs special handling
-        let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-        let features: Option<&str> = Some(&s);
-
-        command_parser(
-            &CargoCommand::Clippy {
-                cargoarg,
-                package: package_filter(package),
-                target: backend.to_target(),
-                features,
-            },
-            false,
-        )?;
-    } else {
-        command_parser(
-            &CargoCommand::Clippy {
-                cargoarg,
-                package: package_filter(package),
-                target: backend.to_target(),
-                features: None,
-            },
-            false,
-        )?;
-    }
+    let features = package_feature_extractor(package, backend);
+    command_parser(
+        &CargoCommand::Clippy {
+            cargoarg,
+            package: package.package,
+            target: backend.to_target(),
+            features,
+        },
+        false,
+    )?;
     Ok(())
 }
 
 fn cargo_format(
     cargoarg: &Option<&str>,
-    package: &Package,
+    package: &PackageOpt,
     check_only: bool,
 ) -> anyhow::Result<()> {
     command_parser(
         &CargoCommand::Format {
             cargoarg,
-            package: package_filter(package),
+            package: package.package,
             check_only,
         },
         false,
@@ -534,10 +609,52 @@ fn cargo_format(
 }
 
 fn cargo_doc(cargoarg: &Option<&str>, backend: Backends) -> anyhow::Result<()> {
-    let s = format!("{}", backend.to_rtic_feature());
-    let features: Option<&str> = Some(&s);
+    let features = Some(format!(
+        "{},{}",
+        DEFAULT_FEATURES,
+        backend.to_rtic_feature()
+    ));
 
     command_parser(&CargoCommand::Doc { cargoarg, features }, false)?;
+    Ok(())
+}
+
+fn cargo_test(package: &PackageOpt, backend: Backends) -> anyhow::Result<()> {
+    if let Some(package) = package.package {
+        let cmd = match package {
+            Package::Rtic => TestMetadata::match_package(package, backend),
+            Package::RticArbiter => TestMetadata::match_package(package, backend),
+            Package::RticChannel => TestMetadata::match_package(package, backend),
+            Package::RticCommon => TestMetadata::match_package(package, backend),
+            Package::RticMacros => TestMetadata::match_package(package, backend),
+            Package::RticMonotonics => TestMetadata::match_package(package, backend),
+            Package::RticTime => TestMetadata::match_package(package, backend),
+        };
+        command_parser(&cmd, false)?;
+    } else {
+        // Iterate over all workspace packages
+        for package in [
+            Package::Rtic,
+            Package::RticArbiter,
+            Package::RticChannel,
+            Package::RticCommon,
+            Package::RticMacros,
+            Package::RticMonotonics,
+            Package::RticTime,
+        ] {
+            let mut error_messages = vec![];
+            let cmd = &TestMetadata::match_package(package, backend);
+            if let Err(err) = command_parser(&cmd, false) {
+                error_messages.push(err);
+            }
+
+            if !error_messages.is_empty() {
+                for err in error_messages {
+                    error!("{err}");
+                }
+            }
+        }
+    }
     Ok(())
 }
 
@@ -557,15 +674,16 @@ fn run_test(
     examples: &[String],
     overwrite: bool,
 ) -> anyhow::Result<()> {
-    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-    let features: Option<&str> = Some(&s);
-
     examples.into_par_iter().for_each(|example| {
         let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
             target: backend.to_target(),
-            features,
+            features: Some(format!(
+                "{},{}",
+                DEFAULT_FEATURES,
+                backend.to_rtic_feature()
+            )),
             mode: BuildMode::Release,
         };
         if let Err(err) = command_parser(&cmd, false) {
@@ -576,7 +694,11 @@ fn run_test(
             cargoarg,
             example,
             target: backend.to_target(),
-            features,
+            features: Some(format!(
+                "{},{}",
+                DEFAULT_FEATURES,
+                backend.to_rtic_feature()
+            )),
             mode: BuildMode::Release,
         };
 
@@ -594,16 +716,17 @@ fn build_and_check_size(
     examples: &[String],
     size_arguments: &Option<Sizearguments>,
 ) -> anyhow::Result<()> {
-    let s = format!("{},{}", DEFAULT_FEATURES, backend.to_rtic_feature());
-    let features: Option<&str> = Some(&s);
-
     examples.into_par_iter().for_each(|example| {
         // Make sure the requested example(s) are built
         let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
             target: backend.to_target(),
-            features,
+            features: Some(format!(
+                "{},{}",
+                DEFAULT_FEATURES,
+                backend.to_rtic_feature()
+            )),
             mode: BuildMode::Release,
         };
         if let Err(err) = command_parser(&cmd, false) {
@@ -614,7 +737,11 @@ fn build_and_check_size(
             cargoarg,
             example,
             target: backend.to_target(),
-            features,
+            features: Some(format!(
+                "{},{}",
+                DEFAULT_FEATURES,
+                backend.to_rtic_feature()
+            )),
             mode: BuildMode::Release,
             arguments: size_arguments.clone(),
         };
@@ -626,38 +753,27 @@ fn build_and_check_size(
     Ok(())
 }
 
-fn package_filter(package: &Package) -> Vec<String> {
-    // TODO Parse Cargo.toml workspace definition instead?
-    let packages: Vec<String> = [
-        "rtic".to_owned(),
-        "rtic-arbiter".to_owned(),
-        "rtic-channel".to_owned(),
-        "rtic-common".to_owned(),
-        "rtic-macros".to_owned(),
-        "rtic-monotonics".to_owned(),
-        "rtic-time".to_owned(),
-    ]
-    .to_vec();
-
-    let package_selected;
-
-    if let Some(package) = package.package.clone() {
-        if packages.contains(&package) {
-            debug!("\nTesting package: {package}");
-            // If we managed to filter, set the packages to test to only this one
-            package_selected = vec![package]
-        } else {
-            error!(
-                "\nThe package you specified is not available. Available packages are:\
-                    \n{packages:#?}\n\
-             By default all packages are tested.",
-            );
-            process::exit(exitcode::USAGE);
+/// Get the features needed given the selected package
+///
+/// Without package specified the features for RTIC are required
+/// With only a single package which is not RTIC, no special
+/// features are needed
+fn package_feature_extractor(package: &PackageOpt, backend: Backends) -> Option<String> {
+    let default_features = Some(format!(
+        "{},{}",
+        DEFAULT_FEATURES,
+        backend.to_rtic_feature()
+    ));
+    if let Some(package) = package.package {
+        debug!("\nTesting package: {package}");
+        match package {
+            Package::Rtic => default_features,
+            Package::RticMacros => Some(backend.to_rtic_macros_feature().to_owned()),
+            _ => None,
         }
     } else {
-        package_selected = packages;
+        default_features
     }
-    package_selected
 }
 
 // run example binary `example`
@@ -704,6 +820,7 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
         | CargoCommand::Build { .. }
         | CargoCommand::Clippy { .. }
         | CargoCommand::Doc { .. }
+        | CargoCommand::Test { .. }
         | CargoCommand::Book { .. }
         | CargoCommand::ExampleSize { .. } => {
             let cargo_result = run_command(command)?;

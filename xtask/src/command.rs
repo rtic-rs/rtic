@@ -1,4 +1,4 @@
-use crate::{debug, RunResult, Sizearguments, TestRunError};
+use crate::{debug, Package, RunResult, Sizearguments, TestRunError};
 use core::fmt;
 use os_pipe::pipe;
 use std::{fs::File, io::Read, process::Command};
@@ -18,58 +18,63 @@ pub enum CargoCommand<'a> {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
         target: &'a str,
-        features: Option<&'a str>,
+        features: Option<String>,
         mode: BuildMode,
     },
     Qemu {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
         target: &'a str,
-        features: Option<&'a str>,
+        features: Option<String>,
         mode: BuildMode,
     },
     ExampleBuild {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
         target: &'a str,
-        features: Option<&'a str>,
+        features: Option<String>,
         mode: BuildMode,
     },
     ExampleCheck {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
         target: &'a str,
-        features: Option<&'a str>,
+        features: Option<String>,
         mode: BuildMode,
     },
     Build {
         cargoarg: &'a Option<&'a str>,
-        package: Vec<String>,
+        package: Option<Package>,
         target: &'a str,
-        features: Option<&'a str>,
+        features: Option<String>,
         mode: BuildMode,
     },
     Check {
         cargoarg: &'a Option<&'a str>,
-        package: Vec<String>,
+        package: Option<Package>,
         target: &'a str,
-        features: Option<&'a str>,
+        features: Option<String>,
         mode: BuildMode,
     },
     Clippy {
         cargoarg: &'a Option<&'a str>,
-        package: Vec<String>,
+        package: Option<Package>,
         target: &'a str,
-        features: Option<&'a str>,
+        features: Option<String>,
     },
     Format {
         cargoarg: &'a Option<&'a str>,
-        package: Vec<String>,
+        package: Option<Package>,
         check_only: bool,
     },
     Doc {
         cargoarg: &'a Option<&'a str>,
-        features: Option<&'a str>,
+        features: Option<String>,
+    },
+    Test {
+        package: Option<Package>,
+        features: Option<String>,
+        test: Option<String>,
     },
     Book {
         mdbookarg: &'a Option<&'a str>,
@@ -78,7 +83,7 @@ pub enum CargoCommand<'a> {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
         target: &'a str,
-        features: Option<&'a str>,
+        features: Option<String>,
         mode: BuildMode,
         arguments: Option<Sizearguments>,
     },
@@ -95,8 +100,7 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Format { .. } => "fmt",
             CargoCommand::Doc { .. } => "doc",
             CargoCommand::Book { .. } => "build",
-            // TODO
-            // CargoCommand::Test { .. } => "test",
+            CargoCommand::Test { .. } => "test",
         }
     }
     pub fn command(&self) -> &str {
@@ -110,10 +114,9 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::ExampleSize { .. }
             | CargoCommand::Clippy { .. }
             | CargoCommand::Format { .. }
+            | CargoCommand::Test { .. }
             | CargoCommand::Doc { .. } => "cargo",
             CargoCommand::Book { .. } => "mdbook",
-            // TODO
-            // CargoCommand::Test { .. } => "test",
         }
     }
 
@@ -175,10 +178,9 @@ impl<'a> CargoCommand<'a> {
                 }
 
                 args.extend_from_slice(&[self.name(), "--target", target]);
-                if !package.is_empty() {
-                    for package in package {
-                        args.extend_from_slice(&["--package", package]);
-                    }
+
+                if let Some(package) = package {
+                    args.extend_from_slice(&["--package", package.to_string()]);
                 }
 
                 if let Some(feature) = features {
@@ -201,10 +203,9 @@ impl<'a> CargoCommand<'a> {
                     args.extend_from_slice(&[cargoarg]);
                 }
                 args.extend_from_slice(&[self.name(), "--target", target]);
-                if !package.is_empty() {
-                    for package in package {
-                        args.extend_from_slice(&["--package", package]);
-                    }
+
+                if let Some(package) = package {
+                    args.extend_from_slice(&["--package", package.to_string()]);
                 }
 
                 if let Some(feature) = features {
@@ -227,10 +228,9 @@ impl<'a> CargoCommand<'a> {
                 }
 
                 args.extend_from_slice(&[self.name(), "--target", target]);
-                if !package.is_empty() {
-                    for package in package {
-                        args.extend_from_slice(&["--package", package]);
-                    }
+
+                if let Some(package) = package {
+                    args.extend_from_slice(&["--package", package.to_string()]);
                 }
 
                 if let Some(feature) = features {
@@ -248,6 +248,26 @@ impl<'a> CargoCommand<'a> {
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
+                }
+                args
+            }
+            CargoCommand::Test {
+                package,
+                features,
+                test,
+            } => {
+                let mut args = vec!["+nightly"];
+                args.extend_from_slice(&[self.name()]);
+
+                if let Some(package) = package {
+                    args.extend_from_slice(&["--package", package.to_string()]);
+                }
+
+                if let Some(feature) = features {
+                    args.extend_from_slice(&["--features", feature]);
+                }
+                if let Some(test) = test {
+                    args.extend_from_slice(&["--test", test]);
                 }
                 args
             }
@@ -273,10 +293,8 @@ impl<'a> CargoCommand<'a> {
                     args.extend_from_slice(&[cargoarg]);
                 }
 
-                if !package.is_empty() {
-                    for package in package {
-                        args.extend_from_slice(&["--package", package]);
-                    }
+                if let Some(package) = package {
+                    args.extend_from_slice(&["--package", package.to_string()]);
                 }
                 if *check_only {
                     args.extend_from_slice(&["--check"]);
