@@ -194,7 +194,7 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Check {
                 cargoarg,
                 package,
-                target,
+                target: _,
                 features,
                 mode,
             } => {
@@ -202,7 +202,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.name(), "--target", target]);
+                args.extend_from_slice(&[self.name()]);
 
                 if let Some(package) = package {
                     args.extend_from_slice(&["--package", package.name()]);
@@ -219,7 +219,7 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Clippy {
                 cargoarg,
                 package,
-                target,
+                target: _,
                 features,
             } => {
                 let mut args = vec!["+nightly"];
@@ -227,7 +227,7 @@ impl<'a> CargoCommand<'a> {
                     args.extend_from_slice(&[cargoarg]);
                 }
 
-                args.extend_from_slice(&[self.name(), "--target", target]);
+                args.extend_from_slice(&[self.name()]);
 
                 if let Some(package) = package {
                     args.extend_from_slice(&["--package", package.name()]);
