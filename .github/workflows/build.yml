@@ -200,10 +200,10 @@ jobs:
     strategy:
       matrix:
         backend:
-          - thumbv7-backend
-          - thumbv6-backend
-          - thumbv8base-backend
-          - thumbv8main-backend
+          - thumbv7
+          - thumbv6
+          - thumbv8-base
+          - thumbv8-main
         package:
           - rtic
           - rtic-arbiter
