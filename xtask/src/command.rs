@@ -180,7 +180,7 @@ impl<'a> CargoCommand<'a> {
                 args.extend_from_slice(&[self.name(), "--target", target]);
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.to_string()]);
+                    args.extend_from_slice(&["--package", package.name()]);
                 }
 
                 if let Some(feature) = features {
@@ -205,7 +205,7 @@ impl<'a> CargoCommand<'a> {
                 args.extend_from_slice(&[self.name(), "--target", target]);
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.to_string()]);
+                    args.extend_from_slice(&["--package", package.name()]);
                 }
 
                 if let Some(feature) = features {
@@ -230,7 +230,7 @@ impl<'a> CargoCommand<'a> {
                 args.extend_from_slice(&[self.name(), "--target", target]);
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.to_string()]);
+                    args.extend_from_slice(&["--package", package.name()]);
                 }
 
                 if let Some(feature) = features {
@@ -260,7 +260,7 @@ impl<'a> CargoCommand<'a> {
                 args.extend_from_slice(&[self.name()]);
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.to_string()]);
+                    args.extend_from_slice(&["--package", package.name()]);
                 }
 
                 if let Some(feature) = features {
@@ -294,7 +294,7 @@ impl<'a> CargoCommand<'a> {
                 }
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.to_string()]);
+                    args.extend_from_slice(&["--package", package.name()]);
                 }
                 if *check_only {
                     args.extend_from_slice(&["--check"]);

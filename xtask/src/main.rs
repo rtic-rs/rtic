@@ -1,9 +1,12 @@
+mod argument_parsing;
 mod build;
 mod command;
 
 use anyhow::bail;
-use clap::{Args, Parser, Subcommand};
+use argument_parsing::{Package, Sizearguments, TestMetadata};
+use clap::Parser;
 use core::fmt;
+use diffy::{create_patch, PatchFormatter};
 use rayon::prelude::*;
 use std::{
     error::Error,
@@ -20,6 +23,7 @@ use env_logger::Env;
 use log::{debug, error, info, log_enabled, trace, Level};
 
 use crate::{
+    argument_parsing::{Backends, BuildOrCheck, Cli, Commands, PackageOpt},
     build::init_build_dir,
     command::{run_command, run_successful, BuildMode, CargoCommand},
 };
@@ -32,256 +36,6 @@ const ARMV8MBASE: &str = "thumbv8m.base-none-eabi";
 const ARMV8MMAIN: &str = "thumbv8m.main-none-eabi";
 
 const DEFAULT_FEATURES: &str = "test-critical-section";
-
-#[derive(clap::ValueEnum, Copy, Clone, Debug)]
-pub enum Package {
-    Rtic,
-    RticArbiter,
-    RticChannel,
-    RticCommon,
-    RticMacros,
-    RticMonotonics,
-    RticTime,
-}
-
-impl fmt::Display for Package {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
-
-impl Package {
-    fn to_string(&self) -> &str {
-        match self {
-            Package::Rtic => "rtic",
-            Package::RticArbiter => "rtic-arbiter",
-            Package::RticChannel => "rtic-channel",
-            Package::RticCommon => "rtic-common",
-            Package::RticMacros => "rtic-macros",
-            Package::RticMonotonics => "rtic-monotonics",
-            Package::RticTime => "rtic-time",
-        }
-    }
-}
-
-struct TestMetadata {}
-
-impl TestMetadata {
-    fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
-        match package {
-            Package::Rtic => {
-                let features = Some(format!(
-                    "{},{}",
-                    DEFAULT_FEATURES,
-                    backend.to_rtic_feature(),
-                ));
-                CargoCommand::Test {
-                    package: Some(package),
-                    features,
-                    test: Some("ui".to_owned()),
-                }
-            }
-            Package::RticMacros => CargoCommand::Test {
-                package: Some(package),
-                features: Some(backend.to_rtic_macros_feature().to_owned()),
-                test: None,
-            },
-            Package::RticArbiter => CargoCommand::Test {
-                package: Some(package),
-                features: Some("testing".to_owned()),
-                test: None,
-            },
-            Package::RticChannel => CargoCommand::Test {
-                package: Some(package),
-                features: Some("testing".to_owned()),
-                test: None,
-            },
-            Package::RticCommon => CargoCommand::Test {
-                package: Some(package),
-                features: Some("testing".to_owned()),
-                test: None,
-            },
-            Package::RticMonotonics => CargoCommand::Test {
-                package: Some(package),
-                features: None,
-                test: Some("tests".to_owned()),
-            },
-            Package::RticTime => CargoCommand::Test {
-                package: Some(package),
-                features: None,
-                test: None,
-            },
-        }
-    }
-}
-
-#[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
-enum Backends {
-    Thumbv6,
-    #[default]
-    Thumbv7,
-    Thumbv8Base,
-    Thumbv8Main,
-}
-
-impl Backends {
-    fn to_target(&self) -> &str {
-        match self {
-            Backends::Thumbv6 => ARMV6M,
-            Backends::Thumbv7 => ARMV7M,
-            Backends::Thumbv8Base => ARMV8MBASE,
-            Backends::Thumbv8Main => ARMV8MMAIN,
-        }
-    }
-
-    fn to_rtic_feature(&self) -> &str {
-        match self {
-            Backends::Thumbv6 => "thumbv6-backend",
-            Backends::Thumbv7 => "thumbv7-backend",
-            Backends::Thumbv8Base => "thumbv8base-backend",
-            Backends::Thumbv8Main => "thumbv8main-backend",
-        }
-    }
-    fn to_rtic_macros_feature(&self) -> &str {
-        match self {
-            Backends::Thumbv6 => "cortex-m-source-masking",
-            Backends::Thumbv7 => "cortex-m-basepri",
-            Backends::Thumbv8Base => "cortex-m-source-masking",
-            Backends::Thumbv8Main => "cortex-m-basepri",
-        }
-    }
-}
-
-#[derive(Copy, Clone, Default, Debug)]
-enum BuildOrCheck {
-    #[default]
-    Check,
-    Build,
-}
-
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-/// RTIC xtask powered testing toolbox
-struct Cli {
-    /// For which backend to build (defaults to thumbv7)
-    #[arg(value_enum, short, long)]
-    backend: Option<Backends>,
-
-    /// List of comma separated examples to include, all others are excluded
-    ///
-    /// If omitted all examples are included
-    ///
-    /// Example: `cargo xtask --example complex,spawn,init`
-    /// would include complex, spawn and init
-    #[arg(short, long, group = "example_group")]
-    example: Option<String>,
-
-    /// List of comma separated examples to exclude, all others are included
-    ///
-    /// If omitted all examples are included
-    ///
-    /// Example: `cargo xtask --excludeexample complex,spawn,init`
-    /// would exclude complex, spawn and init
-    #[arg(long, group = "example_group")]
-    exampleexclude: Option<String>,
-
-    /// Enable more verbose output, repeat up to `-vvv` for even more
-    #[arg(short, long, action = clap::ArgAction::Count)]
-    verbose: u8,
-
-    /// Subcommand selecting operation
-    #[command(subcommand)]
-    command: Commands,
-}
-
-#[derive(Debug, Subcommand)]
-enum Commands {
-    /// Check formatting
-    FormatCheck(PackageOpt),
-
-    /// Format code
-    Format(PackageOpt),
-
-    /// Run clippy
-    Clippy(PackageOpt),
-
-    /// Check all packages
-    Check(PackageOpt),
-
-    /// Build all packages
-    Build(PackageOpt),
-
-    /// Check all examples
-    ExampleCheck,
-
-    /// Build all examples
-    ExampleBuild,
-
-    /// Run `cargo size` on selected or all examples
-    ///
-    /// To pass options to `cargo size`, add `--` and then the following
-    /// arguments will be passed on
-    ///
-    /// Example: `cargo xtask size -- -A`
-    Size(Size),
-
-    /// Run examples in QEMU and compare against expected output
-    ///
-    /// Example runtime output is matched against `rtic/ci/expected/`
-    ///
-    /// Requires that an ARM target is selected
-    Qemu(QemuAndRun),
-
-    /// Run examples through embedded-ci and compare against expected output
-    ///
-    /// unimplemented!() For now TODO, equal to Qemu
-    ///
-    /// Example runtime output is matched against `rtic/ci/expected/`
-    ///
-    /// Requires that an ARM target is selected
-    Run(QemuAndRun),
-
-    /// Build docs
-    Doc,
-
-    /// Run tests
-    Test(PackageOpt),
-
-    /// Build books with mdbook
-    Book,
-}
-
-#[derive(Args, Debug)]
-/// Restrict to package, or run on whole workspace
-struct PackageOpt {
-    /// For which package/workspace member to operate
-    ///
-    /// If omitted, work on all
-    package: Option<Package>,
-}
-
-#[derive(Args, Debug)]
-struct QemuAndRun {
-    /// If expected output is missing or mismatching, recreate the file
-    ///
-    /// This overwrites only missing or mismatching
-    #[arg(long)]
-    overwrite_expected: bool,
-}
-
-#[derive(Debug, Parser)]
-struct Size {
-    /// Options to pass to `cargo size`
-    #[command(subcommand)]
-    sizearguments: Option<Sizearguments>,
-}
-
-#[derive(Clone, Debug, PartialEq, Parser)]
-pub enum Sizearguments {
-    /// All remaining flags and options
-    #[command(external_subcommand)]
-    Other(Vec<String>),
-}
 
 #[derive(Debug, Clone)]
 pub struct RunResult {
@@ -298,8 +52,6 @@ pub enum TestRunError {
     CommandError(RunResult),
     IncompatibleCommand,
 }
-use diffy::{create_patch, PatchFormatter};
-
 impl fmt::Display for TestRunError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
