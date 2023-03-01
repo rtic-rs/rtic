@@ -1,9 +1,5 @@
 //! Crate
 
-#![no_std]
-#![deny(missing_docs)]
-//deny_warnings_placeholder_for_ci
-
 use core::cell::UnsafeCell;
 use core::future::poll_fn;
 use core::ops::{Deref, DerefMut};
@@ -171,10 +167,6 @@ impl<'a, T> DerefMut for ExclusiveAccess<'a, T> {
         self.inner
     }
 }
-
-#[cfg(test)]
-#[macro_use]
-extern crate std;
 
 #[cfg(test)]
 mod tests {

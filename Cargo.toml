@@ -1,8 +1,7 @@
 [workspace]
 members = [
     "rtic",
-    "rtic-arbiter",
-    "rtic-channel",
+    "rtic-sync",
     "rtic-common",
     "rtic-macros",
     "rtic-monotonics",

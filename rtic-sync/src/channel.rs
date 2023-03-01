@@ -1,9 +1,5 @@
 //! Crate
 
-#![no_std]
-#![deny(missing_docs)]
-//deny_warnings_placeholder_for_ci
-
 use core::{
     cell::UnsafeCell,
     future::poll_fn,
@@ -462,10 +458,6 @@ impl<'a, T, const N: usize> Drop for Receiver<'a, T, N> {
         }
     }
 }
-
-#[cfg(test)]
-#[macro_use]
-extern crate std;
 
 #[cfg(test)]
 mod tests {

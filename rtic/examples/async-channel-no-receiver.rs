@@ -12,7 +12,7 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use rtic_channel::*;
+    use rtic_sync::{channel::*, make_channel};
 
     #[shared]
     struct Shared {}

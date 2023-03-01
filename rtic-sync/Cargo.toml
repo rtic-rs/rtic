@@ -1,5 +1,5 @@
 [package]
-name = "rtic-channel"
+name = "rtic-sync"
 version = "1.0.0-alpha.0"
 
 edition = "2021"
@@ -11,7 +11,7 @@ authors = [
   "Per Lindgren <per.lindgren@ltu.se>",
 ]
 categories = ["concurrency", "embedded", "no-std", "asynchronous"]
-description = "rtic-channel lib TODO"
+description = "Synchronization primitives for asynchronous contexts"
 license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
