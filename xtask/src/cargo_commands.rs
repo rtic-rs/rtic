@@ -129,25 +129,16 @@ pub fn cargo_doc(cargoarg: &Option<&str>, backend: Backends) -> anyhow::Result<(
 /// If no package is specified, loop through all packages
 pub fn cargo_test(package: &PackageOpt, backend: Backends) -> anyhow::Result<()> {
     if let Some(package) = package.package {
-        let cmd = match package {
-            Package::Rtic => TestMetadata::match_package(package, backend),
-            Package::RticArbiter => TestMetadata::match_package(package, backend),
-            Package::RticChannel => TestMetadata::match_package(package, backend),
-            Package::RticCommon => TestMetadata::match_package(package, backend),
-            Package::RticMacros => TestMetadata::match_package(package, backend),
-            Package::RticMonotonics => TestMetadata::match_package(package, backend),
-            Package::RticTime => TestMetadata::match_package(package, backend),
-        };
+        let cmd = TestMetadata::match_package(package, backend);
         command_parser(&cmd, false)?;
     } else {
         // Iterate over all workspace packages
         for package in [
             Package::Rtic,
-            Package::RticArbiter,
-            Package::RticChannel,
             Package::RticCommon,
             Package::RticMacros,
             Package::RticMonotonics,
+            Package::RticSync,
             Package::RticTime,
         ] {
             let mut error_messages = vec![];

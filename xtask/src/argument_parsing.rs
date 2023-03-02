@@ -5,11 +5,10 @@ use core::fmt;
 #[derive(clap::ValueEnum, Copy, Clone, Debug)]
 pub enum Package {
     Rtic,
-    RticArbiter,
-    RticChannel,
     RticCommon,
     RticMacros,
     RticMonotonics,
+    RticSync,
     RticTime,
 }
 
@@ -23,11 +22,10 @@ impl Package {
     pub fn name(&self) -> &str {
         match self {
             Package::Rtic => "rtic",
-            Package::RticArbiter => "rtic-arbiter",
-            Package::RticChannel => "rtic-channel",
             Package::RticCommon => "rtic-common",
             Package::RticMacros => "rtic-macros",
             Package::RticMonotonics => "rtic-monotonics",
+            Package::RticSync => "rtic-sync",
             Package::RticTime => "rtic-time",
         }
     }
@@ -55,12 +53,7 @@ impl TestMetadata {
                 features: Some(backend.to_rtic_macros_feature().to_owned()),
                 test: None,
             },
-            Package::RticArbiter => CargoCommand::Test {
-                package: Some(package),
-                features: Some("testing".to_owned()),
-                test: None,
-            },
-            Package::RticChannel => CargoCommand::Test {
+            Package::RticSync => CargoCommand::Test {
                 package: Some(package),
                 features: Some("testing".to_owned()),
                 test: None,
