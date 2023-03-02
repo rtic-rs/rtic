@@ -207,11 +207,10 @@ jobs:
           - thumbv8-main
         package:
           - rtic
-          - rtic-arbiter
-          - rtic-channel
           - rtic-common
           - rtic-macros
           - rtic-monotonics
+          - rtic-sync
           - rtic-time
 
     steps:
