@@ -17,6 +17,6 @@ create-missing = false
 command = "mdbook-mermaid"
 
 [output.html]
-git-repository-url = "https://github.com/rtic-rs/cortex-m-rtic"
+git-repository-url = "https://github.com/rtic-rs/rtic"
 git-repository-icon = "fa-github"
 additional-js = ["mermaid.min.js", "mermaid-init.js"]
