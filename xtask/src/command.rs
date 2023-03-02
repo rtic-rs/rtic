@@ -91,7 +91,7 @@ pub enum CargoCommand<'a> {
 }
 
 impl<'a> CargoCommand<'a> {
-    fn name(&self) -> &str {
+    fn command(&self) -> &str {
         match self {
             CargoCommand::Run { .. } | CargoCommand::Qemu { .. } => "run",
             CargoCommand::ExampleCheck { .. } | CargoCommand::Check { .. } => "check",
@@ -104,7 +104,7 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Test { .. } => "test",
         }
     }
-    pub fn command(&self) -> &str {
+    pub fn executable(&self) -> &str {
         match self {
             CargoCommand::Run { .. }
             | CargoCommand::Qemu { .. }
@@ -135,7 +135,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.name(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -156,7 +156,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.name(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -178,7 +178,7 @@ impl<'a> CargoCommand<'a> {
                     args.extend_from_slice(&[cargoarg]);
                 }
 
-                args.extend_from_slice(&[self.name(), "--target", target]);
+                args.extend_from_slice(&[self.command(), "--target", target]);
 
                 if let Some(package) = package {
                     args.extend_from_slice(&["--package", package.name()]);
@@ -203,7 +203,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.name()]);
+                args.extend_from_slice(&[self.command()]);
 
                 if let Some(package) = package {
                     args.extend_from_slice(&["--package", package.name()]);
@@ -228,7 +228,7 @@ impl<'a> CargoCommand<'a> {
                     args.extend_from_slice(&[cargoarg]);
                 }
 
-                args.extend_from_slice(&[self.name()]);
+                args.extend_from_slice(&[self.command()]);
 
                 if let Some(package) = package {
                     args.extend_from_slice(&["--package", package.name()]);
@@ -249,7 +249,7 @@ impl<'a> CargoCommand<'a> {
                     args.extend_from_slice(&[cargoarg]);
                 }
 
-                args.extend_from_slice(&[self.name()]);
+                args.extend_from_slice(&[self.command()]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -267,7 +267,7 @@ impl<'a> CargoCommand<'a> {
                 test,
             } => {
                 let mut args = vec!["+nightly"];
-                args.extend_from_slice(&[self.name()]);
+                args.extend_from_slice(&[self.command()]);
 
                 if let Some(package) = package {
                     args.extend_from_slice(&["--package", package.name()]);
@@ -290,7 +290,7 @@ impl<'a> CargoCommand<'a> {
                     }
                 } else {
                     // If no argument given, run mdbook build
-                    args.extend_from_slice(&[self.name()]);
+                    args.extend_from_slice(&[self.command()]);
                 }
                 args.extend_from_slice(&["book/en"]);
                 args
@@ -300,7 +300,7 @@ impl<'a> CargoCommand<'a> {
                 package,
                 check_only,
             } => {
-                let mut args = vec!["+nightly", self.name()];
+                let mut args = vec!["+nightly", self.command()];
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
@@ -325,7 +325,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.name(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -346,7 +346,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.name(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -368,7 +368,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.name(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
 
                 if let Some(feature_name) = features {
                     args.extend_from_slice(&["--features", feature_name]);
@@ -413,9 +413,9 @@ impl fmt::Display for BuildMode {
 pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
     let (mut reader, writer) = pipe()?;
     let (mut error_reader, error_writer) = pipe()?;
-    debug!("👟 {} {}", command.command(), command.args().join(" "));
+    debug!("👟 {} {}", command.executable(), command.args().join(" "));
 
-    let mut handle = Command::new(command.command())
+    let mut handle = Command::new(command.executable())
         .args(command.args())
         .stdout(writer)
         .stderr(error_writer)
