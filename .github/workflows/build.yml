@@ -263,12 +263,6 @@ jobs:
           echo rtic_macros
           lychee --offline --format detailed $td/api/rtic_macros/
         
-          echo rtic_arbiter
-          lychee --offline --format detailed $td/api/rtic_arbiter/
-        
-          echo rtic_channel
-          lychee --offline --format detailed $td/api/rtic_channel/
-        
           echo rtic_common
           lychee --offline --format detailed $td/api/rtic_common/
         
@@ -277,6 +271,9 @@ jobs:
         
           echo rtic_monotonics
           lychee --offline --format detailed $td/api/rtic_monotonics/
+
+          echo rtic_sync
+          lychee --offline --format detailed $td/api/rtic_sync/
         
           echo rtic_time
           lychee --offline --format detailed $td/api/rtic_time/
