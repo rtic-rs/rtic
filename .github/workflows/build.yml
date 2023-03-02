@@ -261,7 +261,7 @@ jobs:
           lychee --offline --format detailed $td/api/rtic/
         
           echo rtic_macros
-          lychee --offline --format detailed $td/api/rtic_macros/
+          lychee --offline --format detailed $td/api/rtic_channel/
         
           echo rtic_common
           lychee --offline --format detailed $td/api/rtic_common/
