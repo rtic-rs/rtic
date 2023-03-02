@@ -1,4 +1,4 @@
-use crate::{debug, Package, RunResult, Sizearguments, TestRunError};
+use crate::{debug, ExtraArguments, Package, RunResult, TestRunError};
 use core::fmt;
 use os_pipe::pipe;
 use std::{fs::File, io::Read, process::Command};
@@ -70,6 +70,7 @@ pub enum CargoCommand<'a> {
     Doc {
         cargoarg: &'a Option<&'a str>,
         features: Option<String>,
+        arguments: Option<ExtraArguments>,
     },
     Test {
         package: Option<Package>,
@@ -77,7 +78,7 @@ pub enum CargoCommand<'a> {
         test: Option<String>,
     },
     Book {
-        mdbookarg: &'a Option<&'a str>,
+        arguments: Option<ExtraArguments>,
     },
     ExampleSize {
         cargoarg: &'a Option<&'a str>,
@@ -85,7 +86,7 @@ pub enum CargoCommand<'a> {
         target: &'a str,
         features: Option<String>,
         mode: BuildMode,
-        arguments: Option<Sizearguments>,
+        arguments: Option<ExtraArguments>,
     },
 }
 
@@ -238,7 +239,11 @@ impl<'a> CargoCommand<'a> {
                 }
                 args
             }
-            CargoCommand::Doc { cargoarg, features } => {
+            CargoCommand::Doc {
+                cargoarg,
+                features,
+                arguments,
+            } => {
                 let mut args = vec!["+nightly"];
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
@@ -248,6 +253,11 @@ impl<'a> CargoCommand<'a> {
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
+                }
+                if let Some(ExtraArguments::Other(arguments)) = arguments {
+                    for arg in arguments {
+                        args.extend_from_slice(&[arg.as_str()]);
+                    }
                 }
                 args
             }
@@ -271,15 +281,17 @@ impl<'a> CargoCommand<'a> {
                 }
                 args
             }
-            CargoCommand::Book { mdbookarg } => {
+            CargoCommand::Book { arguments } => {
                 let mut args = vec![];
 
-                args.extend_from_slice(&[self.name()]);
-
-                if let Some(arg) = mdbookarg {
-                    args.extend_from_slice(&[arg]);
+                if let Some(ExtraArguments::Other(arguments)) = arguments {
+                    for arg in arguments {
+                        args.extend_from_slice(&[arg.as_str()]);
+                    }
+                } else {
+                    // If no argument given, run mdbook build
+                    args.extend_from_slice(&[self.name()]);
                 }
-
                 args.extend_from_slice(&["book/en"]);
                 args
             }
@@ -364,7 +376,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(flag) = mode.to_flag() {
                     args.push(flag);
                 }
-                if let Some(Sizearguments::Other(arguments)) = arguments {
+                if let Some(ExtraArguments::Other(arguments)) = arguments {
                     // Arguments to cargo size must be passed after "--"
                     args.extend_from_slice(&["--"]);
                     for arg in arguments {

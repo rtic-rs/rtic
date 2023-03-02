@@ -185,7 +185,7 @@ pub enum Commands {
     /// arguments will be passed on
     ///
     /// Example: `cargo xtask size -- -A`
-    Size(Size),
+    Size(Arg),
 
     /// Run examples in QEMU and compare against expected output
     ///
@@ -204,13 +204,18 @@ pub enum Commands {
     Run(QemuAndRun),
 
     /// Build docs
-    Doc,
+    ///
+    /// To pass options to `cargo doc`, add `--` and then the following
+    /// arguments will be passed on
+    ///
+    /// Example: `cargo xtask doc -- --open`
+    Doc(Arg),
 
     /// Run tests
     Test(PackageOpt),
 
     /// Build books with mdbook
-    Book,
+    Book(Arg),
 }
 
 #[derive(Args, Debug)]
@@ -232,14 +237,14 @@ pub struct QemuAndRun {
 }
 
 #[derive(Debug, Parser)]
-pub struct Size {
+pub struct Arg {
     /// Options to pass to `cargo size`
     #[command(subcommand)]
-    pub sizearguments: Option<Sizearguments>,
+    pub arguments: Option<ExtraArguments>,
 }
 
 #[derive(Clone, Debug, PartialEq, Parser)]
-pub enum Sizearguments {
+pub enum ExtraArguments {
     /// All remaining flags and options
     #[command(external_subcommand)]
     Other(Vec<String>),

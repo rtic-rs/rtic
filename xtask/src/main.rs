@@ -4,7 +4,7 @@ mod cargo_commands;
 mod command;
 
 use anyhow::bail;
-use argument_parsing::{Package, Sizearguments};
+use argument_parsing::{ExtraArguments, Package};
 use clap::Parser;
 use core::fmt;
 use diffy::{create_patch, PatchFormatter};
@@ -230,12 +230,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Size(args) => {
             // x86_64 target not valid
             info!("Measuring for backend: {backend:?}");
-            build_and_check_size(
-                &cargologlevel,
-                backend,
-                &examples_to_run,
-                &args.sizearguments,
-            )?;
+            build_and_check_size(&cargologlevel, backend, &examples_to_run, &args.arguments)?;
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
@@ -247,17 +242,17 @@ fn main() -> anyhow::Result<()> {
                 args.overwrite_expected,
             )?;
         }
-        Commands::Doc => {
+        Commands::Doc(args) => {
             info!("Running cargo doc on backend: {backend:?}");
-            cargo_doc(&cargologlevel, backend)?;
+            cargo_doc(&cargologlevel, backend, &args.arguments)?;
         }
         Commands::Test(args) => {
             info!("Running cargo test on backend: {backend:?}");
             cargo_test(&args, backend)?;
         }
-        Commands::Book => {
-            info!("Running mdbook build");
-            cargo_book(&cargologlevel)?;
+        Commands::Book(args) => {
+            info!("Running mdbook");
+            cargo_book(&args.arguments)?;
         }
     }
 

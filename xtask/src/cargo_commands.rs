@@ -1,5 +1,5 @@
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, Package, PackageOpt, Sizearguments, TestMetadata},
+    argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Package, PackageOpt, TestMetadata},
     command::{BuildMode, CargoCommand},
     command_parser, package_feature_extractor, DEFAULT_FEATURES,
 };
@@ -113,14 +113,25 @@ pub fn cargo_format(
 }
 
 /// Run cargo doc
-pub fn cargo_doc(cargoarg: &Option<&str>, backend: Backends) -> anyhow::Result<()> {
+pub fn cargo_doc(
+    cargoarg: &Option<&str>,
+    backend: Backends,
+    arguments: &Option<ExtraArguments>,
+) -> anyhow::Result<()> {
     let features = Some(format!(
         "{},{}",
         DEFAULT_FEATURES,
         backend.to_rtic_feature()
     ));
 
-    command_parser(&CargoCommand::Doc { cargoarg, features }, false)?;
+    command_parser(
+        &CargoCommand::Doc {
+            cargoarg,
+            features,
+            arguments: arguments.clone(),
+        },
+        false,
+    )?;
     Ok(())
 }
 
@@ -158,10 +169,10 @@ pub fn cargo_test(package: &PackageOpt, backend: Backends) -> anyhow::Result<()>
 }
 
 /// Use mdbook to build the book
-pub fn cargo_book(cargoarg: &Option<&str>) -> anyhow::Result<()> {
+pub fn cargo_book(arguments: &Option<ExtraArguments>) -> anyhow::Result<()> {
     command_parser(
         &CargoCommand::Book {
-            mdbookarg: cargoarg,
+            arguments: arguments.clone(),
         },
         false,
     )?;
@@ -218,7 +229,7 @@ pub fn build_and_check_size(
     cargoarg: &Option<&str>,
     backend: Backends,
     examples: &[String],
-    size_arguments: &Option<Sizearguments>,
+    arguments: &Option<ExtraArguments>,
 ) -> anyhow::Result<()> {
     examples.into_par_iter().for_each(|example| {
         // Make sure the requested example(s) are built
@@ -247,7 +258,7 @@ pub fn build_and_check_size(
                 backend.to_rtic_feature()
             )),
             mode: BuildMode::Release,
-            arguments: size_arguments.clone(),
+            arguments: arguments.clone(),
         };
         if let Err(err) = command_parser(&cmd, false) {
             error!("{err}");
