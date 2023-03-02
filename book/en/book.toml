@@ -10,6 +10,9 @@ multilingual = false
 src = "src"
 title = "Real-Time Interrupt-driven Concurrency"
 
+[build]
+create-missing = false
+
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
 
