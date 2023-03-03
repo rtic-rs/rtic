@@ -338,7 +338,7 @@ jobs:
 
       - name: Archive the book + API docs
         run: |
-          cp -r $td bookroot
+          mv $td bookroot
           tar -cf book.tar bookroot
 
       - name: Store the Book + API docs
