@@ -405,8 +405,8 @@ jobs:
           path: mdbookold.tar
 
   parseversion:
-    # Only run this when pushing to master branch
-    if: github.ref == 'refs/heads/master'
+    name: Parse the master branch RTIC version
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -434,15 +434,8 @@ jobs:
     name: If CI passes, merge master branch into release/vX
     runs-on: ubuntu-22.04
     needs:
+      - ci
       - parseversion
-      - formatcheck
-      - check
-      - clippy
-      - checkexamples
-      - testexamples
-      - tests
-      - docs
-      - mdbook
 
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
@@ -461,7 +454,6 @@ jobs:
     name: deploy
     runs-on: ubuntu-22.04
     needs:
-      - parseversion
       - mergetostablebranch
       - docs      
       - mdbookold      
