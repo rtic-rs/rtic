@@ -568,6 +568,31 @@ jobs:
           cp CNAME $td/
           mv $td/ bookstodeploy
 
+      - name: Archive the webroot
+        run: |
+          tar -cf bookstodeploy.tar bookstodeploy
+
+      - name: Store the books
+        uses: actions/upload-artifact@v3
+        with:
+          name: bookstodeploy
+          path: bookstodeploy.tar
+
+  ghapages:
+    name: Publish rtic.rs
+    runs-on: ubuntu-22.04
+    needs:
+      - deploy
+    steps:
+      - name: Download books
+        uses: actions/download-artifact@v3
+        with:
+          name: bookstodeploy
+
+      - name: Extract the books
+        run: |
+          tar -xf bookstodeploy.tar 
+
       - name: Deploy to GH-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
