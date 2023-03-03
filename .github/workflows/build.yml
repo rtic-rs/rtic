@@ -378,7 +378,7 @@ jobs:
               cargo doc || cargo doc --features timer-queue
               mkdir -p $webroot/$ver/book
               cp -r target/doc $webroot/$ver/api
-              sed 's|URL|rtic/index.html|g' $webroot/redirect.html > $webroot/$ver/api/index.html
+              sed 's|URL|rtic/index.html|g' $root/redirect.html > $webroot/$ver/api/index.html
               popd
 
               for lang in ${langs[@]}; do
@@ -387,7 +387,7 @@ jobs:
                   cp -r $src/book/$lang/book $webroot/$ver/book/$lang
                   cp LICENSE-* $webroot/$ver/book/$lang/
               done
-              sed 's|URL|book/en|g' $webroot/redirect.html > $webroot/$ver/index.html
+              sed 's|URL|book/en|g' $root/redirect.html > $webroot/$ver/index.html
 
               rm -rf $src
           done
