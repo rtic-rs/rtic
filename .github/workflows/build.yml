@@ -434,7 +434,7 @@ jobs:
     name: If CI passes, merge master branch into release/vX
     runs-on: ubuntu-22.04
     needs:
-      - ci
+      - ci-success
       - parseversion
 
     # Only run this when pushing to master branch
