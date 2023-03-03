@@ -335,10 +335,10 @@ jobs:
           cp -r apidocs/ $td/api
 
           lychee --offline --format detailed $td/book/en/
+          mv $td bookroot
 
       - name: Archive the book + API docs
         run: |
-          mv $td bookroot
           tar -cf book.tar bookroot
 
       - name: Store the Book + API docs
