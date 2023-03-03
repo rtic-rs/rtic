@@ -290,9 +290,10 @@ impl<'a> CargoCommand<'a> {
                     }
                 } else {
                     // If no argument given, run mdbook build
+                    // with default path to book
                     args.extend_from_slice(&[self.command()]);
+                    args.extend_from_slice(&["book/en"]);
                 }
-                args.extend_from_slice(&["book/en"]);
                 args
             }
             CargoCommand::Format {
