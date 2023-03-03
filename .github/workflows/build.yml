@@ -376,6 +376,7 @@ jobs:
               pushd $src
               rm -f .cargo/config
               cargo doc || cargo doc --features timer-queue
+              mkdir -p $webroot/$ver/book
               cp -r target/doc $webroot/$ver/api
               sed 's|URL|rtic/index.html|g' $webroot/redirect.html > $webroot/$ver/api/index.html
               popd
@@ -383,7 +384,7 @@ jobs:
               for lang in ${langs[@]}; do
                   cargo xtask book build $src/book/$lang
               
-                  cp -r book/$lang/$book $webroot/$ver/book/$lang
+                  cp -r $src/book/$lang/book $webroot/$ver/book/$lang
                   cp LICENSE-* $webroot/$ver/book/$lang/
               done
               sed 's|URL|book/en|g' $webroot/redirect.html > $webroot/$ver/index.html
