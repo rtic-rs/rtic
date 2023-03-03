@@ -375,7 +375,7 @@ jobs:
 
               pushd $src
               rm -f .cargo/config
-              cargo doc --features thumbv7-backend || cargo doc --features thumbv7-backend,timer-queue
+              cargo doc || cargo doc --features timer-queue
               cp -r target/doc $webroot/$ver/api
               sed 's|URL|rtic/index.html|g' $webroot/redirect.html > $webroot/$ver/api/index.html
               popd
