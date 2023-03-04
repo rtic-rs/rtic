@@ -38,9 +38,10 @@ impl TestMetadata {
         match package {
             Package::Rtic => {
                 let features = Some(format!(
-                    "{},{}",
+                    "{},{},{}",
                     DEFAULT_FEATURES,
                     backend.to_rtic_feature(),
+                    "rtic-uitest"
                 ));
                 CargoCommand::Test {
                     package: Some(package),
