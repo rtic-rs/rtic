@@ -124,6 +124,7 @@ mod basepri {
     use super::*;
 
     /// Generates a `Mutex` implementation
+    #[allow(clippy::too_many_arguments)]
     pub fn impl_mutex(
         app: &App,
         _analysis: &CodegenAnalysis,
