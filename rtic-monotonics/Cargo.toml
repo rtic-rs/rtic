@@ -30,9 +30,9 @@ default = []
 defmt = ["fugit/defmt"]
 
 # Systick on Cortex-M, default 1 kHz
-cortex_m_systick = ["dep:cortex-m"]
-systick_100hz = []
-systick_10khz = []
+cortex-m-systick = ["dep:cortex-m"]
+systick-100hz = []
+systick-10khz = []
 
 # Timer peripheral on the RP2040
 rp2040 = ["dep:rp2040-pac"]

@@ -5,7 +5,7 @@ pub use atomic_polyfill as atomic;
 pub mod executor;
 
 #[cfg(all(
-    cortex_m_basepri,
+    feature = "cortex-m-basepri",
     not(any(feature = "thumbv7-backend", feature = "thumbv8main-backend"))
 ))]
 compile_error!(
@@ -13,27 +13,27 @@ compile_error!(
 );
 
 #[cfg(all(
-    cortex_m_source_masking,
+    feature = "cortex-m-source-masking",
     not(any(feature = "thumbv6-backend", feature = "thumbv8base-backend"))
 ))]
 compile_error!(
     "Building for Cortex-M with source masking, but 'thumbv6-backend' or 'thumbv8base-backend' backend not selected"
 );
 
-#[cfg(cortex_m_basepri)]
+#[cfg(any(feature = "cortex-m-basepri"))]
 pub use cortex_basepri::*;
 
-#[cfg(cortex_m_basepri)]
+#[cfg(any(feature = "cortex-m-basepri"))]
 mod cortex_basepri;
 
-#[cfg(cortex_m_source_masking)]
+#[cfg(feature = "cortex-m-source-masking")]
 pub use cortex_source_mask::*;
 
-#[cfg(cortex_m_source_masking)]
+#[cfg(feature = "cortex-m-source-masking")]
 mod cortex_source_mask;
 
 /// Priority conversion, takes logical priorities 1..=N and converts it to NVIC priority.
-#[cfg(any(cortex_m_basepri, cortex_m_source_masking))]
+#[cfg(any(feature = "cortex-m-basepri", feature = "cortex-m-source-masking",))]
 #[inline]
 #[must_use]
 pub const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {

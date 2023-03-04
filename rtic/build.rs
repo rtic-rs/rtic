@@ -8,14 +8,14 @@ fn main() {
         | target.starts_with("thumbv7em")
         | target.starts_with("thumbv8m.main")
     {
-        println!("cargo:rustc-cfg=cortex_m_basepri");
+        println!("cargo:rustc-cfg=feature=\"cortex-m-basepri\"");
     } else if target.starts_with("thumbv6m") | target.starts_with("thumbv8m.base") {
-        println!("cargo:rustc-cfg=cortex_m_source_masking");
+        println!("cargo:rustc-cfg=feature=\"cortex-m-source-masking\"");
     } else if target.starts_with("riscv32i") {
         panic!("No RISC-V support yet.");
 
         // TODO: Add feature here for risc-v targets
-        // println!("cargo:rustc-cfg=riscv");
+        // println!("cargo:rustc-cfg=feature=\"riscv\"");
     } else if target.starts_with("thumb") || target.starts_with("riscv32") {
         panic!("Unknown target '{target}'. Need to update logic in build.rs.");
     }

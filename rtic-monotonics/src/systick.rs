@@ -7,14 +7,14 @@ use core::future::Future;
 use cortex_m::peripheral::SYST;
 pub use fugit::ExtU32;
 
-// Features should be additive, here systick_100hz gets picked if both
-// `systick_100hz` and `systick_10khz` are enabled.
+// Features should be additive, here systick-100hz gets picked if both
+// `systick-100hz` and `systick-10khz` are enabled.
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "systick_100hz")]
+    if #[cfg(feature = "systick-100hz")]
     {
         const TIMER_HZ: u32 = 100;
-    } else if #[cfg(feature = "systick_10khz")]
+    } else if #[cfg(feature = "systick-10khz")]
     {
         const TIMER_HZ: u32 = 10_000;
     } else {
