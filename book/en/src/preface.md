@@ -12,8 +12,6 @@ This book contains user level documentation for the Real-Time Interrupt-driven C
 
 This is the documentation for RTIC v2.x. 
 
-{{#include ../../../README.md:59}} 
-
 Older releases:
 [RTIC v1.x](/1.0) | [RTIC v0.5.x (unsupported)](/0.5) | [RTFM v0.4.x (unsupported)](/0.4) 
 
