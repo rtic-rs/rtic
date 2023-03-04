@@ -36,6 +36,7 @@ mod source_masking {
     use std::collections::HashMap;
 
     /// Generates a `Mutex` implementation
+    #[allow(clippy::too_many_arguments)]
     pub fn impl_mutex(
         app: &App,
         analysis: &CodegenAnalysis,
