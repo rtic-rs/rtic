@@ -88,6 +88,7 @@ pub enum Backends {
 }
 
 impl Backends {
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_target(&self) -> &str {
         match self {
             Backends::Thumbv6 => ARMV6M,
@@ -97,6 +98,7 @@ impl Backends {
         }
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_rtic_feature(&self) -> &str {
         match self {
             Backends::Thumbv6 => "thumbv6-backend",
@@ -105,6 +107,7 @@ impl Backends {
             Backends::Thumbv8Main => "thumbv8main-backend",
         }
     }
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_rtic_macros_feature(&self) -> &str {
         match self {
             Backends::Thumbv6 => "cortex-m-source-masking",

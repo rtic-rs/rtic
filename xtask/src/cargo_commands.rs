@@ -154,7 +154,7 @@ pub fn cargo_test(package: &PackageOpt, backend: Backends) -> anyhow::Result<()>
         ] {
             let mut error_messages = vec![];
             let cmd = &TestMetadata::match_package(package, backend);
-            if let Err(err) = command_parser(&cmd, false) {
+            if let Err(err) = command_parser(cmd, false) {
                 error_messages.push(err);
             }
 
