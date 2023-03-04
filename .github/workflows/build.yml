@@ -442,7 +442,7 @@ jobs:
   #
   # This needs to run before book is built, as bookbuilding fetches from the branch
   mergetostablebranch:
-    name: If CI passes, merge master branch into release/vX
+    name: Merge branch into release/vX when pushing to master
     runs-on: ubuntu-22.04
     needs:
       - ci-success
