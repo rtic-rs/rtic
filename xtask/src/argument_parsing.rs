@@ -41,7 +41,7 @@ impl TestMetadata {
                     "{},{},{}",
                     DEFAULT_FEATURES,
                     backend.to_rtic_feature(),
-                    "rtic-uitest"
+                    backend.to_rtic_uitest_feature(),
                 ));
                 CargoCommand::Test {
                     package: Some(package),
@@ -110,10 +110,15 @@ impl Backends {
     #[allow(clippy::wrong_self_convention)]
     pub fn to_rtic_macros_feature(&self) -> &str {
         match self {
-            Backends::Thumbv6 => "cortex-m-source-masking",
-            Backends::Thumbv7 => "cortex-m-basepri",
-            Backends::Thumbv8Base => "cortex-m-source-masking",
-            Backends::Thumbv8Main => "cortex-m-basepri",
+            Backends::Thumbv6 | Backends::Thumbv8Base => "cortex-m-source-masking",
+            Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
+        }
+    }
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_rtic_uitest_feature(&self) -> &str {
+        match self {
+            Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
+            Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
         }
     }
 }

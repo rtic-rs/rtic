@@ -74,7 +74,8 @@ thumbv8main-backend = ["rtic-macros/cortex-m-basepri"]
 # riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
 
 # needed for testing
-rtic-uitest = ["thumbv7-backend","rtic-macros/cortex-m-basepri"]
+rtic-uitestv7 = ["thumbv7-backend", "rtic-macros/cortex-m-basepri"]
+rtic-uitestv6 = ["thumbv6-backend", "rtic-macros/cortex-m-source-masking"]
 test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick-100hz"]
 
 # [[example]]

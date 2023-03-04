@@ -20,23 +20,24 @@ compile_error!(
     "Building for Cortex-M with source masking, but 'thumbv6-backend' or 'thumbv8base-backend' backend not selected"
 );
 
-#[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitest"))]
+#[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
 pub use cortex_basepri::*;
 
-#[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitest"))]
+#[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
 mod cortex_basepri;
 
-#[cfg(feature = "cortex-m-source-masking")]
+#[cfg(any(feature = "cortex-m-source-masking", feature = "rtic-uitestv6"))]
 pub use cortex_source_mask::*;
 
-#[cfg(feature = "cortex-m-source-masking")]
+#[cfg(any(feature = "cortex-m-source-masking", feature = "rtic-uitestv6"))]
 mod cortex_source_mask;
 
 /// Priority conversion, takes logical priorities 1..=N and converts it to NVIC priority.
 #[cfg(any(
     feature = "cortex-m-basepri",
     feature = "cortex-m-source-masking",
-    feature = "rtic-uitest",
+    feature = "rtic-uitestv6",
+    feature = "rtic-uitestv7",
 ))]
 #[inline]
 #[must_use]
