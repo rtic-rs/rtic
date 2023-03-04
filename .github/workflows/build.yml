@@ -349,6 +349,7 @@ jobs:
 
   mdbookold:
     name: build docs and mdbook for older releases
+    needs: mergetostablebranch
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
