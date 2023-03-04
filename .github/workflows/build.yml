@@ -354,6 +354,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install mdbook
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+
+      - name: Install mdbook-mermaid
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook-mermaid
+
       - name: Remove cargo-config
         run: rm -f .cargo/config
 
