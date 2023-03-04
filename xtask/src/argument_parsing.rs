@@ -67,7 +67,7 @@ impl TestMetadata {
             Package::RticMonotonics => CargoCommand::Test {
                 package: Some(package),
                 features: None,
-                test: Some("tests".to_owned()),
+                test: None,
             },
             Package::RticTime => CargoCommand::Test {
                 package: Some(package),
