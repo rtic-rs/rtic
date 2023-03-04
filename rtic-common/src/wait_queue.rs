@@ -69,7 +69,9 @@ impl<T: Clone> LinkedList<T> {
 
     /// Put an element at the back of the queue.
     ///
-    /// SAFETY: The link must live until it is removed from the queue.
+    /// # Safety
+    ///
+    /// The link must live until it is removed from the queue.
     pub unsafe fn push(&self, link: Pin<&Link<T>>) {
         cs::with(|_| {
             // Make sure all previous writes are visible
