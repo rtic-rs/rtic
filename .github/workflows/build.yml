@@ -370,7 +370,8 @@ jobs:
 
           for ver in ${vers[@]}; do
 
-              src=$(mktemp -d)
+              mkdir -p src/$ver
+              src=$root/src/$ver
               curl -L https://github.com/rtic-rs/rtic/archive/release/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
 
               pushd $src
@@ -378,15 +379,17 @@ jobs:
               cargo doc || cargo doc --features timer-queue
               mkdir -p $webroot/$ver/book
               cp -r target/doc $webroot/$ver/api
+
               sed 's|URL|rtic/index.html|g' $root/redirect.html > $webroot/$ver/api/index.html
               popd
 
               for lang in ${langs[@]}; do
                   cargo xtask book build $src/book/$lang
-              
+
                   cp -r $src/book/$lang/book $webroot/$ver/book/$lang
                   cp LICENSE-* $webroot/$ver/book/$lang/
               done
+              # using master branch redirect file
               sed 's|URL|book/en|g' $root/redirect.html > $webroot/$ver/index.html
 
               rm -rf $src
