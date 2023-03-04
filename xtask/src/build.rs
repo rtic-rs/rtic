@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 const HEX_BUILD_ROOT: &str = "ci/builds";
 
-/// make sure we're starting with a clean,but existing slate
+/// Make sure we're starting with a clean, but existing slate
 pub fn init_build_dir() -> anyhow::Result<()> {
     if Path::new(HEX_BUILD_ROOT).exists() {
         fs::remove_dir_all(HEX_BUILD_ROOT)

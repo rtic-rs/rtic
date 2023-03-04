@@ -11,22 +11,28 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  DEV_VERSION: 2
+  STABLE_VERSION: 1
+  OLDSTABLE_VERSION: 0.5
+  OLDOLDSTABLE_VERSION: 0.4
 
 jobs:
-  # Run cargo fmt --check, includes macros/
-  style:
-    name: style
+  # Run cargo xtask format-check
+  formatcheck:
+    name: cargo fmt
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
 
-      - name: cargo fmt --check
-        run:  cargo fmt --all -- --check
+      - name: cargo xtask format-check
+        run:  cargo xtask format-check
 
   # Compilation check
   check:
@@ -34,98 +40,125 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        target:
-          - thumbv7m-none-eabi
-          - thumbv6m-none-eabi
-          - x86_64-unknown-linux-gnu
+        backend:
+          - thumbv7
+          - thumbv6
+          - thumbv8-base
+          - thumbv8-main
         toolchain:
-          - stable
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Install Rust ${{ matrix.toolchain }}
         run: |
-          rustup set profile minimal
           rustup override set ${{ matrix.toolchain }}
 
-      - name: Configure Rust target (${{ matrix.target }})
-        run: rustup target add ${{ matrix.target }}
+      - name: Configure Rust target (v6, v7, v8.b v8.m)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
+          rustup target add thumbv8m.base-none-eabi
+          rustup target add thumbv8m.main-none-eabi
 
       - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: cargo check
-        run: cargo check --target=${{ matrix.target }}
+      - run: cargo xtask --verbose --backend ${{ matrix.backend }} check 
 
   # Clippy
   clippy:
-    name: Cargo clippy
+    name: clippy
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        backend:
+          - thumbv7
+          - thumbv6
+          - thumbv8-base
+          - thumbv8-main
+        toolchain:
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target (v6, v7, v8.b v8.m)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
+          rustup target add thumbv8m.base-none-eabi
+          rustup target add thumbv8m.main-none-eabi
 
       - name: Add Rust component clippy
         run: rustup component add clippy
 
+      - name: Fail on warnings
+        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
+
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: cargo clippy
-        run: cargo clippy
+      - run: cargo xtask --verbose --backend ${{ matrix.backend }} clippy
 
   # Verify all examples, checks
   checkexamples:
-    name: checkexamples
+    name: check examples
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        target:
-          - thumbv7m-none-eabi
-          - thumbv6m-none-eabi
-          - thumbv8m.base-none-eabi
-          - thumbv8m.main-none-eabi
+        backend:
+          - thumbv7
+          - thumbv6
+          - thumbv8-base
+          - thumbv8-main
         toolchain:
-          - stable
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Install Rust ${{ matrix.toolchain }}
         run: |
-          rustup set profile minimal
           rustup override set ${{ matrix.toolchain }}
 
-      - name: Configure Rust target (${{ matrix.target }})
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Add Rust component llvm-tools-preview
-        run: rustup component add llvm-tools-preview
+      - name: Configure Rust target (v6, v7, v8.b v8.m)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
+          rustup target add thumbv8m.base-none-eabi
+          rustup target add thumbv8m.main-none-eabi
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: Check the examples
-        run: cargo check --examples --target=${{ matrix.target }}
+        if: ${{ matrix.backend == 'thumbv8-base' }}
+        run: cargo xtask --verbose --backend ${{ matrix.backend }} --exampleexclude pool example-check
+
+      - name: Check the examples
+        if: ${{ matrix.backend != 'thumbv8-base' }}
+        run: cargo xtask --verbose --backend ${{ matrix.backend }} example-check
 
   # Verify the example output with run-pass tests
   testexamples:
-    name: testexamples
+    name: QEMU run
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        target:
-          - thumbv7m-none-eabi
-          - thumbv6m-none-eabi
+        backend:
+          - thumbv7
+          - thumbv6
         toolchain:
-          - stable
+          - nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -135,15 +168,19 @@ jobs:
           rustup set profile minimal
           rustup override set ${{ matrix.toolchain }}
 
-      - name: Configure Rust target (${{ matrix.target }})
-        run: rustup target add ${{ matrix.target }}
+      - name: Configure Rust target (v6, v7)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
 
       - name: Add Rust component llvm-tools-preview
         run: rustup component add llvm-tools-preview
 
       # Use precompiled binutils
-      - name: cargo install cargo-binutils
-        run: cargo install cargo-binutils
+      - name: Install cargo-binutils
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binutils
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
@@ -154,63 +191,32 @@ jobs:
           sudo apt install -y qemu-system-arm
 
       - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+        working-directory: ./rtic
+        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
 
       - name: Run-pass tests
-        run: cargo xtask --target ${{ matrix.target }}
-
-  # Check the correctness of macros/ crate
-  checkmacros:
-    name: checkmacros
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-        toolchain:
-          - stable
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install Rust ${{ matrix.toolchain }}
-        run: |
-          rustup set profile minimal
-          rustup override set ${{ matrix.toolchain }}
-
-      - name: Configure Rust target (${{ matrix.target }})
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
-
-      - name: cargo check
-        run: cargo check --manifest-path macros/Cargo.toml --target=${{ matrix.target }}
-
-  # Run the  macros test-suite
-  testmacros:
-    name: testmacros
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
-
-      - name: cargo check
-        run: cargo test --manifest-path macros/Cargo.toml
+        run: cargo xtask --verbose --backend ${{ matrix.backend }} qemu 
 
   # Run test suite
   tests:
     name: tests
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        backend:
+          - thumbv7
+          - thumbv6
+          - thumbv8-base
+          - thumbv8-main
+        package:
+          - rtic
+          - rtic-common
+          - rtic-macros
+          - rtic-monotonics
+          - rtic-sync
+          - rtic-time
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -218,122 +224,201 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Configure Rust target (v6, v7, v8.b v8.m)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
+          rustup target add thumbv8m.base-none-eabi
+          rustup target add thumbv8m.main-none-eabi
+
       - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
+        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
       - name: Run cargo test
-        run: cargo test --test tests
+        run: cargo xtask --verbose --backend ${{ matrix.backend }} test ${{ matrix.package }}
 
   # Build documentation, check links
   docs:
-    name: docs
+    name: build docs
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Cache pip installed linkchecker
-        uses: actions/cache@v3
+      - name: Install lychee
+        uses: taiki-e/install-action@v2
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
-        with:
-        # Semantic version range syntax or exact version of a Python version
-          python-version: '3.x'
-
-      # You can test your matrix by printing the current Python version
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install dependencies
-        run: pip install git+https://github.com/linkchecker/linkchecker.git
+          tool: lychee
 
       - name: Remove cargo-config
         run: rm -f .cargo/config
 
-      - name: Fail on warnings
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs macros/src/lib.rs
-
       - name: Build docs
-        run: cargo doc
+        # TODO: Any difference between backends?
+        run: cargo doc --features thumbv7-backend
 
       - name: Check links
         run: |
           td=$(mktemp -d)
           cp -r target/doc $td/api
-          linkchecker $td/api/rtic/
-          linkchecker $td/api/cortex_m_rtic_macros/
+          echo rtic
+          lychee --offline --format detailed $td/api/rtic/
+        
+          echo rtic_common
+          lychee --offline --format detailed $td/api/rtic_common/
+        
+          echo rtic_macros
+          lychee --offline --format detailed $td/api/rtic_macros/
+        
+          echo rtic_monotonics
+          lychee --offline --format detailed $td/api/rtic_monotonics/
+
+          echo rtic_sync
+          lychee --offline --format detailed $td/api/rtic_sync/
+        
+          echo rtic_time
+          lychee --offline --format detailed $td/api/rtic_time/
+      
+
+      - name: Archive the API docs
+        run: |
+          cp -r target/doc apidocs
+          tar -cf apidocs.tar apidocs
+
+      - name: Store the API docs
+        uses: actions/upload-artifact@v3
+        with:
+          name: apidocs
+          path: apidocs.tar
 
   # Build the books
   mdbook:
-    name: mdbook
+    name: build mdbook
+    needs: docs
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
+
+      - name: Install lychee
+        uses: taiki-e/install-action@v2
         with:
-        # Semantic version range syntax or exact version of a Python version
-          python-version: '3.x'
+          tool: lychee
 
-      # You can test your matrix by printing the current Python version
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install dependencies
-        run: pip install git+https://github.com/linkchecker/linkchecker.git
-
-      - name: mdBook Action
-        uses: peaceiris/actions-mdbook@v1
+      - name: Install mdbook
+        uses: taiki-e/install-action@v2
         with:
-          mdbook-version: 'latest'
+          tool: mdbook
+
+      - name: Install mdbook-mermaid
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook-mermaid
 
       - name: Build book in English
-        shell: 'script --return --quiet --command "bash {0}"'
-        run: cd book/en && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
+        run: cargo xtask book
 
-      - name: Build book in Russian
-        shell: 'script --return --quiet --command "bash {0}"'
-        run: cd book/ru && if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then echo "Russian book needs updating!"; else exit 0; fi
+      - name: Download built API docs
+        uses: actions/download-artifact@v3
+        with:
+          name: apidocs
+
+      - name: Extract the API docs
+        run: tar -xf apidocs.tar 
 
       - name: Check links
         run: |
           td=$(mktemp -d)
           mkdir $td/book
           cp -r book/en/book $td/book/en
-          cp -r book/ru/book $td/book/ru
           cp LICENSE-* $td/book/en
-          cp LICENSE-* $td/book/ru
+          cp -r apidocs/ $td/api
 
-          linkchecker $td/book/en/
-          linkchecker $td/book/ru/
+          lychee --offline --format detailed $td/book/en/
+          mv $td bookroot
 
-  # Update stable branch
-  #
-  # This needs to run before book is built
-  mergetostablebranch:
-    name: If CI passes, merge master branch into release/vX
+      - name: Archive the book + API docs
+        run: |
+          tar -cf book.tar bookroot
+
+      - name: Store the Book + API docs
+        uses: actions/upload-artifact@v3
+        with:
+          name: book
+          path: book.tar
+
+  mdbookold:
+    name: build docs and mdbook for older releases
+    needs: mergetostablebranch
     runs-on: ubuntu-22.04
-    needs:
-      - style
-      - check
-      - clippy
-      - checkexamples
-      - testexamples
-      - checkmacros
-      - testmacros
-      - tests
-      - docs
-      - mdbook
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    # Only run this when pushing to master branch
-    if: github.ref == 'refs/heads/master'
+      - name: Install mdbook
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+
+      - name: Install mdbook-mermaid
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook-mermaid
+
+      - name: Remove cargo-config
+        run: rm -f .cargo/config
+
+      - name: Prepare output folder
+        run: mkdir -p mdbookold
+
+      - name: Fetch and build books for older versions
+        run: |
+          # The latest stable must be the first element in the array
+          vers=( "${{ env.STABLE_VERSION }}" "${{ env.OLDSTABLE_VERSION }}" )
+          langs=( en )
+          root=$(pwd)
+          webroot=$(pwd)/mdbookold
+
+          for ver in ${vers[@]}; do
+
+              mkdir -p src/$ver
+              src=$root/src/$ver
+              curl -L https://github.com/rtic-rs/rtic/archive/release/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
+
+              pushd $src
+              rm -f .cargo/config
+              cargo doc || cargo doc --features timer-queue
+              mkdir -p $webroot/$ver/book
+              cp -r target/doc $webroot/$ver/api
+
+              sed 's|URL|rtic/index.html|g' $root/redirect.html > $webroot/$ver/api/index.html
+              popd
+
+              for lang in ${langs[@]}; do
+                  cargo xtask book build $src/book/$lang
+
+                  cp -r $src/book/$lang/book $webroot/$ver/book/$lang
+                  cp LICENSE-* $webroot/$ver/book/$lang/
+              done
+              # using master branch redirect file
+              sed 's|URL|book/en|g' $root/redirect.html > $webroot/$ver/index.html
+
+              rm -rf $src
+          done
+
+      - name: Archive the old books
+        run: |
+          tar -cf mdbookold.tar mdbookold
+
+      - name: Store the old API docs
+        uses: actions/upload-artifact@v3
+        with:
+          name: mdbookold
+          path: mdbookold.tar
+
+  parseversion:
+    name: Parse the master branch RTIC version
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -341,18 +426,37 @@ jobs:
         id: crateversionbranch
         # Parse metadata for version number, extract the Semver Major
         run: |
-          VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="cortex-m-rtic") | .version')
+          VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="rtic") | .version')
           VERSIONMAJOR=${VERSION%.*.*}
           echo "branch=release/v$VERSIONMAJOR" >> $GITHUB_ENV
           echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_ENV
 
-      - uses: everlytic/branch-merge@1.1.5
-        with:
-          github_token: ${{ github.token }}
-          source_ref: 'master'
-          target_branch: ${{ env.branch }}
-          commit_message_template: '[Bors] Merged {source_ref} into target {target_branch}'
+
+  # Update stable branch
+  #
+  # This is only valid when current stable resides in
+  # master branch.
+  # As master moves on to development, the work on the
+  # stable version will happen in release/v"stable_version".
+  # Thus, no need to push changes 
+  #
+  # This needs to run before book is built, as bookbuilding fetches from the branch
+  mergetostablebranch:
+    name: Merge branch into release/vX when pushing to master
+    runs-on: ubuntu-22.04
+    needs:
+      - ci-success
+      - parseversion
+
+    # Only run this when pushing to master branch
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Push to stable release branch if master contains stable version
+        if: ${{ env.versionmajor == env.STABLE_VERSION }}
+        run: git push -u origin ${{ env.branch }}
 
   # Only runs when pushing to master branch
   # Bors run CI against staging branch,
@@ -362,65 +466,73 @@ jobs:
     name: deploy
     runs-on: ubuntu-22.04
     needs:
-      mergetostablebranch
+      - mergetostablebranch
+      - docs      
+      - mdbookold      
+      - mdbook
 
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
+      - name: Install lychee
+        uses: taiki-e/install-action@v2
         with:
-        # Semantic version range syntax or exact version of a Python version
-          python-version: '3.x'
+         tool: lychee
 
-      # You can test your matrix by printing the current Python version
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
+      - name: Install mdbook-mermaid
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook-mermaid
+ 
       - name: mdBook Action
         uses: peaceiris/actions-mdbook@v1
         with:
           mdbook-version: 'latest'
 
-      - name: Get crate version
-        id: crateversion
-        # Parse metadata for version number, extract the Semver Major
-        run: |
-          VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="cortex-m-rtic") | .version')
-          VERSIONMAJOR=${VERSION%.*.*}
-          echo "branch=release/v$VERSIONMAJOR" >> $GITHUB_ENV
-          echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_ENV
-
       - name: Remove cargo-config
         run: rm -f .cargo/config
 
-      - name: Build docs
-        run: cargo doc
+      - name: Download built dev-ver book and API docs
+        uses: actions/download-artifact@v3
+        with:
+          name: book
 
-      - name: Build books
+      - name: Extract the dev-version book and API docs
+        run: |
+          tar -xf book.tar 
+
+      - name: Download built old versions of books and API docs
+        uses: actions/download-artifact@v3
+        with:
+          name: mdbookold
+
+      - name: Extract the old version books and API docs
+        run: |
+          tar -xf mdbookold.tar 
+
+      - name: Prepare books
         shell: 'script --return --quiet --command "bash {0}"'
         run: |
-          langs=( en ru )
+          langs=( en )
           devver=( dev )
           # The latest stable must be the first element in the array
-          vers=( "1" "0.5" "0.4"  )
+          vers=( "${{ env.STABLE_VERSION }}" "${{ env.OLDSTABLE_VERSION }}" )
 
           # All releases start with "v"
           # followed by MAJOR.MINOR.PATCH, see semver.org
           # Store first in array as stable
           stable=${vers}
-          crateversion={{ env.versionmajor }}
+          crateversion=${{ env.versionmajor }}
 
           echo "Latest stable version: $stable"
           echo "Current crate version: $crateversion"
 
           # Create directories
           td=$(mktemp -d)
-          mkdir -p $td/$devver/book/
-          cp -r target/doc $td/$devver/api
+          mkdir -p $td/$devver/
+          cp -r bookroot/* $td/$devver/
 
           # Redirect rtic.rs/meeting/index.html to hackmd
           mkdir $td/meeting
@@ -441,52 +553,49 @@ jobs:
           else
             # If the current stable and the "dev" version in master branch
             # share the same major version, redirect dev/ to stable book
+            # This makes sense, preferable to have doc/book updates going live directly to rtic.rs
             sed 's|URL|rtic.rs/$stable/api/rtic|g' redirect.html > $td/$devver/api/index.html
             sed 's|URL|rtic.rs/$stable|g' redirect.html > $td/$devver/index.html
           fi
 
-          # Build books
-          for lang in ${langs[@]}; do
-              ( cd book/$lang &&
-                if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
-              )
-              cp -r book/$lang/book $td/$devver/book/$lang
-              cp LICENSE-* $td/$devver/book/$lang/
-          done
-
-          # Build older versions, including stable
-          root=$(pwd)
-          for ver in ${vers[@]}; do
-              prefix=${ver}
-
-              mkdir -p $td/$prefix/book
-              src=$(mktemp -d)
-              curl -L https://github.com/rtic-rs/cortex-m-rtic/archive/release/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
-
-              pushd $src
-              rm -f .cargo/config
-              cargo doc || cargo doc --features timer-queue
-              cp -r target/doc $td/$prefix/api
-              sed 's|URL|rtic/index.html|g' $root/redirect.html > $td/$prefix/api/index.html
-              for lang in ${langs[@]}; do
-                  ( cd book/$lang &&
-                    if mdbook build |& tee /dev/tty | grep "\[ERROR\]"; then exit 1; else exit 0; fi
-                  )
-                  cp -r book/$lang/book $td/$prefix/book/$lang
-                  cp LICENSE-* $td/$prefix/book/$lang/
-              done
-              sed 's|URL|book/en|g' $root/redirect.html > $td/$prefix/index.html
-              popd
-
-              rm -rf $src
-          done
+          # Package older versions, including stable
 
           # Copy the stable book to the stable alias
-          cp -r $td/$stable $td/stable
+          cp -r mdbookold/${{ env.STABLE_VERSION }} $td/stable
+
+          # Copy the stable book to the webroot
+          cp -r mdbookold/${{ env.STABLE_VERSION }} $td/
+          # Copy the old stable book to the webroot
+          cp -r mdbookold/${{ env.OLDSTABLE_VERSION }} $td/
 
           # Forward CNAME file
           cp CNAME $td/
           mv $td/ bookstodeploy
+
+      - name: Archive the webroot
+        run: |
+          tar -cf bookstodeploy.tar bookstodeploy
+
+      - name: Store the books
+        uses: actions/upload-artifact@v3
+        with:
+          name: bookstodeploy
+          path: bookstodeploy.tar
+
+  ghapages:
+    name: Publish rtic.rs
+    runs-on: ubuntu-22.04
+    needs:
+      - deploy
+    steps:
+      - name: Download books
+        uses: actions/download-artifact@v3
+        with:
+          name: bookstodeploy
+
+      - name: Extract the books
+        run: |
+          tar -xf bookstodeploy.tar 
 
       - name: Deploy to GH-pages
         uses: peaceiris/actions-gh-pages@v3
@@ -503,13 +612,11 @@ jobs:
     name: ci
     if: github.event_name == 'push' && success()
     needs:
-      - style
+      - formatcheck
       - check
       - clippy
       - checkexamples
       - testexamples
-      - checkmacros
-      - testmacros
       - tests
       - docs
       - mdbook

@@ -1,3 +1,5 @@
+<!-- Should probably be removed -->
+
 # Defining tasks with `#[task]`
 
 Tasks, defined with `#[task]`, are the main mechanism of getting work done in RTIC.

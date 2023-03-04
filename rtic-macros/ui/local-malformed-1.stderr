@@ -1,0 +1,5 @@
+error: unexpected end of input, expected one of: `for`, parentheses, `fn`, `unsafe`, `extern`, identifier, `::`, `<`, square brackets, `*`, `&`, `!`, `impl`, `_`, lifetime
+  --> ui/local-malformed-1.rs:11:23
+   |
+11 |     #[task(local = [a:])]
+   |                       ^

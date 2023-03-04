@@ -1,9 +1,22 @@
 [book]
-authors = ["Jorge Aparicio, Per Lindgren and The Real-Time Interrupt-driven Concurrency developers"]
+authors = [
+  "The Real-Time Interrupt-driven Concurrency developers",
+  "Emil Fresk <emil.fresk@gmail.com>",
+  "Henrik Tjäder <henrik@tjaders.com>",
+  "Jorge Aparicio <jorge@japaric.io>",
+  "Per Lindgren <per.lindgren@ltu.se>",
+]
 multilingual = false
 src = "src"
 title = "Real-Time Interrupt-driven Concurrency"
 
+[build]
+create-missing = false
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
 [output.html]
-git-repository-url = "https://github.com/rtic-rs/cortex-m-rtic"
+git-repository-url = "https://github.com/rtic-rs/rtic"
 git-repository-icon = "fa-github"
+additional-js = ["mermaid.min.js", "mermaid-init.js"]

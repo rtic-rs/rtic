@@ -1,0 +1,83 @@
+[package]
+authors = [
+  "The Real-Time Interrupt-driven Concurrency developers",
+  "Emil Fresk <emil.fresk@gmail.com>",
+  "Henrik Tjäder <henrik@tjaders.com>",
+  "Jorge Aparicio <jorge@japaric.io>",
+  "Per Lindgren <per.lindgren@ltu.se>",
+]
+categories = ["concurrency", "embedded", "no-std", "asynchronous"]
+description = "Real-Time Interrupt-driven Concurrency (RTIC): a concurrency framework for building real-time systems"
+documentation = "https://rtic.rs/"
+edition = "2021"
+keywords = [
+  "arm",
+  "cortex-m",
+  "risc-v",
+  "embedded",
+  "async",
+  "runtime",
+  "futures",
+  "await",
+  "no-std",
+  "rtos",
+  "bare-metal",
+]
+license = "MIT OR Apache-2.0"
+name = "rtic"
+readme = "../README.md"
+repository = "https://github.com/rtic-rs/rtic"
+
+version = "2.0.0-alpha.0"
+
+[lib]
+name = "rtic"
+
+[dependencies]
+cortex-m = "0.7.0"
+bare-metal = "1.0.0"
+#portable-atomic = { version = "0.3.19" }
+atomic-polyfill = "1"
+rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.0" }
+rtic-core = "1"
+critical-section = "1"
+
+[dev-dependencies]
+heapless = "0.7.7"
+lm3s6965 = "0.1.3"
+cortex-m-semihosting = "0.5.0"
+rtic-time = { path = "../rtic-time" }
+rtic-sync = { path = "../rtic-sync" }
+rtic-monotonics = { path = "../rtic-monotonics", features = ["cortex-m-systick"] }
+
+[dev-dependencies.futures]
+version = "0.3.26"
+default-features = false
+features = ["async-await"]
+
+[dev-dependencies.panic-semihosting]
+features = ["exit"]
+version = "0.6.0"
+
+[target.x86_64-unknown-linux-gnu.dev-dependencies]
+trybuild = "1"
+
+[features]
+default = []
+
+thumbv6-backend = ["rtic-macros/cortex-m-source-masking"]
+thumbv7-backend = ["rtic-macros/cortex-m-basepri"]
+thumbv8base-backend = ["rtic-macros/cortex-m-source-masking"]
+thumbv8main-backend = ["rtic-macros/cortex-m-basepri"]
+# riscv-clic-backend = ["rtic-macros/riscv-clic"]
+# riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
+# riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
+
+# needed for testing
+rtic-uitestv7 = ["thumbv7-backend", "rtic-macros/cortex-m-basepri"]
+rtic-uitestv6 = ["thumbv6-backend", "rtic-macros/cortex-m-source-masking"]
+test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick-100hz"]
+
+# [[example]]
+# name = "pool"
+# required-features = ["test-critical-section"]

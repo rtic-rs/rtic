@@ -1,0 +1,5 @@
+error: unexpected end of input, expected expression
+  --> ui/local-malformed-3.rs:11:29
+   |
+11 |     #[task(local = [a: u32 =])]
+   |                             ^

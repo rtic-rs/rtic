@@ -1,0 +1,6 @@
+error: attributes are not supported here
+  --> ui/local-shared-attribute.rs:17:9
+   |
+17 | /         #[test]
+18 | |         b, // Error
+   | |_________^

@@ -1,9 +1,15 @@
 [package]
 name = "xtask"
-version = "0.1.0"
-edition = "2018"
+version = "0.0.0"
+edition = "2021"
+publish = false
 
 [dependencies]
 anyhow = "1.0.43"
 os_pipe = "1.1.2"
-structopt = "0.3.22"
+clap = { version = "4", features = ["derive"] }
+env_logger = "0.10.0"
+log = "0.4.17"
+rayon = "1.6.1"
+diffy = "0.3.0"
+exitcode = "1.1.2"

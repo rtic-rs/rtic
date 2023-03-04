@@ -1,0 +1,5 @@
+error: this identifier has already been used
+  --> ui/task-init.rs:16:14
+   |
+16 |     async fn foo(_: foo::Context) {}
+   |              ^^^

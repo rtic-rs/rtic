@@ -1,0 +1,5 @@
+error: hardware tasks are not allowed to be at priority 0
+ --> ui/task-priority-too-low.rs:5:38
+  |
+5 |     #[task(binds = UART0, priority = 0)]
+  |                                      ^
