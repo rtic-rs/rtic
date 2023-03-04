@@ -243,7 +243,7 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
                 // we make sure in `dropper` that the link is removed from the queue before
                 // dropping `link_ptr` AND `dropper` makes sure that the shadowed `link_ptr` lives
                 // until the end of the stack frame.
-                let (was_empty, addr) = unsafe { queue.insert(Pin::new_unchecked(&link_ref)) };
+                let (was_empty, addr) = unsafe { queue.insert(Pin::new_unchecked(link_ref)) };
 
                 marker.store(addr, Ordering::Relaxed);
 
