@@ -72,6 +72,7 @@ thumbv8main-backend = ["rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 # riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
+riscv-e310x-backend = ["rtic-macros/riscv-e310x"]
 
 # needed for testing
 rtic-uitestv7 = ["thumbv7-backend", "rtic-macros/cortex-m-basepri"]

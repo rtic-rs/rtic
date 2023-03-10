@@ -1,0 +1,10 @@
+{
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true
+    },
+    "rust-analyzer.cargo.features": [
+        // "cortex-m-basepri", // toggle this feature just for "inpiration"
+        "riscv-e310x",
+    ]
+}

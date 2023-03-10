@@ -29,6 +29,7 @@ cortex-m-source-masking = []
 cortex-m-basepri = []
 # riscv-clic = []
 # riscv-ch32 = []
+riscv-e310x = []
 
 # backend API test
 test-template = []
