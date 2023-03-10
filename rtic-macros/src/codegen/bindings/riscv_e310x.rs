@@ -6,6 +6,8 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse, Attribute, Ident};
 
+const E310X_PLIC_PRIO_BITS: u8 = 3;
+
 /// Implement `Mutex` using the PLIC threshold
 pub fn impl_mutex(
     _app: &App,
@@ -40,7 +42,7 @@ pub fn impl_mutex(
                         /* FIXME: we need to work around this. The original
                         BASEPRI register has 8 bits to work with, a.k.a 255
                         priority levels. We only have 8 priority levels. */
-                        #device::plic::threshold::PRIORITY_A,
+                        E310X_PLIC_PRIO_BITS,
                         f,
                     )
                 }
