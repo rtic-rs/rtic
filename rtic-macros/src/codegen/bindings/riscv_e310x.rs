@@ -6,6 +6,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse, Attribute, Ident};
 
+/// Implement `Mutex` using the PLIC threshold
 pub fn impl_mutex(
     _app: &App,
     _analysis: &CodegenAnalysis,
@@ -16,6 +17,38 @@ pub fn impl_mutex(
     _ceiling: u8,
     _ptr: &TokenStream2,
 ) -> TokenStream2 {
+    let path = if resources_prefix {
+        quote!(shared_resources::#name)
+    } else {
+        quote!(#name)
+    };
+
+    let device = &app.args.device;
+    quote!(
+        #(#cfgs)*
+        impl<'a> rtic::Mutex for #path<'a> {
+            type T = #ty;
+
+            #[inline(always)]
+            fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
+                const CEILING: u8 = #ceiling;
+
+                unsafe {
+                    rtic::export::lock(
+                        #ptr,
+                        CEILING,
+                        /* FIXME: we need to work around this. The original
+                        BASEPRI register has 8 bits to work with, a.k.a 255
+                        priority levels. We only have 8 priority levels. */
+                        #device::plic::threshold::PRIORITY_A,
+                        f,
+                    )
+                }
+            }
+        }
+    )
+
+
     quote!() // TODO
 }
 
