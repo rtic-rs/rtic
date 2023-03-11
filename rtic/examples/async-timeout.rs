@@ -17,8 +17,6 @@ mod app {
     use futures::{future::FutureExt, select_biased};
     use rtic_monotonics::Monotonic;
 
-    rtic_monotonics::make_systick_handler!();
-
     #[shared]
     struct Shared {}
 
@@ -29,7 +27,8 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         hprintln!("init");
 
-        Systick::start(cx.core.SYST, 12_000_000);
+        let systick_token = rtic_monotonics::make_systick_handler!();
+        Systick::start(cx.core.SYST, 12_000_000, systick_token);
 
         foo::spawn().ok();
 
