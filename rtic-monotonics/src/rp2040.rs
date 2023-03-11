@@ -4,7 +4,7 @@ use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
 use core::future::Future;
 pub use fugit::ExtU64;
-use rp2040_pac::{timer, Interrupt, RESETS, TIMER};
+use rp2040_pac::{timer, Interrupt, NVIC, RESETS, TIMER};
 
 /// Timer implementing `rtic_monotonic::Monotonic` which runs at 1 MHz.
 pub struct Timer;
@@ -17,6 +17,8 @@ impl Timer {
         timer.inte.modify(|_, w| w.alarm_0().set_bit());
 
         TIMER_QUEUE.initialize(Self {});
+
+        unsafe { NVIC::unmask(Interrupt::TIMER_IRQ_0) };
     }
 
     fn timer() -> &'static timer::RegisterBlock {

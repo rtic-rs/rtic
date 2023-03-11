@@ -13,4 +13,6 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Unmask the `rp2040` interrupt
+
 ## [v1.0.0] - 2023-xx-xx
