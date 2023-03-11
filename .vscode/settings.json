@@ -4,8 +4,8 @@
         "editor.formatOnSave": true
     },
     "rust-analyzer.cargo.features": [
-        "cortex-m-basepri", // toggle this feature just for "inpiration"
+        //"cortex-m-basepri", // toggle this feature just for "inpiration"
         //"cortex-m-source-masking", // toggle this feature just for "inpiration"
-        //"riscv-e310x",
+        "riscv-e310x",
     ]
 }

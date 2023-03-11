@@ -1,3 +1,18 @@
+//! Proof of concept: porting RTIC for the E310x RISC-V chip.
+//!
+//! # Related crates
+//!
+//! - riscv
+//! - riscv-rt
+//! - e310x
+//! - e310x-hal
+//!
+//! # Some clarifications
+//!
+//! This implementation uses CLINT and PLIC jointly. As PLIC allows interrupt
+//! thresholds, we are using the cortex-m-basepri as inspiration.
+//! We will document all our decisions for easing future ports.
+
 use crate::{
     analyze::Analysis as CodegenAnalysis,
     syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
@@ -6,18 +21,27 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse, Attribute, Ident};
 
-const E310X_PLIC_PRIO_BITS: u8 = 3;
-
-/// Implement `Mutex` using the PLIC threshold
+/// This macro implements the [`rtic::Mutex`] trait using the PLIC threshold for shared resources.
+///
+/// # Some remarks
+///
+/// If you use a threshold-based approach, you can adapt it using this as inspiration. You can also
+/// have a look to the original cortex-m-basepri codegen binding. As far as we know, here you only
+/// need to know **HOW MANY BITS YOUR PLATFORM USE TO REPRESENT PRIORITIES**.
+/// As the PAC of our platform does not include this information, we "hardcoded" it to 3.
+///
+/// # Future work
+///
+/// We should come up with a more standard mechanism for this.
 pub fn impl_mutex(
     _app: &App,
     _analysis: &CodegenAnalysis,
-    _cfgs: &[Attribute],
-    _resources_prefix: bool,
-    _name: &Ident,
-    _ty: &TokenStream2,
-    _ceiling: u8,
-    _ptr: &TokenStream2,
+    cfgs: &[Attribute],
+    resources_prefix: bool,
+    name: &Ident,
+    ty: &TokenStream2,
+    ceiling: u8,
+    ptr: &TokenStream2,
 ) -> TokenStream2 {
     let path = if resources_prefix {
         quote!(shared_resources::#name)
@@ -25,7 +49,9 @@ pub fn impl_mutex(
         quote!(#name)
     };
 
-    let device = &app.args.device;
+    // E310x supports interrupt levels from 0 to 7. As future work, we should try
+    // to standardize defining the priority bits of each microcontroller in each PAC
+    // let _device = &app.args.device; // TODO we will use this once we standardize the priority bits thing in RISC-V
     quote!(
         #(#cfgs)*
         impl<'a> rtic::Mutex for #path<'a> {
@@ -33,25 +59,20 @@ pub fn impl_mutex(
 
             #[inline(always)]
             fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
+                const E310X_PRIO_BITS: u8 = 3;  // TODO we won't use this once we standardize the priority bits thing in RISC-V
                 const CEILING: u8 = #ceiling;
 
                 unsafe {
                     rtic::export::lock(
                         #ptr,
                         CEILING,
-                        /* FIXME: we need to work around this. The original
-                        BASEPRI register has 8 bits to work with, a.k.a 255
-                        priority levels. We only have 8 priority levels. */
-                        E310X_PLIC_PRIO_BITS,
+                        E310X_PRIO_BITS,  // TODO we will use this once we standardize the priority bits thing in RISC-V
                         f,
                     )
                 }
             }
         }
     )
-
-
-    quote!() // TODO
 }
 
 pub fn extra_assertions(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
