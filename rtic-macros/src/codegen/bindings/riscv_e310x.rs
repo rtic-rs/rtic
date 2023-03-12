@@ -15,6 +15,7 @@
 
 use crate::{
     analyze::Analysis as CodegenAnalysis,
+    codegen::util,
     syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
 };
 use proc_macro2::TokenStream as TokenStream2;
@@ -75,12 +76,26 @@ pub fn impl_mutex(
     )
 }
 
+/// This macro is used to define additional compile-time assertions in case the platform needs it.
+/// The Cortex-M implementations do not use it. Thus, we think we do not need it either.
 pub fn extra_assertions(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
     vec![] // TODO
 }
 
-pub fn pre_init_checks(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
-    vec![] // TODO
+/// This macro is used to check at run-time that all the interruption dispatchers exist.
+/// Probably, this macro fits in any architecture.
+pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
+    let mut stmts = vec![];
+
+    // check that all dispatchers exists in the `Interrupt` enumeration
+    let interrupt = util::interrupt_ident();
+    let rt_err = util::rt_err_ident();
+
+    for name in app.args.dispatchers.keys() {
+        stmts.push(quote!(let _ = #rt_err::#interrupt::#name;));
+    }
+
+    stmts
 }
 
 pub fn pre_init_enable_interrupts(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
