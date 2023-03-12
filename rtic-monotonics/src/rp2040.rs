@@ -4,19 +4,25 @@ use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
 use core::future::Future;
 pub use fugit::ExtU64;
-use rp2040_pac::{timer, Interrupt, RESETS, TIMER};
+use rp2040_pac::{timer, Interrupt, NVIC, RESETS, TIMER};
 
 /// Timer implementing `rtic_monotonic::Monotonic` which runs at 1 MHz.
 pub struct Timer;
 
 impl Timer {
     /// Start a `Monotonic` based on RP2040's Timer.
-    pub fn start(timer: TIMER, resets: &mut RESETS) {
+    pub fn start(
+        timer: TIMER,
+        resets: &mut RESETS,
+        _interrupt_token: impl crate::InterruptToken<Self>,
+    ) {
         resets.reset.modify(|_, w| w.timer().clear_bit());
         while resets.reset_done.read().timer().bit_is_clear() {}
         timer.inte.modify(|_, w| w.alarm_0().set_bit());
 
         TIMER_QUEUE.initialize(Self {});
+
+        unsafe { NVIC::unmask(Interrupt::TIMER_IRQ_0) };
     }
 
     fn timer() -> &'static timer::RegisterBlock {
@@ -134,10 +140,21 @@ impl embedded_hal_async::delay::DelayUs for Timer {
 #[macro_export]
 macro_rules! make_rp2040_monotonic_handler {
     () => {
+    {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn TIMER_IRQ_0() {
             rtic_monotonics::rp2040::Timer::__tq().on_monotonic_interrupt();
         }
+
+        pub struct Rp2040Token;
+
+        unsafe impl rtic_monotonics::InterruptToken<rtic_monotonics::rp2040::Timer>
+            for Rp2040Token
+        {
+        }
+
+        Rp2040Token
+    }
     };
 }

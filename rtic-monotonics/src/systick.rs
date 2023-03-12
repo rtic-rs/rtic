@@ -36,7 +36,11 @@ impl Systick {
     /// `sysclk` and `TIMER_HZ`.
     ///
     /// Note: Give the return value to `TimerQueue::initialize()` to initialize the timer queue.
-    pub fn start(mut systick: cortex_m::peripheral::SYST, sysclk: u32) {
+    pub fn start(
+        mut systick: cortex_m::peripheral::SYST,
+        sysclk: u32,
+        _interrupt_token: impl crate::InterruptToken<Self>,
+    ) {
         // + TIMER_HZ / 2 provides round to nearest instead of round to 0.
         // - 1 as the counter range is inclusive [0, reload]
         let reload = (sysclk + TIMER_HZ / 2) / TIMER_HZ - 1;
@@ -154,10 +158,21 @@ impl embedded_hal_async::delay::DelayUs for Systick {
 #[macro_export]
 macro_rules! make_systick_handler {
     () => {
+    {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn SysTick() {
             rtic_monotonics::systick::Systick::__tq().on_monotonic_interrupt();
         }
+
+        pub struct SystickToken;
+
+        unsafe impl rtic_monotonics::InterruptToken<rtic_monotonics::systick::Systick>
+            for SystickToken
+        {
+        }
+
+        SystickToken
+    }
     };
 }

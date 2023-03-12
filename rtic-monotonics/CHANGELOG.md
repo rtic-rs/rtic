@@ -9,8 +9,12 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- Interrupt tokens for `Systick` and `rp2040` to make sure an interrupt handler exists
+
 ### Changed
 
 ### Fixed
+
+- Unmask the `rp2040` interrupt
 
 ## [v1.0.0] - 2023-xx-xx
