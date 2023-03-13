@@ -106,10 +106,14 @@ pub fn architecture_specific_analysis(_app: &App, _analysis: &SyntaxAnalysis) ->
     Ok(()) // TODO
 }
 
+/// Macro to add statements to be executed at the beginning of all the interrupt handlers.
+/// In most of the cases, this will be empty.
 pub fn interrupt_entry(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     vec![] // TODO
 }
 
+/// Macro to add statements to be executed at the end of all the interrupt handlers.
+/// In most of the cases, this will be empty.
 pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     vec![] // TODO
 }
