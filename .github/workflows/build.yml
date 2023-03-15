@@ -68,7 +68,7 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --verbose --backend ${{ matrix.backend }} check 
+      - run: cargo xtask --backend ${{ matrix.backend }} check 
 
   # Clippy
   clippy:
@@ -107,7 +107,7 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --verbose --backend ${{ matrix.backend }} clippy
+      - run: cargo xtask --backend ${{ matrix.backend }} clippy
 
   # Verify all examples, checks
   checkexamples:
@@ -142,11 +142,11 @@ jobs:
 
       - name: Check the examples
         if: ${{ matrix.backend == 'thumbv8-base' }}
-        run: cargo xtask --verbose --backend ${{ matrix.backend }} --exampleexclude pool example-check
+        run: cargo xtask --backend ${{ matrix.backend }} --exampleexclude pool example-check
 
       - name: Check the examples
         if: ${{ matrix.backend != 'thumbv8-base' }}
-        run: cargo xtask --verbose --backend ${{ matrix.backend }} example-check
+        run: cargo xtask --backend ${{ matrix.backend }} example-check
 
   # Verify the example output with run-pass tests
   testexamples:
@@ -195,7 +195,7 @@ jobs:
         run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
 
       - name: Run-pass tests
-        run: cargo xtask --verbose --backend ${{ matrix.backend }} qemu 
+        run: cargo xtask --backend ${{ matrix.backend }} qemu 
 
   # Run test suite
   tests:
@@ -235,7 +235,7 @@ jobs:
         run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
 
       - name: Run cargo test
-        run: cargo xtask --verbose --backend ${{ matrix.backend }} test ${{ matrix.package }}
+        run: cargo xtask --backend ${{ matrix.backend }} test ${{ matrix.package }}
 
   # Build documentation, check links
   docs:
