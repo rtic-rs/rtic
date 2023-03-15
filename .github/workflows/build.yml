@@ -32,7 +32,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: cargo xtask format-check
-        run:  cargo xtask format-check
+        run:  cargo xtask --verbose format-check
 
   # Compilation check
   check:
