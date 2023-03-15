@@ -144,12 +144,12 @@ macro_rules! make_rp2040_monotonic_handler {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn TIMER_IRQ_0() {
-            rtic_monotonics::rp2040::Timer::__tq().on_monotonic_interrupt();
+            $crate::rp2040::Timer::__tq().on_monotonic_interrupt();
         }
 
         pub struct Rp2040Token;
 
-        unsafe impl rtic_monotonics::InterruptToken<rtic_monotonics::rp2040::Timer>
+        unsafe impl $crate::InterruptToken<rtic_monotonics::rp2040::Timer>
             for Rp2040Token
         {
         }

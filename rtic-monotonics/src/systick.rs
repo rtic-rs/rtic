@@ -162,12 +162,12 @@ macro_rules! make_systick_handler {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn SysTick() {
-            rtic_monotonics::systick::Systick::__tq().on_monotonic_interrupt();
+            $crate::systick::Systick::__tq().on_monotonic_interrupt();
         }
 
         pub struct SystickToken;
 
-        unsafe impl rtic_monotonics::InterruptToken<rtic_monotonics::systick::Systick>
+        unsafe impl $crate::InterruptToken<rtic_monotonics::systick::Systick>
             for SystickToken
         {
         }
