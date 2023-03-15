@@ -102,7 +102,7 @@ impl<T, const N: usize> Channel<T, N> {
 #[macro_export]
 macro_rules! make_channel {
     ($type:path, $size:expr) => {{
-        static mut CHANNEL: Channel<$type, $size> = Channel::new();
+        static mut CHANNEL: ::rtic_sync::channel::Channel<$type, $size> = ::rtic_sync::channel::Channel::new();
 
         // SAFETY: This is safe as we hide the static mut from others to access it.
         // Only this point is where the mutable access happens.
