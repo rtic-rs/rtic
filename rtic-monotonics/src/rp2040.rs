@@ -149,7 +149,7 @@ macro_rules! make_rp2040_monotonic_handler {
 
         pub struct Rp2040Token;
 
-        unsafe impl $crate::InterruptToken<rtic_monotonics::rp2040::Timer>
+        unsafe impl $crate::InterruptToken<$crate::rp2040::Timer>
             for Rp2040Token
         {
         }

@@ -167,7 +167,7 @@ macro_rules! make_systick_handler {
 
         pub struct SystickToken;
 
-        unsafe impl $crate::InterruptToken<rtic_monotonics::systick::Systick>
+        unsafe impl $crate::InterruptToken<$crate::systick::Systick>
             for SystickToken
         {
         }
