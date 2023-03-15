@@ -103,7 +103,8 @@ impl<T, const N: usize> Channel<T, N> {
 #[macro_export]
 macro_rules! make_channel {
     ($type:path, $size:expr) => {{
-        static mut CHANNEL: $crate::channel::Channel<$type, $size> = $crate::channel::Channel::new();
+        static mut CHANNEL: $crate::channel::Channel<$type, $size> =
+            $crate::channel::Channel::new();
 
         // SAFETY: This is safe as we hide the static mut from others to access it.
         // Only this point is where the mutable access happens.
@@ -125,8 +126,8 @@ pub enum TrySendError<T> {
 }
 
 impl<T> core::fmt::Debug for NoReceiver<T>
-    where
-        T: core::fmt::Debug,
+where
+    T: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "NoReceiver({:?})", self.0)
@@ -134,8 +135,8 @@ impl<T> core::fmt::Debug for NoReceiver<T>
 }
 
 impl<T> core::fmt::Debug for TrySendError<T>
-    where
-        T: core::fmt::Debug,
+where
+    T: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -146,8 +147,8 @@ impl<T> core::fmt::Debug for TrySendError<T>
 }
 
 impl<T> PartialEq for TrySendError<T>
-    where
-        T: PartialEq,
+where
+    T: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -301,7 +302,7 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
                 Poll::Pending
             }
         })
-            .await;
+        .await;
 
         // Make sure the link is removed from the queue.
         drop(dropper);
@@ -431,7 +432,7 @@ impl<'a, T, const N: usize> Receiver<'a, T, N> {
 
             Poll::Pending
         })
-            .await
+        .await
     }
 
     /// Returns true if there are no `Sender`s.

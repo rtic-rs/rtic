@@ -157,8 +157,7 @@ impl embedded_hal_async::delay::DelayUs for Systick {
 /// Register the Systick interrupt for the monotonic.
 #[macro_export]
 macro_rules! make_systick_handler {
-    () => {
-    {
+    () => {{
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn SysTick() {
@@ -167,12 +166,8 @@ macro_rules! make_systick_handler {
 
         pub struct SystickToken;
 
-        unsafe impl $crate::InterruptToken<$crate::systick::Systick>
-            for SystickToken
-        {
-        }
+        unsafe impl $crate::InterruptToken<$crate::systick::Systick> for SystickToken {}
 
         SystickToken
-    }
-    };
+    }};
 }
