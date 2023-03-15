@@ -187,12 +187,12 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::FormatCheck(args) => {
-            info!("Running cargo fmt: {args:?}");
+            info!("Running cargo fmt --check: {args:?}");
             let check_only = true;
             cargo_format(&cargologlevel, &args, check_only)?;
         }
         Commands::Format(args) => {
-            info!("Running cargo fmt --check: {args:?}");
+            info!("Running cargo fmt: {args:?}");
             let check_only = false;
             cargo_format(&cargologlevel, &args, check_only)?;
         }
