@@ -1,0 +1,17 @@
+error: Lock free shared resource "e1" is used by tasks at different priorities
+ --> ui/shared-lock-free.rs:9:9
+  |
+9 |         e1: u32,
+  |         ^^
+
+error: Shared resource "e1" is declared lock free but used by tasks at different priorities
+  --> ui/shared-lock-free.rs:30:51
+   |
+30 |     #[task(binds = UART0, priority = 1, shared = [e1])]
+   |                                                   ^^
+
+error: Shared resource "e1" is declared lock free but used by tasks at different priorities
+  --> ui/shared-lock-free.rs:36:51
+   |
+36 |     #[task(binds = UART1, priority = 2, shared = [e1])]
+   |                                                   ^^

@@ -1,0 +1,2 @@
+# Make sure that mdbook output in repo-root/book/<language>/book is ignored
+*/book

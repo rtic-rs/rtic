@@ -1,24 +1,40 @@
 # RTIC by example
 
-This part of the book introduces the Real-Time Interrupt-driven Concurrency (RTIC) framework
-to new users by walking them through examples of increasing complexity.
+This part of the book introduces the RTIC framework to new users by walking them through examples of increasing complexity.
 
-All examples in this part of the book can be found in the GitHub [repository] of
-the project, and most of the examples can be run on QEMU so no special hardware
-is required to follow along.
+All examples in this part of the book are accessible at the
+[GitHub repository][repoexamples].
+The examples are runnable on QEMU (emulating a Cortex M3 target),
+thus no special hardware required to follow along.
 
-[repository]: https://github.com/rtic-rs/cortex-m-rtic
+[repoexamples]: https://github.com/rtic-rs/rtic/tree/master/examples
 
-To run the examples on your computer you'll need the `qemu-system-arm`
-program. Check [the embedded Rust book] for instructions on how to set up an
+## Running an example
+
+To run the examples with QEMU you will need the `qemu-system-arm` program.
+Check [the embedded Rust book] for instructions on how to set up an
 embedded development environment that includes QEMU.
 
 [the embedded Rust book]: https://rust-embedded.github.io/book/intro/install.html
 
-## Real World Examples
+To run the examples found in `examples/` locally, cargo needs a supported `target` and
+either `--examples` (run all examples) or `--example NAME` to run a specific example.
 
-The following are examples of RTFM being used in real world projects.
+Assuming dependencies in place, running:
 
-### RTFM V0.4.2
+``` console
+$ cargo run --target thumbv7m-none-eabi --example locals
+```
 
-- [etrombly/sandbox](https://github.com/etrombly/sandbox/tree/41d423bcdd0d8e42fd46b79771400a8ca349af55). A hardware zen garden that draws patterns in sand. Patterns are sent over serial using G-code.
+Yields this output:
+
+``` console
+{{#include ../../../rtic/ci/expected/locals.run}}
+```
+
+> **NOTE**: You can choose target device by passing a target
+> triple to cargo (e.g. `cargo run --example init --target thumbv7m-none-eabi`) or
+> configure a default target in `.cargo/config.toml`.
+>
+> For running the examples, we (typically) use a Cortex M3 emulated in QEMU, so the target is `thumbv7m-none-eabi`.
+> Since the M3 architecture is backwards compatible to the M0/M0+ architecture, you may also use the `thumbv6m-none-eabi`, in case you want to inspect generated assembly code for the M0/M0+ architecture.

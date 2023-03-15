@@ -1,13 +1,12 @@
 # Real-Time Interrupt-driven Concurrency
 
+> The hardware accelerated Rust RTOS
+
 A concurrency framework for building real-time systems.
 
-Formerly known as Real-Time For the Masses.
-
-[![crates.io](https://img.shields.io/crates/v/cortex-m-rtic)](https://crates.io/crates/cortex-m-rtic)
-[![docs.rs](https://docs.rs/cortex-m-rtic/badge.svg)](https://docs.rs/cortex-m-rtic)
+[![crates.io](https://img.shields.io/crates/v/rtic)](https://crates.io/crates/rtic)
+[![docs.rs](https://docs.rs/rtic/badge.svg)](https://docs.rs/rtic)
 [![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)](https://rtic.rs/)
-[![rustc](https://img.shields.io/badge/rustc-1.36+-lightgray.svg)](https://github.com/rust-lang/rust/releases/tag/1.36.0)
 [![matrix](https://img.shields.io/matrix/rtic:matrix.org)](https://matrix.to/#/#rtic:matrix.org)
 [![Meeting notes](https://hackmd.io/badge.svg)](https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH)
 
@@ -25,7 +24,7 @@ Formerly known as Real-Time For the Masses.
 
 - Support for prioritization of tasks and, thus, **preemptive multitasking**.
 
-- **Efficient and data race free memory sharing** through fine grained *priority
+- **Efficient and data race free memory sharing** through fine-grained *priority
   based* critical sections [^1].
 
 - **Deadlock free execution** guaranteed at compile time. This is a stronger
@@ -43,27 +42,26 @@ Formerly known as Real-Time For the Masses.
 - **All Cortex-M devices are fully supported**.
 
 - This task model is amenable to known WCET (Worst Case Execution Time) analysis
-  and scheduling analysis techniques. (Though we haven't yet developed Rust
-  friendly tooling for that.)
-
-## Requirements
-
-- Rust 1.36.0+
-
-- Applications must be written using the 2018 edition.
+  and scheduling analysis techniques.
 
 ## [User documentation](https://rtic.rs)
 
+Documentation for the [development version](https://rtic.rs/dev).
+
 ## [API reference](https://rtic.rs/stable/api/)
+
+## [Community provided examples repo][examples]
+
+[examples]: https://github.com/rtic-rs/rtic-examples
 
 ## Chat
 
 Join us and talk about RTIC in the [Matrix room][matrix-room].
 
-Weekly meeting notes can be found over at [HackMD][hackmd]
+Weekly meeting minutes can be found over at [RTIC HackMD][hackmd]
 
 [matrix-room]: https://matrix.to/#/#rtic:matrix.org
-[hackmd]: https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH
+[hackmd]: rtic.rs/meeting
 
 ## Contributing
 
@@ -72,15 +70,25 @@ New features and big changes should go through the RFC process in the
 
 [rfcs]: https://github.com/rtic-rs/rfcs
 
+## Running tests locally
+
+To check all `Run-pass tests` locally on your `thumbv6m-none-eabi` or `thumbv7m-none-eabi` target device, run
+
+```console
+$ cargo xtask --target <your target>
+#                       ˆˆˆˆˆˆˆˆˆˆˆˆ
+#                   e.g. thumbv7m-none-eabi
+```
+
 ## Acknowledgments
 
 This crate is based on the [Real-Time For the Masses language][rtfm-lang]
 created by the Embedded Systems group at [Luleå University of Technology][ltu],
-led by [Prof. Per Lindgren][per].
+led by [Prof. Per Lindgren][perl].
 
 [rtfm-lang]: http://www.rtfm-lang.org/
 [ltu]: https://www.ltu.se/?l=en
-[per]: https://www.ltu.se/staff/p/pln-1.11258?l=en
+[perl]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 
 ## References
 

@@ -1,0 +1,73 @@
+# Check that the changelog is updated for all changes.
+#
+# This is only run for PRs.
+
+on:
+  pull_request:
+    # opened, reopened, synchronize are the default types for pull_request.
+    # labeled, unlabeled ensure this check is also run if a label is added or removed.
+    types: [opened, reopened, labeled, unlabeled, synchronize]
+
+name: Changelog
+
+jobs:
+  changelog:
+    name: Changelog
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Check which component is modified 
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            rtic:
+              - 'rtic/**'
+            rtic-channel:
+              - 'rtic-channel/**'
+            rtic-time:
+              - 'rtic-time/**'
+            rtic-monotonics:
+              - 'rtic-monotonics/**'
+
+      - name: Check that changelog updated (rtic)
+        if: steps.changes.outputs.rtic == 'true'
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic/CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that changelog updated (rtic-channel)
+        if: steps.changes.outputs.rtic-channel == 'true'
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic-channel/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-channel/CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that changelog updated (rtic-time)
+        if: steps.changes.outputs.rtic-time == 'true'
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic-time/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-time/CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that changelog updated (rtic-monotonics)
+        if: steps.changes.outputs.rtic-monotonics == 'true'
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic-monotonics/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-monotonics/CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

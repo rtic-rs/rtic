@@ -1,0 +1,38 @@
+[package]
+name = "rtic-monotonics"
+version = "1.0.0-alpha.0"
+
+edition = "2021"
+authors = [
+  "The Real-Time Interrupt-driven Concurrency developers",
+  "Emil Fresk <emil.fresk@gmail.com>",
+  "Henrik Tjäder <henrik@tjaders.com>",
+  "Jorge Aparicio <jorge@japaric.io>",
+  "Per Lindgren <per.lindgren@ltu.se>",
+]
+categories = ["concurrency", "embedded", "no-std", "asynchronous"]
+description = "rtic-monotonics lib TODO"
+license = "MIT OR Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rtic-time = { version = "1.0.0-alpha.0", path = "../rtic-time" }
+embedded-hal-async = { version = "0.2.0-alpha.0", optional = true }
+fugit = { version = "0.3.6" }
+atomic-polyfill = "1"
+cfg-if = "1.0.0"
+cortex-m = { version = "0.7.6", optional = true }
+rp2040-pac = { version = ">=0.2.0,<0.5", optional = true }
+
+[features]
+default = []
+defmt = ["fugit/defmt"]
+
+# Systick on Cortex-M, default 1 kHz
+cortex-m-systick = ["dep:cortex-m"]
+systick-100hz = []
+systick-10khz = []
+
+# Timer peripheral on the RP2040
+rp2040 = ["dep:rp2040-pac"]

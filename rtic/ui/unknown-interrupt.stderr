@@ -1,0 +1,5 @@
+error[E0599]: no variant or associated item named `UnknownInterrupt` found for enum `Interrupt` in the current scope
+ --> $DIR/unknown-interrupt.rs:3:47
+  |
+3 | #[rtic::app(device = lm3s6965, dispatchers = [UnknownInterrupt])]
+  |                                               ^^^^^^^^^^^^^^^^ variant or associated item not found in `Interrupt`
