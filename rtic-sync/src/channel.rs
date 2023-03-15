@@ -38,6 +38,7 @@ pub struct Channel<T, const N: usize> {
 }
 
 unsafe impl<T, const N: usize> Send for Channel<T, N> {}
+
 unsafe impl<T, const N: usize> Sync for Channel<T, N> {}
 
 struct UnsafeAccess<'a, const N: usize> {
@@ -124,8 +125,8 @@ pub enum TrySendError<T> {
 }
 
 impl<T> core::fmt::Debug for NoReceiver<T>
-where
-    T: core::fmt::Debug,
+    where
+        T: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "NoReceiver({:?})", self.0)
@@ -133,8 +134,8 @@ where
 }
 
 impl<T> core::fmt::Debug for TrySendError<T>
-where
-    T: core::fmt::Debug,
+    where
+        T: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -145,8 +146,8 @@ where
 }
 
 impl<T> PartialEq for TrySendError<T>
-where
-    T: PartialEq,
+    where
+        T: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -176,6 +177,7 @@ impl LinkPtr {
 }
 
 unsafe impl Send for LinkPtr {}
+
 unsafe impl Sync for LinkPtr {}
 
 impl<'a, T, const N: usize> core::fmt::Debug for Sender<'a, T, N> {
@@ -299,7 +301,7 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
                 Poll::Pending
             }
         })
-        .await;
+            .await;
 
         // Make sure the link is removed from the queue.
         drop(dropper);
@@ -429,7 +431,7 @@ impl<'a, T, const N: usize> Receiver<'a, T, N> {
 
             Poll::Pending
         })
-        .await
+            .await
     }
 
     /// Returns true if there are no `Sender`s.
