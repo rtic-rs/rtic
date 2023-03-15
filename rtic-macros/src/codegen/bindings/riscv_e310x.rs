@@ -22,6 +22,9 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse, Attribute, Ident};
 
+// Set global to reuse it
+const E310X_PRIO_BITS: u8 = 3; // TODO we won't use this once we standardize the priority bits thing in RISC-V
+
 /// This macro implements the [`rtic::Mutex`] trait using the PLIC threshold for shared resources.
 ///
 /// # Some remarks
@@ -60,7 +63,7 @@ pub fn impl_mutex(
 
             #[inline(always)]
             fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
-                const E310X_PRIO_BITS: u8 = 3;  // TODO we won't use this once we standardize the priority bits thing in RISC-V
+
                 const CEILING: u8 = #ceiling;
 
                 unsafe {
@@ -99,6 +102,44 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
 }
 
 pub fn pre_init_enable_interrupts(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    // Take the implementation from cortex as it's mostly similar
+    let mut stmts = vec![];
+
+    let interrupt = util::interrupt_ident();
+    let rt_err = util::rt_err_ident();
+    let device = &app.args.device;
+    let prio_bits = quote!(E310X_PRIO_BITS);
+    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+
+    // Unmask interrupts and set their priorities
+    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {
+        if is_exception(&task.args.binds) {
+            // We do exceptions in another pass
+            None
+        } else {
+            Some((&task.args.priority, &task.args.binds))
+        }
+    })) {
+        let es = format!(
+            "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
+        );
+        // Compile time assert that this priority is supported by the device
+        stmts.push(quote!(
+            const _: () =  if (1 << E310X_PRIO_BITS) < #priority as usize { ::core::panic!(#es); };
+        ));
+        // TODO: what does core reference??
+        stmts.push(quote!(
+            core.plic.INTERRUPT.set_priority(
+                #rt_err::#interrupt::#name,
+                rtic::export::cortex_logical2hw(#priority, #nvic_prio_bits),
+            );
+        ));
+
+        // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
+        // interrupt is implementation defined
+        stmts.push(quote!(rtic::export::NVIC::unmask(#rt_err::#interrupt::#name);));
+    }
+
     vec![] // TODO
 }
 
