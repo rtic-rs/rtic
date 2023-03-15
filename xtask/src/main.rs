@@ -109,9 +109,8 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     let env_logger_default_level = match cli.verbose {
-        0 => Env::default().default_filter_or("error"),
-        1 => Env::default().default_filter_or("info"),
-        2 => Env::default().default_filter_or("debug"),
+        0 => Env::default().default_filter_or("info"),
+        1 => Env::default().default_filter_or("debug"),
         _ => Env::default().default_filter_or("trace"),
     };
     env_logger::Builder::from_env(env_logger_default_level)
