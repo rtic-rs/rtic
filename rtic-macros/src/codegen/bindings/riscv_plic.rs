@@ -124,19 +124,38 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
         stmts.push(quote!(
             core.plic.INTERRUPT.set_priority(
                 #rt_err::#interrupt::#name,
-                rtic::export::cortex_logical2hw(#priority, #nvic_prio_bits),
+                rtic::export::cortex_logical2hw(#priority, E310X_PRIO_BITS),
             );
         ));
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(rtic::export::NVIC::unmask(#rt_err::#interrupt::#name);));
+        // TODO
+        //stmts.push(quote!(rtic::export::NVIC::unmask(#rt_err::#interrupt::#name);));
     }
 
-    vec![] // TODO
+    stmts
 }
 
-pub fn architecture_specific_analysis(_app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+    // Check that external (device-specific) interrupts are not named after known (riscv)
+    // exceptions
+    for name in app.args.dispatchers.keys() {
+        let name_s = name.to_string();
+
+        match &*name_s {
+            "UserSoft" | "SupervisorSoft" | "MachineSoft" | "UserTimer" | "SupervisorTimer"
+            | "MachineTimer" | "UserExternal" | "SupervisorExternal" | "MachineExternal" => {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "Risc-V exceptions can't be used as `extern` interrupts",
+                ));
+            }
+
+            _ => {}
+        }
+    }
+
     Ok(()) // TODO
 }
 
