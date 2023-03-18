@@ -171,6 +171,7 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
 
         stmts.push(quote!(core.SCB.set_priority(
             rtic::export::SystemHandler::#name,
+            // TODO
             rtic::export::cortex_logical2hw(#priority, #E310X_PRIO_BITS),
         );));
     }
