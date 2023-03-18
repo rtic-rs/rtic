@@ -41,6 +41,7 @@ atomic-polyfill = "1"
 rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.0" }
 rtic-core = "1"
 critical-section = "1"
+riscv = { git = "https://github.com/greenlsi/riscv.git", branch = "master", optional = true }
 
 [dev-dependencies]
 heapless = "0.7.7"
@@ -72,7 +73,7 @@ thumbv8main-backend = ["rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 # riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
-riscv-e310x-backend = ["rtic-macros/riscv-e310x"]
+riscv-plic-backend = ["riscv/plic", "rtic-macros/riscv-plic"]
 
 # needed for testing
 rtic-uitestv7 = ["thumbv7-backend", "rtic-macros/cortex-m-basepri"]

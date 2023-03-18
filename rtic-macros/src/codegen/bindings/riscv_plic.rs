@@ -101,7 +101,7 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
     stmts
 }
 
-pub fn pre_init_enable_interrupts(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     // Take the implementation from cortex as it's mostly similar
     let mut stmts = vec![];
 
@@ -112,14 +112,7 @@ pub fn pre_init_enable_interrupts(_app: &App, _analysis: &CodegenAnalysis) -> Ve
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
     // Unmask interrupts and set their priorities
-    for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {
-        if is_exception(&task.args.binds) {
-            // We do exceptions in another pass
-            None
-        } else {
-            Some((&task.args.priority, &task.args.binds))
-        }
-    })) {
+    for (&priority, name) in interrupt_ids {
         let es = format!(
             "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
         );
