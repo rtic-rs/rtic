@@ -31,12 +31,31 @@ const E310X_PRIO_BITS: u8 = 3; // TODO we won't use this once we standardize the
 ///
 /// If you use a threshold-based approach, you can adapt it using this as inspiration. You can also
 /// have a look to the original cortex-m-basepri codegen binding. As far as we know, here you only
-/// need to know **HOW MANY BITS YOUR PLATFORM USE TO REPRESENT PRIORITIES**.
+/// need to know **HOW MANY BITS YOUR PLATFORM USES TO REPRESENT PRIORITIES**.
 /// As the PAC of our platform does not include this information, we "hardcoded" it to 3.
 ///
 /// # Future work
 ///
 /// We should come up with a more standard mechanism for this.
+
+/// Whether `name` is an exception with configurable priority
+fn is_exception(name: &Ident) -> bool {
+    let s = name.to_string();
+
+    matches!(
+        &*s,
+        "UserSoft"
+            | "SupervisorSoft"
+            | "MachineSoft"
+            | "UserTimer"
+            | "SupervisorTimer"
+            | "MachineTimer"
+            | "UserExternal"
+            | "SupervisorExternal"
+            | "MachineExternal"
+    )
+}
+
 pub fn impl_mutex(
     _app: &App,
     _analysis: &CodegenAnalysis,
@@ -134,6 +153,28 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
         //stmts.push(quote!(rtic::export::NVIC::unmask(#rt_err::#interrupt::#name);));
     }
 
+    // Set exception priorities using generic PLIC
+    for (name, priority) in app.hardware_tasks.values().filter_map(|task| {
+        if is_exception(&task.args.binds) {
+            Some((&task.args.binds, task.args.priority))
+        } else {
+            None
+        }
+    }) {
+        let es = format!(
+            "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
+        );
+        // Compile time assert that this priority is supported by the device
+        stmts.push(quote!(
+            const _: () =  if (1 << #E310X_PRIO_BITS) < #priority as usize { ::core::panic!(#es); };
+        ));
+
+        stmts.push(quote!(core.SCB.set_priority(
+            rtic::export::SystemHandler::#name,
+            rtic::export::cortex_logical2hw(#priority, #E310X_PRIO_BITS),
+        );));
+    }
+
     stmts
 }
 
@@ -141,18 +182,11 @@ pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> 
     // Check that external (device-specific) interrupts are not named after known (riscv)
     // exceptions
     for name in app.args.dispatchers.keys() {
-        let name_s = name.to_string();
-
-        match &*name_s {
-            "UserSoft" | "SupervisorSoft" | "MachineSoft" | "UserTimer" | "SupervisorTimer"
-            | "MachineTimer" | "UserExternal" | "SupervisorExternal" | "MachineExternal" => {
-                return Err(parse::Error::new(
-                    name.span(),
-                    "Risc-V exceptions can't be used as `extern` interrupts",
-                ));
-            }
-
-            _ => {}
+        if is_exception(name) {
+            return Err(parse::Error::new(
+                name.span(),
+                "Risc-V exceptions can't be used as `extern` interrupts",
+            ));
         }
     }
 
