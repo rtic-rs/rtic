@@ -38,6 +38,7 @@ pub struct Channel<T, const N: usize> {
 }
 
 unsafe impl<T, const N: usize> Send for Channel<T, N> {}
+
 unsafe impl<T, const N: usize> Sync for Channel<T, N> {}
 
 struct UnsafeAccess<'a, const N: usize> {
@@ -102,7 +103,8 @@ impl<T, const N: usize> Channel<T, N> {
 #[macro_export]
 macro_rules! make_channel {
     ($type:path, $size:expr) => {{
-        static mut CHANNEL: Channel<$type, $size> = Channel::new();
+        static mut CHANNEL: $crate::channel::Channel<$type, $size> =
+            $crate::channel::Channel::new();
 
         // SAFETY: This is safe as we hide the static mut from others to access it.
         // Only this point is where the mutable access happens.
@@ -176,6 +178,7 @@ impl LinkPtr {
 }
 
 unsafe impl Send for LinkPtr {}
+
 unsafe impl Sync for LinkPtr {}
 
 impl<'a, T, const N: usize> core::fmt::Debug for Sender<'a, T, N> {
