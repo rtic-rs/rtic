@@ -47,12 +47,6 @@ pub fn impl_mutex(
         quote!(#name)
     };
 
-    // ESTOY SUPONIENDO QUE ESTO ME DEVUELVE EL IDENTIFICADOR DEL ENUM DE PRIORIDADES
-    // QUE IMPLEMENTA EL TRAIT riscv::peripheral::plic::Priority.
-    // Habrá que ver cómo hacer esto exáctamente.
-    let priority = util::priority_ident();
-    let rt_err = util::rt_err_ident();
-
     quote!(
         #(#cfgs)*
         impl<'a> rtic::Mutex for #path<'a> {
@@ -61,15 +55,10 @@ pub fn impl_mutex(
             #[inline(always)]
             fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
 
-                const CEILING: u8 = #ceiling;
+                const CEILING: u16 = #ceiling.into();
 
                 unsafe {
-                    rtic::export::lock(
-                        #ptr,
-                        CEILING,
-                        #rt_err::#priority::N_PRIORITY_BITS,
-                        f,
-                    )
+                    rtic::export::lock(#ptr,  CEILING, f)
                 }
             }
         }
@@ -98,34 +87,18 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
     stmts
 }
 
-pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
-    // Take the implementation from cortex as it's mostly similar
+pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
     let interrupt = util::interrupt_ident();
-    // ESTOY SUPONIENDO QUE ESTO ME DEVUELVE EL IDENTIFICADOR DEL ENUM DE PRIORIDADES
-    // QUE IMPLEMENTA EL TRAIT riscv::peripheral::plic::Priority
-    let priority = util::priority_ident();
     let rt_err = util::rt_err_ident();
 
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
     // Set interrupt priorities and unmask them
     for (&p, name) in interrupt_ids {
-        let es = format!(
-            "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
-        );
-        // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () =  if #p as u16 > #rt_err::#priority::MAX_PRIORITY_NUMBER { ::core::panic!(#es); };
-        ));
-        // TODO: what does core reference??
-        stmts.push(quote!(
-            core.plic.set_priority(#rt_err::#interrupt::#name, #rt_err::#priority::try_from(#p as u16));
-        ));
-        // NOTE unmask the interrupt *after* setting its priority
-        stmts.push(quote!(
-            core.plic.interrupt_enable(#rt_err::#interrupt::#name);
+            rtic::export::interrupt::enable_source(&mut core.PLIC #rt_err::#interrupt::#name, #p as u16);
         ));
     }
     stmts
@@ -155,8 +128,6 @@ pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> 
             )
         };
 
-        // If not enough tasks and first still is None, may cause
-        // "custom attribute panicked" due to unwrap on None
         return Err(parse::Error::new(first.unwrap().span(), s));
     }
 
