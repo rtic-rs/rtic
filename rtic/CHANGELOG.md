@@ -13,6 +13,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- `cortex-m` set as an optional dependency
+- Moved `cortex-m`-related utilities from `rtic/lib.rs` to `rtic/export.rs`
+
 ## [v1.1.4] - 2023-02-26
 
 ### Added
