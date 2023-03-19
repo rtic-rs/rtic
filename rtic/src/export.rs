@@ -20,6 +20,9 @@ compile_error!(
     "Building for Cortex-M with source masking, but 'thumbv6-backend' or 'thumbv8base-backend' backend not selected"
 );
 
+#[cfg(all(feature = "riscv-plic", not(any(feature = "riscv-plic-backend"))))]
+compile_error!("Building for RISC-V with PLIC, but 'riscv-plic-backend' backend not selected");
+
 #[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
 pub use cortex_basepri::*;
 
@@ -44,6 +47,12 @@ mod cortex_source_mask;
 pub const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
 }
+
+#[cfg(any(feature = "riscv-plic"))]
+pub use riscv_plic::*;
+
+#[cfg(any(feature = "riscv-plic"))]
+mod riscv_plic;
 
 #[inline(always)]
 pub fn assert_send<T>()

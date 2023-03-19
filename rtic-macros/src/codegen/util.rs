@@ -11,6 +11,11 @@ pub fn interrupt_ident() -> Ident {
     Ident::new("interrupt", span)
 }
 
+pub fn priority_ident() -> Ident {
+    let span = Span::call_site();
+    Ident::new("priority", span)
+}
+
 /// Mark a name as internal
 pub fn mark_internal_name(name: &str) -> Ident {
     Ident::new(&format!("{RTIC_INTERNAL}_{name}"), Span::call_site())
