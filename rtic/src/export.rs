@@ -32,13 +32,23 @@ pub use cortex_source_mask::*;
 #[cfg(any(feature = "cortex-m-source-masking", feature = "rtic-uitestv6"))]
 mod cortex_source_mask;
 
+#[cfg(feature = "cortex-m")]
+pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
+
+/// Sets the given `interrupt` as pending
+///
+/// This is a convenience function around
+/// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
+#[cfg(feature = "cortex-m")]
+pub fn pend<I>(interrupt: I)
+where
+    I: InterruptNumber,
+{
+    NVIC::pend(interrupt);
+}
+
 /// Priority conversion, takes logical priorities 1..=N and converts it to NVIC priority.
-#[cfg(any(
-    feature = "cortex-m-basepri",
-    feature = "cortex-m-source-masking",
-    feature = "rtic-uitestv6",
-    feature = "rtic-uitestv7",
-))]
+#[cfg(feature = "cortex-m")]
 #[inline]
 #[must_use]
 pub const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
