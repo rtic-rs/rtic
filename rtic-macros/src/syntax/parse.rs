@@ -289,11 +289,13 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
             // Handle comma: ,
             let _: Token![,] = content.parse()?;
         }
-        let priority = priority.unwrap_or(1);
         let shared_resources = shared_resources.unwrap_or_default();
         let local_resources = local_resources.unwrap_or_default();
 
         Ok(if let Some(binds) = binds {
+            // Hardware tasks can't run at anything lower than 1
+            let priority = priority.unwrap_or(1);
+
             if priority == 0 {
                 return Err(parse::Error::new(
                     prio_span.unwrap(),
@@ -308,6 +310,9 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                 local_resources,
             })
         } else {
+            // Software tasks start at idle priority
+            let priority = priority.unwrap_or(0);
+
             Either::Right(SoftwareTaskArgs {
                 priority,
                 shared_resources,
