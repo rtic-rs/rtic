@@ -33,7 +33,6 @@
 //deny_warnings_placeholder_for_ci
 #![allow(clippy::inline_always)]
 
-use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
 pub use rtic_core::{prelude as mutex_prelude, Exclusive, Mutex};
 pub use rtic_macros::app;
 // pub use rtic_monotonic::{self, Monotonic};
@@ -46,17 +45,6 @@ pub mod mutex {
 
 #[doc(hidden)]
 pub mod export;
-
-/// Sets the given `interrupt` as pending
-///
-/// This is a convenience function around
-/// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
-pub fn pend<I>(interrupt: I)
-where
-    I: InterruptNumber,
-{
-    NVIC::pend(interrupt);
-}
 
 use core::cell::UnsafeCell;
 
