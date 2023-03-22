@@ -7,7 +7,7 @@ All examples in this part of the book are accessible at the
 The examples are runnable on QEMU (emulating a Cortex M3 target),
 thus no special hardware required to follow along.
 
-[repoexamples]: https://github.com/rtic-rs/rtic/tree/master/examples
+[repoexamples]: https://github.com/rtic-rs/rtic/tree/master/rtic/examples
 
 ## Running an example
 
