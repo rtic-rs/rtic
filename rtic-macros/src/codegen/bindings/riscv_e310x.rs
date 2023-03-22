@@ -6,11 +6,13 @@
 //! - riscv-rt
 //! - e310x
 //! - e310x-hal
+//! - riscv-vsoft
 //!
 //! # Some clarifications
 //!
-//! As PLIC allows interrupt thresholds, we are using the cortex-m-basepri
-//! as inspiration. We will document all our decisions for easing future ports.
+//! This implementation will use a generic software interrupt implementation designed for risc-v processors.
+//! The implementation of the sw interrupts themselves is handled per-processor, depending on their workflow.
+//! In the case of our example board, e310x, the CLINT peripheral takes care of handling them.
 
 use crate::{
     analyze::Analysis as CodegenAnalysis,
@@ -77,11 +79,12 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
     // check that all dispatchers exists in the `Interrupt` enumeration
-    let interrupt = util::interrupt_ident();
+    //let interrupt = util::interrupt_ident();
     let rt_err = util::rt_err_ident();
 
     for name in app.args.dispatchers.keys() {
-        stmts.push(quote!(let _ = #rt_err::#interrupt::#name;));
+        stmts.push(quote!(let _ = rtic::export::Interrupt::#name));
+        // stmts.push(quote!(let _ = #rt_err::#interrupt::#name;));
     }
 
     stmts
@@ -98,7 +101,7 @@ pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec
     // Set interrupt priorities and unmask them
     for (&p, name) in interrupt_ids {
         stmts.push(quote!(
-            rtic::export::interrupt::enable_source(&mut core.PLIC #rt_err::#interrupt::#name, #p as u16);
+            rtic::export::interrupt::source_priority(#rt_err::#interrupt::#name, #p as u8);
         ));
     }
     stmts

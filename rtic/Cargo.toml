@@ -43,6 +43,8 @@ rtic-core = "1"
 critical-section = "1"
 
 riscv = { git = "https://github.com/greenlsi/riscv.git", branch = "master", optional = true }
+riscv-vsoft = {path = "../../riscv-vsoft/riscv-vsoft", features = ["e310x"]}
+riscv-vsoft-macros = {path = "../../riscv-vsoft/riscv-vsoft-macros"}
 e310x = { git = "https://github.com/greenlsi/e310x.git", branch = "master", optional = true }
 
 [dev-dependencies]
