@@ -32,6 +32,44 @@ pub use cortex_source_mask::*;
 #[cfg(any(feature = "cortex-m-source-masking", feature = "rtic-uitestv6"))]
 mod cortex_source_mask;
 
+
+///I think all of these "pends" and "unpends"  should be moved to /export/_device_.rs
+/// otherwise we risk massive size creep in this file.
+#[cfg(feature = "cortex-m")]
+pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
+/// Sets the given `interrupt` as pending
+///
+/// This is a convenience function around
+/// [`NVIC::pend`](../cortex_m/peripheral/struct.NVIC.html#method.pend)
+#[cfg(feature = "cortex-m")]
+pub fn pend<I>(interrupt: I)
+where
+    I: InterruptNumber,
+{
+    NVIC::pend(interrupt);
+}
+
+
+#[cfg(feature = "esp32c3")]
+pub use esp32c3::{Peripherals, Interrupt};
+
+#[cfg(feature = "esp32c3")]
+/// Sets the given software interrupt as pending
+pub fn pend(int: Interrupt){
+    unsafe{
+    let peripherals = Peripherals::steal();
+        match int{
+            Interrupt::FROM_CPU_INTR0 => peripherals.SYSTEM.cpu_intr_from_cpu_0.write(|w|w.cpu_intr_from_cpu_0().bit(true)),
+            Interrupt::FROM_CPU_INTR1 => peripherals.SYSTEM.cpu_intr_from_cpu_1.write(|w|w.cpu_intr_from_cpu_1().bit(true)),
+            Interrupt::FROM_CPU_INTR2 => peripherals.SYSTEM.cpu_intr_from_cpu_2.write(|w|w.cpu_intr_from_cpu_2().bit(true)),
+            Interrupt::FROM_CPU_INTR3 => peripherals.SYSTEM.cpu_intr_from_cpu_3.write(|w|w.cpu_intr_from_cpu_3().bit(true)),      
+            _ => panic!("Unsupported software interrupt"), //unsupported sw interrupt provided, panic for now. Eventually we can check this at compile time also.
+        }
+    }   
+}
+
+
+
 /// Priority conversion, takes logical priorities 1..=N and converts it to NVIC priority.
 #[cfg(any(
     feature = "cortex-m-basepri",
