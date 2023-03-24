@@ -42,7 +42,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let device = &app.args.device;
             let enum_ = util::interrupt_ident();
 
-            quote!(rtic::pend(#device::#enum_::#dispatcher_name);)
+            quote!(rtic::export::pend(#device::#enum_::#dispatcher_name);)
         } else {
             // For 0 priority tasks we don't need to pend anything
             quote!()
@@ -75,6 +75,9 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 #(#attribute)*
                 unsafe fn #dispatcher_name() {
                     #(#entry_stmts)*
+
+                    #[cfg(feature = "esp32c3")]
+                    rtic::export::unpend(rtic::export::Interrupt::#dispatcher_name); //simulate cortex-m behavior by unpending the interrupt on entry.
 
                     /// The priority of this interrupt handler
                     const PRIORITY: u8 = #level;

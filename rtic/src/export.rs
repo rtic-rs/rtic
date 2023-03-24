@@ -20,6 +20,11 @@ compile_error!(
     "Building for Cortex-M with source masking, but 'thumbv6-backend' or 'thumbv8base-backend' backend not selected"
 );
 
+//#[cfg(feature = "riscv-esp32c3", not(feature = "riscv32-esp32c3-backend"))]
+//compile_error!(
+   // "Building for the esp32c3, but 'riscv32-esp32c3-backend not selected'"
+//); 
+
 #[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
 pub use cortex_basepri::*;
 
@@ -50,10 +55,14 @@ where
 }
 
 
-#[cfg(feature = "esp32c3")]
-pub use esp32c3::{Peripherals, Interrupt};
 
-#[cfg(feature = "esp32c3")]
+#[cfg(feature = "riscv-esp32c3")]
+pub use riscv_esp32c3::*;
+
+#[cfg(feature = "riscv32-esp32c3")]
+mod riscv_esp32c3;
+
+#[cfg(feature = "riscv-esp32c3")]
 /// Sets the given software interrupt as pending
 pub fn pend(int: Interrupt){
     unsafe{
@@ -69,6 +78,19 @@ pub fn pend(int: Interrupt){
 }
 
 
+#[cfg(feature = "riscv-esp32c3")]
+pub fn unpend(int: Interrupt){
+    unsafe{
+        let peripherals = Peripherals::steal();
+            match int{
+                Interrupt::FROM_CPU_INTR0 => peripherals.SYSTEM.cpu_intr_from_cpu_0.write(|w|w.cpu_intr_from_cpu_0().bit(false)),
+                Interrupt::FROM_CPU_INTR1 => peripherals.SYSTEM.cpu_intr_from_cpu_1.write(|w|w.cpu_intr_from_cpu_1().bit(false)),
+                Interrupt::FROM_CPU_INTR2 => peripherals.SYSTEM.cpu_intr_from_cpu_2.write(|w|w.cpu_intr_from_cpu_2().bit(false)),
+                Interrupt::FROM_CPU_INTR3 => peripherals.SYSTEM.cpu_intr_from_cpu_3.write(|w|w.cpu_intr_from_cpu_3().bit(false)),      
+                _ => panic!("Unsupported software interrupt"), //this should realistically never happen, since tasks that call unpend must call pend first.
+            }
+        }   
+}
 
 /// Priority conversion, takes logical priorities 1..=N and converts it to NVIC priority.
 #[cfg(any(
