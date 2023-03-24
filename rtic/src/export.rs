@@ -57,10 +57,10 @@ where
 
 
 #[cfg(feature = "riscv-esp32c3")]
+mod riscv_esp32c3;
+#[cfg(feature = "riscv-esp32c3")]
 pub use riscv_esp32c3::*;
 
-#[cfg(feature = "riscv32-esp32c3")]
-mod riscv_esp32c3;
 
 #[cfg(feature = "riscv-esp32c3")]
 /// Sets the given software interrupt as pending
