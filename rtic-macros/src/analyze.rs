@@ -11,6 +11,7 @@ use syn::Ident;
 pub struct Analysis {
     parent: analyze::Analysis,
     pub interrupts: BTreeMap<Priority, (Ident, Dispatcher)>,
+    pub max_async_prio: Option<u8>,
 }
 
 impl ops::Deref for Analysis {
@@ -42,8 +43,16 @@ pub fn app(analysis: analyze::Analysis, app: &App) -> Analysis {
         .map(|p| (p, available_interrupt.pop().expect("UNREACHABLE")))
         .collect();
 
+    let max_async_prio = app
+        .hardware_tasks
+        .iter()
+        .map(|(_, task)| task.args.priority)
+        .min()
+        .map(|v| v - 1); // One less than the smallest HW task
+
     Analysis {
         parent: analysis,
         interrupts,
+        max_async_prio,
     }
 }

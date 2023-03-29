@@ -38,7 +38,7 @@ mod app {
     }
 
     // Direct destructure
-    #[task(shared = [&a, &b, &c])]
+    #[task(shared = [&a, &b, &c], priority = 1)]
     async fn foo(cx: foo::Context) {
         let a = cx.shared.a;
         let b = cx.shared.b;
@@ -48,7 +48,7 @@ mod app {
     }
 
     // De-structure-ing syntax
-    #[task(shared = [&a, &b, &c])]
+    #[task(shared = [&a, &b, &c], priority = 1)]
     async fn bar(cx: bar::Context) {
         let bar::SharedResources { a, b, c, .. } = cx.shared;
 

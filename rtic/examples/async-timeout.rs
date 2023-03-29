@@ -27,7 +27,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         hprintln!("init");
 
-        let systick_token = rtic_monotonics::make_systick_handler!();
+        let systick_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, 12_000_000, systick_token);
 
         foo::spawn().ok();

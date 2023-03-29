@@ -62,7 +62,7 @@ mod app {
     }
 
     // `local_to_foo` can only be accessed from this context
-    #[task(local = [local_to_foo])]
+    #[task(local = [local_to_foo], priority = 1)]
     async fn foo(cx: foo::Context) {
         let local_to_foo = cx.local.local_to_foo;
         *local_to_foo += 1;
@@ -74,7 +74,7 @@ mod app {
     }
 
     // `local_to_bar` can only be accessed from this context
-    #[task(local = [local_to_bar])]
+    #[task(local = [local_to_bar], priority = 1)]
     async fn bar(cx: bar::Context) {
         let local_to_bar = cx.local.local_to_bar;
         *local_to_bar += 1;
