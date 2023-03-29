@@ -156,7 +156,7 @@ impl embedded_hal_async::delay::DelayUs for Systick {
 
 /// Register the Systick interrupt for the monotonic.
 #[macro_export]
-macro_rules! make_systick_handler {
+macro_rules! create_systick_token {
     () => {{
         #[no_mangle]
         #[allow(non_snake_case)]

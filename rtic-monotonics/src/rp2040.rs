@@ -138,7 +138,7 @@ impl embedded_hal_async::delay::DelayUs for Timer {
 
 /// Register the Timer interrupt for the monotonic.
 #[macro_export]
-macro_rules! make_rp2040_monotonic_handler {
+macro_rules! create_rp2040_monotonic_token {
     () => {{
         #[no_mangle]
         #[allow(non_snake_case)]
