@@ -13,6 +13,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Make async task priorities start at 0, instead of 1, to always start at the lowest priority
+
 ## [v1.1.4] - 2023-02-26
 
 ### Added

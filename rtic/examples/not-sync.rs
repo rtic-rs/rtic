@@ -54,13 +54,13 @@ mod app {
         loop {}
     }
 
-    #[task(shared = [&shared])]
+    #[task(shared = [&shared], priority = 1)]
     async fn foo(c: foo::Context) {
         let shared: &NotSync = c.shared.shared;
         hprintln!("foo a {}", shared.data);
     }
 
-    #[task(shared = [&shared])]
+    #[task(shared = [&shared], priority = 1)]
     async fn bar(c: bar::Context) {
         let shared: &NotSync = c.shared.shared;
         hprintln!("bar a {}", shared.data);
