@@ -15,7 +15,7 @@ use panic_semihosting as _;
 //   task can have a mutable reference stored.
 // - Spawning an async task equates to it being polled once.
 
-#[rtic::app(device = lm3s6965, dispatchers = [SSI0, UART0], peripherals = true)]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0, UART0])]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
