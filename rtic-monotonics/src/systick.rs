@@ -1,4 +1,25 @@
-//! ...
+//! A monotonics based on Cortex-M SysTick. Note that this implementation is inefficient as it
+//! ticks, and generates interrupts, at a constant rate.
+//!
+//! # Example
+//!
+//! ```
+//! use rtic_monotonics::systick::*;
+//!
+//! # async fn usage() {
+//! # let systick = unsafe { core::mem::transmute(()) };
+//! // Generate the required token
+//! let systick_token = rtic_monotonics::create_systick_token!();
+//!
+//! // Start the monotonic
+//! Systick::start(systick, 12_000_000, systick_token);
+//!
+//! loop {
+//!      // Use the monotonic
+//!      Systick::delay(100.millis()).await;
+//! }
+//! # }
+//! ```
 
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};

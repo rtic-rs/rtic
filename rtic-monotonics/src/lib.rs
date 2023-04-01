@@ -14,6 +14,18 @@ pub mod systick;
 #[cfg(feature = "rp2040")]
 pub mod rp2040;
 
+#[cfg(any(
+    feature = "nrf52810",
+    feature = "nrf52811",
+    feature = "nrf52832",
+    feature = "nrf52833",
+    feature = "nrf52840",
+    feature = "nrf5340-app",
+    feature = "nrf5340-net",
+    feature = "nrf9160",
+))]
+pub mod nrf;
+
 /// This marker is implemented on an interrupt token to enforce that the right tokens
 /// are given to the correct monotonic implementation.
 ///

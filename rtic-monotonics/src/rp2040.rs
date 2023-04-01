@@ -1,4 +1,25 @@
 //! A monotonic implementation for RP2040's Timer peripheral.
+//!
+//! # Example
+//!
+//! ```
+//! use rtic_monotonics::rp2040::*;
+//!
+//! # async fn usage() {
+//! # let timer = unsafe { core::mem::transmute(()) };
+//! # let mut resets = unsafe { core::mem::transmute(()) };
+//! // Generate the required token
+//! let token = rtic_monotonics::create_rp2040_monotonic_token!();
+//!
+//! // Start the monotonic
+//! Timer::start(timer, &mut resets, token);
+//!
+//! loop {
+//!      // Use the monotonic
+//!      Timer::delay(100.millis()).await;
+//! }
+//! # }
+//! ```
 
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
@@ -41,6 +62,7 @@ impl Timer {
     }
 
     /// Timeout at a specific time.
+    #[inline]
     pub async fn timeout_at<F: Future>(
         instant: <Self as Monotonic>::Instant,
         future: F,
@@ -64,6 +86,7 @@ impl Timer {
     }
 
     /// Delay to some specific time instant.
+    #[inline]
     pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
         TIMER_QUEUE.delay_until(instant).await;
     }
