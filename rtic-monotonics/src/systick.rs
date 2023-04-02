@@ -6,19 +6,22 @@
 //! ```
 //! use rtic_monotonics::systick::*;
 //!
-//! # async fn usage() {
-//! # let systick = unsafe { core::mem::transmute(()) };
-//! // Generate the required token
-//! let systick_token = rtic_monotonics::create_systick_token!();
+//! fn init() {
+//!     # // This is normally provided by the selected PAC
+//!     # let systick = unsafe { core::mem::transmute(()) };
+//!     // Generate the required token
+//!     let systick_token = rtic_monotonics::create_systick_token!();
 //!
-//! // Start the monotonic
-//! Systick::start(systick, 12_000_000, systick_token);
-//!
-//! loop {
-//!      // Use the monotonic
-//!      Systick::delay(100.millis()).await;
+//!     // Start the monotonic
+//!     Systick::start(systick, 12_000_000, systick_token);
 //! }
-//! # }
+//!
+//! async fn usage() {
+//!     loop {
+//!          // Use the monotonic
+//!          Systick::delay(100.millis()).await;
+//!     }
+//! }
 //! ```
 
 use super::Monotonic;

@@ -5,20 +5,23 @@
 //! ```
 //! use rtic_monotonics::rp2040::*;
 //!
-//! # async fn usage() {
-//! # let timer = unsafe { core::mem::transmute(()) };
-//! # let mut resets = unsafe { core::mem::transmute(()) };
-//! // Generate the required token
-//! let token = rtic_monotonics::create_rp2040_monotonic_token!();
+//! fn init() {
+//!     # // This is normally provided by the selected PAC
+//!     # let timer = unsafe { core::mem::transmute(()) };
+//!     # let mut resets = unsafe { core::mem::transmute(()) };
+//!     // Generate the required token
+//!     let token = rtic_monotonics::create_rp2040_monotonic_token!();
 //!
-//! // Start the monotonic
-//! Timer::start(timer, &mut resets, token);
-//!
-//! loop {
-//!      // Use the monotonic
-//!      Timer::delay(100.millis()).await;
+//!     // Start the monotonic
+//!     Timer::start(timer, &mut resets, token);
 //! }
-//! # }
+//!
+//! async fn usage() {
+//!     loop {
+//!          // Use the monotonic
+//!          Timer::delay(100.millis()).await;
+//!     }
+//! }
 //! ```
 
 use super::Monotonic;
@@ -43,7 +46,10 @@ impl Timer {
 
         TIMER_QUEUE.initialize(Self {});
 
-        unsafe { NVIC::unmask(Interrupt::TIMER_IRQ_0) };
+        unsafe {
+            crate::set_monotonic_prio(rp2040_pac::NVIC_PRIO_BITS, Interrupt::TIMER_IRQ_0);
+            NVIC::unmask(Interrupt::TIMER_IRQ_0);
+        }
     }
 
     fn timer() -> &'static timer::RegisterBlock {

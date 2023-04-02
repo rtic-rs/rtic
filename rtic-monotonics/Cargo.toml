@@ -48,14 +48,14 @@ systick-100hz = []
 systick-10khz = []
 
 # Timer peripheral on the RP2040
-rp2040 = ["dep:rp2040-pac"]
+rp2040 = ["dep:cortex-m", "dep:rp2040-pac"]
 
 # nRF Timers and RTC
-nrf52810 = ["dep:nrf52810-pac", "dep:critical-section"]
-nrf52811 = ["dep:nrf52811-pac", "dep:critical-section"]
-nrf52832 = ["dep:nrf52832-pac", "dep:critical-section"]
-nrf52833 = ["dep:nrf52833-pac", "dep:critical-section"]
-nrf52840 = ["dep:nrf52840-pac", "dep:critical-section"]
-nrf5340-app = ["dep:nrf5340-app-pac", "dep:critical-section"]
-nrf5340-net = ["dep:nrf5340-net-pac", "dep:critical-section"]
-nrf9160 = ["dep:nrf9160-pac", "dep:critical-section"]
+nrf52810 = ["dep:cortex-m", "dep:nrf52810-pac", "dep:critical-section"]
+nrf52811 = ["dep:cortex-m", "dep:nrf52811-pac", "dep:critical-section"]
+nrf52832 = ["dep:cortex-m", "dep:nrf52832-pac", "dep:critical-section"]
+nrf52833 = ["dep:cortex-m", "dep:nrf52833-pac", "dep:critical-section"]
+nrf52840 = ["dep:cortex-m", "dep:nrf52840-pac", "dep:critical-section"]
+nrf5340-app = ["dep:cortex-m", "dep:nrf5340-app-pac", "dep:critical-section"]
+nrf5340-net = ["dep:cortex-m", "dep:nrf5340-net-pac", "dep:critical-section"]
+nrf9160 = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]

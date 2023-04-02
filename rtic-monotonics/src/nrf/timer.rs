@@ -5,19 +5,22 @@
 //! ```
 //! use rtic_monotonics::nrf::timer::*;
 //!
-//! # async fn usage() {
-//! # let timer = unsafe { core::mem::transmute(()) };
-//! // Generate the required token
-//! let token = rtic_monotonics::create_nrf_timer0_monotonic_token!();
+//! fn init() {
+//!     # // This is normally provided by the selected PAC
+//!     # let timer = unsafe { core::mem::transmute(()) };
+//!     // Generate the required token
+//!     let token = rtic_monotonics::create_nrf_timer0_monotonic_token!();
 //!
-//! // Start the monotonic
-//! Timer0::start(timer, token);
-//!
-//! loop {
-//!      // Use the monotonic
-//!      Timer0::delay(100.millis()).await;
+//!     // Start the monotonic
+//!     Timer0::start(timer, token);
 //! }
-//! # }
+//!
+//! async fn usage() {
+//!     loop {
+//!          // Use the monotonic
+//!          Timer0::delay(100.millis()).await;
+//!     }
+//! }
 //! ```
 
 use super::super::Monotonic;
@@ -135,7 +138,13 @@ macro_rules! make_timer {
                 timer.events_compare[0].write(|w| w);
                 timer.events_compare[1].write(|w| w);
 
-                unsafe { pac::NVIC::unmask(Interrupt::$timer) };
+                // SAFETY: We take full ownership of the peripheral and interrupt vector,
+                // plus we are not using any external shared resources so we won't impact
+                // basepri/source masking based critical sections.
+                unsafe {
+                    crate::set_monotonic_prio(pac::NVIC_PRIO_BITS, Interrupt::$timer);
+                    pac::NVIC::unmask(Interrupt::$timer);
+                }
             }
 
             /// Used to access the underlying timer queue
