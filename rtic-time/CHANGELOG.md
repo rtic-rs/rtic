@@ -9,6 +9,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- `should_dequeue` to the `Monotonic` trait to handle bugged timers
+
 ### Changed
 
 ### Fixed

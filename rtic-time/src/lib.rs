@@ -131,7 +131,7 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             let head = self.queue.pop_if(|head| {
                 release_at = Some(head.release_at);
 
-                let should_pop = Mono::now() >= head.release_at;
+                let should_pop = Mono::should_dequeue_check(head.release_at);
                 head.was_poped.store(should_pop, Ordering::Relaxed);
 
                 should_pop
@@ -145,7 +145,7 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
                     Mono::enable_timer();
                     Mono::set_compare(instant);
 
-                    if Mono::now() >= instant {
+                    if Mono::should_dequeue_check(instant) {
                         // The time for the next instant passed while handling it,
                         // continue dequeueing
                         continue;
