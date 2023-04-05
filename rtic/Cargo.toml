@@ -11,17 +11,11 @@ description = "Real-Time Interrupt-driven Concurrency (RTIC): a concurrency fram
 documentation = "https://rtic.rs/"
 edition = "2021"
 keywords = [
-  "arm",
-  "cortex-m",
-  "risc-v",
   "embedded",
   "async",
   "runtime",
-  "futures",
-  "await",
   "no-std",
   "rtos",
-  "bare-metal",
 ]
 license = "MIT OR Apache-2.0"
 name = "rtic"
