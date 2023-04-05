@@ -182,6 +182,12 @@ macro_rules! make_timer {
             pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
                 $tq.delay_until(instant).await;
             }
+
+            #[inline(always)]
+            fn is_overflow() -> bool {
+                let timer = unsafe { &*$timer::PTR };
+                timer.events_compare[1].read().bits() & 1 != 0
+            }
         }
 
         #[cfg(feature = "embedded-hal-async")]
@@ -213,17 +219,22 @@ macro_rules! make_timer {
                 critical_section::with(|_| {
                     let timer = unsafe { &*$timer::PTR };
                     timer.tasks_capture[2].write(|w| unsafe { w.bits(1) });
+                    let cnt = timer.cc[2].read().bits();
 
-                    let unhandled_overflow = if timer.events_compare[1].read().bits() & 1 != 0 {
+                    let unhandled_overflow = if Self::is_overflow() {
                         // The overflow has not been handled yet, so add an extra to the read overflow.
                         1
                     } else {
                         0
                     };
 
+                    timer.tasks_capture[2].write(|w| unsafe { w.bits(1) });
+                    let new_cnt = timer.cc[2].read().bits();
+                    let cnt = if new_cnt >= cnt { cnt } else { new_cnt } as u64;
+
                     Self::Instant::from_ticks(
                         (unhandled_overflow + $overflow.load(Ordering::Relaxed) as u64) << 32
-                            | timer.cc[2].read().bits() as u64,
+                            | cnt as u64,
                     )
                 })
             }
@@ -232,7 +243,7 @@ macro_rules! make_timer {
                 let timer = unsafe { &*$timer::PTR };
 
                 // If there is a compare match on channel 1, it is an overflow
-                if timer.events_compare[1].read().bits() & 1 != 0 {
+                if Self::is_overflow() {
                     timer.events_compare[1].write(|w| w);
                     $overflow.fetch_add(1, Ordering::SeqCst);
                 }

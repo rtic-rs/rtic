@@ -189,12 +189,17 @@ macro_rules! make_rtc {
                 // and the flag here.
                 critical_section::with(|_| {
                     let rtc = unsafe { &*$rtc::PTR };
-                    let cnt = rtc.counter.read().bits() as u64;
+                    let cnt = rtc.counter.read().bits();
+                    // OVERFLOW HAPPENS HERE race needs to be handled
                     let ovf = if Self::is_overflow() {
                         $overflow.load(Ordering::Relaxed) + 1
                     } else {
                         $overflow.load(Ordering::Relaxed)
                     } as u64;
+
+                    // Check and fix if above race happened
+                    let new_cnt = rtc.counter.read().bits();
+                    let cnt = if new_cnt >= cnt { cnt } else { new_cnt } as u64;
 
                     Self::Instant::from_ticks((ovf << 24) | cnt)
                 })
