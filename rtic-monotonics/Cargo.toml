@@ -1,6 +1,6 @@
 [package]
 name = "rtic-monotonics"
-version = "1.0.0-alpha.0"
+version = "1.0.0-alpha.1"
 
 edition = "2021"
 authors = [
@@ -17,7 +17,7 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rtic-time = { version = "1.0.0-alpha.0", path = "../rtic-time" }
+rtic-time = { version = "1.0.0-alpha.1", path = "../rtic-time" }
 embedded-hal-async = { version = "0.2.0-alpha.0", optional = true }
 fugit = { version = "0.3.6" }
 atomic-polyfill = "1"
