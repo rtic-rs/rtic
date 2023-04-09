@@ -92,7 +92,8 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
     }
 
     /// Insert a new link into the linked list.
-    /// The return is (was_empty, address), where the address of the link is for use with `delete`.
+    /// The return is (updated head, address), where the address of the link is for use
+    /// with `delete`.
     ///
     /// SAFETY: The pinned link must live until it is removed from this list.
     pub unsafe fn insert(&self, val: Pin<&Link<T>>) -> (bool, usize) {
@@ -127,7 +128,7 @@ impl<T: PartialOrd + Clone> LinkedList<T> {
                 self.head
                     .store(val as *const _ as *mut _, Ordering::Relaxed);
 
-                return (false, addr);
+                return (true, addr);
             }
 
             // 3. search list for correct place
