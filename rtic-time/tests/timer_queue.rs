@@ -1,3 +1,7 @@
+//! A test that verifies the correctness of the [`TimerQueue`].
+//!
+//! To run this test, you need to activate the `critical-section/std` feature.
+
 use std::{fmt::Debug, time::Duration};
 
 use parking_lot::Mutex;
