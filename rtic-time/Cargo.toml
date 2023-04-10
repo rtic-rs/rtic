@@ -23,6 +23,4 @@ rtic-common = { version = "1.0.0-alpha.0", path = "../rtic-common" }
 
 [dev-dependencies]
 parking_lot = "0.12"
-tokio = { version = "1.27", features = ["rt", "macros", "sync", "rt-multi-thread", "time"] }
-pretty_env_logger = "0.4"
-log = "0.4"
+cassette = "0.2"
