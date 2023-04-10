@@ -27,7 +27,7 @@
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
 use core::future::Future;
-pub use fugit::ExtU64;
+pub use fugit::{self, ExtU64};
 use rp2040_pac::{timer, Interrupt, NVIC, RESETS, TIMER};
 
 /// Timer implementing `rtic_monotonic::Monotonic` which runs at 1 MHz.

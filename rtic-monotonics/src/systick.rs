@@ -29,7 +29,7 @@ pub use super::{TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
 use cortex_m::peripheral::SYST;
-pub use fugit::ExtU32;
+pub use fugit::{self, ExtU32};
 
 // Features should be additive, here systick-100hz gets picked if both
 // `systick-100hz` and `systick-10khz` are enabled.
