@@ -7,7 +7,7 @@ use std::{
     task::{Poll, Waker},
 };
 
-use cassette::{pin_mut, Cassette};
+use cassette::Cassette;
 use parking_lot::Mutex;
 use rtic_time::{Monotonic, TimerQueue};
 
@@ -218,39 +218,47 @@ fn timer_queue() {
         }
     };
 
+    macro_rules! cassette {
+        ($($x:ident),* $(,)?) => { $(
+            // Move the value to ensure that it is owned
+            let mut $x = $x;
+            // Shadow the original binding so that it can't be directly accessed
+            // ever again.
+            #[allow(unused_mut)]
+            let mut $x = unsafe {
+                core::pin::Pin::new_unchecked(&mut $x)
+            };
+
+            let mut $x = Cassette::new($x);
+        )* }
+    }
+
     let d1 = build_delay_test(Some(100), 100);
-    pin_mut!(d1);
-    let mut d1 = Cassette::new(d1);
+    cassette!(d1);
 
     let d2 = build_delay_test(None, 300);
-    pin_mut!(d2);
-    let mut d2 = Cassette::new(d2);
+    cassette!(d2);
 
     let d3 = build_delay_test(None, 400);
-    pin_mut!(d3);
-    let mut d3 = Cassette::new(d3);
+    cassette!(d3);
 
-    macro_rules! try_poll {
-        ($fut:ident) => {
-            if !$fut.is_done() {
-                $fut.poll_on();
-            }
+    macro_rules! poll {
+        ($($fut:ident),*) => {
+            $(if !$fut.is_done() {
+                    $fut.poll_on();
+            })*
         };
     }
 
     // Do an initial poll to set up all of the waiting futures
-    try_poll!(d1);
-    try_poll!(d2);
-    try_poll!(d3);
+    poll!(d1, d2, d3);
 
     for _ in 0..500 {
         // We only poll the waiting futures if an
         // interrupt occured or if an artificial delay
         // has passed.
         if Instant::tick() {
-            try_poll!(d1);
-            try_poll!(d2);
-            try_poll!(d3);
+            poll!(d1, d2, d3);
         }
 
         if Instant::now() == 0.into() {
