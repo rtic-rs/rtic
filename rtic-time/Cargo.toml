@@ -20,3 +20,10 @@ license = "MIT OR Apache-2.0"
 critical-section = "1"
 futures-util = { version = "0.3.25", default-features = false }
 rtic-common = { version = "1.0.0-alpha.0", path = "../rtic-common" }
+
+[dev-dependencies]
+parking_lot = "0.12"
+tokio = { version = "1.27", features = ["rt", "macros", "sync", "rt-multi-thread", "time"] }
+critical-section = { version = "1", features = ["std"] }
+pretty_env_logger = "0.4"
+log = "0.4"
