@@ -75,19 +75,11 @@ impl Instant {
         NOW.lock().clone().unwrap_or(Instant::ZERO)
     }
 
-    pub fn from_ticks(ticks: u64) -> Self {
-        Self(ticks)
-    }
-
-    pub fn as_ticks(&self) -> u64 {
-        self.0
-    }
-
     pub fn elapsed(&self) -> Duration {
         Duration(Self::now().0 - self.0)
     }
 
-    pub async fn sleep_until(time: Instant) {
+    pub async fn wait_until(time: Instant) {
         core::future::poll_fn(|ctx| {
             if Instant::now() >= time {
                 Poll::Ready(())
@@ -102,7 +94,7 @@ impl Instant {
 
 impl From<u64> for Instant {
     fn from(value: u64) -> Self {
-        Self::from_ticks(value)
+        Self(value)
     }
 }
 
@@ -206,8 +198,11 @@ fn timer_queue() {
         let total_millis = total.as_ticks();
 
         async move {
+            // A `pre_delay` simulates a delay in scheduling,
+            // without the `pre_delay` being present in the timer
+            // queue
             if let Some(pre_delay) = pre_delay {
-                Instant::sleep_until(start + pre_delay).await;
+                Instant::wait_until(start + pre_delay).await;
             }
 
             TestMono::queue().delay(delay).await;
