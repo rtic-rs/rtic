@@ -18,7 +18,9 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let attrs = &init.attrs;
     let stmts = &init.stmts;
     let shared = &init.user_shared_struct;
+    let shared_vis = &app.shared_resources_vis;
     let local = &init.user_local_struct;
+    let local_vis = &app.local_resources_vis;
 
     let shared_resources: Vec<_> = app
         .shared_resources
@@ -27,10 +29,11 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let ty = &v.ty;
             let cfgs = &v.cfgs;
             let docs = &v.docs;
+            let vis = &v.vis;
             quote!(
                 #(#cfgs)*
                 #(#docs)*
-                #k: #ty,
+                #vis #k: #ty,
             )
         })
         .collect();
@@ -41,20 +44,21 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let ty = &v.ty;
             let cfgs = &v.cfgs;
             let docs = &v.docs;
+            let vis = &v.vis;
             quote!(
                 #(#cfgs)*
                 #(#docs)*
-                #k: #ty,
+                #vis #k: #ty,
             )
         })
         .collect();
 
     root_init.push(quote! {
-        struct #shared {
+        #shared_vis struct #shared {
             #(#shared_resources)*
         }
 
-        struct #local {
+        #local_vis struct #local {
             #(#local_resources)*
         }
     });

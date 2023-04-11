@@ -1,5 +1,4 @@
-use proc_macro2::Span;
-use syn::{parse, Field, Visibility};
+use syn::{parse, Field};
 
 use crate::syntax::parse::util::FilterAttrs;
 use crate::syntax::{
@@ -8,14 +7,7 @@ use crate::syntax::{
 };
 
 impl SharedResource {
-    pub(crate) fn parse(item: &Field, span: Span) -> parse::Result<Self> {
-        if item.vis != Visibility::Inherited {
-            return Err(parse::Error::new(
-                span,
-                "this field must have inherited / private visibility",
-            ));
-        }
-
+    pub(crate) fn parse(item: &Field) -> parse::Result<Self> {
         let FilterAttrs {
             cfgs,
             mut attrs,
@@ -30,19 +22,13 @@ impl SharedResource {
             docs,
             ty: Box::new(item.ty.clone()),
             properties: SharedResourceProperties { lock_free },
+            vis: item.vis.clone(),
         })
     }
 }
 
 impl LocalResource {
-    pub(crate) fn parse(item: &Field, span: Span) -> parse::Result<Self> {
-        if item.vis != Visibility::Inherited {
-            return Err(parse::Error::new(
-                span,
-                "this field must have inherited / private visibility",
-            ));
-        }
-
+    pub(crate) fn parse(item: &Field) -> parse::Result<Self> {
         let FilterAttrs { cfgs, attrs, docs } = util::filter_attributes(item.attrs.clone());
 
         Ok(LocalResource {
@@ -50,6 +36,7 @@ impl LocalResource {
             attrs,
             docs,
             ty: Box::new(item.ty.clone()),
+            vis: item.vis.clone(),
         })
     }
 }

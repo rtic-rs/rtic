@@ -1,5 +1,0 @@
-error: this field must have inherited / private visibility
- --> ui/shared-pub.rs:7:13
-  |
-7 |         pub x: u32,
-  |             ^
