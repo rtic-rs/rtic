@@ -27,9 +27,11 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let main = util::suffixed("main");
     let init_name = &app.init.name;
     quote!(
+        // TODO: we want a section for backend-specific modu
         #[doc(hidden)]
         #[no_mangle]
         unsafe extern "C" fn #main() -> ! {
+
             #(#assertion_stmts)*
 
             #(#pre_init_stmts)*

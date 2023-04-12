@@ -20,8 +20,8 @@ compile_error!(
     "Building for Cortex-M with source masking, but 'thumbv6-backend' or 'thumbv8base-backend' backend not selected"
 );
 
-#[cfg(all(feature = "riscv-e310x", not(any(feature = "riscv-e310x-backend"))))]
-compile_error!("Building for RISC-V E310X, but 'riscv-e310x-backend' backend not selected");
+#[cfg(all(feature = "riscv-slic", not(any(feature = "riscv-slic-backend"))))]
+compile_error!("Building for RISC-V SLIC, but 'riscv-slic-backend' backend not selected");
 
 #[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
 pub use cortex_basepri::*;
@@ -58,11 +58,11 @@ where
     NVIC::pend(interrupt);
 }
 
-#[cfg(any(feature = "riscv-e310x"))]
-pub use riscv_e310x::*;
+#[cfg(any(feature = "riscv-slic"))]
+pub use self::riscv_slic::*;
 
-#[cfg(any(feature = "riscv-e310x"))]
-mod riscv_e310x;
+#[cfg(any(feature = "riscv-slic"))]
+mod riscv_slic;
 
 #[inline(always)]
 pub fn assert_send<T>()
