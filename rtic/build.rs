@@ -12,7 +12,7 @@ fn main() {
     } else if target.starts_with("thumbv6m") | target.starts_with("thumbv8m.base") {
         println!("cargo:rustc-cfg=feature=\"cortex-m-source-masking\"");
     } else if target.starts_with("riscv32i") {
-        panic!("No RISC-V support yet.");
+        //panic!("No RISC-V support yet.");
 
         // TODO: Add feature here for risc-v targets
         // println!("cargo:rustc-cfg=feature=\"riscv\"");

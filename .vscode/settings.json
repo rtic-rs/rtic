@@ -5,7 +5,6 @@
     },
     "rust-analyzer.cargo.features": [
         //"cortex-m-basepri", // toggle this feature just for "inspiration"
-        "riscv-slic",
-        "riscv-slic-backend"
+        "e310x-slic",
     ]
 }

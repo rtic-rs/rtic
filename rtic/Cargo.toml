@@ -44,7 +44,7 @@ critical-section = "1"
 
 riscv = {git = "https://github.com/rust-embedded/riscv.git", branch = "peripheral-plic", optional = true}
 riscv-slic = {git = "https://github.com/romancardenas/riscv-slic", branch = "dev-plic", optional = true}
-# e310x = { git = "https://github.com/greenlsi/e310x.git", branch = "master", optional = true }
+e310x = { git = "https://github.com/greenlsi/e310x.git", branch = "master", optional = true }
 
 [dev-dependencies]
 lm3s6965 = "0.1.3"
@@ -76,8 +76,10 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 # riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
 
-riscv-slic-backend = ["riscv", "rtic-macros/riscv-slic", "riscv-slic"]
+riscv-slic-backend = ["riscv", "e310x", "rtic-macros/riscv-slic", "riscv-slic"]
 riscv-slic-plic-clint-backend = ["riscv-slic-backend", "riscv-slic/swi-clint", "riscv-slic/exti-plic"]
+e310x-slic = ["e310x", "riscv-slic-plic-clint-backend"]
+
 # needed for testing
 rtic-uitestv7 = ["thumbv7-backend", "rtic-macros/cortex-m-basepri"]
 rtic-uitestv6 = ["thumbv6-backend", "rtic-macros/cortex-m-source-masking"]

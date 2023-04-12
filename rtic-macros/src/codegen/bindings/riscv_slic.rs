@@ -14,6 +14,7 @@
 
 use crate::{
     analyze::Analysis as CodegenAnalysis,
+    codegen::util,
     // codegen::util,
     syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
 };
@@ -58,7 +59,7 @@ pub fn impl_mutex(
                 const CEILING: u16 = #ceiling.into();
 
                 unsafe {
-                    slic::lock(#ptr, CEILING, f);
+                    riscv_slic::lock(#ptr, CEILING, f);
                 }
             }
         }
@@ -71,9 +72,7 @@ pub fn extra_assertions(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStre
     vec![]
 }
 
-/// This macro is used to check at run-time that all the interruption dispatchers exist.
-/// Probably, this macro fits in any architecture.
-pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
+pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
     // generate code for the riscv e310x backend, parsing the
@@ -84,10 +83,18 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
         .values()
         .map(|task| &task.args.binds)
         .collect();
-    let sw_slice: Vec<_> = app.software_tasks.keys().collect();
+    let sw_slice: Vec<_> = app.args.dispatchers.keys().collect();
     let device = &app.args.device;
     let slic_module = quote!(riscv_slic::codegen!(#device, [#(#hw_slice,)*], [#(#sw_slice,)*]););
     stmts.push(slic_module);
+    stmts
+}
+
+/// This macro is used to check at run-time that all the interruption dispatchers exist.
+/// Probably, this macro fits in any architecture.
+pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
+    let mut stmts = vec![];
+
     stmts.push(quote!(slic::clear_interrupts();));
 
     // check that all dispatchers exists in the `Interrupt` enumeration
@@ -104,7 +111,7 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
 pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
-    // let interrupt = util::interrupt_ident();
+    let interrupt = util::interrupt_ident();
     // let rt_err = util::rt_err_ident();
 
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
@@ -112,10 +119,10 @@ pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec
     // Set interrupt priorities and unmask them
     for (&p, name) in interrupt_ids {
         stmts.push(quote!(
-            slic::set_priority(slic::Interrupt::#name, #p);
+            riscv_slic::set_priority(#interrupt::#name, #p);
         ));
     }
-    stmts.push(quote!(slic::set_interrupts();));
+    //stmts.push(quote!(slic::set_interrupts();));
     stmts
 }
 

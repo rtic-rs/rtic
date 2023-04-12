@@ -4,6 +4,11 @@ pub use riscv::asm::nop;
 pub use riscv_slic;
 pub use riscv_slic::swi::InterruptNumber;
 
+#[cfg(feature = "e310x-slic")]
+pub use e310x_slic::*;
+#[cfg(feature = "e310x-slic")]
+pub mod e310x_slic;
+
 /// MANDATORY FOR INTERNAL USE OF MACROS
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)

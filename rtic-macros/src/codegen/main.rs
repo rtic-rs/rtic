@@ -1,4 +1,8 @@
-use crate::{analyze::Analysis, codegen::util, syntax::ast::App};
+use crate::{
+    analyze::Analysis,
+    codegen::{extra_mods, util},
+    syntax::ast::App,
+};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
@@ -6,6 +10,8 @@ use super::{assertions, post_init, pre_init};
 
 /// Generates code for `fn main`
 pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
+    let extra_modules_stmts = extra_mods::codegen(app, analysis);
+
     let assertion_stmts = assertions::codegen(app, analysis);
 
     let pre_init_stmts = pre_init::codegen(app, analysis);
@@ -28,6 +34,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let init_name = &app.init.name;
     quote!(
         // TODO: we want a section for backend-specific modu
+        #(#extra_modules_stmts)*
+
         #[doc(hidden)]
         #[no_mangle]
         unsafe extern "C" fn #main() -> ! {

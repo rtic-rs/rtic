@@ -41,6 +41,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     }
 
     // Enable the interrupts -- this completes the `init`-ialization phase
+    // FIXME: temporary fix for riscv
+    #[cfg(not(any(riscv_slic_backend)))]
     stmts.push(quote!(rtic::export::interrupt::enable();));
 
     stmts
