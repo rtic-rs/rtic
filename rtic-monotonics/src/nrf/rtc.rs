@@ -1,4 +1,4 @@
-//! RTIC Monotonic impl for the nRF RTCs.
+//! [`Monotonic`] implementation for the nRF Real Time Clocks (RTC).
 //!
 //! # Example
 //!
@@ -82,6 +82,10 @@ macro_rules! create_nrf_rtc1_monotonic_token {
 
 /// Register the Rtc2 interrupt for the monotonic.
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")))
+)]
 #[macro_export]
 macro_rules! create_nrf_rtc2_monotonic_token {
     () => {{
@@ -90,8 +94,11 @@ macro_rules! create_nrf_rtc2_monotonic_token {
 }
 
 macro_rules! make_rtc {
-    ($mono_name:ident, $rtc:ident, $overflow:ident, $tq:ident) => {
+    ($mono_name:ident, $rtc:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer queue implementation.
+        $(
+            #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
+        )?
         pub struct $mono_name;
 
         static $overflow: AtomicU32 = AtomicU32::new(0);
@@ -243,4 +250,4 @@ macro_rules! make_rtc {
 make_rtc!(Rtc0, RTC0, RTC0_OVERFLOWS, RTC0_TQ);
 make_rtc!(Rtc1, RTC1, RTC1_OVERFLOWS, RTC1_TQ);
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
-make_rtc!(Rtc2, RTC2, RTC2_OVERFLOWS, RTC2_TQ);
+make_rtc!(Rtc2, RTC2, RTC2_OVERFLOWS, RTC2_TQ, doc: (any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")));

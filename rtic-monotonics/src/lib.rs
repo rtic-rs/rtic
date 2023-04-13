@@ -1,10 +1,31 @@
-//! Crate
+//! In-tree implementations of the [`rtic_time::Monotonic`] (reexported) trait for
+//! timers & clocks found on commonly used microcontrollers.
+//!
+//! To enable the implementations, you must enable a feature for the specific MCU you're targeting.
+//!
+//! # Cortex-M Systick
+//! The [`systick`] monotonic works on all cortex-M parts, and requires that the feature `cortex-m-systick` is enabled.
+//!
+//! # RP2040
+//! The RP2040 monotonics require that the `rp2040` feature is enabled.
+//!
+//! # nRF
+//! nRF monotonics require that one of the available `nrf52*` features is enabled.
+//!
+//! All implementations of timers for the nRF52 family are documented here. Monotonics that
+//! are not available on all parts in this family will have an `Available on crate features X only`
+//! tag, describing what parts _do_ support that monotonic. Monotonics without an
+//! `Available on crate features X only` tag are available on any `nrf52*` feature.
+//!
+// To build these docs correctly:
+// RUSTFLAGS="--cfg docsrs" cargo doc --featuers cortex-m-systick,rp2040,nrf52840
 
 #![no_std]
 #![deny(missing_docs)]
 //deny_warnings_placeholder_for_ci
 #![allow(incomplete_features)]
 #![feature(async_fn_in_trait)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub use rtic_time::{Monotonic, TimeoutError, TimerQueue};
 

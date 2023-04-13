@@ -1,6 +1,14 @@
-//! A monotonics based on Cortex-M SysTick. Note that this implementation is inefficient as it
-//! ticks, and generates interrupts, at a constant rate.
+//! [`Monotonic`] based on Cortex-M SysTick. Note: this implementation is inefficient as it
+//! ticks and generates interrupts at a constant rate.
 //!
+//! Currently, the following tick rates are supported:
+//!
+//! | Feature          | Tick rate | Precision |
+//! |:----------------:|----------:|----------:|
+//! | (none / default) |  1 Hz     |      1 ms |
+//! |   systick-100hz  | 100 Hz    |     10 ms |
+//! |   systick-10khz  | 10 KHz    |    0.1 ms |
+
 //! # Example
 //!
 //! ```
