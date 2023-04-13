@@ -76,9 +76,10 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 # riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
 
-riscv-slic-backend = ["riscv", "e310x", "rtic-macros/riscv-slic", "riscv-slic"]
+riscv-slic-backend = ["riscv", "rtic-macros/riscv-slic", "riscv-slic"]
 riscv-slic-plic-clint-backend = ["riscv-slic-backend", "riscv-slic/swi-clint", "riscv-slic/exti-plic"]
-e310x-slic = ["e310x", "riscv-slic-plic-clint-backend"]
+
+riscv-e310x-backend = ["e310x", "riscv-slic-plic-clint-backend"]
 
 # needed for testing
 rtic-uitestv7 = ["thumbv7-backend", "rtic-macros/cortex-m-basepri"]

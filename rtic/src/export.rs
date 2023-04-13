@@ -58,10 +58,10 @@ where
     NVIC::pend(interrupt);
 }
 
-#[cfg(any(feature = "riscv-slic"))]
+#[cfg(feature = "riscv-slic")]
 pub use self::riscv_slic::*;
 
-#[cfg(any(feature = "riscv-slic"))]
+#[cfg(feature = "riscv-slic")]
 mod riscv_slic;
 
 #[inline(always)]

@@ -14,8 +14,6 @@
 
 use crate::{
     analyze::Analysis as CodegenAnalysis,
-    codegen::util,
-    // codegen::util,
     syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
 };
 use proc_macro2::TokenStream as TokenStream2;
@@ -23,15 +21,7 @@ use quote::quote;
 use std::collections::HashSet;
 use syn::{parse, Attribute, Ident};
 
-/// This macro implements the [`rtic::Mutex`] trait using the PLIC threshold for shared resources.
-///
-/// # Some remarks
-///
-/// If you use a threshold-based approach, you can adapt it using this as inspiration. You can also
-/// have a look to the original cortex-m-basepri codegen binding. As far as we know, here you only
-/// need to know **HOW MANY BITS YOUR PLATFORM USES TO REPRESENT PRIORITIES**.
-/// The [`riscv::peripheral::plic::PriorityLevel`] trait stores this information in its
-/// `N_PRIORITY_BITS` const generic.
+/// This macro implements the [`rtic::Mutex`] trait for shared resources using the SLIC.
 pub fn impl_mutex(
     _app: &App,
     _analysis: &CodegenAnalysis,
@@ -59,7 +49,7 @@ pub fn impl_mutex(
                 const CEILING: u16 = #ceiling.into();
 
                 unsafe {
-                    riscv_slic::lock(#ptr, CEILING, f);
+                    rtic::export::lock(#ptr, CEILING, f);
                 }
             }
         }
@@ -72,12 +62,11 @@ pub fn extra_assertions(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStre
     vec![]
 }
 
+/// The SLIC requires us to call to the [`riscv_rtic::codegen`] macro to generate
+/// the appropriate SLIC structure, interrupt enumerations, etc.
 pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
-    // generate code for the riscv e310x backend, parsing the
-    // app arguments to dynamically generate the required dispatchers
-    // in the SLIC implementation.
     let hw_slice: Vec<_> = app
         .hardware_tasks
         .values()
@@ -85,22 +74,18 @@ pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2>
         .collect();
     let sw_slice: Vec<_> = app.args.dispatchers.keys().collect();
     let device = &app.args.device;
-    let slic_module = quote!(riscv_slic::codegen!(#device, [#(#hw_slice,)*], [#(#sw_slice,)*]););
-    stmts.push(slic_module);
+
+    stmts.push(
+        quote!(rtic::export::riscv_slic::codegen!(#device, [#(#hw_slice,)*], [#(#sw_slice,)*]);),
+    );
     stmts
 }
 
 /// This macro is used to check at run-time that all the interruption dispatchers exist.
-/// Probably, this macro fits in any architecture.
 pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
-    stmts.push(quote!(slic::clear_interrupts();));
-
-    // check that all dispatchers exists in the `Interrupt` enumeration
-    //let interrupt = util::interrupt_ident();
-    // let rt_err = util::rt_err_ident();
-
+    // check that all dispatchers exists in the `slic::Interrupt` enumeration
     for name in app.args.dispatchers.keys() {
         stmts.push(quote!(let _ = slic::Interrupt::#name;));
     }
@@ -108,27 +93,29 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
     stmts
 }
 
+/// This macro must perform all the required operations to activate the
+/// interrupt sources with their corresponding priority level.
 pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
-    let interrupt = util::interrupt_ident();
-    // let rt_err = util::rt_err_ident();
-
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
-    // Set interrupt priorities and unmask them
+    // First, we disable all the interrupt controllers
+    stmts.push(quote!(rtic::export::riscv_slic::clear_interrupts();));
+    // Then, we set interrupt priorities and unmask them
     for (&p, name) in interrupt_ids {
         stmts.push(quote!(
-            riscv_slic::set_priority(#interrupt::#name, #p);
+            rtic::export::riscv_slic::set_priority(slic::Interrupt::#name, #p);
         ));
     }
-    //stmts.push(quote!(slic::set_interrupts();));
+    // Finally, we activate the interrupts
+    stmts.push(quote!(rtic::export::riscv_slic::set_interrupts();));
     stmts
 }
 
+/// Any additional checks that depend on the system architecture.
 pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
-    // Check that there are enough external interrupts to dispatch the software tasks and the timer
-    // queue handler
+    // Check that there are enough external interrupts to dispatch the software tasks and the timer queue handler
     let mut first = None;
     let priorities = app
         .software_tasks
@@ -157,13 +144,11 @@ pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> 
 }
 
 /// Macro to add statements to be executed at the beginning of all the interrupt handlers.
-/// In most of the cases, this will be empty.
 pub fn interrupt_entry(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
-    vec![] // TODO
+    vec![]
 }
 
 /// Macro to add statements to be executed at the end of all the interrupt handlers.
-/// In most of the cases, this will be empty.
 pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
-    vec![] // TODO
+    vec![]
 }
