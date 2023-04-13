@@ -9,8 +9,8 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! This crate is compiled and tested with the latest toolchain (rolling) as of the release date.
-//! If you run into compilation errors, try the latest stable release of the rust toolchain.
+//! This crate is compiled and tested with the latest nightly toolchain (rolling).
+//! If you run into compilation errors, try the latest nightly release of the rust toolchain.
 //!
 //! # Semantic Versioning
 //!
