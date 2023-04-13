@@ -8,18 +8,18 @@ use core::task::Waker;
 use critical_section as cs;
 
 /// A helper definition of a wait queue.
-pub type WaitQueue = LinkedList<Waker>;
+pub type WaitQueue = DoublyLinkedList<Waker>;
 
 /// An atomic, doubly linked, FIFO list for a wait queue.
 ///
 /// Atomicity is guaranteed by short [`critical_section`]s, so this list is _not_ lock free,
 /// but it will not deadlock.
-pub struct LinkedList<T> {
+pub struct DoublyLinkedList<T> {
     head: AtomicPtr<Link<T>>, // UnsafeCell<*mut Link<T>>
     tail: AtomicPtr<Link<T>>,
 }
 
-impl<T> LinkedList<T> {
+impl<T> DoublyLinkedList<T> {
     /// Create a new linked list.
     pub const fn new() -> Self {
         Self {
@@ -29,7 +29,7 @@ impl<T> LinkedList<T> {
     }
 }
 
-impl<T: Clone> LinkedList<T> {
+impl<T: Clone> DoublyLinkedList<T> {
     const R: Ordering = Ordering::Relaxed;
 
     /// Pop the first element in the queue.
@@ -133,7 +133,7 @@ impl<T: Clone> Link<T> {
     }
 
     /// Remove this link from a linked list.
-    pub fn remove_from_list(&self, list: &LinkedList<T>) {
+    pub fn remove_from_list(&self, list: &DoublyLinkedList<T>) {
         cs::with(|_| {
             // Make sure all previous writes are visible
             core::sync::atomic::fence(Ordering::SeqCst);
@@ -175,7 +175,7 @@ impl<T: Clone> Link<T> {
 }
 
 #[cfg(test)]
-impl<T: core::fmt::Debug + Clone> LinkedList<T> {
+impl<T: core::fmt::Debug + Clone> DoublyLinkedList<T> {
     fn print(&self) {
         cs::with(|_| {
             // Make sure all previous writes are visible
@@ -235,7 +235,7 @@ mod tests {
 
     #[test]
     fn linked_list() {
-        let wq = LinkedList::<u32>::new();
+        let wq = DoublyLinkedList::<u32>::new();
 
         let i1 = Link::new(10);
         let i2 = Link::new(11);
