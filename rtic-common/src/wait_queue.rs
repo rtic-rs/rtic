@@ -1,4 +1,4 @@
-//! ...
+//! A wait queue implementation using a doubly linked list.
 
 use core::marker::PhantomPinned;
 use core::pin::Pin;
@@ -10,7 +10,10 @@ use critical_section as cs;
 /// A helper definition of a wait queue.
 pub type WaitQueue = LinkedList<Waker>;
 
-/// A FIFO linked list for a wait queue.
+/// An atomic, doubly linked, FIFO list for a wait queue.
+///
+/// Atomicity is guaranteed by short [`critical_section`]s, so this list is _not_ lock free,
+/// but it will not deadlock.
 pub struct LinkedList<T> {
     head: AtomicPtr<Link<T>>, // UnsafeCell<*mut Link<T>>
     tail: AtomicPtr<Link<T>>,
