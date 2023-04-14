@@ -38,7 +38,6 @@ atomic-polyfill = "1"
 rtic-monotonics = { path = "../rtic-monotonics", version = "1.0.0-alpha.1", optional = true }
 rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.0" }
 rtic-core = "1"
-rtt-target = { version = "0.4.0" }
 critical-section = "1"
 
 [dev-dependencies]
