@@ -38,9 +38,6 @@ mod cortex_source_mask;
 #[cfg(feature = "cortex-m")]
 pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
 
-#[cfg(feature = "cortex-m")]
-pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
-
 /// Sets the given `interrupt` as pending
 ///
 /// This is a convenience function around
