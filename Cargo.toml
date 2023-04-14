@@ -1,4 +1,7 @@
 [workspace]
+default-members = [
+    "rtic",
+]
 members = [
     "rtic",
     "rtic-sync",
