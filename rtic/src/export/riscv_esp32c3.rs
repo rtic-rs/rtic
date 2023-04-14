@@ -1,9 +1,8 @@
-pub use esp32c3::{Peripherals, Interrupt};
+use esp32c3::INTERRUPT_CORE0;
+pub use esp32c3::{Interrupt, Peripherals};
 pub use esp32c3_hal::interrupt as hal_interrupt; //high level peripheral interrupt access
-pub use esp32c3_hal::riscv::interrupt; //low level interrupt enable/disable
 use esp32c3_hal::interrupt::Priority; //need this for setting priority since the method takes an object and not a int
-use esp32c3::INTERRUPT_CORE0; //priority threshold control
-
+pub use esp32c3_hal::riscv::interrupt; //low level interrupt enable/disable //priority threshold control
 
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
@@ -14,27 +13,25 @@ where
         //if priority is 1, priority thresh should be 1
         f();
         unsafe {
-            (*INTERRUPT_CORE0::ptr()).
-            cpu_int_thresh.
-            write(|w|{w.cpu_int_thresh().bits(1)});
+            (*INTERRUPT_CORE0::ptr())
+                .cpu_int_thresh
+                .write(|w| w.cpu_int_thresh().bits(1));
         }
     } else {
         //read current thresh
-        let initial = unsafe{
+        let initial = unsafe {
             (*INTERRUPT_CORE0::ptr())
-            .cpu_int_thresh.read()
-            .cpu_int_thresh()
-            .bits()
+                .cpu_int_thresh
+                .read()
+                .cpu_int_thresh()
+                .bits()
         };
         f();
         //write back old thresh
         unsafe {
-            (*INTERRUPT_CORE0::ptr()).
-            cpu_int_thresh.
-            write(|w|{
-                w.cpu_int_thresh().
-                bits(initial)
-            });
+            (*INTERRUPT_CORE0::ptr())
+                .cpu_int_thresh
+                .write(|w| w.cpu_int_thresh().bits(initial));
         }
     }
 }
@@ -56,34 +53,37 @@ where
 /// It is merely used in order to omit masking in case current
 /// priority is current priority >= ceiling.
 #[inline(always)]
-pub unsafe fn lock<T, R>(
-    ptr: *mut T,
-    ceiling: u8,
-    f: impl FnOnce(&mut T) -> R,
-) -> R {
-    
-    if ceiling == (15) { //turn off interrupts completely, were at max prio
+pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) -> R {
+    if ceiling == (15) {
+        //turn off interrupts completely, were at max prio
         let r = critical_section::with(|_| f(&mut *ptr));
         r
     } else {
-
-        let current = unsafe{
+        let current = unsafe {
             (*INTERRUPT_CORE0::ptr())
-            .cpu_int_thresh
-            .read()
-            .cpu_int_thresh()
-            .bits()
+                .cpu_int_thresh
+                .read()
+                .cpu_int_thresh()
+                .bits()
         };
 
-        unsafe{(*INTERRUPT_CORE0::ptr()).cpu_int_thresh.write(|w|w.cpu_int_thresh().bits(ceiling + 1))}     //esp32c3 lets interrupts with prio equal to threshold through so we up it by one
+        unsafe {
+            (*INTERRUPT_CORE0::ptr())
+                .cpu_int_thresh
+                .write(|w| w.cpu_int_thresh().bits(ceiling + 1))
+        } //esp32c3 lets interrupts with prio equal to threshold through so we up it by one
         let r = f(&mut *ptr);
-        unsafe{(*INTERRUPT_CORE0::ptr()).cpu_int_thresh.write(|w|w.cpu_int_thresh().bits(current))}
+        unsafe {
+            (*INTERRUPT_CORE0::ptr())
+                .cpu_int_thresh
+                .write(|w| w.cpu_int_thresh().bits(current))
+        }
         r
     }
 }
 
-pub fn int_to_prio(int:u8) -> Priority{
-    match(int){
+pub fn int_to_prio(int: u8) -> Priority {
+    match (int) {
         0 => Priority::None,
         1 => Priority::Priority1,
         2 => Priority::Priority2,

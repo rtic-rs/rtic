@@ -323,7 +323,11 @@ pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStrea
     vec![]
 }
 
-pub fn async_entry(_app: &App, _analysis: &CodegenAnalysis, _dispatcher_name: Ident) -> Vec<TokenStream2>{
+pub fn async_entry(
+    _app: &App,
+    _analysis: &CodegenAnalysis,
+    _dispatcher_name: Ident,
+) -> Vec<TokenStream2> {
     vec![]
 }
 

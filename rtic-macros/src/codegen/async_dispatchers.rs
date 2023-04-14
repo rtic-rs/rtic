@@ -2,7 +2,7 @@ use crate::syntax::ast::App;
 use crate::{
     analyze::Analysis,
     codegen::{
-        bindings::{interrupt_entry, interrupt_exit, async_entry},
+        bindings::{async_entry, interrupt_entry, interrupt_exit},
         util,
     },
 };

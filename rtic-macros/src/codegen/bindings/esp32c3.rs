@@ -2,16 +2,16 @@
 pub use esp32c3::*;
 
 #[cfg(feature = "riscv-esp32c3")]
-mod esp32c3{
+mod esp32c3 {
     use crate::{
         analyze::Analysis as CodegenAnalysis,
-        syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
         codegen::util,
+        syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
     };
     use proc_macro2::TokenStream as TokenStream2;
     use quote::quote;
-    use syn::{parse, Attribute, Ident};
     use std::collections::HashSet;
+    use syn::{parse, Attribute, Ident};
 
     #[allow(clippy::too_many_arguments)]
     pub fn impl_mutex(
@@ -54,7 +54,6 @@ mod esp32c3{
         vec![]
     }
 
-
     pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
         // check that all dispatchers exists in the `Interrupt` enumeration regardless of whether
@@ -69,32 +68,36 @@ mod esp32c3{
     pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
         let rt_err = util::rt_err_ident();
-        let max_prio:usize = 15; //unfortunately this is not part of pac, but we know that max prio is 15.
+        let max_prio: usize = 15; //unfortunately this is not part of pac, but we know that max prio is 15.
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
         // Unmask interrupts and set their priorities
-        for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {
-            Some((&task.args.priority, &task.args.binds))
-        })){
+        for (&priority, name) in interrupt_ids.chain(
+            app.hardware_tasks
+                .values()
+                .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
+        ) {
             let es = format!(
                 "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
             );
             // Compile time assert that this priority is supported by the device
             stmts.push(quote!(
                 const _: () =  if (#max_prio) <= #priority as usize { ::core::panic!(#es); };
-            ));    
+            ));
             //hal enables interrupt and sets prio simultaneously
             stmts.push(quote!(
                 rtic::export::hal_interrupt::enable(
                     #rt_err::Interrupt::#name, //interrupt struct
-                    rtic::export::int_to_prio(#priority) //interrupt priority object            
+                    rtic::export::int_to_prio(#priority) //interrupt priority object
                 );
             ));
         }
         stmts
     }
 
-
-    pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+    pub fn architecture_specific_analysis(
+        app: &App,
+        _analysis: &SyntaxAnalysis,
+    ) -> parse::Result<()> {
         //check if the dispatchers are supported
         for name in app.args.dispatchers.keys() {
             let name_s = name.to_string();
@@ -103,9 +106,10 @@ mod esp32c3{
 
                 _ => {
                     return Err(parse::Error::new(
-                    name.span(),
-                    "Only FROM_CPU_INTRX are supported as dispatchers",
-                ));}
+                        name.span(),
+                        "Only FROM_CPU_INTRX are supported as dispatchers",
+                    ));
+                }
             }
         }
 
@@ -147,13 +151,15 @@ mod esp32c3{
         vec![]
     }
 
-    pub fn async_entry(_app: &App, _analysis: &CodegenAnalysis, dispatcher_name: Ident) -> Vec<TokenStream2>{
+    pub fn async_entry(
+        _app: &App,
+        _analysis: &CodegenAnalysis,
+        dispatcher_name: Ident,
+    ) -> Vec<TokenStream2> {
         let mut stmts = vec![];
-        stmts.push(
-            quote!(
-                rtic::export::unpend(rtic::export::Interrupt::#dispatcher_name); //simulate cortex-m behavior by unpending the interrupt on entry.
-            )
-        );
+        stmts.push(quote!(
+            rtic::export::unpend(rtic::export::Interrupt::#dispatcher_name); //simulate cortex-m behavior by unpending the interrupt on entry.
+        ));
         stmts
     }
 
@@ -165,7 +171,7 @@ mod esp32c3{
             let device = &app.args.device;
             quote!(1 << #device::NVIC_PRIO_BITS)
         };
-    
+
         vec![quote!(
             /// Holds the maximum priority level for use by async HAL drivers.
             #[no_mangle]
