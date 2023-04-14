@@ -25,8 +25,6 @@ mod app {
 
     use panic_probe as _;
 
-    rtic_monotonics::make_rp2040_monotonic_handler!();
-
     type I2CBus = I2C<
         pac::I2C1,
         (
@@ -51,8 +49,11 @@ mod app {
         i2c_ctx: MaybeUninit<I2CBus> = MaybeUninit::uninit()
     ])]
     fn init(mut ctx: init::Context) -> (Shared, Local) {
+        // Initialize the interrupt for the RP2040 timer and obtain the token
+        // proving that we have.
+        let rp2040_timer_token = rtic_monotonics::create_rp2040_monotonic_token!();
         // Configure the clocks, watchdog - The default is to generate a 125 MHz system clock
-        Timer::start(ctx.device.TIMER, &mut ctx.device.RESETS); // default rp2040 clock-rate is 125MHz
+        Timer::start(ctx.device.TIMER, &mut ctx.device.RESETS, rp2040_timer_token); // default rp2040 clock-rate is 125MHz
         let mut watchdog = Watchdog::new(ctx.device.WATCHDOG);
         let clocks = clocks::init_clocks_and_plls(
             XOSC_CRYSTAL_FREQ,

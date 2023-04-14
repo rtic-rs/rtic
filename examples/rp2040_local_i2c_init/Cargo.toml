@@ -6,14 +6,20 @@ license = "MIT OR Apache-2.0"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+
+[dependencies.rtic]
+path = "../../rtic"
+version = "2.0.0-alpha.1"
+features = ["thumbv6-backend"]
+
+[dependencies.rtic-monotonics]
+path = "../../rtic-monotonics"
+version = "1.0.0-alpha.1"
+features = ["rp2040"]
+
 [dependencies]
 cortex-m = "0.7"
-rtic = { git = "https://github.com/rtic-rs/rtic", features = [
-  "thumbv6-backend",
-] }
-rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [
-  "rp2040",
-] }
 embedded-hal = { version = "0.2.7", features = ["unproven"] }
 fugit = "0.3"
 rp-pico = "0.7.0"
