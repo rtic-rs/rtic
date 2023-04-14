@@ -22,7 +22,7 @@ compile_error!(
 
 #[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]
 compile_error!(
-    "Building for the esp32c3, but 'riscv32-esp32c3-backend not selected'"
+    "Building for the esp32c3, but 'riscv-esp32c3-backend not selected'"
 ); 
 
 #[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
