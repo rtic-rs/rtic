@@ -2,7 +2,7 @@ use crate::syntax::ast::App;
 use crate::{
     analyze::Analysis,
     codegen::{
-        bindings::{interrupt_entry, interrupt_exit},
+        bindings::{interrupt_entry, interrupt_exit, async_entry},
         util,
     },
 };
@@ -67,8 +67,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let attribute = &interrupts.get(&level).expect("UNREACHABLE").1.attrs;
             let entry_stmts = interrupt_entry(app, analysis);
             let exit_stmts = interrupt_exit(app, analysis);
-
-            #[cfg(not(feature = "riscv-esp32c3"))]
+            let async_entry_stmts = async_entry(app, analysis, dispatcher_name.clone());
             items.push(quote!(
                 #[allow(non_snake_case)]
                 #[doc = #doc]
@@ -76,28 +75,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 #(#attribute)*
                 unsafe fn #dispatcher_name() {
                     #(#entry_stmts)*
-
-                    /// The priority of this interrupt handler
-                    const PRIORITY: u8 = #level;
-
-                    rtic::export::run(PRIORITY, || {
-                        #(#stmts)*
-                    });
-
-                    #(#exit_stmts)*
-                }
-            ));
-            #[cfg(feature = "riscv-esp32c3")] //need to feature gate the unpend somehow, for now this has to do, but need to figure out something better
-            items.push(quote!(
-                #[allow(non_snake_case)]
-                #[doc = #doc]
-                #[no_mangle]
-                #(#attribute)*
-                unsafe fn #dispatcher_name() {
-                    #(#entry_stmts)*
-
-                    
-                    rtic::export::unpend(rtic::export::Interrupt::#dispatcher_name); //simulate cortex-m behavior by unpending the interrupt on entry.
+                    #(#async_entry_stmts)*
 
                     /// The priority of this interrupt handler
                     const PRIORITY: u8 = #level;

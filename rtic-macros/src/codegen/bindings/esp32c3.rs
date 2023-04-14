@@ -147,6 +147,16 @@ mod esp32c3{
         vec![]
     }
 
+    pub fn async_entry(_app: &App, _analysis: &CodegenAnalysis, dispatcher_name: Ident) -> Vec<TokenStream2>{
+        let mut stmts = vec![];
+        stmts.push(
+            quote!(
+                rtic::export::unpend(rtic::export::Interrupt::#dispatcher_name); //simulate cortex-m behavior by unpending the interrupt on entry.
+            )
+        );
+        stmts
+    }
+
     pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let max = if let Some(max) = analysis.max_async_prio {
             quote!(#max)

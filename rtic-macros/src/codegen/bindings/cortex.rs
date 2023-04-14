@@ -323,6 +323,10 @@ pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStrea
     vec![]
 }
 
+pub fn async_entry(_app: &App, _analysis: &CodegenAnalysis, _dispatcher_name: Ident) -> Vec<TokenStream2>{
+    vec![]
+}
+
 pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     let max = if let Some(max) = analysis.max_async_prio {
         quote!(#max)
