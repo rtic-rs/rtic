@@ -75,9 +75,7 @@ pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2>
     let sw_slice: Vec<_> = app.args.dispatchers.keys().collect();
     let device = &app.args.device;
 
-    stmts.push(
-        quote!(rtic::export::riscv_slic::codegen!(#device, [#(#hw_slice,)*], [#(#sw_slice,)*]);),
-    );
+    stmts.push(quote!(rtic::export::codegen!(#device, [#(#hw_slice,)*], [#(#sw_slice,)*]);));
     stmts
 }
 
@@ -99,17 +97,12 @@ pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec
     let mut stmts = vec![];
 
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
-
-    // First, we disable all the interrupt controllers
-    stmts.push(quote!(rtic::export::riscv_slic::clear_interrupts();));
-    // Then, we set interrupt priorities and unmask them
+    // We set interrupt priorities and unmask them
     for (&p, name) in interrupt_ids {
         stmts.push(quote!(
-            rtic::export::riscv_slic::set_priority(slic::Interrupt::#name, #p);
+            rtic::export::set_priority(slic::Interrupt::#name, #p);
         ));
     }
-    // Finally, we activate the interrupts
-    stmts.push(quote!(rtic::export::riscv_slic::set_interrupts();));
     stmts
 }
 

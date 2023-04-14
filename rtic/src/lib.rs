@@ -46,6 +46,9 @@ pub mod mutex {
 #[doc(hidden)]
 pub mod export;
 
+/// HANDY RE-EXPORTS
+pub use export::{nop, pend};
+
 use core::cell::UnsafeCell;
 
 /// Internal replacement for `static mut T`
