@@ -130,10 +130,8 @@ pub enum BuildOrCheck {
     Build,
 }
 
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-/// RTIC xtask powered testing toolbox
-pub struct Cli {
+#[derive(Parser, Clone)]
+pub struct Globals {
     /// For which backend to build (defaults to thumbv7)
     #[arg(value_enum, short, long)]
     pub backend: Option<Backends>,
@@ -160,12 +158,28 @@ pub struct Cli {
     #[arg(short, long, action = clap::ArgAction::Count)]
     pub verbose: u8,
 
+    /// Enable `stderr` inheritance on child processes.
+    ///
+    /// If this flag is enabled, the output of `stderr` produced by child
+    /// processes is printed directly to `stderr`. This will cause a lot of
+    /// clutter, but can make debugging long-running processes a lot easier.
+    #[arg(short, long)]
+    pub stderr_inherited: bool,
+}
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+/// RTIC xtask powered testing toolbox
+pub struct Cli {
+    #[clap(flatten)]
+    pub globals: Globals,
+
     /// Subcommand selecting operation
     #[command(subcommand)]
     pub command: Commands,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
     /// Check formatting
     FormatCheck(PackageOpt),
@@ -227,7 +241,7 @@ pub enum Commands {
     Book(Arg),
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Clone)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
     /// For which package/workspace member to operate
@@ -236,7 +250,7 @@ pub struct PackageOpt {
     pub package: Option<Package>,
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Clone)]
 pub struct QemuAndRun {
     /// If expected output is missing or mismatching, recreate the file
     ///
@@ -245,7 +259,7 @@ pub struct QemuAndRun {
     pub overwrite_expected: bool,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Clone)]
 pub struct Arg {
     /// Options to pass to `cargo size`
     #[command(subcommand)]

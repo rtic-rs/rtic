@@ -4,8 +4,9 @@ mod cargo_commands;
 mod command;
 
 use anyhow::bail;
-use argument_parsing::{ExtraArguments, Package};
+use argument_parsing::{ExtraArguments, Globals, Package};
 use clap::Parser;
+use command::OutputMode;
 use core::fmt;
 use diffy::{create_patch, PatchFormatter};
 use std::{
@@ -109,7 +110,9 @@ fn main() -> anyhow::Result<()> {
 
     let cli = Cli::parse();
 
-    let env_logger_default_level = match cli.verbose {
+    let globals = &cli.globals;
+
+    let env_logger_default_level = match globals.verbose {
         0 => Env::default().default_filter_or("info"),
         1 => Env::default().default_filter_or("debug"),
         _ => Env::default().default_filter_or("trace"),
@@ -119,16 +122,16 @@ fn main() -> anyhow::Result<()> {
         .format_timestamp(None)
         .init();
 
-    trace!("default logging level: {0}", cli.verbose);
+    trace!("default logging level: {0}", globals.verbose);
 
-    let backend = if let Some(backend) = cli.backend {
+    let backend = if let Some(backend) = globals.backend {
         backend
     } else {
         Backends::default()
     };
 
-    let example = cli.example;
-    let exampleexclude = cli.exampleexclude;
+    let example = globals.example.clone();
+    let exampleexclude = globals.exampleexclude.clone();
 
     let examples_to_run = {
         let mut examples_to_run = examples.clone();
@@ -190,28 +193,29 @@ fn main() -> anyhow::Result<()> {
         Commands::FormatCheck(args) => {
             info!("Running cargo fmt --check: {args:?}");
             let check_only = true;
-            cargo_format(&cargologlevel, &args, check_only)?;
+            cargo_format(globals, &cargologlevel, &args, check_only)?;
         }
         Commands::Format(args) => {
             info!("Running cargo fmt: {args:?}");
             let check_only = false;
-            cargo_format(&cargologlevel, &args, check_only)?;
+            cargo_format(globals, &cargologlevel, &args, check_only)?;
         }
         Commands::Clippy(args) => {
             info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(&cargologlevel, &args, backend)?;
+            cargo_clippy(globals, &cargologlevel, &args, backend)?;
         }
         Commands::Check(args) => {
             info!("Checking on backend: {backend:?}");
-            cargo(BuildOrCheck::Check, &cargologlevel, &args, backend)?;
+            cargo(globals, BuildOrCheck::Check, &cargologlevel, &args, backend)?;
         }
         Commands::Build(args) => {
             info!("Building for backend: {backend:?}");
-            cargo(BuildOrCheck::Build, &cargologlevel, &args, backend)?;
+            cargo(globals, BuildOrCheck::Build, &cargologlevel, &args, backend)?;
         }
         Commands::ExampleCheck => {
             info!("Checking on backend: {backend:?}");
             cargo_example(
+                globals,
                 BuildOrCheck::Check,
                 &cargologlevel,
                 backend,
@@ -221,6 +225,7 @@ fn main() -> anyhow::Result<()> {
         Commands::ExampleBuild => {
             info!("Building for backend: {backend:?}");
             cargo_example(
+                globals,
                 BuildOrCheck::Build,
                 &cargologlevel,
                 backend,
@@ -230,12 +235,19 @@ fn main() -> anyhow::Result<()> {
         Commands::Size(args) => {
             // x86_64 target not valid
             info!("Measuring for backend: {backend:?}");
-            build_and_check_size(&cargologlevel, backend, &examples_to_run, &args.arguments)?;
+            build_and_check_size(
+                globals,
+                &cargologlevel,
+                backend,
+                &examples_to_run,
+                &args.arguments,
+            )?;
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
             info!("Testing for backend: {backend:?}");
             run_test(
+                globals,
                 &cargologlevel,
                 backend,
                 &examples_to_run,
@@ -244,15 +256,15 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Doc(args) => {
             info!("Running cargo doc on backend: {backend:?}");
-            cargo_doc(&cargologlevel, backend, &args.arguments)?;
+            cargo_doc(globals, &cargologlevel, backend, &args.arguments)?;
         }
         Commands::Test(args) => {
             info!("Running cargo test on backend: {backend:?}");
-            cargo_test(&args, backend)?;
+            cargo_test(globals, &args, backend)?;
         }
         Commands::Book(args) => {
             info!("Running mdbook");
-            cargo_book(&args.arguments)?;
+            cargo_book(globals, &args.arguments)?;
         }
     }
 
@@ -283,7 +295,13 @@ fn package_feature_extractor(package: &PackageOpt, backend: Backends) -> Option<
 }
 
 // run example binary `example`
-fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
+fn command_parser(glob: &Globals, command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
+    let output_mode = if glob.stderr_inherited {
+        OutputMode::Inherited
+    } else {
+        OutputMode::PipedAndCollected
+    };
+
     match *command {
         CargoCommand::Qemu { example, .. } | CargoCommand::Run { example, .. } => {
             let run_file = format!("{example}.run");
@@ -296,7 +314,7 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
 
             // cargo run <..>
             info!("Running example: {example}");
-            let cargo_run_result = run_command(command)?;
+            let cargo_run_result = run_command(command, output_mode)?;
             info!("{}", cargo_run_result.stdout);
 
             // Create a file for the expected output if it does not exist or mismatches
@@ -329,7 +347,7 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
         | CargoCommand::Test { .. }
         | CargoCommand::Book { .. }
         | CargoCommand::ExampleSize { .. } => {
-            let cargo_result = run_command(command)?;
+            let cargo_result = run_command(command, output_mode)?;
             let command = cargo_result.full_command;
             if let Some(exit_code) = cargo_result.exit_status.code() {
                 if exit_code != exitcode::OK {

@@ -1,5 +1,7 @@
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Package, PackageOpt, TestMetadata},
+    argument_parsing::{
+        Backends, BuildOrCheck, ExtraArguments, Globals, Package, PackageOpt, TestMetadata,
+    },
     command::{BuildMode, CargoCommand},
     command_parser, package_feature_extractor, DEFAULT_FEATURES,
 };
@@ -8,6 +10,7 @@ use rayon::prelude::*;
 
 /// Cargo command to either build or check
 pub fn cargo(
+    globals: &Globals,
     operation: BuildOrCheck,
     cargoarg: &Option<&str>,
     package: &PackageOpt,
@@ -31,7 +34,7 @@ pub fn cargo(
             mode: BuildMode::Release,
         },
     };
-    command_parser(&command, false)?;
+    command_parser(globals, &command, false)?;
     Ok(())
 }
 
@@ -39,6 +42,7 @@ pub fn cargo(
 ///
 /// The examples are in rtic/examples
 pub fn cargo_example(
+    globals: &Globals,
     operation: BuildOrCheck,
     cargoarg: &Option<&str>,
     backend: Backends,
@@ -68,7 +72,7 @@ pub fn cargo_example(
             },
         };
 
-        if let Err(err) = command_parser(&command, false) {
+        if let Err(err) = command_parser(globals, &command, false) {
             error!("{err}");
         }
     });
@@ -78,12 +82,14 @@ pub fn cargo_example(
 
 /// Run cargo clippy on selected package
 pub fn cargo_clippy(
+    globals: &Globals,
     cargoarg: &Option<&str>,
     package: &PackageOpt,
     backend: Backends,
 ) -> anyhow::Result<()> {
     let features = package_feature_extractor(package, backend);
     command_parser(
+        globals,
         &CargoCommand::Clippy {
             cargoarg,
             package: package.package,
@@ -97,11 +103,13 @@ pub fn cargo_clippy(
 
 /// Run cargo fmt on selected package
 pub fn cargo_format(
+    globals: &Globals,
     cargoarg: &Option<&str>,
     package: &PackageOpt,
     check_only: bool,
 ) -> anyhow::Result<()> {
     command_parser(
+        globals,
         &CargoCommand::Format {
             cargoarg,
             package: package.package,
@@ -114,6 +122,7 @@ pub fn cargo_format(
 
 /// Run cargo doc
 pub fn cargo_doc(
+    globals: &Globals,
     cargoarg: &Option<&str>,
     backend: Backends,
     arguments: &Option<ExtraArguments>,
@@ -125,6 +134,7 @@ pub fn cargo_doc(
     ));
 
     command_parser(
+        globals,
         &CargoCommand::Doc {
             cargoarg,
             features,
@@ -138,10 +148,14 @@ pub fn cargo_doc(
 /// Run cargo test on the selcted package or all packages
 ///
 /// If no package is specified, loop through all packages
-pub fn cargo_test(package: &PackageOpt, backend: Backends) -> anyhow::Result<()> {
+pub fn cargo_test(
+    globals: &Globals,
+    package: &PackageOpt,
+    backend: Backends,
+) -> anyhow::Result<()> {
     if let Some(package) = package.package {
         let cmd = TestMetadata::match_package(package, backend);
-        command_parser(&cmd, false)?;
+        command_parser(globals, &cmd, false)?;
     } else {
         // Iterate over all workspace packages
         for package in [
@@ -154,7 +168,7 @@ pub fn cargo_test(package: &PackageOpt, backend: Backends) -> anyhow::Result<()>
         ] {
             let mut error_messages = vec![];
             let cmd = &TestMetadata::match_package(package, backend);
-            if let Err(err) = command_parser(cmd, false) {
+            if let Err(err) = command_parser(globals, cmd, false) {
                 error_messages.push(err);
             }
 
@@ -169,8 +183,9 @@ pub fn cargo_test(package: &PackageOpt, backend: Backends) -> anyhow::Result<()>
 }
 
 /// Use mdbook to build the book
-pub fn cargo_book(arguments: &Option<ExtraArguments>) -> anyhow::Result<()> {
+pub fn cargo_book(globals: &Globals, arguments: &Option<ExtraArguments>) -> anyhow::Result<()> {
     command_parser(
+        globals,
         &CargoCommand::Book {
             arguments: arguments.clone(),
         },
@@ -183,6 +198,7 @@ pub fn cargo_book(arguments: &Option<ExtraArguments>) -> anyhow::Result<()> {
 ///
 /// Supports updating the expected output via the overwrite argument
 pub fn run_test(
+    globals: &Globals,
     cargoarg: &Option<&str>,
     backend: Backends,
     examples: &[String],
@@ -200,7 +216,7 @@ pub fn run_test(
             )),
             mode: BuildMode::Release,
         };
-        if let Err(err) = command_parser(&cmd, false) {
+        if let Err(err) = command_parser(globals, &cmd, false) {
             error!("{err}");
         }
 
@@ -216,7 +232,7 @@ pub fn run_test(
             mode: BuildMode::Release,
         };
 
-        if let Err(err) = command_parser(&cmd, overwrite) {
+        if let Err(err) = command_parser(globals, &cmd, overwrite) {
             error!("{err}");
         }
     });
@@ -226,6 +242,7 @@ pub fn run_test(
 
 /// Check the binary sizes of examples
 pub fn build_and_check_size(
+    globals: &Globals,
     cargoarg: &Option<&str>,
     backend: Backends,
     examples: &[String],
@@ -244,7 +261,7 @@ pub fn build_and_check_size(
             )),
             mode: BuildMode::Release,
         };
-        if let Err(err) = command_parser(&cmd, false) {
+        if let Err(err) = command_parser(globals, &cmd, false) {
             error!("{err}");
         }
 
@@ -260,7 +277,7 @@ pub fn build_and_check_size(
             mode: BuildMode::Release,
             arguments: arguments.clone(),
         };
-        if let Err(err) = command_parser(&cmd, false) {
+        if let Err(err) = command_parser(globals, &cmd, false) {
             error!("{err}");
         }
     });

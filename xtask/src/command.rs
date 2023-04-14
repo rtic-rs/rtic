@@ -13,6 +13,21 @@ pub enum BuildMode {
     Debug,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum OutputMode {
+    PipedAndCollected,
+    Inherited,
+}
+
+impl From<OutputMode> for Stdio {
+    fn from(value: OutputMode) -> Self {
+        match value {
+            OutputMode::PipedAndCollected => Stdio::piped(),
+            OutputMode::Inherited => Stdio::inherit(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum CargoCommand<'a> {
     // For future embedded-ci
@@ -414,7 +429,7 @@ impl fmt::Display for BuildMode {
     }
 }
 
-pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
+pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Result<RunResult> {
     let command_display = command.executable();
     let args = command.args();
 
@@ -425,7 +440,7 @@ pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
     let result = Command::new(command.executable())
         .args(command.args())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(stderr_mode)
         .output()?;
 
     let exit_status = result.status;
