@@ -3,7 +3,6 @@ pub use esp32c3_hal::interrupt as hal_interrupt; //high level peripheral interru
 pub use esp32c3_hal::riscv::interrupt; //low level interrupt enable/disable
 use esp32c3_hal::interrupt::Priority; //need this for setting priority since the method takes an object and not a int
 use esp32c3::INTERRUPT_CORE0; //priority threshold control
-use rtt_target::rprintln;
 
 
 #[inline(always)]
@@ -20,7 +19,7 @@ where
             write(|w|{w.cpu_int_thresh().bits(1)});
         }
     } else {
-        //just a read so safe
+        //read current thresh
         let initial = unsafe{
             (*INTERRUPT_CORE0::ptr())
             .cpu_int_thresh.read()
@@ -28,7 +27,7 @@ where
             .bits()
         };
         f();
-        //write back the old value, safe
+        //write back old thresh
         unsafe {
             (*INTERRUPT_CORE0::ptr()).
             cpu_int_thresh.
@@ -56,24 +55,6 @@ where
 /// as being a context local cell (not affected by preemptions).
 /// It is merely used in order to omit masking in case current
 /// priority is current priority >= ceiling.
-///
-/// Lock Efficiency:
-/// Experiments validate (sub)-zero cost for CS implementation
-/// (Sub)-zero as:
-/// - Either zero OH (lock optimized out), or
-/// - Amounting to an optimal assembly implementation
-///   - The BASEPRI value is folded to a constant at compile time
-///   - CS entry, single assembly instruction to write BASEPRI
-///   - CS exit, single assembly instruction to write BASEPRI
-///   - priority.set/get optimized out (their effect not)
-/// - On par or better than any handwritten implementation of SRP
-///
-/// Limitations:
-/// The current implementation reads/writes BASEPRI once
-/// even in some edge cases where this may be omitted.
-/// Total OH of per task is max 2 clock cycles, negligible in practice
-/// but can in theory be fixed.
-///
 #[inline(always)]
 pub unsafe fn lock<T, R>(
     ptr: *mut T,
