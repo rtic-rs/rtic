@@ -93,15 +93,19 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
 
 /// This macro must perform all the required operations to activate the
 /// interrupt sources with their corresponding priority level.
-pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
-
-    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
     // First, we reset and disable all the interrupt controllers
     stmts.push(quote!(rtic::export::clear_interrupts();));
-    // Then, we set interrupt priorities and unmask them
-    for (&p, name) in interrupt_ids {
+
+    // Then, we set the corresponding priorities
+    let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+    for (&p, name) in interrupt_ids.chain(
+        app.hardware_tasks
+            .values()
+            .map(|task| (&task.args.priority, &task.args.binds)),
+    ) {
         stmts.push(quote!(
             rtic::export::set_priority(slic::Interrupt::#name, #p);
         ));
