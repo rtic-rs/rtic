@@ -5,10 +5,20 @@ readme = "README.md"
 name = "stm32f3-blinky"
 version = "0.1.0"
 
+[workspace]
+
+[dependencies.rtic]
+path = "../../rtic"
+version = "2.0.0-alhpa.1"
+features = ["thumbv7-backend"]
+
+[dependencies.rtic-monotonics]
+path = "../../rtic-monotonics"
+version = "1.0.0-alhpa.1"
+features = ["cortex-m-systick"]
+
 [dependencies]
 embedded-hal = "0.2.7"
-rtic = { git = "https://github.com/rtic-rs/rtic", features = ["thumbv7-backend"] }
-rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = ["cortex-m-systick"] }
 panic-rtt-target = { version = "0.1.2", features = ["cortex-m"] }
 rtt-target = { version = "0.3.1", features = ["cortex-m"] }
 
