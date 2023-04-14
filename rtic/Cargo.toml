@@ -28,6 +28,8 @@ version = "2.0.0-alpha.1"
 name = "rtic"
 
 [dependencies]
+esp32c3 = {version = "0.11.0", optional = true}
+esp32c3-hal = { version = "0.7.0", optional = true}
 cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
 #portable-atomic = { version = "0.3.19" }
@@ -35,6 +37,7 @@ atomic-polyfill = "1"
 rtic-monotonics = { path = "../rtic-monotonics", version = "1.0.0-alpha.1", optional = true }
 rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.0" }
 rtic-core = "1"
+rtt-target = { version = "0.4.0" }
 critical-section = "1"
 
 [dev-dependencies]
@@ -66,7 +69,7 @@ thumbv8base-backend = ["cortex-m", "rtic-macros/cortex-m-source-masking"]
 thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
-# riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
+riscv-esp32c3-backend = ["esp32c3-hal", "esp32c3", "rtic-macros/riscv-esp32c3"]
 
 # needed for testing
 rtic-uitestv7 = ["thumbv7-backend"]

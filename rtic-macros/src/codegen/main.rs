@@ -20,7 +20,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         quote!(#dispatcher();)
     } else {
         quote!(loop {
-            rtic::export::nop()
+            continue;
         })
     };
 
