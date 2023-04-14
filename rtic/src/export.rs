@@ -39,7 +39,7 @@ mod cortex_source_mask;
 
 #[cfg(feature = "cortex-m")]
 pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
-=======
+
 #[cfg(feature = "cortex-m")]
 pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
 

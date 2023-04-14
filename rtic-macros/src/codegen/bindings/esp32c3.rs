@@ -11,6 +11,7 @@ mod esp32c3{
     use proc_macro2::TokenStream as TokenStream2;
     use quote::quote;
     use syn::{parse, Attribute, Ident};
+    use std::collections::HashSet;
 
     #[allow(clippy::too_many_arguments)]
     pub fn impl_mutex(
@@ -93,7 +94,48 @@ mod esp32c3{
     }
 
 
-    pub fn architecture_specific_analysis(_app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+    pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+        //check if the dispatchers are supported
+        for name in app.args.dispatchers.keys() {
+            let name_s = name.to_string();
+            match &*name_s {
+                "FROM_CPU_INTR0" | "FROM_CPU_INTR1" | "FROM_CPU_INTR2" | "FROM_CPU_INTR3" => {}
+
+                _ => {
+                    return Err(parse::Error::new(
+                    name.span(),
+                    "Only FROM_CPU_INTRX are supported as dispatchers",
+                ));}
+            }
+        }
+
+        // Check that there are enough external interrupts to dispatch the software tasks and the timer
+        // queue handler
+        let mut first = None;
+        let priorities = app
+            .software_tasks
+            .iter()
+            .map(|(name, task)| {
+                first = Some(name);
+                task.args.priority
+            })
+            .filter(|prio| *prio > 0)
+            .collect::<HashSet<_>>();
+
+        let need = priorities.len();
+        let given = app.args.dispatchers.len();
+        if need > given {
+            let s = {
+                format!(
+                    "not enough interrupts to dispatch \
+                        all software tasks (need: {need}; given: {given})"
+                )
+            };
+
+            // If not enough tasks and first still is None, may cause
+            // "custom attribute panicked" due to unwrap on None
+            return Err(parse::Error::new(first.unwrap().span(), s));
+        }
         Ok(())
     }
 
@@ -103,5 +145,21 @@ mod esp32c3{
 
     pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         vec![]
+    }
+
+    pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+        let max = if let Some(max) = analysis.max_async_prio {
+            quote!(#max)
+        } else {
+            // No limit
+            let device = &app.args.device;
+            quote!(1 << #device::NVIC_PRIO_BITS)
+        };
+    
+        vec![quote!(
+            /// Holds the maximum priority level for use by async HAL drivers.
+            #[no_mangle]
+            static RTIC_ASYNC_MAX_LOGICAL_PRIO: u8 = #max;
+        )]
     }
 }
