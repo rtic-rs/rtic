@@ -1,6 +1,6 @@
 [package]
 name = "rtic-time"
-version = "1.0.0-alpha.0"
+version = "1.0.0-alpha.1"
 
 edition = "2021"
 authors = [
@@ -20,3 +20,7 @@ license = "MIT OR Apache-2.0"
 critical-section = "1"
 futures-util = { version = "0.3.25", default-features = false }
 rtic-common = { version = "1.0.0-alpha.0", path = "../rtic-common" }
+
+[dev-dependencies]
+parking_lot = "0.12"
+cassette = "0.2"

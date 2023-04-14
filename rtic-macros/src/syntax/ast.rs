@@ -23,8 +23,12 @@ pub struct App {
     /// Resources shared between tasks defined in `#[shared]`
     pub shared_resources: Map<SharedResource>,
 
+    pub shared_resources_vis: syn::Visibility,
+
     /// Task local resources defined in `#[local]`
     pub local_resources: Map<LocalResource>,
+
+    pub local_resources_vis: syn::Visibility,
 
     /// User imports
     pub user_imports: Vec<ItemUse>,
@@ -170,6 +174,9 @@ pub struct SharedResource {
 
     /// Shared resource properties
     pub properties: SharedResourceProperties,
+
+    /// The visibility of this resource
+    pub vis: syn::Visibility,
 }
 
 /// A local resource, defined in `#[local]`
@@ -187,6 +194,9 @@ pub struct LocalResource {
 
     /// The type of this resource
     pub ty: Box<Type>,
+
+    /// The visibility of this resource
+    pub vis: syn::Visibility,
 }
 
 /// An async software task

@@ -322,3 +322,19 @@ pub fn interrupt_entry(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStre
 pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     vec![]
 }
+
+pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    let max = if let Some(max) = analysis.max_async_prio {
+        quote!(#max)
+    } else {
+        // No limit
+        let device = &app.args.device;
+        quote!(1 << #device::NVIC_PRIO_BITS)
+    };
+
+    vec![quote!(
+        /// Holds the maximum priority level for use by async HAL drivers.
+        #[no_mangle]
+        static RTIC_ASYNC_MAX_LOGICAL_PRIO: u8 = #max;
+    )]
+}

@@ -1,9 +1,33 @@
 //! A monotonic implementation for RP2040's Timer peripheral.
+//!
+//! # Example
+//!
+//! ```
+//! use rtic_monotonics::rp2040::*;
+//!
+//! fn init() {
+//!     # // This is normally provided by the selected PAC
+//!     # let timer = unsafe { core::mem::transmute(()) };
+//!     # let mut resets = unsafe { core::mem::transmute(()) };
+//!     // Generate the required token
+//!     let token = rtic_monotonics::create_rp2040_monotonic_token!();
+//!
+//!     // Start the monotonic
+//!     Timer::start(timer, &mut resets, token);
+//! }
+//!
+//! async fn usage() {
+//!     loop {
+//!          // Use the monotonic
+//!          Timer::delay(100.millis()).await;
+//!     }
+//! }
+//! ```
 
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
 use core::future::Future;
-pub use fugit::ExtU64;
+pub use fugit::{self, ExtU64};
 use rp2040_pac::{timer, Interrupt, NVIC, RESETS, TIMER};
 
 /// Timer implementing `rtic_monotonic::Monotonic` which runs at 1 MHz.
@@ -22,7 +46,10 @@ impl Timer {
 
         TIMER_QUEUE.initialize(Self {});
 
-        unsafe { NVIC::unmask(Interrupt::TIMER_IRQ_0) };
+        unsafe {
+            crate::set_monotonic_prio(rp2040_pac::NVIC_PRIO_BITS, Interrupt::TIMER_IRQ_0);
+            NVIC::unmask(Interrupt::TIMER_IRQ_0);
+        }
     }
 
     fn timer() -> &'static timer::RegisterBlock {
@@ -41,6 +68,7 @@ impl Timer {
     }
 
     /// Timeout at a specific time.
+    #[inline]
     pub async fn timeout_at<F: Future>(
         instant: <Self as Monotonic>::Instant,
         future: F,
@@ -64,6 +92,7 @@ impl Timer {
     }
 
     /// Delay to some specific time instant.
+    #[inline]
     pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
         TIMER_QUEUE.delay_until(instant).await;
     }
@@ -138,7 +167,7 @@ impl embedded_hal_async::delay::DelayUs for Timer {
 
 /// Register the Timer interrupt for the monotonic.
 #[macro_export]
-macro_rules! make_rp2040_monotonic_handler {
+macro_rules! create_rp2040_monotonic_token {
     () => {{
         #[no_mangle]
         #[allow(non_snake_case)]

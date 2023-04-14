@@ -37,11 +37,12 @@ pub use cortex_source_mask::*;
 #[cfg(any(feature = "cortex-m-source-masking", feature = "rtic-uitestv6"))]
 mod cortex_source_mask;
 
-
-///I think all of these "pends" and "unpends"  should be moved to /export/_device_.rs
-/// otherwise we risk massive size creep in this file.
 #[cfg(feature = "cortex-m")]
 pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
+=======
+#[cfg(feature = "cortex-m")]
+pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
+
 /// Sets the given `interrupt` as pending
 ///
 /// This is a convenience function around
@@ -55,13 +56,12 @@ where
 }
 
 
-
 #[cfg(feature = "riscv-esp32c3")]
 mod riscv_esp32c3;
 #[cfg(feature = "riscv-esp32c3")]
 pub use riscv_esp32c3::*;
 
-
+///I think all of these "pends" and "unpends"  should be moved to /export/<device>.rs
 #[cfg(feature = "riscv-esp32c3")]
 /// Sets the given software interrupt as pending
 pub fn pend(int: Interrupt){
@@ -93,12 +93,7 @@ pub fn unpend(int: Interrupt){
 }
 
 /// Priority conversion, takes logical priorities 1..=N and converts it to NVIC priority.
-#[cfg(any(
-    feature = "cortex-m-basepri",
-    feature = "cortex-m-source-masking",
-    feature = "rtic-uitestv6",
-    feature = "rtic-uitestv7",
-))]
+#[cfg(feature = "cortex-m")]
 #[inline]
 #[must_use]
 pub const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {

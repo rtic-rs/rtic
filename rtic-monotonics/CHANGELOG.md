@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- nRF52xxx, nRF9160, nRF5340 Timer and RTC monotonics
 - Interrupt tokens for `Systick` and `rp2040` to make sure an interrupt handler exists
 
 ### Changed

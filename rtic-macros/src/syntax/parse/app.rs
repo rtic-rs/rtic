@@ -8,7 +8,6 @@ use syn::{
     Expr, ExprArray, Fields, ForeignItem, Ident, Item, LitBool, Path, Token, Visibility,
 };
 
-use super::Input;
 use crate::syntax::{
     ast::{
         App, AppArgs, Dispatcher, Dispatchers, HardwareTask, Idle, IdleArgs, Init, InitArgs,
@@ -17,6 +16,8 @@ use crate::syntax::{
     parse::{self as syntax_parse, util},
     Either, Map, Set,
 };
+
+use super::Input;
 
 impl AppArgs {
     pub(crate) fn parse(tokens: TokenStream2) -> parse::Result<Self> {
@@ -147,9 +148,13 @@ impl App {
         let mut idle = None;
 
         let mut shared_resources_ident = None;
+        let mut shared_resources_vis = Visibility::Inherited;
         let mut shared_resources = Map::new();
+
         let mut local_resources_ident = None;
+        let mut local_resources_vis = Visibility::Inherited;
         let mut local_resources = Map::new();
+
         let mut hardware_tasks = Map::new();
         let mut software_tasks = Map::new();
         let mut user_imports = vec![];
@@ -283,12 +288,7 @@ impl App {
                             ));
                         }
 
-                        if struct_item.vis != Visibility::Inherited {
-                            return Err(parse::Error::new(
-                                struct_item.span(),
-                                "this item must have inherited / private visibility",
-                            ));
-                        }
+                        shared_resources_vis = struct_item.vis.clone();
 
                         if let Fields::Named(fields) = &mut struct_item.fields {
                             for field in &mut fields.named {
@@ -301,10 +301,8 @@ impl App {
                                     ));
                                 }
 
-                                shared_resources.insert(
-                                    ident.clone(),
-                                    SharedResource::parse(field, ident.span())?,
-                                );
+                                shared_resources
+                                    .insert(ident.clone(), SharedResource::parse(field)?);
                             }
                         } else {
                             return Err(parse::Error::new(
@@ -328,12 +326,7 @@ impl App {
                             ));
                         }
 
-                        if struct_item.vis != Visibility::Inherited {
-                            return Err(parse::Error::new(
-                                struct_item.span(),
-                                "this item must have inherited / private visibility",
-                            ));
-                        }
+                        local_resources_vis = struct_item.vis.clone();
 
                         if let Fields::Named(fields) = &mut struct_item.fields {
                             for field in &mut fields.named {
@@ -346,10 +339,7 @@ impl App {
                                     ));
                                 }
 
-                                local_resources.insert(
-                                    ident.clone(),
-                                    LocalResource::parse(field, ident.span())?,
-                                );
+                                local_resources.insert(ident.clone(), LocalResource::parse(field)?);
                             }
                         } else {
                             return Err(parse::Error::new(
@@ -470,7 +460,9 @@ impl App {
             init,
             idle,
             shared_resources,
+            shared_resources_vis,
             local_resources,
+            local_resources_vis,
             user_imports,
             user_code,
             hardware_tasks,

@@ -10,10 +10,16 @@ categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "Procedural macros, syntax parsing, and codegen of the RTIC crate"
 documentation = "https://rtic-rs.github.io/rtic/api/rtic"
 edition = "2021"
-keywords = ["arm", "cortex-m", "risc-v", "embedded", "async", "runtime", "futures", "await", "no-std", "rtos", "bare-metal"]
+keywords = [
+  "embedded",
+  "async",
+  "runtime",
+  "no-std",
+  "rtos",
+]
 license = "MIT OR Apache-2.0"
 name = "rtic-macros"
-readme = "../../README.md"
+readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
 version = "2.0.0-alpha.0"

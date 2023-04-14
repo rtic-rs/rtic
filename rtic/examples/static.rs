@@ -51,7 +51,7 @@ mod app {
         }
     }
 
-    #[task(local = [p, state: u32 = 0])]
+    #[task(local = [p, state: u32 = 0], priority = 1)]
     async fn foo(c: foo::Context) {
         *c.local.state += 1;
 

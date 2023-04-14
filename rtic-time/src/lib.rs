@@ -25,7 +25,7 @@ mod monotonic;
 struct WaitingWaker<Mono: Monotonic> {
     waker: Waker,
     release_at: Mono::Instant,
-    was_poped: AtomicBool,
+    was_popped: AtomicBool,
 }
 
 impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
@@ -33,7 +33,7 @@ impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
         Self {
             waker: self.waker.clone(),
             release_at: self.release_at,
-            was_poped: AtomicBool::new(self.was_poped.load(Ordering::Relaxed)),
+            was_popped: AtomicBool::new(self.was_popped.load(Ordering::Relaxed)),
         }
     }
 }
@@ -131,8 +131,8 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             let head = self.queue.pop_if(|head| {
                 release_at = Some(head.release_at);
 
-                let should_pop = Mono::now() >= head.release_at;
-                head.was_poped.store(should_pop, Ordering::Relaxed);
+                let should_pop = Mono::should_dequeue_check(head.release_at);
+                head.was_popped.store(should_pop, Ordering::Relaxed);
 
                 should_pop
             });
@@ -145,7 +145,7 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
                     Mono::enable_timer();
                     Mono::set_compare(instant);
 
-                    if Mono::now() >= instant {
+                    if Mono::should_dequeue_check(instant) {
                         // The time for the next instant passed while handling it,
                         // continue dequeueing
                         continue;
@@ -234,7 +234,7 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
                 let link_ref = link.insert(Link::new(WaitingWaker {
                     waker: cx.waker().clone(),
                     release_at: instant,
-                    was_poped: AtomicBool::new(false),
+                    was_popped: AtomicBool::new(false),
                 }));
 
                 // SAFETY(new_unchecked): The address to the link is stable as it is defined
@@ -243,13 +243,13 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
                 // we make sure in `dropper` that the link is removed from the queue before
                 // dropping `link_ptr` AND `dropper` makes sure that the shadowed `link_ptr` lives
                 // until the end of the stack frame.
-                let (was_empty, addr) = unsafe { queue.insert(Pin::new_unchecked(link_ref)) };
+                let (head_updated, addr) = unsafe { queue.insert(Pin::new_unchecked(link_ref)) };
 
                 marker.store(addr, Ordering::Relaxed);
 
-                if was_empty {
-                    // Pend the monotonic handler if the queue was empty to setup the timer.
-                    Mono::pend_interrupt();
+                if head_updated {
+                    // Pend the monotonic handler if the queue head was updated.
+                    Mono::pend_interrupt()
                 }
             }
 
@@ -261,8 +261,8 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
         // exited the `poll_fn` below in the `drop(dropper)` call. The other dereference
         // of this pointer is in the `poll_fn`.
         if let Some(link) = unsafe { link_ptr.get() } {
-            if link.val.was_poped.load(Ordering::Relaxed) {
-                // If it was poped from the queue there is no need to run delete
+            if link.val.was_popped.load(Ordering::Relaxed) {
+                // If it was popped from the queue there is no need to run delete
                 dropper.defuse();
             }
         } else {

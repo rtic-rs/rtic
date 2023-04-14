@@ -53,13 +53,13 @@ mod app {
         hprintln!("hello from hw");
     }
 
-    #[task(shared = [a])]
+    #[task(shared = [a], priority = 1)]
     async fn async_task(cx: async_task::Context) {
         let async_task::SharedResources { a: _, .. } = cx.shared;
         hprintln!("hello from async");
     }
 
-    #[task]
+    #[task(priority = 1)]
     async fn async_task_args(_cx: async_task_args::Context, a: u32, b: i32) {
         hprintln!("hello from async with args a: {}, b: {}", a, b);
     }

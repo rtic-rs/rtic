@@ -1,11 +1,35 @@
-//! ...
+//! A monotonics based on Cortex-M SysTick. Note that this implementation is inefficient as it
+//! ticks, and generates interrupts, at a constant rate.
+//!
+//! # Example
+//!
+//! ```
+//! use rtic_monotonics::systick::*;
+//!
+//! fn init() {
+//!     # // This is normally provided by the selected PAC
+//!     # let systick = unsafe { core::mem::transmute(()) };
+//!     // Generate the required token
+//!     let systick_token = rtic_monotonics::create_systick_token!();
+//!
+//!     // Start the monotonic
+//!     Systick::start(systick, 12_000_000, systick_token);
+//! }
+//!
+//! async fn usage() {
+//!     loop {
+//!          // Use the monotonic
+//!          Systick::delay(100.millis()).await;
+//!     }
+//! }
+//! ```
 
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
 use cortex_m::peripheral::SYST;
-pub use fugit::ExtU32;
+pub use fugit::{self, ExtU32};
 
 // Features should be additive, here systick-100hz gets picked if both
 // `systick-100hz` and `systick-10khz` are enabled.
@@ -156,7 +180,7 @@ impl embedded_hal_async::delay::DelayUs for Systick {
 
 /// Register the Systick interrupt for the monotonic.
 #[macro_export]
-macro_rules! make_systick_handler {
+macro_rules! create_systick_token {
     () => {{
         #[no_mangle]
         #[allow(non_snake_case)]

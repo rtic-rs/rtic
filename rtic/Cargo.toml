@@ -11,24 +11,18 @@ description = "Real-Time Interrupt-driven Concurrency (RTIC): a concurrency fram
 documentation = "https://rtic.rs/"
 edition = "2021"
 keywords = [
-  "arm",
-  "cortex-m",
-  "risc-v",
   "embedded",
   "async",
   "runtime",
-  "futures",
-  "await",
   "no-std",
   "rtos",
-  "bare-metal",
 ]
 license = "MIT OR Apache-2.0"
 name = "rtic"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
-version = "2.0.0-alpha.0"
+version = "2.0.0-alpha.1"
 
 [lib]
 name = "rtic"
@@ -40,6 +34,7 @@ cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
 #portable-atomic = { version = "0.3.19" }
 atomic-polyfill = "1"
+rtic-monotonics = { path = "../rtic-monotonics", version = "1.0.0-alpha.1", optional = true }
 rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.0" }
 rtic-core = "1"
 rtt-target = { version = "0.4.0" }
@@ -67,6 +62,7 @@ trybuild = "1"
 
 [features]
 default = []
+
 thumbv6-backend = ["cortex-m", "rtic-macros/cortex-m-source-masking"]
 thumbv7-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 thumbv8base-backend = ["cortex-m", "rtic-macros/cortex-m-source-masking"]
@@ -76,8 +72,8 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 riscv-esp32c3-backend = ["esp32c3-hal", "esp32c3", "rtic-macros/riscv-esp32c3"]
 
 # needed for testing
-rtic-uitestv7 = ["thumbv7-backend", "rtic-macros/cortex-m-basepri"]
-rtic-uitestv6 = ["thumbv6-backend", "rtic-macros/cortex-m-source-masking"]
+rtic-uitestv7 = ["thumbv7-backend"]
+rtic-uitestv6 = ["thumbv6-backend"]
 test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick-100hz"]
 
 # [[example]]

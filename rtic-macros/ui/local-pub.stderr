@@ -1,5 +1,0 @@
-error: this field must have inherited / private visibility
-  --> ui/local-pub.rs:10:13
-   |
-10 |         pub x: u32,
-   |             ^

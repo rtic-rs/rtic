@@ -71,7 +71,7 @@ impl TestMetadata {
             },
             Package::RticTime => CargoCommand::Test {
                 package: Some(package),
-                features: None,
+                features: Some("critical-section/std".into()),
                 test: None,
             },
         }
