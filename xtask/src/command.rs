@@ -1,7 +1,10 @@
 use crate::{debug, ExtraArguments, Package, RunResult, TestRunError};
 use core::fmt;
-use os_pipe::pipe;
-use std::{fs::File, io::Read, process::Command};
+use std::{
+    fs::File,
+    io::Read,
+    process::{Command, Stdio},
+};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -412,26 +415,26 @@ impl fmt::Display for BuildMode {
 }
 
 pub fn run_command(command: &CargoCommand) -> anyhow::Result<RunResult> {
-    let (mut reader, writer) = pipe()?;
-    let (mut error_reader, error_writer) = pipe()?;
-    debug!("👟 {} {}", command.executable(), command.args().join(" "));
+    let command_display = command.executable();
+    let args = command.args();
 
-    let mut handle = Command::new(command.executable())
+    let full_command = format!("\"{command_display}\" {}", args.join(" "));
+
+    debug!("👟 {full_command}");
+
+    let result = Command::new(command.executable())
         .args(command.args())
-        .stdout(writer)
-        .stderr(error_writer)
-        .spawn()?;
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()?;
 
-    // retrieve output and clean up
-    let mut stdout = String::new();
-    reader.read_to_string(&mut stdout)?;
-    let exit_status = handle.wait()?;
-
-    let mut stderr = String::new();
-    error_reader.read_to_string(&mut stderr)?;
+    let exit_status = result.status;
+    let stderr = String::from_utf8(result.stderr).unwrap_or("Not displayable".into());
+    let stdout = String::from_utf8(result.stdout).unwrap_or("Not displayable".into());
 
     Ok(RunResult {
         exit_status,
+        full_command,
         stdout,
         stderr,
     })

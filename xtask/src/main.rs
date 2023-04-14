@@ -44,6 +44,7 @@ const DEFAULT_FEATURES: &str = "test-critical-section";
 #[derive(Debug, Clone)]
 pub struct RunResult {
     exit_status: ExitStatus,
+    full_command: String,
     stdout: String,
     stderr: String,
 }
@@ -329,9 +330,12 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
         | CargoCommand::Book { .. }
         | CargoCommand::ExampleSize { .. } => {
             let cargo_result = run_command(command)?;
+            let command = cargo_result.full_command;
             if let Some(exit_code) = cargo_result.exit_status.code() {
                 if exit_code != exitcode::OK {
-                    error!("Exit code from command: {exit_code}");
+                    error!("Command {command} failed.");
+                    error!("Exit code: {exit_code}");
+
                     if !cargo_result.stdout.is_empty() {
                         info!("{}", cargo_result.stdout);
                     }
