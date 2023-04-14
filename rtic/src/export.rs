@@ -81,7 +81,7 @@ pub fn pend(int: Interrupt) {
                 .SYSTEM
                 .cpu_intr_from_cpu_3
                 .write(|w| w.cpu_intr_from_cpu_3().bit(true)),
-            _ => panic!("Unsupported software interrupt"), //unsupported sw interrupt provided, panic for now. Eventually we can check this at compile time also.
+            _ => panic!("Unsupported software interrupt"), //should never happen, checked at compile time
         }
     }
 }

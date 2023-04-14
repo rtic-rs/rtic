@@ -1,8 +1,8 @@
-use esp32c3::INTERRUPT_CORE0;
+use esp32c3::INTERRUPT_CORE0; //priority threshold control
 pub use esp32c3::{Interrupt, Peripherals};
 pub use esp32c3_hal::interrupt as hal_interrupt; //high level peripheral interrupt access
 use esp32c3_hal::interrupt::Priority; //need this for setting priority since the method takes an object and not a int
-pub use esp32c3_hal::riscv::interrupt; //low level interrupt enable/disable //priority threshold control
+pub use esp32c3_hal::riscv::interrupt; //low level interrupt enable/disable
 
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
@@ -36,13 +36,13 @@ where
     }
 }
 
-/// Lock implementation using BASEPRI and global Critical Section (CS)
+/// Lock implementation using threshold and global Critical Section (CS)
 ///
 /// # Safety
 ///
 /// The system ceiling is raised from current to ceiling
 /// by either
-/// - raising the BASEPRI to the ceiling value, or
+/// - raising the threshold to the ceiling value, or
 /// - disable all interrupts in case we want to
 ///   mask interrupts with maximum priority
 ///
@@ -100,6 +100,6 @@ pub fn int_to_prio(int: u8) -> Priority {
         13 => Priority::Priority13,
         14 => Priority::Priority14,
         15 => Priority::Priority15,
-        _ => panic!(), //unsupported priority supplied, so best approach is to panic i think.
+        _ => panic!(), //this should never happen, since it's checked at compile time.
     }
 }
