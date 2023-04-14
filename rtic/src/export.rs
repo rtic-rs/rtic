@@ -20,10 +20,10 @@ compile_error!(
     "Building for Cortex-M with source masking, but 'thumbv6-backend' or 'thumbv8base-backend' backend not selected"
 );
 
-//#[cfg(feature = "riscv-esp32c3", not(feature = "riscv32-esp32c3-backend"))]
-//compile_error!(
-   // "Building for the esp32c3, but 'riscv32-esp32c3-backend not selected'"
-//); 
+#[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]
+compile_error!(
+    "Building for the esp32c3, but 'riscv32-esp32c3-backend not selected'"
+); 
 
 #[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
 pub use cortex_basepri::*;

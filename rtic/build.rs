@@ -11,7 +11,9 @@ fn main() {
         println!("cargo:rustc-cfg=feature=\"cortex-m-basepri\"");
     } else if target.starts_with("thumbv6m") | target.starts_with("thumbv8m.base") {
         println!("cargo:rustc-cfg=feature=\"cortex-m-source-masking\"");
-        //TODO: this should not be this general!
+        //this should not be this general
+        //riscv processors differ in interrupt implementation
+        //even within the same target
         //need some other way to discern
     } else if target.starts_with("riscv32i") {
         println!("cargo:rustc-cfg=feature=\"riscv-esp32c3\"");
