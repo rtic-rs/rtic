@@ -1,4 +1,4 @@
-use crate::{command::CargoCommand, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN, DEFAULT_FEATURES};
+use crate::{command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN};
 use clap::{Args, Parser, Subcommand};
 use core::fmt;
 
@@ -37,12 +37,12 @@ impl TestMetadata {
     pub fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
-                let features = Some(format!(
-                    "{},{},{}",
-                    DEFAULT_FEATURES,
+                let features = format!(
+                    "{},{}",
                     backend.to_rtic_feature(),
-                    backend.to_rtic_uitest_feature(),
-                ));
+                    backend.to_rtic_uitest_feature()
+                );
+                let features = Some(backend.to_target().and_features(&features));
                 CargoCommand::Test {
                     package: Some(package),
                     features,
@@ -89,7 +89,7 @@ pub enum Backends {
 
 impl Backends {
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_target(&self) -> &str {
+    pub fn to_target(&self) -> Target {
         match self {
             Backends::Thumbv6 => ARMV6M,
             Backends::Thumbv7 => ARMV7M,

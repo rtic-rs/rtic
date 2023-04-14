@@ -33,14 +33,42 @@ use crate::{
     command::{run_command, run_successful, CargoCommand},
 };
 
-// x86_64-unknown-linux-gnu
-const _X86_64: &str = "x86_64-unknown-linux-gnu";
-const ARMV6M: &str = "thumbv6m-none-eabi";
-const ARMV7M: &str = "thumbv7m-none-eabi";
-const ARMV8MBASE: &str = "thumbv8m.base-none-eabi";
-const ARMV8MMAIN: &str = "thumbv8m.main-none-eabi";
+#[derive(Debug, Clone, Copy)]
+pub struct Target<'a> {
+    triple: &'a str,
+    has_std: bool,
+}
 
-const DEFAULT_FEATURES: &str = "test-critical-section";
+impl<'a> Target<'a> {
+    const STD_FEATURES: &str = "test-critical-section";
+
+    pub const fn new(triple: &'a str, has_std: bool) -> Self {
+        Self { triple, has_std }
+    }
+
+    pub fn triple(&self) -> &str {
+        self.triple
+    }
+
+    pub fn has_std(&self) -> bool {
+        self.has_std
+    }
+
+    pub fn and_features(&self, features: &str) -> String {
+        if self.has_std {
+            format!("{},{}", Self::STD_FEATURES, features)
+        } else {
+            features.to_string()
+        }
+    }
+}
+
+// x86_64-unknown-linux-gnu
+const _X86_64: Target = Target::new("x86_64-unknown-linux-gnu", true);
+const ARMV6M: Target = Target::new("thumbv6m-none-eabi", false);
+const ARMV7M: Target = Target::new("thumbv7m-none-eabi", false);
+const ARMV8MBASE: Target = Target::new("thumbv8m.base-none-eabi", false);
+const ARMV8MMAIN: Target = Target::new("thumbv8m.main-none-eabi", false);
 
 #[derive(Debug, Clone)]
 pub struct RunResult {
@@ -276,12 +304,13 @@ fn main() -> anyhow::Result<()> {
 /// Without package specified the features for RTIC are required
 /// With only a single package which is not RTIC, no special
 /// features are needed
-fn package_feature_extractor(package: &PackageOpt, backend: Backends) -> Option<String> {
-    let default_features = Some(format!(
-        "{},{}",
-        DEFAULT_FEATURES,
-        backend.to_rtic_feature()
-    ));
+fn package_feature_extractor(
+    target: Target,
+    package: &PackageOpt,
+    backend: Backends,
+) -> Option<String> {
+    let default_features = Some(target.and_features(backend.to_rtic_feature()));
+
     if let Some(package) = package.package {
         debug!("\nTesting package: {package}");
         match package {

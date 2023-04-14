@@ -1,4 +1,4 @@
-use crate::{debug, ExtraArguments, Package, RunResult, TestRunError};
+use crate::{debug, ExtraArguments, Package, RunResult, Target, TestRunError};
 use core::fmt;
 use std::{
     fs::File,
@@ -35,49 +35,49 @@ pub enum CargoCommand<'a> {
     Run {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: &'a str,
+        target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
     },
     Qemu {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: &'a str,
+        target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
     },
     ExampleBuild {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: &'a str,
+        target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
     },
     ExampleCheck {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: &'a str,
+        target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
     },
     Build {
         cargoarg: &'a Option<&'a str>,
         package: Option<Package>,
-        target: &'a str,
+        target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
     },
     Check {
         cargoarg: &'a Option<&'a str>,
         package: Option<Package>,
-        target: &'a str,
+        target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
     },
     Clippy {
         cargoarg: &'a Option<&'a str>,
         package: Option<Package>,
-        target: &'a str,
+        target: Target<'a>,
         features: Option<String>,
     },
     Format {
@@ -101,7 +101,7 @@ pub enum CargoCommand<'a> {
     ExampleSize {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: &'a str,
+        target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
         arguments: Option<ExtraArguments>,
@@ -153,7 +153,13 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[
+                    self.command(),
+                    "--example",
+                    example,
+                    "--target",
+                    target.triple(),
+                ]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -174,7 +180,13 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[
+                    self.command(),
+                    "--example",
+                    example,
+                    "--target",
+                    target.triple(),
+                ]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -196,7 +208,7 @@ impl<'a> CargoCommand<'a> {
                     args.extend_from_slice(&[cargoarg]);
                 }
 
-                args.extend_from_slice(&[self.command(), "--target", target]);
+                args.extend_from_slice(&[self.command(), "--target", target.triple()]);
 
                 if let Some(package) = package {
                     args.extend_from_slice(&["--package", package.name()]);
@@ -344,7 +356,13 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[
+                    self.command(),
+                    "--example",
+                    example,
+                    "--target",
+                    target.triple(),
+                ]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -365,7 +383,13 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[
+                    self.command(),
+                    "--example",
+                    example,
+                    "--target",
+                    target.triple(),
+                ]);
 
                 if let Some(feature) = features {
                     args.extend_from_slice(&["--features", feature]);
@@ -387,7 +411,13 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-                args.extend_from_slice(&[self.command(), "--example", example, "--target", target]);
+                args.extend_from_slice(&[
+                    self.command(),
+                    "--example",
+                    example,
+                    "--target",
+                    target.triple(),
+                ]);
 
                 if let Some(feature_name) = features {
                     args.extend_from_slice(&["--features", feature_name]);

@@ -3,7 +3,7 @@ use crate::{
         Backends, BuildOrCheck, ExtraArguments, Globals, Package, PackageOpt, TestMetadata,
     },
     command::{BuildMode, CargoCommand},
-    command_parser, package_feature_extractor, DEFAULT_FEATURES,
+    command_parser, package_feature_extractor,
 };
 use log::error;
 use rayon::prelude::*;
@@ -16,20 +16,21 @@ pub fn cargo(
     package: &PackageOpt,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    let features = package_feature_extractor(package, backend);
+    let target = backend.to_target();
+    let features = package_feature_extractor(target, package, backend);
 
     let command = match operation {
         BuildOrCheck::Check => CargoCommand::Check {
             cargoarg,
             package: package.package,
-            target: backend.to_target(),
+            target,
             features,
             mode: BuildMode::Release,
         },
         BuildOrCheck::Build => CargoCommand::Build {
             cargoarg,
             package: package.package,
-            target: backend.to_target(),
+            target,
             features,
             mode: BuildMode::Release,
         },
@@ -49,11 +50,7 @@ pub fn cargo_example(
     examples: &[String],
 ) -> anyhow::Result<()> {
     examples.into_par_iter().for_each(|example| {
-        let features = Some(format!(
-            "{},{}",
-            DEFAULT_FEATURES,
-            backend.to_rtic_feature()
-        ));
+        let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
         let command = match operation {
             BuildOrCheck::Check => CargoCommand::ExampleCheck {
@@ -87,13 +84,14 @@ pub fn cargo_clippy(
     package: &PackageOpt,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    let features = package_feature_extractor(package, backend);
+    let target = backend.to_target();
+    let features = package_feature_extractor(target, package, backend);
     command_parser(
         globals,
         &CargoCommand::Clippy {
             cargoarg,
             package: package.package,
-            target: backend.to_target(),
+            target,
             features,
         },
         false,
@@ -127,11 +125,7 @@ pub fn cargo_doc(
     backend: Backends,
     arguments: &Option<ExtraArguments>,
 ) -> anyhow::Result<()> {
-    let features = Some(format!(
-        "{},{}",
-        DEFAULT_FEATURES,
-        backend.to_rtic_feature()
-    ));
+    let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
     command_parser(
         globals,
@@ -145,7 +139,7 @@ pub fn cargo_doc(
     Ok(())
 }
 
-/// Run cargo test on the selcted package or all packages
+/// Run cargo test on the selected package or all packages
 ///
 /// If no package is specified, loop through all packages
 pub fn cargo_test(
@@ -204,16 +198,15 @@ pub fn run_test(
     examples: &[String],
     overwrite: bool,
 ) -> anyhow::Result<()> {
+    let target = backend.to_target();
+    let features = Some(target.and_features(backend.to_rtic_feature()));
+
     examples.into_par_iter().for_each(|example| {
         let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
-            target: backend.to_target(),
-            features: Some(format!(
-                "{},{}",
-                DEFAULT_FEATURES,
-                backend.to_rtic_feature()
-            )),
+            target,
+            features: features.clone(),
             mode: BuildMode::Release,
         };
         if let Err(err) = command_parser(globals, &cmd, false) {
@@ -223,12 +216,8 @@ pub fn run_test(
         let cmd = CargoCommand::Qemu {
             cargoarg,
             example,
-            target: backend.to_target(),
-            features: Some(format!(
-                "{},{}",
-                DEFAULT_FEATURES,
-                backend.to_rtic_feature()
-            )),
+            target,
+            features: features.clone(),
             mode: BuildMode::Release,
         };
 
@@ -248,17 +237,16 @@ pub fn build_and_check_size(
     examples: &[String],
     arguments: &Option<ExtraArguments>,
 ) -> anyhow::Result<()> {
+    let target = backend.to_target();
+    let features = Some(target.and_features(backend.to_rtic_feature()));
+
     examples.into_par_iter().for_each(|example| {
         // Make sure the requested example(s) are built
         let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
-            target: backend.to_target(),
-            features: Some(format!(
-                "{},{}",
-                DEFAULT_FEATURES,
-                backend.to_rtic_feature()
-            )),
+            target,
+            features: features.clone(),
             mode: BuildMode::Release,
         };
         if let Err(err) = command_parser(globals, &cmd, false) {
@@ -269,11 +257,7 @@ pub fn build_and_check_size(
             cargoarg,
             example,
             target: backend.to_target(),
-            features: Some(format!(
-                "{},{}",
-                DEFAULT_FEATURES,
-                backend.to_rtic_feature()
-            )),
+            features: features.clone(),
             mode: BuildMode::Release,
             arguments: arguments.clone(),
         };
