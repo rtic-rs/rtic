@@ -23,10 +23,7 @@ use log::{error, info, log_enabled, trace, Level};
 use crate::{
     argument_parsing::{Backends, BuildOrCheck, Cli, Commands},
     build::init_build_dir,
-    cargo_commands::{
-        build_and_check_size, cargo, cargo_book, cargo_clippy, cargo_doc, cargo_example,
-        cargo_format, cargo_test, run_test,
-    },
+    cargo_commands::*,
     command::{handle_results, run_command, run_successful, CargoCommand},
 };
 
@@ -151,6 +148,12 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     trace!("default logging level: {0}", globals.verbose);
+
+    log::debug!(
+        "Stderr of child processes is inherited: {}",
+        globals.stderr_inherited
+    );
+    log::debug!("Partial features: {}", globals.partial);
 
     let backend = if let Some(backend) = globals.backend {
         backend
@@ -285,6 +288,14 @@ fn main() -> anyhow::Result<()> {
             info!("Running mdbook");
             cargo_book(globals, &args.arguments)
         }
+        Commands::UsageExamplesCheck(examples) => {
+            info!("Checking usage examples");
+            cargo_usage_example(globals, BuildOrCheck::Check, examples.examples()?)
+        }
+        Commands::UsageExampleBuild(examples) => {
+            info!("Building usage examples");
+            cargo_usage_example(globals, BuildOrCheck::Build, examples.examples()?)
+        }
     };
 
     handle_results(globals, final_run_results)
@@ -347,7 +358,9 @@ fn command_parser(
         | CargoCommand::Doc { .. }
         | CargoCommand::Test { .. }
         | CargoCommand::Book { .. }
-        | CargoCommand::ExampleSize { .. } => {
+        | CargoCommand::ExampleSize { .. }
+        | CargoCommand::BuildInDir { .. }
+        | CargoCommand::CheckInDir { .. } => {
             let cargo_result = run_command(command, output_mode)?;
             Ok(cargo_result)
         }

@@ -8,6 +8,7 @@ use core::fmt;
 use std::{
     fs::File,
     io::Read,
+    path::PathBuf,
     process::{Command, Stdio},
 };
 
@@ -111,6 +112,14 @@ pub enum CargoCommand<'a> {
         mode: BuildMode,
         arguments: Option<ExtraArguments>,
     },
+    CheckInDir {
+        mode: BuildMode,
+        dir: PathBuf,
+    },
+    BuildInDir {
+        mode: BuildMode,
+        dir: PathBuf,
+    },
 }
 
 impl core::fmt::Display for CargoCommand<'_> {
@@ -211,6 +220,10 @@ impl core::fmt::Display for CargoCommand<'_> {
                     details(target, mode, features, cargoarg)
                 )
             }
+            CargoCommand::BuildInDir { mode, dir } => {
+                let dir = dir.as_os_str().to_str().unwrap_or("Not displayable");
+                write!(f, "Build {dir} ({mode})")
+            }
             CargoCommand::Check {
                 cargoarg,
                 package,
@@ -224,6 +237,10 @@ impl core::fmt::Display for CargoCommand<'_> {
                     "Check {package} {}",
                     details(target, mode, features, cargoarg)
                 )
+            }
+            CargoCommand::CheckInDir { mode, dir } => {
+                let dir = dir.as_os_str().to_str().unwrap_or("Not displayable");
+                write!(f, "Check {dir} ({mode})")
             }
             CargoCommand::Clippy {
                 cargoarg,
@@ -316,11 +333,15 @@ impl<'a> CargoCommand<'a> {
         format!("{executable} {args}")
     }
 
-    fn command(&self) -> &str {
+    fn command(&self) -> &'static str {
         match self {
             CargoCommand::Run { .. } | CargoCommand::Qemu { .. } => "run",
-            CargoCommand::ExampleCheck { .. } | CargoCommand::Check { .. } => "check",
-            CargoCommand::ExampleBuild { .. } | CargoCommand::Build { .. } => "build",
+            CargoCommand::ExampleCheck { .. }
+            | CargoCommand::Check { .. }
+            | CargoCommand::CheckInDir { .. } => "check",
+            CargoCommand::ExampleBuild { .. }
+            | CargoCommand::Build { .. }
+            | CargoCommand::BuildInDir { .. } => "build",
             CargoCommand::ExampleSize { .. } => "size",
             CargoCommand::Clippy { .. } => "clippy",
             CargoCommand::Format { .. } => "fmt",
@@ -329,7 +350,7 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Test { .. } => "test",
         }
     }
-    pub fn executable(&self) -> &str {
+    pub fn executable(&self) -> &'static str {
         match self {
             CargoCommand::Run { .. }
             | CargoCommand::Qemu { .. }
@@ -341,7 +362,9 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::Clippy { .. }
             | CargoCommand::Format { .. }
             | CargoCommand::Test { .. }
-            | CargoCommand::Doc { .. } => "cargo",
+            | CargoCommand::Doc { .. }
+            | CargoCommand::CheckInDir { .. }
+            | CargoCommand::BuildInDir { .. } => "cargo",
             CargoCommand::Book { .. } => "mdbook",
         }
     }
@@ -641,6 +664,34 @@ impl<'a> CargoCommand<'a> {
                 }
                 args
             }
+            CargoCommand::CheckInDir { mode, dir: _ } => {
+                let mut args = vec!["+nightly"];
+                args.push(self.command());
+
+                if let Some(mode) = mode.to_flag() {
+                    args.push(mode);
+                }
+
+                args
+            }
+            CargoCommand::BuildInDir { mode, dir: _ } => {
+                let mut args = vec!["+nightly", self.command()];
+
+                if let Some(mode) = mode.to_flag() {
+                    args.push(mode);
+                }
+
+                args
+            }
+        }
+    }
+
+    fn chdir(&self) -> Option<&PathBuf> {
+        match self {
+            CargoCommand::CheckInDir { dir, .. } | CargoCommand::BuildInDir { dir, .. } => {
+                Some(dir)
+            }
+            _ => None,
         }
     }
 }
@@ -669,11 +720,18 @@ impl fmt::Display for BuildMode {
 pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Result<RunResult> {
     log::info!("👟 {command}");
 
-    let result = Command::new(command.executable())
+    let mut process = Command::new(command.executable());
+
+    process
         .args(command.args())
         .stdout(Stdio::piped())
-        .stderr(stderr_mode)
-        .output()?;
+        .stderr(stderr_mode);
+
+    if let Some(dir) = command.chdir() {
+        process.current_dir(dir);
+    }
+
+    let result = process.output()?;
 
     let exit_status = result.status;
     let stderr = String::from_utf8(result.stderr).unwrap_or("Not displayable".into());
@@ -759,15 +817,27 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> anyhow
     errors.clone().for_each(log_stdout_stderr(Level::Error));
 
     successes.for_each(|(cmd, _)| {
-        if globals.verbose > 0 {
-            info!("✅ Success: {cmd}\n    {}", cmd.as_cmd_string());
+        let path = if let Some(dir) = cmd.chdir() {
+            let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
+            format!(" (in {path}")
         } else {
-            info!("✅ Success: {cmd}");
+            format!("")
+        };
+
+        if globals.verbose > 0 {
+            info!("✅ Success:{path} {cmd}\n    {}", cmd.as_cmd_string());
+        } else {
+            info!("✅ Success:{path} {cmd}");
         }
     });
 
     errors.clone().for_each(|(cmd, _)| {
-        error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
+        if let Some(dir) = cmd.chdir() {
+            let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
+            error!("❌ Failed: (in {path}) {cmd}\n    {}", cmd.as_cmd_string());
+        } else {
+            error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
+        }
     });
 
     let ecount = errors.count();

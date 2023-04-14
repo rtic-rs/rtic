@@ -190,8 +190,8 @@ pub enum BuildOrCheck {
 
 #[derive(Parser, Clone)]
 pub struct Globals {
-    /// For which backend to build (defaults to thumbv7)
-    #[arg(value_enum, short, long, global = true)]
+    /// For which backend to build.
+    #[arg(value_enum, short, default_value = "thumbv7", long, global = true)]
     pub backend: Option<Backends>,
 
     /// List of comma separated examples to include, all others are excluded
@@ -300,6 +300,55 @@ pub enum Commands {
 
     /// Build books with mdbook
     Book(Arg),
+
+    /// Check one or more usage examples.
+    ///
+    /// Usage examples are located in ./examples
+    UsageExamplesCheck(UsageExamples),
+
+    /// Build one or more usage examples.
+    ///
+    /// Usage examples are located in ./examples
+    #[clap(alias = "./examples")]
+    UsageExampleBuild(UsageExamples),
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct UsageExamples {
+    /// The usage examples to build. All usage examples are selected if this argument is not provided.
+    ///
+    /// Example: `rp2040_local_i2c_init,stm32f3_blinky`.
+    examples: Option<String>,
+}
+
+impl UsageExamples {
+    pub fn examples(&self) -> anyhow::Result<Vec<String>> {
+        let usage_examples: Vec<_> = std::fs::read_dir("./examples")?
+            .filter_map(Result::ok)
+            .filter(|p| p.metadata().ok().map(|p| p.is_dir()).unwrap_or(false))
+            .filter_map(|p| p.file_name().as_os_str().to_str().map(ToString::to_string))
+            .collect();
+
+        let selected_examples: Option<Vec<String>> = self
+            .examples
+            .clone()
+            .map(|s| s.split(",").map(ToString::to_string).collect());
+
+        if let Some(selected_examples) = selected_examples {
+            if let Some(unfound_example) = selected_examples
+                .iter()
+                .find(|e| !usage_examples.contains(e))
+            {
+                Err(anyhow::anyhow!(
+                    "Usage example {unfound_example} does not exist"
+                ))
+            } else {
+                Ok(selected_examples)
+            }
+        } else {
+            Ok(usage_examples)
+        }
+    }
 }
 
 #[derive(Args, Debug, Clone)]
