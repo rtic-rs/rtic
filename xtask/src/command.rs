@@ -383,6 +383,7 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
+
                 args.extend_from_slice(&[
                     self.command(),
                     "--example",
@@ -407,9 +408,15 @@ impl<'a> CargoCommand<'a> {
                 mode,
             } => {
                 let mut args = vec!["+nightly"];
+
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
+
+                // We need to be in the `rtic` directory to pick up
+                // the correct .cargo/config.toml file
+                args.extend_from_slice(&["-Z", "unstable-options", "-C", "rtic"]);
+
                 args.extend_from_slice(&[
                     self.command(),
                     "--example",
@@ -641,6 +648,11 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
+
+                // We need to be in the `rtic` directory to pick up
+                // the correct .cargo/config.toml file
+                args.extend_from_slice(&["-Z", "unstable-options", "-C", "rtic"]);
+
                 args.extend_from_slice(&[
                     self.command(),
                     "--example",
@@ -694,6 +706,13 @@ impl<'a> CargoCommand<'a> {
             _ => None,
         }
     }
+
+    pub fn print_stdout_intermediate(&self) -> bool {
+        match self {
+            Self::ExampleSize { .. } => true,
+            _ => false,
+        }
+    }
 }
 
 impl BuildMode {
@@ -736,6 +755,10 @@ pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::R
     let exit_status = result.status;
     let stderr = String::from_utf8(result.stderr).unwrap_or("Not displayable".into());
     let stdout = String::from_utf8(result.stdout).unwrap_or("Not displayable".into());
+
+    if command.print_stdout_intermediate() && exit_status.success() {
+        log::info!("\n{}", stdout);
+    }
 
     Ok(RunResult {
         exit_status,
@@ -850,9 +873,8 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
         .clone()
         .for_each(|(cmd, error)| error!("❌ Failed: {cmd}\n    {}\n{error}", cmd.as_cmd_string()));
 
-    let ecount = errors.count();
-    let cecount = command_errors.count();
-    if ecount != 0 || cecount != 0 {
+    let ecount = errors.count() + command_errors.count();
+    if ecount != 0 {
         log::error!("{ecount} commands failed.");
         Err(())
     } else {

@@ -100,8 +100,8 @@ impl fmt::Display for TestRunError {
             TestRunError::CommandError(e) => {
                 write!(
                     f,
-                    "Command failed with exit status {}: {}",
-                    e.exit_status, e.stdout
+                    "Command failed with exit status {}: {} {}",
+                    e.exit_status, e.stdout, e.stderr
                 )
             }
             TestRunError::PathConversionError(p) => {
