@@ -298,7 +298,7 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    handle_results(globals, final_run_results)
+    handle_results(globals, final_run_results).map_err(|_| anyhow::anyhow!("Commands failed"))
 }
 
 // run example binary `example`

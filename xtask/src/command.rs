@@ -771,7 +771,7 @@ pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(),
     }
 }
 
-pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> anyhow::Result<()> {
+pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result<(), ()> {
     let errors = results.iter().filter_map(|r| {
         if let FinalRunResult::Failed(c, r) = r {
             Some((c, r))
@@ -842,8 +842,10 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> anyhow
 
     let ecount = errors.count();
     if ecount != 0 {
-        Err(anyhow::anyhow!("{ecount} commands failed."))
+        log::error!("{ecount} commands failed.");
+        Err(())
     } else {
+        info!("🚀🚀🚀 All tasks succeeded 🚀🚀🚀");
         Ok(())
     }
 }
