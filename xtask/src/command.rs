@@ -774,7 +774,7 @@ pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(),
 pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result<(), ()> {
     let errors = results.iter().filter_map(|r| {
         if let FinalRunResult::Failed(c, r) = r {
-            Some((c, r))
+            Some((c, &r.stdout, &r.stderr))
         } else {
             None
         }
@@ -782,16 +782,22 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
 
     let successes = results.iter().filter_map(|r| {
         if let FinalRunResult::Success(c, r) = r {
-            Some((c, r))
+            Some((c, &r.stdout, &r.stderr))
+        } else {
+            None
+        }
+    });
+
+    let command_errors = results.iter().filter_map(|r| {
+        if let FinalRunResult::CommandError(c, e) = r {
+            Some((c, e))
         } else {
             None
         }
     });
 
     let log_stdout_stderr = |level: Level| {
-        move |(command, result): (&CargoCommand, &RunResult)| {
-            let stdout = &result.stdout;
-            let stderr = &result.stderr;
+        move |(command, stdout, stderr): (&CargoCommand, &String, &String)| {
             if !stdout.is_empty() && !stderr.is_empty() {
                 log::log!(
                     level,
@@ -816,7 +822,7 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
     successes.clone().for_each(log_stdout_stderr(Level::Debug));
     errors.clone().for_each(log_stdout_stderr(Level::Error));
 
-    successes.for_each(|(cmd, _)| {
+    successes.for_each(|(cmd, _, _)| {
         let path = if let Some(dir) = cmd.chdir() {
             let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
             format!(" (in {path}")
@@ -831,7 +837,7 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
         }
     });
 
-    errors.clone().for_each(|(cmd, _)| {
+    errors.clone().for_each(|(cmd, _, _)| {
         if let Some(dir) = cmd.chdir() {
             let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
             error!("❌ Failed: (in {path}) {cmd}\n    {}", cmd.as_cmd_string());
@@ -840,8 +846,13 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
         }
     });
 
+    command_errors
+        .clone()
+        .for_each(|(cmd, error)| error!("❌ Failed: {cmd}\n    {}\n{error}", cmd.as_cmd_string()));
+
     let ecount = errors.count();
-    if ecount != 0 {
+    let cecount = command_errors.count();
+    if ecount != 0 || cecount != 0 {
         log::error!("{ecount} commands failed.");
         Err(())
     } else {

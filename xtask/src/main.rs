@@ -324,9 +324,7 @@ fn command_parser(
                 .map_err(TestRunError::PathConversionError)?;
 
             // cargo run <..>
-            info!("Running example: {example}");
             let cargo_run_result = run_command(command, output_mode)?;
-            info!("{}", cargo_run_result.stdout);
 
             // Create a file for the expected output if it does not exist or mismatches
             if overwrite {

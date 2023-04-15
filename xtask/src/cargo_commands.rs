@@ -10,10 +10,11 @@ use rayon::prelude::*;
 
 use iters::*;
 
+#[derive(Debug)]
 pub enum FinalRunResult<'c> {
     Success(CargoCommand<'c>, RunResult),
     Failed(CargoCommand<'c>, RunResult),
-    CommandError(anyhow::Error),
+    CommandError(CargoCommand<'c>, anyhow::Error),
 }
 
 fn run_and_convert<'a>(
@@ -21,7 +22,8 @@ fn run_and_convert<'a>(
 ) -> FinalRunResult<'a> {
     // Run the command
     let result = command_parser(global, &command, overwrite);
-    match result {
+
+    let output = match result {
         // If running the command succeeded without looking at any of the results,
         // log the data and see if the actual execution was succesfull too.
         Ok(result) => {
@@ -32,8 +34,12 @@ fn run_and_convert<'a>(
             }
         }
         // If it didn't and some IO error occured, just panic
-        Err(e) => FinalRunResult::CommandError(e),
-    }
+        Err(e) => FinalRunResult::CommandError(command, e),
+    };
+
+    log::trace!("Final result: {output:?}");
+
+    output
 }
 
 pub trait CoalescingRunner<'c> {
