@@ -831,16 +831,16 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
         };
 
         if globals.verbose > 0 {
-            info!("✅ Success:{path} {cmd}\n    {}", cmd.as_cmd_string());
+            info!("✅ Success: {cmd}{path}\n    {}", cmd.as_cmd_string());
         } else {
-            info!("✅ Success:{path} {cmd}");
+            info!("✅ Success:{cmd}{path}");
         }
     });
 
     errors.clone().for_each(|(cmd, _, _)| {
         if let Some(dir) = cmd.chdir() {
             let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
-            error!("❌ Failed: (in {path}) {cmd}\n    {}", cmd.as_cmd_string());
+            error!("❌ Failed: {cmd} (in {path}) \n    {}", cmd.as_cmd_string());
         } else {
             error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
         }

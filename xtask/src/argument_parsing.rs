@@ -304,24 +304,24 @@ pub enum Commands {
     /// Check one or more usage examples.
     ///
     /// Usage examples are located in ./examples
-    UsageExamplesCheck(UsageExamples),
+    UsageExampleCheck(UsageExamplesOpt),
 
     /// Build one or more usage examples.
     ///
     /// Usage examples are located in ./examples
     #[clap(alias = "./examples")]
-    UsageExampleBuild(UsageExamples),
+    UsageExampleBuild(UsageExamplesOpt),
 }
 
 #[derive(Args, Clone, Debug)]
-pub struct UsageExamples {
+pub struct UsageExamplesOpt {
     /// The usage examples to build. All usage examples are selected if this argument is not provided.
     ///
     /// Example: `rp2040_local_i2c_init,stm32f3_blinky`.
     examples: Option<String>,
 }
 
-impl UsageExamples {
+impl UsageExamplesOpt {
     pub fn examples(&self) -> anyhow::Result<Vec<String>> {
         let usage_examples: Vec<_> = std::fs::read_dir("./examples")?
             .filter_map(Result::ok)

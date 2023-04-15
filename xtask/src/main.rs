@@ -288,7 +288,7 @@ fn main() -> anyhow::Result<()> {
             info!("Running mdbook");
             cargo_book(globals, &args.arguments)
         }
-        Commands::UsageExamplesCheck(examples) => {
+        Commands::UsageExampleCheck(examples) => {
             info!("Checking usage examples");
             cargo_usage_example(globals, BuildOrCheck::Check, examples.examples()?)
         }
