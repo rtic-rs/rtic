@@ -20,7 +20,6 @@ use std::{
     str,
 };
 
-use env_logger::Env;
 use log::{debug, error, info, log_enabled, trace, Level};
 
 use crate::{
@@ -141,13 +140,13 @@ fn main() -> anyhow::Result<()> {
     let globals = &cli.globals;
 
     let env_logger_default_level = match globals.verbose {
-        0 => Env::default().default_filter_or("info"),
-        1 => Env::default().default_filter_or("debug"),
-        _ => Env::default().default_filter_or("trace"),
+        0 => "info",
+        1 => "debug",
+        _ => "trace",
     };
-    env_logger::Builder::from_env(env_logger_default_level)
-        .format_module_path(false)
-        .format_timestamp(None)
+
+    pretty_env_logger::formatted_builder()
+        .parse_filters(&std::env::var("RUST_LOG").unwrap_or(env_logger_default_level.into()))
         .init();
 
     trace!("default logging level: {0}", globals.verbose);

@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 anyhow = "1.0.43"
 clap = { version = "4", features = ["derive"] }
-env_logger = "0.10.0"
+pretty_env_logger = "0.4.0"
 log = "0.4.17"
 rayon = "1.6.1"
 diffy = "0.3.0"
