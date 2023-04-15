@@ -266,11 +266,11 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let arguments = arguments
                     .clone()
                     .map(|a| format!("{a}"))
-                    .unwrap_or_else(|| "No extra arguments".into());
+                    .unwrap_or_else(|| "no extra arguments".into());
                 if cargoarg.is_some() {
-                    write!(f, "Document ({feat}, {carg}, {arguments}")
+                    write!(f, "Document ({feat}, {carg}, {arguments})")
                 } else {
-                    write!(f, "Document ({feat}, {arguments}")
+                    write!(f, "Document ({feat}, {arguments})")
                 }
             }
             CargoCommand::Test {
