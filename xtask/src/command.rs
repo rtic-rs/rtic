@@ -51,6 +51,7 @@ pub enum CargoCommand<'a> {
         target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
+        dir: Option<PathBuf>,
     },
     ExampleBuild {
         cargoarg: &'a Option<&'a str>,
@@ -58,6 +59,7 @@ pub enum CargoCommand<'a> {
         target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
+        dir: Option<PathBuf>,
     },
     ExampleCheck {
         cargoarg: &'a Option<&'a str>,
@@ -111,6 +113,7 @@ pub enum CargoCommand<'a> {
         features: Option<String>,
         mode: BuildMode,
         arguments: Option<ExtraArguments>,
+        dir: Option<PathBuf>,
     },
     CheckInDir {
         mode: BuildMode,
@@ -179,22 +182,32 @@ impl core::fmt::Display for CargoCommand<'_> {
                 target,
                 features,
                 mode,
-            } => write!(
-                f,
-                "Run example {example} in QEMU {}",
-                details(target, mode, features, cargoarg)
-            ),
+                dir,
+            } => {
+                let details = details(target, mode, features, cargoarg);
+                if let Some(dir) = dir {
+                    let dir = dir.to_str().unwrap_or("Not displayable");
+                    write!(f, "Run example {example} in QEMU from {dir} {details}",)
+                } else {
+                    write!(f, "Run example {example} in QEMU {details}",)
+                }
+            }
             CargoCommand::ExampleBuild {
                 cargoarg,
                 example,
                 target,
                 features,
                 mode,
-            } => write!(
-                f,
-                "Build example {example} {}",
-                details(target, mode, features, cargoarg)
-            ),
+                dir,
+            } => {
+                let details = details(target, mode, features, cargoarg);
+                if let Some(dir) = dir {
+                    let dir = dir.to_str().unwrap_or("Not displayable");
+                    write!(f, "Build example {example} in {dir} {details}")
+                } else {
+                    write!(f, "Build example {example} {details}",)
+                }
+            }
             CargoCommand::ExampleCheck {
                 cargoarg,
                 example,
@@ -221,7 +234,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 )
             }
             CargoCommand::BuildInDir { mode, dir } => {
-                let dir = dir.as_os_str().to_str().unwrap_or("Not displayable");
+                let dir = dir.to_str().unwrap_or("Not displayable");
                 write!(f, "Build {dir} ({mode})")
             }
             CargoCommand::Check {
@@ -239,7 +252,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 )
             }
             CargoCommand::CheckInDir { mode, dir } => {
-                let dir = dir.as_os_str().to_str().unwrap_or("Not displayable");
+                let dir = dir.to_str().unwrap_or("Not displayable");
                 write!(f, "Check {dir} ({mode})")
             }
             CargoCommand::Clippy {
@@ -315,12 +328,15 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 mode,
                 arguments: _,
+                dir,
             } => {
-                write!(
-                    f,
-                    "Compute size of example {example} {}",
-                    details(target, mode, features, cargoarg)
-                )
+                let details = details(target, mode, features, cargoarg);
+                if let Some(dir) = dir {
+                    let dir = dir.to_str().unwrap_or("Not displayable");
+                    write!(f, "Compute size of example {example} from {dir} {details}",)
+                } else {
+                    write!(f, "Compute size of example {example} {details}")
+                }
             }
         }
     }
@@ -328,9 +344,15 @@ impl core::fmt::Display for CargoCommand<'_> {
 
 impl<'a> CargoCommand<'a> {
     pub fn as_cmd_string(&self) -> String {
+        let cd = if let Some(Some(chdir)) = self.chdir().map(|p| p.to_str()) {
+            format!("cd {chdir} && ")
+        } else {
+            format!("")
+        };
+
         let executable = self.executable();
         let args = self.args().join(" ");
-        format!("{executable} {args}")
+        format!("{cd}{executable} {args}")
     }
 
     fn command(&self) -> &'static str {
@@ -406,16 +428,14 @@ impl<'a> CargoCommand<'a> {
                 target,
                 features,
                 mode,
+                // Dir is exposed through chdir instead
+                dir: _,
             } => {
                 let mut args = vec!["+nightly"];
 
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-
-                // We need to be in the `rtic` directory to pick up
-                // the correct .cargo/config.toml file
-                args.extend_from_slice(&["-Z", "unstable-options", "-C", "rtic"]);
 
                 args.extend_from_slice(&[
                     self.command(),
@@ -588,15 +608,13 @@ impl<'a> CargoCommand<'a> {
                 target,
                 features,
                 mode,
+                // Dir is exposed through chdir instead
+                dir: _,
             } => {
                 let mut args = vec!["+nightly"];
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-
-                // We need to be in the `rtic` directory to pick up
-                // the correct .cargo/config.toml file
-                args.extend_from_slice(&["-Z", "unstable-options", "-C", "rtic"]);
 
                 args.extend_from_slice(&[
                     self.command(),
@@ -648,15 +666,13 @@ impl<'a> CargoCommand<'a> {
                 features,
                 mode,
                 arguments,
+                // Dir is exposed through chdir instead
+                dir: _,
             } => {
                 let mut args = vec!["+nightly"];
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
-
-                // We need to be in the `rtic` directory to pick up
-                // the correct .cargo/config.toml file
-                args.extend_from_slice(&["-Z", "unstable-options", "-C", "rtic"]);
 
                 args.extend_from_slice(&[
                     self.command(),
@@ -708,6 +724,9 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::CheckInDir { dir, .. } | CargoCommand::BuildInDir { dir, .. } => {
                 Some(dir)
             }
+            CargoCommand::Qemu { dir, .. }
+            | CargoCommand::ExampleBuild { dir, .. }
+            | CargoCommand::ExampleSize { dir, .. } => dir.as_ref(),
             _ => None,
         }
     }
@@ -752,7 +771,7 @@ pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::R
         .stderr(stderr_mode);
 
     if let Some(dir) = command.chdir() {
-        process.current_dir(dir);
+        process.current_dir(dir.canonicalize()?);
     }
 
     let result = process.output()?;
@@ -765,7 +784,9 @@ pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::R
         log::info!("\n{}", stdout);
     }
 
-    if !exit_status.success() {
+    if exit_status.success() {
+        log::info!("✅ Success.")
+    } else {
         log::error!("❌ Command failed. Run to completion for the summary.");
     }
 
@@ -843,7 +864,7 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
 
     successes.for_each(|(cmd, stdout, stderr)| {
         let path = if let Some(dir) = cmd.chdir() {
-            let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
+            let path = dir.to_str().unwrap_or("Not displayable");
             format!(" (in {path}")
         } else {
             format!("")
@@ -860,7 +881,7 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
 
     errors.clone().for_each(|(cmd, stdout, stderr)| {
         if let Some(dir) = cmd.chdir() {
-            let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
+            let path = dir.to_str().unwrap_or("Not displayable");
             error!("❌ Failed: {cmd} (in {path}) \n    {}", cmd.as_cmd_string());
         } else {
             error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());

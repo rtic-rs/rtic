@@ -326,7 +326,7 @@ impl UsageExamplesOpt {
         let usage_examples: Vec<_> = std::fs::read_dir("./examples")?
             .filter_map(Result::ok)
             .filter(|p| p.metadata().ok().map(|p| p.is_dir()).unwrap_or(false))
-            .filter_map(|p| p.file_name().as_os_str().to_str().map(ToString::to_string))
+            .filter_map(|p| p.file_name().to_str().map(ToString::to_string))
             .collect();
 
         let selected_examples: Option<Vec<String>> = self

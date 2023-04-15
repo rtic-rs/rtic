@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{
     argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, TestMetadata},
     command::{BuildMode, CargoCommand},
@@ -186,6 +188,7 @@ pub fn cargo_example<'c>(
                 target: backend.to_target(),
                 features,
                 mode: BuildMode::Release,
+                dir: Some(PathBuf::from("./rtic")),
             },
         };
         (globals, command, false)
@@ -320,6 +323,7 @@ pub fn qemu_run_examples<'c>(
                 target,
                 features: features.clone(),
                 mode: BuildMode::Release,
+                dir: Some(PathBuf::from("./rtic")),
             };
 
             let cmd_qemu = CargoCommand::Qemu {
@@ -328,6 +332,7 @@ pub fn qemu_run_examples<'c>(
                 target,
                 features: features.clone(),
                 mode: BuildMode::Release,
+                dir: Some(PathBuf::from("./rtic")),
             };
 
             #[cfg(not(feature = "rayon"))]
@@ -363,6 +368,7 @@ pub fn build_and_check_size<'c>(
             target,
             features: features.clone(),
             mode: BuildMode::Release,
+            dir: Some(PathBuf::from("./rtic")),
         };
         if let Err(err) = command_parser(globals, &cmd, false) {
             error!("{err}");
@@ -375,6 +381,7 @@ pub fn build_and_check_size<'c>(
             features: features.clone(),
             mode: BuildMode::Release,
             arguments: arguments.clone(),
+            dir: Some(PathBuf::from("./rtic")),
         };
         (globals, cmd, false)
     });
