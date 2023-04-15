@@ -29,6 +29,30 @@ impl Package {
             Package::RticTime => "rtic-time",
         }
     }
+
+    pub fn all() -> Vec<Self> {
+        vec![
+            Self::Rtic,
+            Self::RticCommon,
+            Self::RticMacros,
+            Self::RticMonotonics,
+            Self::RticSync,
+            Self::RticTime,
+        ]
+    }
+
+    /// Get the features needed given the selected package
+    ///
+    /// Without package specified the features for RTIC are required
+    /// With only a single package which is not RTIC, no special
+    /// features are needed
+    pub fn extract_features(&self, target: Target, backend: Backends) -> Option<String> {
+        match self {
+            Package::Rtic => Some(target.and_features(backend.to_rtic_feature())),
+            Package::RticMacros => Some(backend.to_rtic_macros_feature().to_owned()),
+            _ => None,
+        }
+    }
 }
 
 pub struct TestMetadata {}
@@ -247,7 +271,16 @@ pub struct PackageOpt {
     /// For which package/workspace member to operate
     ///
     /// If omitted, work on all
-    pub package: Option<Package>,
+    package: Option<Package>,
+}
+
+impl PackageOpt {
+    pub fn packages(&self) -> impl Iterator<Item = Package> {
+        self.package
+            .map(|p| vec![p])
+            .unwrap_or(Package::all())
+            .into_iter()
+    }
 }
 
 #[derive(Args, Debug, Clone)]

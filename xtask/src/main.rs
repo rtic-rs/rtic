@@ -24,7 +24,7 @@ use env_logger::Env;
 use log::{debug, error, info, log_enabled, trace, Level};
 
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, Cli, Commands, PackageOpt},
+    argument_parsing::{Backends, BuildOrCheck, Cli, Commands},
     build::init_build_dir,
     cargo_commands::{
         build_and_check_size, cargo, cargo_book, cargo_clippy, cargo_doc, cargo_example,
@@ -297,30 +297,6 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
-}
-
-/// Get the features needed given the selected package
-///
-/// Without package specified the features for RTIC are required
-/// With only a single package which is not RTIC, no special
-/// features are needed
-fn package_feature_extractor(
-    target: Target,
-    package: &PackageOpt,
-    backend: Backends,
-) -> Option<String> {
-    let default_features = Some(target.and_features(backend.to_rtic_feature()));
-
-    if let Some(package) = package.package {
-        debug!("\nTesting package: {package}");
-        match package {
-            Package::Rtic => default_features,
-            Package::RticMacros => Some(backend.to_rtic_macros_feature().to_owned()),
-            _ => None,
-        }
-    } else {
-        default_features
-    }
 }
 
 // run example binary `example`

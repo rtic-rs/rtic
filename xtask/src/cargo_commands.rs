@@ -1,9 +1,7 @@
 use crate::{
-    argument_parsing::{
-        Backends, BuildOrCheck, ExtraArguments, Globals, Package, PackageOpt, TestMetadata,
-    },
+    argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, TestMetadata},
     command::{BuildMode, CargoCommand},
-    command_parser, package_feature_extractor,
+    command_parser,
 };
 use log::error;
 use rayon::prelude::*;
@@ -16,26 +14,42 @@ pub fn cargo(
     package: &PackageOpt,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    let target = backend.to_target();
-    let features = package_feature_extractor(target, package, backend);
+    package.packages().for_each(|package| {
+        let target = backend.to_target();
 
-    let command = match operation {
-        BuildOrCheck::Check => CargoCommand::Check {
-            cargoarg,
-            package: package.package,
-            target,
-            features,
-            mode: BuildMode::Release,
-        },
-        BuildOrCheck::Build => CargoCommand::Build {
-            cargoarg,
-            package: package.package,
-            target,
-            features,
-            mode: BuildMode::Release,
-        },
-    };
-    command_parser(globals, &command, false)?;
+        let features = package.extract_features(target, backend);
+
+        match operation {
+            BuildOrCheck::Check => {
+                log::debug!(target: "xtask::command", "Checking package: {package}")
+            }
+            BuildOrCheck::Build => {
+                log::debug!(target: "xtask::command", "Building package: {package}")
+            }
+        }
+
+        let command = match operation {
+            BuildOrCheck::Check => CargoCommand::Check {
+                cargoarg,
+                package: Some(package),
+                target,
+                features,
+                mode: BuildMode::Release,
+            },
+            BuildOrCheck::Build => CargoCommand::Build {
+                cargoarg,
+                package: Some(package),
+                target,
+                features,
+                mode: BuildMode::Release,
+            },
+        };
+        let res = command_parser(globals, &command, false);
+        if let Err(e) = res {
+            error!("{e}");
+        }
+    });
+
     Ok(())
 }
 
@@ -84,18 +98,26 @@ pub fn cargo_clippy(
     package: &PackageOpt,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    let target = backend.to_target();
-    let features = package_feature_extractor(target, package, backend);
-    command_parser(
-        globals,
-        &CargoCommand::Clippy {
-            cargoarg,
-            package: package.package,
-            target,
-            features,
-        },
-        false,
-    )?;
+    package.packages().for_each(|p| {
+        let target = backend.to_target();
+        let features = p.extract_features(target, backend);
+
+        let res = command_parser(
+            globals,
+            &CargoCommand::Clippy {
+                cargoarg,
+                package: Some(p),
+                target,
+                features,
+            },
+            false,
+        );
+
+        if let Err(e) = res {
+            error!("{e}")
+        }
+    });
+
     Ok(())
 }
 
@@ -106,15 +128,22 @@ pub fn cargo_format(
     package: &PackageOpt,
     check_only: bool,
 ) -> anyhow::Result<()> {
-    command_parser(
-        globals,
-        &CargoCommand::Format {
-            cargoarg,
-            package: package.package,
-            check_only,
-        },
-        false,
-    )?;
+    package.packages().for_each(|p| {
+        let res = command_parser(
+            globals,
+            &CargoCommand::Format {
+                cargoarg,
+                package: Some(p),
+                check_only,
+            },
+            false,
+        );
+
+        if let Err(e) = res {
+            error!("{e}")
+        }
+    });
+
     Ok(())
 }
 
@@ -147,32 +176,13 @@ pub fn cargo_test(
     package: &PackageOpt,
     backend: Backends,
 ) -> anyhow::Result<()> {
-    if let Some(package) = package.package {
-        let cmd = TestMetadata::match_package(package, backend);
-        command_parser(globals, &cmd, false)?;
-    } else {
-        // Iterate over all workspace packages
-        for package in [
-            Package::Rtic,
-            Package::RticCommon,
-            Package::RticMacros,
-            Package::RticMonotonics,
-            Package::RticSync,
-            Package::RticTime,
-        ] {
-            let mut error_messages = vec![];
-            let cmd = &TestMetadata::match_package(package, backend);
-            if let Err(err) = command_parser(globals, cmd, false) {
-                error_messages.push(err);
-            }
-
-            if !error_messages.is_empty() {
-                for err in error_messages {
-                    error!("{err}");
-                }
-            }
+    package.packages().for_each(|p| {
+        let cmd = &TestMetadata::match_package(p, backend);
+        if let Err(err) = command_parser(globals, cmd, false) {
+            error!("{err}")
         }
-    }
+    });
+
     Ok(())
 }
 
@@ -209,6 +219,7 @@ pub fn run_test(
             features: features.clone(),
             mode: BuildMode::Release,
         };
+
         if let Err(err) = command_parser(globals, &cmd, false) {
             error!("{err}");
         }
