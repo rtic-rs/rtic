@@ -287,7 +287,7 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    handle_results(final_run_results)
+    handle_results(globals, final_run_results)
 }
 
 // run example binary `example`

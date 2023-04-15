@@ -1,7 +1,8 @@
 use log::{error, info, Level};
 
 use crate::{
-    cargo_commands::FinalRunResult, ExtraArguments, Package, RunResult, Target, TestRunError,
+    argument_parsing::Globals, cargo_commands::FinalRunResult, ExtraArguments, Package, RunResult,
+    Target, TestRunError,
 };
 use core::fmt;
 use std::{
@@ -305,6 +306,12 @@ impl core::fmt::Display for CargoCommand<'_> {
 }
 
 impl<'a> CargoCommand<'a> {
+    pub fn as_cmd_string(&self) -> String {
+        let executable = self.executable();
+        let args = self.args().join(" ");
+        format!("{executable} {args}")
+    }
+
     fn command(&self) -> &str {
         match self {
             CargoCommand::Run { .. } | CargoCommand::Qemu { .. } => "run",
@@ -702,7 +709,7 @@ pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(),
     }
 }
 
-pub fn handle_results(results: Vec<FinalRunResult>) -> anyhow::Result<()> {
+pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> anyhow::Result<()> {
     let errors = results.iter().filter_map(|r| {
         if let FinalRunResult::Failed(c, r) = r {
             Some((c, r))
@@ -748,11 +755,15 @@ pub fn handle_results(results: Vec<FinalRunResult>) -> anyhow::Result<()> {
     errors.clone().for_each(log_stdout_stderr(Level::Error));
 
     successes.for_each(|(cmd, _)| {
-        info!("✅ Success: {cmd}");
+        if globals.verbose > 0 {
+            info!("✅ Success: {cmd}\n    {}", cmd.as_cmd_string());
+        } else {
+            info!("✅ Success: {cmd}");
+        }
     });
 
     errors.clone().for_each(|(cmd, _)| {
-        error!("❌ Failed: {cmd}");
+        error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
     });
 
     let ecount = errors.count();
