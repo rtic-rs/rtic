@@ -157,7 +157,7 @@ pub enum BuildOrCheck {
 #[derive(Parser, Clone)]
 pub struct Globals {
     /// For which backend to build (defaults to thumbv7)
-    #[arg(value_enum, short, long)]
+    #[arg(value_enum, short, long, global = true)]
     pub backend: Option<Backends>,
 
     /// List of comma separated examples to include, all others are excluded
@@ -166,7 +166,7 @@ pub struct Globals {
     ///
     /// Example: `cargo xtask --example complex,spawn,init`
     /// would include complex, spawn and init
-    #[arg(short, long, group = "example_group")]
+    #[arg(short, long, group = "example_group", global = true)]
     pub example: Option<String>,
 
     /// List of comma separated examples to exclude, all others are included
@@ -175,11 +175,11 @@ pub struct Globals {
     ///
     /// Example: `cargo xtask --excludeexample complex,spawn,init`
     /// would exclude complex, spawn and init
-    #[arg(long, group = "example_group")]
+    #[arg(long, group = "example_group", global = true)]
     pub exampleexclude: Option<String>,
 
     /// Enable more verbose output, repeat up to `-vvv` for even more
-    #[arg(short, long, action = clap::ArgAction::Count)]
+    #[arg(short, long, action = clap::ArgAction::Count, global = true)]
     pub verbose: u8,
 
     /// Enable `stderr` inheritance on child processes.
@@ -187,7 +187,7 @@ pub struct Globals {
     /// If this flag is enabled, the output of `stderr` produced by child
     /// processes is printed directly to `stderr`. This will cause a lot of
     /// clutter, but can make debugging long-running processes a lot easier.
-    #[arg(short, long)]
+    #[arg(short, long, global = true)]
     pub stderr_inherited: bool,
 }
 
