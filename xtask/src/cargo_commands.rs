@@ -312,30 +312,36 @@ pub fn qemu_run_examples<'c>(
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
-    let build = examples_iter(examples).map(|example| {
-        let cmd_build = CargoCommand::ExampleBuild {
-            // We need to be in the correct
-            cargoarg: &None,
-            example,
-            target,
-            features: features.clone(),
-            mode: BuildMode::Release,
-        };
-        (globals, cmd_build, overwrite)
-    });
+    examples_iter(examples)
+        .flat_map(|example| {
+            let cmd_build = CargoCommand::ExampleBuild {
+                cargoarg: &None,
+                example,
+                target,
+                features: features.clone(),
+                mode: BuildMode::Release,
+            };
 
-    let run = examples_iter(examples).map(|example| {
-        let cmd_qemu = CargoCommand::Qemu {
-            cargoarg,
-            example,
-            target,
-            features: features.clone(),
-            mode: BuildMode::Release,
-        };
-        (globals, cmd_qemu, overwrite)
-    });
+            let cmd_qemu = CargoCommand::Qemu {
+                cargoarg,
+                example,
+                target,
+                features: features.clone(),
+                mode: BuildMode::Release,
+            };
 
-    build.chain(run).run_and_coalesce()
+            #[cfg(not(feature = "rayon"))]
+            {
+                [cmd_build, cmd_qemu].into_iter()
+            }
+
+            #[cfg(feature = "rayon")]
+            {
+                [cmd_build, cmd_qemu].into_par_iter()
+            }
+        })
+        .map(|cmd| (globals, cmd, overwrite))
+        .run_and_coalesce()
 }
 
 /// Check the binary sizes of examples

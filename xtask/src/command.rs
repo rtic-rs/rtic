@@ -765,6 +765,10 @@ pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::R
         log::info!("\n{}", stdout);
     }
 
+    if !exit_status.success() {
+        log::error!("❌ Command failed. Run to completion for the summary.");
+    }
+
     Ok(RunResult {
         exit_status,
         stdout,
@@ -825,32 +829,19 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
     });
 
     let log_stdout_stderr = |level: Level| {
-        move |(command, stdout, stderr): (&CargoCommand, &String, &String)| {
+        move |(cmd, stdout, stderr): (&CargoCommand, &String, &String)| {
+            let cmd = cmd.as_cmd_string();
             if !stdout.is_empty() && !stderr.is_empty() {
-                log::log!(
-                    level,
-                    "Output for \"{command}\"\nStdout:\n{stdout}\nStderr:\n{stderr}"
-                );
+                log::log!(level, "\n{cmd}\nStdout:\n{stdout}\nStderr:\n{stderr}");
             } else if !stdout.is_empty() {
-                log::log!(
-                    level,
-                    "Output for \"{command}\":\nStdout:\n{}",
-                    stdout.trim_end()
-                );
+                log::log!(level, "\n{cmd}\nStdout:\n{}", stdout.trim_end());
             } else if !stderr.is_empty() {
-                log::log!(
-                    level,
-                    "Output for \"{command}\"\nStderr:\n{}",
-                    stderr.trim_end()
-                );
+                log::log!(level, "\n{cmd}\nStderr:\n{}", stderr.trim_end());
             }
         }
     };
 
-    successes.clone().for_each(log_stdout_stderr(Level::Debug));
-    errors.clone().for_each(log_stdout_stderr(Level::Error));
-
-    successes.for_each(|(cmd, _, _)| {
+    successes.for_each(|(cmd, stdout, stderr)| {
         let path = if let Some(dir) = cmd.chdir() {
             let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
             format!(" (in {path}")
@@ -863,15 +854,18 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
         } else {
             info!("✅ Success: {cmd}{path}");
         }
+
+        log_stdout_stderr(Level::Debug)((cmd, stdout, stderr));
     });
 
-    errors.clone().for_each(|(cmd, _, _)| {
+    errors.clone().for_each(|(cmd, stdout, stderr)| {
         if let Some(dir) = cmd.chdir() {
             let path = dir.as_os_str().to_str().unwrap_or("Not displayable");
             error!("❌ Failed: {cmd} (in {path}) \n    {}", cmd.as_cmd_string());
         } else {
             error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
         }
+        log_stdout_stderr(Level::Error)((cmd, stdout, stderr));
     });
 
     command_errors
