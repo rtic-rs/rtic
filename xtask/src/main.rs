@@ -3,9 +3,9 @@ mod build;
 mod cargo_commands;
 mod command;
 
-use anyhow::bail;
-use argument_parsing::{ExtraArguments, Package};
+use argument_parsing::{ExtraArguments, Globals, Package};
 use clap::Parser;
+use command::OutputMode;
 use core::fmt;
 use diffy::{create_patch, PatchFormatter};
 use std::{
@@ -14,32 +14,60 @@ use std::{
     fs::File,
     io::prelude::*,
     path::{Path, PathBuf},
-    process,
     process::ExitStatus,
     str,
 };
 
-use env_logger::Env;
-use log::{debug, error, info, log_enabled, trace, Level};
+use log::{error, info, log_enabled, trace, Level};
 
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, Cli, Commands, PackageOpt},
+    argument_parsing::{Backends, BuildOrCheck, Cli, Commands},
     build::init_build_dir,
     cargo_commands::{
         build_and_check_size, cargo, cargo_book, cargo_clippy, cargo_doc, cargo_example,
         cargo_format, cargo_test, run_test,
     },
-    command::{run_command, run_successful, CargoCommand},
+    command::{handle_results, run_command, run_successful, CargoCommand},
 };
 
-// x86_64-unknown-linux-gnu
-const _X86_64: &str = "x86_64-unknown-linux-gnu";
-const ARMV6M: &str = "thumbv6m-none-eabi";
-const ARMV7M: &str = "thumbv7m-none-eabi";
-const ARMV8MBASE: &str = "thumbv8m.base-none-eabi";
-const ARMV8MMAIN: &str = "thumbv8m.main-none-eabi";
+#[derive(Debug, Clone, Copy)]
+pub struct Target<'a> {
+    triple: &'a str,
+    has_std: bool,
+}
 
-const DEFAULT_FEATURES: &str = "test-critical-section";
+impl<'a> Target<'a> {
+    const DEFAULT_FEATURES: &str = "test-critical-section";
+
+    pub const fn new(triple: &'a str, has_std: bool) -> Self {
+        Self { triple, has_std }
+    }
+
+    pub fn triple(&self) -> &str {
+        self.triple
+    }
+
+    pub fn has_std(&self) -> bool {
+        self.has_std
+    }
+
+    pub fn and_features(&self, features: &str) -> String {
+        format!("{},{}", Self::DEFAULT_FEATURES, features)
+    }
+}
+
+impl core::fmt::Display for Target<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.triple)
+    }
+}
+
+// x86_64-unknown-linux-gnu
+const _X86_64: Target = Target::new("x86_64-unknown-linux-gnu", true);
+const ARMV6M: Target = Target::new("thumbv6m-none-eabi", false);
+const ARMV7M: Target = Target::new("thumbv7m-none-eabi", false);
+const ARMV8MBASE: Target = Target::new("thumbv8m.base-none-eabi", false);
+const ARMV8MMAIN: Target = Target::new("thumbv8m.main-none-eabi", false);
 
 #[derive(Debug, Clone)]
 pub struct RunResult {
@@ -96,7 +124,9 @@ fn main() -> anyhow::Result<()> {
     // check the name of `env::current_dir()` because people might clone it into a different name)
     let probably_running_from_repo_root = Path::new("./xtask").exists();
     if !probably_running_from_repo_root {
-        bail!("xtasks can only be executed from the root of the `rtic` repository");
+        return Err(anyhow::anyhow!(
+            "xtasks can only be executed from the root of the `rtic` repository"
+        ));
     }
 
     let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
@@ -108,26 +138,28 @@ fn main() -> anyhow::Result<()> {
 
     let cli = Cli::parse();
 
-    let env_logger_default_level = match cli.verbose {
-        0 => Env::default().default_filter_or("info"),
-        1 => Env::default().default_filter_or("debug"),
-        _ => Env::default().default_filter_or("trace"),
+    let globals = &cli.globals;
+
+    let env_logger_default_level = match globals.verbose {
+        0 => "info",
+        1 => "debug",
+        _ => "trace",
     };
-    env_logger::Builder::from_env(env_logger_default_level)
-        .format_module_path(false)
-        .format_timestamp(None)
+
+    pretty_env_logger::formatted_builder()
+        .parse_filters(&std::env::var("RUST_LOG").unwrap_or(env_logger_default_level.into()))
         .init();
 
-    trace!("default logging level: {0}", cli.verbose);
+    trace!("default logging level: {0}", globals.verbose);
 
-    let backend = if let Some(backend) = cli.backend {
+    let backend = if let Some(backend) = globals.backend {
         backend
     } else {
         Backends::default()
     };
 
-    let example = cli.example;
-    let exampleexclude = cli.exampleexclude;
+    let example = globals.example.clone();
+    let exampleexclude = globals.exampleexclude.clone();
 
     let examples_to_run = {
         let mut examples_to_run = examples.clone();
@@ -164,10 +196,10 @@ fn main() -> anyhow::Result<()> {
                     \n{examples:#?}\n\
              By default if example flag is emitted, all examples are tested.",
             );
-            process::exit(exitcode::USAGE);
+            return Err(anyhow::anyhow!("Incorrect usage"));
         } else {
+            examples_to_run
         }
-        examples_to_run
     };
 
     init_build_dir()?;
@@ -185,104 +217,91 @@ fn main() -> anyhow::Result<()> {
         Some("--quiet")
     };
 
-    match cli.command {
-        Commands::FormatCheck(args) => {
-            info!("Running cargo fmt --check: {args:?}");
-            let check_only = true;
-            cargo_format(&cargologlevel, &args, check_only)?;
-        }
-        Commands::Format(args) => {
-            info!("Running cargo fmt: {args:?}");
-            let check_only = false;
-            cargo_format(&cargologlevel, &args, check_only)?;
-        }
+    let final_run_results = match &cli.command {
+        Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
         Commands::Clippy(args) => {
             info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(&cargologlevel, &args, backend)?;
+            cargo_clippy(globals, &cargologlevel, &args, backend)
         }
         Commands::Check(args) => {
             info!("Checking on backend: {backend:?}");
-            cargo(BuildOrCheck::Check, &cargologlevel, &args, backend)?;
+            cargo(globals, BuildOrCheck::Check, &cargologlevel, &args, backend)
         }
         Commands::Build(args) => {
             info!("Building for backend: {backend:?}");
-            cargo(BuildOrCheck::Build, &cargologlevel, &args, backend)?;
+            cargo(globals, BuildOrCheck::Build, &cargologlevel, &args, backend)
         }
         Commands::ExampleCheck => {
             info!("Checking on backend: {backend:?}");
             cargo_example(
+                globals,
                 BuildOrCheck::Check,
                 &cargologlevel,
                 backend,
                 &examples_to_run,
-            )?;
+            )
         }
         Commands::ExampleBuild => {
             info!("Building for backend: {backend:?}");
             cargo_example(
+                globals,
                 BuildOrCheck::Build,
                 &cargologlevel,
                 backend,
                 &examples_to_run,
-            )?;
+            )
         }
         Commands::Size(args) => {
             // x86_64 target not valid
             info!("Measuring for backend: {backend:?}");
-            build_and_check_size(&cargologlevel, backend, &examples_to_run, &args.arguments)?;
+            build_and_check_size(
+                globals,
+                &cargologlevel,
+                backend,
+                &examples_to_run,
+                &args.arguments,
+            )
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
             info!("Testing for backend: {backend:?}");
             run_test(
+                globals,
                 &cargologlevel,
                 backend,
                 &examples_to_run,
                 args.overwrite_expected,
-            )?;
+            )
         }
         Commands::Doc(args) => {
             info!("Running cargo doc on backend: {backend:?}");
-            cargo_doc(&cargologlevel, backend, &args.arguments)?;
+            cargo_doc(globals, &cargologlevel, backend, &args.arguments)
         }
         Commands::Test(args) => {
             info!("Running cargo test on backend: {backend:?}");
-            cargo_test(&args, backend)?;
+            cargo_test(globals, &args, backend)
         }
         Commands::Book(args) => {
             info!("Running mdbook");
-            cargo_book(&args.arguments)?;
+            cargo_book(globals, &args.arguments)
         }
-    }
+    };
 
-    Ok(())
-}
-
-/// Get the features needed given the selected package
-///
-/// Without package specified the features for RTIC are required
-/// With only a single package which is not RTIC, no special
-/// features are needed
-fn package_feature_extractor(package: &PackageOpt, backend: Backends) -> Option<String> {
-    let default_features = Some(format!(
-        "{},{}",
-        DEFAULT_FEATURES,
-        backend.to_rtic_feature()
-    ));
-    if let Some(package) = package.package {
-        debug!("\nTesting package: {package}");
-        match package {
-            Package::Rtic => default_features,
-            Package::RticMacros => Some(backend.to_rtic_macros_feature().to_owned()),
-            _ => None,
-        }
-    } else {
-        default_features
-    }
+    handle_results(globals, final_run_results)
 }
 
 // run example binary `example`
-fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
+fn command_parser(
+    glob: &Globals,
+    command: &CargoCommand,
+    overwrite: bool,
+) -> anyhow::Result<RunResult> {
+    let output_mode = if glob.stderr_inherited {
+        OutputMode::Inherited
+    } else {
+        OutputMode::PipedAndCollected
+    };
+
     match *command {
         CargoCommand::Qemu { example, .. } | CargoCommand::Run { example, .. } => {
             let run_file = format!("{example}.run");
@@ -295,7 +314,7 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
 
             // cargo run <..>
             info!("Running example: {example}");
-            let cargo_run_result = run_command(command)?;
+            let cargo_run_result = run_command(command, output_mode)?;
             info!("{}", cargo_run_result.stdout);
 
             // Create a file for the expected output if it does not exist or mismatches
@@ -315,8 +334,9 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
                 };
             } else {
                 run_successful(&cargo_run_result, &expected_output_file)?;
-            }
-            Ok(())
+            };
+
+            Ok(cargo_run_result)
         }
         CargoCommand::Format { .. }
         | CargoCommand::ExampleCheck { .. }
@@ -328,28 +348,8 @@ fn command_parser(command: &CargoCommand, overwrite: bool) -> anyhow::Result<()>
         | CargoCommand::Test { .. }
         | CargoCommand::Book { .. }
         | CargoCommand::ExampleSize { .. } => {
-            let cargo_result = run_command(command)?;
-            if let Some(exit_code) = cargo_result.exit_status.code() {
-                if exit_code != exitcode::OK {
-                    error!("Exit code from command: {exit_code}");
-                    if !cargo_result.stdout.is_empty() {
-                        info!("{}", cargo_result.stdout);
-                    }
-                    if !cargo_result.stderr.is_empty() {
-                        error!("{}", cargo_result.stderr);
-                    }
-                    process::exit(exit_code);
-                } else {
-                    if !cargo_result.stdout.is_empty() {
-                        info!("{}", cargo_result.stdout);
-                    }
-                    if !cargo_result.stderr.is_empty() {
-                        info!("{}", cargo_result.stderr);
-                    }
-                }
-            }
-
-            Ok(())
+            let cargo_result = run_command(command, output_mode)?;
+            Ok(cargo_result)
         }
     }
 }

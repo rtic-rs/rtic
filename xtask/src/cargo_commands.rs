@@ -1,55 +1,143 @@
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Package, PackageOpt, TestMetadata},
+    argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, TestMetadata},
     command::{BuildMode, CargoCommand},
-    command_parser, package_feature_extractor, DEFAULT_FEATURES,
+    command_parser, RunResult,
 };
 use log::error;
+
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-/// Cargo command to either build or check
-pub fn cargo(
-    operation: BuildOrCheck,
-    cargoarg: &Option<&str>,
-    package: &PackageOpt,
-    backend: Backends,
-) -> anyhow::Result<()> {
-    let features = package_feature_extractor(package, backend);
+use iters::*;
 
-    let command = match operation {
-        BuildOrCheck::Check => CargoCommand::Check {
-            cargoarg,
-            package: package.package,
-            target: backend.to_target(),
-            features,
-            mode: BuildMode::Release,
-        },
-        BuildOrCheck::Build => CargoCommand::Build {
-            cargoarg,
-            package: package.package,
-            target: backend.to_target(),
-            features,
-            mode: BuildMode::Release,
-        },
-    };
-    command_parser(&command, false)?;
-    Ok(())
+pub enum FinalRunResult<'c> {
+    Success(CargoCommand<'c>, RunResult),
+    Failed(CargoCommand<'c>, RunResult),
+    CommandError(anyhow::Error),
+}
+
+fn run_and_convert<'a>(
+    (global, command, overwrite): (&Globals, CargoCommand<'a>, bool),
+) -> FinalRunResult<'a> {
+    // Run the command
+    let result = command_parser(global, &command, overwrite);
+    match result {
+        // If running the command succeeded without looking at any of the results,
+        // log the data and see if the actual execution was succesfull too.
+        Ok(result) => {
+            if result.exit_status.success() {
+                FinalRunResult::Success(command, result)
+            } else {
+                FinalRunResult::Failed(command, result)
+            }
+        }
+        // If it didn't and some IO error occured, just panic
+        Err(e) => FinalRunResult::CommandError(e),
+    }
+}
+
+pub trait CoalescingRunner<'c> {
+    /// Run all the commands in this iterator, and coalesce the results into
+    /// one error (if any individual commands failed)
+    fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>>;
+}
+
+#[cfg(not(feature = "rayon"))]
+mod iters {
+    use super::*;
+
+    pub fn examples_iter(examples: &[String]) -> impl Iterator<Item = &String> {
+        examples.into_iter()
+    }
+
+    impl<'g, 'c, I> CoalescingRunner<'c> for I
+    where
+        I: Iterator<Item = (&'g Globals, CargoCommand<'c>, bool)>,
+    {
+        fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>> {
+            self.map(run_and_convert).collect()
+        }
+    }
+}
+
+#[cfg(feature = "rayon")]
+mod iters {
+    use super::*;
+
+    pub fn examples_iter(examples: &[String]) -> impl ParallelIterator<Item = &String> {
+        examples.into_par_iter()
+    }
+
+    impl<'g, 'c, I> CoalescingRunner<'c> for I
+    where
+        I: ParallelIterator<Item = (&'g Globals, CargoCommand<'c>, bool)>,
+    {
+        fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>> {
+            self.map(run_and_convert).collect()
+        }
+    }
+}
+
+/// Cargo command to either build or check
+pub fn cargo<'c>(
+    globals: &Globals,
+    operation: BuildOrCheck,
+    cargoarg: &'c Option<&'c str>,
+    package: &'c PackageOpt,
+    backend: Backends,
+) -> Vec<FinalRunResult<'c>> {
+    let runner = package
+        .packages()
+        .flat_map(|package| {
+            let target = backend.to_target();
+            let features = package.features(target, backend, globals.partial);
+
+            #[cfg(feature = "rayon")]
+            {
+                features.into_par_iter().map(move |f| (package, target, f))
+            }
+
+            #[cfg(not(feature = "rayon"))]
+            {
+                features.into_iter().map(move |f| (package, target, f))
+            }
+        })
+        .map(move |(package, target, features)| {
+            let command = match operation {
+                BuildOrCheck::Check => CargoCommand::Check {
+                    cargoarg,
+                    package: Some(package),
+                    target,
+                    features,
+                    mode: BuildMode::Release,
+                },
+                BuildOrCheck::Build => CargoCommand::Build {
+                    cargoarg,
+                    package: Some(package),
+                    target,
+                    features,
+                    mode: BuildMode::Release,
+                },
+            };
+
+            (globals, command, false)
+        });
+
+    runner.run_and_coalesce()
 }
 
 /// Cargo command to either build or check all examples
 ///
 /// The examples are in rtic/examples
-pub fn cargo_example(
+pub fn cargo_example<'c>(
+    globals: &Globals,
     operation: BuildOrCheck,
-    cargoarg: &Option<&str>,
+    cargoarg: &'c Option<&'c str>,
     backend: Backends,
-    examples: &[String],
-) -> anyhow::Result<()> {
-    examples.into_par_iter().for_each(|example| {
-        let features = Some(format!(
-            "{},{}",
-            DEFAULT_FEATURES,
-            backend.to_rtic_feature()
-        ));
+    examples: &'c [String],
+) -> Vec<FinalRunResult<'c>> {
+    let runner = examples_iter(examples).map(|example| {
+        let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
         let command = match operation {
             BuildOrCheck::Check => CargoCommand::ExampleCheck {
@@ -67,184 +155,178 @@ pub fn cargo_example(
                 mode: BuildMode::Release,
             },
         };
-
-        if let Err(err) = command_parser(&command, false) {
-            error!("{err}");
-        }
+        (globals, command, false)
     });
-
-    Ok(())
+    runner.run_and_coalesce()
 }
 
 /// Run cargo clippy on selected package
-pub fn cargo_clippy(
-    cargoarg: &Option<&str>,
-    package: &PackageOpt,
+pub fn cargo_clippy<'c>(
+    globals: &Globals,
+    cargoarg: &'c Option<&'c str>,
+    package: &'c PackageOpt,
     backend: Backends,
-) -> anyhow::Result<()> {
-    let features = package_feature_extractor(package, backend);
-    command_parser(
-        &CargoCommand::Clippy {
-            cargoarg,
-            package: package.package,
-            target: backend.to_target(),
-            features,
-        },
-        false,
-    )?;
-    Ok(())
+) -> Vec<FinalRunResult<'c>> {
+    let runner = package
+        .packages()
+        .flat_map(|package| {
+            let target = backend.to_target();
+            let features = package.features(target, backend, globals.partial);
+
+            #[cfg(feature = "rayon")]
+            {
+                features.into_par_iter().map(move |f| (package, target, f))
+            }
+
+            #[cfg(not(feature = "rayon"))]
+            {
+                features.into_iter().map(move |f| (package, target, f))
+            }
+        })
+        .map(move |(package, target, features)| {
+            (
+                globals,
+                CargoCommand::Clippy {
+                    cargoarg,
+                    package: Some(package),
+                    target,
+                    features,
+                },
+                false,
+            )
+        });
+
+    runner.run_and_coalesce()
 }
 
 /// Run cargo fmt on selected package
-pub fn cargo_format(
-    cargoarg: &Option<&str>,
-    package: &PackageOpt,
+pub fn cargo_format<'c>(
+    globals: &Globals,
+    cargoarg: &'c Option<&'c str>,
+    package: &'c PackageOpt,
     check_only: bool,
-) -> anyhow::Result<()> {
-    command_parser(
-        &CargoCommand::Format {
-            cargoarg,
-            package: package.package,
-            check_only,
-        },
-        false,
-    )?;
-    Ok(())
+) -> Vec<FinalRunResult<'c>> {
+    let runner = package.packages().map(|p| {
+        (
+            globals,
+            CargoCommand::Format {
+                cargoarg,
+                package: Some(p),
+                check_only,
+            },
+            false,
+        )
+    });
+    runner.run_and_coalesce()
 }
 
 /// Run cargo doc
-pub fn cargo_doc(
-    cargoarg: &Option<&str>,
+pub fn cargo_doc<'c>(
+    globals: &Globals,
+    cargoarg: &'c Option<&'c str>,
     backend: Backends,
-    arguments: &Option<ExtraArguments>,
-) -> anyhow::Result<()> {
-    let features = Some(format!(
-        "{},{}",
-        DEFAULT_FEATURES,
-        backend.to_rtic_feature()
-    ));
+    arguments: &'c Option<ExtraArguments>,
+) -> Vec<FinalRunResult<'c>> {
+    let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
-    command_parser(
-        &CargoCommand::Doc {
-            cargoarg,
-            features,
-            arguments: arguments.clone(),
-        },
-        false,
-    )?;
-    Ok(())
+    let command = CargoCommand::Doc {
+        cargoarg,
+        features,
+        arguments: arguments.clone(),
+    };
+
+    vec![run_and_convert((globals, command, false))]
 }
 
-/// Run cargo test on the selcted package or all packages
+/// Run cargo test on the selected package or all packages
 ///
 /// If no package is specified, loop through all packages
-pub fn cargo_test(package: &PackageOpt, backend: Backends) -> anyhow::Result<()> {
-    if let Some(package) = package.package {
-        let cmd = TestMetadata::match_package(package, backend);
-        command_parser(&cmd, false)?;
-    } else {
-        // Iterate over all workspace packages
-        for package in [
-            Package::Rtic,
-            Package::RticCommon,
-            Package::RticMacros,
-            Package::RticMonotonics,
-            Package::RticSync,
-            Package::RticTime,
-        ] {
-            let mut error_messages = vec![];
-            let cmd = &TestMetadata::match_package(package, backend);
-            if let Err(err) = command_parser(cmd, false) {
-                error_messages.push(err);
-            }
-
-            if !error_messages.is_empty() {
-                for err in error_messages {
-                    error!("{err}");
-                }
-            }
-        }
-    }
-    Ok(())
+pub fn cargo_test<'c>(
+    globals: &Globals,
+    package: &'c PackageOpt,
+    backend: Backends,
+) -> Vec<FinalRunResult<'c>> {
+    package
+        .packages()
+        .map(|p| (globals, TestMetadata::match_package(p, backend), false))
+        .run_and_coalesce()
 }
 
 /// Use mdbook to build the book
-pub fn cargo_book(arguments: &Option<ExtraArguments>) -> anyhow::Result<()> {
-    command_parser(
-        &CargoCommand::Book {
+pub fn cargo_book<'c>(
+    globals: &Globals,
+    arguments: &'c Option<ExtraArguments>,
+) -> Vec<FinalRunResult<'c>> {
+    vec![run_and_convert((
+        globals,
+        CargoCommand::Book {
             arguments: arguments.clone(),
         },
         false,
-    )?;
-    Ok(())
+    ))]
 }
 
 /// Run examples
 ///
 /// Supports updating the expected output via the overwrite argument
-pub fn run_test(
-    cargoarg: &Option<&str>,
+pub fn run_test<'c>(
+    globals: &Globals,
+    cargoarg: &'c Option<&'c str>,
     backend: Backends,
-    examples: &[String],
+    examples: &'c [String],
     overwrite: bool,
-) -> anyhow::Result<()> {
-    examples.into_par_iter().for_each(|example| {
-        let cmd = CargoCommand::ExampleBuild {
-            cargoarg: &Some("--quiet"),
-            example,
-            target: backend.to_target(),
-            features: Some(format!(
-                "{},{}",
-                DEFAULT_FEATURES,
-                backend.to_rtic_feature()
-            )),
-            mode: BuildMode::Release,
-        };
-        if let Err(err) = command_parser(&cmd, false) {
-            error!("{err}");
-        }
+) -> Vec<FinalRunResult<'c>> {
+    let target = backend.to_target();
+    let features = Some(target.and_features(backend.to_rtic_feature()));
 
-        let cmd = CargoCommand::Qemu {
-            cargoarg,
-            example,
-            target: backend.to_target(),
-            features: Some(format!(
-                "{},{}",
-                DEFAULT_FEATURES,
-                backend.to_rtic_feature()
-            )),
-            mode: BuildMode::Release,
-        };
+    examples_iter(examples)
+        .map(|example| {
+            let cmd = CargoCommand::ExampleBuild {
+                cargoarg: &Some("--quiet"),
+                example,
+                target,
+                features: features.clone(),
+                mode: BuildMode::Release,
+            };
 
-        if let Err(err) = command_parser(&cmd, overwrite) {
-            error!("{err}");
-        }
-    });
+            if let Err(err) = command_parser(globals, &cmd, false) {
+                error!("{err}");
+            }
 
-    Ok(())
+            let cmd = CargoCommand::Qemu {
+                cargoarg,
+                example,
+                target,
+                features: features.clone(),
+                mode: BuildMode::Release,
+            };
+
+            (globals, cmd, overwrite)
+        })
+        .run_and_coalesce()
 }
 
 /// Check the binary sizes of examples
-pub fn build_and_check_size(
-    cargoarg: &Option<&str>,
+pub fn build_and_check_size<'c>(
+    globals: &Globals,
+    cargoarg: &'c Option<&'c str>,
     backend: Backends,
-    examples: &[String],
-    arguments: &Option<ExtraArguments>,
-) -> anyhow::Result<()> {
-    examples.into_par_iter().for_each(|example| {
+    examples: &'c [String],
+    arguments: &'c Option<ExtraArguments>,
+) -> Vec<FinalRunResult<'c>> {
+    let target = backend.to_target();
+    let features = Some(target.and_features(backend.to_rtic_feature()));
+
+    let runner = examples_iter(examples).map(|example| {
         // Make sure the requested example(s) are built
         let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
             example,
-            target: backend.to_target(),
-            features: Some(format!(
-                "{},{}",
-                DEFAULT_FEATURES,
-                backend.to_rtic_feature()
-            )),
+            target,
+            features: features.clone(),
             mode: BuildMode::Release,
         };
-        if let Err(err) = command_parser(&cmd, false) {
+        if let Err(err) = command_parser(globals, &cmd, false) {
             error!("{err}");
         }
 
@@ -252,18 +334,12 @@ pub fn build_and_check_size(
             cargoarg,
             example,
             target: backend.to_target(),
-            features: Some(format!(
-                "{},{}",
-                DEFAULT_FEATURES,
-                backend.to_rtic_feature()
-            )),
+            features: features.clone(),
             mode: BuildMode::Release,
             arguments: arguments.clone(),
         };
-        if let Err(err) = command_parser(&cmd, false) {
-            error!("{err}");
-        }
+        (globals, cmd, false)
     });
 
-    Ok(())
+    runner.run_and_coalesce()
 }
