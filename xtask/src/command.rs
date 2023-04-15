@@ -108,6 +108,14 @@ pub enum CargoCommand<'a> {
     },
 }
 
+impl core::fmt::Display for CargoCommand<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let executable = self.executable();
+        let args = self.args().join(" ");
+        write!(f, "\"{executable} {args}\"")
+    }
+}
+
 impl<'a> CargoCommand<'a> {
     fn command(&self) -> &str {
         match self {
@@ -460,12 +468,7 @@ impl fmt::Display for BuildMode {
 }
 
 pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Result<RunResult> {
-    let command_display = command.executable();
-    let args = command.args();
-
-    let full_command = format!("\"{command_display}\" {}", args.join(" "));
-
-    debug!("👟 {full_command}");
+    debug!("👟 {command}");
 
     let result = Command::new(command.executable())
         .args(command.args())
@@ -479,7 +482,6 @@ pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::R
 
     Ok(RunResult {
         exit_status,
-        full_command,
         stdout,
         stderr,
     })

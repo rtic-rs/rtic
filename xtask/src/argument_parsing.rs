@@ -275,11 +275,21 @@ pub struct PackageOpt {
 }
 
 impl PackageOpt {
+    #[cfg(not(feature = "rayon"))]
     pub fn packages(&self) -> impl Iterator<Item = Package> {
         self.package
             .map(|p| vec![p])
             .unwrap_or(Package::all())
             .into_iter()
+    }
+
+    #[cfg(feature = "rayon")]
+    pub fn packages(&self) -> impl rayon::prelude::ParallelIterator<Item = Package> {
+        use rayon::prelude::*;
+        self.package
+            .map(|p| vec![p])
+            .unwrap_or(Package::all())
+            .into_par_iter()
     }
 }
 

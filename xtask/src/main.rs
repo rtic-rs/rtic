@@ -3,7 +3,6 @@ mod build;
 mod cargo_commands;
 mod command;
 
-use anyhow::bail;
 use argument_parsing::{ExtraArguments, Globals, Package};
 use clap::Parser;
 use command::OutputMode;
@@ -15,7 +14,6 @@ use std::{
     fs::File,
     io::prelude::*,
     path::{Path, PathBuf},
-    process,
     process::ExitStatus,
     str,
 };
@@ -72,7 +70,6 @@ const ARMV8MMAIN: Target = Target::new("thumbv8m.main-none-eabi", false);
 #[derive(Debug, Clone)]
 pub struct RunResult {
     exit_status: ExitStatus,
-    full_command: String,
     stdout: String,
     stderr: String,
 }
@@ -125,7 +122,9 @@ fn main() -> anyhow::Result<()> {
     // check the name of `env::current_dir()` because people might clone it into a different name)
     let probably_running_from_repo_root = Path::new("./xtask").exists();
     if !probably_running_from_repo_root {
-        bail!("xtasks can only be executed from the root of the `rtic` repository");
+        return Err(anyhow::anyhow!(
+            "xtasks can only be executed from the root of the `rtic` repository"
+        ));
     }
 
     let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
@@ -195,10 +194,10 @@ fn main() -> anyhow::Result<()> {
                     \n{examples:#?}\n\
              By default if example flag is emitted, all examples are tested.",
             );
-            process::exit(exitcode::USAGE);
+            return Err(anyhow::anyhow!("Incorrect usage"));
         } else {
+            examples_to_run
         }
-        examples_to_run
     };
 
     init_build_dir()?;
@@ -299,7 +298,11 @@ fn main() -> anyhow::Result<()> {
 }
 
 // run example binary `example`
-fn command_parser(glob: &Globals, command: &CargoCommand, overwrite: bool) -> anyhow::Result<()> {
+fn command_parser(
+    glob: &Globals,
+    command: &CargoCommand,
+    overwrite: bool,
+) -> anyhow::Result<RunResult> {
     let output_mode = if glob.stderr_inherited {
         OutputMode::Inherited
     } else {
@@ -338,8 +341,9 @@ fn command_parser(glob: &Globals, command: &CargoCommand, overwrite: bool) -> an
                 };
             } else {
                 run_successful(&cargo_run_result, &expected_output_file)?;
-            }
-            Ok(())
+            };
+
+            Ok(cargo_run_result)
         }
         CargoCommand::Format { .. }
         | CargoCommand::ExampleCheck { .. }
@@ -352,30 +356,7 @@ fn command_parser(glob: &Globals, command: &CargoCommand, overwrite: bool) -> an
         | CargoCommand::Book { .. }
         | CargoCommand::ExampleSize { .. } => {
             let cargo_result = run_command(command, output_mode)?;
-            let command = cargo_result.full_command;
-            if let Some(exit_code) = cargo_result.exit_status.code() {
-                if exit_code != exitcode::OK {
-                    error!("Command {command} failed.");
-                    error!("Exit code: {exit_code}");
-
-                    if !cargo_result.stdout.is_empty() {
-                        info!("{}", cargo_result.stdout);
-                    }
-                    if !cargo_result.stderr.is_empty() {
-                        error!("{}", cargo_result.stderr);
-                    }
-                    process::exit(exit_code);
-                } else {
-                    if !cargo_result.stdout.is_empty() {
-                        info!("{}", cargo_result.stdout);
-                    }
-                    if !cargo_result.stderr.is_empty() {
-                        info!("{}", cargo_result.stderr);
-                    }
-                }
-            }
-
-            Ok(())
+            Ok(cargo_result)
         }
     }
 }
