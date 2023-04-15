@@ -148,6 +148,35 @@ jobs:
         if: ${{ matrix.backend != 'thumbv8-base' }}
         run: cargo xtask --backend ${{ matrix.backend }} example-check
 
+  # Check that the usage examples build
+  usageexamples:
+    name: Build usage examples
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        toolchain:
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Install rust ${{ matrix.toolchain }}
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure rust target (v6, v7)
+        run: |
+          rustup target add thumbv7m-none-eabi
+          rustup target add thumbv6m-none-eabi
+          rustup component add rust-src
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check the examples
+        run: cargo xtask usage-example-build
+
   # Verify the example output with run-pass tests
   testexamples:
     name: QEMU run
