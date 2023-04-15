@@ -3,14 +3,14 @@ use crate::{
     command::{BuildMode, CargoCommand},
     command_parser, RunResult,
 };
-use log::{error, info, Level};
+use log::error;
 
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
 use iters::*;
 
-enum FinalRunResult<'c> {
+pub enum FinalRunResult<'c> {
     Success(CargoCommand<'c>, RunResult),
     Failed(CargoCommand<'c>, RunResult),
     CommandError(anyhow::Error),
@@ -36,71 +36,10 @@ fn run_and_convert<'a>(
     }
 }
 
-fn handle_results(results: Vec<FinalRunResult>) -> anyhow::Result<()> {
-    let errors = results.iter().filter_map(|r| {
-        if let FinalRunResult::Failed(c, r) = r {
-            Some((c, r))
-        } else {
-            None
-        }
-    });
-
-    let successes = results.iter().filter_map(|r| {
-        if let FinalRunResult::Success(c, r) = r {
-            Some((c, r))
-        } else {
-            None
-        }
-    });
-
-    let log_stdout_stderr = |level: Level| {
-        move |(command, result): (&CargoCommand, &RunResult)| {
-            let stdout = &result.stdout;
-            let stderr = &result.stderr;
-            if !stdout.is_empty() && !stderr.is_empty() {
-                log::log!(
-                    level,
-                    "Output for \"{command}\"\nStdout:\n{stdout}\nStderr:\n{stderr}"
-                );
-            } else if !stdout.is_empty() {
-                log::log!(
-                    level,
-                    "Output for \"{command}\":\nStdout:\n{}",
-                    stdout.trim_end()
-                );
-            } else if !stderr.is_empty() {
-                log::log!(
-                    level,
-                    "Output for \"{command}\"\nStderr:\n{}",
-                    stderr.trim_end()
-                );
-            }
-        }
-    };
-
-    successes.clone().for_each(log_stdout_stderr(Level::Debug));
-    errors.clone().for_each(log_stdout_stderr(Level::Error));
-
-    successes.for_each(|(cmd, _)| {
-        info!("Success: {cmd}");
-    });
-
-    errors.clone().for_each(|(cmd, _)| {
-        error!("Failed: {cmd}");
-    });
-
-    let ecount = errors.count();
-    if ecount != 0 {
-        Err(anyhow::anyhow!("{ecount} commands failed."))
-    } else {
-        Ok(())
-    }
-}
-
-pub trait CoalescingRunning {
+pub trait CoalescingRunner<'c> {
     /// Run all the commands in this iterator, and coalesce the results into
     /// one error (if any individual commands failed)
-    fn run_and_coalesce(self) -> anyhow::Result<()>;
+    fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>>;
 }
 
 #[cfg(not(feature = "rayon"))]
@@ -111,13 +50,12 @@ mod iters {
         examples.into_iter()
     }
 
-    impl<'g, 'c, I> CoalescingRunning for I
+    impl<'g, 'c, I> CoalescingRunner<'c> for I
     where
         I: Iterator<Item = (&'g Globals, CargoCommand<'c>, bool)>,
     {
-        fn run_and_coalesce(self) -> anyhow::Result<()> {
-            let results: Vec<_> = self.map(run_and_convert).collect();
-            handle_results(results)
+        fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>> {
+            self.map(run_and_convert).collect()
         }
     }
 }
@@ -130,28 +68,26 @@ mod iters {
         examples.into_par_iter()
     }
 
-    impl<'g, 'c, I> CoalescingRunning for I
+    impl<'g, 'c, I> CoalescingRunner<'c> for I
     where
         I: ParallelIterator<Item = (&'g Globals, CargoCommand<'c>, bool)>,
     {
-        fn run_and_coalesce(self) -> anyhow::Result<()> {
-            let results: Vec<_> = self.map(run_and_convert).collect();
-            handle_results(results)
+        fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>> {
+            self.map(run_and_convert).collect()
         }
     }
 }
 
 /// Cargo command to either build or check
-pub fn cargo(
+pub fn cargo<'c>(
     globals: &Globals,
     operation: BuildOrCheck,
-    cargoarg: &Option<&str>,
-    package: &PackageOpt,
+    cargoarg: &'c Option<&'c str>,
+    package: &'c PackageOpt,
     backend: Backends,
-) -> anyhow::Result<()> {
-    let runner = package.packages().map(|package| {
+) -> Vec<FinalRunResult<'c>> {
+    let runner = package.packages().map(move |package| {
         let target = backend.to_target();
-
         let features = package.extract_features(target, backend);
 
         let command = match operation {
@@ -180,13 +116,13 @@ pub fn cargo(
 /// Cargo command to either build or check all examples
 ///
 /// The examples are in rtic/examples
-pub fn cargo_example(
+pub fn cargo_example<'c>(
     globals: &Globals,
     operation: BuildOrCheck,
-    cargoarg: &Option<&str>,
+    cargoarg: &'c Option<&'c str>,
     backend: Backends,
-    examples: &[String],
-) -> anyhow::Result<()> {
+    examples: &'c [String],
+) -> Vec<FinalRunResult<'c>> {
     let runner = examples_iter(examples).map(|example| {
         let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
@@ -212,12 +148,12 @@ pub fn cargo_example(
 }
 
 /// Run cargo clippy on selected package
-pub fn cargo_clippy(
+pub fn cargo_clippy<'c>(
     globals: &Globals,
-    cargoarg: &Option<&str>,
-    package: &PackageOpt,
+    cargoarg: &'c Option<&'c str>,
+    package: &'c PackageOpt,
     backend: Backends,
-) -> anyhow::Result<()> {
+) -> Vec<FinalRunResult<'c>> {
     let runner = package.packages().map(|p| {
         let target = backend.to_target();
         let features = p.extract_features(target, backend);
@@ -238,12 +174,12 @@ pub fn cargo_clippy(
 }
 
 /// Run cargo fmt on selected package
-pub fn cargo_format(
+pub fn cargo_format<'c>(
     globals: &Globals,
-    cargoarg: &Option<&str>,
-    package: &PackageOpt,
+    cargoarg: &'c Option<&'c str>,
+    package: &'c PackageOpt,
     check_only: bool,
-) -> anyhow::Result<()> {
+) -> Vec<FinalRunResult<'c>> {
     let runner = package.packages().map(|p| {
         (
             globals,
@@ -259,34 +195,31 @@ pub fn cargo_format(
 }
 
 /// Run cargo doc
-pub fn cargo_doc(
+pub fn cargo_doc<'c>(
     globals: &Globals,
-    cargoarg: &Option<&str>,
+    cargoarg: &'c Option<&'c str>,
     backend: Backends,
-    arguments: &Option<ExtraArguments>,
-) -> anyhow::Result<()> {
+    arguments: &'c Option<ExtraArguments>,
+) -> Vec<FinalRunResult<'c>> {
     let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
-    command_parser(
-        globals,
-        &CargoCommand::Doc {
-            cargoarg,
-            features,
-            arguments: arguments.clone(),
-        },
-        false,
-    )?;
-    Ok(())
+    let command = CargoCommand::Doc {
+        cargoarg,
+        features,
+        arguments: arguments.clone(),
+    };
+
+    vec![run_and_convert((globals, command, false))]
 }
 
 /// Run cargo test on the selected package or all packages
 ///
 /// If no package is specified, loop through all packages
-pub fn cargo_test(
+pub fn cargo_test<'c>(
     globals: &Globals,
-    package: &PackageOpt,
+    package: &'c PackageOpt,
     backend: Backends,
-) -> anyhow::Result<()> {
+) -> Vec<FinalRunResult<'c>> {
     package
         .packages()
         .map(|p| (globals, TestMetadata::match_package(p, backend), false))
@@ -294,29 +227,29 @@ pub fn cargo_test(
 }
 
 /// Use mdbook to build the book
-pub fn cargo_book(
+pub fn cargo_book<'c>(
     globals: &Globals,
-    arguments: &Option<ExtraArguments>,
-) -> anyhow::Result<RunResult> {
-    command_parser(
+    arguments: &'c Option<ExtraArguments>,
+) -> Vec<FinalRunResult<'c>> {
+    vec![run_and_convert((
         globals,
-        &CargoCommand::Book {
+        CargoCommand::Book {
             arguments: arguments.clone(),
         },
         false,
-    )
+    ))]
 }
 
 /// Run examples
 ///
 /// Supports updating the expected output via the overwrite argument
-pub fn run_test(
+pub fn run_test<'c>(
     globals: &Globals,
-    cargoarg: &Option<&str>,
+    cargoarg: &'c Option<&'c str>,
     backend: Backends,
-    examples: &[String],
+    examples: &'c [String],
     overwrite: bool,
-) -> anyhow::Result<()> {
+) -> Vec<FinalRunResult<'c>> {
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
@@ -348,13 +281,13 @@ pub fn run_test(
 }
 
 /// Check the binary sizes of examples
-pub fn build_and_check_size(
+pub fn build_and_check_size<'c>(
     globals: &Globals,
-    cargoarg: &Option<&str>,
+    cargoarg: &'c Option<&'c str>,
     backend: Backends,
-    examples: &[String],
-    arguments: &Option<ExtraArguments>,
-) -> anyhow::Result<()> {
+    examples: &'c [String],
+    arguments: &'c Option<ExtraArguments>,
+) -> Vec<FinalRunResult<'c>> {
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 

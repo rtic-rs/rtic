@@ -113,7 +113,7 @@ pub enum Backends {
 
 impl Backends {
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_target(&self) -> Target {
+    pub fn to_target(&self) -> Target<'static> {
         match self {
             Backends::Thumbv6 => ARMV6M,
             Backends::Thumbv7 => ARMV7M,
@@ -123,7 +123,7 @@ impl Backends {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_feature(&self) -> &str {
+    pub fn to_rtic_feature(&self) -> &'static str {
         match self {
             Backends::Thumbv6 => "thumbv6-backend",
             Backends::Thumbv7 => "thumbv7-backend",
@@ -132,14 +132,14 @@ impl Backends {
         }
     }
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_macros_feature(&self) -> &str {
+    pub fn to_rtic_macros_feature(&self) -> &'static str {
         match self {
             Backends::Thumbv6 | Backends::Thumbv8Base => "cortex-m-source-masking",
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
         }
     }
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_uitest_feature(&self) -> &str {
+    pub fn to_rtic_uitest_feature(&self) -> &'static str {
         match self {
             Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
             Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
@@ -205,9 +205,6 @@ pub struct Cli {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
-    /// Check formatting
-    FormatCheck(PackageOpt),
-
     /// Format code
     #[clap(alias = "fmt")]
     Format(FormatOpt),
@@ -270,9 +267,9 @@ pub enum Commands {
 pub struct FormatOpt {
     #[clap(flatten)]
     pub package: PackageOpt,
-    /// Only check formatting, without applying fixes.
-    #[clap(short, long, alias = "check-only")]
-    pub check: bool,
+    /// Apply formatting fixes immediately.
+    #[clap(short, long)]
+    pub apply: bool,
 }
 
 #[derive(Args, Debug, Clone)]

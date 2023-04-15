@@ -1,4 +1,8 @@
-use crate::{debug, ExtraArguments, Package, RunResult, Target, TestRunError};
+use log::{error, info, Level};
+
+use crate::{
+    cargo_commands::FinalRunResult, ExtraArguments, Package, RunResult, Target, TestRunError,
+};
 use core::fmt;
 use std::{
     fs::File,
@@ -279,7 +283,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                     .map(|t| format!("test {t}"))
                     .unwrap_or("all tests".into());
                 let feat = feat(features);
-                write!(f, "Run {test} in {p} ({feat})")
+                write!(f, "Run {test} in {p} (features: {feat})")
             }
             CargoCommand::Book { arguments: _ } => write!(f, "Build the book"),
             CargoCommand::ExampleSize {
@@ -652,7 +656,7 @@ impl fmt::Display for BuildMode {
 }
 
 pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Result<RunResult> {
-    debug!("👟 {command}");
+    log::info!("👟 {command}");
 
     let result = Command::new(command.executable())
         .args(command.args())
@@ -693,6 +697,67 @@ pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(),
         })
     } else if !run.exit_status.success() {
         Err(TestRunError::CommandError(run.clone()))
+    } else {
+        Ok(())
+    }
+}
+
+pub fn handle_results(results: Vec<FinalRunResult>) -> anyhow::Result<()> {
+    let errors = results.iter().filter_map(|r| {
+        if let FinalRunResult::Failed(c, r) = r {
+            Some((c, r))
+        } else {
+            None
+        }
+    });
+
+    let successes = results.iter().filter_map(|r| {
+        if let FinalRunResult::Success(c, r) = r {
+            Some((c, r))
+        } else {
+            None
+        }
+    });
+
+    let log_stdout_stderr = |level: Level| {
+        move |(command, result): (&CargoCommand, &RunResult)| {
+            let stdout = &result.stdout;
+            let stderr = &result.stderr;
+            if !stdout.is_empty() && !stderr.is_empty() {
+                log::log!(
+                    level,
+                    "Output for \"{command}\"\nStdout:\n{stdout}\nStderr:\n{stderr}"
+                );
+            } else if !stdout.is_empty() {
+                log::log!(
+                    level,
+                    "Output for \"{command}\":\nStdout:\n{}",
+                    stdout.trim_end()
+                );
+            } else if !stderr.is_empty() {
+                log::log!(
+                    level,
+                    "Output for \"{command}\"\nStderr:\n{}",
+                    stderr.trim_end()
+                );
+            }
+        }
+    };
+
+    successes.clone().for_each(log_stdout_stderr(Level::Debug));
+    errors.clone().for_each(log_stdout_stderr(Level::Error));
+
+    successes.for_each(|(cmd, _)| {
+        info!("✅ Success: {cmd}");
+    });
+
+    errors.clone().for_each(|(cmd, _)| {
+        error!("❌ Failed: {cmd}");
+    });
+
+    let ecount = errors.count();
+    if ecount != 0 {
+        Err(anyhow::anyhow!("{ecount} commands failed."))
     } else {
         Ok(())
     }

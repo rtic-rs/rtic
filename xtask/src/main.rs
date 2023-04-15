@@ -18,7 +18,7 @@ use std::{
     str,
 };
 
-use log::{debug, error, info, log_enabled, trace, Level};
+use log::{error, info, log_enabled, trace, Level};
 
 use crate::{
     argument_parsing::{Backends, BuildOrCheck, Cli, Commands},
@@ -27,7 +27,7 @@ use crate::{
         build_and_check_size, cargo, cargo_book, cargo_clippy, cargo_doc, cargo_example,
         cargo_format, cargo_test, run_test,
     },
-    command::{run_command, run_successful, CargoCommand},
+    command::{handle_results, run_command, run_successful, CargoCommand},
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -217,27 +217,19 @@ fn main() -> anyhow::Result<()> {
         Some("--quiet")
     };
 
-    match cli.command {
-        Commands::FormatCheck(args) => {
-            info!("Running cargo fmt --check: {args:?}");
-            let check_only = true;
-            cargo_format(globals, &cargologlevel, &args, check_only)?;
-        }
-        Commands::Format(args) => {
-            info!("Running cargo fmt: {args:?}");
-            cargo_format(globals, &cargologlevel, &args.package, args.check)?;
-        }
+    let final_run_results = match &cli.command {
+        Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, !args.apply),
         Commands::Clippy(args) => {
             info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(globals, &cargologlevel, &args, backend)?;
+            cargo_clippy(globals, &cargologlevel, &args, backend)
         }
         Commands::Check(args) => {
             info!("Checking on backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Check, &cargologlevel, &args, backend)?;
+            cargo(globals, BuildOrCheck::Check, &cargologlevel, &args, backend)
         }
         Commands::Build(args) => {
             info!("Building for backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Build, &cargologlevel, &args, backend)?;
+            cargo(globals, BuildOrCheck::Build, &cargologlevel, &args, backend)
         }
         Commands::ExampleCheck => {
             info!("Checking on backend: {backend:?}");
@@ -247,7 +239,7 @@ fn main() -> anyhow::Result<()> {
                 &cargologlevel,
                 backend,
                 &examples_to_run,
-            )?;
+            )
         }
         Commands::ExampleBuild => {
             info!("Building for backend: {backend:?}");
@@ -257,7 +249,7 @@ fn main() -> anyhow::Result<()> {
                 &cargologlevel,
                 backend,
                 &examples_to_run,
-            )?;
+            )
         }
         Commands::Size(args) => {
             // x86_64 target not valid
@@ -268,7 +260,7 @@ fn main() -> anyhow::Result<()> {
                 backend,
                 &examples_to_run,
                 &args.arguments,
-            )?;
+            )
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
@@ -279,23 +271,23 @@ fn main() -> anyhow::Result<()> {
                 backend,
                 &examples_to_run,
                 args.overwrite_expected,
-            )?;
+            )
         }
         Commands::Doc(args) => {
             info!("Running cargo doc on backend: {backend:?}");
-            cargo_doc(globals, &cargologlevel, backend, &args.arguments)?;
+            cargo_doc(globals, &cargologlevel, backend, &args.arguments)
         }
         Commands::Test(args) => {
             info!("Running cargo test on backend: {backend:?}");
-            cargo_test(globals, &args, backend)?;
+            cargo_test(globals, &args, backend)
         }
         Commands::Book(args) => {
             info!("Running mdbook");
-            cargo_book(globals, &args.arguments)?;
+            cargo_book(globals, &args.arguments)
         }
-    }
+    };
 
-    Ok(())
+    handle_results(final_run_results)
 }
 
 // run example binary `example`
