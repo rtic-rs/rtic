@@ -110,9 +110,193 @@ pub enum CargoCommand<'a> {
 
 impl core::fmt::Display for CargoCommand<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let executable = self.executable();
-        let args = self.args().join(" ");
-        write!(f, "\"{executable} {args}\"")
+        let p = |p: &Option<Package>| {
+            if let Some(package) = p {
+                format!("package {package}")
+            } else {
+                format!("default package")
+            }
+        };
+
+        let feat = |f: &Option<String>| {
+            if let Some(features) = f {
+                format!("\"{features}\"")
+            } else {
+                format!("no features")
+            }
+        };
+
+        let carg = |f: &&Option<&str>| {
+            if let Some(cargoarg) = f {
+                format!("{cargoarg}")
+            } else {
+                format!("no cargo args")
+            }
+        };
+
+        let details = |target: &Target,
+                       mode: &BuildMode,
+                       features: &Option<String>,
+                       cargoarg: &&Option<&str>| {
+            let feat = feat(features);
+            let carg = carg(cargoarg);
+            if cargoarg.is_some() {
+                format!("({target}, {mode}, {feat}, {carg})")
+            } else {
+                format!("({target}, {mode}, {feat})")
+            }
+        };
+
+        match self {
+            CargoCommand::Run {
+                cargoarg,
+                example,
+                target,
+                features,
+                mode,
+            } => write!(
+                f,
+                "Run example {example} {}",
+                details(target, mode, features, cargoarg)
+            ),
+            CargoCommand::Qemu {
+                cargoarg,
+                example,
+                target,
+                features,
+                mode,
+            } => write!(
+                f,
+                "Run example {example} in QEMU {}",
+                details(target, mode, features, cargoarg)
+            ),
+            CargoCommand::ExampleBuild {
+                cargoarg,
+                example,
+                target,
+                features,
+                mode,
+            } => write!(
+                f,
+                "Build example {example} {}",
+                details(target, mode, features, cargoarg)
+            ),
+            CargoCommand::ExampleCheck {
+                cargoarg,
+                example,
+                target,
+                features,
+                mode,
+            } => write!(
+                f,
+                "Check example {example} {}",
+                details(target, mode, features, cargoarg)
+            ),
+            CargoCommand::Build {
+                cargoarg,
+                package,
+                target,
+                features,
+                mode,
+            } => {
+                let package = p(package);
+                write!(
+                    f,
+                    "Build {package} {}",
+                    details(target, mode, features, cargoarg)
+                )
+            }
+            CargoCommand::Check {
+                cargoarg,
+                package,
+                target,
+                features,
+                mode,
+            } => {
+                let package = p(package);
+                write!(
+                    f,
+                    "Check {package} {}",
+                    details(target, mode, features, cargoarg)
+                )
+            }
+            CargoCommand::Clippy {
+                cargoarg,
+                package,
+                target,
+                features,
+            } => {
+                let package = p(package);
+                let features = feat(features);
+                let carg = carg(cargoarg);
+                write!(f, "Clippy {package} ({target}, {features}, {carg})")
+            }
+            CargoCommand::Format {
+                cargoarg,
+                package,
+                check_only,
+            } => {
+                let package = p(package);
+                let carg = carg(cargoarg);
+
+                let carg = if cargoarg.is_some() {
+                    format!("(cargo args: {carg})")
+                } else {
+                    format!("")
+                };
+
+                if *check_only {
+                    write!(f, "Check format for {package} {carg}")
+                } else {
+                    write!(f, "Format {package} {carg}")
+                }
+            }
+            CargoCommand::Doc {
+                cargoarg,
+                features,
+                arguments,
+            } => {
+                let feat = feat(features);
+                let carg = carg(cargoarg);
+                let arguments = arguments
+                    .clone()
+                    .map(|a| format!("{a}"))
+                    .unwrap_or_else(|| "No extra arguments".into());
+                if cargoarg.is_some() {
+                    write!(f, "Document ({feat}, {carg}, {arguments}")
+                } else {
+                    write!(f, "Document ({feat}, {arguments}")
+                }
+            }
+            CargoCommand::Test {
+                package,
+                features,
+                test,
+            } => {
+                let p = p(package);
+                let test = test
+                    .clone()
+                    .map(|t| format!("test {t}"))
+                    .unwrap_or("all tests".into());
+                let feat = feat(features);
+                write!(f, "Run {test} in {p} ({feat})")
+            }
+            CargoCommand::Book { arguments: _ } => write!(f, "Build the book"),
+            CargoCommand::ExampleSize {
+                cargoarg,
+                example,
+                target,
+                features,
+                mode,
+                arguments: _,
+            } => {
+                write!(
+                    f,
+                    "Compute size of example {example} {}",
+                    details(target, mode, features, cargoarg)
+                )
+            }
+        }
     }
 }
 

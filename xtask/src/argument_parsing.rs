@@ -209,7 +209,8 @@ pub enum Commands {
     FormatCheck(PackageOpt),
 
     /// Format code
-    Format(PackageOpt),
+    #[clap(alias = "fmt")]
+    Format(FormatOpt),
 
     /// Run clippy
     Clippy(PackageOpt),
@@ -266,6 +267,15 @@ pub enum Commands {
 }
 
 #[derive(Args, Debug, Clone)]
+pub struct FormatOpt {
+    #[clap(flatten)]
+    pub package: PackageOpt,
+    /// Only check formatting, without applying fixes.
+    #[clap(short, long, alias = "check-only")]
+    pub check: bool,
+}
+
+#[derive(Args, Debug, Clone)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
     /// For which package/workspace member to operate
@@ -314,4 +324,14 @@ pub enum ExtraArguments {
     /// All remaining flags and options
     #[command(external_subcommand)]
     Other(Vec<String>),
+}
+
+impl core::fmt::Display for ExtraArguments {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ExtraArguments::Other(args) => {
+                write!(f, "{}", args.join(" "))
+            }
+        }
+    }
 }

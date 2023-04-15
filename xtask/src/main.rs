@@ -56,6 +56,12 @@ impl<'a> Target<'a> {
     }
 }
 
+impl core::fmt::Display for Target<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.triple)
+    }
+}
+
 // x86_64-unknown-linux-gnu
 const _X86_64: Target = Target::new("x86_64-unknown-linux-gnu", true);
 const ARMV6M: Target = Target::new("thumbv6m-none-eabi", false);
@@ -219,8 +225,7 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Format(args) => {
             info!("Running cargo fmt: {args:?}");
-            let check_only = false;
-            cargo_format(globals, &cargologlevel, &args, check_only)?;
+            cargo_format(globals, &cargologlevel, &args.package, args.check)?;
         }
         Commands::Clippy(args) => {
             info!("Running clippy on backend: {backend:?}");

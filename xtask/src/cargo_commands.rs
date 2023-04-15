@@ -60,18 +60,18 @@ fn handle_results(results: Vec<FinalRunResult>) -> anyhow::Result<()> {
             if !stdout.is_empty() && !stderr.is_empty() {
                 log::log!(
                     level,
-                    "Command output for {command}\nStdout:\n{stdout}\nStderr:\n{stderr}"
+                    "Output for \"{command}\"\nStdout:\n{stdout}\nStderr:\n{stderr}"
                 );
             } else if !stdout.is_empty() {
                 log::log!(
                     level,
-                    "Command output for {command}\nStdout:\n{}",
+                    "Output for \"{command}\":\nStdout:\n{}",
                     stdout.trim_end()
                 );
             } else if !stderr.is_empty() {
                 log::log!(
                     level,
-                    "Command output for {command}\nStderr:\n{}",
+                    "Output for \"{command}\"\nStderr:\n{}",
                     stderr.trim_end()
                 );
             }
@@ -82,15 +82,16 @@ fn handle_results(results: Vec<FinalRunResult>) -> anyhow::Result<()> {
     errors.clone().for_each(log_stdout_stderr(Level::Error));
 
     successes.for_each(|(cmd, _)| {
-        info!("Succesfully executed {cmd}");
+        info!("Success: {cmd}");
     });
 
     errors.clone().for_each(|(cmd, _)| {
-        error!("Command {cmd} failed");
+        error!("Failed: {cmd}");
     });
 
-    if errors.count() != 0 {
-        Err(anyhow::anyhow!("Some commands failed."))
+    let ecount = errors.count();
+    if ecount != 0 {
+        Err(anyhow::anyhow!("{ecount} commands failed."))
     } else {
         Ok(())
     }
@@ -152,15 +153,6 @@ pub fn cargo(
         let target = backend.to_target();
 
         let features = package.extract_features(target, backend);
-
-        match operation {
-            BuildOrCheck::Check => {
-                log::debug!(target: "xtask::command", "Checking package: {package}")
-            }
-            BuildOrCheck::Build => {
-                log::debug!(target: "xtask::command", "Building package: {package}")
-            }
-        }
 
         let command = match operation {
             BuildOrCheck::Check => CargoCommand::Check {
