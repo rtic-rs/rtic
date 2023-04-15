@@ -251,7 +251,7 @@ jobs:
           tool: lychee
 
       - name: Remove cargo-config
-        run: rm -f .cargo/config
+        run: rm -f .cargo/config.toml
 
       - name: Build docs
         # TODO: Any difference between backends?
