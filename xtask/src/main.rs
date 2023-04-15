@@ -268,7 +268,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
             info!("Testing for backend: {backend:?}");
-            run_test(
+            qemu_run_examples(
                 globals,
                 &cargologlevel,
                 backend,

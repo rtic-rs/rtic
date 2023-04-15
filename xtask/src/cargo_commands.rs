@@ -302,7 +302,7 @@ pub fn cargo_book<'c>(
 /// Run examples
 ///
 /// Supports updating the expected output via the overwrite argument
-pub fn run_test<'c>(
+pub fn qemu_run_examples<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
     backend: Backends,
@@ -312,31 +312,30 @@ pub fn run_test<'c>(
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
-    examples_iter(examples)
-        .map(|example| {
-            let cmd = CargoCommand::ExampleBuild {
-                cargoarg: &Some("--quiet"),
-                example,
-                target,
-                features: features.clone(),
-                mode: BuildMode::Release,
-            };
+    let build = examples_iter(examples).map(|example| {
+        let cmd_build = CargoCommand::ExampleBuild {
+            // We need to be in the correct
+            cargoarg: &None,
+            example,
+            target,
+            features: features.clone(),
+            mode: BuildMode::Release,
+        };
+        (globals, cmd_build, overwrite)
+    });
 
-            if let Err(err) = command_parser(globals, &cmd, false) {
-                error!("{err}");
-            }
+    let run = examples_iter(examples).map(|example| {
+        let cmd_qemu = CargoCommand::Qemu {
+            cargoarg,
+            example,
+            target,
+            features: features.clone(),
+            mode: BuildMode::Release,
+        };
+        (globals, cmd_qemu, overwrite)
+    });
 
-            let cmd = CargoCommand::Qemu {
-                cargoarg,
-                example,
-                target,
-                features: features.clone(),
-                mode: BuildMode::Release,
-            };
-
-            (globals, cmd, overwrite)
-        })
-        .run_and_coalesce()
+    build.chain(run).run_and_coalesce()
 }
 
 /// Check the binary sizes of examples

@@ -593,6 +593,11 @@ impl<'a> CargoCommand<'a> {
                 if let Some(cargoarg) = cargoarg {
                     args.extend_from_slice(&[cargoarg]);
                 }
+
+                // We need to be in the `rtic` directory to pick up
+                // the correct .cargo/config.toml file
+                args.extend_from_slice(&["-Z", "unstable-options", "-C", "rtic"]);
+
                 args.extend_from_slice(&[
                     self.command(),
                     "--example",
@@ -856,7 +861,7 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
         if globals.verbose > 0 {
             info!("✅ Success: {cmd}{path}\n    {}", cmd.as_cmd_string());
         } else {
-            info!("✅ Success:{cmd}{path}");
+            info!("✅ Success: {cmd}{path}");
         }
     });
 
