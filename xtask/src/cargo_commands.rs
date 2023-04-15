@@ -86,29 +86,42 @@ pub fn cargo<'c>(
     package: &'c PackageOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
-    let runner = package.packages().map(move |package| {
-        let target = backend.to_target();
-        let features = package.extract_features(target, backend);
+    let runner = package
+        .packages()
+        .flat_map(|package| {
+            let target = backend.to_target();
+            let features = package.features(target, backend, globals.partial);
 
-        let command = match operation {
-            BuildOrCheck::Check => CargoCommand::Check {
-                cargoarg,
-                package: Some(package),
-                target,
-                features,
-                mode: BuildMode::Release,
-            },
-            BuildOrCheck::Build => CargoCommand::Build {
-                cargoarg,
-                package: Some(package),
-                target,
-                features,
-                mode: BuildMode::Release,
-            },
-        };
+            #[cfg(feature = "rayon")]
+            {
+                features.into_par_iter().map(move |f| (package, target, f))
+            }
 
-        (globals, command, false)
-    });
+            #[cfg(not(feature = "rayon"))]
+            {
+                features.into_iter().map(move |f| (package, target, f))
+            }
+        })
+        .map(move |(package, target, features)| {
+            let command = match operation {
+                BuildOrCheck::Check => CargoCommand::Check {
+                    cargoarg,
+                    package: Some(package),
+                    target,
+                    features,
+                    mode: BuildMode::Release,
+                },
+                BuildOrCheck::Build => CargoCommand::Build {
+                    cargoarg,
+                    package: Some(package),
+                    target,
+                    features,
+                    mode: BuildMode::Release,
+                },
+            };
+
+            (globals, command, false)
+        });
 
     runner.run_and_coalesce()
 }
@@ -154,21 +167,34 @@ pub fn cargo_clippy<'c>(
     package: &'c PackageOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
-    let runner = package.packages().map(|p| {
-        let target = backend.to_target();
-        let features = p.extract_features(target, backend);
+    let runner = package
+        .packages()
+        .flat_map(|package| {
+            let target = backend.to_target();
+            let features = package.features(target, backend, globals.partial);
 
-        (
-            globals,
-            CargoCommand::Clippy {
-                cargoarg,
-                package: Some(p),
-                target,
-                features,
-            },
-            false,
-        )
-    });
+            #[cfg(feature = "rayon")]
+            {
+                features.into_par_iter().map(move |f| (package, target, f))
+            }
+
+            #[cfg(not(feature = "rayon"))]
+            {
+                features.into_iter().map(move |f| (package, target, f))
+            }
+        })
+        .map(move |(package, target, features)| {
+            (
+                globals,
+                CargoCommand::Clippy {
+                    cargoarg,
+                    package: Some(package),
+                    target,
+                    features,
+                },
+                false,
+            )
+        });
 
     runner.run_and_coalesce()
 }

@@ -46,11 +46,45 @@ impl Package {
     /// Without package specified the features for RTIC are required
     /// With only a single package which is not RTIC, no special
     /// features are needed
-    pub fn extract_features(&self, target: Target, backend: Backends) -> Option<String> {
+    pub fn features(
+        &self,
+        target: Target,
+        backend: Backends,
+        partial: bool,
+    ) -> Vec<Option<String>> {
         match self {
-            Package::Rtic => Some(target.and_features(backend.to_rtic_feature())),
-            Package::RticMacros => Some(backend.to_rtic_macros_feature().to_owned()),
-            _ => None,
+            Package::Rtic => vec![Some(target.and_features(backend.to_rtic_feature()))],
+            Package::RticMacros => {
+                vec![Some(backend.to_rtic_macros_feature().to_string())]
+            }
+            Package::RticMonotonics => {
+                let features = if partial {
+                    &["cortex-m-systick", "rp2040", "nrf52840"][..]
+                } else {
+                    &[
+                        "cortex-m-systick",
+                        "cortex-m-systick,systick-100hz",
+                        "cortex-m-systick,systick-10khz",
+                        "rp2040",
+                        "nrf52810",
+                        "nrf52811",
+                        "nrf52832",
+                        "nrf52833",
+                        "nrf52840",
+                        "nrf5340-app",
+                        "nrf5340-net",
+                        "nrf9160",
+                    ][..]
+                };
+
+                features
+                    .into_iter()
+                    .map(ToString::to_string)
+                    .map(Some)
+                    .chain(std::iter::once(None))
+                    .collect()
+            }
+            _ => vec![None],
         }
     }
 }
@@ -189,6 +223,11 @@ pub struct Globals {
     /// clutter, but can make debugging long-running processes a lot easier.
     #[arg(short, long, global = true)]
     pub stderr_inherited: bool,
+
+    /// Don't build/check/test all feature combinations that are available, only
+    /// a necessary subset.
+    #[arg(long, global = true)]
+    pub partial: bool,
 }
 
 #[derive(Parser)]
