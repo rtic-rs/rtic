@@ -234,7 +234,11 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let package = p(package);
                 let features = feat(features);
                 let carg = carg(cargoarg);
-                write!(f, "Clippy {package} ({target}, {features}, {carg})")
+                if cargoarg.is_some() {
+                    write!(f, "Clippy {package} ({target}, {features}, {carg})")
+                } else {
+                    write!(f, "Clippy {package} ({target}, {features})")
+                }
             }
             CargoCommand::Format {
                 cargoarg,
