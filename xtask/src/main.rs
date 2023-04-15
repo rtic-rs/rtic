@@ -37,7 +37,7 @@ pub struct Target<'a> {
 }
 
 impl<'a> Target<'a> {
-    const STD_FEATURES: &str = "test-critical-section";
+    const DEFAULT_FEATURES: &str = "test-critical-section";
 
     pub const fn new(triple: &'a str, has_std: bool) -> Self {
         Self { triple, has_std }
@@ -52,11 +52,7 @@ impl<'a> Target<'a> {
     }
 
     pub fn and_features(&self, features: &str) -> String {
-        if self.has_std {
-            format!("{},{}", Self::STD_FEATURES, features)
-        } else {
-            features.to_string()
-        }
+        format!("{},{}", Self::DEFAULT_FEATURES, features)
     }
 }
 
