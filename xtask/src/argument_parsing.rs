@@ -306,9 +306,9 @@ pub enum Commands {
 pub struct FormatOpt {
     #[clap(flatten)]
     pub package: PackageOpt,
-    /// Apply formatting fixes immediately.
+    /// Check-only, do not apply formatting fixes.
     #[clap(short, long)]
-    pub apply: bool,
+    pub check: bool,
 }
 
 #[derive(Args, Debug, Clone)]

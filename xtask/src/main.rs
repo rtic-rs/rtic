@@ -218,7 +218,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let final_run_results = match &cli.command {
-        Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, !args.apply),
+        Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
         Commands::Clippy(args) => {
             info!("Running clippy on backend: {backend:?}");
             cargo_clippy(globals, &cargologlevel, &args, backend)
