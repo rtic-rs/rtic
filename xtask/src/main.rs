@@ -1,11 +1,10 @@
 mod argument_parsing;
 mod build;
-mod xtasks;
 mod cargo_command;
+mod run;
 
 use argument_parsing::{ExtraArguments, Globals};
 use clap::Parser;
-use cargo_command::OutputMode;
 use core::fmt;
 use diffy::{create_patch, PatchFormatter};
 use std::{
@@ -23,8 +22,8 @@ use log::{error, info, log_enabled, trace, Level};
 use crate::{
     argument_parsing::{Backends, BuildOrCheck, Cli, Commands},
     build::init_build_dir,
-    xtasks::*,
-    cargo_command::{handle_results, run_command, run_successful, CargoCommand},
+    cargo_command::CargoCommand,
+    run::*,
 };
 
 #[derive(Debug, Clone, Copy)]

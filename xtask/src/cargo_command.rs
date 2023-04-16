@@ -1,37 +1,12 @@
-use log::{error, info, Level};
-
-use crate::{
-    argument_parsing::Globals, xtasks::FinalRunResult, ExtraArguments, RunResult, Target,
-    TestRunError,
-};
+use crate::{ExtraArguments, Target};
 use core::fmt;
-use std::{
-    fs::File,
-    io::Read,
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+use std::path::PathBuf;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BuildMode {
     Release,
     Debug,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum OutputMode {
-    PipedAndCollected,
-    Inherited,
-}
-
-impl From<OutputMode> for Stdio {
-    fn from(value: OutputMode) -> Self {
-        match value {
-            OutputMode::PipedAndCollected => Stdio::piped(),
-            OutputMode::Inherited => Stdio::inherit(),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -614,7 +589,7 @@ impl<'a> CargoCommand<'a> {
     }
 
     /// TODO: integrate this into `args` once `-C` becomes stable.
-    fn chdir(&self) -> Option<&PathBuf> {
+    pub fn chdir(&self) -> Option<&PathBuf> {
         match self {
             CargoCommand::Qemu { dir, .. }
             | CargoCommand::ExampleBuild { dir, .. }
@@ -666,136 +641,5 @@ impl fmt::Display for BuildMode {
         };
 
         write!(f, "{cmd}")
-    }
-}
-
-pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Result<RunResult> {
-    log::info!("👟 {command}");
-
-    let mut process = Command::new(command.executable());
-
-    process
-        .args(command.args())
-        .stdout(Stdio::piped())
-        .stderr(stderr_mode);
-
-    if let Some(dir) = command.chdir() {
-        process.current_dir(dir.canonicalize()?);
-    }
-
-    let result = process.output()?;
-
-    let exit_status = result.status;
-    let stderr = String::from_utf8(result.stderr).unwrap_or("Not displayable".into());
-    let stdout = String::from_utf8(result.stdout).unwrap_or("Not displayable".into());
-
-    if command.print_stdout_intermediate() && exit_status.success() {
-        log::info!("\n{}", stdout);
-    }
-
-    if exit_status.success() {
-        log::info!("✅ Success.")
-    } else {
-        log::error!("❌ Command failed. Run to completion for the summary.");
-    }
-
-    Ok(RunResult {
-        exit_status,
-        stdout,
-        stderr,
-    })
-}
-
-/// Check if `run` was successful.
-/// returns Ok in case the run went as expected,
-/// Err otherwise
-pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(), TestRunError> {
-    let mut file_handle =
-        File::open(expected_output_file).map_err(|_| TestRunError::FileError {
-            file: expected_output_file.to_owned(),
-        })?;
-    let mut expected_output = String::new();
-    file_handle
-        .read_to_string(&mut expected_output)
-        .map_err(|_| TestRunError::FileError {
-            file: expected_output_file.to_owned(),
-        })?;
-
-    if expected_output != run.stdout {
-        Err(TestRunError::FileCmpError {
-            expected: expected_output.clone(),
-            got: run.stdout.clone(),
-        })
-    } else if !run.exit_status.success() {
-        Err(TestRunError::CommandError(run.clone()))
-    } else {
-        Ok(())
-    }
-}
-
-pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result<(), ()> {
-    let errors = results.iter().filter_map(|r| {
-        if let FinalRunResult::Failed(c, r) = r {
-            Some((c, &r.stdout, &r.stderr))
-        } else {
-            None
-        }
-    });
-
-    let successes = results.iter().filter_map(|r| {
-        if let FinalRunResult::Success(c, r) = r {
-            Some((c, &r.stdout, &r.stderr))
-        } else {
-            None
-        }
-    });
-
-    let command_errors = results.iter().filter_map(|r| {
-        if let FinalRunResult::CommandError(c, e) = r {
-            Some((c, e))
-        } else {
-            None
-        }
-    });
-
-    let log_stdout_stderr = |level: Level| {
-        move |(cmd, stdout, stderr): (&CargoCommand, &String, &String)| {
-            let cmd = cmd.as_cmd_string();
-            if !stdout.is_empty() && !stderr.is_empty() {
-                log::log!(level, "\n{cmd}\nStdout:\n{stdout}\nStderr:\n{stderr}");
-            } else if !stdout.is_empty() {
-                log::log!(level, "\n{cmd}\nStdout:\n{}", stdout.trim_end());
-            } else if !stderr.is_empty() {
-                log::log!(level, "\n{cmd}\nStderr:\n{}", stderr.trim_end());
-            }
-        }
-    };
-
-    successes.for_each(|(cmd, stdout, stderr)| {
-        if globals.verbose > 0 {
-            info!("✅ Success: {cmd}\n    {}", cmd.as_cmd_string());
-        } else {
-            info!("✅ Success: {cmd}");
-        }
-
-        log_stdout_stderr(Level::Debug)((cmd, stdout, stderr));
-    });
-
-    errors.clone().for_each(|(cmd, stdout, stderr)| {
-        error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
-        log_stdout_stderr(Level::Error)((cmd, stdout, stderr));
-    });
-
-    command_errors
-        .clone()
-        .for_each(|(cmd, error)| error!("❌ Failed: {cmd}\n    {}\n{error}", cmd.as_cmd_string()));
-
-    let ecount = errors.count() + command_errors.count();
-    if ecount != 0 {
-        log::error!("{ecount} commands failed.");
-        Err(())
-    } else {
-        info!("🚀🚀🚀 All tasks succeeded 🚀🚀🚀");
-        Ok(())
     }
 }
