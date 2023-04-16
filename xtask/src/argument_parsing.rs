@@ -1,4 +1,4 @@
-use crate::{command::CargoCommand, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN, DEFAULT_FEATURES};
+use crate::{command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN};
 use clap::{Args, Parser, Subcommand};
 use core::fmt;
 
@@ -29,6 +29,64 @@ impl Package {
             Package::RticTime => "rtic-time",
         }
     }
+
+    pub fn all() -> Vec<Self> {
+        vec![
+            Self::Rtic,
+            Self::RticCommon,
+            Self::RticMacros,
+            Self::RticMonotonics,
+            Self::RticSync,
+            Self::RticTime,
+        ]
+    }
+
+    /// Get the features needed given the selected package
+    ///
+    /// Without package specified the features for RTIC are required
+    /// With only a single package which is not RTIC, no special
+    /// features are needed
+    pub fn features(
+        &self,
+        target: Target,
+        backend: Backends,
+        partial: bool,
+    ) -> Vec<Option<String>> {
+        match self {
+            Package::Rtic => vec![Some(target.and_features(backend.to_rtic_feature()))],
+            Package::RticMacros => {
+                vec![Some(backend.to_rtic_macros_feature().to_string())]
+            }
+            Package::RticMonotonics => {
+                let features = if partial {
+                    &["cortex-m-systick", "rp2040", "nrf52840"][..]
+                } else {
+                    &[
+                        "cortex-m-systick",
+                        "cortex-m-systick,systick-100hz",
+                        "cortex-m-systick,systick-10khz",
+                        "rp2040",
+                        "nrf52810",
+                        "nrf52811",
+                        "nrf52832",
+                        "nrf52833",
+                        "nrf52840",
+                        "nrf5340-app",
+                        "nrf5340-net",
+                        "nrf9160",
+                    ][..]
+                };
+
+                features
+                    .into_iter()
+                    .map(ToString::to_string)
+                    .map(Some)
+                    .chain(std::iter::once(None))
+                    .collect()
+            }
+            _ => vec![None],
+        }
+    }
 }
 
 pub struct TestMetadata {}
@@ -37,12 +95,12 @@ impl TestMetadata {
     pub fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
-                let features = Some(format!(
-                    "{},{},{}",
-                    DEFAULT_FEATURES,
+                let features = format!(
+                    "{},{}",
                     backend.to_rtic_feature(),
-                    backend.to_rtic_uitest_feature(),
-                ));
+                    backend.to_rtic_uitest_feature()
+                );
+                let features = Some(backend.to_target().and_features(&features));
                 CargoCommand::Test {
                     package: Some(package),
                     features,
@@ -89,7 +147,7 @@ pub enum Backends {
 
 impl Backends {
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_target(&self) -> &str {
+    pub fn to_target(&self) -> Target<'static> {
         match self {
             Backends::Thumbv6 => ARMV6M,
             Backends::Thumbv7 => ARMV7M,
@@ -99,7 +157,7 @@ impl Backends {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_feature(&self) -> &str {
+    pub fn to_rtic_feature(&self) -> &'static str {
         match self {
             Backends::Thumbv6 => "thumbv6-backend",
             Backends::Thumbv7 => "thumbv7-backend",
@@ -108,14 +166,14 @@ impl Backends {
         }
     }
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_macros_feature(&self) -> &str {
+    pub fn to_rtic_macros_feature(&self) -> &'static str {
         match self {
             Backends::Thumbv6 | Backends::Thumbv8Base => "cortex-m-source-masking",
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
         }
     }
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_uitest_feature(&self) -> &str {
+    pub fn to_rtic_uitest_feature(&self) -> &'static str {
         match self {
             Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
             Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
@@ -130,12 +188,10 @@ pub enum BuildOrCheck {
     Build,
 }
 
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-/// RTIC xtask powered testing toolbox
-pub struct Cli {
+#[derive(Parser, Clone)]
+pub struct Globals {
     /// For which backend to build (defaults to thumbv7)
-    #[arg(value_enum, short, long)]
+    #[arg(value_enum, short, long, global = true)]
     pub backend: Option<Backends>,
 
     /// List of comma separated examples to include, all others are excluded
@@ -144,7 +200,7 @@ pub struct Cli {
     ///
     /// Example: `cargo xtask --example complex,spawn,init`
     /// would include complex, spawn and init
-    #[arg(short, long, group = "example_group")]
+    #[arg(short, long, group = "example_group", global = true)]
     pub example: Option<String>,
 
     /// List of comma separated examples to exclude, all others are included
@@ -153,25 +209,44 @@ pub struct Cli {
     ///
     /// Example: `cargo xtask --excludeexample complex,spawn,init`
     /// would exclude complex, spawn and init
-    #[arg(long, group = "example_group")]
+    #[arg(long, group = "example_group", global = true)]
     pub exampleexclude: Option<String>,
 
     /// Enable more verbose output, repeat up to `-vvv` for even more
-    #[arg(short, long, action = clap::ArgAction::Count)]
+    #[arg(short, long, action = clap::ArgAction::Count, global = true)]
     pub verbose: u8,
+
+    /// Enable `stderr` inheritance on child processes.
+    ///
+    /// If this flag is enabled, the output of `stderr` produced by child
+    /// processes is printed directly to `stderr`. This will cause a lot of
+    /// clutter, but can make debugging long-running processes a lot easier.
+    #[arg(short, long, global = true)]
+    pub stderr_inherited: bool,
+
+    /// Don't build/check/test all feature combinations that are available, only
+    /// a necessary subset.
+    #[arg(long, global = true)]
+    pub partial: bool,
+}
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+/// RTIC xtask powered testing toolbox
+pub struct Cli {
+    #[clap(flatten)]
+    pub globals: Globals,
 
     /// Subcommand selecting operation
     #[command(subcommand)]
     pub command: Commands,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
-    /// Check formatting
-    FormatCheck(PackageOpt),
-
     /// Format code
-    Format(PackageOpt),
+    #[clap(alias = "fmt")]
+    Format(FormatOpt),
 
     /// Run clippy
     Clippy(PackageOpt),
@@ -227,16 +302,44 @@ pub enum Commands {
     Book(Arg),
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Clone)]
+pub struct FormatOpt {
+    #[clap(flatten)]
+    pub package: PackageOpt,
+    /// Check-only, do not apply formatting fixes.
+    #[clap(short, long)]
+    pub check: bool,
+}
+
+#[derive(Args, Debug, Clone)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
     /// For which package/workspace member to operate
     ///
     /// If omitted, work on all
-    pub package: Option<Package>,
+    package: Option<Package>,
 }
 
-#[derive(Args, Debug)]
+impl PackageOpt {
+    #[cfg(not(feature = "rayon"))]
+    pub fn packages(&self) -> impl Iterator<Item = Package> {
+        self.package
+            .map(|p| vec![p])
+            .unwrap_or(Package::all())
+            .into_iter()
+    }
+
+    #[cfg(feature = "rayon")]
+    pub fn packages(&self) -> impl rayon::prelude::ParallelIterator<Item = Package> {
+        use rayon::prelude::*;
+        self.package
+            .map(|p| vec![p])
+            .unwrap_or(Package::all())
+            .into_par_iter()
+    }
+}
+
+#[derive(Args, Debug, Clone)]
 pub struct QemuAndRun {
     /// If expected output is missing or mismatching, recreate the file
     ///
@@ -245,7 +348,7 @@ pub struct QemuAndRun {
     pub overwrite_expected: bool,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Clone)]
 pub struct Arg {
     /// Options to pass to `cargo size`
     #[command(subcommand)]
@@ -257,4 +360,14 @@ pub enum ExtraArguments {
     /// All remaining flags and options
     #[command(external_subcommand)]
     Other(Vec<String>),
+}
+
+impl core::fmt::Display for ExtraArguments {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ExtraArguments::Other(args) => {
+                write!(f, "{}", args.join(" "))
+            }
+        }
+    }
 }

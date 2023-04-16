@@ -1,4 +1,7 @@
-//! Monotonic impl for the 32-bit timers of the nRF series.
+//! [`Monotonic`] impl for the 32-bit timers of the nRF series.
+//!
+//! Not all timers are available on all parts. Ensure that only the available
+//! timers are exposed by having the correct `nrf52*` feature enabled for `rtic-monotonic`.
 //!
 //! # Example
 //!
@@ -95,6 +98,10 @@ macro_rules! create_nrf_timer2_monotonic_token {
 }
 
 /// Register the Timer3 interrupt for the monotonic.
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")))
+)]
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
 #[macro_export]
 macro_rules! create_nrf_timer3_monotonic_token {
@@ -104,6 +111,10 @@ macro_rules! create_nrf_timer3_monotonic_token {
 }
 
 /// Register the Timer4 interrupt for the monotonic.
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")))
+)]
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
 #[macro_export]
 macro_rules! create_nrf_timer4_monotonic_token {
@@ -113,8 +124,11 @@ macro_rules! create_nrf_timer4_monotonic_token {
 }
 
 macro_rules! make_timer {
-    ($mono_name:ident, $timer:ident, $overflow:ident, $tq:ident) => {
+    ($mono_name:ident, $timer:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer queue implementation.
+        $(
+            #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
+        )?
         pub struct $mono_name;
 
         static $overflow: AtomicU32 = AtomicU32::new(0);
@@ -274,6 +288,6 @@ make_timer!(Timer0, TIMER0, TIMER0_OVERFLOWS, TIMER0_TQ);
 make_timer!(Timer1, TIMER1, TIMER1_OVERFLOWS, TIMER1_TQ);
 make_timer!(Timer2, TIMER2, TIMER2_OVERFLOWS, TIMER2_TQ);
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
-make_timer!(Timer3, TIMER3, TIMER3_OVERFLOWS, TIMER3_TQ);
+make_timer!(Timer3, TIMER3, TIMER3_OVERFLOWS, TIMER3_TQ, doc: (any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")));
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
-make_timer!(Timer4, TIMER4, TIMER4_OVERFLOWS, TIMER4_TQ);
+make_timer!(Timer4, TIMER4, TIMER4_OVERFLOWS, TIMER4_TQ, doc: (any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")));

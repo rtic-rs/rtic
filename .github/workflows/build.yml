@@ -31,8 +31,8 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: cargo xtask format-check
-        run:  cargo xtask --verbose format-check
+      - name: cargo xtask fmt
+        run:  cargo xtask --verbose fmt -c
 
   # Compilation check
   check:
@@ -251,7 +251,7 @@ jobs:
           tool: lychee
 
       - name: Remove cargo-config
-        run: rm -f .cargo/config
+        run: rm -f .cargo/config.toml
 
       - name: Build docs
         # TODO: Any difference between backends?
