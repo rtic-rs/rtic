@@ -2,7 +2,6 @@
     html_logo_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg",
     html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg"
 )]
-//deny_warnings_placeholder_for_ci
 
 use proc_macro::TokenStream;
 use std::{env, fs, path::Path};

@@ -25,9 +25,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Fail on warnings
-        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
-
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
@@ -62,13 +59,10 @@ jobs:
           rustup target add thumbv8m.base-none-eabi
           rustup target add thumbv8m.main-none-eabi
 
-      - name: Fail on warnings
-        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
-
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --backend ${{ matrix.backend }} check 
+      - run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} check
 
   # Clippy
   clippy:
@@ -101,13 +95,10 @@ jobs:
       - name: Add Rust component clippy
         run: rustup component add clippy
 
-      - name: Fail on warnings
-        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
-
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --backend ${{ matrix.backend }} clippy
+      - run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} clippy
 
   # Verify all examples, checks
   checkexamples:
@@ -219,12 +210,8 @@ jobs:
           sudo apt update
           sudo apt install -y qemu-system-arm
 
-      - name: Fail on warnings
-        working-directory: ./rtic
-        run: sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' src/lib.rs
-
       - name: Run-pass tests
-        run: cargo xtask --backend ${{ matrix.backend }} qemu 
+        run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} qemu
 
   # Run test suite
   tests:
@@ -260,11 +247,8 @@ jobs:
           rustup target add thumbv8m.base-none-eabi
           rustup target add thumbv8m.main-none-eabi
 
-      - name: Fail on warnings
-        run: find . -type f -name lib.rs -execdir sed -i 's,//deny_warnings_placeholder_for_ci,#![deny(warnings)],' {} +
-
       - name: Run cargo test
-        run: cargo xtask --backend ${{ matrix.backend }} test ${{ matrix.package }}
+        run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} test ${{ matrix.package }}
 
   # Build documentation, check links
   docs:

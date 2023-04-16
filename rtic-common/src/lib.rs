@@ -2,7 +2,6 @@
 
 #![no_std]
 #![deny(missing_docs)]
-//deny_warnings_placeholder_for_ci
 
 #[cfg(test)]
 #[macro_use]

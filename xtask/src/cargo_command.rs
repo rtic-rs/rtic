@@ -28,6 +28,7 @@ pub enum CargoCommand<'a> {
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
+        deny_warnings: bool,
     },
     ExampleBuild {
         cargoarg: &'a Option<&'a str>,
@@ -36,6 +37,7 @@ pub enum CargoCommand<'a> {
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
+        deny_warnings: bool,
     },
     ExampleCheck {
         cargoarg: &'a Option<&'a str>,
@@ -43,6 +45,7 @@ pub enum CargoCommand<'a> {
         target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
+        deny_warnings: bool,
     },
     Build {
         cargoarg: &'a Option<&'a str>,
@@ -51,6 +54,7 @@ pub enum CargoCommand<'a> {
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
+        deny_warnings: bool,
     },
     Check {
         cargoarg: &'a Option<&'a str>,
@@ -59,6 +63,7 @@ pub enum CargoCommand<'a> {
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
+        deny_warnings: bool,
     },
     Clippy {
         cargoarg: &'a Option<&'a str>,
@@ -81,6 +86,7 @@ pub enum CargoCommand<'a> {
         package: Option<String>,
         features: Option<String>,
         test: Option<String>,
+        deny_warnings: bool,
     },
     Book {
         arguments: Option<ExtraArguments>,
@@ -123,6 +129,7 @@ impl core::fmt::Display for CargoCommand<'_> {
         }
 
         fn details(
+            deny_warnings: bool,
             target: &Option<Target>,
             mode: Option<&BuildMode>,
             features: &Option<String>,
@@ -150,14 +157,20 @@ impl core::fmt::Display for CargoCommand<'_> {
                 format!("debug")
             };
 
-            if cargoarg.is_some() && path.is_some() {
-                format!("({target}, {mode}, {feat}, {carg}, {in_dir})")
-            } else if cargoarg.is_some() {
-                format!("({target}, {mode}, {feat}, {carg})")
-            } else if path.is_some() {
-                format!("({target}, {mode}, {feat}, {in_dir})")
+            let deny_warnings = if deny_warnings {
+                format!("deny warnings, ")
             } else {
-                format!("({target}, {mode}, {feat})")
+                format!("")
+            };
+
+            if cargoarg.is_some() && path.is_some() {
+                format!("({deny_warnings}{target}, {mode}, {feat}, {carg}, {in_dir})")
+            } else if cargoarg.is_some() {
+                format!("({deny_warnings}{target}, {mode}, {feat}, {carg})")
+            } else if path.is_some() {
+                format!("({deny_warnings}{target}, {mode}, {feat}, {in_dir})")
+            } else {
+                format!("({deny_warnings}{target}, {mode}, {feat})")
             }
         }
 
@@ -173,7 +186,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 write!(
                     f,
                     "Run example {example} {}",
-                    details(target, Some(mode), features, cargoarg, dir.as_ref())
+                    details(false, target, Some(mode), features, cargoarg, dir.as_ref())
                 )
             }
             CargoCommand::Qemu {
@@ -183,8 +196,10 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 mode,
                 dir,
+                deny_warnings,
             } => {
-                let details = details(target, Some(mode), features, cargoarg, dir.as_ref());
+                let warns = *deny_warnings;
+                let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
                 write!(f, "Run example {example} in QEMU {details}",)
             }
             CargoCommand::ExampleBuild {
@@ -194,8 +209,10 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 mode,
                 dir,
+                deny_warnings,
             } => {
-                let details = details(target, Some(mode), features, cargoarg, dir.as_ref());
+                let warns = *deny_warnings;
+                let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
                 write!(f, "Build example {example} {details}",)
             }
             CargoCommand::ExampleCheck {
@@ -204,10 +221,11 @@ impl core::fmt::Display for CargoCommand<'_> {
                 target,
                 features,
                 mode,
+                deny_warnings,
             } => write!(
                 f,
                 "Check example {example} {}",
-                details(target, Some(mode), features, cargoarg, None)
+                details(*deny_warnings, target, Some(mode), features, cargoarg, None)
             ),
             CargoCommand::Build {
                 cargoarg,
@@ -216,12 +234,14 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 mode,
                 dir,
+                deny_warnings,
             } => {
                 let package = p(package);
+                let warns = *deny_warnings;
                 write!(
                     f,
                     "Build {package} {}",
-                    details(target, Some(mode), features, cargoarg, dir.as_ref())
+                    details(warns, target, Some(mode), features, cargoarg, dir.as_ref())
                 )
             }
 
@@ -232,12 +252,14 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 mode,
                 dir,
+                deny_warnings,
             } => {
                 let package = p(package);
+                let warns = *deny_warnings;
                 write!(
                     f,
                     "Check {package} {}",
-                    details(target, Some(mode), features, cargoarg, dir.as_ref())
+                    details(warns, target, Some(mode), features, cargoarg, dir.as_ref())
                 )
             }
             CargoCommand::Clippy {
@@ -247,14 +269,9 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 deny_warnings,
             } => {
-                let details = details(target, None, features, cargoarg, None);
+                let details = details(*deny_warnings, target, None, features, cargoarg, None);
                 let package = p(package);
-                let deny_warns = if *deny_warnings {
-                    format!(" (deny warnings)")
-                } else {
-                    format!("")
-                };
-                write!(f, "Clippy{deny_warns} {package} {details}")
+                write!(f, "Clippy {package} {details}")
             }
             CargoCommand::Format {
                 cargoarg,
@@ -297,14 +314,20 @@ impl core::fmt::Display for CargoCommand<'_> {
                 package,
                 features,
                 test,
+                deny_warnings,
             } => {
                 let p = p(package);
                 let test = test
                     .clone()
                     .map(|t| format!("test {t}"))
                     .unwrap_or("all tests".into());
+                let deny_warnings = if *deny_warnings {
+                    format!("deny warnings, ")
+                } else {
+                    format!("")
+                };
                 let feat = feat(features);
-                write!(f, "Run {test} in {p} (features: {feat})")
+                write!(f, "Run {test} in {p} ({deny_warnings}features: {feat})")
             }
             CargoCommand::Book { arguments: _ } => write!(f, "Build the book"),
             CargoCommand::ExampleSize {
@@ -316,7 +339,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 arguments: _,
                 dir,
             } => {
-                let details = details(target, Some(mode), features, cargoarg, dir.as_ref());
+                let details = details(false, target, Some(mode), features, cargoarg, dir.as_ref());
                 write!(f, "Compute size of example {example} {details}")
             }
         }
@@ -459,6 +482,8 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // Target is added by build_args
                 target: _,
+                // deny_warnings is exposed through `rustflags`
+                deny_warnings: _,
             } => self.build_args(
                 true,
                 cargoarg,
@@ -471,10 +496,12 @@ impl<'a> CargoCommand<'a> {
                 package,
                 features,
                 mode,
-                // Dir is exposed through `chdir`
-                dir: _,
                 // Target is added by build_args
                 target: _,
+                // Dir is exposed through `chdir`
+                dir: _,
+                // deny_warnings is exposed through `rustflags`
+                deny_warnings: _,
             } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Check {
                 cargoarg,
@@ -485,23 +512,25 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // Target is added by build_args
                 target: _,
+                // deny_warnings is exposed through `rustflags`
+                deny_warnings: _,
             } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Clippy {
                 cargoarg,
                 package,
                 features,
-                deny_warnings,
                 // Target is added by build_args
                 target: _,
+                deny_warnings,
             } => {
-                let package = p(package);
-                let extra = if *deny_warnings {
-                    vec!["--", "-D", "warnings"].into_iter()
+                let deny_warnings = if *deny_warnings {
+                    vec!["--", "-D", "warnings"]
                 } else {
-                    vec![].into_iter()
+                    vec![]
                 };
 
-                self.build_args(true, cargoarg, features, None, package.chain(extra))
+                let extra = p(package).chain(deny_warnings);
+                self.build_args(true, cargoarg, features, None, extra)
             }
             CargoCommand::Doc {
                 cargoarg,
@@ -515,6 +544,8 @@ impl<'a> CargoCommand<'a> {
                 package,
                 features,
                 test,
+                // deny_warnings is exposed through `rustflags`
+                deny_warnings: _,
             } => {
                 let extra = if let Some(test) = test {
                     vec!["--test", test]
@@ -564,6 +595,8 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // Target is added by build_args
                 target: _,
+                // deny_warnings is exposed through `rustflags`
+                deny_warnings: _,
             } => self.build_args(
                 true,
                 cargoarg,
@@ -578,6 +611,8 @@ impl<'a> CargoCommand<'a> {
                 mode,
                 // Target is added by build_args
                 target: _,
+                // deny_warnings is exposed through `rustflags`
+                deny_warnings: _,
             } => self.build_args(
                 true,
                 cargoarg,
@@ -628,6 +663,27 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::Check { target, .. }
             | CargoCommand::Clippy { target, .. }
             | CargoCommand::ExampleSize { target, .. } => target.as_ref(),
+            _ => None,
+        }
+    }
+
+    pub fn rustflags(&self) -> Option<&str> {
+        match self {
+            // Clippy is a special case: it sets deny warnings
+            // through an argument to rustc.
+            CargoCommand::Clippy { .. } => None,
+            CargoCommand::Check { deny_warnings, .. }
+            | CargoCommand::ExampleCheck { deny_warnings, .. }
+            | CargoCommand::Build { deny_warnings, .. }
+            | CargoCommand::ExampleBuild { deny_warnings, .. }
+            | CargoCommand::Test { deny_warnings, .. }
+            | CargoCommand::Qemu { deny_warnings, .. } => {
+                if *deny_warnings {
+                    Some("-D warnings")
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }

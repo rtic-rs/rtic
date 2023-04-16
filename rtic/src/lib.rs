@@ -30,7 +30,6 @@
     html_logo_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg",
     html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg"
 )]
-//deny_warnings_placeholder_for_ci
 #![allow(clippy::inline_always)]
 
 pub use rtic_core::{prelude as mutex_prelude, Exclusive, Mutex};

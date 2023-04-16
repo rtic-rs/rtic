@@ -172,6 +172,7 @@ pub fn cargo<'c>(
                     features,
                     mode: BuildMode::Release,
                     dir: None,
+                    deny_warnings: globals.deny_warnings,
                 },
                 BuildOrCheck::Build => CargoCommand::Build {
                     cargoarg,
@@ -180,6 +181,7 @@ pub fn cargo<'c>(
                     features,
                     mode: BuildMode::Release,
                     dir: None,
+                    deny_warnings: globals.deny_warnings,
                 },
             };
 
@@ -209,6 +211,7 @@ pub fn cargo_usage_example(
                     package: None,
                     target: None,
                     features: None,
+                    deny_warnings: globals.deny_warnings,
                 },
                 BuildOrCheck::Build => CargoCommand::Build {
                     cargoarg: &None,
@@ -217,6 +220,7 @@ pub fn cargo_usage_example(
                     features: None,
                     mode: BuildMode::Release,
                     dir: Some(path.into()),
+                    deny_warnings: globals.deny_warnings,
                 },
             };
             (globals, command, false)
@@ -244,6 +248,7 @@ pub fn cargo_example<'c>(
                 target: Some(backend.to_target()),
                 features,
                 mode: BuildMode::Release,
+                deny_warnings: globals.deny_warnings,
             },
             BuildOrCheck::Build => CargoCommand::ExampleBuild {
                 cargoarg,
@@ -252,6 +257,7 @@ pub fn cargo_example<'c>(
                 features,
                 mode: BuildMode::Release,
                 dir: Some(PathBuf::from("./rtic")),
+                deny_warnings: globals.deny_warnings,
             },
         };
         (globals, command, false)
@@ -337,7 +343,10 @@ pub fn cargo_test<'c>(
 ) -> Vec<FinalRunResult<'c>> {
     package
         .packages()
-        .map(|p| (globals, TestMetadata::match_package(p, backend), false))
+        .map(|p| {
+            let meta = TestMetadata::match_package(globals.deny_warnings, p, backend);
+            (globals, meta, false)
+        })
         .run_and_coalesce()
 }
 
@@ -378,6 +387,7 @@ pub fn qemu_run_examples<'c>(
                 features: features.clone(),
                 mode: BuildMode::Release,
                 dir: Some(PathBuf::from("./rtic")),
+                deny_warnings: globals.deny_warnings,
             };
 
             let cmd_qemu = CargoCommand::Qemu {
@@ -387,6 +397,7 @@ pub fn qemu_run_examples<'c>(
                 features: features.clone(),
                 mode: BuildMode::Release,
                 dir: Some(PathBuf::from("./rtic")),
+                deny_warnings: globals.deny_warnings,
             };
 
             into_iter([cmd_build, cmd_qemu])
@@ -417,7 +428,9 @@ pub fn build_and_check_size<'c>(
             features: features.clone(),
             mode: BuildMode::Release,
             dir: Some(PathBuf::from("./rtic")),
+            deny_warnings: globals.deny_warnings,
         };
+
         if let Err(err) = command_parser(globals, &cmd, false) {
             error!("{err}");
         }
@@ -453,6 +466,10 @@ fn run_command(
 
     if let Some(dir) = command.chdir() {
         process.current_dir(dir.canonicalize()?);
+    }
+
+    if let Some(rustflags) = command.rustflags() {
+        process.env("RUSTFLAGS", rustflags);
     }
 
     let result = process.output()?;

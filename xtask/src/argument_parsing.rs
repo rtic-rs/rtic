@@ -94,7 +94,11 @@ impl Package {
 pub struct TestMetadata {}
 
 impl TestMetadata {
-    pub fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
+    pub fn match_package(
+        deny_warnings: bool,
+        package: Package,
+        backend: Backends,
+    ) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
                 let features = format!(
@@ -107,32 +111,38 @@ impl TestMetadata {
                     package: Some(package.name()),
                     features,
                     test: Some("ui".to_owned()),
+                    deny_warnings,
                 }
             }
             Package::RticMacros => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some(backend.to_rtic_macros_feature().to_owned()),
                 test: None,
+                deny_warnings,
             },
             Package::RticSync => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
+                deny_warnings,
             },
             Package::RticCommon => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
+                deny_warnings,
             },
             Package::RticMonotonics => CargoCommand::Test {
                 package: Some(package.name()),
                 features: None,
                 test: None,
+                deny_warnings,
             },
             Package::RticTime => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("critical-section/std".into()),
                 test: None,
+                deny_warnings,
             },
         }
     }
@@ -192,6 +202,10 @@ pub enum BuildOrCheck {
 
 #[derive(Parser, Clone)]
 pub struct Globals {
+    /// Error out on warnings
+    #[arg(short = 'D', long)]
+    pub deny_warnings: bool,
+
     /// For which backend to build.
     #[arg(value_enum, short, default_value = "thumbv7", long, global = true)]
     pub backend: Option<Backends>,
