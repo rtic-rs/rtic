@@ -355,6 +355,12 @@ impl core::fmt::Display for CargoCommand<'_> {
 
 impl<'a> CargoCommand<'a> {
     pub fn as_cmd_string(&self) -> String {
+        let env = if let Some((key, value)) = self.extra_env() {
+            format!("{key}=\"{value}\" ")
+        } else {
+            format!("")
+        };
+
         let cd = if let Some(Some(chdir)) = self.chdir().map(|p| p.to_str()) {
             format!("cd {chdir} && ")
         } else {
@@ -363,7 +369,7 @@ impl<'a> CargoCommand<'a> {
 
         let executable = self.executable();
         let args = self.args().join(" ");
-        format!("{cd}{executable} {args}")
+        format!("{env}{cd}{executable} {args}")
     }
 
     fn command(&self) -> &'static str {
