@@ -114,14 +114,14 @@ pub fn cargo<'c>(
             let command = match operation {
                 BuildOrCheck::Check => CargoCommand::Check {
                     cargoarg,
-                    package: Some(package),
+                    package: Some(package.name()),
                     target,
                     features,
                     mode: BuildMode::Release,
                 },
                 BuildOrCheck::Build => CargoCommand::Build {
                     cargoarg,
-                    package: Some(package),
+                    package: Some(package.name()),
                     target,
                     features,
                     mode: BuildMode::Release,
@@ -224,7 +224,7 @@ pub fn cargo_clippy<'c>(
                 globals,
                 CargoCommand::Clippy {
                     cargoarg,
-                    package: Some(package),
+                    package: Some(package.name()),
                     target,
                     features,
                 },
@@ -247,7 +247,7 @@ pub fn cargo_format<'c>(
             globals,
             CargoCommand::Format {
                 cargoarg,
-                package: Some(p),
+                package: Some(p.name()),
                 check_only,
             },
             false,

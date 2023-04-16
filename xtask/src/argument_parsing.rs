@@ -19,15 +19,17 @@ impl fmt::Display for Package {
 }
 
 impl Package {
-    pub fn name(&self) -> &str {
-        match self {
+    pub fn name(&self) -> String {
+        let name = match self {
             Package::Rtic => "rtic",
             Package::RticCommon => "rtic-common",
             Package::RticMacros => "rtic-macros",
             Package::RticMonotonics => "rtic-monotonics",
             Package::RticSync => "rtic-sync",
             Package::RticTime => "rtic-time",
-        }
+        };
+
+        name.to_string()
     }
 
     pub fn all() -> Vec<Self> {
@@ -102,33 +104,33 @@ impl TestMetadata {
                 );
                 let features = Some(backend.to_target().and_features(&features));
                 CargoCommand::Test {
-                    package: Some(package),
+                    package: Some(package.name()),
                     features,
                     test: Some("ui".to_owned()),
                 }
             }
             Package::RticMacros => CargoCommand::Test {
-                package: Some(package),
+                package: Some(package.name()),
                 features: Some(backend.to_rtic_macros_feature().to_owned()),
                 test: None,
             },
             Package::RticSync => CargoCommand::Test {
-                package: Some(package),
+                package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
             },
             Package::RticCommon => CargoCommand::Test {
-                package: Some(package),
+                package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
             },
             Package::RticMonotonics => CargoCommand::Test {
-                package: Some(package),
+                package: Some(package.name()),
                 features: None,
                 test: None,
             },
             Package::RticTime => CargoCommand::Test {
-                package: Some(package),
+                package: Some(package.name()),
                 features: Some("critical-section/std".into()),
                 test: None,
             },

@@ -1,8 +1,8 @@
 use log::{error, info, Level};
 
 use crate::{
-    argument_parsing::Globals, cargo_commands::FinalRunResult, ExtraArguments, Package, RunResult,
-    Target, TestRunError,
+    argument_parsing::Globals, cargo_commands::FinalRunResult, ExtraArguments, RunResult, Target,
+    TestRunError,
 };
 use core::fmt;
 use std::{
@@ -70,27 +70,27 @@ pub enum CargoCommand<'a> {
     },
     Build {
         cargoarg: &'a Option<&'a str>,
-        package: Option<Package>,
+        package: Option<String>,
         target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
     },
     Check {
         cargoarg: &'a Option<&'a str>,
-        package: Option<Package>,
+        package: Option<String>,
         target: Target<'a>,
         features: Option<String>,
         mode: BuildMode,
     },
     Clippy {
         cargoarg: &'a Option<&'a str>,
-        package: Option<Package>,
+        package: Option<String>,
         target: Target<'a>,
         features: Option<String>,
     },
     Format {
         cargoarg: &'a Option<&'a str>,
-        package: Option<Package>,
+        package: Option<String>,
         check_only: bool,
     },
     Doc {
@@ -99,7 +99,7 @@ pub enum CargoCommand<'a> {
         arguments: Option<ExtraArguments>,
     },
     Test {
-        package: Option<Package>,
+        package: Option<String>,
         features: Option<String>,
         test: Option<String>,
     },
@@ -127,7 +127,7 @@ pub enum CargoCommand<'a> {
 
 impl core::fmt::Display for CargoCommand<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let p = |p: &Option<Package>| {
+        let p = |p: &Option<String>| {
             if let Some(package) = p {
                 format!("package {package}")
             } else {
@@ -468,7 +468,7 @@ impl<'a> CargoCommand<'a> {
                 args.extend_from_slice(&[self.command(), "--target", target.triple()]);
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.name()]);
+                    args.extend_from_slice(&["--package", package]);
                 }
 
                 if let Some(feature) = features {
@@ -493,7 +493,7 @@ impl<'a> CargoCommand<'a> {
                 args.extend_from_slice(&[self.command()]);
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.name()]);
+                    args.extend_from_slice(&["--package", package]);
                 }
 
                 if let Some(feature) = features {
@@ -518,7 +518,7 @@ impl<'a> CargoCommand<'a> {
                 args.extend_from_slice(&[self.command()]);
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.name()]);
+                    args.extend_from_slice(&["--package", package]);
                 }
 
                 if let Some(feature) = features {
@@ -557,7 +557,7 @@ impl<'a> CargoCommand<'a> {
                 args.extend_from_slice(&[self.command()]);
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.name()]);
+                    args.extend_from_slice(&["--package", package]);
                 }
 
                 if let Some(feature) = features {
@@ -594,7 +594,7 @@ impl<'a> CargoCommand<'a> {
                 }
 
                 if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package.name()]);
+                    args.extend_from_slice(&["--package", package]);
                 }
                 if *check_only {
                     args.extend_from_slice(&["--check"]);

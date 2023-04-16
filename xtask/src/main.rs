@@ -3,7 +3,7 @@ mod build;
 mod cargo_commands;
 mod command;
 
-use argument_parsing::{ExtraArguments, Globals, Package};
+use argument_parsing::{ExtraArguments, Globals};
 use clap::Parser;
 use command::OutputMode;
 use core::fmt;
