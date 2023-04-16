@@ -381,13 +381,15 @@ pub fn qemu_run_examples<'c>(
     into_iter(examples)
         .flat_map(|example| {
             let target = target.into();
+            let dir = Some(PathBuf::from("./rtic"));
+
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &None,
                 example,
                 target,
                 features: features.clone(),
                 mode: BuildMode::Release,
-                dir: Some(PathBuf::from("./rtic")),
+                dir: dir.clone(),
                 deny_warnings: globals.deny_warnings,
             };
 
@@ -397,7 +399,7 @@ pub fn qemu_run_examples<'c>(
                 target,
                 features: features.clone(),
                 mode: BuildMode::Release,
-                dir: Some(PathBuf::from("./rtic")),
+                dir,
                 deny_warnings: globals.deny_warnings,
             };
 
@@ -441,6 +443,7 @@ pub fn build_and_check_size<'c>(
                 mode: BuildMode::Release,
                 arguments: arguments.clone(),
                 dir: Some(PathBuf::from("./rtic")),
+                deny_warnings: globals.deny_warnings,
             };
 
             [cmd_build, cmd_size]

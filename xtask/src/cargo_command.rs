@@ -100,6 +100,7 @@ pub enum CargoCommand<'a> {
         mode: BuildMode,
         arguments: Option<ExtraArguments>,
         dir: Option<PathBuf>,
+        deny_warnings: bool,
     },
 }
 
@@ -345,8 +346,10 @@ impl core::fmt::Display for CargoCommand<'_> {
                 mode,
                 arguments: _,
                 dir,
+                deny_warnings,
             } => {
-                let details = details(false, target, Some(mode), features, cargoarg, dir.as_ref());
+                let warns = *deny_warnings;
+                let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
                 write!(f, "Compute size of example {example} {details}")
             }
         }
@@ -645,6 +648,8 @@ impl<'a> CargoCommand<'a> {
                 target: _,
                 // dir is exposed through `chdir`
                 dir: _,
+                // deny_warnings is exposed through `extra_env`
+                deny_warnings: _,
             } => {
                 let extra = ["--example", example]
                     .into_iter()
@@ -688,12 +693,23 @@ impl<'a> CargoCommand<'a> {
             // through an argument to rustc.
             CargoCommand::Clippy { .. } => None,
             CargoCommand::Doc { .. } => Some(("RUSTDOCFLAGS", "-D warnings")),
+
+            CargoCommand::Qemu { deny_warnings, .. }
+            | CargoCommand::ExampleBuild { deny_warnings, .. }
+            | CargoCommand::ExampleSize { deny_warnings, .. } => {
+                if *deny_warnings {
+                    // NOTE: this also needs the link-arg because .cargo/config.toml
+                    // is ignored if you set the RUSTFLAGS env variable.
+                    Some(("RUSTFLAGS", "-D warnings -C link-arg=-Tlink.x"))
+                } else {
+                    None
+                }
+            }
+
             CargoCommand::Check { deny_warnings, .. }
             | CargoCommand::ExampleCheck { deny_warnings, .. }
             | CargoCommand::Build { deny_warnings, .. }
-            | CargoCommand::ExampleBuild { deny_warnings, .. }
-            | CargoCommand::Test { deny_warnings, .. }
-            | CargoCommand::Qemu { deny_warnings, .. } => {
+            | CargoCommand::Test { deny_warnings, .. } => {
                 if *deny_warnings {
                     Some(("RUSTFLAGS", "-D warnings"))
                 } else {
