@@ -149,7 +149,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             let target = if let Some(target) = target {
                 format!("{target}")
             } else {
-                format!("<host target>")
+                format!("<no explicit target>")
             };
 
             let mode = if let Some(mode) = mode {
