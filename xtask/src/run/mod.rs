@@ -328,6 +328,7 @@ pub fn cargo_doc<'c>(
         cargoarg,
         features,
         arguments: arguments.clone(),
+        deny_warnings: true,
     };
 
     vec![run_and_convert((globals, command, false))]
@@ -468,8 +469,8 @@ fn run_command(
         process.current_dir(dir.canonicalize()?);
     }
 
-    if let Some(rustflags) = command.rustflags() {
-        process.env("RUSTFLAGS", rustflags);
+    if let Some((k, v)) = command.extra_env() {
+        process.env(k, v);
     }
 
     let result = process.output()?;

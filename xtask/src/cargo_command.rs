@@ -81,6 +81,7 @@ pub enum CargoCommand<'a> {
         cargoarg: &'a Option<&'a str>,
         features: Option<String>,
         arguments: Option<ExtraArguments>,
+        deny_warnings: bool,
     },
     Test {
         package: Option<String>,
@@ -297,6 +298,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 cargoarg,
                 features,
                 arguments,
+                deny_warnings,
             } => {
                 let feat = feat(features);
                 let carg = carg(cargoarg);
@@ -304,10 +306,15 @@ impl core::fmt::Display for CargoCommand<'_> {
                     .clone()
                     .map(|a| format!("{a}"))
                     .unwrap_or_else(|| "no extra arguments".into());
-                if cargoarg.is_some() {
-                    write!(f, "Document ({feat}, {carg}, {arguments})")
+                let deny_warnings = if *deny_warnings {
+                    format!("deny warnings, ")
                 } else {
-                    write!(f, "Document ({feat}, {arguments})")
+                    format!("")
+                };
+                if cargoarg.is_some() {
+                    write!(f, "Document ({deny_warnings}{feat}, {carg}, {arguments})")
+                } else {
+                    write!(f, "Document ({deny_warnings}{feat}, {arguments})")
                 }
             }
             CargoCommand::Test {
@@ -482,7 +489,7 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // Target is added by build_args
                 target: _,
-                // deny_warnings is exposed through `rustflags`
+                // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(
                 true,
@@ -500,7 +507,7 @@ impl<'a> CargoCommand<'a> {
                 target: _,
                 // Dir is exposed through `chdir`
                 dir: _,
-                // deny_warnings is exposed through `rustflags`
+                // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Check {
@@ -512,7 +519,7 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // Target is added by build_args
                 target: _,
-                // deny_warnings is exposed through `rustflags`
+                // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Clippy {
@@ -536,6 +543,8 @@ impl<'a> CargoCommand<'a> {
                 cargoarg,
                 features,
                 arguments,
+                // deny_warnings is exposed through `extra_env`
+                deny_warnings: _,
             } => {
                 let extra = Self::extra_args(arguments.as_ref());
                 self.build_args(true, cargoarg, features, None, extra)
@@ -544,7 +553,7 @@ impl<'a> CargoCommand<'a> {
                 package,
                 features,
                 test,
-                // deny_warnings is exposed through `rustflags`
+                // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => {
                 let extra = if let Some(test) = test {
@@ -595,7 +604,7 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // Target is added by build_args
                 target: _,
-                // deny_warnings is exposed through `rustflags`
+                // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(
                 true,
@@ -611,7 +620,7 @@ impl<'a> CargoCommand<'a> {
                 mode,
                 // Target is added by build_args
                 target: _,
-                // deny_warnings is exposed through `rustflags`
+                // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(
                 true,
@@ -667,11 +676,12 @@ impl<'a> CargoCommand<'a> {
         }
     }
 
-    pub fn rustflags(&self) -> Option<&str> {
+    pub fn extra_env(&self) -> Option<(&str, &str)> {
         match self {
             // Clippy is a special case: it sets deny warnings
             // through an argument to rustc.
             CargoCommand::Clippy { .. } => None,
+            CargoCommand::Doc { .. } => Some(("RUSTDOCFLAGS", "-D warnings")),
             CargoCommand::Check { deny_warnings, .. }
             | CargoCommand::ExampleCheck { deny_warnings, .. }
             | CargoCommand::Build { deny_warnings, .. }
@@ -679,7 +689,7 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::Test { deny_warnings, .. }
             | CargoCommand::Qemu { deny_warnings, .. } => {
                 if *deny_warnings {
-                    Some("-D warnings")
+                    Some(("RUSTFLAGS", "-D warnings"))
                 } else {
                     None
                 }
