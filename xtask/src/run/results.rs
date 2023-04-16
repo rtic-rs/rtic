@@ -2,31 +2,9 @@ use log::{error, info, log, Level};
 
 use crate::{argument_parsing::Globals, cargo_command::CargoCommand};
 
-use super::data::{FinalRunResult, RunResult, TestRunError};
+use super::data::FinalRunResult;
 
 const TARGET: &str = "xtask::results";
-
-/// Check if `run` was successful.
-/// returns Ok in case the run went as expected,
-/// Err otherwise
-pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(), TestRunError> {
-    let file = expected_output_file.to_string();
-
-    let expected_output = std::fs::read(expected_output_file)
-        .map(|d| String::from_utf8(d).map_err(|_| TestRunError::FileError { file: file.clone() }))
-        .map_err(|_| TestRunError::FileError { file })??;
-
-    if expected_output != run.stdout {
-        Err(TestRunError::FileCmpError {
-            expected: expected_output.clone(),
-            got: run.stdout.clone(),
-        })
-    } else if !run.exit_status.success() {
-        Err(TestRunError::CommandError(run.clone()))
-    } else {
-        Ok(())
-    }
-}
 
 pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result<(), ()> {
     let errors = results.iter().filter_map(|r| {

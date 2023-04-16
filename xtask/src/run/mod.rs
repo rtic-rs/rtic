@@ -24,8 +24,6 @@ use log::{error, info};
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-use self::results::run_successful;
-
 fn run_and_convert<'a>(
     (global, command, overwrite): (&Globals, CargoCommand<'a>, bool),
 ) -> FinalRunResult<'a> {
@@ -65,6 +63,42 @@ fn command_parser(
 
     match *command {
         CargoCommand::Qemu { example, .. } | CargoCommand::Run { example, .. } => {
+            /// Check if `run` was successful.
+            /// returns Ok in case the run went as expected,
+            /// Err otherwise
+            pub fn run_successful(
+                run: &RunResult,
+                expected_output_file: &str,
+            ) -> Result<(), TestRunError> {
+                let file = expected_output_file.to_string();
+
+                let expected_output = std::fs::read(expected_output_file)
+                    .map(|d| {
+                        String::from_utf8(d)
+                            .map_err(|_| TestRunError::FileError { file: file.clone() })
+                    })
+                    .map_err(|_| TestRunError::FileError { file })??;
+
+                let res = if expected_output != run.stdout {
+                    Err(TestRunError::FileCmpError {
+                        expected: expected_output.clone(),
+                        got: run.stdout.clone(),
+                    })
+                } else if !run.exit_status.success() {
+                    Err(TestRunError::CommandError(run.clone()))
+                } else {
+                    Ok(())
+                };
+
+                if res.is_ok() {
+                    log::info!("✅ Success.");
+                } else {
+                    log::error!("❌ Command failed. Run to completion for the summary.");
+                }
+
+                res
+            }
+
             let run_file = format!("{example}.run");
             let expected_output_file = ["rtic", "ci", "expected", &run_file]
                 .iter()
@@ -74,7 +108,7 @@ fn command_parser(
                 .map_err(TestRunError::PathConversionError)?;
 
             // cargo run <..>
-            let cargo_run_result = run_command(command, output_mode)?;
+            let cargo_run_result = run_command(command, output_mode, false)?;
 
             // Create a file for the expected output if it does not exist or mismatches
             if overwrite {
@@ -107,7 +141,7 @@ fn command_parser(
         | CargoCommand::Test { .. }
         | CargoCommand::Book { .. }
         | CargoCommand::ExampleSize { .. } => {
-            let cargo_result = run_command(command, output_mode)?;
+            let cargo_result = run_command(command, output_mode, true)?;
             Ok(cargo_result)
         }
     }
@@ -402,7 +436,11 @@ pub fn build_and_check_size<'c>(
     runner.run_and_coalesce()
 }
 
-fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Result<RunResult> {
+fn run_command(
+    command: &CargoCommand,
+    stderr_mode: OutputMode,
+    print_command_success: bool,
+) -> anyhow::Result<RunResult> {
     log::info!("👟 {command}");
 
     let mut process = Command::new(command.executable());
@@ -426,10 +464,12 @@ fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Resul
         log::info!("\n{}", stdout);
     }
 
-    if exit_status.success() {
-        log::info!("✅ Success.")
-    } else {
-        log::error!("❌ Command failed. Run to completion for the summary.");
+    if print_command_success {
+        if exit_status.success() {
+            log::info!("✅ Success.")
+        } else {
+            log::error!("❌ Command failed. Run to completion for the summary.");
+        }
     }
 
     Ok(RunResult {
