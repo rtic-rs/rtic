@@ -345,7 +345,7 @@ pub fn cargo_test<'c>(
     package
         .packages()
         .map(|p| {
-            let meta = TestMetadata::match_package(globals.deny_warnings, p, backend);
+            let meta = TestMetadata::match_package(p, backend);
             (globals, meta, false)
         })
         .run_and_coalesce()

@@ -94,11 +94,7 @@ impl Package {
 pub struct TestMetadata {}
 
 impl TestMetadata {
-    pub fn match_package(
-        deny_warnings: bool,
-        package: Package,
-        backend: Backends,
-    ) -> CargoCommand<'static> {
+    pub fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
                 let features = format!(
@@ -111,38 +107,38 @@ impl TestMetadata {
                     package: Some(package.name()),
                     features,
                     test: Some("ui".to_owned()),
-                    deny_warnings,
+                    deny_warnings: true,
                 }
             }
             Package::RticMacros => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some(backend.to_rtic_macros_feature().to_owned()),
                 test: None,
-                deny_warnings,
+                deny_warnings: true,
             },
             Package::RticSync => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
-                deny_warnings,
+                deny_warnings: true,
             },
             Package::RticCommon => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
-                deny_warnings,
+                deny_warnings: true,
             },
             Package::RticMonotonics => CargoCommand::Test {
                 package: Some(package.name()),
                 features: None,
                 test: None,
-                deny_warnings,
+                deny_warnings: true,
             },
             Package::RticTime => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("critical-section/std".into()),
                 test: None,
-                deny_warnings,
+                deny_warnings: true,
             },
         }
     }
