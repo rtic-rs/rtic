@@ -1,9 +1,15 @@
 use std::{
     fs::File,
-    io::Read,
+    io::Write,
     path::PathBuf,
     process::{Command, Stdio},
 };
+
+mod results;
+pub use results::handle_results;
+
+mod data;
+use data::*;
 
 mod iter;
 use iter::{into_iter, CoalescingRunner};
@@ -11,35 +17,14 @@ use iter::{into_iter, CoalescingRunner};
 use crate::{
     argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, TestMetadata},
     cargo_command::{BuildMode, CargoCommand},
-    command_parser, RunResult, TestRunError,
 };
 
-use log::{error, info, Level};
+use log::{error, info};
 
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum OutputMode {
-    PipedAndCollected,
-    Inherited,
-}
-
-impl From<OutputMode> for Stdio {
-    fn from(value: OutputMode) -> Self {
-        match value {
-            OutputMode::PipedAndCollected => Stdio::piped(),
-            OutputMode::Inherited => Stdio::inherit(),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum FinalRunResult<'c> {
-    Success(CargoCommand<'c>, RunResult),
-    Failed(CargoCommand<'c>, RunResult),
-    CommandError(CargoCommand<'c>, anyhow::Error),
-}
+use self::results::run_successful;
 
 fn run_and_convert<'a>(
     (global, command, overwrite): (&Globals, CargoCommand<'a>, bool),
@@ -64,6 +49,68 @@ fn run_and_convert<'a>(
     log::trace!("Final result: {output:?}");
 
     output
+}
+
+// run example binary `example`
+fn command_parser(
+    glob: &Globals,
+    command: &CargoCommand,
+    overwrite: bool,
+) -> anyhow::Result<RunResult> {
+    let output_mode = if glob.stderr_inherited {
+        OutputMode::Inherited
+    } else {
+        OutputMode::PipedAndCollected
+    };
+
+    match *command {
+        CargoCommand::Qemu { example, .. } | CargoCommand::Run { example, .. } => {
+            let run_file = format!("{example}.run");
+            let expected_output_file = ["rtic", "ci", "expected", &run_file]
+                .iter()
+                .collect::<PathBuf>()
+                .into_os_string()
+                .into_string()
+                .map_err(TestRunError::PathConversionError)?;
+
+            // cargo run <..>
+            let cargo_run_result = run_command(command, output_mode)?;
+
+            // Create a file for the expected output if it does not exist or mismatches
+            if overwrite {
+                let result = run_successful(&cargo_run_result, &expected_output_file);
+                if let Err(e) = result {
+                    // FileError means the file did not exist or was unreadable
+                    error!("Error: {e}");
+                    let mut file_handle = File::create(&expected_output_file).map_err(|_| {
+                        TestRunError::FileError {
+                            file: expected_output_file.clone(),
+                        }
+                    })?;
+                    info!("Flag --overwrite-expected enabled");
+                    info!("Creating/updating file: {expected_output_file}");
+                    file_handle.write_all(cargo_run_result.stdout.as_bytes())?;
+                };
+            } else {
+                run_successful(&cargo_run_result, &expected_output_file)?;
+            };
+
+            Ok(cargo_run_result)
+        }
+        CargoCommand::Format { .. }
+        | CargoCommand::ExampleCheck { .. }
+        | CargoCommand::ExampleBuild { .. }
+        | CargoCommand::Check { .. }
+        | CargoCommand::Build { .. }
+        | CargoCommand::Clippy { .. }
+        | CargoCommand::Doc { .. }
+        | CargoCommand::Test { .. }
+        | CargoCommand::Book { .. }
+        | CargoCommand::ExampleSize { .. } => {
+            let cargo_result = run_command(command, output_mode)?;
+            Ok(cargo_result)
+        }
+    }
 }
 
 /// Cargo command to either build or check
@@ -355,7 +402,7 @@ pub fn build_and_check_size<'c>(
     runner.run_and_coalesce()
 }
 
-pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Result<RunResult> {
+fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::Result<RunResult> {
     log::info!("👟 {command}");
 
     let mut process = Command::new(command.executable());
@@ -390,98 +437,4 @@ pub fn run_command(command: &CargoCommand, stderr_mode: OutputMode) -> anyhow::R
         stdout,
         stderr,
     })
-}
-
-/// Check if `run` was successful.
-/// returns Ok in case the run went as expected,
-/// Err otherwise
-pub fn run_successful(run: &RunResult, expected_output_file: &str) -> Result<(), TestRunError> {
-    let mut file_handle =
-        File::open(expected_output_file).map_err(|_| TestRunError::FileError {
-            file: expected_output_file.to_owned(),
-        })?;
-    let mut expected_output = String::new();
-    file_handle
-        .read_to_string(&mut expected_output)
-        .map_err(|_| TestRunError::FileError {
-            file: expected_output_file.to_owned(),
-        })?;
-
-    if expected_output != run.stdout {
-        Err(TestRunError::FileCmpError {
-            expected: expected_output.clone(),
-            got: run.stdout.clone(),
-        })
-    } else if !run.exit_status.success() {
-        Err(TestRunError::CommandError(run.clone()))
-    } else {
-        Ok(())
-    }
-}
-
-pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result<(), ()> {
-    let errors = results.iter().filter_map(|r| {
-        if let FinalRunResult::Failed(c, r) = r {
-            Some((c, &r.stdout, &r.stderr))
-        } else {
-            None
-        }
-    });
-
-    let successes = results.iter().filter_map(|r| {
-        if let FinalRunResult::Success(c, r) = r {
-            Some((c, &r.stdout, &r.stderr))
-        } else {
-            None
-        }
-    });
-
-    let command_errors = results.iter().filter_map(|r| {
-        if let FinalRunResult::CommandError(c, e) = r {
-            Some((c, e))
-        } else {
-            None
-        }
-    });
-
-    let log_stdout_stderr = |level: Level| {
-        move |(cmd, stdout, stderr): (&CargoCommand, &String, &String)| {
-            let cmd = cmd.as_cmd_string();
-            if !stdout.is_empty() && !stderr.is_empty() {
-                log::log!(level, "\n{cmd}\nStdout:\n{stdout}\nStderr:\n{stderr}");
-            } else if !stdout.is_empty() {
-                log::log!(level, "\n{cmd}\nStdout:\n{}", stdout.trim_end());
-            } else if !stderr.is_empty() {
-                log::log!(level, "\n{cmd}\nStderr:\n{}", stderr.trim_end());
-            }
-        }
-    };
-
-    successes.for_each(|(cmd, stdout, stderr)| {
-        if globals.verbose > 0 {
-            info!("✅ Success: {cmd}\n    {}", cmd.as_cmd_string());
-        } else {
-            info!("✅ Success: {cmd}");
-        }
-
-        log_stdout_stderr(Level::Debug)((cmd, stdout, stderr));
-    });
-
-    errors.clone().for_each(|(cmd, stdout, stderr)| {
-        error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
-        log_stdout_stderr(Level::Error)((cmd, stdout, stderr));
-    });
-
-    command_errors
-        .clone()
-        .for_each(|(cmd, error)| error!("❌ Failed: {cmd}\n    {}\n{error}", cmd.as_cmd_string()));
-
-    let ecount = errors.count() + command_errors.count();
-    if ecount != 0 {
-        log::error!("{ecount} commands failed.");
-        Err(())
-    } else {
-        info!("🚀🚀🚀 All tasks succeeded 🚀🚀🚀");
-        Ok(())
-    }
 }

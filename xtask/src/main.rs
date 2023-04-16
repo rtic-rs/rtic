@@ -3,26 +3,16 @@ mod build;
 mod cargo_command;
 mod run;
 
-use argument_parsing::{ExtraArguments, Globals};
+use argument_parsing::ExtraArguments;
 use clap::Parser;
 use core::fmt;
-use diffy::{create_patch, PatchFormatter};
-use std::{
-    error::Error,
-    ffi::OsString,
-    fs::File,
-    io::prelude::*,
-    path::{Path, PathBuf},
-    process::ExitStatus,
-    str,
-};
+use std::{path::Path, str};
 
 use log::{error, info, log_enabled, trace, Level};
 
 use crate::{
     argument_parsing::{Backends, BuildOrCheck, Cli, Commands},
     build::init_build_dir,
-    cargo_command::CargoCommand,
     run::*,
 };
 
@@ -64,56 +54,6 @@ const ARMV6M: Target = Target::new("thumbv6m-none-eabi", false);
 const ARMV7M: Target = Target::new("thumbv7m-none-eabi", false);
 const ARMV8MBASE: Target = Target::new("thumbv8m.base-none-eabi", false);
 const ARMV8MMAIN: Target = Target::new("thumbv8m.main-none-eabi", false);
-
-#[derive(Debug, Clone)]
-pub struct RunResult {
-    exit_status: ExitStatus,
-    stdout: String,
-    stderr: String,
-}
-
-#[derive(Debug)]
-pub enum TestRunError {
-    FileCmpError { expected: String, got: String },
-    FileError { file: String },
-    PathConversionError(OsString),
-    CommandError(RunResult),
-    IncompatibleCommand,
-}
-impl fmt::Display for TestRunError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TestRunError::FileCmpError { expected, got } => {
-                let patch = create_patch(expected, got);
-                writeln!(f, "Differing output in files.\n")?;
-                let pf = PatchFormatter::new().with_color();
-                writeln!(f, "{}", pf.fmt_patch(&patch))?;
-                write!(
-                    f,
-                    "See flag --overwrite-expected to create/update expected output."
-                )
-            }
-            TestRunError::FileError { file } => {
-                write!(f, "File error on: {file}\nSee flag --overwrite-expected to create/update expected output.")
-            }
-            TestRunError::CommandError(e) => {
-                write!(
-                    f,
-                    "Command failed with exit status {}: {} {}",
-                    e.exit_status, e.stdout, e.stderr
-                )
-            }
-            TestRunError::PathConversionError(p) => {
-                write!(f, "Can't convert path from `OsString` to `String`: {p:?}")
-            }
-            TestRunError::IncompatibleCommand => {
-                write!(f, "Can't run that command in this context")
-            }
-        }
-    }
-}
-
-impl Error for TestRunError {}
 
 fn main() -> anyhow::Result<()> {
     // if there's an `xtask` folder, we're *probably* at the root of this repo (we can't just
@@ -298,66 +238,4 @@ fn main() -> anyhow::Result<()> {
     };
 
     handle_results(globals, final_run_results).map_err(|_| anyhow::anyhow!("Commands failed"))
-}
-
-// run example binary `example`
-fn command_parser(
-    glob: &Globals,
-    command: &CargoCommand,
-    overwrite: bool,
-) -> anyhow::Result<RunResult> {
-    let output_mode = if glob.stderr_inherited {
-        OutputMode::Inherited
-    } else {
-        OutputMode::PipedAndCollected
-    };
-
-    match *command {
-        CargoCommand::Qemu { example, .. } | CargoCommand::Run { example, .. } => {
-            let run_file = format!("{example}.run");
-            let expected_output_file = ["rtic", "ci", "expected", &run_file]
-                .iter()
-                .collect::<PathBuf>()
-                .into_os_string()
-                .into_string()
-                .map_err(TestRunError::PathConversionError)?;
-
-            // cargo run <..>
-            let cargo_run_result = run_command(command, output_mode)?;
-
-            // Create a file for the expected output if it does not exist or mismatches
-            if overwrite {
-                let result = run_successful(&cargo_run_result, &expected_output_file);
-                if let Err(e) = result {
-                    // FileError means the file did not exist or was unreadable
-                    error!("Error: {e}");
-                    let mut file_handle = File::create(&expected_output_file).map_err(|_| {
-                        TestRunError::FileError {
-                            file: expected_output_file.clone(),
-                        }
-                    })?;
-                    info!("Flag --overwrite-expected enabled");
-                    info!("Creating/updating file: {expected_output_file}");
-                    file_handle.write_all(cargo_run_result.stdout.as_bytes())?;
-                };
-            } else {
-                run_successful(&cargo_run_result, &expected_output_file)?;
-            };
-
-            Ok(cargo_run_result)
-        }
-        CargoCommand::Format { .. }
-        | CargoCommand::ExampleCheck { .. }
-        | CargoCommand::ExampleBuild { .. }
-        | CargoCommand::Check { .. }
-        | CargoCommand::Build { .. }
-        | CargoCommand::Clippy { .. }
-        | CargoCommand::Doc { .. }
-        | CargoCommand::Test { .. }
-        | CargoCommand::Book { .. }
-        | CargoCommand::ExampleSize { .. } => {
-            let cargo_result = run_command(command, output_mode)?;
-            Ok(cargo_result)
-        }
-    }
 }
