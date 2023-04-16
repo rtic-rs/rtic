@@ -279,6 +279,7 @@ pub fn cargo_clippy<'c>(
                 package: Some(package.name()),
                 target: target.into(),
                 features,
+                deny_warnings: true,
             };
 
             (globals, command, false)

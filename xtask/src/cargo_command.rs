@@ -65,6 +65,7 @@ pub enum CargoCommand<'a> {
         package: Option<String>,
         target: Option<Target<'a>>,
         features: Option<String>,
+        deny_warnings: bool,
     },
     Format {
         cargoarg: &'a Option<&'a str>,
@@ -244,10 +245,16 @@ impl core::fmt::Display for CargoCommand<'_> {
                 package,
                 target,
                 features,
+                deny_warnings,
             } => {
                 let details = details(target, None, features, cargoarg, None);
                 let package = p(package);
-                write!(f, "Clippy {package} {details}")
+                let deny_warns = if *deny_warnings {
+                    format!(" (deny warnings)")
+                } else {
+                    format!("")
+                };
+                write!(f, "Clippy{deny_warns} {package} {details}")
             }
             CargoCommand::Format {
                 cargoarg,
@@ -483,9 +490,19 @@ impl<'a> CargoCommand<'a> {
                 cargoarg,
                 package,
                 features,
+                deny_warnings,
                 // Target is added by build_args
                 target: _,
-            } => self.build_args(true, cargoarg, features, None, p(package)),
+            } => {
+                let package = p(package);
+                let extra = if *deny_warnings {
+                    vec!["--", "-D", "warnings"].into_iter()
+                } else {
+                    vec![].into_iter()
+                };
+
+                self.build_args(true, cargoarg, features, None, package.chain(extra))
+            }
             CargoCommand::Doc {
                 cargoarg,
                 features,
