@@ -43,6 +43,6 @@ pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStrea
     vec![]
 }
 
-pub fn async_prio_limit(app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+pub fn async_prio_limit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     vec![]
 }

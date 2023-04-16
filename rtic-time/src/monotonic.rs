@@ -1,4 +1,4 @@
-//! ...
+//! A monotonic clock / counter definition.
 
 /// # A monotonic clock / counter definition.
 ///

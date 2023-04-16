@@ -1,4 +1,4 @@
-//! A monotonic implementation for RP2040's Timer peripheral.
+//! [`Monotonic`] implementation for RP2040's Timer peripheral.
 //!
 //! # Example
 //!

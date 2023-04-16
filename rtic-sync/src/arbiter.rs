@@ -1,4 +1,27 @@
-//! Crate
+//! A Mutex-like FIFO with unlimited-waiter for embedded systems.
+//!
+//! Example usage:
+//!
+//! ```rust
+//! # async fn select<F1, F2>(f1: F1, f2: F2) {}
+//! use rtic_sync::arbiter::Arbiter;
+//!
+//! // Instantiate an Arbiter with a static lifetime.
+//! static ARBITER: Arbiter<u32> = Arbiter::new(32);
+//!
+//! async fn run(){
+//!     let write_42 = async move {
+//!         *ARBITER.access().await = 42;
+//!     };
+//!
+//!     let write_1337 = async move {
+//!         *ARBITER.access().await = 1337;
+//!     };
+//!
+//!     // Attempt to access the Arbiter concurrently.
+//!     select(write_42, write_1337).await;
+//! }
+//! ```
 
 use core::cell::UnsafeCell;
 use core::future::poll_fn;
@@ -45,7 +68,7 @@ impl<T> Arbiter<T> {
         }
     }
 
-    /// Get access to the inner value in the `Arbiter`. This will wait until access is granted,
+    /// Get access to the inner value in the [`Arbiter`]. This will wait until access is granted,
     /// for non-blocking access use `try_access`.
     pub async fn access(&self) -> ExclusiveAccess<'_, T> {
         let mut link_ptr: Option<Link<Waker>> = None;
@@ -132,7 +155,7 @@ impl<T> Arbiter<T> {
     }
 }
 
-/// This token represents exclusive access to the value protected by the `Arbiter`.
+/// This token represents exclusive access to the value protected by the [`Arbiter`].
 pub struct ExclusiveAccess<'a, T> {
     arbiter: &'a Arbiter<T>,
     inner: &'a mut T,

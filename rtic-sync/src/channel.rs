@@ -1,4 +1,4 @@
-//! Crate
+//! An async aware MPSC channel that can be used on no-alloc systems.
 
 use core::{
     cell::UnsafeCell,

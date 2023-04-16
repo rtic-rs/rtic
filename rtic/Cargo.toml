@@ -24,6 +24,9 @@ repository = "https://github.com/rtic-rs/rtic"
 
 version = "2.0.0-alpha.1"
 
+[package.metadata.docs.rs]
+features = ["rtic-macros/test-template"]
+
 [lib]
 name = "rtic"
 

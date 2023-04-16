@@ -1,4 +1,7 @@
-//! Crate
+//! Time-related traits & structs.
+//!
+//! This crate contains basic definitions and utilities that can be used
+//! to keep track of time.
 
 #![no_std]
 #![deny(missing_docs)]
