@@ -66,8 +66,7 @@ pub unsafe fn lock<T, R>(
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
     if ceiling == (1 << nvic_prio_bits) {
-        let r = critical_section::with(|_| f(&mut *ptr));
-        r
+        critical_section::with(|_| f(&mut *ptr))
     } else {
         let current = basepri::read();
         basepri::write(cortex_logical2hw(ceiling, nvic_prio_bits));

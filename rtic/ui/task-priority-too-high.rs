@@ -9,7 +9,7 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local) {
+    fn init(_cx: init::Context) -> (Shared, Local) {
         (Shared {}, Local {})
     }
 

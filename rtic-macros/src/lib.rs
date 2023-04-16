@@ -2,7 +2,6 @@
     html_logo_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg",
     html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg"
 )]
-//deny_warnings_placeholder_for_ci
 
 macro_rules! with_backend {
     (mod: [$($mod:tt),*]) => {
