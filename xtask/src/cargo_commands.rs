@@ -111,6 +111,7 @@ pub fn cargo<'c>(
             }
         })
         .map(move |(package, target, features)| {
+            let target = target.into();
             let command = match operation {
                 BuildOrCheck::Check => CargoCommand::Check {
                     cargoarg,
@@ -118,6 +119,7 @@ pub fn cargo<'c>(
                     target,
                     features,
                     mode: BuildMode::Release,
+                    dir: None,
                 },
                 BuildOrCheck::Build => CargoCommand::Build {
                     cargoarg,
@@ -125,6 +127,7 @@ pub fn cargo<'c>(
                     target,
                     features,
                     mode: BuildMode::Release,
+                    dir: None,
                 },
             };
 
@@ -147,13 +150,21 @@ pub fn cargo_usage_example(
             let path = format!("examples/{example}");
 
             let command = match operation {
-                BuildOrCheck::Check => CargoCommand::CheckInDir {
+                BuildOrCheck::Check => CargoCommand::Check {
+                    cargoarg: &None,
                     mode: BuildMode::Release,
-                    dir: path.into(),
+                    dir: Some(path.into()),
+                    package: None,
+                    target: None,
+                    features: None,
                 },
-                BuildOrCheck::Build => CargoCommand::BuildInDir {
+                BuildOrCheck::Build => CargoCommand::Build {
+                    cargoarg: &None,
+                    package: None,
+                    target: None,
+                    features: None,
                     mode: BuildMode::Release,
-                    dir: path.into(),
+                    dir: Some(path.into()),
                 },
             };
             (globals, command, false)
@@ -178,14 +189,14 @@ pub fn cargo_example<'c>(
             BuildOrCheck::Check => CargoCommand::ExampleCheck {
                 cargoarg,
                 example,
-                target: backend.to_target(),
+                target: Some(backend.to_target()),
                 features,
                 mode: BuildMode::Release,
             },
             BuildOrCheck::Build => CargoCommand::ExampleBuild {
                 cargoarg,
                 example,
-                target: backend.to_target(),
+                target: Some(backend.to_target()),
                 features,
                 mode: BuildMode::Release,
                 dir: Some(PathBuf::from("./rtic")),
@@ -220,16 +231,14 @@ pub fn cargo_clippy<'c>(
             }
         })
         .map(move |(package, target, features)| {
-            (
-                globals,
-                CargoCommand::Clippy {
-                    cargoarg,
-                    package: Some(package.name()),
-                    target,
-                    features,
-                },
-                false,
-            )
+            let command = CargoCommand::Clippy {
+                cargoarg,
+                package: Some(package.name()),
+                target: target.into(),
+                features,
+            };
+
+            (globals, command, false)
         });
 
     runner.run_and_coalesce()
@@ -317,6 +326,7 @@ pub fn qemu_run_examples<'c>(
 
     examples_iter(examples)
         .flat_map(|example| {
+            let target = target.into();
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &None,
                 example,
@@ -361,6 +371,8 @@ pub fn build_and_check_size<'c>(
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
     let runner = examples_iter(examples).map(|example| {
+        let target = target.into();
+
         // Make sure the requested example(s) are built
         let cmd = CargoCommand::ExampleBuild {
             cargoarg: &Some("--quiet"),
@@ -377,7 +389,7 @@ pub fn build_and_check_size<'c>(
         let cmd = CargoCommand::ExampleSize {
             cargoarg,
             example,
-            target: backend.to_target(),
+            target,
             features: features.clone(),
             mode: BuildMode::Release,
             arguments: arguments.clone(),

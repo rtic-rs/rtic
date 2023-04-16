@@ -41,14 +41,15 @@ pub enum CargoCommand<'a> {
     Run {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: Target<'a>,
+        target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
+        dir: Option<PathBuf>,
     },
     Qemu {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: Target<'a>,
+        target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
@@ -56,7 +57,7 @@ pub enum CargoCommand<'a> {
     ExampleBuild {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: Target<'a>,
+        target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
@@ -64,28 +65,30 @@ pub enum CargoCommand<'a> {
     ExampleCheck {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: Target<'a>,
+        target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
     },
     Build {
         cargoarg: &'a Option<&'a str>,
         package: Option<String>,
-        target: Target<'a>,
+        target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
+        dir: Option<PathBuf>,
     },
     Check {
         cargoarg: &'a Option<&'a str>,
         package: Option<String>,
-        target: Target<'a>,
+        target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
+        dir: Option<PathBuf>,
     },
     Clippy {
         cargoarg: &'a Option<&'a str>,
         package: Option<String>,
-        target: Target<'a>,
+        target: Option<Target<'a>>,
         features: Option<String>,
     },
     Format {
@@ -109,60 +112,78 @@ pub enum CargoCommand<'a> {
     ExampleSize {
         cargoarg: &'a Option<&'a str>,
         example: &'a str,
-        target: Target<'a>,
+        target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
         arguments: Option<ExtraArguments>,
         dir: Option<PathBuf>,
     },
-    CheckInDir {
-        mode: BuildMode,
-        dir: PathBuf,
-    },
-    BuildInDir {
-        mode: BuildMode,
-        dir: PathBuf,
-    },
 }
 
 impl core::fmt::Display for CargoCommand<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let p = |p: &Option<String>| {
+        fn p(p: &Option<String>) -> String {
             if let Some(package) = p {
                 format!("package {package}")
             } else {
                 format!("default package")
             }
-        };
+        }
 
-        let feat = |f: &Option<String>| {
+        fn feat(f: &Option<String>) -> String {
             if let Some(features) = f {
                 format!("\"{features}\"")
             } else {
                 format!("no features")
             }
-        };
+        }
 
-        let carg = |f: &&Option<&str>| {
+        fn carg(f: &&Option<&str>) -> String {
             if let Some(cargoarg) = f {
                 format!("{cargoarg}")
             } else {
                 format!("no cargo args")
             }
-        };
+        }
 
-        let details = |target: &Target,
-                       mode: &BuildMode,
-                       features: &Option<String>,
-                       cargoarg: &&Option<&str>| {
+        fn details(
+            target: &Option<Target>,
+            mode: Option<&BuildMode>,
+            features: &Option<String>,
+            cargoarg: &&Option<&str>,
+            path: Option<&PathBuf>,
+        ) -> String {
             let feat = feat(features);
             let carg = carg(cargoarg);
-            if cargoarg.is_some() {
+            let in_dir = if let Some(path) = path {
+                let path = path.to_str().unwrap_or("<can't display>");
+                format!("in {path}")
+            } else {
+                format!("")
+            };
+
+            let target = if let Some(target) = target {
+                format!("{target}")
+            } else {
+                format!("<host target>")
+            };
+
+            let mode = if let Some(mode) = mode {
+                format!("{mode}")
+            } else {
+                format!("debug")
+            };
+
+            if cargoarg.is_some() && path.is_some() {
+                format!("({target}, {mode}, {feat}, {carg}, {in_dir})")
+            } else if cargoarg.is_some() {
                 format!("({target}, {mode}, {feat}, {carg})")
+            } else if path.is_some() {
+                format!("({target}, {mode}, {feat}, {in_dir})")
             } else {
                 format!("({target}, {mode}, {feat})")
             }
-        };
+        }
 
         match self {
             CargoCommand::Run {
@@ -171,11 +192,14 @@ impl core::fmt::Display for CargoCommand<'_> {
                 target,
                 features,
                 mode,
-            } => write!(
-                f,
-                "Run example {example} {}",
-                details(target, mode, features, cargoarg)
-            ),
+                dir,
+            } => {
+                write!(
+                    f,
+                    "Run example {example} {}",
+                    details(target, Some(mode), features, cargoarg, dir.as_ref())
+                )
+            }
             CargoCommand::Qemu {
                 cargoarg,
                 example,
@@ -184,13 +208,8 @@ impl core::fmt::Display for CargoCommand<'_> {
                 mode,
                 dir,
             } => {
-                let details = details(target, mode, features, cargoarg);
-                if let Some(dir) = dir {
-                    let dir = dir.to_str().unwrap_or("Not displayable");
-                    write!(f, "Run example {example} in QEMU from {dir} {details}",)
-                } else {
-                    write!(f, "Run example {example} in QEMU {details}",)
-                }
+                let details = details(target, Some(mode), features, cargoarg, dir.as_ref());
+                write!(f, "Run example {example} in QEMU {details}",)
             }
             CargoCommand::ExampleBuild {
                 cargoarg,
@@ -200,13 +219,8 @@ impl core::fmt::Display for CargoCommand<'_> {
                 mode,
                 dir,
             } => {
-                let details = details(target, mode, features, cargoarg);
-                if let Some(dir) = dir {
-                    let dir = dir.to_str().unwrap_or("Not displayable");
-                    write!(f, "Build example {example} in {dir} {details}")
-                } else {
-                    write!(f, "Build example {example} {details}",)
-                }
+                let details = details(target, Some(mode), features, cargoarg, dir.as_ref());
+                write!(f, "Build example {example} {details}",)
             }
             CargoCommand::ExampleCheck {
                 cargoarg,
@@ -217,7 +231,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             } => write!(
                 f,
                 "Check example {example} {}",
-                details(target, mode, features, cargoarg)
+                details(target, Some(mode), features, cargoarg, None)
             ),
             CargoCommand::Build {
                 cargoarg,
@@ -225,35 +239,30 @@ impl core::fmt::Display for CargoCommand<'_> {
                 target,
                 features,
                 mode,
+                dir,
             } => {
                 let package = p(package);
                 write!(
                     f,
                     "Build {package} {}",
-                    details(target, mode, features, cargoarg)
+                    details(target, Some(mode), features, cargoarg, dir.as_ref())
                 )
             }
-            CargoCommand::BuildInDir { mode, dir } => {
-                let dir = dir.to_str().unwrap_or("Not displayable");
-                write!(f, "Build {dir} ({mode})")
-            }
+
             CargoCommand::Check {
                 cargoarg,
                 package,
                 target,
                 features,
                 mode,
+                dir,
             } => {
                 let package = p(package);
                 write!(
                     f,
                     "Check {package} {}",
-                    details(target, mode, features, cargoarg)
+                    details(target, Some(mode), features, cargoarg, dir.as_ref())
                 )
-            }
-            CargoCommand::CheckInDir { mode, dir } => {
-                let dir = dir.to_str().unwrap_or("Not displayable");
-                write!(f, "Check {dir} ({mode})")
             }
             CargoCommand::Clippy {
                 cargoarg,
@@ -261,14 +270,9 @@ impl core::fmt::Display for CargoCommand<'_> {
                 target,
                 features,
             } => {
+                let details = details(target, None, features, cargoarg, None);
                 let package = p(package);
-                let features = feat(features);
-                let carg = carg(cargoarg);
-                if cargoarg.is_some() {
-                    write!(f, "Clippy {package} ({target}, {features}, {carg})")
-                } else {
-                    write!(f, "Clippy {package} ({target}, {features})")
-                }
+                write!(f, "Clippy {package} {details}")
             }
             CargoCommand::Format {
                 cargoarg,
@@ -330,13 +334,8 @@ impl core::fmt::Display for CargoCommand<'_> {
                 arguments: _,
                 dir,
             } => {
-                let details = details(target, mode, features, cargoarg);
-                if let Some(dir) = dir {
-                    let dir = dir.to_str().unwrap_or("Not displayable");
-                    write!(f, "Compute size of example {example} from {dir} {details}",)
-                } else {
-                    write!(f, "Compute size of example {example} {details}")
-                }
+                let details = details(target, Some(mode), features, cargoarg, dir.as_ref());
+                write!(f, "Compute size of example {example} {details}")
             }
         }
     }
@@ -358,12 +357,8 @@ impl<'a> CargoCommand<'a> {
     fn command(&self) -> &'static str {
         match self {
             CargoCommand::Run { .. } | CargoCommand::Qemu { .. } => "run",
-            CargoCommand::ExampleCheck { .. }
-            | CargoCommand::Check { .. }
-            | CargoCommand::CheckInDir { .. } => "check",
-            CargoCommand::ExampleBuild { .. }
-            | CargoCommand::Build { .. }
-            | CargoCommand::BuildInDir { .. } => "build",
+            CargoCommand::ExampleCheck { .. } | CargoCommand::Check { .. } => "check",
+            CargoCommand::ExampleBuild { .. } | CargoCommand::Build { .. } => "build",
             CargoCommand::ExampleSize { .. } => "size",
             CargoCommand::Clippy { .. } => "clippy",
             CargoCommand::Format { .. } => "fmt",
@@ -384,189 +379,159 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::Clippy { .. }
             | CargoCommand::Format { .. }
             | CargoCommand::Test { .. }
-            | CargoCommand::Doc { .. }
-            | CargoCommand::CheckInDir { .. }
-            | CargoCommand::BuildInDir { .. } => "cargo",
+            | CargoCommand::Doc { .. } => "cargo",
             CargoCommand::Book { .. } => "mdbook",
         }
     }
 
+    /// Build args using common arguments for all commands, and the
+    /// specific information provided
+    fn build_args<'i, T: Iterator<Item = &'i str>>(
+        &'i self,
+        nightly: bool,
+        cargoarg: &'i Option<&'i str>,
+        features: &'i Option<String>,
+        mode: Option<&'i BuildMode>,
+        extra: T,
+    ) -> Vec<&str> {
+        let mut args: Vec<&str> = Vec::new();
+
+        if nightly {
+            args.push("+nightly");
+        }
+
+        if let Some(cargoarg) = cargoarg.as_deref() {
+            args.push(cargoarg);
+        }
+
+        args.push(self.command());
+
+        if let Some(target) = self.target() {
+            args.extend_from_slice(&["--target", target.triple()])
+        }
+
+        if let Some(features) = features.as_ref() {
+            args.extend_from_slice(&["--features", features]);
+        }
+
+        if let Some(mode) = mode.map(|m| m.to_flag()).flatten() {
+            args.push(mode);
+        }
+
+        args.extend(extra);
+
+        args
+    }
+
+    /// Turn the ExtraArguments into an interator that contains the separating dashes
+    /// and the rest of the arguments.
+    ///
+    /// NOTE: you _must_ chain this iterator at the _end_ of the extra arguments.
+    fn extra_args(args: Option<&ExtraArguments>) -> impl Iterator<Item = &str> {
+        #[allow(irrefutable_let_patterns)]
+        let args = if let Some(ExtraArguments::Other(arguments)) = args {
+            // Extra arguments must be passed after "--"
+            ["--"]
+                .into_iter()
+                .chain(arguments.iter().map(String::as_str))
+                .collect()
+        } else {
+            vec![]
+        };
+        args.into_iter()
+    }
+
     pub fn args(&self) -> Vec<&str> {
+        fn p(package: &Option<String>) -> impl Iterator<Item = &str> {
+            if let Some(package) = package {
+                vec!["--package", &package].into_iter()
+            } else {
+                vec![].into_iter()
+            }
+        }
+
         match self {
             // For future embedded-ci, for now the same as Qemu
             CargoCommand::Run {
                 cargoarg,
                 example,
-                target,
                 features,
                 mode,
-            } => {
-                let mut args = vec!["+nightly"];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-
-                args.extend_from_slice(&[
-                    self.command(),
-                    "--example",
-                    example,
-                    "--target",
-                    target.triple(),
-                ]);
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                if let Some(flag) = mode.to_flag() {
-                    args.push(flag);
-                }
-                args
-            }
+                // dir is exposed through `chdir`
+                dir: _,
+                // Target is added by build_args
+                target: _,
+            } => self.build_args(
+                true,
+                cargoarg,
+                features,
+                Some(mode),
+                ["--example", example].into_iter(),
+            ),
             CargoCommand::Qemu {
                 cargoarg,
                 example,
-                target,
                 features,
                 mode,
-                // Dir is exposed through chdir instead
+                // dir is exposed through `chdir`
                 dir: _,
-            } => {
-                let mut args = vec!["+nightly"];
-
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-
-                args.extend_from_slice(&[
-                    self.command(),
-                    "--example",
-                    example,
-                    "--target",
-                    target.triple(),
-                ]);
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                if let Some(flag) = mode.to_flag() {
-                    args.push(flag);
-                }
-                args
-            }
+                // Target is added by build_args
+                target: _,
+            } => self.build_args(
+                true,
+                cargoarg,
+                features,
+                Some(mode),
+                ["--example", example].into_iter(),
+            ),
             CargoCommand::Build {
                 cargoarg,
                 package,
-                target,
                 features,
                 mode,
-            } => {
-                let mut args = vec!["+nightly"];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-
-                args.extend_from_slice(&[self.command(), "--target", target.triple()]);
-
-                if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package]);
-                }
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                if let Some(flag) = mode.to_flag() {
-                    args.push(flag);
-                }
-                args
-            }
+                // Dir is exposed through `chdir`
+                dir: _,
+                // Target is added by build_args
+                target: _,
+            } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Check {
                 cargoarg,
                 package,
-                target: _,
                 features,
                 mode,
-            } => {
-                let mut args = vec!["+nightly"];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-                args.extend_from_slice(&[self.command()]);
-
-                if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package]);
-                }
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                if let Some(flag) = mode.to_flag() {
-                    args.push(flag);
-                }
-                args
-            }
+                // Dir is exposed through `chdir`
+                dir: _,
+                // Target is added by build_args
+                target: _,
+            } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Clippy {
                 cargoarg,
                 package,
-                target: _,
                 features,
-            } => {
-                let mut args = vec!["+nightly"];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-
-                args.extend_from_slice(&[self.command()]);
-
-                if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package]);
-                }
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                args
-            }
+                // Target is added by build_args
+                target: _,
+            } => self.build_args(true, cargoarg, features, None, p(package)),
             CargoCommand::Doc {
                 cargoarg,
                 features,
                 arguments,
             } => {
-                let mut args = vec!["+nightly"];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-
-                args.extend_from_slice(&[self.command()]);
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                if let Some(ExtraArguments::Other(arguments)) = arguments {
-                    for arg in arguments {
-                        args.extend_from_slice(&[arg.as_str()]);
-                    }
-                }
-                args
+                let extra = Self::extra_args(arguments.as_ref());
+                self.build_args(true, cargoarg, features, None, extra)
             }
             CargoCommand::Test {
                 package,
                 features,
                 test,
             } => {
-                let mut args = vec!["+nightly"];
-                args.extend_from_slice(&[self.command()]);
-
-                if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package]);
-                }
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                if let Some(test) = test {
-                    args.extend_from_slice(&["--test", test]);
-                }
-                args
+                let extra = if let Some(test) = test {
+                    vec!["--test", test]
+                } else {
+                    vec![]
+                };
+                let package = p(package);
+                let extra = extra.into_iter().chain(package);
+                self.build_args(true, &None, features, None, extra)
             }
             CargoCommand::Book { arguments } => {
                 let mut args = vec![];
@@ -588,145 +553,89 @@ impl<'a> CargoCommand<'a> {
                 package,
                 check_only,
             } => {
-                let mut args = vec!["+nightly", self.command()];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-
-                if let Some(package) = package {
-                    args.extend_from_slice(&["--package", package]);
-                }
-                if *check_only {
-                    args.extend_from_slice(&["--check"]);
-                }
-
-                args
+                let extra = if *check_only { Some("--check") } else { None };
+                let package = p(package);
+                self.build_args(
+                    true,
+                    cargoarg,
+                    &None,
+                    None,
+                    extra.into_iter().chain(package),
+                )
             }
             CargoCommand::ExampleBuild {
                 cargoarg,
                 example,
-                target,
                 features,
                 mode,
-                // Dir is exposed through chdir instead
+                // dir is exposed through `chdir`
                 dir: _,
-            } => {
-                let mut args = vec!["+nightly"];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-
-                args.extend_from_slice(&[
-                    self.command(),
-                    "--example",
-                    example,
-                    "--target",
-                    target.triple(),
-                ]);
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                if let Some(flag) = mode.to_flag() {
-                    args.push(flag);
-                }
-                args
-            }
+                // Target is added by build_args
+                target: _,
+            } => self.build_args(
+                true,
+                cargoarg,
+                features,
+                Some(mode),
+                ["--example", example].into_iter(),
+            ),
             CargoCommand::ExampleCheck {
                 cargoarg,
                 example,
-                target,
                 features,
                 mode,
-            } => {
-                let mut args = vec!["+nightly"];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
-                args.extend_from_slice(&[
-                    self.command(),
-                    "--example",
-                    example,
-                    "--target",
-                    target.triple(),
-                ]);
-
-                if let Some(feature) = features {
-                    args.extend_from_slice(&["--features", feature]);
-                }
-                if let Some(flag) = mode.to_flag() {
-                    args.push(flag);
-                }
-                args
-            }
+                // Target is added by build_args
+                target: _,
+            } => self.build_args(
+                true,
+                cargoarg,
+                features,
+                Some(mode),
+                ["--example", example].into_iter(),
+            ),
             CargoCommand::ExampleSize {
                 cargoarg,
                 example,
-                target,
                 features,
                 mode,
                 arguments,
-                // Dir is exposed through chdir instead
+                // Target is added by build_args
+                target: _,
+                // dir is exposed through `chdir`
                 dir: _,
             } => {
-                let mut args = vec!["+nightly"];
-                if let Some(cargoarg) = cargoarg {
-                    args.extend_from_slice(&[cargoarg]);
-                }
+                let extra = ["--example", example]
+                    .into_iter()
+                    .chain(Self::extra_args(arguments.as_ref()));
 
-                args.extend_from_slice(&[
-                    self.command(),
-                    "--example",
-                    example,
-                    "--target",
-                    target.triple(),
-                ]);
-
-                if let Some(feature_name) = features {
-                    args.extend_from_slice(&["--features", feature_name]);
-                }
-                if let Some(flag) = mode.to_flag() {
-                    args.push(flag);
-                }
-                if let Some(ExtraArguments::Other(arguments)) = arguments {
-                    // Arguments to cargo size must be passed after "--"
-                    args.extend_from_slice(&["--"]);
-                    for arg in arguments {
-                        args.extend_from_slice(&[arg.as_str()]);
-                    }
-                }
-                args
-            }
-            CargoCommand::CheckInDir { mode, dir: _ } => {
-                let mut args = vec!["+nightly"];
-                args.push(self.command());
-
-                if let Some(mode) = mode.to_flag() {
-                    args.push(mode);
-                }
-
-                args
-            }
-            CargoCommand::BuildInDir { mode, dir: _ } => {
-                let mut args = vec!["+nightly", self.command()];
-
-                if let Some(mode) = mode.to_flag() {
-                    args.push(mode);
-                }
-
-                args
+                self.build_args(true, cargoarg, features, Some(mode), extra)
             }
         }
     }
 
+    /// TODO: integrate this into `args` once `-C` becomes stable.
     fn chdir(&self) -> Option<&PathBuf> {
         match self {
-            CargoCommand::CheckInDir { dir, .. } | CargoCommand::BuildInDir { dir, .. } => {
-                Some(dir)
-            }
             CargoCommand::Qemu { dir, .. }
             | CargoCommand::ExampleBuild { dir, .. }
-            | CargoCommand::ExampleSize { dir, .. } => dir.as_ref(),
+            | CargoCommand::ExampleSize { dir, .. }
+            | CargoCommand::Build { dir, .. }
+            | CargoCommand::Run { dir, .. }
+            | CargoCommand::Check { dir, .. } => dir.as_ref(),
+            _ => None,
+        }
+    }
+
+    fn target(&self) -> Option<&Target> {
+        match self {
+            CargoCommand::Run { target, .. }
+            | CargoCommand::Qemu { target, .. }
+            | CargoCommand::ExampleBuild { target, .. }
+            | CargoCommand::ExampleCheck { target, .. }
+            | CargoCommand::Build { target, .. }
+            | CargoCommand::Check { target, .. }
+            | CargoCommand::Clippy { target, .. }
+            | CargoCommand::ExampleSize { target, .. } => target.as_ref(),
             _ => None,
         }
     }
@@ -863,29 +772,17 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
     };
 
     successes.for_each(|(cmd, stdout, stderr)| {
-        let path = if let Some(dir) = cmd.chdir() {
-            let path = dir.to_str().unwrap_or("Not displayable");
-            format!(" (in {path}")
-        } else {
-            format!("")
-        };
-
         if globals.verbose > 0 {
-            info!("✅ Success: {cmd}{path}\n    {}", cmd.as_cmd_string());
+            info!("✅ Success: {cmd}\n    {}", cmd.as_cmd_string());
         } else {
-            info!("✅ Success: {cmd}{path}");
+            info!("✅ Success: {cmd}");
         }
 
         log_stdout_stderr(Level::Debug)((cmd, stdout, stderr));
     });
 
     errors.clone().for_each(|(cmd, stdout, stderr)| {
-        if let Some(dir) = cmd.chdir() {
-            let path = dir.to_str().unwrap_or("Not displayable");
-            error!("❌ Failed: {cmd} (in {path}) \n    {}", cmd.as_cmd_string());
-        } else {
-            error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
-        }
+        error!("❌ Failed: {cmd}\n    {}", cmd.as_cmd_string());
         log_stdout_stderr(Level::Error)((cmd, stdout, stderr));
     });
 

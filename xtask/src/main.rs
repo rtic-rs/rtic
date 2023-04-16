@@ -356,9 +356,7 @@ fn command_parser(
         | CargoCommand::Doc { .. }
         | CargoCommand::Test { .. }
         | CargoCommand::Book { .. }
-        | CargoCommand::ExampleSize { .. }
-        | CargoCommand::BuildInDir { .. }
-        | CargoCommand::CheckInDir { .. } => {
+        | CargoCommand::ExampleSize { .. } => {
             let cargo_result = run_command(command, output_mode)?;
             Ok(cargo_result)
         }
