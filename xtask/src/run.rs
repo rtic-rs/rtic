@@ -418,35 +418,34 @@ pub fn build_and_check_size<'c>(
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
-    let runner = into_iter(examples).map(|example| {
-        let target = target.into();
+    let runner = into_iter(examples)
+        .flat_map(|example| {
+            let target = target.into();
 
-        // Make sure the requested example(s) are built
-        let cmd = CargoCommand::ExampleBuild {
-            cargoarg: &Some("--quiet"),
-            example,
-            target,
-            features: features.clone(),
-            mode: BuildMode::Release,
-            dir: Some(PathBuf::from("./rtic")),
-            deny_warnings: globals.deny_warnings,
-        };
+            // Make sure the requested example(s) are built
+            let cmd_build = CargoCommand::ExampleBuild {
+                cargoarg: &Some("--quiet"),
+                example,
+                target,
+                features: features.clone(),
+                mode: BuildMode::Release,
+                dir: Some(PathBuf::from("./rtic")),
+                deny_warnings: globals.deny_warnings,
+            };
 
-        if let Err(err) = command_parser(globals, &cmd, false) {
-            error!("{err}");
-        }
+            let cmd_size = CargoCommand::ExampleSize {
+                cargoarg,
+                example,
+                target,
+                features: features.clone(),
+                mode: BuildMode::Release,
+                arguments: arguments.clone(),
+                dir: Some(PathBuf::from("./rtic")),
+            };
 
-        let cmd = CargoCommand::ExampleSize {
-            cargoarg,
-            example,
-            target,
-            features: features.clone(),
-            mode: BuildMode::Release,
-            arguments: arguments.clone(),
-            dir: Some(PathBuf::from("./rtic")),
-        };
-        (globals, cmd, false)
-    });
+            [cmd_build, cmd_size]
+        })
+        .map(|cmd| (globals, cmd, false));
 
     runner.run_and_coalesce()
 }
