@@ -5,17 +5,19 @@ use std::{
     process::{Command, Stdio},
 };
 
+mod iter;
+use iter::{into_iter, CoalescingRunner};
+
 use crate::{
     argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, TestMetadata},
     cargo_command::{BuildMode, CargoCommand},
     command_parser, RunResult, TestRunError,
 };
+
 use log::{error, info, Level};
 
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
-
-use iters::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum OutputMode {
@@ -64,48 +66,6 @@ fn run_and_convert<'a>(
     output
 }
 
-pub trait CoalescingRunner<'c> {
-    /// Run all the commands in this iterator, and coalesce the results into
-    /// one error (if any individual commands failed)
-    fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>>;
-}
-
-#[cfg(not(feature = "rayon"))]
-mod iters {
-    use super::*;
-
-    pub fn examples_iter(examples: &[String]) -> impl Iterator<Item = &String> {
-        examples.into_iter()
-    }
-
-    impl<'g, 'c, I> CoalescingRunner<'c> for I
-    where
-        I: Iterator<Item = (&'g Globals, CargoCommand<'c>, bool)>,
-    {
-        fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>> {
-            self.map(run_and_convert).collect()
-        }
-    }
-}
-
-#[cfg(feature = "rayon")]
-mod iters {
-    use super::*;
-
-    pub fn examples_iter(examples: &[String]) -> impl ParallelIterator<Item = &String> {
-        examples.into_par_iter()
-    }
-
-    impl<'g, 'c, I> CoalescingRunner<'c> for I
-    where
-        I: ParallelIterator<Item = (&'g Globals, CargoCommand<'c>, bool)>,
-    {
-        fn run_and_coalesce(self) -> Vec<FinalRunResult<'c>> {
-            self.map(run_and_convert).collect()
-        }
-    }
-}
-
 /// Cargo command to either build or check
 pub fn cargo<'c>(
     globals: &Globals,
@@ -119,16 +79,7 @@ pub fn cargo<'c>(
         .flat_map(|package| {
             let target = backend.to_target();
             let features = package.features(target, backend, globals.partial);
-
-            #[cfg(feature = "rayon")]
-            {
-                features.into_par_iter().map(move |f| (package, target, f))
-            }
-
-            #[cfg(not(feature = "rayon"))]
-            {
-                features.into_iter().map(move |f| (package, target, f))
-            }
+            into_iter(features).map(move |f| (package, target, f))
         })
         .map(move |(package, target, features)| {
             let target = target.into();
@@ -165,7 +116,7 @@ pub fn cargo_usage_example(
     operation: BuildOrCheck,
     usage_examples: Vec<String>,
 ) -> Vec<FinalRunResult<'_>> {
-    examples_iter(&usage_examples)
+    into_iter(&usage_examples)
         .map(|example| {
             let path = format!("examples/{example}");
 
@@ -202,7 +153,7 @@ pub fn cargo_example<'c>(
     backend: Backends,
     examples: &'c [String],
 ) -> Vec<FinalRunResult<'c>> {
-    let runner = examples_iter(examples).map(|example| {
+    let runner = into_iter(examples).map(|example| {
         let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
         let command = match operation {
@@ -239,16 +190,7 @@ pub fn cargo_clippy<'c>(
         .flat_map(|package| {
             let target = backend.to_target();
             let features = package.features(target, backend, globals.partial);
-
-            #[cfg(feature = "rayon")]
-            {
-                features.into_par_iter().map(move |f| (package, target, f))
-            }
-
-            #[cfg(not(feature = "rayon"))]
-            {
-                features.into_iter().map(move |f| (package, target, f))
-            }
+            into_iter(features).map(move |f| (package, target, f))
         })
         .map(move |(package, target, features)| {
             let command = CargoCommand::Clippy {
@@ -344,7 +286,7 @@ pub fn qemu_run_examples<'c>(
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
-    examples_iter(examples)
+    into_iter(examples)
         .flat_map(|example| {
             let target = target.into();
             let cmd_build = CargoCommand::ExampleBuild {
@@ -365,15 +307,7 @@ pub fn qemu_run_examples<'c>(
                 dir: Some(PathBuf::from("./rtic")),
             };
 
-            #[cfg(not(feature = "rayon"))]
-            {
-                [cmd_build, cmd_qemu].into_iter()
-            }
-
-            #[cfg(feature = "rayon")]
-            {
-                [cmd_build, cmd_qemu].into_par_iter()
-            }
+            into_iter([cmd_build, cmd_qemu])
         })
         .map(|cmd| (globals, cmd, overwrite))
         .run_and_coalesce()
@@ -390,7 +324,7 @@ pub fn build_and_check_size<'c>(
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
-    let runner = examples_iter(examples).map(|example| {
+    let runner = into_iter(examples).map(|example| {
         let target = target.into();
 
         // Make sure the requested example(s) are built
