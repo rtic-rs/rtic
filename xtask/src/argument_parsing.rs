@@ -1,4 +1,4 @@
-use crate::{command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN};
+use crate::{cargo_command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN};
 use clap::{Args, Parser, Subcommand};
 use core::fmt;
 

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{
     argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, TestMetadata},
-    command::{BuildMode, CargoCommand},
+    cargo_command::{BuildMode, CargoCommand},
     command_parser, RunResult,
 };
 use log::error;
