@@ -103,13 +103,23 @@ mod app {
 
     #[task(local = [i2c, led])]
     async fn heartbeat(ctx: heartbeat::Context) {
-        // Flicker the built-in LED
-        _ = ctx.local.led.toggle();
+        // Loop forever.
+        //
+        // It is important to remember that tasks that loop
+        // forever should have an `await` somewhere in that loop.
+        //
+        // Without the await, the task will never yield back to
+        // the async executor, which means that no other lower or
+        // equal  priority task will be able to run.
+        loop {
+            // Flicker the built-in LED
+            _ = ctx.local.led.toggle();
 
-        // Congrats, you can use your i2c and have access to it here,
-        // now to do something with it!
+            // Congrats, you can use your i2c and have access to it here,
+            // now to do something with it!
 
-        // Re-spawn this task after 1 second
-        Timer::delay(1000.millis()).await;
+            // Delay for 1 second
+            Timer::delay(1000.millis()).await;
+        }
     }
 }
