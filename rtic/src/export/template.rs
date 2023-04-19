@@ -46,3 +46,6 @@ where
 {
     f(&mut *ptr)
 }
+
+/// You can add any additional feature you want.
+pub mod others {}
