@@ -16,10 +16,17 @@ use crate::{
     analyze::Analysis as CodegenAnalysis,
     syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
 };
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use std::collections::HashSet;
 use syn::{parse, Attribute, Ident};
+
+/// Utility function to get the SLIC interrupt module.
+pub fn interrupt_mod_ident() -> TokenStream2 {
+    let span = Span::call_site();
+    let slic_mod = Ident::new("slic::interrupt", span);
+    quote!(#slic_mod)
+}
 
 /// This macro implements the [`rtic::Mutex`] trait for shared resources using the SLIC.
 pub fn impl_mutex(
