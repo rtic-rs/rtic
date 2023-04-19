@@ -1,7 +1,3 @@
-use crate::codegen::{util, App};
-use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
-
 #[cfg(not(any(
     feature = "cortex-m-source-masking",
     feature = "cortex-m-basepri",
@@ -32,8 +28,10 @@ mod template;
 /// Utility function to get the device identifier as to refer to the interrupt enum.
 /// In most of the cases, this is just [`App::args::device`].
 /// However, the SLIC implementation is slightly different, as it creates its own enum.
-pub fn interrupt_mod_ident(app: &App) -> TokenStream2 {
+pub fn interrupt_mod_ident(app: &crate::codegen::App) -> proc_macro2::TokenStream {
     let device = &app.args.device;
-    let enum_ = util::interrupt_ident();
-    quote!(#device::enum_)
+
+    let span = proc_macro2::Span::call_site();
+    let enum_ = syn::Ident::new("interrupt", span);
+    quote::quote!(#device::enum_)
 }
