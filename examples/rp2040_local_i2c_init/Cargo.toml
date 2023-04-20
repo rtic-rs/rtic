@@ -1,0 +1,38 @@
+[package]
+name = "rp2040_local_i2c_init"
+categories = ["embedded", "no-std"]
+description = "Example task local initialized resources for Raspberry Pi Pico"
+license = "MIT OR Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies.rtic]
+path = "../../rtic"
+version = "=2.0.0-alpha.1"
+features = ["thumbv6-backend"]
+
+[dependencies.rtic-monotonics]
+path = "../../rtic-monotonics"
+version = "=1.0.0-alpha.1"
+features = ["rp2040"]
+
+[dependencies]
+cortex-m = "0.7"
+embedded-hal = { version = "0.2.7", features = ["unproven"] }
+fugit = "0.3"
+rp-pico = "0.7.0"
+panic-probe = "0.3"
+
+[profile.dev]
+opt-level = 1
+codegen-units = 16
+debug = true
+lto = false
+
+[profile.release]
+opt-level = "s"   # optimize for size
+codegen-units = 1 # better optimizations
+debug = true      # symbols are nice and they don't increase the size on Flash
+lto = true        # better optimzations
