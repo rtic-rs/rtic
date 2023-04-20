@@ -1,7 +1,7 @@
 use esp32c3::INTERRUPT_CORE0; //priority threshold control
 pub use esp32c3::{Interrupt, Peripherals};
-pub use esp32c3_hal::interrupt as hal_interrupt; //high level peripheral interrupt access
-use esp32c3_hal::interrupt::Priority; //need this for setting priority since the method takes an object and not a int
+//pub use esp32c3_hal::interrupt as hal_interrupt; //high level peripheral interrupt access
+//use esp32c3_hal::interrupt::Priority; //need this for setting priority since the method takes an object and not a int
 pub use riscv::{interrupt, register::mcause}; //low level interrupt enable/disable
 
 #[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]
@@ -137,7 +137,29 @@ pub fn unpend(int: Interrupt) {
         }
     }
 }
+const PRIORITY_TO_INTERRUPT: [usize; 15] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
+pub fn enable(int: Interrupt, prio: u8) {
+    const INTERRUPT_MAP_BASE: u32 = 0x600c2000; //this isn't exposed properly in the PAC,
+                                                //should maybe figure out a workaround that
+                                                //doesnt involve raw pointers.
+                                                //Again, this is how they do it in the HAL
+                                                //but i'm really not a fan.
+    let interrupt_number = int as isize;
+    let cpu_interrupt_number = prio as isize; //this is how they do it in the HAL, i'm not a huge fan but lack better ideas at the moment.
+    unsafe {
+        let intr_map_base = INTERRUPT_MAP_BASE as *mut u32;
+        intr_map_base
+            .offset(interrupt_number)
+            .write_volatile(cpu_interrupt_number as u32);
+        //map peripheral interrupt to CPU interrupt
+        (*INTERRUPT_CORE0::ptr())
+            .cpu_int_enable
+            .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits())); //enable the CPU interupt.
+    }
+}
+
+/*
 pub fn int_to_prio(int: u8) -> Priority {
     match (int) {
         0 => Priority::None,
@@ -158,4 +180,5 @@ pub fn int_to_prio(int: u8) -> Priority {
         15 => Priority::Priority15,
         _ => panic!(), //this should never happen, since it's checked at compile time.
     }
-}
+
+}*/

@@ -89,11 +89,10 @@ mod esp32c3 {
             stmts.push(quote!(
                 const _: () =  if (#max_prio) <= #priority as usize { ::core::panic!(#es); };
             ));
-            //hal enables interrupt and sets prio simultaneously
             stmts.push(quote!(
-                rtic::export::hal_interrupt::enable(
-                    #rt_err::Interrupt::#name, //interrupt struct
-                    rtic::export::int_to_prio(#priority) //interrupt priority object
+                rtic::export::enable(
+                    #rt_err::Interrupt::#name,
+                    #priority
                 );
             ));
         }
