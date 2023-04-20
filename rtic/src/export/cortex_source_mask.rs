@@ -6,6 +6,11 @@ pub use cortex_m::{
     Peripherals,
 };
 
+#[cfg(not(any(feature = "thumbv6-backend", feature = "thumbv8base-backend")))]
+compile_error!(
+    "Building for Cortex-M with source masking, but 'thumbv6-backend' or 'thumbv8base-backend' backend not selected"
+);
+
 /// Mask is used to store interrupt masks on systems without a BASEPRI register (M0, M0+, M23).
 /// It needs to be large enough to cover all the relevant interrupts in use.
 /// For M0/M0+ there are only 32 interrupts so we only need one u32 value.

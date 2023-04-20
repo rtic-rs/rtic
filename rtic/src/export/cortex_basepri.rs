@@ -8,6 +8,11 @@ pub use cortex_m::{
     Peripherals,
 };
 
+#[cfg(not(any(feature = "thumbv7-backend", feature = "thumbv8main-backend")))]
+compile_error!(
+    "Building for Cortex-M with basepri, but 'thumbv7-backend' or 'thumbv8main-backend' backend not selected"
+);
+
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
 where

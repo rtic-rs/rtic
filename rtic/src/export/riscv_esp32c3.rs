@@ -4,6 +4,9 @@ pub use esp32c3_hal::interrupt as hal_interrupt; //high level peripheral interru
 use esp32c3_hal::interrupt::Priority; //need this for setting priority since the method takes an object and not a int
 pub use esp32c3_hal::riscv::interrupt; //low level interrupt enable/disable
 
+#[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]
+compile_error!("Building for the esp32c3, but 'riscv-esp32c3-backend not selected'");
+
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
 where
@@ -79,6 +82,59 @@ pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) 
                 .write(|w| w.cpu_int_thresh().bits(current))
         }
         r
+    }
+}
+
+/// Sets the given software interrupt as pending
+#[inline(always)]
+pub fn pend(int: Interrupt) {
+    unsafe {
+        let peripherals = Peripherals::steal();
+        match int {
+            Interrupt::FROM_CPU_INTR0 => peripherals
+                .SYSTEM
+                .cpu_intr_from_cpu_0
+                .write(|w| w.cpu_intr_from_cpu_0().bit(true)),
+            Interrupt::FROM_CPU_INTR1 => peripherals
+                .SYSTEM
+                .cpu_intr_from_cpu_1
+                .write(|w| w.cpu_intr_from_cpu_1().bit(true)),
+            Interrupt::FROM_CPU_INTR2 => peripherals
+                .SYSTEM
+                .cpu_intr_from_cpu_2
+                .write(|w| w.cpu_intr_from_cpu_2().bit(true)),
+            Interrupt::FROM_CPU_INTR3 => peripherals
+                .SYSTEM
+                .cpu_intr_from_cpu_3
+                .write(|w| w.cpu_intr_from_cpu_3().bit(true)),
+            _ => panic!("Unsupported software interrupt"), //should never happen, checked at compile time
+        }
+    }
+}
+
+// Sets the given software interrupt as not pending
+pub fn unpend(int: Interrupt) {
+    unsafe {
+        let peripherals = Peripherals::steal();
+        match int {
+            Interrupt::FROM_CPU_INTR0 => peripherals
+                .SYSTEM
+                .cpu_intr_from_cpu_0
+                .write(|w| w.cpu_intr_from_cpu_0().bit(false)),
+            Interrupt::FROM_CPU_INTR1 => peripherals
+                .SYSTEM
+                .cpu_intr_from_cpu_1
+                .write(|w| w.cpu_intr_from_cpu_1().bit(false)),
+            Interrupt::FROM_CPU_INTR2 => peripherals
+                .SYSTEM
+                .cpu_intr_from_cpu_2
+                .write(|w| w.cpu_intr_from_cpu_2().bit(false)),
+            Interrupt::FROM_CPU_INTR3 => peripherals
+                .SYSTEM
+                .cpu_intr_from_cpu_3
+                .write(|w| w.cpu_intr_from_cpu_3().bit(false)),
+            _ => panic!("Unsupported software interrupt"), //this should realistically never happen, since tasks that call unpend must call pend first.
+        }
     }
 }
 
