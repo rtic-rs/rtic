@@ -3,7 +3,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Ident, PatType};
-use bindings::interrupt_ident;
+pub use bindings::interrupt_ident;
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
 
