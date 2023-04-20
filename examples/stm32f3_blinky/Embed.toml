@@ -1,0 +1,9 @@
+[default.general]
+chip = "stm32f303re"
+
+
+[default.rtt]
+enabled = true
+
+[default.gdb]
+enabled = false
