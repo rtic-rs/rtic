@@ -2,7 +2,7 @@ use esp32c3::INTERRUPT_CORE0; //priority threshold control
 pub use esp32c3::{Interrupt, Peripherals};
 pub use esp32c3_hal::interrupt as hal_interrupt; //high level peripheral interrupt access
 use esp32c3_hal::interrupt::Priority; //need this for setting priority since the method takes an object and not a int
-pub use esp32c3_hal::riscv::interrupt; //low level interrupt enable/disable
+pub use riscv::{interrupt, register::mcause}; //low level interrupt enable/disable
 
 #[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]
 compile_error!("Building for the esp32c3, but 'riscv-esp32c3-backend not selected'");
