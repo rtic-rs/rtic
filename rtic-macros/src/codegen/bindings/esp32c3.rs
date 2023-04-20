@@ -50,6 +50,11 @@ mod esp32c3 {
         )
     }
 
+    pub fn interrupt_ident() -> Ident {
+        let span = Span::call_site();
+        Ident::new("Interrupt", span)
+    }
+
     pub fn extra_assertions(_: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
         vec![]
     }

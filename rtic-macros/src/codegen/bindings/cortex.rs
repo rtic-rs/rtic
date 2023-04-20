@@ -29,6 +29,10 @@ fn is_exception(name: &Ident) -> bool {
             | "SysTick"
     )
 }
+pub fn interrupt_ident() -> Ident {
+    let span = Span::call_site();
+    Ident::new("interrupt", span)
+}
 
 #[cfg(feature = "cortex-m-source-masking")]
 mod source_masking {
