@@ -4,7 +4,6 @@ pub use atomic_polyfill as atomic;
 
 pub mod executor;
 
-
 // Cortex-M target (any)
 #[cfg(feature = "cortex-m")]
 pub use cortex_common::*;
@@ -37,7 +36,6 @@ mod riscv_common;
 mod riscv_esp32c3;
 #[cfg(feature = "riscv-esp32c3")]
 pub use riscv_esp32c3::*;
-
 
 #[inline(always)]
 pub fn assert_send<T>()
