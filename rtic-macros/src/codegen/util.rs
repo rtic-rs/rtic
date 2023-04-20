@@ -3,7 +3,8 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Ident, PatType};
-pub use bindings::interrupt_ident;
+//hook the target specific interrupt_ident function
+pub use super::bindings::interrupt_ident;
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
 
