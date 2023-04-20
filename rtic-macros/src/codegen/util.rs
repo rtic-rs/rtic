@@ -8,17 +8,7 @@ const RTIC_INTERNAL: &str = "__rtic_internal";
 
 //this is named something else in the esp32c3 pac
 #[cfg(not(feature = "riscv-esp32c3"))]
-pub fn interrupt_ident() -> Ident {
-    let span = Span::call_site();
-    Ident::new("interrupt", span)
-}
 
-//:DDDDD
-#[cfg(feature = "riscv-esp32c3")]
-pub fn interrupt_ident() -> Ident {
-    let span = Span::call_site();
-    Ident::new("Interrupt", span)
-}
 
 /// Mark a name as internal
 pub fn mark_internal_name(name: &str) -> Ident {

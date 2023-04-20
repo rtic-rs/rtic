@@ -3,7 +3,7 @@ use crate::{
     codegen::util,
     syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
 };
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use std::collections::HashSet;
 use syn::{parse, Attribute, Ident};
