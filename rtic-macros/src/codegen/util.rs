@@ -3,11 +3,9 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Ident, PatType};
+use bindings::interrupt_ident;
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
-
-//this is named something else in the esp32c3 pac
-#[cfg(not(feature = "riscv-esp32c3"))]
 
 
 /// Mark a name as internal
