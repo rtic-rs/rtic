@@ -11,7 +11,7 @@
   - [The init task](./by-example/app_init.md)
   - [The idle task](./by-example/app_idle.md)
   - [Channel based communication](./by-example/channel.md)
-  - [Delay and Timeout](./by-example/delay.md)
+  - [Delay and Timeout using Monotonics](./by-example/delay.md)
   - [The minimal app](./by-example/app_minimal.md)
   - [Tips & Tricks](./by-example/tips.md)
     - [Implementing Monotonic](./by-example/tips_monotonic_impl.md)
