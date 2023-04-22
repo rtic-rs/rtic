@@ -24,6 +24,7 @@
 - [RTIC vs. the world](./rtic_vs.md)
 - [Awesome RTIC examples](./awesome_rtic.md)
 <!-- - [Migration Guides](./migration.md)
+  - [v1.0.x to v2.0.0](./migration/migration_v2.md)
   - [v0.5.x to v1.0.x](./migration/migration_v5.md)
   - [v0.4.x to v0.5.x](./migration/migration_v4.md)
   - [RTFM to RTIC](./migration/migration_rtic.md) -->
@@ -44,3 +45,12 @@
     - [Task priorities](./by-example/app_priorities.md)
     - [Monotonic & `spawn_{at/after}`](./by-example/monotonic.md) 
   -->
+
+---
+
+- [Migrating from v1.0.x to v2.0.0](./migration/migration_v2.md)
+  - [Rust Nightly & features](./migration/migration_v2/nightly.md)
+  - [Migrating to `rtic-monotonics`](./migration/migration_v2/monotonics.md)
+  - [Software tasks must now be `async`](./migration/migration_v2/async_tasks.md)
+  - [Using and understanding `rtic-sync`](./migration/migration_v2/rtic-sync.md)
+  - [A code example on migration](./migration/migration_v2/complete_example.md)
