@@ -87,7 +87,7 @@ mod app {
 # V2.0.0
 
 ``` rust
-{{ #include ../../../../../examples/stm32f3_blinky/src/main.rs }}
+{{ #include ../../../../examples/stm32f3_blinky/src/main.rs }}
 ```
 
 ## A diff between the two projects
