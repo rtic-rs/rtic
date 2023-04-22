@@ -1,6 +1,6 @@
 # Communication over channels.
 
-Channels can be used to communicate data between running *software* tasks. The channel is essentially a wait queue, allowing tasks with multiple producers and a single receiver. A channel is constructed in the `init` task and backed by statically allocated memory. Send and receive endpoints are distributed to *software* tasks:
+Channels can be used to communicate data between running tasks. The channel is essentially a wait queue, allowing tasks with multiple producers and a single receiver. A channel is constructed in the `init` task and backed by statically allocated memory. Send and receive endpoints are distributed to *software* tasks:
 
 ``` rust
 ...
@@ -15,6 +15,8 @@ const CAPACITY: usize = 5;
 ```
 
 In this case the channel holds data of `u32` type with a capacity of 5  elements. 
+
+Channels can also be used from *hardware* tasks, but only in a non-`async` manner using the [Try API](#try-api).
 
 ## Sending data
 
@@ -107,11 +109,11 @@ $ cargo run --target thumbv7m-none-eabi --example async-channel-no-receiver --fe
 {{#include ../../../../rtic/ci/expected/async-channel-no-receiver.run}}
 ```
 
-
-
 ## Try API
 
-In cases you wish the sender to proceed even in case the channel is full. To that end, a `try_send` API is provided.
+Using the Try API, you can send or receive data from or to a channel without requiring that the operation succeeds, and in non-`async` contexts.
+
+This API is exposed through `Receiver::try_recv` and `Sender::try_send`.
 
 ``` rust
 {{#include ../../../../rtic/examples/async-channel-try.rs}}

@@ -18,7 +18,9 @@ mod app {
     struct Shared {}
 
     #[local]
-    struct Local {}
+    struct Local {
+        sender: Sender<'static, u32, CAPACITY>,
+    }
 
     const CAPACITY: usize = 1;
     #[init]
@@ -28,7 +30,7 @@ mod app {
         receiver::spawn(r).unwrap();
         sender1::spawn(s.clone()).unwrap();
 
-        (Shared {}, Local {})
+        (Shared {}, Local { sender: s.clone() })
     }
 
     #[task]
@@ -44,5 +46,12 @@ mod app {
         sender.send(1).await.unwrap();
         hprintln!("Sender 1 try sending: 2 {:?}", sender.try_send(2));
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+    }
+
+    // This interrupt is never triggered, but is used to demonstrate that
+    // one can (try to) send data into a channel from a hardware task.
+    #[task(binds = GPIOA, local = [sender])]
+    fn hw_task(cx: hw_task::Context) {
+        cx.local.sender.try_send(3).ok();
     }
 }
