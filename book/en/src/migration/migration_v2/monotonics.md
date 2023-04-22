@@ -8,4 +8,4 @@ The `#[monotonic]` attribute is no longer used. Instead, you use a `create_X_tok
 
 Check out the [code example](./complete_example.md) for an overview of the required changes.
 
-For more information on current monotonic implementations, see [the `rtic-monotonics` documentation](https://docs.rs/rtic-monotonics).
+For more information on current monotonic implementations, see [the `rtic-monotonics` documentation](https://docs.rs/rtic-monotonics), and [the examples](https://github.com/rtic-rs/rtic/tree/master/examples).
