@@ -10,12 +10,8 @@ If you are targeting ARMv6-M or ARMv8-M-base architecture, check out the section
 This will give you an RTIC application with support for RTT logging with [`defmt`] and stack overflow
 protection using [`flip-link`]. There is also a multitude of examples provided by the community:
 
-For inspiration, you may look at the below resources. For now, they cover RTIC v1.x, but will be updated with RTIC v2.x examples over time.
-
-- [`rtic-examples`] - Multiple projects
-- [https://github.com/kalkyl/f411-rtic](https://github.com/kalkyl/f411-rtic)
-- ... More to come
+For inspiration, you may look at the [rtic examples].
 
 [`defmt`]: https://github.com/knurling-rs/defmt/
 [`flip-link`]: https://github.com/knurling-rs/flip-link/
-[`rtic-examples`]: https://github.com/rtic-rs/rtic-examples
+[rtic examples]: https://github.com/rtic-rs/rtic/tree/master/examples
