@@ -9,13 +9,8 @@ This can be achieved by instantiating a monotonic timer (for implementations, se
 
 ``` rust
 ...
-#[init]
-fn init(cx: init::Context) -> (Shared, Local) {
-    hprintln!("init");
-
-    let token = rtic_monotonics::create_systick_token!();
-    Systick::start(cx.core.SYST, 12_000_000, token);
-    ...
+{{#include ../../../../rtic/examples/async-timeout.rs:init}}
+        ...
 ```
 
 A *software* task can `await` the delay to expire:
@@ -63,12 +58,8 @@ A common use case is transactions with an associated timeout. In the examples sh
 
 Using the `select_biased` macro from the `futures` crate it may look like this:
 
-``` rust
-// Call hal with short relative timeout using `select_biased`
-select_biased! {
-    v = hal_get(1).fuse() => hprintln!("hal returned {}", v),
-    _ = Systick::delay(200.millis()).fuse() =>  hprintln!("timeout", ), // this will finish first
-}
+``` rust,noplayground
+{{#include ../../../../rtic/examples/async-timeout.rs:select_biased}}
 ```
 
 Assuming the `hal_get` will take 450ms to finish, a short timeout of 200ms will expire before `hal_get` can complete.
@@ -80,11 +71,7 @@ Using `select_biased` any number of futures can be combined, so its very powerfu
 Rewriting the second example from above using `timeout_after` gives:
 
 ``` rust
-// Call hal with long relative timeout using monotonic `timeout_after`
-match Systick::timeout_after(1000.millis(), hal_get(1)).await {
-    Ok(v) => hprintln!("hal returned {}", v),
-    _ => hprintln!("timeout"),
-}
+{{#include ../../../../rtic/examples/async-timeout.rs:timeout_at_basic}}
 ```
 
 In cases where you want exact control over time without drift we can use exact points in time using `Instant`, and spans of time using `Duration`. Operations on the `Instant` and `Duration` types come from the [`fugit`] crate.
@@ -92,24 +79,9 @@ In cases where you want exact control over time without drift we can use exact p
 [fugit]: https://crates.io/crates/fugit
 
 ``` rust
-// get the current time instance
-let mut instant = Systick::now();
 
-// do this 3 times
-for n in 0..3 {
-    // absolute point in time without drift
-    instant += 1000.millis();
-    Systick::delay_until(instant).await;
+{{#include ../../../../rtic/examples/async-timeout.rs:timeout_at}}
 
-    // absolute point it time for timeout
-    let timeout = instant + 500.millis();
-    hprintln!("now is {:?}, timeout at {:?}", Systick::now(), timeout);
-
-    match Systick::timeout_at(timeout, hal_get(n)).await {
-        Ok(v) => hprintln!("hal returned {} at time {:?}", v, Systick::now()),
-        _ => hprintln!("timeout"),
-    }
-}
 ```
 
 `let mut instant = Systick::now()` sets the starting time of execution. 
