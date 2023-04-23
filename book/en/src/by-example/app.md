@@ -27,6 +27,6 @@ Overall, the generated code infers no additional overhead in comparison to a han
 To give a flavour of RTIC, the following example contains commonly used features.
 In the following sections we will go through each feature in detail.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/common.rs}}
 ```

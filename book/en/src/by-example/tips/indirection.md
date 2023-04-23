@@ -13,7 +13,7 @@ As this example of approach goes completely outside of RTIC resource model with 
 
 Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../../rtic/examples/pool.rs}}
 ```
 

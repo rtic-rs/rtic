@@ -10,7 +10,7 @@ All software tasks are now required to be `async`.
 
 All of the tasks in your project that do not bind to an interrupt must now be an `async fn`. For example:
 
-``` rust
+``` rust,noplayground
 #[task(
     local = [ some_resource ],
     shared = [ my_shared_resource ],
@@ -24,7 +24,7 @@ fn my_task(cx: my_task::Context) {
 
 becomes
 
-``` rust
+``` rust,noplayground
 #[task(
     local = [ some_resource ],
     shared = [ my_shared_resource ],
@@ -40,7 +40,7 @@ async fn my_task(cx: my_task::Context) {
 
 The new `async` software tasks are allowed to run forever, on one precondition: **there must be an `await` within the infinite loop of the task**. An example of such a task:
 
-``` rust
+``` rust,noplayground
 #[task(local = [ my_channel ] )]
 async fn my_task_that_runs_forever(cx: my_task_that_runs_forever::Context) {
     loop {

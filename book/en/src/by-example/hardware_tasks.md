@@ -19,7 +19,7 @@ Beware of using interrupt vectors that are used internally by hardware features;
 
 The example below demonstrates the use of the `#[task(binds = InterruptName)]` attribute to declare a hardware task bound to an interrupt handler.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/hardware.rs}}
 ```
 

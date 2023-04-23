@@ -11,7 +11,7 @@ improve performance in some cases.
 
 The example below shows how to place the higher priority task, `bar`, in RAM.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../../rtic/examples/ramfunc.rs}}
 ```
 

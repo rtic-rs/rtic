@@ -10,7 +10,7 @@ pending spawns of `foo`. Exceeding this capacity is an `Error`.
 
 The number of arguments to a task is not limited:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../examples/message_passing.rs}}
 ```
 

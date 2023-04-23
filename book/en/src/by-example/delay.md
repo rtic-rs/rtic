@@ -7,7 +7,7 @@ This can be achieved by instantiating a monotonic timer (for implementations, se
 [`rtic-monotonics`]: https://github.com/rtic-rs/rtic/tree/master/rtic-monotonics
 [`rtic-time`]: https://github.com/rtic-rs/rtic/tree/master/rtic-time
 
-``` rust
+``` rust,noplayground
 ...
 {{#include ../../../../rtic/examples/async-timeout.rs:init}}
         ...
@@ -15,7 +15,7 @@ This can be achieved by instantiating a monotonic timer (for implementations, se
 
 A *software* task can `await` the delay to expire:
 
-``` rust
+``` rust,noplayground
 #[task]
 async fn foo(_cx: foo::Context) {
     ...
@@ -34,7 +34,7 @@ Similarly the channels implementation, the timer-queue implementation relies on 
 <details>
 <summary>A complete example</summary>
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-delay.rs}}
 ```
 
@@ -58,7 +58,7 @@ A common use case is transactions with an associated timeout. In the examples sh
 
 Using the `select_biased` macro from the `futures` crate it may look like this:
 
-``` rust,noplayground
+``` rust,noplayground,noplayground
 {{#include ../../../../rtic/examples/async-timeout.rs:select_biased}}
 ```
 
@@ -70,7 +70,7 @@ Using `select_biased` any number of futures can be combined, so its very powerfu
 
 Rewriting the second example from above using `timeout_after` gives:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-timeout.rs:timeout_at_basic}}
 ```
 
@@ -78,7 +78,7 @@ In cases where you want exact control over time without drift we can use exact p
 
 [fugit]: https://crates.io/crates/fugit
 
-``` rust
+``` rust,noplayground
 
 {{#include ../../../../rtic/examples/async-timeout.rs:timeout_at}}
 
@@ -99,7 +99,7 @@ For the third iteration, with `n == 2`, `hal_get` will take 550ms to finish, in 
 <details>
 <summary>A complete example</summary>
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-timeout.rs}}
 ```
 

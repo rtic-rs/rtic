@@ -34,7 +34,7 @@ This activates the monotonics making it possible to use them.
 
 See the following example:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../examples/schedule.rs}}
 ```
 
@@ -54,7 +54,7 @@ which allows canceling or rescheduling of the task scheduled to run in the futur
 If `cancel` or `reschedule_at`/`reschedule_after` returns an `Err` it means that the operation was
 too late and that the task is already sent for execution. The following example shows this in action:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../examples/cancel-reschedule.rs}}
 ```
 

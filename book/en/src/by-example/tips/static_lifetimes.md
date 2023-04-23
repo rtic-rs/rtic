@@ -8,7 +8,7 @@ In the following example two different tasks share a [`heapless::spsc::Queue`] f
 
 [`heapless::spsc::Queue`]: https://docs.rs/heapless/0.7.5/heapless/spsc/struct.Queue.html
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../../rtic/examples/static.rs}}
 ```
 

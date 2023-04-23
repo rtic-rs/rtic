@@ -23,7 +23,7 @@ The framework will give a compilation error if there are not enough dispatchers 
 
 See the following example:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/spawn.rs}}
 ```
 
@@ -40,7 +40,7 @@ In the below example, we `spawn` the *software* task `foo` from the `idle` task.
 
 Technically the async executor will `poll` the `foo` *future* which in this case leaves the *future* in a *completed* state. 
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/spawn_loop.rs}}
 ```
 
@@ -56,7 +56,7 @@ An attempt to `spawn` an already spawned task (running) task will result in an e
 
 Technically, a `spawn` to a *future* that is not in *completed* state is considered an error.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/spawn_err.rs}}
 ```
 
@@ -71,7 +71,7 @@ $ cargo run --target thumbv7m-none-eabi --example spawn_err
 ## Passing arguments
 You can also pass arguments at spawn as follows.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/spawn_arguments.rs}}
 ```
 
@@ -92,7 +92,7 @@ Conceptually, one can see such tasks as running in the `main` thread of the appl
 [Send]: https://doc.rust-lang.org/nomicon/send-and-sync.html
 
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/zero-prio-task.rs}}
 ```
 

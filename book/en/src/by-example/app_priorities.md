@@ -33,7 +33,7 @@ Task Priority
 
 The following example showcases the priority based scheduling of tasks:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/preempt.rs}}
 ```
 

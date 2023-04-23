@@ -10,7 +10,7 @@ To reenter a task handler in software its underlying interrupt handler must be
 invoked using FFI (see example below). FFI requires `unsafe` code so end users
 are discouraged from directly invoking an interrupt handler.
 
-``` rust
+``` rust,noplayground
 #[rtic::app(device = ..)]
 mod app {
     #[init]
@@ -48,7 +48,7 @@ call from user code.
 
 The above example expands into:
 
-``` rust
+``` rust,noplayground
 fn foo(c: foo::Context) {
     // .. user code ..
 }

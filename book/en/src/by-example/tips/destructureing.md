@@ -3,7 +3,7 @@
 Destructuring task resources might help readability if a task takes multiple
 resources. Here are two examples on how to split up the resource struct:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../../rtic/examples/destructure.rs}}
 ```
 

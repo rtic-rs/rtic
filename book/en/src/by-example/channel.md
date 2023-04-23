@@ -2,7 +2,7 @@
 
 Channels can be used to communicate data between running tasks. The channel is essentially a wait queue, allowing tasks with multiple producers and a single receiver. A channel is constructed in the `init` task and backed by statically allocated memory. Send and receive endpoints are distributed to *software* tasks:
 
-``` rust
+``` rust,noplayground
 ...
 const CAPACITY: usize = 5;
 #[init]
@@ -22,7 +22,7 @@ Channels can also be used from *hardware* tasks, but only in a non-`async` manne
 
 The `send` method post a message on the channel as shown below:
 
-``` rust
+``` rust,noplayground
 #[task]
 async fn sender1(_c: sender1::Context, mut sender: Sender<'static, u32, CAPACITY>) {
     hprintln!("Sender 1 sending: 1");
@@ -34,7 +34,7 @@ async fn sender1(_c: sender1::Context, mut sender: Sender<'static, u32, CAPACITY
 
 The receiver can `await` incoming messages:
 
-``` rust
+``` rust,noplayground
 #[task]
 async fn receiver(_c: receiver::Context, mut receiver: Receiver<'static, u32, CAPACITY>) {
     while let Ok(val) = receiver.recv().await {
@@ -48,7 +48,7 @@ Channels are implemented using a small (global) *Critical Section* (CS) for prot
 
 For a complete example:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-channel.rs}}
 ```
 
@@ -64,7 +64,7 @@ Also sender endpoint can be awaited. In case the channel capacity has not yet be
 
 In the following example the `CAPACITY` has been reduced to 1, forcing sender tasks to wait until the data in the channel has been received.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-channel-done.rs}}
 ```
 
@@ -81,7 +81,7 @@ $ cargo run --target thumbv7m-none-eabi --example async-channel-done --features 
 
 In case all senders have been dropped `await`-ing on an empty receiver channel results in an error. This allows to gracefully implement different types of shutdown operations.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-channel-no-sender.rs}}
 ```
 
@@ -97,7 +97,7 @@ Similarly, `await`-ing on a send channel results in an error in case the receive
 
 The resulting error returns the data back to the sender, allowing the sender to take appropriate action (e.g., storing the data to later retry sending it).
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-channel-no-receiver.rs}}
 ```
 
@@ -115,7 +115,7 @@ Using the Try API, you can send or receive data from or to a channel without req
 
 This API is exposed through `Receiver::try_recv` and `Sender::try_send`.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-channel-try.rs}}
 ```
 

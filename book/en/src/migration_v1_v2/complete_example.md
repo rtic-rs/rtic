@@ -86,7 +86,7 @@ mod app {
 
 # V2.0.0
 
-``` rust
+``` rust,noplayground
 {{ #include ../../../../examples/stm32f3_blinky/src/main.rs }}
 ```
 

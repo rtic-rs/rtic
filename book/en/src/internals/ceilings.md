@@ -26,7 +26,7 @@ gets a unique reference (`&mut-`) to resources.
 
 An example to illustrate the ceiling analysis:
 
-``` rust
+``` rust,noplayground
 #[rtic::app(device = ..)]
 mod app {
     struct Resources {
