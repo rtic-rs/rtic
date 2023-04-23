@@ -13,13 +13,13 @@
   - [Channel based communication](./by-example/channel.md)
   - [Delay and Timeout using Monotonics](./by-example/delay.md)
   - [The minimal app](./by-example/app_minimal.md)
-  - [Tips & Tricks](./by-example/tips.md)
-    - [Implementing Monotonic](./by-example/tips_monotonic_impl.md)
-    - [Resource de-structure-ing](./by-example/tips_destructureing.md)
-    - [Avoid copies when message passing](./by-example/tips_indirection.md)
-    - [`'static` super-powers](./by-example/tips_static_lifetimes.md)
-    - [Inspecting generated code](./by-example/tips_view_code.md)
-    <!-- - [Running tasks from RAM](./by-example/tips_from_ram.md) -->
+  - [Tips & Tricks](./by-example/tips/index.md)
+    - [Implementing Monotonic](./by-example/tips/monotonic_impl.md)
+    - [Resource de-structure-ing](./by-example/tips/destructureing.md)
+    - [Avoid copies when message passing](./by-example/tips/indirection.md)
+    - [`'static` super-powers](./by-example/tips/static_lifetimes.md)
+    - [Inspecting generated code](./by-example/tips/view_code.md)
+    <!-- - [Running tasks from RAM](./by-example/tips/from_ram.md) -->
     <!-- - [`#[cfg(..)]` support](./by-example/tips.md) -->
 - [RTIC vs. the world](./rtic_vs.md)
 - [Awesome RTIC examples](./awesome_rtic.md)
