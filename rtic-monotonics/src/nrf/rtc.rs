@@ -40,8 +40,7 @@ use nrf5340_net_pac::{self as pac, Interrupt, RTC0_NS as RTC0, RTC1_NS as RTC1};
 #[cfg(feature = "nrf9160")]
 use nrf9160_pac::{self as pac, Interrupt, RTC0_NS as RTC0, RTC1_NS as RTC1};
 
-use super::super::Monotonic;
-pub use super::super::{TimeoutError, TimerQueue};
+use crate::{Monotonic, TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
 pub use fugit::{self, ExtU64};
@@ -131,6 +130,12 @@ macro_rules! make_rtc {
                 &$tq
             }
 
+            #[inline(always)]
+            fn is_overflow() -> bool {
+                let rtc = unsafe { &*$rtc::PTR };
+                rtc.events_ovrflw.read().bits() == 1
+            }
+
             /// Timeout at a specific time.
             #[inline]
             pub async fn timeout_at<F: Future>(
@@ -160,28 +165,18 @@ macro_rules! make_rtc {
             pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
                 $tq.delay_until(instant).await;
             }
-
-            #[inline(always)]
-            fn is_overflow() -> bool {
-                let rtc = unsafe { &*$rtc::PTR };
-                rtc.events_ovrflw.read().bits() == 1
-            }
         }
 
         #[cfg(feature = "embedded-hal-async")]
         impl embedded_hal_async::delay::DelayUs for $mono_name {
-            type Error = core::convert::Infallible;
-
             #[inline]
-            async fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
-                $tq.delay((us as u64).micros()).await;
-                Ok(())
+            async fn delay_us(&mut self, us: u32) {
+               Self::delay((us as u64).micros()).await;
             }
 
             #[inline]
-            async fn delay_ms(&mut self, ms: u32) -> Result<(), Self::Error> {
-                $tq.delay((ms as u64).millis()).await;
-                Ok(())
+            async fn delay_ms(&mut self, ms: u32) {
+                Self::delay((ms as u64).millis()).await;
             }
         }
 
