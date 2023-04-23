@@ -15,7 +15,7 @@ features = ["thumbv6-backend"]
 
 [dependencies.rtic-monotonics]
 path = "../../rtic-monotonics"
-version = "=1.0.0-alpha.1"
+version = "=1.0.0-alpha.2"
 features = ["rp2040"]
 
 [dependencies]
