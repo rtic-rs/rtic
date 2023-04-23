@@ -25,6 +25,7 @@
 //! ```
 
 use super::Monotonic;
+
 pub use super::{TimeoutError, TimerQueue};
 use core::future::Future;
 pub use fugit::{self, ExtU64};
@@ -152,16 +153,12 @@ impl Monotonic for Timer {
 
 #[cfg(feature = "embedded-hal-async")]
 impl embedded_hal_async::delay::DelayUs for Timer {
-    type Error = core::convert::Infallible;
-
-    async fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
-        TIMER_QUEUE.delay((us as u64).micros()).await;
-        Ok(())
+    async fn delay_us(&mut self, us: u32) {
+        Self::delay((us as u64).micros()).await;
     }
 
-    async fn delay_ms(&mut self, ms: u32) -> Result<(), Self::Error> {
-        TIMER_QUEUE.delay((ms as u64).millis()).await;
-        Ok(())
+    async fn delay_ms(&mut self, ms: u32) {
+        Self::delay((ms as u64).millis()).await;
     }
 }
 
