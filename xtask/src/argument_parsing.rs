@@ -64,18 +64,18 @@ impl Package {
                     &["cortex-m-systick", "rp2040", "nrf52840"][..]
                 } else {
                     &[
-                        "cortex-m-systick",
-                        "cortex-m-systick,systick-100hz",
-                        "cortex-m-systick,systick-10khz",
-                        "rp2040",
-                        "nrf52810",
-                        "nrf52811",
-                        "nrf52832",
-                        "nrf52833",
-                        "nrf52840",
-                        "nrf5340-app",
-                        "nrf5340-net",
-                        "nrf9160",
+                        "cortex-m-systick,embedded-hal-async",
+                        "cortex-m-systick,systick-100hz,embedded-hal-async",
+                        "cortex-m-systick,systick-10khz,embedded-hal-async",
+                        "rp2040,embedded-hal-async",
+                        "nrf52810,embedded-hal-async",
+                        "nrf52811,embedded-hal-async",
+                        "nrf52832,embedded-hal-async",
+                        "nrf52833,embedded-hal-async",
+                        "nrf52840,embedded-hal-async",
+                        "nrf5340-app,embedded-hal-async",
+                        "nrf5340-net,embedded-hal-async",
+                        "nrf9160,embedded-hal-async",
                     ][..]
                 };
 
