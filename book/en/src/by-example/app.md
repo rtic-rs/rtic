@@ -30,6 +30,12 @@ At compile time the task/resource model is analyzed under the Stack Resource Pol
 
 Overall, the generated code infers no additional overhead in comparison to a hand-written implementation, thus in Rust terms RTIC offers a zero-cost abstraction to concurrency.
 
+## Priority
+
+Priorities in RTIC are specified using the `priority = N` (where N is a positive number) argument passed to the `#[task]` attribute. All `#[task]`s can have a priority. If the priority of a task is not specified, it is set to the default value of 1.
+
+Priorities in RTIC follow a higher value = more important scheme. For examples, a task with priority 2 will preempt a task with priority 1.
+
 ## An RTIC application example
 
 To give a taste of RTIC, the following example contains commonly used features.
