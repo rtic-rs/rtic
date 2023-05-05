@@ -2,6 +2,8 @@
 
 [Preface](./preface.md)
 
+---
+
 - [Starting a new project](./starting_a_project.md)
 - [RTIC by example](./by-example.md)
   - [The `app`](./by-example/app.md)
@@ -23,12 +25,18 @@
     <!-- - [`#[cfg(..)]` support](./by-example/tips.md) -->
 - [RTIC vs. the world](./rtic_vs.md)
 - [Awesome RTIC examples](./awesome_rtic.md)
+
+---
+
 - [Migrating from v1.0.x to v2.0.0](./migration_v1_v2.md)
   - [Rust Nightly & features](./migration_v1_v2/nightly.md)
   - [Migrating to `rtic-monotonics`](./migration_v1_v2/monotonics.md)
   - [Software tasks must now be `async`](./migration_v1_v2/async_tasks.md)
   - [Using and understanding `rtic-sync`](./migration_v1_v2/rtic-sync.md)
   - [A code example on migration](./migration_v1_v2/complete_example.md)
+
+---
+
 - [Under the hood](./internals.md)
   - [Cortex-M architectures](./internals/targets.md)
   <!--- [Interrupt configuration](./internals/interrupt-configuration.md)-->
