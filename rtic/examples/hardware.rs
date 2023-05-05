@@ -36,6 +36,8 @@ mod app {
 
         hprintln!("idle");
 
+        // Some backends provide a manual way of pending an
+        // interrupt.
         rtic::pend(Interrupt::UART0);
 
         loop {

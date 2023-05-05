@@ -7,7 +7,7 @@
 - [Starting a new project](./starting_a_project.md)
 - [RTIC by example](./by-example.md)
   - [The `app`](./by-example/app.md)
-  - [Hardware tasks & `pend`](./by-example/hardware_tasks.md)
+  - [Hardware tasks](./by-example/hardware_tasks.md)
   - [Software tasks & `spawn`](./by-example/software_tasks.md)
   - [Resources](./by-example/resources.md)
   - [The init task](./by-example/app_init.md)
