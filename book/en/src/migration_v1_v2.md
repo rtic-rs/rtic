@@ -9,7 +9,7 @@ Migrating a project from RTIC `v1.0.x` to `v2.0.0` involves the following steps:
 
 For a detailed description of the changes, refer to the subchapters.
 
-If you wish to see a code example of changes required, you can check out [the full example migration page](./migration_v2/complete_example.md).
+If you wish to see a code example of changes required, you can check out [the full example migration page](./migration_v1_v2/complete_example.md).
 
 #### TL;DR (Too Long; Didn't Read)
 1. Add `#![type_alias_impl_trait]` to your crate, and use `cargo +nightly`.

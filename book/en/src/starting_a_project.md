@@ -3,7 +3,7 @@
 A recommendation when starting a RTIC project from scratch is to 
 follow RTIC's [`defmt-app-template`].
 
-If you are targeting ARMv6-M or ARMv8-M-base architecture, check out the section [Target Architecture](../internals/targets.md) for more information on hardware limitations to be aware of.
+If you are targeting ARMv6-M or ARMv8-M-base architecture, check out the section [Target Architecture](./internals/targets.md) for more information on hardware limitations to be aware of.
 
 [`defmt-app-template`]: https://github.com/rtic-rs/defmt-app-template
 
