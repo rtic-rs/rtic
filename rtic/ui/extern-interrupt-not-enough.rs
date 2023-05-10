@@ -13,6 +13,6 @@ mod app {
         (Shared {}, Local {})
     }
 
-    #[task]
+    #[task(priority = 1)]
     async fn a(_: a::Context) {}
 }
