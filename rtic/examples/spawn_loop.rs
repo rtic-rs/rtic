@@ -25,6 +25,7 @@ mod app {
 
         (Shared {}, Local {})
     }
+
     #[idle]
     fn idle(_: idle::Context) -> ! {
         for _ in 0..3 {
@@ -35,7 +36,7 @@ mod app {
         loop {}
     }
 
-    #[task]
+    #[task(priority = 1)]
     async fn foo(_: foo::Context) {
         hprintln!("foo");
     }

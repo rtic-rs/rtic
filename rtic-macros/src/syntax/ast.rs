@@ -242,7 +242,7 @@ pub struct SoftwareTaskArgs {
 impl Default for SoftwareTaskArgs {
     fn default() -> Self {
         Self {
-            priority: 1,
+            priority: 0,
             local_resources: LocalResources::new(),
             shared_resources: SharedResources::new(),
         }

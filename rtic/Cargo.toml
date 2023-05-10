@@ -22,7 +22,7 @@ name = "rtic"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
-version = "2.0.0-alpha.1"
+version = "2.0.0-alpha.2"
 
 [package.metadata.docs.rs]
 features = ["rtic-macros/test-template"]
@@ -36,7 +36,7 @@ bare-metal = "1.0.0"
 #portable-atomic = { version = "0.3.19" }
 atomic-polyfill = "1"
 rtic-monotonics = { path = "../rtic-monotonics", version = "1.0.0-alpha.1", optional = true }
-rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.0" }
+rtic-macros = { path = "../rtic-macros", version = "2.0.0-alpha.2" }
 rtic-core = "1"
 critical-section = "1"
 
