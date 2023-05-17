@@ -61,7 +61,8 @@ macro_rules! __internal_create_nrf_timer_interrupt {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn $timer() {
-            $crate::nrf::timer::$mono_timer::__tq().on_monotonic_interrupt();
+            $crate::nrf::timer::$mono_timer::__tq()
+                .on_monotonic_interrupt::<$crate::nrf::timer::$mono_timer>();
         }
 
         pub struct $timer_token;
@@ -131,7 +132,7 @@ macro_rules! make_timer {
         pub struct $mono_name;
 
         static $overflow: AtomicU32 = AtomicU32::new(0);
-        static $tq: TimerQueue<$mono_name> = TimerQueue::new();
+        static $tq: TimerQueue<fugit::TimerInstantU64<1_000_000>> = TimerQueue::new();
 
         impl $mono_name {
             /// Start the timer monotonic.
@@ -162,7 +163,7 @@ macro_rules! make_timer {
 
             /// Used to access the underlying timer queue
             #[doc(hidden)]
-            pub fn __tq() -> &'static TimerQueue<$mono_name> {
+            pub fn __tq() -> &'static TimerQueue<fugit::TimerInstantU64<1_000_000>> {
                 &$tq
             }
 
@@ -178,7 +179,7 @@ macro_rules! make_timer {
                 instant: <Self as Monotonic>::Instant,
                 future: F,
             ) -> Result<F::Output, TimeoutError> {
-                $tq.timeout_at(instant, future).await
+                $tq.timeout_at::<Self, _>(instant, future).await
             }
 
             /// Timeout after a specific duration.
@@ -187,19 +188,19 @@ macro_rules! make_timer {
                 duration: <Self as Monotonic>::Duration,
                 future: F,
             ) -> Result<F::Output, TimeoutError> {
-                $tq.timeout_after(duration, future).await
+                $tq.timeout_after::<Self, _>(duration, future).await
             }
 
             /// Delay for some duration of time.
             #[inline]
             pub async fn delay(duration: <Self as Monotonic>::Duration) {
-                $tq.delay(duration).await;
+                $tq.delay::<Self>(duration).await;
             }
 
             /// Delay to some specific time instant.
             #[inline]
             pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
-                $tq.delay_until(instant).await;
+                $tq.delay_until::<Self>(instant).await;
             }
         }
 

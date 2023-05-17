@@ -67,8 +67,8 @@ impl<Instant: Copy + Ord> PartialOrd for WaitingWaker<Instant> {
 /// complete.
 ///
 /// Do not call `mem::forget` on an awaited future, or there will be dragons!
-pub struct TimerQueue<Mono: Monotonic> {
-    queue: LinkedList<WaitingWaker<Mono::Instant>>,
+pub struct TimerQueue<Instant: Copy + Ord> {
+    queue: LinkedList<WaitingWaker<Instant>>,
     initialized: AtomicBool,
 }
 
@@ -95,7 +95,7 @@ impl<Instant: Copy + Ord> LinkPtr<Instant> {
 unsafe impl<Instant: Copy + Ord> Send for LinkPtr<Instant> {}
 unsafe impl<Instant: Copy + Ord> Sync for LinkPtr<Instant> {}
 
-impl<Mono: Monotonic> TimerQueue<Mono> {
+impl<Instant: Copy + Ord> TimerQueue<Instant> {
     /// Make a new queue.
     pub const fn new() -> Self {
         Self {
@@ -106,12 +106,18 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
 
     /// Forwards the `Monotonic::now()` method.
     #[inline(always)]
-    pub fn now(&self) -> Mono::Instant {
+    pub fn now<Mono>(&self) -> Instant
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
         Mono::now()
     }
 
     /// Takes the initialized monotonic to initialize the TimerQueue.
-    pub fn initialize(&self, monotonic: Mono) {
+    pub fn initialize<Mono>(&self, monotonic: Mono)
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
         self.initialized.store(true, Ordering::SeqCst);
 
         // Don't run drop on `Mono`
@@ -124,7 +130,10 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
     ///
     /// It's always safe to call, but it must only be called from the interrupt of the
     /// monotonic timer for correct operation.
-    pub unsafe fn on_monotonic_interrupt(&self) {
+    pub unsafe fn on_monotonic_interrupt<Mono>(&self)
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
         Mono::clear_compare_flag();
         Mono::on_interrupt();
 
@@ -166,12 +175,15 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
     }
 
     /// Timeout at a specific time.
-    pub async fn timeout_at<F: Future>(
+    pub async fn timeout_at<Mono, F: Future>(
         &self,
-        instant: Mono::Instant,
+        instant: Instant,
         future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        let delay = self.delay_until(instant);
+    ) -> Result<F::Output, TimeoutError>
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
+        let delay = self.delay_until::<Mono>(instant);
 
         pin_mut!(future);
         pin_mut!(delay);
@@ -184,24 +196,36 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
 
     /// Timeout after a specific duration.
     #[inline]
-    pub async fn timeout_after<F: Future>(
+    pub async fn timeout_after<Mono, F: Future>(
         &self,
         duration: Mono::Duration,
         future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        self.timeout_at(Mono::now() + duration, future).await
+    ) -> Result<F::Output, TimeoutError>
+    where
+        Mono: Monotonic<Instant = Instant>,
+        Instant: core::ops::Add<Mono::Duration, Output = Instant>,
+    {
+        self.timeout_at::<Mono, _>(Mono::now() + duration, future)
+            .await
     }
 
     /// Delay for some duration of time.
     #[inline]
-    pub async fn delay(&self, duration: Mono::Duration) {
+    pub async fn delay<Mono>(&self, duration: Mono::Duration)
+    where
+        Mono: Monotonic<Instant = Instant>,
+        Instant: core::ops::Add<Mono::Duration, Output = Instant>,
+    {
         let now = Mono::now();
 
-        self.delay_until(now + duration).await;
+        self.delay_until::<Mono>(now + duration).await;
     }
 
     /// Delay to some specific time instant.
-    pub async fn delay_until(&self, instant: Mono::Instant) {
+    pub async fn delay_until<Mono>(&self, instant: Mono::Instant)
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
         if !self.initialized.load(Ordering::Relaxed) {
             panic!(
                 "The timer queue is not initialized with a monotonic, you need to run `initialize`"

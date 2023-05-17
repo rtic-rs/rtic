@@ -55,6 +55,8 @@ cfg_if::cfg_if! {
     }
 }
 
+type Instant = fugit::TimerInstantU32<TIMER_HZ>;
+
 /// Systick implementing `rtic_monotonic::Monotonic` which runs at 1 kHz, 100Hz or 10 kHz.
 pub struct Systick;
 
@@ -95,22 +97,24 @@ impl Systick {
 }
 
 static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
-static SYSTICK_TIMER_QUEUE: TimerQueue<Systick> = TimerQueue::new();
+static SYSTICK_TIMER_QUEUE: TimerQueue<Instant> = TimerQueue::new();
 
 // Forward timerqueue interface
 impl Systick {
     /// Used to access the underlying timer queue
     #[doc(hidden)]
-    pub fn __tq() -> &'static TimerQueue<Systick> {
+    pub fn __tq() -> &'static TimerQueue<Instant> {
         &SYSTICK_TIMER_QUEUE
     }
 
     /// Timeout at a specific time.
     pub async fn timeout_at<F: Future>(
-        instant: <Self as Monotonic>::Instant,
+        instant: Instant,
         future: F,
     ) -> Result<F::Output, TimeoutError> {
-        SYSTICK_TIMER_QUEUE.timeout_at(instant, future).await
+        SYSTICK_TIMER_QUEUE
+            .timeout_at::<Self, _>(instant, future)
+            .await
     }
 
     /// Timeout after a specific duration.
@@ -119,24 +123,26 @@ impl Systick {
         duration: <Self as Monotonic>::Duration,
         future: F,
     ) -> Result<F::Output, TimeoutError> {
-        SYSTICK_TIMER_QUEUE.timeout_after(duration, future).await
+        SYSTICK_TIMER_QUEUE
+            .timeout_after::<Self, _>(duration, future)
+            .await
     }
 
     /// Delay for some duration of time.
     #[inline]
     pub async fn delay(duration: <Self as Monotonic>::Duration) {
-        SYSTICK_TIMER_QUEUE.delay(duration).await;
+        SYSTICK_TIMER_QUEUE.delay::<Self>(duration).await;
     }
 
     /// Delay to some specific time instant.
     #[inline]
-    pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
-        SYSTICK_TIMER_QUEUE.delay_until(instant).await;
+    pub async fn delay_until(instant: Instant) {
+        SYSTICK_TIMER_QUEUE.delay_until::<Self>(instant).await;
     }
 }
 
 impl Monotonic for Systick {
-    type Instant = fugit::TimerInstantU32<TIMER_HZ>;
+    type Instant = Instant;
     type Duration = fugit::TimerDurationU32<TIMER_HZ>;
 
     const ZERO: Self::Instant = Self::Instant::from_ticks(0);
@@ -190,7 +196,7 @@ macro_rules! create_systick_token {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn SysTick() {
-            $crate::systick::Systick::__tq().on_monotonic_interrupt();
+            $crate::systick::Systick::__tq().on_monotonic_interrupt::<$crate::systick::Systick>();
         }
 
         pub struct SystickToken;

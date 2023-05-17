@@ -31,6 +31,8 @@ use core::future::Future;
 pub use fugit::{self, ExtU64};
 use rp2040_pac::{timer, Interrupt, NVIC, RESETS, TIMER};
 
+type Instant = fugit::TimerInstantU64<1_000_000>;
+
 /// Timer implementing `rtic_monotonic::Monotonic` which runs at 1 MHz.
 pub struct Timer;
 
@@ -58,23 +60,23 @@ impl Timer {
     }
 }
 
-static TIMER_QUEUE: TimerQueue<Timer> = TimerQueue::new();
+static TIMER_QUEUE: TimerQueue<Instant> = TimerQueue::new();
 
 // Forward timerqueue interface
 impl Timer {
     /// Used to access the underlying timer queue
     #[doc(hidden)]
-    pub fn __tq() -> &'static TimerQueue<Timer> {
+    pub fn __tq() -> &'static TimerQueue<Instant> {
         &TIMER_QUEUE
     }
 
     /// Timeout at a specific time.
     #[inline]
     pub async fn timeout_at<F: Future>(
-        instant: <Self as Monotonic>::Instant,
+        instant: Instant,
         future: F,
     ) -> Result<F::Output, TimeoutError> {
-        TIMER_QUEUE.timeout_at(instant, future).await
+        TIMER_QUEUE.timeout_at::<Self, _>(instant, future).await
     }
 
     /// Timeout after a specific duration.
@@ -83,24 +85,24 @@ impl Timer {
         duration: <Self as Monotonic>::Duration,
         future: F,
     ) -> Result<F::Output, TimeoutError> {
-        TIMER_QUEUE.timeout_after(duration, future).await
+        TIMER_QUEUE.timeout_after::<Self, _>(duration, future).await
     }
 
     /// Delay for some duration of time.
     #[inline]
     pub async fn delay(duration: <Self as Monotonic>::Duration) {
-        TIMER_QUEUE.delay(duration).await;
+        TIMER_QUEUE.delay::<Self>(duration).await;
     }
 
     /// Delay to some specific time instant.
     #[inline]
-    pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
-        TIMER_QUEUE.delay_until(instant).await;
+    pub async fn delay_until(instant: Instant) {
+        TIMER_QUEUE.delay_until::<Self>(instant).await;
     }
 }
 
 impl Monotonic for Timer {
-    type Instant = fugit::TimerInstantU64<1_000_000>;
+    type Instant = Instant;
     type Duration = fugit::TimerDurationU64<1_000_000>;
 
     const ZERO: Self::Instant = Self::Instant::from_ticks(0);
@@ -169,7 +171,7 @@ macro_rules! create_rp2040_monotonic_token {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn TIMER_IRQ_0() {
-            $crate::rp2040::Timer::__tq().on_monotonic_interrupt();
+            $crate::rp2040::Timer::__tq().on_monotonic_interrupt::<$crate::rp2040::Timer>();
         }
 
         pub struct Rp2040Token;
