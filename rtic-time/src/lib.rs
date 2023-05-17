@@ -24,13 +24,13 @@ mod linked_list;
 mod monotonic;
 
 /// Holds a waker and at which time instant this waker shall be awoken.
-struct WaitingWaker<Mono: Monotonic> {
+struct WaitingWaker<Instant: Copy + Ord> {
     waker: Waker,
-    release_at: Mono::Instant,
+    release_at: Instant,
     was_popped: AtomicBool,
 }
 
-impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
+impl<Instant: Copy + Ord> Clone for WaitingWaker<Instant> {
     fn clone(&self) -> Self {
         Self {
             waker: self.waker.clone(),
@@ -40,13 +40,13 @@ impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
     }
 }
 
-impl<Mono: Monotonic> PartialEq for WaitingWaker<Mono> {
+impl<Instant: Copy + Ord> PartialEq for WaitingWaker<Instant> {
     fn eq(&self, other: &Self) -> bool {
         self.release_at == other.release_at
     }
 }
 
-impl<Mono: Monotonic> PartialOrd for WaitingWaker<Mono> {
+impl<Instant: Copy + Ord> PartialOrd for WaitingWaker<Instant> {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.release_at.partial_cmp(&other.release_at)
     }
@@ -68,7 +68,7 @@ impl<Mono: Monotonic> PartialOrd for WaitingWaker<Mono> {
 ///
 /// Do not call `mem::forget` on an awaited future, or there will be dragons!
 pub struct TimerQueue<Mono: Monotonic> {
-    queue: LinkedList<WaitingWaker<Mono>>,
+    queue: LinkedList<WaitingWaker<Mono::Instant>>,
     initialized: AtomicBool,
 }
 
@@ -77,23 +77,23 @@ pub struct TimeoutError;
 
 /// This is needed to make the async closure in `delay_until` accept that we "share"
 /// the link possible between threads.
-struct LinkPtr<Mono: Monotonic>(*mut Option<linked_list::Link<WaitingWaker<Mono>>>);
+struct LinkPtr<Instant: Copy + Ord>(*mut Option<linked_list::Link<WaitingWaker<Instant>>>);
 
-impl<Mono: Monotonic> Clone for LinkPtr<Mono> {
+impl<Instant: Copy + Ord> Clone for LinkPtr<Instant> {
     fn clone(&self) -> Self {
         LinkPtr(self.0)
     }
 }
 
-impl<Mono: Monotonic> LinkPtr<Mono> {
+impl<Instant: Copy + Ord> LinkPtr<Instant> {
     /// This will dereference the pointer stored within and give out an `&mut`.
-    unsafe fn get(&mut self) -> &mut Option<linked_list::Link<WaitingWaker<Mono>>> {
+    unsafe fn get(&mut self) -> &mut Option<linked_list::Link<WaitingWaker<Instant>>> {
         &mut *self.0
     }
 }
 
-unsafe impl<Mono: Monotonic> Send for LinkPtr<Mono> {}
-unsafe impl<Mono: Monotonic> Sync for LinkPtr<Mono> {}
+unsafe impl<Instant: Copy + Ord> Send for LinkPtr<Instant> {}
+unsafe impl<Instant: Copy + Ord> Sync for LinkPtr<Instant> {}
 
 impl<Mono: Monotonic> TimerQueue<Mono> {
     /// Make a new queue.
@@ -208,12 +208,12 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
             );
         }
 
-        let mut link_ptr: Option<linked_list::Link<WaitingWaker<Mono>>> = None;
+        let mut link_ptr: Option<linked_list::Link<WaitingWaker<Mono::Instant>>> = None;
 
         // Make this future `Drop`-safe
         // SAFETY(link_ptr): Shadow the original definition of `link_ptr` so we can't abuse it.
         let mut link_ptr =
-            LinkPtr(&mut link_ptr as *mut Option<linked_list::Link<WaitingWaker<Mono>>>);
+            LinkPtr(&mut link_ptr as *mut Option<linked_list::Link<WaitingWaker<Mono::Instant>>>);
         let mut link_ptr2 = link_ptr.clone();
 
         let queue = &self.queue;
