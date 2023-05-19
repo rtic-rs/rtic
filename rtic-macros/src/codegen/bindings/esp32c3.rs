@@ -73,6 +73,7 @@ mod esp32c3 {
     }
     pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
+        let mut curr_cpu_id:u8 = 1; //cpu interrupt id 0 is reserved
         let rt_err = util::rt_err_ident();
         let max_prio: usize = 15; //unfortunately this is not part of pac, but we know that max prio is 15.
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
@@ -92,9 +93,11 @@ mod esp32c3 {
             stmts.push(quote!(
                 rtic::export::enable(
                     #rt_err::Interrupt::#name,
-                    #priority
+                    #priority,
+                    #curr_cpu_id,
                 );
             ));
+            curr_cpu_id += 1;
         }
         stmts
     }
@@ -211,5 +214,30 @@ mod esp32c3 {
             #[no_mangle]
             static RTIC_ASYNC_MAX_LOGICAL_PRIO: u8 = #max;
         )]
+    }
+    pub fn async_config(
+        app: &App,
+        analysis: &CodegenAnalysis,
+        dispatcher_name: Ident,
+    ) -> Vec<TokenStream2> {
+        let mut stmts = vec![];
+        let mut curr_cpu_id = 1;
+        //let mut ret = "";
+        let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
+        for (&priority, name) in interrupt_ids.chain(
+            app.hardware_tasks
+                .values()
+                .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
+        ) {
+            if *name == dispatcher_name{
+                let ret = &("cpu_int_".to_owned()+&curr_cpu_id.to_string()+"_handler");
+                stmts.push(
+                    quote!(#[export_name = #ret])
+                );
+            }
+            curr_cpu_id += 1;
+        }
+
+        stmts
     }
 }
