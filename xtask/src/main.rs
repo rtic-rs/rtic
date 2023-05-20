@@ -142,7 +142,7 @@ fn main() -> anyhow::Result<()> {
             globals,
             !args.skip_link_check,
             !args.skip_api_link_check,
-            std::path::PathBuf::from(&args.path),
+            std::path::PathBuf::from(&args.output_path),
             &args.arguments,
         ),
         Commands::UsageExampleCheck(examples) => {
