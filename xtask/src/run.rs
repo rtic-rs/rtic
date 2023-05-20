@@ -537,7 +537,14 @@ fn run_command(
 
 fn check_all_api_links(globals: &Globals) -> Vec<FinalRunResult> {
     info!("Checking all API links");
-    let runner = Package::all().into_iter().map(|p| {
+
+    #[cfg(feature = "rayon")]
+    let iter = Package::all().into_par_iter();
+
+    #[cfg(not(feature = "rayon"))]
+    let iter = Package::all().into_iter();
+
+    let runner = iter.map(|p| {
         let name = p.name().to_string().replace('-', "_");
         let segments = ["target", "doc", name.as_str()];
         let path = PathBuf::from_iter(segments);
