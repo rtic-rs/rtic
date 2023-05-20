@@ -90,6 +90,7 @@ pub enum CargoCommand<'a> {
         deny_warnings: bool,
     },
     Book {
+        output_path: PathBuf,
         arguments: Option<ExtraArguments>,
     },
     ExampleSize {
@@ -101,6 +102,9 @@ pub enum CargoCommand<'a> {
         arguments: Option<ExtraArguments>,
         dir: Option<PathBuf>,
         deny_warnings: bool,
+    },
+    Lychee {
+        path: PathBuf,
     },
 }
 
@@ -337,7 +341,12 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let feat = feat(features);
                 write!(f, "Run {test} in {p} ({deny_warnings}features: {feat})")
             }
-            CargoCommand::Book { arguments: _ } => write!(f, "Build the book"),
+            CargoCommand::Book {
+                arguments: _,
+                output_path,
+            } => {
+                write!(f, "Build the book (output: {})", output_path.display())
+            }
             CargoCommand::ExampleSize {
                 cargoarg,
                 example,
@@ -351,6 +360,9 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let warns = *deny_warnings;
                 let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
                 write!(f, "Compute size of example {example} {details}")
+            }
+            CargoCommand::Lychee { path } => {
+                write!(f, "Check links in {}", path.display())
             }
         }
     }
@@ -375,8 +387,8 @@ impl<'a> CargoCommand<'a> {
         format!("{env}{cd}{executable} {args}")
     }
 
-    fn command(&self) -> &'static str {
-        match self {
+    fn command(&self) -> Option<&'static str> {
+        let command = match self {
             CargoCommand::Run { .. } | CargoCommand::Qemu { .. } => "run",
             CargoCommand::ExampleCheck { .. } | CargoCommand::Check { .. } => "check",
             CargoCommand::ExampleBuild { .. } | CargoCommand::Build { .. } => "build",
@@ -386,7 +398,9 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Doc { .. } => "doc",
             CargoCommand::Book { .. } => "build",
             CargoCommand::Test { .. } => "test",
-        }
+            CargoCommand::Lychee { .. } => return None,
+        };
+        Some(command)
     }
     pub fn executable(&self) -> &'static str {
         match self {
@@ -402,6 +416,7 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::Test { .. }
             | CargoCommand::Doc { .. } => "cargo",
             CargoCommand::Book { .. } => "mdbook",
+            CargoCommand::Lychee { .. } => "lychee",
         }
     }
 
@@ -414,7 +429,7 @@ impl<'a> CargoCommand<'a> {
         features: &'i Option<String>,
         mode: Option<&'i BuildMode>,
         extra: T,
-    ) -> Vec<&str> {
+    ) -> Vec<String> {
         let mut args: Vec<&str> = Vec::new();
 
         if nightly {
@@ -425,7 +440,9 @@ impl<'a> CargoCommand<'a> {
             args.push(cargoarg);
         }
 
-        args.push(self.command());
+        if let Some(subcommand) = self.command() {
+            args.push(subcommand);
+        }
 
         if let Some(target) = self.target() {
             args.extend_from_slice(&["--target", target.triple()])
@@ -441,7 +458,7 @@ impl<'a> CargoCommand<'a> {
 
         args.extend(extra);
 
-        args
+        args.into_iter().map(String::from).collect()
     }
 
     /// Turn the ExtraArguments into an interator that contains the separating dashes
@@ -462,7 +479,7 @@ impl<'a> CargoCommand<'a> {
         args.into_iter()
     }
 
-    pub fn args(&self) -> Vec<&str> {
+    pub fn args(&self) -> Vec<String> {
         fn p(package: &Option<String>) -> impl Iterator<Item = &str> {
             if let Some(package) = package {
                 vec!["--package", &package].into_iter()
@@ -574,18 +591,25 @@ impl<'a> CargoCommand<'a> {
                 let extra = extra.into_iter().chain(package);
                 self.build_args(true, &None, features, None, extra)
             }
-            CargoCommand::Book { arguments } => {
+            CargoCommand::Book {
+                arguments,
+                output_path,
+            } => {
                 let mut args = vec![];
 
                 if let Some(ExtraArguments::Other(arguments)) = arguments {
                     for arg in arguments {
-                        args.extend_from_slice(&[arg.as_str()]);
+                        args.extend_from_slice(&[arg.to_string()]);
                     }
                 } else {
                     // If no argument given, run mdbook build
                     // with default path to book
-                    args.extend_from_slice(&[self.command()]);
-                    args.extend_from_slice(&["book/en"]);
+                    args.extend(
+                        ["build", "book/en", "--dest-dir"]
+                            .into_iter()
+                            .map(String::from),
+                    );
+                    args.push(format!("{}", output_path.display()))
                 }
                 args
             }
@@ -657,6 +681,15 @@ impl<'a> CargoCommand<'a> {
 
                 self.build_args(true, cargoarg, features, Some(mode), extra)
             }
+            CargoCommand::Lychee { path } => [
+                "--offline",
+                "--format",
+                "detailed",
+                &format!("{}", path.display()),
+            ]
+            .into_iter()
+            .map(String::from)
+            .collect(),
         }
     }
 

@@ -204,7 +204,7 @@ pub struct Globals {
 
     /// For which backend to build.
     #[arg(value_enum, short, default_value = "thumbv7", long, global = true)]
-    pub backend: Option<Backends>,
+    backend: Option<Backends>,
 
     /// List of comma separated examples to include, all others are excluded
     ///
@@ -240,6 +240,26 @@ pub struct Globals {
     /// a necessary subset.
     #[arg(long, global = true)]
     pub partial: bool,
+}
+
+impl Default for Globals {
+    fn default() -> Self {
+        Self {
+            deny_warnings: false,
+            backend: None,
+            example: None,
+            exampleexclude: None,
+            verbose: 0,
+            stderr_inherited: false,
+            partial: false,
+        }
+    }
+}
+
+impl Globals {
+    pub fn backend(&self) -> Backends {
+        self.backend.unwrap_or_default()
+    }
 }
 
 #[derive(Parser)]
@@ -305,13 +325,13 @@ pub enum Commands {
     /// arguments will be passed on
     ///
     /// Example: `cargo xtask doc -- --open`
-    Doc(Arg),
+    Doc(DocArgs),
 
     /// Run tests
     Test(PackageOpt),
 
     /// Build books with mdbook
-    Book(Arg),
+    Book(BookArgs),
 
     /// Check one or more usage examples.
     ///
@@ -326,11 +346,55 @@ pub enum Commands {
 }
 
 #[derive(Args, Clone, Debug)]
+pub struct BookArgs {
+    /// If this flag is set, the links in the book are
+    /// not verified
+    #[clap(long, short = 'l')]
+    pub skip_link_check: bool,
+
+    /// If this flag is set, the links in the API documentation
+    /// included with the book are not verified
+    #[clap(long, short = 'a')]
+    pub skip_api_link_check: bool,
+
+    /// The path to which the contents of the book should
+    /// be written.
+    #[clap(long, short, default_value = "book-target")]
+    pub path: String,
+
+    /// Additional arguments to pass to `mdbook`
+    #[command(subcommand)]
+    pub arguments: Option<ExtraArguments>,
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct DocArgs {
+    /// If this flag is set, the links in the API
+    /// docs are not verified.
+    #[clap(long, short = 'l')]
+    pub skip_link_check: bool,
+
+    /// Additional arguments to pass to `cargo doc`
+    #[command(subcommand)]
+    pub arguments: Option<ExtraArguments>,
+}
+
+#[derive(Args, Clone, Debug)]
 pub struct UsageExamplesOpt {
     /// The usage examples to build. All usage examples are selected if this argument is not provided.
     ///
     /// Example: `rp2040_local_i2c_init,stm32f3_blinky`.
     examples: Option<String>,
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct BookOpt {
+    /// The directory in which the book is located
+    #[clap(default_value = "./book/en", short, long)]
+    pub directory: String,
+    /// The directory to put the final book in.
+    #[clap(default_value = "./book-target", short, long)]
+    pub output_dir: String,
 }
 
 impl UsageExamplesOpt {
@@ -411,7 +475,7 @@ pub struct QemuAndRun {
 
 #[derive(Debug, Parser, Clone)]
 pub struct Arg {
-    /// Options to pass to `cargo size`
+    /// Additional arguments to pass to called binaries.
     #[command(subcommand)]
     pub arguments: Option<ExtraArguments>,
 }

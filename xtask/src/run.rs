@@ -15,11 +15,11 @@ mod iter;
 use iter::{into_iter, CoalescingRunner};
 
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, TestMetadata},
+    argument_parsing::{BuildOrCheck, ExtraArguments, Globals, Package, PackageOpt, TestMetadata},
     cargo_command::{BuildMode, CargoCommand},
 };
 
-use log::{error, info};
+use log::{debug, error, info};
 
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
@@ -28,7 +28,7 @@ fn run_and_convert<'a>(
     (global, command, overwrite): (&Globals, CargoCommand<'a>, bool),
 ) -> FinalRunResult<'a> {
     // Run the command
-    let result = command_parser(global, &command, overwrite);
+    let result = interpret_command(global, &command, overwrite);
 
     let output = match result {
         // If running the command succeeded without looking at any of the results,
@@ -50,7 +50,7 @@ fn run_and_convert<'a>(
 }
 
 // run example binary `example`
-fn command_parser(
+fn interpret_command(
     glob: &Globals,
     command: &CargoCommand,
     overwrite: bool,
@@ -140,7 +140,8 @@ fn command_parser(
         | CargoCommand::Doc { .. }
         | CargoCommand::Test { .. }
         | CargoCommand::Book { .. }
-        | CargoCommand::ExampleSize { .. } => {
+        | CargoCommand::ExampleSize { .. }
+        | CargoCommand::Lychee { .. } => {
             let cargo_result = run_command(command, output_mode, true)?;
             Ok(cargo_result)
         }
@@ -153,8 +154,18 @@ pub fn cargo<'c>(
     operation: BuildOrCheck,
     cargoarg: &'c Option<&'c str>,
     package: &'c PackageOpt,
-    backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
+    let backend = globals.backend();
+
+    match operation {
+        BuildOrCheck::Check => {
+            info!("Checking on backend: {backend:?}")
+        }
+        BuildOrCheck::Build => {
+            info!("Building for backend: {backend:?}")
+        }
+    }
+
     let runner = package
         .packages()
         .flat_map(|package| {
@@ -199,6 +210,10 @@ pub fn cargo_usage_example(
     operation: BuildOrCheck,
     usage_examples: Vec<String>,
 ) -> Vec<FinalRunResult<'_>> {
+    match operation {
+        BuildOrCheck::Check => info!("Checking usage examples"),
+        BuildOrCheck::Build => info!("Building usage examples"),
+    }
     into_iter(&usage_examples)
         .map(|example| {
             let path = format!("examples/{example}");
@@ -235,9 +250,19 @@ pub fn cargo_example<'c>(
     globals: &Globals,
     operation: BuildOrCheck,
     cargoarg: &'c Option<&'c str>,
-    backend: Backends,
     examples: &'c [String],
 ) -> Vec<FinalRunResult<'c>> {
+    let backend = globals.backend();
+
+    match operation {
+        BuildOrCheck::Check => {
+            info!("Checking examples for backend {backend:?}");
+        }
+        BuildOrCheck::Build => {
+            info!("Building for examples for backend {backend:?}");
+        }
+    }
+
     let runner = into_iter(examples).map(|example| {
         let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
@@ -270,8 +295,10 @@ pub fn cargo_clippy<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
     package: &'c PackageOpt,
-    backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
+    let backend = globals.backend();
+    info!("Running clippy on backend: {backend:?}");
+
     let runner = package
         .packages()
         .flat_map(|package| {
@@ -319,9 +346,11 @@ pub fn cargo_format<'c>(
 pub fn cargo_doc<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
-    backend: Backends,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    let backend = globals.backend();
+    info!("Running cargo doc for backend {backend:?}");
+
     let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
     let command = CargoCommand::Doc {
@@ -337,11 +366,11 @@ pub fn cargo_doc<'c>(
 /// Run cargo test on the selected package or all packages
 ///
 /// If no package is specified, loop through all packages
-pub fn cargo_test<'c>(
-    globals: &Globals,
-    package: &'c PackageOpt,
-    backend: Backends,
-) -> Vec<FinalRunResult<'c>> {
+pub fn cargo_test<'c>(globals: &Globals, package: &'c PackageOpt) -> Vec<FinalRunResult<'c>> {
+    let backend = globals.backend();
+
+    info!("Running cargo test on backend: {backend:?}");
+
     package
         .packages()
         .map(|p| {
@@ -351,30 +380,19 @@ pub fn cargo_test<'c>(
         .run_and_coalesce()
 }
 
-/// Use mdbook to build the book
-pub fn cargo_book<'c>(
-    globals: &Globals,
-    arguments: &'c Option<ExtraArguments>,
-) -> Vec<FinalRunResult<'c>> {
-    vec![run_and_convert((
-        globals,
-        CargoCommand::Book {
-            arguments: arguments.clone(),
-        },
-        false,
-    ))]
-}
-
 /// Run examples
 ///
 /// Supports updating the expected output via the overwrite argument
 pub fn qemu_run_examples<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
-    backend: Backends,
     examples: &'c [String],
     overwrite: bool,
 ) -> Vec<FinalRunResult<'c>> {
+    let backend = globals.backend();
+
+    info!("Running QEMU examples for backend: {backend:?}");
+
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
@@ -413,10 +431,12 @@ pub fn qemu_run_examples<'c>(
 pub fn build_and_check_size<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
-    backend: Backends,
     examples: &'c [String],
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    let backend = globals.backend();
+    info!("Measuring size for backend {backend:?}");
+
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
@@ -465,7 +485,8 @@ fn run_command(
     process
         .args(command.args())
         .stdout(Stdio::piped())
-        .stderr(stderr_mode);
+        .stderr(stderr_mode)
+        .env_remove("RUST_LOG");
 
     if let Some(dir) = command.chdir() {
         process.current_dir(dir.canonicalize()?);
@@ -498,4 +519,125 @@ fn run_command(
         stdout,
         stderr,
     })
+}
+
+/// Use mdbook to build the book
+pub fn cargo_book<'c>(
+    globals: &Globals,
+    check_book_links: bool,
+    check_api_links: bool,
+    output_dir: PathBuf,
+    arguments: &'c Option<ExtraArguments>,
+) -> Vec<FinalRunResult<'c>> {
+    info!("Documenting all crates");
+    let mut final_results = Vec::new();
+
+    let doc_command = CargoCommand::Doc {
+        cargoarg: &None,
+        features: Some(globals.backend().to_rtic_feature().to_string()),
+        arguments: None,
+        deny_warnings: true,
+    };
+
+    final_results.push(run_and_convert((globals, doc_command, true)));
+    if final_results.iter().any(|r| !r.is_success()) {
+        return final_results;
+    }
+
+    if check_api_links {
+        info!("Checking all API links");
+        let runner = Package::all().into_iter().map(|p| {
+            let name = p.name().to_string().replace('-', "_");
+            let segments = ["target", "doc", name.as_str()];
+            let path = PathBuf::from_iter(segments);
+            (globals, CargoCommand::Lychee { path }, true)
+        });
+
+        let mut results = runner.run_and_coalesce();
+        final_results.append(&mut results);
+        if final_results.iter().any(|r| !r.is_success()) {
+            return final_results;
+        }
+    }
+
+    let construct_book = || -> anyhow::Result<FinalRunResult> {
+        use fs_extra::dir::CopyOptions;
+
+        // ./book-target/
+        let book_target = PathBuf::from(output_dir);
+        std::fs::remove_dir_all(&book_target)?;
+
+        // ./book-target/book
+        let mut book_target_book = book_target.clone();
+        book_target_book.push("book");
+
+        // ./book-target/book/en
+        let mut book_target_en = book_target_book.clone();
+        book_target_en.push("en");
+        std::fs::create_dir_all(&book_target_en)?;
+        let book_target_en = book_target_en.canonicalize()?;
+
+        // ./book-target/api
+        let mut book_target_api = book_target.clone();
+        book_target_api.push("api");
+
+        // ./target/doc
+        let mut target_doc = std::env::current_dir()?;
+        target_doc.extend(["target", "doc"]);
+
+        info!("Running mdbook");
+
+        let book = run_and_convert((
+            globals,
+            CargoCommand::Book {
+                arguments: arguments.clone(),
+                output_path: book_target_en.clone(),
+            },
+            false,
+        ));
+
+        if !book.is_success() {
+            return Ok(book);
+        }
+
+        std::fs::create_dir_all(&book_target_book)?;
+
+        debug!("Copying licenses");
+        fs_extra::copy_items(
+            &["./LICENSE-APACHE", "./LICENSE-CC-BY-SA", "./LICENSE-MIT"],
+            &book_target_en,
+            &Default::default(),
+        )?;
+
+        debug!(
+            "Copying API docs from {} to {}",
+            target_doc.display(),
+            book_target_api.display()
+        );
+        fs_extra::copy_items(
+            &[target_doc],
+            book_target_api,
+            &CopyOptions::default().overwrite(true).copy_inside(true),
+        )?;
+
+        if check_book_links {
+            info!("Checking links in the book");
+
+            let last_command = CargoCommand::Lychee {
+                path: book_target_en,
+            };
+
+            Ok(run_and_convert((globals, last_command, true)))
+        } else {
+            Ok(book)
+        }
+    };
+
+    let construction_result = match construct_book() {
+        Ok(res) => res,
+        Err(other) => FinalRunResult::OtherError(other),
+    };
+
+    final_results.push(construction_result);
+    final_results
 }

@@ -8,10 +8,10 @@ use clap::Parser;
 use core::fmt;
 use std::{path::Path, str};
 
-use log::{error, info, log_enabled, trace, Level};
+use log::{error, log_enabled, trace, Level};
 
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, Cli, Commands},
+    argument_parsing::{BuildOrCheck, Cli, Commands},
     build::init_build_dir,
     run::*,
 };
@@ -94,12 +94,6 @@ fn main() -> anyhow::Result<()> {
     );
     log::debug!("Partial features: {}", globals.partial);
 
-    let backend = if let Some(backend) = globals.backend {
-        backend
-    } else {
-        Backends::default()
-    };
-
     let example = globals.example.clone();
     let exampleexclude = globals.exampleexclude.clone();
 
@@ -161,78 +155,47 @@ fn main() -> anyhow::Result<()> {
 
     let final_run_results = match &cli.command {
         Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
-        Commands::Clippy(args) => {
-            info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(globals, &cargologlevel, &args, backend)
-        }
-        Commands::Check(args) => {
-            info!("Checking on backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Check, &cargologlevel, &args, backend)
-        }
-        Commands::Build(args) => {
-            info!("Building for backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Build, &cargologlevel, &args, backend)
-        }
-        Commands::ExampleCheck => {
-            info!("Checking on backend: {backend:?}");
-            cargo_example(
-                globals,
-                BuildOrCheck::Check,
-                &cargologlevel,
-                backend,
-                &examples_to_run,
-            )
-        }
-        Commands::ExampleBuild => {
-            info!("Building for backend: {backend:?}");
-            cargo_example(
-                globals,
-                BuildOrCheck::Build,
-                &cargologlevel,
-                backend,
-                &examples_to_run,
-            )
-        }
+        Commands::Clippy(args) => cargo_clippy(globals, &cargologlevel, &args),
+        Commands::Check(args) => cargo(globals, BuildOrCheck::Check, &cargologlevel, &args),
+        Commands::Build(args) => cargo(globals, BuildOrCheck::Build, &cargologlevel, &args),
+        Commands::ExampleCheck => cargo_example(
+            globals,
+            BuildOrCheck::Check,
+            &cargologlevel,
+            &examples_to_run,
+        ),
+        Commands::ExampleBuild => cargo_example(
+            globals,
+            BuildOrCheck::Build,
+            &cargologlevel,
+            &examples_to_run,
+        ),
         Commands::Size(args) => {
             // x86_64 target not valid
-            info!("Measuring for backend: {backend:?}");
-            build_and_check_size(
-                globals,
-                &cargologlevel,
-                backend,
-                &examples_to_run,
-                &args.arguments,
-            )
+            build_and_check_size(globals, &cargologlevel, &examples_to_run, &args.arguments)
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
-            info!("Testing for backend: {backend:?}");
             qemu_run_examples(
                 globals,
                 &cargologlevel,
-                backend,
                 &examples_to_run,
                 args.overwrite_expected,
             )
         }
-        Commands::Doc(args) => {
-            info!("Running cargo doc on backend: {backend:?}");
-            cargo_doc(globals, &cargologlevel, backend, &args.arguments)
-        }
-        Commands::Test(args) => {
-            info!("Running cargo test on backend: {backend:?}");
-            cargo_test(globals, &args, backend)
-        }
-        Commands::Book(args) => {
-            info!("Running mdbook");
-            cargo_book(globals, &args.arguments)
-        }
+        Commands::Doc(args) => cargo_doc(globals, &cargologlevel, &args.arguments),
+        Commands::Test(args) => cargo_test(globals, &args),
+        Commands::Book(args) => cargo_book(
+            globals,
+            !args.skip_link_check,
+            !args.skip_api_link_check,
+            std::path::PathBuf::from(&args.path),
+            &args.arguments,
+        ),
         Commands::UsageExampleCheck(examples) => {
-            info!("Checking usage examples");
             cargo_usage_example(globals, BuildOrCheck::Check, examples.examples()?)
         }
         Commands::UsageExampleBuild(examples) => {
-            info!("Building usage examples");
             cargo_usage_example(globals, BuildOrCheck::Build, examples.examples()?)
         }
     };
