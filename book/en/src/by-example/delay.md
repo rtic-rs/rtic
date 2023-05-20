@@ -6,6 +6,8 @@ This can be achieved by instantiating a monotonic timer (for implementations, se
 
 [`rtic-monotonics`]: https://github.com/rtic-rs/rtic/tree/master/rtic-monotonics
 [`rtic-time`]: https://github.com/rtic-rs/rtic/tree/master/rtic-time
+[`Monotonic`]: https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html
+[Implementing a `Monotonic`]: ../../monotonic_impl.md
 
 ``` rust,noplayground
 ...
@@ -25,12 +27,6 @@ async fn foo(_cx: foo::Context) {
 
 ```
 
-<!-- TODO: move technical explanation to internals -->
-
-Technically, the timer queue is implemented as a list based priority queue, where list-nodes are statically allocated as part of the underlying task `Future`. Thus, the timer queue is infallible at run-time (its size and allocation are determined at compile time).
-
-Similarly the channels implementation, the timer-queue implementation relies on a global *Critical Section* (CS) for race protection. For the examples a CS implementation is provided by adding `--features test-critical-section` to the build options.
-
 <details>
 <summary>A complete example</summary>
 
@@ -47,6 +43,9 @@ $ cargo run --target thumbv7m-none-eabi --example async-delay --features test-cr
 ```
 
 </details>
+
+> Interested in contributing new implementations of [`Monotonic`], or more information about the inner workings of monotonics?
+> Check out the [Implementing a `Monotonic`] chapter!
 
 ## Timeout
 
