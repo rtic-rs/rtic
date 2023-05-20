@@ -346,9 +346,10 @@ pub fn cargo_format<'c>(
 
 /// Run cargo doc
 pub fn cargo_doc<'c>(
-    globals: &Globals,
+    globals: &'c Globals,
     cargoarg: &'c Option<&'c str>,
     arguments: &'c Option<ExtraArguments>,
+    check_links: bool,
 ) -> Vec<FinalRunResult<'c>> {
     let backend = globals.backend();
     info!("Running cargo doc for backend {backend:?}");
@@ -362,7 +363,18 @@ pub fn cargo_doc<'c>(
         deny_warnings: true,
     };
 
-    vec![run_and_convert((globals, command, false))]
+    let mut results = Vec::new();
+    let doc = run_and_convert((globals, command, false));
+    results.push(doc);
+    if results.iter().any(|r| !r.is_success()) {
+        return results;
+    }
+
+    if check_links {
+        let mut links = check_all_api_links(globals);
+        results.append(&mut links);
+    }
+    results
 }
 
 /// Run cargo test on the selected package or all packages
@@ -523,9 +535,21 @@ fn run_command(
     })
 }
 
+fn check_all_api_links(globals: &Globals) -> Vec<FinalRunResult> {
+    info!("Checking all API links");
+    let runner = Package::all().into_iter().map(|p| {
+        let name = p.name().to_string().replace('-', "_");
+        let segments = ["target", "doc", name.as_str()];
+        let path = PathBuf::from_iter(segments);
+        (globals, CargoCommand::Lychee { path }, true)
+    });
+
+    runner.run_and_coalesce()
+}
+
 /// Use mdbook to build the book
 pub fn cargo_book<'c>(
-    globals: &Globals,
+    globals: &'c Globals,
     check_book_links: bool,
     check_api_links: bool,
     output_dir: PathBuf,
@@ -547,16 +571,8 @@ pub fn cargo_book<'c>(
     }
 
     if check_api_links {
-        info!("Checking all API links");
-        let runner = Package::all().into_iter().map(|p| {
-            let name = p.name().to_string().replace('-', "_");
-            let segments = ["target", "doc", name.as_str()];
-            let path = PathBuf::from_iter(segments);
-            (globals, CargoCommand::Lychee { path }, true)
-        });
-
-        let mut results = runner.run_and_coalesce();
-        final_results.append(&mut results);
+        let mut links = check_all_api_links(globals);
+        final_results.append(&mut links);
         if final_results.iter().any(|r| !r.is_success()) {
             return final_results;
         }
