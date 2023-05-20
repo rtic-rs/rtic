@@ -133,7 +133,7 @@ jobs:
 
       - name: Check the examples
         if: ${{ matrix.backend == 'thumbv8-base' }}
-        run: cargo xtask --backend ${{ matrix.backend }} --exampleexclude pool example-check
+        run: cargo xtask --backend ${{ matrix.backend }} example-check --exclude pool
 
       - name: Check the examples
         if: ${{ matrix.backend != 'thumbv8-base' }}
