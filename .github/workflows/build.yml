@@ -345,12 +345,6 @@ jobs:
         with:
           tool: mdbook-mermaid
 
-      - name: Remove cargo-config
-        run: rm -f .cargo/config
-
-      - name: Prepare output folder
-        run: mkdir -p mdbookold
-
       - name: Fetch and build books for older versions
         run: |
           ./scripts/build-old-books.sh "${{ env.STABLE_VERSION }} ${{ env.OLDSTABLE_VERSION }}"
@@ -377,7 +371,7 @@ jobs:
         id: crateversionbranch
         # Parse metadata for version number, extract the Semver Major
         run: |
-          VERSION=$(./scripts/parse_version.sh)
+          VERSION=$(./scripts/parse-version.sh)
           VERSIONMAJOR=${VERSION%.*.*}
           echo "branch=release/v$VERSIONMAJOR" >> $GITHUB_ENV
           echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
@@ -441,9 +435,6 @@ jobs:
         uses: peaceiris/actions-mdbook@v1
         with:
           mdbook-version: 'latest'
-
-      - name: Remove cargo-config
-        run: rm -f .cargo/config
 
       - name: Download built dev-ver book and API docs
         uses: actions/download-artifact@v3
