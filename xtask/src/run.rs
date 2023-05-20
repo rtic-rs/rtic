@@ -562,12 +562,23 @@ pub fn cargo_book<'c>(
         }
     }
 
-    let construct_book = || -> anyhow::Result<FinalRunResult> {
+    let construct_book = || -> anyhow::Result<Vec<FinalRunResult>> {
         use fs_extra::dir::CopyOptions;
 
         // ./book-target/
         let book_target = PathBuf::from(output_dir);
-        std::fs::remove_dir_all(&book_target)?;
+
+        if std::fs::metadata(&book_target)
+            .map(|m| !m.is_dir())
+            .unwrap_or(false)
+        {
+            return Err(anyhow::anyhow!(
+                "Book target ({}) exists but is not a directory.",
+                book_target.display()
+            ));
+        }
+
+        std::fs::remove_dir_all(&book_target).ok();
 
         // ./book-target/book
         let mut book_target_book = book_target.clone();
@@ -599,7 +610,7 @@ pub fn cargo_book<'c>(
         ));
 
         if !book.is_success() {
-            return Ok(book);
+            return Ok(vec![book]);
         }
 
         std::fs::create_dir_all(&book_target_book)?;
@@ -629,17 +640,17 @@ pub fn cargo_book<'c>(
                 path: book_target_en,
             };
 
-            Ok(run_and_convert((globals, last_command, true)))
+            Ok(vec![book, run_and_convert((globals, last_command, true))])
         } else {
-            Ok(book)
+            Ok(vec![book])
         }
     };
 
-    let construction_result = match construct_book() {
+    let mut construction_result = match construct_book() {
         Ok(res) => res,
-        Err(other) => FinalRunResult::OtherError(other),
+        Err(other) => vec![FinalRunResult::OtherError(other)],
     };
 
-    final_results.push(construction_result);
+    final_results.append(&mut construction_result);
     final_results
 }
