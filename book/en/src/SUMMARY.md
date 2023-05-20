@@ -22,6 +22,7 @@
     - [`'static` super-powers](./by-example/tips/static_lifetimes.md)
     - [Inspecting generated code](./by-example/tips/view_code.md)
 - [RTIC vs. the world](./rtic_vs.md)
+- [RTIC and Embassy](./rtic_and_embassy.md)
 - [Awesome RTIC examples](./awesome_rtic.md)
 
 ---
