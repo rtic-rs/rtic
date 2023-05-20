@@ -327,7 +327,7 @@ pub struct ExampleArgs {
     /// Example: `cargo xtask --excludeexample complex,spawn,init`
     /// would exclude complex, spawn and init
     #[arg(long, group = "example_group", global = true)]
-    exampleexclude: Option<String>,
+    exclude: Option<String>,
 
     /// Additional arguments to pass to the invoked tool
     #[command(subcommand)]
@@ -354,7 +354,7 @@ impl ExampleArgs {
             }
         };
 
-        if let Some(example) = &self.exampleexclude {
+        if let Some(example) = &self.exclude {
             to_run = examples.clone();
             let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
             // From the list of all examples, remove all those listed as excluded
