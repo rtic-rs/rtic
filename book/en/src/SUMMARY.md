@@ -21,8 +21,6 @@
     - [Avoid copies when message passing](./by-example/tips/indirection.md)
     - [`'static` super-powers](./by-example/tips/static_lifetimes.md)
     - [Inspecting generated code](./by-example/tips/view_code.md)
-    <!-- - [Running tasks from RAM](./by-example/tips/from_ram.md) -->
-    <!-- - [`#[cfg(..)]` support](./by-example/tips.md) -->
 - [RTIC vs. the world](./rtic_vs.md)
 - [Awesome RTIC examples](./awesome_rtic.md)
 
