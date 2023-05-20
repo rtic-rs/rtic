@@ -8,7 +8,7 @@ use clap::Parser;
 use core::fmt;
 use std::{path::Path, str};
 
-use log::{error, log_enabled, trace, Level};
+use log::{log_enabled, trace, Level};
 
 use crate::{
     argument_parsing::{BuildOrCheck, Cli, Commands},
@@ -65,13 +65,6 @@ fn main() -> anyhow::Result<()> {
         ));
     }
 
-    let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
-        .filter_map(|p| p.ok())
-        .map(|p| p.path())
-        .filter(|p| p.display().to_string().ends_with(".rs"))
-        .map(|path| path.file_stem().unwrap().to_str().unwrap().to_string())
-        .collect();
-
     let cli = Cli::parse();
 
     let globals = &cli.globals;
@@ -92,51 +85,6 @@ fn main() -> anyhow::Result<()> {
         "Stderr of child processes is inherited: {}",
         globals.stderr_inherited
     );
-    log::debug!("Partial features: {}", globals.partial);
-
-    let example = globals.example.clone();
-    let exampleexclude = globals.exampleexclude.clone();
-
-    let examples_to_run = {
-        let mut examples_to_run = examples.clone();
-
-        if let Some(example) = example {
-            examples_to_run = examples.clone();
-            let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
-            // From the list of all examples, remove all not listed as included
-            for ex in examples_to_exclude {
-                examples_to_run.retain(|x| *x.as_str() == *ex);
-            }
-        };
-
-        if let Some(example) = exampleexclude {
-            examples_to_run = examples.clone();
-            let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
-            // From the list of all examples, remove all those listed as excluded
-            for ex in examples_to_exclude {
-                examples_to_run.retain(|x| *x.as_str() != *ex);
-            }
-        };
-
-        if log_enabled!(Level::Trace) {
-            trace!("All examples:\n{examples:?} number: {}", examples.len());
-            trace!(
-                "examples_to_run:\n{examples_to_run:?} number: {}",
-                examples_to_run.len()
-            );
-        }
-
-        if examples_to_run.is_empty() {
-            error!(
-                "\nThe example(s) you specified is not available. Available examples are:\
-                    \n{examples:#?}\n\
-             By default if example flag is emitted, all examples are tested.",
-            );
-            return Err(anyhow::anyhow!("Incorrect usage"));
-        } else {
-            examples_to_run
-        }
-    };
 
     init_build_dir()?;
     #[allow(clippy::if_same_then_else)]
@@ -155,33 +103,38 @@ fn main() -> anyhow::Result<()> {
 
     let final_run_results = match &cli.command {
         Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
-        Commands::Clippy(args) => cargo_clippy(globals, &cargologlevel, &args),
-        Commands::Check(args) => cargo(globals, BuildOrCheck::Check, &cargologlevel, &args),
-        Commands::Build(args) => cargo(globals, BuildOrCheck::Build, &cargologlevel, &args),
-        Commands::ExampleCheck => cargo_example(
+        Commands::Clippy(args) => cargo_clippy(globals, &cargologlevel, &args, args.partial),
+        Commands::Check(args) => cargo(
             globals,
             BuildOrCheck::Check,
             &cargologlevel,
-            &examples_to_run,
+            &args,
+            args.partial,
         ),
-        Commands::ExampleBuild => cargo_example(
+        Commands::Build(args) => cargo(
             globals,
             BuildOrCheck::Build,
             &cargologlevel,
-            &examples_to_run,
+            &args,
+            args.partial,
         ),
+        Commands::ExampleCheck(ex) => {
+            let ex = ex.example_list()?;
+            cargo_example(globals, BuildOrCheck::Check, &cargologlevel, ex)
+        }
+        Commands::ExampleBuild(ex) => {
+            let ex = ex.example_list()?;
+            cargo_example(globals, BuildOrCheck::Build, &cargologlevel, ex)
+        }
         Commands::Size(args) => {
             // x86_64 target not valid
-            build_and_check_size(globals, &cargologlevel, &examples_to_run, &args.arguments)
+            let ex = args.example_list()?;
+            build_and_check_size(globals, &cargologlevel, ex, &args.arguments)
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
-            qemu_run_examples(
-                globals,
-                &cargologlevel,
-                &examples_to_run,
-                args.overwrite_expected,
-            )
+            let ex = args.examples.example_list()?;
+            qemu_run_examples(globals, &cargologlevel, ex, args.overwrite_expected)
         }
         Commands::Doc(args) => cargo_doc(globals, &cargologlevel, &args.arguments),
         Commands::Test(args) => cargo_test(globals, &args),

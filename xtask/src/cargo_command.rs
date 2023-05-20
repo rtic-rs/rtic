@@ -15,7 +15,7 @@ pub enum CargoCommand<'a> {
     #[allow(dead_code)]
     Run {
         cargoarg: &'a Option<&'a str>,
-        example: &'a str,
+        example: String,
         target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
@@ -23,7 +23,7 @@ pub enum CargoCommand<'a> {
     },
     Qemu {
         cargoarg: &'a Option<&'a str>,
-        example: &'a str,
+        example: String,
         target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
@@ -32,7 +32,7 @@ pub enum CargoCommand<'a> {
     },
     ExampleBuild {
         cargoarg: &'a Option<&'a str>,
-        example: &'a str,
+        example: String,
         target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
@@ -41,7 +41,7 @@ pub enum CargoCommand<'a> {
     },
     ExampleCheck {
         cargoarg: &'a Option<&'a str>,
-        example: &'a str,
+        example: String,
         target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
@@ -95,7 +95,7 @@ pub enum CargoCommand<'a> {
     },
     ExampleSize {
         cargoarg: &'a Option<&'a str>,
-        example: &'a str,
+        example: String,
         target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,

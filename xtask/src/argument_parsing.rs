@@ -1,6 +1,7 @@
 use crate::{cargo_command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN};
 use clap::{Args, Parser, Subcommand};
 use core::fmt;
+use log::{error, trace};
 
 #[derive(clap::ValueEnum, Copy, Clone, Debug)]
 pub enum Package {
@@ -206,24 +207,6 @@ pub struct Globals {
     #[arg(value_enum, short, default_value = "thumbv7", long, global = true)]
     backend: Option<Backends>,
 
-    /// List of comma separated examples to include, all others are excluded
-    ///
-    /// If omitted all examples are included
-    ///
-    /// Example: `cargo xtask --example complex,spawn,init`
-    /// would include complex, spawn and init
-    #[arg(short, long, group = "example_group", global = true)]
-    pub example: Option<String>,
-
-    /// List of comma separated examples to exclude, all others are included
-    ///
-    /// If omitted all examples are included
-    ///
-    /// Example: `cargo xtask --excludeexample complex,spawn,init`
-    /// would exclude complex, spawn and init
-    #[arg(long, group = "example_group", global = true)]
-    pub exampleexclude: Option<String>,
-
     /// Enable more verbose output, repeat up to `-vvv` for even more
     #[arg(short, long, action = clap::ArgAction::Count, global = true)]
     pub verbose: u8,
@@ -235,25 +218,6 @@ pub struct Globals {
     /// clutter, but can make debugging long-running processes a lot easier.
     #[arg(short, long, global = true)]
     pub stderr_inherited: bool,
-
-    /// Don't build/check/test all feature combinations that are available, only
-    /// a necessary subset.
-    #[arg(long, global = true)]
-    pub partial: bool,
-}
-
-impl Default for Globals {
-    fn default() -> Self {
-        Self {
-            deny_warnings: false,
-            backend: None,
-            example: None,
-            exampleexclude: None,
-            verbose: 0,
-            stderr_inherited: false,
-            partial: false,
-        }
-    }
 }
 
 impl Globals {
@@ -290,10 +254,10 @@ pub enum Commands {
     Build(PackageOpt),
 
     /// Check all examples
-    ExampleCheck,
+    ExampleCheck(ExampleArgs),
 
     /// Build all examples
-    ExampleBuild,
+    ExampleBuild(ExampleArgs),
 
     /// Run `cargo size` on selected or all examples
     ///
@@ -301,7 +265,7 @@ pub enum Commands {
     /// arguments will be passed on
     ///
     /// Example: `cargo xtask size -- -A`
-    Size(Arg),
+    Size(ExampleArgs),
 
     /// Run examples in QEMU and compare against expected output
     ///
@@ -343,6 +307,75 @@ pub enum Commands {
     /// Usage examples are located in ./examples
     #[clap(alias = "./examples")]
     UsageExampleBuild(UsageExamplesOpt),
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct ExampleArgs {
+    /// List of comma separated examples to include, all others are excluded
+    ///
+    /// If omitted all examples are included
+    ///
+    /// Example: `cargo xtask --example complex,spawn,init`
+    /// would include complex, spawn and init
+    #[arg(short, long, group = "example_group", global = true)]
+    example: Option<String>,
+
+    /// List of comma separated examples to exclude, all others are included
+    ///
+    /// If omitted all examples are included
+    ///
+    /// Example: `cargo xtask --excludeexample complex,spawn,init`
+    /// would exclude complex, spawn and init
+    #[arg(long, group = "example_group", global = true)]
+    exampleexclude: Option<String>,
+
+    /// Additional arguments to pass to the invoked tool
+    #[command(subcommand)]
+    pub arguments: Option<ExtraArguments>,
+}
+
+impl ExampleArgs {
+    pub fn example_list(&self) -> anyhow::Result<Vec<String>> {
+        let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
+            .filter_map(|p| p.ok())
+            .map(|p| p.path())
+            .filter(|p| p.display().to_string().ends_with(".rs"))
+            .map(|path| path.file_stem().unwrap().to_str().unwrap().to_string())
+            .collect();
+
+        let mut to_run = examples.clone();
+
+        if let Some(example) = &self.example {
+            to_run = examples.clone();
+            let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
+            // From the list of all examples, remove all not listed as included
+            for ex in examples_to_exclude {
+                to_run.retain(|x| *x.as_str() == *ex);
+            }
+        };
+
+        if let Some(example) = &self.exampleexclude {
+            to_run = examples.clone();
+            let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
+            // From the list of all examples, remove all those listed as excluded
+            for ex in examples_to_exclude {
+                to_run.retain(|x| *x.as_str() != *ex);
+            }
+        };
+
+        trace!("All examples (N: {}): {examples:?}", examples.len());
+        trace!("Examples to run (N: {}): {to_run:?}", to_run.len());
+
+        if to_run.is_empty() {
+            error!("The example(s) you specified cannot be found. Available examples are:");
+            error!("{examples:#?}");
+            error!("");
+            error!("By default, all examples are tested");
+            Err(anyhow::anyhow!("Incorrect usage"))
+        } else {
+            Ok(to_run)
+        }
+    }
 }
 
 #[derive(Args, Clone, Debug)]
@@ -439,6 +472,11 @@ pub struct FormatOpt {
 #[derive(Args, Debug, Clone)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
+    /// Don't build/check/test all feature combinations that are available, only
+    /// a necessary subset.
+    #[arg(long)]
+    pub partial: bool,
+
     /// For which package/workspace member to operate
     ///
     /// If omitted, work on all
@@ -466,6 +504,9 @@ impl PackageOpt {
 
 #[derive(Args, Debug, Clone)]
 pub struct QemuAndRun {
+    #[clap(flatten)]
+    pub examples: ExampleArgs,
+
     /// If expected output is missing or mismatching, recreate the file
     ///
     /// This overwrites only missing or mismatching

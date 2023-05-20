@@ -61,7 +61,7 @@ fn interpret_command(
         OutputMode::PipedAndCollected
     };
 
-    match *command {
+    match command {
         CargoCommand::Qemu { example, .. } | CargoCommand::Run { example, .. } => {
             /// Check if `run` was successful.
             /// returns Ok in case the run went as expected,
@@ -154,6 +154,7 @@ pub fn cargo<'c>(
     operation: BuildOrCheck,
     cargoarg: &'c Option<&'c str>,
     package: &'c PackageOpt,
+    partial: bool,
 ) -> Vec<FinalRunResult<'c>> {
     let backend = globals.backend();
 
@@ -170,7 +171,7 @@ pub fn cargo<'c>(
         .packages()
         .flat_map(|package| {
             let target = backend.to_target();
-            let features = package.features(target, backend, globals.partial);
+            let features = package.features(target, backend, partial);
             into_iter(features).map(move |f| (package, target, f))
         })
         .map(move |(package, target, features)| {
@@ -250,7 +251,7 @@ pub fn cargo_example<'c>(
     globals: &Globals,
     operation: BuildOrCheck,
     cargoarg: &'c Option<&'c str>,
-    examples: &'c [String],
+    examples: Vec<String>,
 ) -> Vec<FinalRunResult<'c>> {
     let backend = globals.backend();
 
@@ -295,6 +296,7 @@ pub fn cargo_clippy<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
     package: &'c PackageOpt,
+    partial: bool,
 ) -> Vec<FinalRunResult<'c>> {
     let backend = globals.backend();
     info!("Running clippy on backend: {backend:?}");
@@ -303,7 +305,7 @@ pub fn cargo_clippy<'c>(
         .packages()
         .flat_map(|package| {
             let target = backend.to_target();
-            let features = package.features(target, backend, globals.partial);
+            let features = package.features(target, backend, partial);
             into_iter(features).map(move |f| (package, target, f))
         })
         .map(move |(package, target, features)| {
@@ -386,7 +388,7 @@ pub fn cargo_test<'c>(globals: &Globals, package: &'c PackageOpt) -> Vec<FinalRu
 pub fn qemu_run_examples<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
-    examples: &'c [String],
+    examples: Vec<String>,
     overwrite: bool,
 ) -> Vec<FinalRunResult<'c>> {
     let backend = globals.backend();
@@ -403,7 +405,7 @@ pub fn qemu_run_examples<'c>(
 
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &None,
-                example,
+                example: example.clone(),
                 target,
                 features: features.clone(),
                 mode: BuildMode::Release,
@@ -431,7 +433,7 @@ pub fn qemu_run_examples<'c>(
 pub fn build_and_check_size<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
-    examples: &'c [String],
+    examples: Vec<String>,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
     let backend = globals.backend();
@@ -447,7 +449,7 @@ pub fn build_and_check_size<'c>(
             // Make sure the requested example(s) are built
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &Some("--quiet"),
-                example,
+                example: example.clone(),
                 target,
                 features: features.clone(),
                 mode: BuildMode::Release,
