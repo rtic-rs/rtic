@@ -141,13 +141,13 @@ fn main() -> anyhow::Result<()> {
             cargo_doc(globals, &cargologlevel, &args.arguments, links)
         }
         Commands::Test(args) => cargo_test(globals, &args),
-        Commands::Book(args) => cargo_book(
-            globals,
-            !args.skip_link_check,
-            !args.skip_api_link_check,
-            std::path::PathBuf::from(&args.output_path),
-            &args.arguments,
-        ),
+        Commands::Book(args) => {
+            let links = !args.skip_link_check;
+            let api_links = !args.skip_api_link_check;
+            let output = std::path::PathBuf::from(&args.output_path);
+            let api = args.api_docs.clone().map(std::path::PathBuf::from);
+            cargo_book(globals, links, api_links, output, api, &args.arguments)
+        }
         Commands::UsageExampleCheck(examples) => {
             cargo_usage_example(globals, BuildOrCheck::Check, examples.examples()?)
         }

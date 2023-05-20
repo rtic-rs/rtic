@@ -386,9 +386,16 @@ pub struct BookArgs {
     pub skip_link_check: bool,
 
     /// If this flag is set, the links in the API documentation
-    /// included with the book are not verified
-    #[clap(long, short = 'a')]
+    /// included with the book are not verified.
+    ///
+    /// This flag is ignored if `--api-docs` is set
+    #[clap(long, short = 'c')]
     pub skip_api_link_check: bool,
+
+    /// The path to the API docs if you do not wish
+    /// to build them again.
+    #[clap(long, short = 'a')]
+    pub api_docs: Option<String>,
 
     /// The path to which the contents of the book should
     /// be written.

@@ -268,30 +268,7 @@ jobs:
 
       - name: Build docs
         # TODO: Any difference between backends?
-        run: cargo doc --features thumbv7-backend
-
-      - name: Check links
-        run: |
-          td=$(mktemp -d)
-          cp -r target/doc $td/api
-          echo rtic
-          lychee --offline --format detailed $td/api/rtic/
-        
-          echo rtic_common
-          lychee --offline --format detailed $td/api/rtic_common/
-        
-          echo rtic_macros
-          lychee --offline --format detailed $td/api/rtic_macros/
-        
-          echo rtic_monotonics
-          lychee --offline --format detailed $td/api/rtic_monotonics/
-
-          echo rtic_sync
-          lychee --offline --format detailed $td/api/rtic_sync/
-        
-          echo rtic_time
-          lychee --offline --format detailed $td/api/rtic_time/
-      
+        run: cargo xtask doc
 
       - name: Archive the API docs
         run: |
@@ -342,13 +319,8 @@ jobs:
       - name: Check links
         run: |
           td=$(mktemp -d)
-          mkdir $td/book
-          cp -r book/en/book $td/book/en
-          cp LICENSE-* $td/book/en
-          cp -r apidocs/ $td/api
-
-          lychee --offline --format detailed $td/book/en/
-          mv $td bookroot
+          cargo xtask book --output-path "$td" --api-docs apidocs/
+          mv "$td" bookroot
 
       - name: Archive the book + API docs
         run: |

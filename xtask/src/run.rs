@@ -553,30 +553,42 @@ pub fn cargo_book<'c>(
     check_book_links: bool,
     check_api_links: bool,
     output_dir: PathBuf,
+    api: Option<PathBuf>,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
     info!("Documenting all crates");
     let mut final_results = Vec::new();
 
-    let doc_command = CargoCommand::Doc {
-        cargoarg: &None,
-        features: Some(globals.backend().to_rtic_feature().to_string()),
-        arguments: None,
-        deny_warnings: true,
-    };
+    let api_path = if let Some(api) = api {
+        if let Err(e) = std::fs::metadata(&api) {
+            return vec![FinalRunResult::OtherError(anyhow::anyhow!(
+                "Could not find API path: {e}"
+            ))];
+        }
+        api
+    } else {
+        let doc_command = CargoCommand::Doc {
+            cargoarg: &None,
+            features: Some(globals.backend().to_rtic_feature().to_string()),
+            arguments: None,
+            deny_warnings: true,
+        };
 
-    final_results.push(run_and_convert((globals, doc_command, true)));
-    if final_results.iter().any(|r| !r.is_success()) {
-        return final_results;
-    }
-
-    if check_api_links {
-        let mut links = check_all_api_links(globals);
-        final_results.append(&mut links);
+        final_results.push(run_and_convert((globals, doc_command, true)));
         if final_results.iter().any(|r| !r.is_success()) {
             return final_results;
         }
-    }
+
+        if check_api_links {
+            let mut links = check_all_api_links(globals);
+            final_results.append(&mut links);
+            if final_results.iter().any(|r| !r.is_success()) {
+                return final_results;
+            }
+        }
+
+        PathBuf::from_iter(["target", "doc"].into_iter())
+    };
 
     let construct_book = || -> anyhow::Result<Vec<FinalRunResult>> {
         use fs_extra::dir::CopyOptions;
@@ -610,10 +622,6 @@ pub fn cargo_book<'c>(
         let mut book_target_api = book_target.clone();
         book_target_api.push("api");
 
-        // ./target/doc
-        let mut target_doc = std::env::current_dir()?;
-        target_doc.extend(["target", "doc"]);
-
         info!("Running mdbook");
 
         let book = run_and_convert((
@@ -638,13 +646,13 @@ pub fn cargo_book<'c>(
             &Default::default(),
         )?;
 
-        debug!(
+        info!(
             "Copying API docs from {} to {}",
-            target_doc.display(),
+            api_path.display(),
             book_target_api.display()
         );
         fs_extra::copy_items(
-            &[target_doc],
+            &[api_path],
             book_target_api,
             &CopyOptions::default().overwrite(true).copy_inside(true),
         )?;
