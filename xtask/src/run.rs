@@ -563,6 +563,17 @@ pub fn cargo_book<'c>(
     api: Option<PathBuf>,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    if let Some(args) = arguments {
+        return vec![run_and_convert((
+            &globals,
+            CargoCommand::Book {
+                output_path: None,
+                arguments: Some(args.clone()),
+            },
+            true,
+        ))];
+    }
+
     info!("Documenting all crates");
     let mut final_results = Vec::new();
 
@@ -635,7 +646,7 @@ pub fn cargo_book<'c>(
             globals,
             CargoCommand::Book {
                 arguments: arguments.clone(),
-                output_path: book_target_en.clone(),
+                output_path: Some(book_target_en.clone()),
             },
             false,
         ));

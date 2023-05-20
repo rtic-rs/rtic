@@ -90,7 +90,7 @@ pub enum CargoCommand<'a> {
         deny_warnings: bool,
     },
     Book {
-        output_path: PathBuf,
+        output_path: Option<PathBuf>,
         arguments: Option<ExtraArguments>,
     },
     ExampleSize {
@@ -345,7 +345,14 @@ impl core::fmt::Display for CargoCommand<'_> {
                 arguments: _,
                 output_path,
             } => {
-                write!(f, "Build the book (output: {})", output_path.display())
+                write!(
+                    f,
+                    "Build the book (output: {})",
+                    output_path
+                        .as_ref()
+                        .map(|p| format!("{}", p.display()))
+                        .unwrap_or("not specified".to_string())
+                )
             }
             CargoCommand::ExampleSize {
                 cargoarg,
@@ -597,6 +604,7 @@ impl<'a> CargoCommand<'a> {
             } => {
                 let mut args = vec![];
 
+                // If there are extra arguments, just proxy
                 if let Some(ExtraArguments::Other(arguments)) = arguments {
                     for arg in arguments {
                         args.extend_from_slice(&[arg.to_string()]);
@@ -604,12 +612,12 @@ impl<'a> CargoCommand<'a> {
                 } else {
                     // If no argument given, run mdbook build
                     // with default path to book
-                    args.extend(
-                        ["build", "book/en", "--dest-dir"]
-                            .into_iter()
-                            .map(String::from),
-                    );
-                    args.push(format!("{}", output_path.display()))
+                    args.extend(["build", "book/en"].into_iter().map(String::from));
+
+                    if let Some(output_path) = output_path {
+                        args.push("--dest-dir".to_string());
+                        args.push(format!("{}", output_path.display()))
+                    }
                 }
                 args
             }
