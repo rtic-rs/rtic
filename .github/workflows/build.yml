@@ -315,13 +315,11 @@ jobs:
 
       - name: Check links
         run: |
-          td=$(mktemp -d)
-          cargo xtask book --output-path "$td" --api-docs apidocs/
-          mv "$td" bookroot
+          cargo xtask book --output-path book-target/current/ --api-docs apidocs/
 
       - name: Archive the book + API docs
         run: |
-          tar -cf book.tar bookroot
+          tar -cf book.tar book-target/current/
 
       - name: Store the Book + API docs
         uses: actions/upload-artifact@v3
@@ -355,41 +353,12 @@ jobs:
 
       - name: Fetch and build books for older versions
         run: |
-          # The latest stable must be the first element in the array
-          vers=( "${{ env.STABLE_VERSION }}" "${{ env.OLDSTABLE_VERSION }}" )
-          langs=( en )
-          root=$(pwd)
-          webroot=$(pwd)/mdbookold
-
-          for ver in ${vers[@]}; do
-
-              mkdir -p src/$ver
-              src=$root/src/$ver
-              curl -L https://github.com/rtic-rs/rtic/archive/release/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
-
-              pushd $src
-              rm -f .cargo/config
-              cargo doc || cargo doc --features timer-queue
-              mkdir -p $webroot/$ver/book
-              cp -r target/doc $webroot/$ver/api
-
-              sed 's|URL|rtic/index.html|g' $root/redirect.html > $webroot/$ver/api/index.html
-              popd
-
-              for lang in ${langs[@]}; do
-                  cargo xtask book build $src/book/$lang
-
-                  cp -r $src/book/$lang/book $webroot/$ver/book/$lang
-                  cp LICENSE-* $webroot/$ver/book/$lang/
-              done
-              # using master branch redirect file
-              sed 's|URL|book/en|g' $root/redirect.html > $webroot/$ver/index.html
-
-              rm -rf $src
-          done
+          ./scripts/build-old-books.sh "${{ env.STABLE_VERSION }} ${{ env.OLDSTABLE_VERSION }}"
 
       - name: Archive the old books
         run: |
+          cd book-target
+          mv old mdbookold
           tar -cf mdbookold.tar mdbookold
 
       - name: Store the old API docs
@@ -408,7 +377,7 @@ jobs:
         id: crateversionbranch
         # Parse metadata for version number, extract the Semver Major
         run: |
-          VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="rtic") | .version')
+          VERSION=$(./scripts/parse_version.sh)
           VERSIONMAJOR=${VERSION%.*.*}
           echo "branch=release/v$VERSIONMAJOR" >> $GITHUB_ENV
           echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
@@ -497,65 +466,13 @@ jobs:
       - name: Prepare books
         shell: 'script --return --quiet --command "bash {0}"'
         run: |
-          langs=( en )
-          devver=( dev )
-          # The latest stable must be the first element in the array
-          vers=( "${{ env.STABLE_VERSION }}" "${{ env.OLDSTABLE_VERSION }}" )
-
-          # All releases start with "v"
-          # followed by MAJOR.MINOR.PATCH, see semver.org
-          # Store first in array as stable
-          stable=${vers}
-          crateversion=${{ env.versionmajor }}
-
-          echo "Latest stable version: $stable"
-          echo "Current crate version: $crateversion"
-
-          # Create directories
-          td=$(mktemp -d)
-          mkdir -p $td/$devver/
-          cp -r bookroot/* $td/$devver/
-
-          # Redirect rtic.rs/meeting/index.html to hackmd
-          mkdir $td/meeting
-          sed "s|URL|https://hackmd.io/c_mFUZL-Q2C6614MlrrxOg|g" redirect.html > $td/meeting/index.html
-          sed -i "s|Page Redirection|RTIC Meeting|" $td/meeting/index.html
-          sed -i "s|If you|Redirecting to RTIC HackMD. If you|" $td/meeting/index.html
-
-          # Redirect the main site to the stable release
-          sed "s|URL|$stable|g" redirect.html > $td/index.html
-
-          # Create the redirects for dev-version
-          # If the current stable and the version being built differ,
-          # then there is a dev-version and the links should point to it.
-          if [[ "$stable" != "$crateversion" ]];
-          then
-            sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
-            sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html
-          else
-            # If the current stable and the "dev" version in master branch
-            # share the same major version, redirect dev/ to stable book
-            # This makes sense, preferable to have doc/book updates going live directly to rtic.rs
-            sed 's|URL|rtic.rs/$stable/api/rtic|g' redirect.html > $td/$devver/api/index.html
-            sed 's|URL|rtic.rs/$stable|g' redirect.html > $td/$devver/index.html
-          fi
-
-          # Package older versions, including stable
-
-          # Copy the stable book to the stable alias
-          cp -r mdbookold/${{ env.STABLE_VERSION }} $td/stable
-
-          # Copy the stable book to the webroot
-          cp -r mdbookold/${{ env.STABLE_VERSION }} $td/
-          # Copy the old stable book to the webroot
-          cp -r mdbookold/${{ env.OLDSTABLE_VERSION }} $td/
-
-          # Forward CNAME file
-          cp CNAME $td/
-          mv $td/ bookstodeploy
+          export CURRENT_VERSION=${{ env.versionmajor }}
+          ./scripts/prep-books.sh "${{ env.STABLE_VERSION }} ${{ env.OLDSTABLE_VERSION }}"
 
       - name: Archive the webroot
         run: |
+          cd book-target
+          mv deploy bookstodeploy
           tar -cf bookstodeploy.tar bookstodeploy
 
       - name: Store the books
@@ -588,7 +505,7 @@ jobs:
 
   # Refs: https://github.com/rust-lang/crater/blob/9ab6f9697c901c4a44025cf0a39b73ad5b37d198/.github/workflows/bors.yml#L125-L149
   #
-  # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
+  # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
 
   ci-success:
     name: ci
