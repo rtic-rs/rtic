@@ -7,7 +7,7 @@ This can be achieved by instantiating a monotonic timer (for implementations, se
 [`rtic-monotonics`]: https://github.com/rtic-rs/rtic/tree/master/rtic-monotonics
 [`rtic-time`]: https://github.com/rtic-rs/rtic/tree/master/rtic-time
 [`Monotonic`]: https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html
-[Implementing a `Monotonic`]: ../../monotonic_impl.md
+[Implementing a `Monotonic`]: ../monotonic_impl.md
 
 ``` rust,noplayground
 ...
