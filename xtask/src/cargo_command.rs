@@ -432,6 +432,7 @@ impl<'a> CargoCommand<'a> {
     fn build_args<'i, T: Iterator<Item = &'i str>>(
         &'i self,
         nightly: bool,
+        color: bool,
         cargoarg: &'i Option<&'i str>,
         features: &'i Option<String>,
         mode: Option<&'i BuildMode>,
@@ -449,6 +450,10 @@ impl<'a> CargoCommand<'a> {
 
         if let Some(subcommand) = self.command() {
             args.push(subcommand);
+        }
+
+        if color {
+            args.extend_from_slice(&["--color", "always"])
         }
 
         if let Some(target) = self.target() {
@@ -508,6 +513,7 @@ impl<'a> CargoCommand<'a> {
                 target: _,
             } => self.build_args(
                 true,
+                true,
                 cargoarg,
                 features,
                 Some(mode),
@@ -526,6 +532,7 @@ impl<'a> CargoCommand<'a> {
                 deny_warnings: _,
             } => self.build_args(
                 true,
+                false,
                 cargoarg,
                 features,
                 Some(mode),
@@ -542,7 +549,7 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
+            } => self.build_args(true, true, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Check {
                 cargoarg,
                 package,
@@ -554,7 +561,7 @@ impl<'a> CargoCommand<'a> {
                 target: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
+            } => self.build_args(true, true, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Clippy {
                 cargoarg,
                 package,
@@ -570,7 +577,7 @@ impl<'a> CargoCommand<'a> {
                 };
 
                 let extra = p(package).chain(deny_warnings);
-                self.build_args(true, cargoarg, features, None, extra)
+                self.build_args(true, true, cargoarg, features, None, extra)
             }
             CargoCommand::Doc {
                 cargoarg,
@@ -580,7 +587,7 @@ impl<'a> CargoCommand<'a> {
                 deny_warnings: _,
             } => {
                 let extra = Self::extra_args(arguments.as_ref());
-                self.build_args(true, cargoarg, features, None, extra)
+                self.build_args(true, true, cargoarg, features, None, extra)
             }
             CargoCommand::Test {
                 package,
@@ -596,7 +603,7 @@ impl<'a> CargoCommand<'a> {
                 };
                 let package = p(package);
                 let extra = extra.into_iter().chain(package);
-                self.build_args(true, &None, features, None, extra)
+                self.build_args(true, true, &None, features, None, extra)
             }
             CargoCommand::Book {
                 arguments,
@@ -630,6 +637,7 @@ impl<'a> CargoCommand<'a> {
                 let package = p(package);
                 self.build_args(
                     true,
+                    false,
                     cargoarg,
                     &None,
                     None,
@@ -649,6 +657,7 @@ impl<'a> CargoCommand<'a> {
                 deny_warnings: _,
             } => self.build_args(
                 true,
+                true,
                 cargoarg,
                 features,
                 Some(mode),
@@ -664,6 +673,7 @@ impl<'a> CargoCommand<'a> {
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(
+                true,
                 true,
                 cargoarg,
                 features,
@@ -687,7 +697,7 @@ impl<'a> CargoCommand<'a> {
                     .into_iter()
                     .chain(Self::extra_args(arguments.as_ref()));
 
-                self.build_args(true, cargoarg, features, Some(mode), extra)
+                self.build_args(true, false, cargoarg, features, Some(mode), extra)
             }
             CargoCommand::Lychee { path } => [
                 "--offline",
