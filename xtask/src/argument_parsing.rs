@@ -399,7 +399,7 @@ pub struct BookArgs {
 
     /// The path to which the contents of the book should
     /// be written.
-    #[clap(long, short, default_value = "book-target")]
+    #[clap(long, short, default_value = "book-target/current")]
     pub output_path: String,
 
     /// Additional arguments to pass to `mdbook`

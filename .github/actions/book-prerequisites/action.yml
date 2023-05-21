@@ -1,0 +1,20 @@
+name: Install prerequisites for building the book
+description: "Install mdBook, mdBook-mermaid, and lychee"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install lychee
+      uses: taiki-e/install-action@v2
+      with:
+        tool: lychee
+
+    - name: Install mdbook
+      uses: taiki-e/install-action@v2
+      with:
+        tool: mdbook
+
+    - name: Install mdbook-mermaid
+      uses: taiki-e/install-action@v2
+      with:
+        tool: mdbook-mermaid

@@ -11,7 +11,7 @@ mkredirect(){
 
 clean_build_output=${CLEAN_BUILD_OUTPUT:-1}
 vers=($1)
-buildroot=${OLD_BOOK_BUILD_ROOT:-"book-target/old"}
+buildroot=${OLD_BOOKS_ROOT:-"book-target/old"}
 
 webroot=$buildroot/versions
 rm -rf $webroot
@@ -55,13 +55,13 @@ for ver in ${vers[@]}; do
 
     popd
 
-    rm -r $buildroot/$ver
+    rm -rf $buildroot/$ver
 done
 
 # Move all versions into the build root for easier access
 cp -r $webroot/* $buildroot
 
 if [ $clean_build_output -eq 1 ]; then
-    rm -r $srcdir
-    rm -r $webroot
+    rm -rf $srcdir
+    rm -rf $webroot
 fi
