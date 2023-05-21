@@ -2,27 +2,32 @@
 
 set -e
 
+root=$(pwd)
+
 mkredirect(){
     mkdir -p $(dirname $2)
     sed -e "s|URL|$1|g" $root/redirect.html > $2
 }
 
+clean_build_output=${CLEAN_BUILD_OUTPUT:-1}
 vers=($1)
 buildroot=${OLD_BOOK_BUILD_ROOT:-"book-target/old"}
-webroot=$buildroot/output
+
+webroot=$buildroot/versions
 rm -rf $webroot
 mkdir -p $webroot
+
 webroot=$(realpath $webroot)
-root=$(pwd)
+
+srcdir=$buildroot/src
 
 for ver in ${vers[@]}; do
     echo "Building book v${ver}"
-    mkdir -p $buildroot/src/$ver
-    src=$buildroot/src/$ver
+    mkdir -p $srcdir/$ver
+    src=$srcdir/$ver
     curl -fL https://github.com/rtic-rs/rtic/archive/release/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
 
     pushd $src
-    rm -rf .cargo/config
 
     # Build the docs: there are a few combinations we have to try to cover all of
     # the versions
@@ -49,5 +54,14 @@ for ver in ${vers[@]}; do
     mkredirect "book/en" $webroot/$ver/index.html
 
     popd
-    rm -r $src
+
+    rm -r $buildroot/$ver
 done
+
+# Move all versions into the build root for easier access
+cp -r $webroot/* $buildroot
+
+if [ $clean_build_output -eq 1 ]; then
+    rm -r $srcdir
+    rm -r $webroot
+fi
