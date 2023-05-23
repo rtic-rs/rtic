@@ -61,7 +61,7 @@ mod app {
         }
         // ANCHOR_END: timeout_after_basic
 
-        // ANCHOR: timeout_at
+        // ANCHOR: timeout_at_basic
         // get the current time instance
         let mut instant = Systick::now();
 
@@ -80,7 +80,7 @@ mod app {
                 _ => hprintln!("timeout"),
             }
         }
-        // ANCHOR_END: timeout_at
+        // ANCHOR_END: timeout_at_basic
 
         debug::exit(debug::EXIT_SUCCESS);
     }
