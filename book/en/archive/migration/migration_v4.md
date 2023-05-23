@@ -42,7 +42,7 @@ framework: `resources`, `spawn`, `schedule` -- these variables will become
 fields of the `Context` structure. Each function within the `#[rtfm::app]` item
 gets a different `Context` type.
 
-``` rust
+``` rust,noplayground
 #[rtfm::app(/* .. */)]
 const APP: () = {
     // change this
@@ -90,7 +90,7 @@ const APP: () = {
 The syntax used to declare resources has changed from `static mut`
 variables to a `struct Resources`.
 
-``` rust
+``` rust,noplayground
 #[rtfm::app(/* .. */)]
 const APP: () = {
     // change this
@@ -118,7 +118,7 @@ the `device` field of the `init::Context` structure.
 
 Change this:
 
-``` rust
+``` rust,noplayground
 #[rtfm::app(/* .. */)]
 const APP: () = {
     #[init]
@@ -132,7 +132,7 @@ const APP: () = {
 
 Into this:
 
-``` rust
+``` rust,noplayground
 #[rtfm::app(/* .. */, peripherals = true)]
 //                    ^^^^^^^^^^^^^^^^^^
 const APP: () = {
@@ -155,7 +155,7 @@ attribute with the `binds` argument instead.
 
 Change this:
 
-``` rust
+``` rust,noplayground
 #[rtfm::app(/* .. */)]
 const APP: () = {
     // hardware tasks
@@ -175,7 +175,7 @@ const APP: () = {
 
 Into this:
 
-``` rust
+``` rust,noplayground
 #[rtfm::app(/* .. */)]
 const APP: () = {
     #[task(binds = SVCall)]
@@ -212,7 +212,7 @@ ensure it is enabled by the application inside `init`.
 
 Change this:
 
-``` rust
+``` rust,noplayground
 use rtfm::{Duration, Instant, U32Ext};
 
 #[rtfm::app(/* .. */)]
@@ -226,7 +226,7 @@ const APP: () = {
 
 Into this:
 
-``` rust
+``` rust,noplayground
 use rtfm::cyccnt::{Duration, Instant, U32Ext};
 //        ^^^^^^^^
 

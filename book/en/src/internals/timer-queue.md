@@ -10,7 +10,7 @@ appropriate ready queue.
 
 Let's see how this in implemented in code. Consider the following program:
 
-``` rust
+``` rust,noplayground
 #[rtic::app(device = ..)]
 mod app {
     // ..
@@ -31,7 +31,7 @@ mod app {
 
 Let's first look at the `schedule` API.
 
-``` rust
+``` rust,noplayground
 mod foo {
     pub struct Schedule<'a> {
         priority: &'a Cell<u8>,
@@ -122,7 +122,7 @@ is up.
 
 Let's see the associated code.
 
-``` rust
+``` rust,noplayground
 mod app {
     #[no_mangle]
     fn SysTick() {
@@ -220,7 +220,7 @@ analysis.
 
 To illustrate, consider the following example:
 
-``` rust
+``` rust,noplayground
 #[rtic::app(device = ..)]
 mod app {
     #[task(priority = 3, spawn = [baz])]
@@ -269,7 +269,7 @@ an `INSTANTS` buffers used to store the time at which a task was scheduled to
 run; this `Instant` is read in the task dispatcher and passed to the user code
 as part of the task context.
 
-``` rust
+``` rust,noplayground
 mod app {
     // ..
 
@@ -311,7 +311,7 @@ buffer. The value to be written is stored in the `Spawn` struct and its either
 the `start` time of the hardware task or the `scheduled` time of the software
 task.
 
-``` rust
+``` rust,noplayground
 mod foo {
     // ..
 

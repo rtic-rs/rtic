@@ -16,7 +16,7 @@ $ rustfmt target/rtic-expansion.rs
 $ tail target/rtic-expansion.rs
 ```
 
-``` rust
+``` rust,noplayground
 #[doc = r" Implementation details"]
 mod app {
     #[doc = r" Always include the device crate which contains the vector table"]

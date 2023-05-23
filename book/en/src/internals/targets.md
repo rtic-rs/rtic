@@ -29,7 +29,7 @@ Table 1 below shows a list of Cortex-m processors and which type of critical sec
 
 ## Priority Ceiling
 
-This is covered by the [Resources][resources] page of this book.
+This is covered by the [Resources](../by-example/resources.html) page of this book.
 
 ## Source Masking
 

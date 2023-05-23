@@ -11,7 +11,7 @@ Like in `init`, locally declared resources will have `'static` lifetimes that ar
 
 The example below shows that `idle` runs after `init`.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/idle.rs}}
 ```
 
@@ -38,7 +38,7 @@ The following example shows how to enable sleep by setting the
 [WFI]: https://developer.arm.com/documentation/dui0662/b/The-Cortex-M0--Instruction-Set/Miscellaneous-instructions/WFI
 [NOP]: https://developer.arm.com/documentation/dui0662/b/The-Cortex-M0--Instruction-Set/Miscellaneous-instructions/NOP
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/idle-wfi.rs}}
 ```
 

@@ -4,8 +4,6 @@ RTIC aims to provide the lowest level of abstraction needed for developing robus
 
 It provides a minimal set of required mechanisms for safe sharing of mutable resources among interrupts and asynchronously executing tasks. The scheduling primitives leverages on the underlying hardware for unparalleled performance and predictability, in effect RTIC provides in Rust terms a zero-cost abstraction to concurrent real-time programming.
 
-
-
 ## Comparison regarding safety and security
 
 Comparing RTIC to traditional a Real-Time Operating System (RTOS) is hard. Firstly, a traditional RTOS typically comes with no guarantees regarding system safety, even the most hardened kernels like the formally verified [seL4] kernel. Their claims to integrity, confidentiality, and availability regards only the kernel itself (under additional assumptions its configuration and environment). They even state: 
@@ -16,7 +14,7 @@ Comparing RTIC to traditional a Real-Time Operating System (RTOS) is hard. First
 
 [seL4]: https://sel4.systems/
 
-### Security by design 
+## Security by design 
 
 In the world of information security we commonly find:
 

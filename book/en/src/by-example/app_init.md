@@ -16,7 +16,7 @@ The example below shows the types of the `core`, `device` and `cs` fields, and s
 The `device` field is only available when the `peripherals` argument is set to the default value `true`.
 In the rare case you want to implement an ultra-slim application you can explicitly set `peripherals` to `false`.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/init.rs}}
 ```
 

@@ -27,7 +27,7 @@ section on [critical sections](critical-sections.html)).
 The code below is an example of the kind of source level transformation that
 happens behind the scenes:
 
-``` rust
+``` rust,noplayground
 #[rtic::app(device = ..)]
 mod app {
     static mut X: u64: 0;
@@ -54,7 +54,7 @@ mod app {
 
 The framework produces codes like this:
 
-``` rust
+``` rust,noplayground
 fn init(c: init::Context) {
     // .. user code ..
 }

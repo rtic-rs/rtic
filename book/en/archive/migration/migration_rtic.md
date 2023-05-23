@@ -27,7 +27,7 @@ cortex-m-rtic = "0.5.3"
 The only code change that needs to be made is that any reference to `rtfm` before now need to point
 to `rtic` as follows:
 
-``` rust
+``` rust,noplayground
 //
 // Change this
 //
