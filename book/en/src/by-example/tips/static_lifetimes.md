@@ -8,8 +8,8 @@ In the following example two different tasks share a [`heapless::spsc::Queue`] f
 
 [`heapless::spsc::Queue`]: https://docs.rs/heapless/0.7.5/heapless/spsc/struct.Queue.html
 
-``` rust
-{{#include ../../../../rtic/examples/static.rs}}
+``` rust,noplayground
+{{#include ../../../../../rtic/examples/static.rs}}
 ```
 
 Running this program produces the expected output.
@@ -19,5 +19,5 @@ $ cargo run --target thumbv7m-none-eabi --example static
 ```
 
 ``` console
-{{#include ../../../../rtic/ci/expected/static.run}}
+{{#include ../../../../../rtic/ci/expected/static.run}}
 ```

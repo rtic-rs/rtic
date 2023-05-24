@@ -2,7 +2,7 @@
 
 This is the smallest possible RTIC application:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/smallest.rs}}
 ```
 

@@ -34,15 +34,6 @@ mod app {
         (Shared {}, Local {})
     }
 
-    #[idle]
-    fn idle(_: idle::Context) -> ! {
-        // debug::exit(debug::EXIT_SUCCESS);
-        loop {
-            // hprintln!("idle");
-            cortex_m::asm::wfi(); // put the MCU in sleep mode until interrupt occurs
-        }
-    }
-
     #[task]
     async fn foo(_cx: foo::Context) {
         hprintln!("hello from foo");

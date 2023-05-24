@@ -25,7 +25,7 @@ Types of `#[local]` resources must implement a [`Send`] trait as they are being 
 
 The example application shown below contains three tasks `foo`, `bar` and `idle`, each having access to its own `#[local]` resource.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/locals.rs}}
 ```
 
@@ -51,7 +51,7 @@ Types of `#[task(local = [..])]` resources have to be neither [`Send`] nor [`Syn
 
 In the example below the different uses and lifetimes are shown:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/declared_locals.rs}}
 ```
 
@@ -76,7 +76,7 @@ The critical section created by the `lock` API is based on dynamic priorities: i
 
 In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for a `shared` resource and need to succeed in locking the resource in order to access its data. The highest priority handler, which does not access the `shared` resource, is free to preempt a critical section created by the lowest priority handler.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/lock.rs}}
 ```
 
@@ -94,7 +94,7 @@ Types of `#[shared]` resources have to be [`Send`].
 
 As an extension to `lock`, and to reduce rightward drift, locks can be taken as tuples. The following examples show this in use:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/multilock.rs}}
 ```
 
@@ -116,7 +116,7 @@ Note that in this release of RTIC it is not possible to request both exclusive a
 
 In the example below a key (e.g. a cryptographic key) is loaded (or created) at runtime (returned by `init`) and then used from two tasks that run at different priorities without any kind of lock.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/only-shared-access.rs}}
 ```
 
@@ -142,7 +142,7 @@ To adhere to the Rust [aliasing] rule, a resource may be either accessed through
 
 Using `#[lock_free]` on resources shared by tasks running at different priorities will result in a *compile-time* error -- not using the `lock` API would violate the aforementioned alias rule. Similarly, for each priority there can be only a single *software* task accessing a shared resource (as an `async` task may yield execution to other *software* or *hardware* tasks running at the same priority). However, under this single-task restriction, we make the observation that the resource is in effect no longer `shared` but rather `local`. Thus, using a `#[lock_free]` shared resource will result in a *compile-time* error -- where applicable, use a `#[local]` resource instead.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/lock-free.rs}}
 ```
 

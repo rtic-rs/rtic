@@ -129,6 +129,7 @@ impl Systick {
     }
 
     /// Delay to some specific time instant.
+    #[inline]
     pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
         SYSTICK_TIMER_QUEUE.delay_until(instant).await;
     }
@@ -173,16 +174,12 @@ impl Monotonic for Systick {
 
 #[cfg(feature = "embedded-hal-async")]
 impl embedded_hal_async::delay::DelayUs for Systick {
-    type Error = core::convert::Infallible;
-
-    async fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
-        SYSTICK_TIMER_QUEUE.delay(us.micros()).await;
-        Ok(())
+    async fn delay_us(&mut self, us: u32) {
+        Self::delay(us.micros()).await;
     }
 
-    async fn delay_ms(&mut self, ms: u32) -> Result<(), Self::Error> {
-        SYSTICK_TIMER_QUEUE.delay(ms.millis()).await;
-        Ok(())
+    async fn delay_ms(&mut self, ms: u32) {
+        Self::delay(ms.millis()).await;
     }
 }
 

@@ -12,7 +12,7 @@ With the support of attributes on modules the `const APP` workaround is not need
 
 Change
 
-``` rust
+``` rust,noplayground
 #[rtic::app(/* .. */)]
 const APP: () = {
   [code here]
@@ -21,7 +21,7 @@ const APP: () = {
 
 into
 
-``` rust
+``` rust,noplayground
 #[rtic::app(/* .. */)]
 mod app {
   [code here]
@@ -75,7 +75,7 @@ mod app {
 
 Change
 
-``` rust
+``` rust,noplayground
 #[rtic::app(/* .. */)]
 const APP: () = {
     [code here]
@@ -92,7 +92,7 @@ const APP: () = {
 
 into
 
-``` rust
+``` rust,noplayground
 #[rtic::app(/* .. */, dispatchers = [SSI0, QEI0])]
 mod app {
   [code here]
@@ -106,7 +106,7 @@ This works also for ram functions, see examples/ramfunc.rs
 
 Previously the RTIC resources had to be in in a struct named exactly "Resources":
 
-``` rust
+``` rust,noplayground
 struct Resources {
     // Resources defined in here
 }
@@ -115,7 +115,7 @@ struct Resources {
 With RTIC v1.0.0 the resources structs are annotated similarly like
 `#[task]`, `#[init]`, `#[idle]`: with the attributes `#[shared]` and `#[local]`
 
-``` rust
+``` rust,noplayground
 #[shared]
 struct MySharedResources {
     // Resources shared between tasks are defined here
@@ -136,7 +136,7 @@ In v1.0.0 resources are split between `shared` resources and `local` resources.
 
 In v0.5.x:
 
-``` rust
+``` rust,noplayground
 struct Resources {
     local_to_b: i64,
     shared_by_a_and_b: i64,
@@ -151,7 +151,7 @@ fn b(_: b::Context) {}
 
 In v1.0.0:
 
-``` rust
+``` rust,noplayground
 #[shared]
 struct Shared {
     shared_by_a_and_b: i64,
@@ -176,7 +176,7 @@ to be used for all `shared` resource access.
 In old code one could do the following as the high priority
 task has exclusive access to the resource:
 
-``` rust
+``` rust,noplayground
 #[task(priority = 2, resources = [r])]
 fn foo(cx: foo::Context) {
     cx.resources.r = /* ... */;
@@ -190,7 +190,7 @@ fn bar(cx: bar::Context) {
 
 And with symmetric locks one needs to use locks in both tasks:
 
-``` rust
+``` rust,noplayground
 #[task(priority = 2, shared = [r])]
 fn foo(cx: foo::Context) {
     cx.shared.r.lock(|r| r = /* ... */);
@@ -211,7 +211,7 @@ This is still possible in 1.0: the `#[shared]` resource must be annotated with t
 
 v0.5 code:
 
-``` rust
+``` rust,noplayground
 struct Resources {
     counter: u64,
 }
@@ -229,7 +229,7 @@ fn b(cx: b::Context) {
 
 v1.0 code:
 
-``` rust
+``` rust,noplayground
 #[shared]
 struct Shared {
     #[lock_free]
@@ -254,7 +254,7 @@ Instead of that syntax, use the `local` argument in `#[init]`.
 
 v0.5.x code:
 
-``` rust
+``` rust,noplayground
 #[init]
 fn init(_: init::Context) {
     static mut BUFFER: [u8; 1024] = [0; 1024];
@@ -264,7 +264,7 @@ fn init(_: init::Context) {
 
 v1.0.0 code:
 
-``` rust
+``` rust,noplayground
 #[init(local = [
     buffer: [u8; 1024] = [0; 1024]
 //   type ^^^^^^^^^^^^   ^^^^^^^^^ initial value
@@ -282,7 +282,7 @@ In order to make the API more symmetric the #[init]-task always returns a late r
 
 From this:
 
-``` rust
+``` rust,noplayground
 #[rtic::app(device = lm3s6965)]
 const APP: () = {
     #[init]
@@ -296,7 +296,7 @@ const APP: () = {
 
 to this:
 
-``` rust
+``` rust,noplayground
 #[rtic::app(device = lm3s6965)]
 mod app {
     #[shared]
@@ -321,7 +321,7 @@ mod app {
 With the new spawn/spawn_after/spawn_at interface,
 old code requiring the context `cx` for spawning such as:
 
-``` rust
+``` rust,noplayground
 #[task(spawn = [bar])]
 fn foo(cx: foo::Context) {
     cx.spawn.bar().unwrap();
@@ -335,7 +335,7 @@ fn bar(cx: bar::Context) {
 
 Will now be written as:
 
-``` rust
+``` rust,noplayground
 #[task]
 fn foo(_c: foo::Context) {
     bar::spawn().unwrap();

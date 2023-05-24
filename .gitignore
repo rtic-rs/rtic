@@ -5,3 +5,4 @@
 /target
 Cargo.lock
 *.hex
+book-target/

@@ -38,8 +38,3 @@ target = "thumbv6m-none-eabi"        # Cortex-M0 and Cortex-M0+
 # target = "thumbv8m.base-none-eabi"   # Cortex-M23
 # target = "thumbv8m.main-none-eabi"   # Cortex-M33 (no FPU)
 # target = "thumbv8m.main-none-eabihf" # Cortex-M33 (with FPU)
-
-# thumbv7m-none-eabi is not coming with core and alloc, compile myself
-[unstable]
-mtime-on-use = true
-build-std = ["core", "alloc"]

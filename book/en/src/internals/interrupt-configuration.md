@@ -11,7 +11,7 @@ configuration is done before the `init` function runs.
 
 This example gives you an idea of the code that the RTIC framework runs:
 
-``` rust
+``` rust,noplayground
 #[rtic::app(device = lm3s6965)]
 mod app {
     #[init]
@@ -33,7 +33,7 @@ mod app {
 
 The framework generates an entry point that looks like this:
 
-``` rust
+``` rust,noplayground
 // the real entry point of the program
 #[no_mangle]
 unsafe fn main() -> ! {

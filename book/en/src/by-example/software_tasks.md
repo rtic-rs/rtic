@@ -1,7 +1,6 @@
 # Software tasks & spawn
 
-The RTIC concept of a software task shares a lot with that of [hardware tasks](./hardware_tasks.md) with the core difference that a software task is not explicitly bound to a specific
-interrupt vector, but rather bound to a “dispatcher” interrupt vector running at the intended priority of the software task (see below).
+The RTIC concept of a software task shares a lot with that of [hardware tasks](./hardware_tasks.md). The core difference is that a software task is not explicitly bound to a specific interrupt vector, but rather bound to a “dispatcher” interrupt vector running at the intended priority of the software task (see below).
 
 Similarly to *hardware* tasks, the `#[task]` attribute used on a function declare it as a task. The absence of a `binds = InterruptName` argument to the attribute declares the function as a *software task*. 
 
@@ -9,11 +8,11 @@ The static method `task_name::spawn()` spawns (starts) a software task and given
 
 The *software* task itself is given as an `async` Rust function, which allows the user to optionally `await` future events. This allows to blend reactive programming (by means of *hardware* tasks) with sequential programming (by means of *software* tasks).
 
-Whereas, *hardware* tasks are assumed to run-to-completion (and return), *software* tasks may be started (`spawned`) once and run forever, with the side condition that any loop (execution path) is broken by at least one `await` (yielding operation). 
+While *hardware* tasks are assumed to run-to-completion (and return), *software* tasks may be started (`spawned`) once and run forever, on the condition that any loop (execution path) is broken by at least one `await` (yielding operation).
 
-All *software* tasks at the same priority level shares an interrupt handler acting as an async executor dispatching the software tasks. 
+## Dispatchers
 
-This list of dispatchers, `dispatchers = [FreeInterrupt1, FreeInterrupt2, ...]` is an argument to the `#[app]` attribute, where you define the set of free and usable interrupts.
+All *software* tasks at the same priority level share an interrupt handler acting as an async executor dispatching the software tasks. This list of dispatchers, `dispatchers = [FreeInterrupt1, FreeInterrupt2, ...]` is an argument to the `#[app]` attribute, where you define the set of free and usable interrupts.
 
 Each interrupt vector acting as dispatcher gets assigned to one priority level meaning that the list of dispatchers need to cover all priority levels used by software tasks.
 
@@ -23,7 +22,7 @@ The framework will give a compilation error if there are not enough dispatchers 
 
 See the following example:
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/spawn.rs}}
 ```
 
@@ -40,7 +39,7 @@ In the below example, we `spawn` the *software* task `foo` from the `idle` task.
 
 Technically the async executor will `poll` the `foo` *future* which in this case leaves the *future* in a *completed* state. 
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/spawn_loop.rs}}
 ```
 
@@ -56,7 +55,7 @@ An attempt to `spawn` an already spawned task (running) task will result in an e
 
 Technically, a `spawn` to a *future* that is not in *completed* state is considered an error.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/spawn_err.rs}}
 ```
 
@@ -71,7 +70,7 @@ $ cargo run --target thumbv7m-none-eabi --example spawn_err
 ## Passing arguments
 You can also pass arguments at spawn as follows.
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/spawn_arguments.rs}}
 ```
 
@@ -92,7 +91,7 @@ Conceptually, one can see such tasks as running in the `main` thread of the appl
 [Send]: https://doc.rust-lang.org/nomicon/send-and-sync.html
 
 
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/zero-prio-task.rs}}
 ```
 

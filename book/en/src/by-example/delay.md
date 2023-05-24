@@ -1,24 +1,23 @@
 # Tasks with delay
 
-A convenient way to express *miniminal* timing requirements is by means of delaying progression. 
+A convenient way to express miniminal timing requirements is by delaying progression. 
 
-This can be achieved by instantiating a monotonic timer:
+This can be achieved by instantiating a monotonic timer (for implementations, see [`rtic-monotonics`]):
 
-``` rust
+[`rtic-monotonics`]: https://github.com/rtic-rs/rtic/tree/master/rtic-monotonics
+[`rtic-time`]: https://github.com/rtic-rs/rtic/tree/master/rtic-time
+[`Monotonic`]: https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html
+[Implementing a `Monotonic`]: ../monotonic_impl.md
+
+``` rust,noplayground
 ...
-rtic_monotonics::make_systick_handler!();
-
-#[init]
-fn init(cx: init::Context) -> (Shared, Local) {
-    hprintln!("init");
-
-    Systick::start(cx.core.SYST, 12_000_000);
-    ...
+{{#include ../../../../rtic/examples/async-timeout.rs:init}}
+        ...
 ```
 
 A *software* task can `await` the delay to expire:
 
-``` rust
+``` rust,noplayground
 #[task]
 async fn foo(_cx: foo::Context) {
     ...
@@ -28,13 +27,10 @@ async fn foo(_cx: foo::Context) {
 
 ```
 
-Technically, the timer queue is implemented as a list based priority queue, where list-nodes are statically allocated as part of the underlying task `Future`. Thus, the timer queue is infallible at run-time (its size and allocation is determined at compile time).
+<details>
+<summary>A complete example</summary>
 
-Similarly the channels implementation, the timer-queue implementation relies on a global *Critical Section* (CS) for race protection. For the examples a CS implementation is provided by adding `--features test-critical-section` to the build options.
-
-For a complete example:
-
-``` rust
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-delay.rs}}
 ```
 
@@ -46,75 +42,63 @@ $ cargo run --target thumbv7m-none-eabi --example async-delay --features test-cr
 {{#include ../../../../rtic/ci/expected/async-delay.run}}
 ```
 
+</details>
+
+> Interested in contributing new implementations of [`Monotonic`], or more information about the inner workings of monotonics?
+> Check out the [Implementing a `Monotonic`] chapter!
+
 ## Timeout
 
-Rust `Futures` (underlying Rust `async`/`await`) are composable. This makes it possible to `select` in between `Futures` that have completed.
+Rust [`Future`]s (underlying Rust `async`/`await`) are composable. This makes it possible to `select` in between `Futures` that have completed.
 
-A common use case is transactions with associated timeout. In the examples shown below, we introduce a fake HAL device which performs some transaction. We have modelled the time it takes based on the input parameter (`n`) as `350ms + n * 100ms)`. 
+[`Future`]: https://doc.rust-lang.org/std/future/trait.Future.html
+
+A common use case is transactions with an associated timeout. In the examples shown below, we introduce a fake HAL device that performs some transaction. We have modelled the time it takes based on the input parameter (`n`) as `350ms + n * 100ms`. 
 
 Using the `select_biased` macro from the `futures` crate it may look like this:
 
-``` rust
-// Call hal with short relative timeout using `select_biased`
-select_biased! {
-    v = hal_get(1).fuse() => hprintln!("hal returned {}", v),
-    _ = Systick::delay(200.millis()).fuse() =>  hprintln!("timeout", ), // this will finish first
-}
+``` rust,noplayground,noplayground
+{{#include ../../../../rtic/examples/async-timeout.rs:select_biased}}
 ```
 
-Assuming the `hal_get` will take 450ms to finish, a short timeout of 200ms will expire.
+Assuming the `hal_get` will take 450ms to finish, a short timeout of 200ms will expire before `hal_get` can complete.
 
-``` rust
-// Call hal with long relative timeout using `select_biased`
-select_biased! {
-    v = hal_get(1).fuse() => hprintln!("hal returned {}", v), // hal finish first
-    _ = Systick::delay(1000.millis()).fuse() =>  hprintln!("timeout", ),
-}
+Extending the timeout to 1000ms would cause `hal_get` will to complete first.
+
+Using `select_biased` any number of futures can be combined, so its very powerful. However, as the timeout pattern is frequently used, more ergonomic support is baked into RTIC, provided by the [`rtic-monotonics`] and [`rtic-time`] crates. 
+
+Rewriting the second example from above using `timeout_after` gives:
+
+``` rust,noplayground
+{{#include ../../../../rtic/examples/async-timeout.rs:timeout_at_basic}}
 ```
 
-By extending the timeout to 1000ms, the `hal_get` will finish first.
-
-Using `select_biased` any number of futures can be combined, so its very powerful. However, as the timeout pattern is frequently used, it is directly supported by the RTIC [rtc-monotonics] and [rtic-time] crates. The second example from above using `timeout_after`:
-
-``` rust
-// Call hal with long relative timeout using monotonic `timeout_after`
-match Systick::timeout_after(1000.millis(), hal_get(1)).await {
-    Ok(v) => hprintln!("hal returned {}", v),
-    _ => hprintln!("timeout"),
-}
-```
-
-In cases you want exact control over time without drift. For this purpose we can use exact points in time using `Instance`, and spans of time using `Duration`. Operations on the `Instance` and `Duration` types are given by the [fugit] crate.
+In cases where you want exact control over time without drift we can use exact points in time using `Instant`, and spans of time using `Duration`. Operations on the `Instant` and `Duration` types come from the [`fugit`] crate.
 
 [fugit]: https://crates.io/crates/fugit
 
-``` rust
-// get the current time instance
-let mut instant = Systick::now();
+``` rust,noplayground
 
-// do this 3 times
-for n in 0..3 {
-    // absolute point in time without drift
-    instant += 1000.millis();
-    Systick::delay_until(instant).await;
+{{#include ../../../../rtic/examples/async-timeout.rs:timeout_at}}
 
-    // absolute point it time for timeout
-    let timeout = instant + 500.millis();
-    hprintln!("now is {:?}, timeout at {:?}", Systick::now(), timeout);
-
-    match Systick::timeout_at(timeout, hal_get(n)).await {
-        Ok(v) => hprintln!("hal returned {} at time {:?}", v, Systick::now()),
-        _ => hprintln!("timeout"),
-    }
-}
 ```
 
-`instant = Systick::now()` gives the baseline (i.e., the absolute current point in time). We want to call `hal_get` after 1000ms relative to this absolute point in time. This can be accomplished by `Systick::delay_until(instant).await;`. We define the absolute point in time for the `timeout`, and call `Systick::timeout_at(timeout, hal_get(n)).await`. For the first loop iteration `n == 0`, and the `hal_get` will take 350ms (and finishes before the timeout). For the second iteration `n == 1`, and `hal_get` will take 450ms (and again succeeds to finish before the timeout).  For the third iteration `n == 2` (`hal_get` will take 5500ms to finish). In this case we will run into a timeout.
+`let mut instant = Systick::now()` sets the starting time of execution. 
 
+We want to call `hal_get` after 1000ms relative to this starting time. This can be accomplished by using `Systick::delay_until(instant).await`. 
 
-The complete example:
+Then, we define a point in time called `timeout`, and call `Systick::timeout_at(timeout, hal_get(n)).await`. 
 
-``` rust
+For the first iteration of the loop, with `n == 0`, the `hal_get` will take 350ms (and finishes before the timeout). 
+
+For the second iteration, with `n == 1`, the `hal_get` will take 450ms (and again succeeds to finish before the timeout).  
+
+For the third iteration, with `n == 2`, `hal_get` will take 550ms to finish, in which case we will run into a timeout.
+
+<details>
+<summary>A complete example</summary>
+
+``` rust,noplayground
 {{#include ../../../../rtic/examples/async-timeout.rs}}
 ```
 
@@ -125,3 +109,4 @@ $ cargo run --target thumbv7m-none-eabi --example async-timeout --features test-
 ``` console
 {{#include ../../../../rtic/ci/expected/async-timeout.run}}
 ```
+</details>

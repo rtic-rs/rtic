@@ -1,0 +1,5 @@
+error: Async task "task1" has priority 0, but `#[idle]` is defined. 0-priority async tasks are only allowed if there is no `#[idle]`.
+  --> ui/task-no-prio.rs:18:14
+   |
+18 |     async fn task1(_: task1::Context) {}
+   |              ^^^^^

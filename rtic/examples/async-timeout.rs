@@ -23,12 +23,14 @@ mod app {
     #[local]
     struct Local {}
 
+    // ANCHOR: init
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
         hprintln!("init");
 
         let systick_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, 12_000_000, systick_token);
+        // ANCHOR_END: init
 
         foo::spawn().ok();
 
@@ -37,6 +39,7 @@ mod app {
 
     #[task]
     async fn foo(_cx: foo::Context) {
+        // ANCHOR: select_biased
         // Call hal with short relative timeout using `select_biased`
         select_biased! {
             v = hal_get(1).fuse() => hprintln!("hal returned {}", v),
@@ -48,13 +51,17 @@ mod app {
             v = hal_get(1).fuse() => hprintln!("hal returned {}", v), // hal finish first
             _ = Systick::delay(1000.millis()).fuse() =>  hprintln!("timeout", ),
         }
+        // ANCHOR_END: select_biased
 
+        // ANCHOR: timeout_after_basic
         // Call hal with long relative timeout using monotonic `timeout_after`
         match Systick::timeout_after(1000.millis(), hal_get(1)).await {
             Ok(v) => hprintln!("hal returned {}", v),
             _ => hprintln!("timeout"),
         }
+        // ANCHOR_END: timeout_after_basic
 
+        // ANCHOR: timeout_at_basic
         // get the current time instance
         let mut instant = Systick::now();
 
@@ -73,6 +80,7 @@ mod app {
                 _ => hprintln!("timeout"),
             }
         }
+        // ANCHOR_END: timeout_at_basic
 
         debug::exit(debug::EXIT_SUCCESS);
     }

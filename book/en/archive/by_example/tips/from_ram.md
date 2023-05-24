@@ -11,8 +11,8 @@ improve performance in some cases.
 
 The example below shows how to place the higher priority task, `bar`, in RAM.
 
-``` rust
-{{#include ../../../../rtic/examples/ramfunc.rs}}
+``` rust,noplayground
+{{#include ../../../../../rtic/examples/ramfunc.rs}}
 ```
 
 Running this program produces the expected output.
@@ -22,7 +22,7 @@ $ cargo run --target thumbv7m-none-eabi --example ramfunc
 ```
 
 ``` console
-{{#include ../../../../rtic/ci/expected/ramfunc.run}}
+{{#include ../../../../../rtic/ci/expected/ramfunc.run}}
 ```
 
 One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
@@ -33,7 +33,7 @@ $ cargo nm --example ramfunc --release | grep ' foo::'
 ```
 
 ``` console
-{{#include ../../../../rtic/ci/expected/ramfunc.run.grep.foo}}
+{{#include ../../../../../rtic/ci/expected/ramfunc.run.grep.foo}}
 ```
 
 ``` console
@@ -41,5 +41,5 @@ $ cargo nm --example ramfunc  --target thumbv7m-none-eabi --release | grep '*bar
 ```
 
 ``` console
-{{#include ../../../../rtic/ci/expected/ramfunc.run.grep.bar}}
+{{#include ../../../../../rtic/ci/expected/ramfunc.run.grep.bar}}
 ```
