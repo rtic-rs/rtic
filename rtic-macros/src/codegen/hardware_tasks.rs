@@ -22,7 +22,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         let attrs = &task.attrs;
         let entry_stmts = interrupt_entry(app, analysis);
         let exit_stmts = interrupt_exit(app, analysis);
-        let config = async_config(app, analysis, symbol.clone());
+        let config = handler_config(app, analysis, symbol.clone());
 
         mod_app.push(quote!(
             #[allow(non_snake_case)]

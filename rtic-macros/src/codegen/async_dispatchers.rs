@@ -68,15 +68,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let entry_stmts = interrupt_entry(app, analysis);
             let exit_stmts = interrupt_exit(app, analysis);
             let async_entry_stmts = async_entry(app, analysis, dispatcher_name.clone());
-            let config = async_config(app,analysis,dispatcher_name.clone());
-            let symbol_literal = async_config(app, analysis, dispatcher_name.clone());
-            //let id = &interrupts.get();
+            let config = handler_config(app,analysis,dispatcher_name.clone());
             items.push(quote!(
                 #[allow(non_snake_case)]
                 #[doc = #doc]
                 #[no_mangle]
                 #(#config)*
-                //#(config)*
                 unsafe fn #dispatcher_name() {
                     #(#entry_stmts)*
                     #(#async_entry_stmts)*

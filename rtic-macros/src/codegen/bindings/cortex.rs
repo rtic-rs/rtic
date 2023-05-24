@@ -350,7 +350,7 @@ pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStrea
         static RTIC_ASYNC_MAX_LOGICAL_PRIO: u8 = #max;
     )]
 }
-pub fn async_config(
+pub fn handler_config(
     _app: &App,
     _analysis: &CodegenAnalysis,
     dispatcher_name: Ident,
