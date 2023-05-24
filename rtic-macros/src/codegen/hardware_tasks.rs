@@ -2,7 +2,7 @@ use crate::syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
     codegen::{
-        bindings::{interrupt_entry, interrupt_exit, async_config},
+        bindings::{interrupt_entry, interrupt_exit, handler_config},
         local_resources_struct, module, shared_resources_struct,
     },
 };
