@@ -385,9 +385,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install book prerequisites
-        uses: ./.github/actions/book-prerequisites
-
       - name: Download built dev-ver book and API docs
         uses: actions/download-artifact@v3
         with:
@@ -432,5 +429,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./book-webroot
+          publish_dir: ./deploy
           force_orphan: true
