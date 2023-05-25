@@ -1,14 +1,14 @@
 [package]
 name = "rtic-monotonics"
-version = "1.0.0-alpha.2"
+version = "1.0.0"
 
 edition = "2021"
 authors = [
-  "The Real-Time Interrupt-driven Concurrency developers",
-  "Emil Fresk <emil.fresk@gmail.com>",
-  "Henrik Tjäder <henrik@tjaders.com>",
-  "Jorge Aparicio <jorge@japaric.io>",
-  "Per Lindgren <per.lindgren@ltu.se>",
+    "The Real-Time Interrupt-driven Concurrency developers",
+    "Emil Fresk <emil.fresk@gmail.com>",
+    "Henrik Tjäder <henrik@tjaders.com>",
+    "Jorge Aparicio <jorge@japaric.io>",
+    "Per Lindgren <per.lindgren@ltu.se>",
 ]
 categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "A library that provides implementations of the Monotonic trait from rtic-time"
@@ -19,7 +19,7 @@ features = ["cortex-m-systick", "rp2040", "nrf52840"]
 rustdoc-flags = ["--cfg", "docsrs"]
 
 [dependencies]
-rtic-time = { version = "1.0.0-alpha.1", path = "../rtic-time" }
+rtic-time = { version = "1.0.0", path = "../rtic-time" }
 embedded-hal-async = { version = "0.2.0-alpha.1", optional = true }
 fugit = { version = "0.3.6" }
 atomic-polyfill = "1"

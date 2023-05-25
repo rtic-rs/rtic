@@ -9,18 +9,18 @@ version = "0.1.0"
 
 [dependencies.rtic]
 path = "../../rtic"
-version = "=2.0.0-alpha.2"
+version = "2.0.0"
 features = ["thumbv7-backend"]
 
 [dependencies.rtic-monotonics]
 path = "../../rtic-monotonics"
-version = "=1.0.0-alpha.2"
+version = "1.0.0"
 features = ["cortex-m-systick"]
 
 [dependencies]
 embedded-hal = "0.2.7"
 panic-rtt-target = { version = "0.1.2", features = ["cortex-m"] }
-rtt-target = { version = "0.3.1", features = ["cortex-m"] }
+rtt-target = { version = "0.4.0" }
 
 [dependencies.stm32f3xx-hal]
 features = ["stm32f303xc", "rt"]
