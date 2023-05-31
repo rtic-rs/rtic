@@ -401,7 +401,14 @@ jobs:
 
               pushd $src
               rm -f .cargo/config
-              cargo doc || cargo doc --features timer-queue
+              # Version 1 and below uses cargo doc directly
+              if [[ $ver -gt 1 ]]
+                 then
+                   # Version 2 and above
+                   cargo xtask doc
+                 else
+                   cargo doc || cargo doc --features timer-queue
+              fi
               mkdir -p $webroot/$ver/book
               cp -r target/doc $webroot/$ver/api
 
