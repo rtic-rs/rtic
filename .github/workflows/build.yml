@@ -474,15 +474,14 @@ jobs:
     needs:
       - ci-success
       - parseversion
+    env:
+      branch: ${{ needs.parseversion.outputs.branch }}
+      majorversion: ${{ needs.parseversion.outputs.majorversion }}
+      version: ${{ needs.parseversion.outputs.version }}
 
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
     steps:
-      - env:
-        branch: ${{ needs.parseversion.outputs.branch }}
-        majorversion: ${{ needs.parseversion.outputs.majorversion }}
-        version: ${{ needs.parseversion.outputs.version }}
-            
       - uses: actions/checkout@v3
 
       - name: Push to stable release branch if master contains stable version
