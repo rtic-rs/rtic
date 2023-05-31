@@ -440,18 +440,23 @@ jobs:
   parseversion:
     name: Parse the master branch RTIC version
     runs-on: ubuntu-22.04
+    outputs:
+      branch: ${{ steps.parseversion.outputs.branch }}
+      versionmajor: ${{ steps.parseversion.outputs.versionmajor }}
+      version: ${{ steps.parseversion.outputs.version }}
     steps:
       - uses: actions/checkout@v3
 
       - name: Get crate version and print output branch release/vX
-        id: crateversionbranch
+        id: parseversion
         # Parse metadata for version number, extract the Semver Major
         run: |
           VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="rtic") | .version')
           VERSIONMAJOR=${VERSION%.*.*}
-          echo "branch=release/v$VERSIONMAJOR" >> $GITHUB_ENV
-          echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "branch=release/v$VERSIONMAJOR" >> "$GITHUB_OUTPUT"
+          echo "versionmajor=$VERSIONMAJOR" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
 
 
   # Update stable branch
@@ -473,6 +478,11 @@ jobs:
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
     steps:
+      - env:
+        branch: ${{ needs.parseversion.outputs.branch }}
+        majorversion: ${{ needs.parseversion.outputs.majorversion }}
+        version: ${{ needs.parseversion.outputs.version }}
+            
       - uses: actions/checkout@v3
 
       - name: Push to stable release branch if master contains stable version
