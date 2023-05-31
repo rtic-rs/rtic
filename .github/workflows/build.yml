@@ -476,7 +476,7 @@ jobs:
       - parseversion
     env:
       branch: ${{ needs.parseversion.outputs.branch }}
-      majorversion: ${{ needs.parseversion.outputs.majorversion }}
+      versionmajor: ${{ needs.parseversion.outputs.versionmajor }}
       version: ${{ needs.parseversion.outputs.version }}
 
     # Only run this when pushing to master branch
