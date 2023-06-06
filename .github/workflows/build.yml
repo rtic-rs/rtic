@@ -363,7 +363,7 @@ jobs:
 
   mdbookold:
     name: build docs and mdbook for older releases
-    needs: mergetostablebranch
+    needs: pushtostablebranch
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -468,8 +468,8 @@ jobs:
   # Thus, no need to push changes 
   #
   # This needs to run before book is built, as bookbuilding fetches from the branch
-  mergetostablebranch:
-    name: Merge branch into release/vX when pushing to master
+  pushtostablebranch:
+    name: Also push branch into release/vX when pushing to master
     runs-on: ubuntu-22.04
     needs:
       - ci-success
@@ -486,7 +486,7 @@ jobs:
 
       - name: Push to stable release branch if master contains stable version
         if: ${{ env.versionmajor == env.STABLE_VERSION }}
-        run: git push -u origin ${{ env.branch }}
+        run: git push -u origin master:${{ env.branch }}
 
       - name: Else case, master did not contain the stable version version
         if: ${{ env.versionmajor != env.STABLE_VERSION }}
@@ -500,7 +500,7 @@ jobs:
     name: deploy
     runs-on: ubuntu-22.04
     needs:
-      - mergetostablebranch
+      - pushtostablebranch
       - docs      
       - mdbookold      
       - mdbook
