@@ -15,8 +15,8 @@ This is the documentation for RTIC v2.x.
 Older releases:
 [RTIC v1.x](/1) | [RTIC v0.5.x (unsupported)][v0_5] | [RTFM v0.4.x (unsupported)][v0_4] 
 
-v0_5: https://github.com/rtic-rs/rtic/tree/release/v0.5
-v0_4: https://github.com/rtic-rs/rtic/tree/release/v0.4
+[v0_5]: https://github.com/rtic-rs/rtic/tree/release/v0.5
+[v0_4]: https://github.com/rtic-rs/rtic/tree/release/v0.4
 
 {{#include ../../../README.md:7:12}}
 
