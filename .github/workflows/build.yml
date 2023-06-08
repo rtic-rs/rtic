@@ -488,7 +488,7 @@ jobs:
         if: ${{ env.versionmajor == env.STABLE_VERSION }}
         run: git push -u origin master:${{ env.branch }}
 
-      - name: Else case, master did not contain the stable version version
+      - name: Else case, master did not contain the stable version
         if: ${{ env.versionmajor != env.STABLE_VERSION }}
         run: echo "Master branch contains a development release, no git push performed"
 
