@@ -367,6 +367,42 @@ impl App {
                             if let Some(pos) = item
                                 .attrs
                                 .iter()
+                                .position(|attr| util::attr_eq(attr, "init"))
+                            {
+                                let args = InitArgs::parse(item.attrs.remove(pos).tokens)?;
+
+                                // If an init function already exists, error
+                                if init.is_some() {
+                                    return Err(parse::Error::new(
+                                        span,
+                                        "`#[init]` function must appear at most once",
+                                    ));
+                                }
+
+                                check_ident(&item.sig.ident)?;
+
+                                init = Some(Init::parse_foreign(args, item)?);
+                            } else if let Some(pos) = item
+                                .attrs
+                                .iter()
+                                .position(|attr| util::attr_eq(attr, "idle"))
+                            {
+                                let args = IdleArgs::parse(item.attrs.remove(pos).tokens)?;
+
+                                // If an idle function already exists, error
+                                if idle.is_some() {
+                                    return Err(parse::Error::new(
+                                        span,
+                                        "`#[idle]` function must appear at most once",
+                                    ));
+                                }
+
+                                check_ident(&item.sig.ident)?;
+
+                                idle = Some(Idle::parse_foreign(args, item)?);
+                            } else if let Some(pos) = item
+                                .attrs
+                                .iter()
                                 .position(|attr| util::attr_eq(attr, "task"))
                             {
                                 if hardware_tasks.contains_key(&item.sig.ident)
@@ -408,7 +444,8 @@ impl App {
                             } else {
                                 return Err(parse::Error::new(
                                     span,
-                                    "`extern` task required `#[task(..)]` attribute",
+                                    "`extern` task, init or idle must have either `#[task(..)]`,
+                                    `#[init(..)]` or `#[idle(..)]` attribute",
                                 ));
                             }
                         } else {

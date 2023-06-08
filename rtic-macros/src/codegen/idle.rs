@@ -34,16 +34,20 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         let attrs = &idle.attrs;
         let context = &idle.context;
         let stmts = &idle.stmts;
-        let user_idle = Some(quote!(
-            #(#attrs)*
-            #[allow(non_snake_case)]
-            fn #name(#context: #name::Context) -> ! {
-                use rtic::Mutex as _;
-                use rtic::mutex::prelude::*;
+        let user_idle = if !idle.is_extern {
+            Some(quote!(
+                #(#attrs)*
+                #[allow(non_snake_case)]
+                fn #name(#context: #name::Context) -> ! {
+                    use rtic::Mutex as _;
+                    use rtic::mutex::prelude::*;
 
-                #(#stmts)*
-            }
-        ));
+                    #(#stmts)*
+                }
+            ))
+        } else {
+            None
+        };
 
         quote!(
             #(#mod_app)*
