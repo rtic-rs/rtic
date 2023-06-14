@@ -8,6 +8,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ## [Unreleased]
 
 ### Added
+- Allow #[init] and #[idle] to be defined externally
 
 ### Fixed
 
