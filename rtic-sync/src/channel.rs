@@ -106,6 +106,16 @@ macro_rules! make_channel {
         static mut CHANNEL: $crate::channel::Channel<$type, $size> =
             $crate::channel::Channel::new();
 
+        static CHECK: ::core::sync::atomic::AtomicU8 = ::core::sync::atomic::AtomicU8::new(0);
+
+        critical_section::with(|_| {
+            if CHECK.load(::core::sync::atomic::Ordering::Relaxed) != 0 {
+                panic!("call to the same `make_channel` instance twice");
+            }
+
+            CHECK.store(1, ::core::sync::atomic::Ordering::Relaxed);
+        });
+
         // SAFETY: This is safe as we hide the static mut from others to access it.
         // Only this point is where the mutable access happens.
         unsafe { CHANNEL.split() }
@@ -572,5 +582,16 @@ mod tests {
         for v in v {
             v.await.unwrap();
         }
+    }
+
+    fn make() {
+        let _ = make_channel!(u32, 10);
+    }
+
+    #[test]
+    #[should_panic]
+    fn double_make_channel() {
+        make();
+        make();
     }
 }
