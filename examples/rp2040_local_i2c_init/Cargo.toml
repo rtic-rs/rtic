@@ -10,12 +10,12 @@ edition = "2021"
 
 [dependencies.rtic]
 path = "../../rtic"
-version = "=2.0.0-alpha.2"
+version = "2.0.0"
 features = ["thumbv6-backend"]
 
 [dependencies.rtic-monotonics]
 path = "../../rtic-monotonics"
-version = "=1.0.0-alpha.2"
+version = "1.0.0"
 features = ["rp2040"]
 
 [dependencies]

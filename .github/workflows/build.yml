@@ -12,9 +12,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
   DEV_VERSION: 2
-  STABLE_VERSION: 1
-  OLDSTABLE_VERSION: 0.5
-  OLDOLDSTABLE_VERSION: 0.4
+  STABLE_VERSION: 2
+  OLDSTABLE_VERSION: 1
+  OLDOLDSTABLE_VERSION: 0.5
+  OLDOLDOLDSTABLE_VERSION: 0.4
 
 jobs:
   # Run cargo xtask format-check
@@ -362,7 +363,7 @@ jobs:
 
   mdbookold:
     name: build docs and mdbook for older releases
-    needs: mergetostablebranch
+    needs: pushtostablebranch
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -400,7 +401,14 @@ jobs:
 
               pushd $src
               rm -f .cargo/config
-              cargo doc || cargo doc --features timer-queue
+              # Version 1 and below uses cargo doc directly
+              if [[ $ver -gt 1 ]]
+                 then
+                   # Version 2 and above
+                   cargo xtask doc
+                 else
+                   cargo doc || cargo doc --features timer-queue
+              fi
               mkdir -p $webroot/$ver/book
               cp -r target/doc $webroot/$ver/api
 
@@ -432,18 +440,23 @@ jobs:
   parseversion:
     name: Parse the master branch RTIC version
     runs-on: ubuntu-22.04
+    outputs:
+      branch: ${{ steps.parseversion.outputs.branch }}
+      versionmajor: ${{ steps.parseversion.outputs.versionmajor }}
+      version: ${{ steps.parseversion.outputs.version }}
     steps:
       - uses: actions/checkout@v3
 
       - name: Get crate version and print output branch release/vX
-        id: crateversionbranch
+        id: parseversion
         # Parse metadata for version number, extract the Semver Major
         run: |
           VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="rtic") | .version')
           VERSIONMAJOR=${VERSION%.*.*}
-          echo "branch=release/v$VERSIONMAJOR" >> $GITHUB_ENV
-          echo "versionmajor=$VERSIONMAJOR" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "branch=release/v$VERSIONMAJOR" >> "$GITHUB_OUTPUT"
+          echo "versionmajor=$VERSIONMAJOR" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
 
 
   # Update stable branch
@@ -455,12 +468,16 @@ jobs:
   # Thus, no need to push changes 
   #
   # This needs to run before book is built, as bookbuilding fetches from the branch
-  mergetostablebranch:
-    name: Merge branch into release/vX when pushing to master
+  pushtostablebranch:
+    name: Also push branch into release/vX when pushing to master
     runs-on: ubuntu-22.04
     needs:
       - ci-success
       - parseversion
+    env:
+      branch: ${{ needs.parseversion.outputs.branch }}
+      versionmajor: ${{ needs.parseversion.outputs.versionmajor }}
+      version: ${{ needs.parseversion.outputs.version }}
 
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
@@ -469,7 +486,11 @@ jobs:
 
       - name: Push to stable release branch if master contains stable version
         if: ${{ env.versionmajor == env.STABLE_VERSION }}
-        run: git push -u origin ${{ env.branch }}
+        run: git push -u origin master:${{ env.branch }}
+
+      - name: Else case, master did not contain the stable version
+        if: ${{ env.versionmajor != env.STABLE_VERSION }}
+        run: echo "Master branch contains a development release, no git push performed"
 
   # Only runs when pushing to master branch
   # Bors run CI against staging branch,
@@ -479,7 +500,7 @@ jobs:
     name: deploy
     runs-on: ubuntu-22.04
     needs:
-      - mergetostablebranch
+      - pushtostablebranch
       - docs      
       - mdbookold      
       - mdbook
