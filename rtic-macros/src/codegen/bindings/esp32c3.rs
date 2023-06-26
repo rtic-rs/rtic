@@ -154,22 +154,7 @@ mod esp32c3 {
     pub fn interrupt_entry(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
         stmts.push(
-            quote!(
-                let interrupt_id: usize = rtic::export::mcause::read().code(); // MSB is whether its exception or interrupt.
-                let intr = &*esp32c3::INTERRUPT_CORE0::PTR;
-                let interrupt_priority = intr
-                    .cpu_int_pri_0
-                    .as_ptr()
-                    .offset(interrupt_id as isize)
-                    .read_volatile();
-                let prev_interrupt_priority = intr.cpu_int_thresh.read().bits();
-                intr.cpu_int_thresh
-                    .write(|w| w.bits(interrupt_priority + 1)); // set the prio threshold to 1 more than the prio of interrupt currently being
-                                                                // handled
-                unsafe {
-                    rtic::export::interrupt::enable(); // prio filtering is set up, now enable interrupts
-                }
-            )
+            quote!()
         );
         stmts
     }
@@ -177,13 +162,7 @@ mod esp32c3 {
     pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
         stmts.push(
-            quote!(
-                let intr = &*esp32c3::INTERRUPT_CORE0::PTR;
-                intr.cpu_int_thresh.write(|w| w.bits(prev_interrupt_priority)); // set the prio
-                                                                    // threshold to 1 more
-                                                                    // than current
-                                                                    // interrupt prio
-            )
+            quote!()
         );
         stmts
     }

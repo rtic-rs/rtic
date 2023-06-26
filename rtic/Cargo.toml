@@ -33,10 +33,6 @@ name = "rtic"
 [dependencies]
 esp32c3 = {version = "0.14.0", optional = true}
 riscv = {version = "0.10.1"}
-#next goal is getting the neccessary changes to the hal upstreamed
-#esp32c3-hal = { git = "https://github.com/onsdagens/esp-hal", branch="scaled_back", optional = true}
-#esp32c3-hal = { git = "https://github.com/onsdagens/esp-hal", branch="interrupt_preemption", optional = true}
-#esp32c3-hal = {version = "0.8.0", optional = true}
 cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
 #portable-atomic = { version = "0.3.19" }
