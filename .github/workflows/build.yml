@@ -1,13 +1,10 @@
 name: Build
 on:
+  merge_group:
   pull_request:
   push:
     branches:
       - master
-      - staging
-      - trying
-      - bors/staging
-      - bors/trying
 
 env:
   CARGO_TERM_COLOR: always
@@ -493,8 +490,6 @@ jobs:
         run: echo "Master branch contains a development release, no git push performed"
 
   # Only runs when pushing to master branch
-  # Bors run CI against staging branch,
-  # if that succeeds Borst tries against master branch
   # If all tests pass, then deploy stage is run
   deploy:
     name: deploy
@@ -638,10 +633,7 @@ jobs:
           publish_dir: ./bookstodeploy
           force_orphan: true
 
-  # Refs: https://github.com/rust-lang/crater/blob/9ab6f9697c901c4a44025cf0a39b73ad5b37d198/.github/workflows/bors.yml#L125-L149
-  #
   # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
-
   ci-success:
     name: ci
     if: github.event_name == 'push' && success()
