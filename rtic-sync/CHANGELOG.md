@@ -13,10 +13,12 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
-## [v1.0.1]
+## [v1.0.1] - 2023-06-14
 
 ### Fixed
 
 - `make_channel` could be UB
 
-## [v1.0.0] - 2023-xx-xx
+## [v1.0.0] - 2023-05-31 - yanked 
+
+- Initial release
