@@ -19,4 +19,4 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 - Unmask the `rp2040` interrupt
 - Use `$crate` and fully qualified paths in macros 
 
-## [v1.0.0] - 2023-xx-xx
+## [v1.0.0] - 2023-05-31
