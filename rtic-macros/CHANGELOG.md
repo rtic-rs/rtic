@@ -13,4 +13,6 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
-## [v1.0.0] - 2023-xx-xx
+## [v2.0.0] - 2023-05-31
+
+- Initial v2 release
