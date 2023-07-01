@@ -20,8 +20,8 @@ pub fn abi_is_rust(abi: &Abi) -> bool {
 }
 
 pub fn attr_eq(attr: &Attribute, name: &str) -> bool {
-    attr.style == AttrStyle::Outer && attr.path.segments.len() == 1 && {
-        let segment = attr.path.segments.first().unwrap();
+    attr.style == AttrStyle::Outer && attr.path().segments.len() == 1 && {
+        let segment = attr.path().segments.first().unwrap();
         segment.arguments == PathArguments::None && *segment.ident.to_string() == *name
     }
 }

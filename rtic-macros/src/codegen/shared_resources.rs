@@ -19,7 +19,10 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
         // late resources in `util::link_section_uninit`
         // unless user specifies custom link section
-        let section = if attrs.iter().any(|attr| attr.path.is_ident("link_section")) {
+        let section = if attrs
+            .iter()
+            .any(|attr| attr.path().is_ident("link_section"))
+        {
             None
         } else {
             Some(util::link_section_uninit())
