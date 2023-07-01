@@ -8,7 +8,7 @@ mod util;
 
 use proc_macro2::TokenStream as TokenStream2;
 use syn::{
-    braced, parenthesized,
+    braced,
     parse::{self, Parse, ParseStream, Parser},
     token::Brace,
     Ident, Item, LitInt, Token,
@@ -70,8 +70,7 @@ fn init_args(tokens: TokenStream2) -> parse::Result<InitArgs> {
 
         let mut local_resources = None;
 
-        let content;
-        parenthesized!(content in input);
+        let content = input;
 
         if !content.is_empty() {
             loop {
@@ -131,8 +130,7 @@ fn idle_args(tokens: TokenStream2) -> parse::Result<IdleArgs> {
         let mut shared_resources = None;
         let mut local_resources = None;
 
-        let content;
-        parenthesized!(content in input);
+        let content = input;
         if !content.is_empty() {
             loop {
                 // Parse identifier name
@@ -196,8 +194,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
         let mut local_resources = None;
         let mut prio_span = None;
 
-        let content;
-        parenthesized!(content in input);
+        let content = input;
         loop {
             if content.is_empty() {
                 break;
