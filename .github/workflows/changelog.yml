@@ -3,6 +3,7 @@
 # This is only run for PRs.
 
 on:
+  merge_group:
   pull_request:
     # opened, reopened, synchronize are the default types for pull_request.
     # labeled, unlabeled ensure this check is also run if a label is added or removed.
@@ -25,8 +26,12 @@ jobs:
           filters: |
             rtic:
               - 'rtic/**'
-            rtic-channel:
-              - 'rtic-channel/**'
+            rtic-common:
+              - 'rtic-common/**'
+            rtic-macros:
+              - 'rtic-macros/**'
+            rtic-sync:
+              - 'rtic-sync/**'
             rtic-time:
               - 'rtic-time/**'
             rtic-monotonics:
@@ -42,13 +47,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check that changelog updated (rtic-channel)
-        if: steps.changes.outputs.rtic-channel == 'true'
+      - name: Check that changelog updated (rtic-common)
+        if: steps.changes.outputs.rtic-common == 'true'
         uses: dangoslen/changelog-enforcer@v3
         with:
-          changeLogPath: ./rtic-channel/CHANGELOG.md
+          changeLogPath: ./rtic-common/CHANGELOG.md
           skipLabels: 'needs-changelog, skip-changelog'
-          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-channel/CHANGELOG.md file.'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-common/CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that changelog updated (rtic-macros)
+        if: steps.changes.outputs.rtic-macros == 'true'
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic-macros/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-macros/CHANGELOG.md file.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that changelog updated (rtic-sync)
+        if: steps.changes.outputs.rtic-sync == 'true'
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: ./rtic-sync/CHANGELOG.md
+          skipLabels: 'needs-changelog, skip-changelog'
+          missingUpdateErrorMessage: 'Please add a changelog entry in the rtic-sync/CHANGELOG.md file.'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -54,10 +54,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         .collect();
 
     root_init.push(quote! {
+        #[doc = r"Shared resources"]
         #shared_vis struct #shared {
             #(#shared_resources)*
         }
 
+        #[doc = r"Local resources"]
         #local_vis struct #local {
             #(#local_resources)*
         }
@@ -67,14 +69,18 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     let user_init_return = quote! {#shared, #local};
 
-    let user_init = quote!(
-        #(#attrs)*
-        #[inline(always)]
-        #[allow(non_snake_case)]
-        fn #name(#context: #name::Context) -> (#user_init_return) {
-            #(#stmts)*
-        }
-    );
+    let user_init = if !init.is_extern {
+        Some(quote!(
+            #(#attrs)*
+            #[inline(always)]
+            #[allow(non_snake_case)]
+            fn #name(#context: #name::Context) -> (#user_init_return) {
+                #(#stmts)*
+            }
+        ))
+    } else {
+        None
+    };
 
     let mut mod_app = None;
 

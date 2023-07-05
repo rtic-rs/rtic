@@ -91,6 +91,9 @@ pub struct Init {
 
     /// The name of the user provided local resources struct
     pub user_local_struct: Ident,
+
+    /// The init function is declared externally
+    pub is_extern: bool,
 }
 
 /// `init` context metadata
@@ -127,6 +130,9 @@ pub struct Idle {
 
     /// The statements that make up this `idle` function
     pub stmts: Vec<Stmt>,
+
+    /// The idle function is declared externally
+    pub is_extern: bool,
 }
 
 /// `idle` context metadata

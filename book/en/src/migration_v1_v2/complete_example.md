@@ -123,7 +123,7 @@ _Note_: This diff may not be 100% accurate, but it displays the important change
  
 -        let mono = Systick::new(cx.core.SYST, 36_000_000);
 +        let mono_token = rtic_monotonics::create_systick_token!();
-+        let mono = Systick::new(cx.core.SYST, 36_000_000, mono_token);
++        let mono = Systick::start(cx.core.SYST, 36_000_000, mono_token);
  
          let _clocks = rcc
              .cfgr
