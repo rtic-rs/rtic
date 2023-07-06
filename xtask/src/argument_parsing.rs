@@ -283,14 +283,6 @@ pub enum Commands {
     /// Requires that an ARM target is selected
     Run(QemuAndRun),
 
-    /// Build docs
-    ///
-    /// To pass options to `cargo doc`, add `--` and then the following
-    /// arguments will be passed on
-    ///
-    /// Example: `cargo xtask doc -- --open`
-    Doc(DocArgs),
-
     /// Run tests
     Test(PackageOpt),
 

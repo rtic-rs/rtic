@@ -344,39 +344,6 @@ pub fn cargo_format<'c>(
     runner.run_and_coalesce()
 }
 
-/// Run cargo doc
-pub fn cargo_doc<'c>(
-    globals: &'c Globals,
-    cargoarg: &'c Option<&'c str>,
-    arguments: &'c Option<ExtraArguments>,
-    check_links: bool,
-) -> Vec<FinalRunResult<'c>> {
-    let backend = globals.backend();
-    info!("Running cargo doc for backend {backend:?}");
-
-    let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
-
-    let command = CargoCommand::Doc {
-        cargoarg,
-        features,
-        arguments: arguments.clone(),
-        deny_warnings: true,
-    };
-
-    let mut results = Vec::new();
-    let doc = run_and_convert((globals, command, false));
-    results.push(doc);
-    if results.iter().any(|r| !r.is_success()) {
-        return results;
-    }
-
-    if check_links {
-        let mut links = check_all_api_links(globals);
-        results.append(&mut links);
-    }
-    results
-}
-
 /// Run cargo test on the selected package or all packages
 ///
 /// If no package is specified, loop through all packages
@@ -585,9 +552,12 @@ pub fn cargo_book<'c>(
         }
         api
     } else {
+        let features = globals.backend().to_rtic_feature().to_string();
+        let features = format!("rp2040,cortex-m-systick,nrf52840,{features}");
+
         let doc_command = CargoCommand::Doc {
             cargoarg: &None,
-            features: Some(globals.backend().to_rtic_feature().to_string()),
+            features: Some(features),
             arguments: None,
             deny_warnings: true,
         };

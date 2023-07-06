@@ -136,10 +136,6 @@ fn main() -> anyhow::Result<()> {
             let ex = args.examples.example_list()?;
             qemu_run_examples(globals, &cargologlevel, ex, args.overwrite_expected)
         }
-        Commands::Doc(args) => {
-            let links = !args.skip_link_check;
-            cargo_doc(globals, &cargologlevel, &args.arguments, links)
-        }
         Commands::Test(args) => cargo_test(globals, &args),
         Commands::Book(args) => {
             let links = !args.skip_link_check;
