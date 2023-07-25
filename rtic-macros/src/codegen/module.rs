@@ -150,6 +150,8 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         let (input_args, input_tupled, input_untupled, input_ty) =
             util::regroup_inputs(&spawnee.inputs);
 
+        let type_name = util::internal_task_ident(name, "F");
+
         // Spawn caller
         items.push(quote!(
             #(#cfgs)*
@@ -157,10 +159,17 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             #[allow(non_snake_case)]
             #[doc(hidden)]
             pub fn #internal_spawn_ident(#(#input_args,)*) -> Result<(), #input_ty> {
-                // SAFETY: If `try_allocate` suceeds one must call `spawn`, which we do.
+                // New TAIT requirement hack; the opaque type must be in the argument or return
+                // position of a function...
+                #[inline(always)]
+                fn tait_hack(#(#input_args,)*) -> #type_name {
+                    #name(unsafe { #name::Context::new() } #(,#input_untupled)*)
+                }
+
+                // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
                 unsafe {
                     if #exec_name.try_allocate() {
-                        let f = #name(unsafe { #name::Context::new() } #(,#input_untupled)*);
+                        let f = tait_hack(#(#input_untupled,)*);
                         #exec_name.spawn(f);
                         #pend_interrupt
 
@@ -169,7 +178,6 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                         Err(#input_tupled)
                     }
                 }
-
             }
         ));
 

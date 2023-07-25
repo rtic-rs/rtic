@@ -38,7 +38,7 @@ impl Timer {
     /// Start a `Monotonic` based on RP2040's Timer.
     pub fn start(
         timer: TIMER,
-        resets: &mut RESETS,
+        resets: &RESETS,
         _interrupt_token: impl crate::InterruptToken<Self>,
     ) {
         resets.reset.modify(|_, w| w.timer().clear_bit());

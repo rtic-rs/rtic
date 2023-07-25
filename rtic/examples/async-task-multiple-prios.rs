@@ -32,7 +32,7 @@ mod app {
     fn init(_: init::Context) -> (Shared, Local) {
         hprintln!("init");
 
-        async_task1::spawn().ok();
+        async_task1::spawn(1).ok();
         async_task2::spawn().ok();
         async_task3::spawn().ok();
         async_task4::spawn().ok();
@@ -49,11 +49,11 @@ mod app {
     }
 
     #[task(priority = 1, shared = [a, b])]
-    async fn async_task1(mut cx: async_task1::Context) {
+    async fn async_task1(mut cx: async_task1::Context, inc: u32) {
         hprintln!(
             "hello from async 1 a {}",
             cx.shared.a.lock(|a| {
-                *a += 1;
+                *a += inc;
                 *a
             })
         );
