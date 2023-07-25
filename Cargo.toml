@@ -16,6 +16,7 @@ members = [
     "rtic-time",
     "xtask",
 ]
+resolver = "2"
 
 [profile.release]
 codegen-units = 1
@@ -36,6 +37,3 @@ debug = false
 debug-assertions = false
 opt-level = 0
 overflow-checks = false
-
-[patch.crates-io]
-lm3s6965 = { git = "https://github.com/japaric/lm3s6965" }

@@ -8,9 +8,20 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ## [Unreleased]
 
 ### Added
-- Allow #[init] and #[idle] to be defined externally
 
 ### Fixed
+
+### Changed
+
+## [v2.0.1] - 2023-07-25
+
+### Added
+
+- Allow `#[init]` and `#[idle]` to be defined externally
+
+### Fixed
+
+- Support new TAIT syntax requirement.
 
 ### Changed
 
@@ -568,7 +579,8 @@ Yanked due to a soundness issue in `init`; the issue has been mostly fixed in v0
 
 - Initial release
 
-[Unreleased]: https://github.com/rtic-rs/rtic/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/rtic-rs/rtic/compare/v2.0.1...HEAD
+[v2.0.1]: https://github.com/rtic-rs/rtic/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/rtic-rs/rtic/compare/v1.1.4...v2.0.0
 [v1.1.4]: https://github.com/rtic-rs/rtic/compare/v1.1.3...v1.1.4
 [v1.1.3]: https://github.com/rtic-rs/rtic/compare/v1.1.2...v1.1.3

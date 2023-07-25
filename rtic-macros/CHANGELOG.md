@@ -7,11 +7,15 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+## [v2.0.1] - 2023-07-25
+
 ### Added
 
-### Changed
+- `init` and `idle` can now be externed.
 
 ### Fixed
+
+- Support new TAIT syntax requirement.
 
 ## [v2.0.0] - 2023-05-31
 
