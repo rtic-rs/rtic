@@ -43,7 +43,7 @@ impl Timer {
     ) {
         resets.reset.modify(|_, w| w.timer().clear_bit());
         while resets.reset_done.read().timer().bit_is_clear() {}
-        timer.inte.modify(|_, w| w.alarm_0().set_bit());
+        timer.inte.modify(|_, w| w.alarm_0().bit(true));
 
         TIMER_QUEUE.initialize(Self {});
 
@@ -137,7 +137,7 @@ impl Monotonic for Timer {
     }
 
     fn clear_compare_flag() {
-        Self::timer().intr.modify(|_, w| w.alarm_0().set_bit());
+        Self::timer().intr.modify(|_, w| w.alarm_0().bit(true));
     }
 
     fn pend_interrupt() {
