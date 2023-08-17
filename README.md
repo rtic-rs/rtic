@@ -61,7 +61,7 @@ Join us and talk about RTIC in the [Matrix room][matrix-room].
 Weekly meeting minutes can be found over at [RTIC HackMD][hackmd]
 
 [matrix-room]: https://matrix.to/#/#rtic:matrix.org
-[hackmd]: rtic.rs/meeting
+[hackmd]: https://rtic.rs/meeting
 
 ## Contributing
 
