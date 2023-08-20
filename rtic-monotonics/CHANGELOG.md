@@ -5,7 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
-## [Unreleased]
+## Unreleased
+
+## v1.0.1 - 2023-08-20
 
 ### Added
 
@@ -15,9 +17,11 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Bump `embedded-hal-async`
+
 ### Fixed
 
 - Unmask the `rp2040` interrupt
 - Use `$crate` and fully qualified paths in macros
 
-## [v1.0.0] - 2023-05-31
+## v1.0.0 - 2023-05-31
