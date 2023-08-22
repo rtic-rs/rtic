@@ -9,6 +9,8 @@ use core::{
     sync::atomic::{fence, Ordering},
     task::{Poll, Waker},
 };
+#[doc(hidden)]
+pub use critical_section;
 use heapless::Deque;
 use rtic_common::waker_registration::CriticalSectionWakerRegistration as WakerRegistration;
 use rtic_common::{
@@ -108,7 +110,7 @@ macro_rules! make_channel {
 
         static CHECK: ::core::sync::atomic::AtomicU8 = ::core::sync::atomic::AtomicU8::new(0);
 
-        critical_section::with(|_| {
+        $crate::channel::critical_section::with(|_| {
             if CHECK.load(::core::sync::atomic::Ordering::Relaxed) != 0 {
                 panic!("call to the same `make_channel` instance twice");
             }

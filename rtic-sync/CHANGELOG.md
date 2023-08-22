@@ -13,6 +13,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- `make_channel` no longer requires the user crate to have `critical_section` in scope
+
 ## [v1.0.1] - 2023-06-14
 
 ### Fixed
