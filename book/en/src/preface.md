@@ -71,7 +71,7 @@ A graph representation of the example:
 ```mermaid
 graph LR
     A["p(A) = 2"] --> R
-    B["p(A) = 4"] --> R
+    B["p(B) = 4"] --> R
     R["𝝅(R) = 4"]
 ```
 
