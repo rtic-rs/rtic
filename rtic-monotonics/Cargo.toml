@@ -48,6 +48,8 @@ defmt = ["fugit/defmt"]
 cortex-m-systick = ["dep:cortex-m"]
 systick-100hz = []
 systick-10khz = []
+# Use 64-bit wide backing storage for the Instant
+systick-64bit = []
 
 # Timer peripheral on the RP2040
 rp2040 = ["dep:cortex-m", "dep:rp2040-pac"]
