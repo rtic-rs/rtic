@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- Feature `systick-64bit` to get 64-bit backed `TimerInstantU64` instead of `TimerInstantU32` from the SysTick-based monotonic timer
+
 ## v1.0.1 - 2023-08-20
 
 ### Added

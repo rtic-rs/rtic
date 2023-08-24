@@ -34,10 +34,22 @@
 
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
-use atomic_polyfill::{AtomicU32, Ordering};
+use atomic_polyfill::Ordering;
 use core::future::Future;
 use cortex_m::peripheral::SYST;
-pub use fugit::{self, ExtU32};
+pub use fugit;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "systick-64bit")] {
+        pub use fugit::ExtU64;
+        use atomic_polyfill::AtomicU64;
+        static SYSTICK_CNT: AtomicU64 = AtomicU64::new(0);
+    } else {
+        pub use fugit::ExtU32;
+        use atomic_polyfill::AtomicU32;
+        static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
+    }
+}
+static SYSTICK_TIMER_QUEUE: TimerQueue<Systick> = TimerQueue::new();
 
 // Features should be additive, here systick-100hz gets picked if both
 // `systick-100hz` and `systick-10khz` are enabled.
@@ -94,9 +106,6 @@ impl Systick {
     }
 }
 
-static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
-static SYSTICK_TIMER_QUEUE: TimerQueue<Systick> = TimerQueue::new();
-
 // Forward timerqueue interface
 impl Systick {
     /// Used to access the underlying timer queue
@@ -136,8 +145,15 @@ impl Systick {
 }
 
 impl Monotonic for Systick {
-    type Instant = fugit::TimerInstantU32<TIMER_HZ>;
-    type Duration = fugit::TimerDurationU32<TIMER_HZ>;
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "systick-64bit")] {
+            type Instant = fugit::TimerInstantU64<TIMER_HZ>;
+            type Duration = fugit::TimerDurationU64<TIMER_HZ>;
+        } else {
+            type Instant = fugit::TimerInstantU32<TIMER_HZ>;
+            type Duration = fugit::TimerDurationU32<TIMER_HZ>;
+        }
+    }
 
     const ZERO: Self::Instant = Self::Instant::from_ticks(0);
 
@@ -175,10 +191,14 @@ impl Monotonic for Systick {
 #[cfg(feature = "embedded-hal-async")]
 impl embedded_hal_async::delay::DelayUs for Systick {
     async fn delay_us(&mut self, us: u32) {
+        #[cfg(feature = "systick-64bit")]
+        let us = u64::from(us);
         Self::delay(us.micros()).await;
     }
 
     async fn delay_ms(&mut self, ms: u32) {
+        #[cfg(feature = "systick-64bit")]
+        let ms = u64::from(ms);
         Self::delay(ms.millis()).await;
     }
 }
