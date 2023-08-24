@@ -24,13 +24,13 @@ mod linked_list;
 mod monotonic;
 
 /// Holds a waker and at which time instant this waker shall be awoken.
-struct WaitingWaker<Mono: Monotonic> {
+struct WaitingWaker<Instant: Copy + Ord> {
     waker: Waker,
-    release_at: Mono::Instant,
+    release_at: Instant,
     was_popped: AtomicBool,
 }
 
-impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
+impl<Instant: Copy + Ord> Clone for WaitingWaker<Instant> {
     fn clone(&self) -> Self {
         Self {
             waker: self.waker.clone(),
@@ -40,13 +40,13 @@ impl<Mono: Monotonic> Clone for WaitingWaker<Mono> {
     }
 }
 
-impl<Mono: Monotonic> PartialEq for WaitingWaker<Mono> {
+impl<Instant: Copy + Ord> PartialEq for WaitingWaker<Instant> {
     fn eq(&self, other: &Self) -> bool {
         self.release_at == other.release_at
     }
 }
 
-impl<Mono: Monotonic> PartialOrd for WaitingWaker<Mono> {
+impl<Instant: Copy + Ord> PartialOrd for WaitingWaker<Instant> {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.release_at.partial_cmp(&other.release_at)
     }
@@ -67,8 +67,8 @@ impl<Mono: Monotonic> PartialOrd for WaitingWaker<Mono> {
 /// complete.
 ///
 /// Do not call `mem::forget` on an awaited future, or there will be dragons!
-pub struct TimerQueue<Mono: Monotonic> {
-    queue: LinkedList<WaitingWaker<Mono>>,
+pub struct TimerQueue<Instant: Copy + Ord> {
+    queue: LinkedList<WaitingWaker<Instant>>,
     initialized: AtomicBool,
 }
 
@@ -77,25 +77,25 @@ pub struct TimeoutError;
 
 /// This is needed to make the async closure in `delay_until` accept that we "share"
 /// the link possible between threads.
-struct LinkPtr<Mono: Monotonic>(*mut Option<linked_list::Link<WaitingWaker<Mono>>>);
+struct LinkPtr<Instant: Copy + Ord>(*mut Option<linked_list::Link<WaitingWaker<Instant>>>);
 
-impl<Mono: Monotonic> Clone for LinkPtr<Mono> {
+impl<Instant: Copy + Ord> Clone for LinkPtr<Instant> {
     fn clone(&self) -> Self {
         LinkPtr(self.0)
     }
 }
 
-impl<Mono: Monotonic> LinkPtr<Mono> {
+impl<Instant: Copy + Ord> LinkPtr<Instant> {
     /// This will dereference the pointer stored within and give out an `&mut`.
-    unsafe fn get(&mut self) -> &mut Option<linked_list::Link<WaitingWaker<Mono>>> {
+    unsafe fn get(&mut self) -> &mut Option<linked_list::Link<WaitingWaker<Instant>>> {
         &mut *self.0
     }
 }
 
-unsafe impl<Mono: Monotonic> Send for LinkPtr<Mono> {}
-unsafe impl<Mono: Monotonic> Sync for LinkPtr<Mono> {}
+unsafe impl<Instant: Copy + Ord> Send for LinkPtr<Instant> {}
+unsafe impl<Instant: Copy + Ord> Sync for LinkPtr<Instant> {}
 
-impl<Mono: Monotonic> TimerQueue<Mono> {
+impl<Instant: Copy + Ord> TimerQueue<Instant> {
     /// Make a new queue.
     pub const fn new() -> Self {
         Self {
@@ -106,12 +106,18 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
 
     /// Forwards the `Monotonic::now()` method.
     #[inline(always)]
-    pub fn now(&self) -> Mono::Instant {
+    pub fn now<Mono>(&self) -> Instant
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
         Mono::now()
     }
 
     /// Takes the initialized monotonic to initialize the TimerQueue.
-    pub fn initialize(&self, monotonic: Mono) {
+    pub fn initialize<Mono>(&self, monotonic: Mono)
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
         self.initialized.store(true, Ordering::SeqCst);
 
         // Don't run drop on `Mono`
@@ -124,7 +130,10 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
     ///
     /// It's always safe to call, but it must only be called from the interrupt of the
     /// monotonic timer for correct operation.
-    pub unsafe fn on_monotonic_interrupt(&self) {
+    pub unsafe fn on_monotonic_interrupt<Mono>(&self)
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
         Mono::clear_compare_flag();
         Mono::on_interrupt();
 
@@ -166,12 +175,15 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
     }
 
     /// Timeout at a specific time.
-    pub async fn timeout_at<F: Future>(
+    pub async fn timeout_at<Mono, F: Future>(
         &self,
-        instant: Mono::Instant,
+        instant: Instant,
         future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        let delay = self.delay_until(instant);
+    ) -> Result<F::Output, TimeoutError>
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
+        let delay = self.delay_until::<Mono>(instant);
 
         pin_mut!(future);
         pin_mut!(delay);
@@ -184,36 +196,48 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
 
     /// Timeout after a specific duration.
     #[inline]
-    pub async fn timeout_after<F: Future>(
+    pub async fn timeout_after<Mono, F: Future>(
         &self,
         duration: Mono::Duration,
         future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        self.timeout_at(Mono::now() + duration, future).await
+    ) -> Result<F::Output, TimeoutError>
+    where
+        Mono: Monotonic<Instant = Instant>,
+        Instant: core::ops::Add<Mono::Duration, Output = Instant>,
+    {
+        self.timeout_at::<Mono, _>(Mono::now() + duration, future)
+            .await
     }
 
     /// Delay for some duration of time.
     #[inline]
-    pub async fn delay(&self, duration: Mono::Duration) {
+    pub async fn delay<Mono>(&self, duration: Mono::Duration)
+    where
+        Mono: Monotonic<Instant = Instant>,
+        Instant: core::ops::Add<Mono::Duration, Output = Instant>,
+    {
         let now = Mono::now();
 
-        self.delay_until(now + duration).await;
+        self.delay_until::<Mono>(now + duration).await;
     }
 
     /// Delay to some specific time instant.
-    pub async fn delay_until(&self, instant: Mono::Instant) {
+    pub async fn delay_until<Mono>(&self, instant: Mono::Instant)
+    where
+        Mono: Monotonic<Instant = Instant>,
+    {
         if !self.initialized.load(Ordering::Relaxed) {
             panic!(
                 "The timer queue is not initialized with a monotonic, you need to run `initialize`"
             );
         }
 
-        let mut link_ptr: Option<linked_list::Link<WaitingWaker<Mono>>> = None;
+        let mut link_ptr: Option<linked_list::Link<WaitingWaker<Mono::Instant>>> = None;
 
         // Make this future `Drop`-safe
         // SAFETY(link_ptr): Shadow the original definition of `link_ptr` so we can't abuse it.
         let mut link_ptr =
-            LinkPtr(&mut link_ptr as *mut Option<linked_list::Link<WaitingWaker<Mono>>>);
+            LinkPtr(&mut link_ptr as *mut Option<linked_list::Link<WaitingWaker<Mono::Instant>>>);
         let mut link_ptr2 = link_ptr.clone();
 
         let queue = &self.queue;

@@ -123,7 +123,7 @@ impl core::ops::Sub<Instant> for Instant {
 }
 
 static COMPARE: Mutex<Option<Instant>> = Mutex::new(None);
-static TIMER_QUEUE: TimerQueue<TestMono> = TimerQueue::new();
+static TIMER_QUEUE: TimerQueue<Instant> = TimerQueue::new();
 
 pub struct TestMono;
 
@@ -136,7 +136,7 @@ impl TestMono {
 
         if interrupt {
             unsafe {
-                TestMono::queue().on_monotonic_interrupt();
+                TestMono::queue().on_monotonic_interrupt::<Self>();
             }
             true
         } else {
@@ -150,7 +150,7 @@ impl TestMono {
     }
 
     /// Used to access the underlying timer queue
-    pub fn queue() -> &'static TimerQueue<TestMono> {
+    pub fn queue() -> &'static TimerQueue<Instant> {
         &TIMER_QUEUE
     }
 
@@ -205,7 +205,7 @@ fn timer_queue() {
                 Instant::wait_until(start + pre_delay).await;
             }
 
-            TestMono::queue().delay(delay).await;
+            TestMono::queue().delay::<TestMono>(delay).await;
 
             let elapsed = start.elapsed().as_ticks();
             println!("{total_millis} ticks delay reached after {elapsed} ticks");
