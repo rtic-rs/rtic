@@ -15,4 +15,4 @@ If you wish to see a code example of changes required, you can check out [the fu
 1. Add `#![type_alias_impl_trait]` to your crate, and use `cargo +nightly`.
 2. Instead of `spawn_after` and `spawn_at`, you now use the `async` functions `delay`, `delay_until` (and related) with impls provided by `rtic-monotonics`.
 3. Software tasks _must_ be `async fn`s now. Not returning from a task is allowed so long as there is an `await` in the task. You can still `lock` shared resources.
-4. Use `rtic_sync::Arbiter` to `await` access to a shared resource, and `rtic-channel` to communicate between tasks instead of `spawn`-ing new ones.
+4. Use `rtic_sync::arbiter::Arbiter` to `await` access to a shared resource, and `rtic_sync::channel::Channel` to communicate between tasks instead of `spawn`-ing new ones.
