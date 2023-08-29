@@ -10,4 +10,4 @@ Check out the [code example](./complete_example.md) for an overview of the requi
 
 For more information on current monotonic implementations, see [the `rtic-monotonics` documentation](https://docs.rs/rtic-monotonics), and [the examples](https://github.com/rtic-rs/rtic/tree/master/examples).
 
-[`rtic-monotonics`]: ghttps://github.com/rtic/rtic-monotonics
+[`rtic-monotonics`]: https://github.com/rtic-rs/rtic
