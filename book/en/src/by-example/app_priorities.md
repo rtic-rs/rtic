@@ -4,9 +4,9 @@
 
 The `priority` argument declares the static priority of each `task`.
 
-For Cortex-M, tasks can have priorities in the range `1..=(1 << NVIC_PRIO_BITS)` where `NVIC_PRIO_BITS` is a constant defined in the `device` crate.
+For Cortex-M, tasks can have priorities in the range `0..=(1 << NVIC_PRIO_BITS)` where `NVIC_PRIO_BITS` is a constant defined in the `device` crate.
 
-Omitting the `priority` argument the task priority defaults to `1`. The `idle` task has a non-configurable static priority of `0`, the lowest priority.
+Omitting the `priority` argument the task priority defaults to `0`. The `idle` task has a non-configurable static priority of `0`, the lowest priority.
 
 > A higher number means a higher priority in RTIC, which is the opposite from what
 > Cortex-M does in the NVIC peripheral.
