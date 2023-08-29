@@ -35,7 +35,7 @@ $ cargo run --target thumbv7m-none-eabi --example spawn
 ```
 You may `spawn` a *software* task again, given that it has run-to-completion (returned). 
 
-In the below example, we `spawn` the *software* task `foo` from the `idle` task. Since the default priority of the *software* task is 1 (higher than `idle`), the dispatcher will execute `foo` (preempting `idle`). Since `foo` runs-to-completion. It is ok to `spawn` the `foo` task again.
+In the below example, we `spawn` the *software* task `foo` from the `idle` task. Since the priority of the *software* task is 1 (higher than `idle`), the dispatcher will execute `foo` (preempting `idle`). Since `foo` runs-to-completion. It is ok to `spawn` the `foo` task again.
 
 Technically the async executor will `poll` the `foo` *future* which in this case leaves the *future* in a *completed* state. 
 
