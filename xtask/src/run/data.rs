@@ -34,6 +34,13 @@ pub enum FinalRunResult<'c> {
     Success(CargoCommand<'c>, RunResult),
     Failed(CargoCommand<'c>, RunResult),
     CommandError(CargoCommand<'c>, anyhow::Error),
+    OtherError(anyhow::Error),
+}
+
+impl FinalRunResult<'_> {
+    pub fn is_success(&self) -> bool {
+        matches!(self, Self::Success(_, _))
+    }
 }
 
 #[derive(Debug)]

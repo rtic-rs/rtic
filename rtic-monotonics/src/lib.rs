@@ -4,13 +4,19 @@
 //! To enable the implementations, you must enable a feature for the specific MCU you're targeting.
 //!
 //! # Cortex-M Systick
-//! The [`systick`] monotonic works on all cortex-M parts, and requires that the feature `cortex-m-systick` is enabled.
+//! The
+#![cfg_attr(feature = "cortex-m-systick", doc = "[`systick`]")]
+#![cfg_attr(not(feature = "cortex-m-systick"), doc = "`systick`")]
+//! monotonic works on all cortex-M parts, and requires that the feature `cortex-m-systick` is enabled.
 //!
 //! # RP2040
-//! The RP2040 monotonics require that the `rp2040` feature is enabled.
+//! The
+#![cfg_attr(feature = "rp2040", doc = "[`rp2040`]")]
+#![cfg_attr(not(feature = "rp2040"), doc = "`rp2040`")]
+//! monotonics require that the `rp2040` feature is enabled.
 //!
 //! # nRF
-//! nRF monotonics require that one of the available `nrf52*` features is enabled.
+//! The nRF monotonics require that one of the available `nrf52*` features is enabled.
 //!
 //! All implementations of timers for the nRF52 family are documented here. Monotonics that
 //! are not available on all parts in this family will have an `Available on crate features X only`

@@ -1,6 +1,7 @@
 use crate::{cargo_command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN};
 use clap::{Args, Parser, Subcommand};
 use core::fmt;
+use log::{error, trace};
 
 #[derive(clap::ValueEnum, Copy, Clone, Debug)]
 pub enum Package {
@@ -207,25 +208,7 @@ pub struct Globals {
 
     /// For which backend to build.
     #[arg(value_enum, short, default_value = "thumbv7", long, global = true)]
-    pub backend: Option<Backends>,
-
-    /// List of comma separated examples to include, all others are excluded
-    ///
-    /// If omitted all examples are included
-    ///
-    /// Example: `cargo xtask --example complex,spawn,init`
-    /// would include complex, spawn and init
-    #[arg(short, long, group = "example_group", global = true)]
-    pub example: Option<String>,
-
-    /// List of comma separated examples to exclude, all others are included
-    ///
-    /// If omitted all examples are included
-    ///
-    /// Example: `cargo xtask --excludeexample complex,spawn,init`
-    /// would exclude complex, spawn and init
-    #[arg(long, group = "example_group", global = true)]
-    pub exampleexclude: Option<String>,
+    backend: Option<Backends>,
 
     /// Enable more verbose output, repeat up to `-vvv` for even more
     #[arg(short, long, action = clap::ArgAction::Count, global = true)]
@@ -238,11 +221,12 @@ pub struct Globals {
     /// clutter, but can make debugging long-running processes a lot easier.
     #[arg(short, long, global = true)]
     pub stderr_inherited: bool,
+}
 
-    /// Don't build/check/test all feature combinations that are available, only
-    /// a necessary subset.
-    #[arg(long, global = true)]
-    pub partial: bool,
+impl Globals {
+    pub fn backend(&self) -> Backends {
+        self.backend.unwrap_or_default()
+    }
 }
 
 #[derive(Parser)]
@@ -273,10 +257,10 @@ pub enum Commands {
     Build(PackageOpt),
 
     /// Check all examples
-    ExampleCheck,
+    ExampleCheck(ExampleArgs),
 
     /// Build all examples
-    ExampleBuild,
+    ExampleBuild(ExampleArgs),
 
     /// Run `cargo size` on selected or all examples
     ///
@@ -284,7 +268,7 @@ pub enum Commands {
     /// arguments will be passed on
     ///
     /// Example: `cargo xtask size -- -A`
-    Size(Arg),
+    Size(ExampleArgs),
 
     /// Run examples in QEMU and compare against expected output
     ///
@@ -302,19 +286,11 @@ pub enum Commands {
     /// Requires that an ARM target is selected
     Run(QemuAndRun),
 
-    /// Build docs
-    ///
-    /// To pass options to `cargo doc`, add `--` and then the following
-    /// arguments will be passed on
-    ///
-    /// Example: `cargo xtask doc -- --open`
-    Doc(Arg),
-
     /// Run tests
     Test(PackageOpt),
 
     /// Build books with mdbook
-    Book(Arg),
+    Book(BookArgs),
 
     /// Check one or more usage examples.
     ///
@@ -329,11 +305,131 @@ pub enum Commands {
 }
 
 #[derive(Args, Clone, Debug)]
+pub struct ExampleArgs {
+    /// List of comma separated examples to include, all others are excluded
+    ///
+    /// If omitted all examples are included
+    ///
+    /// Example: `cargo xtask --example complex,spawn,init`
+    /// would include complex, spawn and init
+    #[arg(short, long, group = "example_group", global = true)]
+    example: Option<String>,
+
+    /// List of comma separated examples to exclude, all others are included
+    ///
+    /// If omitted all examples are included
+    ///
+    /// Example: `cargo xtask --excludeexample complex,spawn,init`
+    /// would exclude complex, spawn and init
+    #[arg(long, group = "example_group", global = true)]
+    exclude: Option<String>,
+
+    /// Additional arguments to pass to the invoked tool
+    #[command(subcommand)]
+    pub arguments: Option<ExtraArguments>,
+}
+
+impl ExampleArgs {
+    pub fn example_list(&self) -> anyhow::Result<Vec<String>> {
+        let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
+            .filter_map(|p| p.ok())
+            .map(|p| p.path())
+            .filter(|p| p.display().to_string().ends_with(".rs"))
+            .map(|path| path.file_stem().unwrap().to_str().unwrap().to_string())
+            .collect();
+
+        let mut to_run = examples.clone();
+
+        if let Some(example) = &self.example {
+            to_run = examples.clone();
+            let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
+            // From the list of all examples, remove all not listed as included
+            for ex in examples_to_exclude {
+                to_run.retain(|x| *x.as_str() == *ex);
+            }
+        };
+
+        if let Some(example) = &self.exclude {
+            to_run = examples.clone();
+            let examples_to_exclude = example.split(',').collect::<Vec<&str>>();
+            // From the list of all examples, remove all those listed as excluded
+            for ex in examples_to_exclude {
+                to_run.retain(|x| *x.as_str() != *ex);
+            }
+        };
+
+        trace!("All examples (N: {}): {examples:?}", examples.len());
+        trace!("Examples to run (N: {}): {to_run:?}", to_run.len());
+
+        if to_run.is_empty() {
+            error!("The example(s) you specified cannot be found. Available examples are:");
+            error!("{examples:#?}");
+            error!("");
+            error!("By default, all examples are tested");
+            Err(anyhow::anyhow!("Incorrect usage"))
+        } else {
+            Ok(to_run)
+        }
+    }
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct BookArgs {
+    /// If this flag is set, the links in the book are
+    /// not verified
+    #[clap(long, short = 'l')]
+    pub skip_link_check: bool,
+
+    /// If this flag is set, the links in the API documentation
+    /// included with the book are not verified.
+    ///
+    /// This flag is ignored if `--api-docs` is set
+    #[clap(long, short = 'c')]
+    pub skip_api_link_check: bool,
+
+    /// The path to the API docs if you do not wish
+    /// to build them again.
+    #[clap(long, short = 'a')]
+    pub api_docs: Option<String>,
+
+    /// The path to which the contents of the book should
+    /// be written.
+    #[clap(long, short, default_value = "book-target/current")]
+    pub output_path: String,
+
+    /// Additional arguments to pass to `mdbook`
+    #[command(subcommand)]
+    pub arguments: Option<ExtraArguments>,
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct DocArgs {
+    /// If this flag is set, the links in the API
+    /// docs are not verified.
+    #[clap(long, short = 'l')]
+    pub skip_link_check: bool,
+
+    /// Additional arguments to pass to `cargo doc`
+    #[command(subcommand)]
+    pub arguments: Option<ExtraArguments>,
+}
+
+#[derive(Args, Clone, Debug)]
 pub struct UsageExamplesOpt {
     /// The usage examples to build. All usage examples are selected if this argument is not provided.
     ///
     /// Example: `rp2040_local_i2c_init,stm32f3_blinky`.
     examples: Option<String>,
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct BookOpt {
+    /// The directory in which the book is located
+    #[clap(default_value = "./book/en", short, long)]
+    pub directory: String,
+    /// The directory to put the final book in.
+    #[clap(default_value = "./book-target", short, long)]
+    pub output_dir: String,
 }
 
 impl UsageExamplesOpt {
@@ -378,6 +474,11 @@ pub struct FormatOpt {
 #[derive(Args, Debug, Clone)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
+    /// Don't build/check/test all feature combinations that are available, only
+    /// a necessary subset.
+    #[arg(long)]
+    pub partial: bool,
+
     /// For which package/workspace member to operate
     ///
     /// If omitted, work on all
@@ -405,6 +506,9 @@ impl PackageOpt {
 
 #[derive(Args, Debug, Clone)]
 pub struct QemuAndRun {
+    #[clap(flatten)]
+    pub examples: ExampleArgs,
+
     /// If expected output is missing or mismatching, recreate the file
     ///
     /// This overwrites only missing or mismatching
@@ -414,7 +518,7 @@ pub struct QemuAndRun {
 
 #[derive(Debug, Parser, Clone)]
 pub struct Arg {
-    /// Options to pass to `cargo size`
+    /// Additional arguments to pass to called binaries.
     #[command(subcommand)]
     pub arguments: Option<ExtraArguments>,
 }

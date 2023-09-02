@@ -31,6 +31,14 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
         }
     });
 
+    let external_errors = results.iter().filter_map(|r| {
+        if let FinalRunResult::OtherError(e) = r {
+            Some(e)
+        } else {
+            None
+        }
+    });
+
     let log_stdout_stderr = |level: Level| {
         move |(cmd, stdout, stderr): (&CargoCommand, &String, &String)| {
             let cmd = cmd.as_cmd_string();
@@ -89,7 +97,11 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
         )
     });
 
-    let ecount = errors.count() + command_errors.count();
+    external_errors
+        .clone()
+        .for_each(|e| error!(target: TARGET, "❌ Failed: {e}"));
+
+    let ecount = errors.count() + command_errors.count() + external_errors.count();
     if ecount != 0 {
         error!(target: TARGET, "{ecount} commands failed.");
         Err(())

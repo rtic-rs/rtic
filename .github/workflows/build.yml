@@ -14,6 +14,10 @@ env:
   OLDOLDSTABLE_VERSION: 0.5
   OLDOLDOLDSTABLE_VERSION: 0.4
 
+  OLD_BOOKS_ROOT: old/
+  CURRENT_BOOK_ROOT: current/
+  WEB_ROOT: deploy/
+
 jobs:
   # Run cargo xtask format-check
   formatcheck:
@@ -131,7 +135,7 @@ jobs:
 
       - name: Check the examples
         if: ${{ matrix.backend == 'thumbv8-base' }}
-        run: cargo xtask --backend ${{ matrix.backend }} --exampleexclude pool example-check
+        run: cargo xtask --backend ${{ matrix.backend }} example-check --exclude pool
 
       - name: Check the examples
         if: ${{ matrix.backend != 'thumbv8-base' }}
@@ -248,191 +252,34 @@ jobs:
       - name: Run cargo test
         run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} test ${{ matrix.package }}
 
-  # Build documentation, check links
-  docs:
-    name: build docs
+  # Build book for current version, check links
+  current-book:
+    name: Build book for the current version
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install lychee
-        uses: taiki-e/install-action@v2
-        with:
-          tool: lychee
+      - name: Install book prerequisites
+        uses: ./.github/actions/book-prerequisites
 
-      - name: Remove cargo-config
-        run: rm -f .cargo/config.toml
-
+      # Build book & docs for the current version
+      #
+      # This also checks the links for the API docs and
+      # the book using lychee
       - name: Build docs
-        # TODO: Any difference between backends?
-        run: cargo doc --features thumbv7-backend
+        run: cargo xtask book --output-path current
 
-      - name: Check links
-        run: |
-          td=$(mktemp -d)
-          cp -r target/doc $td/api
-          echo rtic
-          lychee --offline --format detailed $td/api/rtic/
-        
-          echo rtic_common
-          lychee --offline --format detailed $td/api/rtic_common/
-        
-          echo rtic_macros
-          lychee --offline --format detailed $td/api/rtic_macros/
-        
-          echo rtic_monotonics
-          lychee --offline --format detailed $td/api/rtic_monotonics/
+      - name: Archive the current documentation
+        run: tar -czf current-book.tar.gz current/
 
-          echo rtic_sync
-          lychee --offline --format detailed $td/api/rtic_sync/
-        
-          echo rtic_time
-          lychee --offline --format detailed $td/api/rtic_time/
-      
-
-      - name: Archive the API docs
-        run: |
-          cp -r target/doc apidocs
-          tar -cf apidocs.tar apidocs
-
-      - name: Store the API docs
+      - name: Store the current API docs + book
         uses: actions/upload-artifact@v3
         with:
-          name: apidocs
-          path: apidocs.tar
+          name: current-book
+          path: current-book.tar.gz
 
-  # Build the books
-  mdbook:
-    name: build mdbook
-    needs: docs
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install lychee
-        uses: taiki-e/install-action@v2
-        with:
-          tool: lychee
-
-      - name: Install mdbook
-        uses: taiki-e/install-action@v2
-        with:
-          tool: mdbook
-
-      - name: Install mdbook-mermaid
-        uses: taiki-e/install-action@v2
-        with:
-          tool: mdbook-mermaid
-
-      - name: Build book in English
-        run: cargo xtask book
-
-      - name: Download built API docs
-        uses: actions/download-artifact@v3
-        with:
-          name: apidocs
-
-      - name: Extract the API docs
-        run: tar -xf apidocs.tar 
-
-      - name: Check links
-        run: |
-          td=$(mktemp -d)
-          mkdir $td/book
-          cp -r book/en/book $td/book/en
-          cp LICENSE-* $td/book/en
-          cp -r apidocs/ $td/api
-
-          lychee --offline --format detailed $td/book/en/
-          mv $td bookroot
-
-      - name: Archive the book + API docs
-        run: |
-          tar -cf book.tar bookroot
-
-      - name: Store the Book + API docs
-        uses: actions/upload-artifact@v3
-        with:
-          name: book
-          path: book.tar
-
-  mdbookold:
-    name: build docs and mdbook for older releases
-    needs: pushtostablebranch
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install mdbook
-        uses: taiki-e/install-action@v2
-        with:
-          tool: mdbook
-
-      - name: Install mdbook-mermaid
-        uses: taiki-e/install-action@v2
-        with:
-          tool: mdbook-mermaid
-
-      - name: Remove cargo-config
-        run: rm -f .cargo/config
-
-      - name: Prepare output folder
-        run: mkdir -p mdbookold
-
-      - name: Fetch and build books for older versions
-        run: |
-          # The latest stable must be the first element in the array
-          vers=( "${{ env.STABLE_VERSION }}" "${{ env.OLDSTABLE_VERSION }}" )
-          langs=( en )
-          root=$(pwd)
-          webroot=$(pwd)/mdbookold
-
-          for ver in ${vers[@]}; do
-
-              mkdir -p src/$ver
-              src=$root/src/$ver
-              curl -L https://github.com/rtic-rs/rtic/archive/release/v${ver}.tar.gz | tar xz --strip-components 1 -C $src
-
-              pushd $src
-              rm -f .cargo/config
-              # Version 1 and below uses cargo doc directly
-              if [[ $ver -gt 1 ]]
-                 then
-                   # Version 2 and above
-                   cargo xtask doc
-                 else
-                   cargo doc || cargo doc --features timer-queue
-              fi
-              mkdir -p $webroot/$ver/book
-              cp -r target/doc $webroot/$ver/api
-
-              sed 's|URL|rtic/index.html|g' $root/redirect.html > $webroot/$ver/api/index.html
-              popd
-
-              for lang in ${langs[@]}; do
-                  cargo xtask book build $src/book/$lang
-
-                  cp -r $src/book/$lang/book $webroot/$ver/book/$lang
-                  cp LICENSE-* $webroot/$ver/book/$lang/
-              done
-              # using master branch redirect file
-              sed 's|URL|book/en|g' $root/redirect.html > $webroot/$ver/index.html
-
-              rm -rf $src
-          done
-
-      - name: Archive the old books
-        run: |
-          tar -cf mdbookold.tar mdbookold
-
-      - name: Store the old API docs
-        uses: actions/upload-artifact@v3
-        with:
-          name: mdbookold
-          path: mdbookold.tar
+  # All the steps below are for the book & archiving purposes
 
   parseversion:
     name: Parse the master branch RTIC version
@@ -448,12 +295,11 @@ jobs:
         id: parseversion
         # Parse metadata for version number, extract the Semver Major
         run: |
-          VERSION=$(cargo metadata --format-version 1 --no-deps --offline | jq -r '.packages[] | select(.name =="rtic") | .version')
+          VERSION=$(./scripts/parse-version.sh)
           VERSIONMAJOR=${VERSION%.*.*}
           echo "branch=release/v$VERSIONMAJOR" >> "$GITHUB_OUTPUT"
           echo "versionmajor=$VERSIONMAJOR" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
 
 
   # Update stable branch
@@ -465,7 +311,7 @@ jobs:
   # Thus, no need to push changes 
   #
   # This needs to run before book is built, as bookbuilding fetches from the branch
-  pushtostablebranch:
+  merge-to-stable-branch:
     name: Also push branch into release/vX when pushing to master
     runs-on: ubuntu-22.04
     needs:
@@ -489,127 +335,70 @@ jobs:
         if: ${{ env.versionmajor != env.STABLE_VERSION }}
         run: echo "Master branch contains a development release, no git push performed"
 
+  old-books:
+    name: Build book and API docs for older versions
+    runs-on: ubuntu-22.04
+    needs:
+      - merge-to-stable-branch
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install book prerequisites
+        uses: ./.github/actions/book-prerequisites
+
+      # Build book for older releases
+      - name: Build old docs
+        run: ./scripts/build-old-books.sh "${{ env.STABLE_VERSION }} ${{ env.OLDSTABLE_VERSION }}"
+
+      - name: Archive the current documentation
+        run: tar -czf old-books.tar.gz old/
+
+      - name: Store the old versions of API docs + book
+        uses: actions/upload-artifact@v3
+        with:
+          name: old-books
+          path: old-books.tar.gz
+
   # Only runs when pushing to master branch
   # If all tests pass, then deploy stage is run
   deploy:
     name: deploy
     runs-on: ubuntu-22.04
     needs:
-      - pushtostablebranch
-      - docs      
-      - mdbookold      
-      - mdbook
+      - merge-to-stable-branch
+      - current-book
+      - old-books
 
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install lychee
-        uses: taiki-e/install-action@v2
-        with:
-         tool: lychee
-
-      - name: Install mdbook-mermaid
-        uses: taiki-e/install-action@v2
-        with:
-          tool: mdbook-mermaid
- 
-      - name: mdBook Action
-        uses: peaceiris/actions-mdbook@v1
-        with:
-          mdbook-version: 'latest'
-
-      - name: Remove cargo-config
-        run: rm -f .cargo/config
-
       - name: Download built dev-ver book and API docs
         uses: actions/download-artifact@v3
         with:
-          name: book
-
-      - name: Extract the dev-version book and API docs
-        run: |
-          tar -xf book.tar 
+          name: current-book
 
       - name: Download built old versions of books and API docs
         uses: actions/download-artifact@v3
         with:
-          name: mdbookold
-
-      - name: Extract the old version books and API docs
-        run: |
-          tar -xf mdbookold.tar 
+          name: old-books
 
       - name: Prepare books
         shell: 'script --return --quiet --command "bash {0}"'
         run: |
-          langs=( en )
-          devver=( dev )
-          # The latest stable must be the first element in the array
-          vers=( "${{ env.STABLE_VERSION }}" "${{ env.OLDSTABLE_VERSION }}" )
-
-          # All releases start with "v"
-          # followed by MAJOR.MINOR.PATCH, see semver.org
-          # Store first in array as stable
-          stable=${vers}
-          crateversion=${{ env.versionmajor }}
-
-          echo "Latest stable version: $stable"
-          echo "Current crate version: $crateversion"
-
-          # Create directories
-          td=$(mktemp -d)
-          mkdir -p $td/$devver/
-          cp -r bookroot/* $td/$devver/
-
-          # Redirect rtic.rs/meeting/index.html to hackmd
-          mkdir $td/meeting
-          sed "s|URL|https://hackmd.io/c_mFUZL-Q2C6614MlrrxOg|g" redirect.html > $td/meeting/index.html
-          sed -i "s|Page Redirection|RTIC Meeting|" $td/meeting/index.html
-          sed -i "s|If you|Redirecting to RTIC HackMD. If you|" $td/meeting/index.html
-
-          # Redirect the main site to the stable release
-          sed "s|URL|$stable|g" redirect.html > $td/index.html
-
-          # Create the redirects for dev-version
-          # If the current stable and the version being built differ,
-          # then there is a dev-version and the links should point to it.
-          if [[ "$stable" != "$crateversion" ]];
-          then
-            sed 's|URL|rtic/index.html|g' redirect.html > $td/$devver/api/index.html
-            sed 's|URL|book/en|g' redirect.html > $td/$devver/index.html
-          else
-            # If the current stable and the "dev" version in master branch
-            # share the same major version, redirect dev/ to stable book
-            # This makes sense, preferable to have doc/book updates going live directly to rtic.rs
-            sed 's|URL|rtic.rs/$stable/api/rtic|g' redirect.html > $td/$devver/api/index.html
-            sed 's|URL|rtic.rs/$stable|g' redirect.html > $td/$devver/index.html
-          fi
-
-          # Package older versions, including stable
-
-          # Copy the stable book to the stable alias
-          cp -r mdbookold/${{ env.STABLE_VERSION }} $td/stable
-
-          # Copy the stable book to the webroot
-          cp -r mdbookold/${{ env.STABLE_VERSION }} $td/
-          # Copy the old stable book to the webroot
-          cp -r mdbookold/${{ env.OLDSTABLE_VERSION }} $td/
-
-          # Forward CNAME file
-          cp CNAME $td/
-          mv $td/ bookstodeploy
+          tar xf current-book.tar.gz
+          tar xf old-books.tar.gz
+          CURRENT_VERSION=${{ env.versionmajor }} ./scripts/prep-books.sh "${{ env.STABLE_VERSION }} ${{ env.OLDSTABLE_VERSION }}"
 
       - name: Archive the webroot
-        run: |
-          tar -cf bookstodeploy.tar bookstodeploy
+        run: tar -czf book-webroot.tar.gz deploy
 
       - name: Store the books
         uses: actions/upload-artifact@v3
         with:
-          name: bookstodeploy
-          path: bookstodeploy.tar
+          name: book-webroot
+          path: book-webroot.tar.gz
 
   ghapages:
     name: Publish rtic.rs
@@ -620,17 +409,16 @@ jobs:
       - name: Download books
         uses: actions/download-artifact@v3
         with:
-          name: bookstodeploy
+          name: book-webroot
 
       - name: Extract the books
-        run: |
-          tar -xf bookstodeploy.tar 
+        run: tar -xf book-webroot.tar.gz
 
       - name: Deploy to GH-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./bookstodeploy
+          publish_dir: ./deploy
           force_orphan: true
 
   # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
@@ -644,8 +432,7 @@ jobs:
       - checkexamples
       - testexamples
       - tests
-      - docs
-      - mdbook
+      - current-book
     runs-on: ubuntu-22.04
     steps:
       - name: Mark the job as a success
