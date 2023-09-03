@@ -46,6 +46,9 @@ pub mod rp2040;
 ))]
 pub mod nrf;
 
+#[cfg(any(feature = "stm32g081kb",))]
+pub mod stm32;
+
 #[allow(dead_code)]
 pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
@@ -61,6 +64,7 @@ pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     feature = "nrf5340-app",
     feature = "nrf5340-net",
     feature = "nrf9160",
+    feature = "stm32g081kb",
 ))]
 pub(crate) unsafe fn set_monotonic_prio(
     prio_bits: u8,
