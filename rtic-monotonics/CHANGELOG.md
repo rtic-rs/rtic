@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- STM32 support.
+
 ## v1.1.0 - 2023-08-29
 
 ### Added

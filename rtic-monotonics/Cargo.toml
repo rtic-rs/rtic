@@ -9,6 +9,7 @@ authors = [
     "Henrik Tjäder <henrik@tjaders.com>",
     "Jorge Aparicio <jorge@japaric.io>",
     "Per Lindgren <per.lindgren@ltu.se>",
+    "Andres Vahter <andres@vahter.me>",
 ]
 categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "A library that provides implementations of the Monotonic trait from rtic-time"
@@ -40,6 +41,9 @@ nrf5340-app-pac = { version = "0.12.2", optional = true }
 nrf5340-net-pac = { version = "0.12.2", optional = true }
 nrf9160-pac = { version = "0.12.2", optional = true }
 
+# STM32
+stm32-metapac = { version = "13.0.0", features = ["metadata"], optional = true }
+
 [features]
 default = []
 defmt = ["fugit/defmt"]
@@ -63,3 +67,6 @@ nrf52840 = ["dep:cortex-m", "dep:nrf52840-pac", "dep:critical-section"]
 nrf5340-app = ["dep:cortex-m", "dep:nrf5340-app-pac", "dep:critical-section"]
 nrf5340-net = ["dep:cortex-m", "dep:nrf5340-net-pac", "dep:critical-section"]
 nrf9160 = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
+
+# STM32 timers
+stm32g081kb = ["dep:cortex-m", "stm32-metapac/stm32g081kb"]
