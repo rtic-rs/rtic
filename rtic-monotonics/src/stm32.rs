@@ -61,6 +61,7 @@ macro_rules! __internal_create_stm32_timer_interrupt {
 }
 
 /// Register TIM2 interrupt for the monotonic.
+#[cfg(feature = "stm32_tim2")]
 #[macro_export]
 macro_rules! create_stm32_tim2_monotonic_token {
     () => {{
@@ -69,6 +70,7 @@ macro_rules! create_stm32_tim2_monotonic_token {
 }
 
 /// Register TIM3 interrupt for the monotonic.
+#[cfg(feature = "stm32_tim3")]
 #[macro_export]
 macro_rules! create_stm32_tim3_monotonic_token {
     () => {{
@@ -76,8 +78,55 @@ macro_rules! create_stm32_tim3_monotonic_token {
     }};
 }
 
+/// Register TIM4 interrupt for the monotonic.
+#[cfg(feature = "stm32_tim4")]
+#[macro_export]
+macro_rules! create_stm32_tim4_monotonic_token {
+    () => {{
+        $crate::__internal_create_stm32_timer_interrupt!(Tim4, TIM4, Tim4Token)
+    }};
+}
+
+/// Register TIM5 interrupt for the monotonic.
+#[cfg(feature = "stm32_tim5")]
+#[macro_export]
+macro_rules! create_stm32_tim5_monotonic_token {
+    () => {{
+        $crate::__internal_create_stm32_timer_interrupt!(Tim5, TIM5, Tim5Token)
+    }};
+}
+
+/// Register TIM12 interrupt for the monotonic.
+#[cfg(feature = "stm32_tim12")]
+#[macro_export]
+macro_rules! create_stm32_tim12_monotonic_token {
+    () => {{
+        $crate::__internal_create_stm32_timer_interrupt!(Tim12, TIM12, Tim12Token)
+    }};
+}
+
+/// Register TIM15 interrupt for the monotonic.
+#[cfg(feature = "stm32_tim15")]
+#[macro_export]
+macro_rules! create_stm32_tim15_monotonic_token {
+    () => {{
+        $crate::__internal_create_stm32_timer_interrupt!(Tim15, TIM15, Tim15Token)
+    }};
+}
+
+// Creates `enable_timer()` function which enables timer in RCC.
+macro_rules! enable_timer {
+    ($apbenrX:ident, $set_timXen:ident, $apbrstrX:ident, $set_timXrst:ident) => {
+        fn enable_timer() {
+            pac::RCC.$apbenrX().modify(|r| r.$set_timXen(true));
+            pac::RCC.$apbrstrX().modify(|r| r.$set_timXrst(true));
+            pac::RCC.$apbrstrX().modify(|r| r.$set_timXrst(false));
+        }
+    };
+}
+
 macro_rules! make_timer {
-    ($mono_name:ident, $timer:ident, $bits:ident, $set_tim_en:ident, $set_tim_rst:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
+    ($mono_name:ident, $timer:ident, $bits:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer queue implementation.
         $(
             #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
@@ -91,12 +140,12 @@ macro_rules! make_timer {
         static $tq: TimerQueue<$mono_name> = TimerQueue::new();
 
         impl $mono_name {
-            /// Start monotonic timer. Must be called only once.
-            /// `tim_clock_hz` shows to which frequency `TIMx` clock source is configured.
+            /// Starts the monotonic timer.
+            /// - `tim_clock_hz`: `TIMx` peripheral clock frequency.
+            /// - `_interrupt_token`: Required for correct timer interrupt handling.
+            /// This method must be called only once.
             pub fn start(tim_clock_hz: u32, _interrupt_token: impl crate::InterruptToken<Self>) {
-                pac::RCC.apbenr1().modify(|r| r.$set_tim_en(true));
-                pac::RCC.apbrstr1().modify(|r| r.$set_tim_rst(true));
-                pac::RCC.apbrstr1().modify(|r| r.$set_tim_rst(false));
+                enable_timer();
 
                 $timer.cr1().modify(|r| r.set_cen(false));
 
@@ -229,21 +278,32 @@ macro_rules! make_timer {
     };
 }
 
-make_timer!(
-    Tim2,
-    TIM2,
-    u32,
-    set_tim2en,
-    set_tim2rst,
-    TIMER2_OVERFLOWS,
-    TIMER2_TQ
-);
-make_timer!(
-    Tim3,
-    TIM3,
-    u16,
-    set_tim3en,
-    set_tim3rst,
-    TIMER3_OVERFLOWS,
-    TIMER3_TQ
-);
+#[cfg(feature = "stm32_tim2")]
+enable_timer!(apbenr1, set_tim2en, apbrstr1, set_tim2rst);
+#[cfg(feature = "stm32_tim2")]
+make_timer!(Tim2, TIM2, u32, TIMER2_OVERFLOWS, TIMER2_TQ);
+
+#[cfg(feature = "stm32_tim3")]
+enable_timer!(apbenr1, set_tim3en, apbrstr1, set_tim3rst);
+#[cfg(feature = "stm32_tim3")]
+make_timer!(Tim3, TIM3, u16, TIMER3_OVERFLOWS, TIMER3_TQ);
+
+#[cfg(feature = "stm32_tim4")]
+enable_timer!(apbenr1, set_tim4en, apbrstr1, set_tim4rst);
+#[cfg(feature = "stm32_tim4")]
+make_timer!(Tim4, TIM4, u16, TIMER4_OVERFLOWS, TIMER4_TQ);
+
+#[cfg(feature = "stm32_tim5")]
+enable_timer!(apbenr1, set_tim5en, apbrstr1, set_tim5rst);
+#[cfg(feature = "stm32_tim5")]
+make_timer!(Tim5, TIM5, u16, TIMER5_OVERFLOWS, TIMER5_TQ);
+
+#[cfg(feature = "stm32_tim12")]
+enable_timer!(apb1enr, set_tim12en, apb1rstr, set_tim12rst);
+#[cfg(feature = "stm32_tim12")]
+make_timer!(Tim12, TIM12, u16, TIMER12_OVERFLOWS, TIMER12_TQ);
+
+#[cfg(feature = "stm32_tim15")]
+enable_timer!(apbenr2, set_tim15en, apbrstr2, set_tim15rst);
+#[cfg(feature = "stm32_tim15")]
+make_timer!(Tim15, TIM15, u16, TIMER15_OVERFLOWS, TIMER15_TQ);
