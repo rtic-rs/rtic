@@ -217,6 +217,19 @@ macro_rules! make_timer {
             }
         }
 
+        #[cfg(feature = "embedded-hal-async")]
+        impl embedded_hal_async::delay::DelayUs for $mono_name {
+            #[inline]
+            async fn delay_us(&mut self, us: u32) {
+                Self::delay((us as u64).micros()).await;
+            }
+
+            #[inline]
+            async fn delay_ms(&mut self, ms: u32) {
+                Self::delay((ms as u64).millis()).await;
+            }
+        }
+
         impl Monotonic for $mono_name {
             type Instant = fugit::TimerInstantU64<TIMER_HZ>;
             type Duration = fugit::TimerDurationU64<TIMER_HZ>;
