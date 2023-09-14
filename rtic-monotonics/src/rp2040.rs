@@ -162,6 +162,13 @@ impl embedded_hal_async::delay::DelayUs for Timer {
     }
 }
 
+impl embedded_hal::delay::DelayUs for Timer {
+    fn delay_us(&mut self, us: u32) {
+        let done = Self::now() + u64::from(us).micros();
+        while Self::now() < done {}
+    }
+}
+
 /// Register the Timer interrupt for the monotonic.
 #[macro_export]
 macro_rules! create_rp2040_monotonic_token {

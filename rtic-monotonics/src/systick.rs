@@ -203,6 +203,15 @@ impl embedded_hal_async::delay::DelayUs for Systick {
     }
 }
 
+impl embedded_hal::delay::DelayUs for Systick {
+    fn delay_us(&mut self, us: u32) {
+        #[cfg(feature = "systick-64bit")]
+        let us = u64::from(us);
+        let done = Self::now() + us.micros();
+        while Self::now() < done {}
+    }
+}
+
 /// Register the Systick interrupt for the monotonic.
 #[macro_export]
 macro_rules! create_systick_token {

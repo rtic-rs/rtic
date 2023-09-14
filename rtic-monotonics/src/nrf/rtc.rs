@@ -180,6 +180,13 @@ macro_rules! make_rtc {
             }
         }
 
+        impl embedded_hal::delay::DelayUs for $mono_name {
+            fn delay_us(&mut self, us: u32) {
+                let done = Self::now() + u64::from(us).micros();
+                while Self::now() < done {}
+            }
+        }
+
         impl Monotonic for $mono_name {
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
 
