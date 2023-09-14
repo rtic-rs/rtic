@@ -10,6 +10,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Added
 
 - STM32 support.
+- `embedded-hal` 1.0.0-rc.1 `DelayUs` support
 
 ## v1.1.0 - 2023-08-29
 

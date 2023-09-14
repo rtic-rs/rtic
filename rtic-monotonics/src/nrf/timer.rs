@@ -216,6 +216,13 @@ macro_rules! make_timer {
             }
         }
 
+        impl embedded_hal::delay::DelayUs for $mono_name {
+            fn delay_us(&mut self, us: u32) {
+                let done = Self::now() + (us as u64).micros();
+                while Self::now() < done {}
+            }
+        }
+
         impl Monotonic for $mono_name {
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
 
