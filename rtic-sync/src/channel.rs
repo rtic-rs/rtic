@@ -108,7 +108,7 @@ macro_rules! make_channel {
         static mut CHANNEL: $crate::channel::Channel<$type, $size> =
             $crate::channel::Channel::new();
 
-        static CHECK: ::core::sync::atomic::AtomicU8 = ::core::sync::atomic::AtomicU8::new(0);
+        static CHECK: $crate::portable_atomic::AtomicU8 = $crate::portable_atomic::AtomicU8::new(0);
 
         $crate::channel::critical_section::with(|_| {
             if CHECK.load(::core::sync::atomic::Ordering::Relaxed) != 0 {

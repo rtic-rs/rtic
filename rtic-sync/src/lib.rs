@@ -5,6 +5,7 @@
 
 pub mod arbiter;
 pub mod channel;
+pub use portable_atomic;
 
 #[cfg(test)]
 #[macro_use]

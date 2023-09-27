@@ -3,9 +3,9 @@
 use core::marker::PhantomPinned;
 use core::pin::Pin;
 use core::ptr::null_mut;
-use core::sync::atomic::{AtomicBool, AtomicPtr, Ordering};
 use core::task::Waker;
 use critical_section as cs;
+use portable_atomic::{AtomicBool, AtomicPtr, Ordering};
 
 /// A helper definition of a wait queue.
 pub type WaitQueue = DoublyLinkedList<Waker>;

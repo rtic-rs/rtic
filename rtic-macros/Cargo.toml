@@ -33,8 +33,10 @@ default = []
 # list of supported codegen backends
 cortex-m-source-masking = []
 cortex-m-basepri = []
+riscv-esp32c3 = []
 # riscv-clic = []
 # riscv-ch32 = []
+
 
 # backend API test
 test-template = []
