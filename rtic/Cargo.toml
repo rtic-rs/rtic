@@ -31,6 +31,8 @@ features = ["rtic-macros/test-template"]
 name = "rtic"
 
 [dependencies]
+esp32c3 = { version = "0.17.0", optional = true}
+riscv = {version = "0.10.1", optional = true}
 cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
 #portable-atomic = { version = "0.3.19" }
@@ -62,14 +64,13 @@ trybuild = "1"
 
 [features]
 default = []
-
 thumbv6-backend = ["cortex-m", "rtic-macros/cortex-m-source-masking"]
 thumbv7-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 thumbv8base-backend = ["cortex-m", "rtic-macros/cortex-m-source-masking"]
 thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
-# riscv-esp32c3-backend = ["rtic-macros/riscv-esp32c3"]
+riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]
 
 # needed for testing
 rtic-uitestv7 = ["thumbv7-backend"]

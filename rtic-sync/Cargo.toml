@@ -1,6 +1,6 @@
 [package]
 name = "rtic-sync"
-version = "1.0.2"
+version = "1.0.3"
 
 edition = "2021"
 authors = [
@@ -20,6 +20,7 @@ license = "MIT OR Apache-2.0"
 heapless = "0.7"
 critical-section = "1"
 rtic-common = { version = "1.0.0", path = "../rtic-common" }
+portable-atomic = { version = "1", default-features = false }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "macros", "time"] }

@@ -8,6 +8,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ## [Unreleased]
 
 ### Added
+- Unstable support for ESP32-C3
 
 ### Fixed
 

@@ -13,4 +13,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+## [v1.0.1]
+
+- `portable-atomic` used as a drop in replacement for `core::sync::atomic` in code and macros. `portable-atomic` imported with `default-features = false`, as we do not require CAS.
+
 ## [v1.0.0] - 2023-05-31

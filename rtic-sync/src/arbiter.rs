@@ -27,8 +27,8 @@ use core::cell::UnsafeCell;
 use core::future::poll_fn;
 use core::ops::{Deref, DerefMut};
 use core::pin::Pin;
-use core::sync::atomic::{fence, AtomicBool, Ordering};
 use core::task::{Poll, Waker};
+use portable_atomic::{fence, AtomicBool, Ordering};
 
 use rtic_common::dropper::OnDrop;
 use rtic_common::wait_queue::{Link, WaitQueue};

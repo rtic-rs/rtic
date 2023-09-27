@@ -3,7 +3,7 @@ use crate::{
     codegen::util,
     syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
 };
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use std::collections::HashSet;
 use syn::{parse, Attribute, Ident};
@@ -28,6 +28,10 @@ fn is_exception(name: &Ident) -> bool {
             | "PendSV"
             | "SysTick"
     )
+}
+pub fn interrupt_ident() -> Ident {
+    let span = Span::call_site();
+    Ident::new("interrupt", span)
 }
 
 #[cfg(feature = "cortex-m-source-masking")]
@@ -323,6 +327,14 @@ pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStrea
     vec![]
 }
 
+pub fn async_entry(
+    _app: &App,
+    _analysis: &CodegenAnalysis,
+    _dispatcher_name: Ident,
+) -> Vec<TokenStream2> {
+    vec![]
+}
+
 pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     let max = if let Some(max) = analysis.max_async_prio {
         quote!(#max)
@@ -337,4 +349,11 @@ pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStrea
         #[no_mangle]
         static RTIC_ASYNC_MAX_LOGICAL_PRIO: u8 = #max;
     )]
+}
+pub fn handler_config(
+    _app: &App,
+    _analysis: &CodegenAnalysis,
+    _dispatcher_name: Ident,
+) -> Vec<TokenStream2> {
+    vec![]
 }
