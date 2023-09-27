@@ -1,5 +1,4 @@
 pub use cortex_m::{
-    asm::nop,
     asm::wfi,
     interrupt,
     peripheral::{scb::SystemHandler, DWT, NVIC, SCB, SYST},
