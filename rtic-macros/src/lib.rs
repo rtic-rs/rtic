@@ -13,7 +13,8 @@ macro_rules! with_backend {
         #[cfg(any(
             feature = "cortex-m-source-masking",
             feature = "cortex-m-basepri",
-            feature = "test-template"
+            feature = "test-template",
+            feature = "riscv-esp32c3"
         ))]
         $($tokens)*
     };
@@ -107,6 +108,7 @@ with_backend! {
 #[cfg(not(any(
     feature = "cortex-m-source-masking",
     feature = "cortex-m-basepri",
-    feature = "test-template"
+    feature = "test-template",
+    feature = "riscv-esp32c3"
 )))]
 compile_error!("Cannot compile. No backend feature selected.");

@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+- Unstable ESP32-C3 support.
+
 ## [v2.0.1] - 2023-07-25
 
 ### Added
