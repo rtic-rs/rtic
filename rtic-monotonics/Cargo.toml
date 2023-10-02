@@ -43,7 +43,12 @@ nrf5340-net-pac = { version = "0.12.2", optional = true }
 nrf9160-pac = { version = "0.12.2", optional = true }
 
 # STM32
-stm32-metapac = { version = "14.0.0", features = ["metadata"], optional = true }
+stm32-metapac = { version = "14.0.0", optional = true }
+
+[build-dependencies]
+proc-macro2 = { version = "1.0.36", optional = true }
+quote = { version = "1.0.15", optional = true }
+stm32-metapac = { version = "14.0.0", default-features = false, features = ["metadata"], optional = true }
 
 [features]
 default = []
@@ -77,6 +82,8 @@ stm32_tim4 = []
 stm32_tim5 = []
 stm32_tim12 = []
 stm32_tim15 = []
+
+stm32-metapac = ["dep:stm32-metapac", "dep:quote", "dep:proc-macro2"]
 
 # Maintainers: this `stm32-metapac` feature list is taken from:
 # https://github.com/embassy-rs/embassy/blob/2e6f4237f2410aa18c9866a5a1a5ed1f3bec8a4e/embassy-stm32/Cargo.toml#L143

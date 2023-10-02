@@ -37,8 +37,15 @@
 use crate::{Monotonic, TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU64, Ordering};
 pub use fugit::{self, ExtU64};
-use pac::metadata::METADATA;
 use stm32_metapac as pac;
+
+mod _generated {
+    #![allow(dead_code)]
+    #![allow(unused_imports)]
+    #![allow(non_snake_case)]
+
+    include!(concat!(env!("OUT_DIR"), "/_generated.rs"));
+}
 
 const TIMER_HZ: u32 = 1_000_000;
 
@@ -114,17 +121,6 @@ macro_rules! create_stm32_tim15_monotonic_token {
     }};
 }
 
-// Creates `enable_timer()` function which enables timer in RCC.
-macro_rules! enable_timer {
-    ($apbenrX:ident, $set_timXen:ident, $apbrstrX:ident, $set_timXrst:ident) => {
-        fn enable_timer() {
-            pac::RCC.$apbenrX().modify(|r| r.$set_timXen(true));
-            pac::RCC.$apbrstrX().modify(|r| r.$set_timXrst(true));
-            pac::RCC.$apbrstrX().modify(|r| r.$set_timXrst(false));
-        }
-    };
-}
-
 macro_rules! make_timer {
     ($mono_name:ident, $timer:ident, $bits:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer queue implementation.
@@ -138,6 +134,11 @@ macro_rules! make_timer {
 
         static $overflow: AtomicU64 = AtomicU64::new(0);
         static $tq: TimerQueue<$mono_name> = TimerQueue::new();
+
+        fn enable_timer() {
+            _generated::$timer::enable();
+            _generated::$timer::reset();
+        }
 
         impl $mono_name {
             /// Starts the monotonic timer.
@@ -173,7 +174,7 @@ macro_rules! make_timer {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(METADATA.nvic_priority_bits.unwrap(), pac::Interrupt::$timer);
+                    crate::set_monotonic_prio(_generated::NVIC_PRIO_BITS, pac::Interrupt::$timer);
                     cortex_m::peripheral::NVIC::unmask(pac::Interrupt::$timer);
                 }
             }
@@ -299,31 +300,19 @@ macro_rules! make_timer {
 }
 
 #[cfg(feature = "stm32_tim2")]
-enable_timer!(apbenr1, set_tim2en, apbrstr1, set_tim2rst);
-#[cfg(feature = "stm32_tim2")]
 make_timer!(Tim2, TIM2, u32, TIMER2_OVERFLOWS, TIMER2_TQ);
 
-#[cfg(feature = "stm32_tim3")]
-enable_timer!(apbenr1, set_tim3en, apbrstr1, set_tim3rst);
 #[cfg(feature = "stm32_tim3")]
 make_timer!(Tim3, TIM3, u16, TIMER3_OVERFLOWS, TIMER3_TQ);
 
 #[cfg(feature = "stm32_tim4")]
-enable_timer!(apbenr1, set_tim4en, apbrstr1, set_tim4rst);
-#[cfg(feature = "stm32_tim4")]
 make_timer!(Tim4, TIM4, u16, TIMER4_OVERFLOWS, TIMER4_TQ);
 
-#[cfg(feature = "stm32_tim5")]
-enable_timer!(apbenr1, set_tim5en, apbrstr1, set_tim5rst);
 #[cfg(feature = "stm32_tim5")]
 make_timer!(Tim5, TIM5, u16, TIMER5_OVERFLOWS, TIMER5_TQ);
 
 #[cfg(feature = "stm32_tim12")]
-enable_timer!(apb1enr, set_tim12en, apb1rstr, set_tim12rst);
-#[cfg(feature = "stm32_tim12")]
 make_timer!(Tim12, TIM12, u16, TIMER12_OVERFLOWS, TIMER12_TQ);
 
-#[cfg(feature = "stm32_tim15")]
-enable_timer!(apbenr2, set_tim15en, apbrstr2, set_tim15rst);
 #[cfg(feature = "stm32_tim15")]
 make_timer!(Tim15, TIM15, u16, TIMER15_OVERFLOWS, TIMER15_TQ);
