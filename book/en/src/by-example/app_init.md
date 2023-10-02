@@ -3,7 +3,8 @@
 An RTIC application requires an `init` task setting up the system. The corresponding `init` function must have the
 signature `fn(init::Context) -> (Shared, Local)`, where `Shared` and `Local` are resource structures defined by the user.
 
-The `init` task executes after system reset, [after an optionally defined `pre-init` code section][pre-init] and an always occurring internal RTIC initialization.  [pre-init]: https://docs.rs/cortex-m-rt/latest/cortex_m_rt/attr.pre_init.html
+The `init` task executes after system reset, [after an optionally defined `pre-init` code section][pre-init] and an always occurring internal RTIC initialization.
+[pre-init]: https://docs.rs/cortex-m-rt/latest/cortex_m_rt/attr.pre_init.html
 
 The `init` and optional `pre-init` tasks runs *with interrupts disabled* and have exclusive access to Cortex-M (the `bare_metal::CriticalSection` token is available as `cs`).
 
