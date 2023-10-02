@@ -43,7 +43,7 @@ nrf5340-net-pac = { version = "0.12.2", optional = true }
 nrf9160-pac = { version = "0.12.2", optional = true }
 
 # STM32
-stm32-metapac = { version = "13.0.0", features = ["metadata"], optional = true }
+stm32-metapac = { version = "14.0.0", features = ["metadata"], optional = true }
 
 [features]
 default = []
