@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Fixed
+
+- Fix STM32 support for other chip families
+
 ## v1.2.0 - 2023-09-19
 
 ### Added
