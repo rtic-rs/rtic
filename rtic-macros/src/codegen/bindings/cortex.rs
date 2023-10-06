@@ -381,3 +381,7 @@ pub fn handler_config(
 ) -> Vec<TokenStream2> {
     vec![]
 }
+
+pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
+    vec![]
+}

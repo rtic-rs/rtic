@@ -61,10 +61,15 @@ pub fn async_entry(
 pub fn async_prio_limit(app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     vec![]
 }
+
 pub fn handler_config(
     _app: &App,
     _analysis: &CodegenAnalysis,
     dispatcher_name: Ident,
 ) -> Vec<TokenStream2> {
+    vec![]
+}
+
+pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
     vec![]
 }

@@ -7,8 +7,12 @@ use crate::{
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
+use super::{assertions, extra_mods, post_init, pre_init};
+
 /// Generates code for `fn main`
 pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
+    let extra_mods_stmts = extra_mods::codegen(app, analysis);
+
     let assertion_stmts = assertions::codegen(app, analysis);
 
     let pre_init_stmts = pre_init::codegen(app, analysis);
@@ -43,6 +47,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let msp_check = bindings::check_stack_overflow_before_init(app, analysis);
 
     quote!(
+        #(#extra_mods_stmts)*
+
         #[doc(hidden)]
         #[no_mangle]
         unsafe extern "C" fn #main() -> ! {

@@ -31,6 +31,7 @@ features = ["rtic-macros/test-template"]
 name = "rtic"
 
 [dependencies]
+riscv-slic = { git = "https://github.com/romancardenas/riscv-slic.git", rev = "eca7590", optional = true }
 esp32c3 = { version = "0.20.0", optional = true}
 riscv = {version = "0.11.0", optional = true}
 cortex-m = { version = "0.7.0", optional = true }
@@ -71,6 +72,7 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]
+riscv-clint-backend = ["riscv", "riscv-slic/clint-backend", "rtic-macros/riscv-slic"]
 
 # needed for testing
 rtic-uitestv7 = ["thumbv7-backend"]

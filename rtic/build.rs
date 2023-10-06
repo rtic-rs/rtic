@@ -16,7 +16,7 @@ fn main() {
         //even within the same target
         //need some other way to discern
     } else if target.starts_with("riscv32i") {
-        println!("cargo:rustc-cfg=feature=\"riscv-esp32c3\"");
+        // println!("cargo:rustc-cfg=feature=\"riscv-esp32c3\"");
 
         // TODO: Add feature here for risc-v targets
         // println!("cargo:rustc-cfg=feature=\"riscv\"");
