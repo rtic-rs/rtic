@@ -15,7 +15,7 @@ pub fn interrupt_ident() -> Ident {
 
 pub fn interrupt_mod(_app: &App) -> TokenStream2 {
     let interrupt = interrupt_ident();
-    quote!(slic:::#interrupt)
+    quote!(slic::#interrupt)
 }
 
 /// This macro implements the [`rtic::Mutex`] trait for shared resources using the SLIC.
@@ -185,7 +185,7 @@ pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2>
     let device = &app.args.device;
 
     stmts.push(quote!(
-        use rtic::export::slic::riscv_slic;
+        use rtic::export::riscv_slic;
     ));
     // TODO add export field to app.args
     stmts.push(quote!(rtic::export::codegen!(pac = #device, swi = [#(#swi_slice,)*], backend = [hart_id = HART0]);));
