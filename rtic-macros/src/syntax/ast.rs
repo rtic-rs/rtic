@@ -2,7 +2,7 @@
 
 use syn::{Attribute, Expr, Ident, Item, ItemUse, Pat, PatType, Path, Stmt, Type};
 
-use crate::syntax::Map;
+use crate::syntax::{backend::BackendArgs, Map};
 
 /// The `#[app]` attribute
 #[derive(Debug)]
@@ -65,6 +65,9 @@ pub struct AppArgs {
 
     /// Interrupts used to dispatch software tasks
     pub dispatchers: Dispatchers,
+
+    /// Backend-specific arguments
+    pub backend: Option<BackendArgs>,
 }
 
 /// The `init`-ialization function

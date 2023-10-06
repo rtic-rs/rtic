@@ -124,6 +124,13 @@ pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> 
         return Err(parse::Error::new(first.unwrap().span(), s));
     }
 
+    if app.args.backend.is_none() {
+        return Err(parse::Error::new(
+            Span::call_site(),
+            "SLIC requires backend-specific configuration",
+        ));
+    }
+
     Ok(()) // TODO
 }
 
@@ -187,8 +194,9 @@ pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2>
     stmts.push(quote!(
         use rtic::export::riscv_slic;
     ));
-    // TODO add export field to app.args
-    stmts.push(quote!(rtic::export::codegen!(pac = #device, swi = [#(#swi_slice,)*], backend = [hart_id = HART0]);));
+    let hart_id = &app.args.backend.as_ref().unwrap().hart_id;
+
+    stmts.push(quote!(rtic::export::codegen!(pac = #device, swi = [#(#swi_slice,)*], backend = [hart_id = #hart_id]);));
 
     stmts
 }
