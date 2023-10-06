@@ -7,6 +7,17 @@ use quote::quote;
 use std::{collections::HashSet, vec};
 use syn::{parse, Attribute, Ident};
 
+/// Utility function to get the SLIC interrupt module.
+pub fn interrupt_ident() -> Ident {
+    let span = Span::call_site();
+    Ident::new("Interrupt", span)
+}
+
+pub fn interrupt_mod(_app: &App) -> TokenStream2 {
+    let interrupt = interrupt_ident();
+    quote!(slic:::#interrupt)
+}
+
 /// This macro implements the [`rtic::Mutex`] trait for shared resources using the SLIC.
 #[allow(clippy::too_many_arguments)]
 pub fn impl_mutex(
@@ -43,12 +54,6 @@ pub fn impl_mutex(
     )
 }
 
-/// Utility function to get the SLIC interrupt module.
-pub fn interrupt_ident(_app: &App) -> Ident {
-    let span = Span::call_site();
-    Ident::new("slic::Interrupt", span)
-}
-
 /// This macro is used to define additional compile-time assertions in case the platform needs it.
 /// The Cortex-M implementations do not use it. Thus, we think we do not need it either.
 pub fn extra_assertions(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
@@ -57,12 +62,12 @@ pub fn extra_assertions(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStre
 
 /// This macro is used to check at run-time that all the interruption dispatchers exist.
 pub fn pre_init_checks(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
-    let mut stmts = vec![];
-    let interrupt_ident = interrupt_ident(app);
+    let mut stmts: Vec<TokenStream2> = vec![];
+    let int_mod = interrupt_mod(app);
 
     // check that all dispatchers exists in the `slic::Interrupt` enumeration
     for name in app.args.dispatchers.keys() {
-        stmts.push(quote!(let _ = #interrupt_ident::#name;));
+        stmts.push(quote!(let _ = #int_mod::#name;));
     }
 
     stmts

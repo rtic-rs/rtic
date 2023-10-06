@@ -6,6 +6,17 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse, Attribute, Ident};
 
+pub fn interrupt_ident() -> Ident {
+    let span = Span::call_site();
+    Ident::new("interrupt", span)
+}
+
+pub fn interrupt_mod(_app: &App) -> TokenStream2 {
+    let device = &app.args.device;
+    let interrupt = interrupt_ident();
+    quote!(#device::#interrupt)
+}
+
 pub fn impl_mutex(
     _app: &App,
     _analysis: &CodegenAnalysis,

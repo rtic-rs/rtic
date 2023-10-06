@@ -35,6 +35,12 @@ pub fn interrupt_ident() -> Ident {
     Ident::new("interrupt", span)
 }
 
+pub fn interrupt_mod(_app: &App) -> TokenStream2 {
+    let device = &app.args.device;
+    let interrupt = interrupt_ident();
+    quote!(#device::#interrupt)
+}
+
 pub fn check_stack_overflow_before_init(
     _app: &App,
     _analysis: &CodegenAnalysis,
