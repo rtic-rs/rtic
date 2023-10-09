@@ -60,7 +60,10 @@ pub struct AppArgs {
     /// Device
     pub device: Path,
 
-    /// Peripherals
+    /// Core peripherals
+    pub core: bool,
+
+    /// Device peripherals
     pub peripherals: bool,
 
     /// Interrupts used to dispatch software tasks
