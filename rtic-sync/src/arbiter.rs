@@ -191,6 +191,89 @@ impl<'a, T> DerefMut for ExclusiveAccess<'a, T> {
     }
 }
 
+#[cfg(feature = "unstable")]
+/// SPI bus sharing using [`Arbiter`]
+pub mod spi {
+    use super::Arbiter;
+    use embedded_hal::digital::OutputPin;
+    use embedded_hal_async::{
+        delay::DelayUs,
+        spi::{ErrorType, Operation, SpiBus, SpiDevice},
+    };
+    use embedded_hal_bus::spi::DeviceError;
+
+    /// [`Arbiter`]-based shared bus implementation.
+    pub struct ArbiterDevice<'a, BUS, CS, D> {
+        bus: &'a Arbiter<BUS>,
+        cs: CS,
+        delay: D,
+    }
+
+    impl<'a, BUS, CS, D> ArbiterDevice<'a, BUS, CS, D> {
+        /// Create a new [`ArbiterDevice`].
+        pub fn new(bus: &'a Arbiter<BUS>, cs: CS, delay: D) -> Self {
+            Self { bus, cs, delay }
+        }
+    }
+
+    impl<'a, BUS, CS, D> ErrorType for ArbiterDevice<'a, BUS, CS, D>
+    where
+        BUS: ErrorType,
+        CS: OutputPin,
+    {
+        type Error = DeviceError<BUS::Error, CS::Error>;
+    }
+
+    impl<'a, Word, BUS, CS, D> SpiDevice<Word> for ArbiterDevice<'a, BUS, CS, D>
+    where
+        Word: Copy + 'static,
+        BUS: SpiBus<Word>,
+        CS: OutputPin,
+        D: DelayUs,
+    {
+        async fn transaction(
+            &mut self,
+            operations: &mut [Operation<'_, Word>],
+        ) -> Result<(), DeviceError<BUS::Error, CS::Error>> {
+            let mut bus = self.bus.access().await;
+
+            self.cs.set_low().map_err(DeviceError::Cs)?;
+
+            let op_res = 'ops: {
+                for op in operations {
+                    let res = match op {
+                        Operation::Read(buf) => bus.read(buf).await,
+                        Operation::Write(buf) => bus.write(buf).await,
+                        Operation::Transfer(read, write) => bus.transfer(read, write).await,
+                        Operation::TransferInPlace(buf) => bus.transfer_in_place(buf).await,
+                        Operation::DelayUs(us) => match bus.flush().await {
+                            Err(e) => Err(e),
+                            Ok(()) => {
+                                self.delay.delay_us(*us).await;
+                                Ok(())
+                            }
+                        },
+                    };
+                    if let Err(e) = res {
+                        break 'ops Err(e);
+                    }
+                }
+                Ok(())
+            };
+
+            // On failure, it's important to still flush and deassert CS.
+            let flush_res = bus.flush().await;
+            let cs_res = self.cs.set_high();
+
+            op_res.map_err(DeviceError::Spi)?;
+            flush_res.map_err(DeviceError::Spi)?;
+            cs_res.map_err(DeviceError::Cs)?;
+
+            Ok(())
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

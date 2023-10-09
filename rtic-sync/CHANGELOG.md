@@ -9,6 +9,8 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Added
 
+- `arbiter::spi::ArbiterDevice` for sharing SPI buses using `embedded-hal-async`
+
 ### Changed
 
 ### Fixed
