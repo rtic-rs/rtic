@@ -89,6 +89,7 @@ impl Package {
                     .chain(std::iter::once(None))
                     .collect()
             }
+            Package::RticSync => vec![Some("unstable".to_string()), None],
             _ => vec![None],
         }
     }
