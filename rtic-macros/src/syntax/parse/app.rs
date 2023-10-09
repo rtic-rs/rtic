@@ -127,6 +127,7 @@ impl AppArgs {
                             ));
                         }
                     }
+
                     "backend" => {
                         if let Ok(p) = input.parse::<BackendArgs>() {
                             backend = Some(p);
@@ -137,6 +138,7 @@ impl AppArgs {
                             ));
                         }
                     }
+
                     _ => {
                         return Err(parse::Error::new(ident.span(), "unexpected argument"));
                     }

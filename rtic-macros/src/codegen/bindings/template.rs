@@ -34,6 +34,10 @@ pub fn extra_assertions(app: &App, analysis: &SyntaxAnalysis) -> Vec<TokenStream
     vec![]
 }
 
+pub fn pre_init_preprocessing(app: &mut App, analysis: &SyntaxAnalysis) -> parse::Result<()> {
+    Ok(())
+}
+
 pub fn pre_init_checks(app: &App, analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
     vec![]
 }

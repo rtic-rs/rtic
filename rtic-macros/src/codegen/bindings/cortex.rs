@@ -205,6 +205,10 @@ mod basepri {
     }
 }
 
+pub fn pre_init_preprocessing(_app: &mut App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+    Ok(())
+}
+
 pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 

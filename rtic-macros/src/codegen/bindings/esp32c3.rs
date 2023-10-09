@@ -65,6 +65,10 @@ mod esp32c3 {
         vec![]
     }
 
+    pub fn pre_init_preprocessing(_app: &mut App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+        Ok(())
+    }
+
     pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
         // check that all dispatchers exists in the `Interrupt` enumeration regardless of whether

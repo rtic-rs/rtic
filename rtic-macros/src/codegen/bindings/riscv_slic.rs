@@ -1,6 +1,9 @@
 use crate::{
     analyze::Analysis as CodegenAnalysis,
-    syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
+    syntax::{
+        analyze::Analysis as SyntaxAnalysis,
+        ast::{App, Dispatcher},
+    },
 };
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
@@ -58,6 +61,33 @@ pub fn impl_mutex(
 /// The Cortex-M implementations do not use it. Thus, we think we do not need it either.
 pub fn extra_assertions(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
     vec![]
+}
+
+pub fn pre_init_preprocessing(app: &mut App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+    app.args.core = false; // RISC-V SLIC is not compatible with using core peripherals
+    if !app.args.dispatchers.is_empty() {
+        return Err(parse::Error::new(
+            Span::call_site(),
+            "riscv-slic does not support explicit interrupt dispatchers; remove the `dispatchers` argument from `#[app]`",
+        ));
+    }
+
+    // Compute the number of handlers we need to dispatch the software tasks
+    let soft_priorities = app
+        .software_tasks
+        .iter()
+        .map(|(_, task)| task.args.priority)
+        .filter(|prio| *prio > 0)
+        .collect::<HashSet<_>>();
+
+    for i in 0..soft_priorities.len() {
+        let dispatcher_ident = Ident::new(&format!("__RTICDispatcher{}", i), Span::call_site());
+        app.args
+            .dispatchers
+            .insert(dispatcher_ident, Dispatcher { attrs: vec![] });
+    }
+
+    Ok(())
 }
 
 /// This macro is used to check at run-time that all the interruption dispatchers exist.
