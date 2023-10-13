@@ -77,12 +77,6 @@ In cases where you want exact control over time without drift we can use exact p
 
 [fugit]: https://crates.io/crates/fugit
 
-``` rust,noplayground
-
-{{#include ../../../../rtic/examples/async-timeout.rs:timeout_at}}
-
-```
-
 `let mut instant = Systick::now()` sets the starting time of execution. 
 
 We want to call `hal_get` after 1000ms relative to this starting time. This can be accomplished by using `Systick::delay_until(instant).await`. 
