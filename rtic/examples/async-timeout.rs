@@ -71,7 +71,7 @@ mod app {
             instant += 1000.millis();
             Systick::delay_until(instant).await;
 
-            // absolute point it time for timeout
+            // absolute point in time for timeout
             let timeout = instant + 500.millis();
             hprintln!("now is {:?}, timeout at {:?}", Systick::now(), timeout);
 
