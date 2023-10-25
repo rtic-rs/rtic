@@ -216,6 +216,7 @@ macro_rules! make_timer {
             }
         }
 
+        #[cfg(feature = "embedded-hal")]
         impl embedded_hal::delay::DelayUs for $mono_name {
             fn delay_us(&mut self, us: u32) {
                 let done = Self::now() + (us as u64).micros();

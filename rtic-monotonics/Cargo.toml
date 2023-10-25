@@ -4,12 +4,12 @@ version = "1.2.0"
 
 edition = "2021"
 authors = [
-    "The Real-Time Interrupt-driven Concurrency developers",
-    "Emil Fresk <emil.fresk@gmail.com>",
-    "Henrik Tjäder <henrik@tjaders.com>",
-    "Jorge Aparicio <jorge@japaric.io>",
-    "Per Lindgren <per.lindgren@ltu.se>",
-    "Andres Vahter <andres@vahter.me>",
+  "The Real-Time Interrupt-driven Concurrency developers",
+  "Emil Fresk <emil.fresk@gmail.com>",
+  "Henrik Tjäder <henrik@tjaders.com>",
+  "Jorge Aparicio <jorge@japaric.io>",
+  "Per Lindgren <per.lindgren@ltu.se>",
+  "Andres Vahter <andres@vahter.me>",
 ]
 categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "A library that provides implementations of the Monotonic trait from rtic-time"
@@ -21,13 +21,14 @@ rustdoc-flags = ["--cfg", "docsrs"]
 
 [dependencies]
 rtic-time = { version = "1.0.0", path = "../rtic-time" }
-embedded-hal = { version = "1.0.0-rc.1" }
-embedded-hal-async = { version = "1.0.0-rc.1", optional = true }
 fugit = { version = "0.3.6" }
 atomic-polyfill = "1"
 cfg-if = "1.0.0"
 cortex-m = { version = "0.7.6", optional = true }
 critical-section = { version = "1", optional = true }
+
+embedded-hal = { version = "1.0.0-rc.1", optional = true }
+embedded-hal-async = { version = "1.0.0-rc.1", optional = true }
 
 # RP2040
 rp2040-pac = { version = ">=0.2.0,<0.6", optional = true }
@@ -48,11 +49,15 @@ stm32-metapac = { version = "14.0.0", optional = true }
 [build-dependencies]
 proc-macro2 = { version = "1.0.36", optional = true }
 quote = { version = "1.0.15", optional = true }
-stm32-metapac = { version = "14.0.0", default-features = false, features = ["metadata"], optional = true }
+stm32-metapac = { version = "14.0.0", default-features = false, features = [
+  "metadata",
+], optional = true }
 
 [features]
-default = []
+default = ["embedded-hal"]
 defmt = ["fugit/defmt"]
+embedded-hal = ["dep:embedded-hal"]
+embedded-hal-async = ["dep:embedded-hal-async"]
 
 # Systick on Cortex-M, default 1 kHz
 cortex-m-systick = ["dep:cortex-m"]
