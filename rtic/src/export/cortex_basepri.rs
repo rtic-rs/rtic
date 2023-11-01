@@ -3,7 +3,7 @@ use cortex_m::register::basepri;
 pub use cortex_m::{
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, DWT, NVIC, SCB, SYST},
+    peripheral::{scb::SystemHandler, DWT, SCB, SYST},
     Peripherals,
 };
 
