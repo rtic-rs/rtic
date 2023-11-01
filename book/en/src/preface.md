@@ -31,12 +31,14 @@ is no software kernel and that it relies on external HALs.
 
 This section gives a background to the RTIC model. Feel free to skip to section [RTIC the model](preface.md#rtic-the-model) for a TL;DR.
 
-The RTIC framework takes the outset from real-time systems research at Luleå University of Technology (LTU) Sweden. RTIC is inspired by the concurrency model of the [Timber] language, the [RTFM-SRP] based scheduler, the [RTFM-core] language and [Abstract Timer] implementation. For a full list of related research see [TODO].
+The RTIC framework takes the outset from real-time systems research at Luleå University of Technology (LTU) Sweden. RTIC is inspired by the concurrency model of the [Timber] language, the [RTFM-SRP] based scheduler, the [RTFM-core] language and [Abstract Timer] implementation. For a full list of related research see [RTFM][rtfm_publications] and [RTIC][rtic_publications] publications.
 
-[Timber]: https://timber-lang.org/
+[Timber]: https://web.archive.org/web/20230325133224/http://timber-lang.org/
 [RTFM-SRP]: https://www.diva-portal.org/smash/get/diva2:1005680/FULLTEXT01.pdf
 [RTFM-core]: https://ltu.diva-portal.org/smash/get/diva2:1013248/FULLTEXT01.pdf
 [Abstract Timer]: https://ltu.diva-portal.org/smash/get/diva2:1013030/FULLTEXT01.pdf
+[rtfm_publications]: http://ltu.diva-portal.org/smash/resultList.jsf?query=RTFM&language=en&searchType=SIMPLE&noOfRows=50&sortOrder=author_sort_asc&sortOrder2=title_sort_asc&onlyFullText=false&sf=all&aq=%5B%5B%5D%5D&aqe=%5B%5D&aq2=%5B%5B%5D%5D&af=%5B%5D
+[rtic_publications]: http://ltu.diva-portal.org/smash/resultList.jsf?query=RTIC&language=en&searchType=SIMPLE&noOfRows=50&sortOrder=author_sort_asc&sortOrder2=title_sort_asc&onlyFullText=false&sf=all&aq=%5B%5B%5D%5D&aqe=%5B%5D&aq2=%5B%5B%5D%5D&af=%5B%5D
 
 ## Stack Resource Policy based Scheduling
 
@@ -149,7 +151,7 @@ The answer is - improved ergonomics! A recurring use case is to have task perfor
 
 Rust `async`/`await` support is still incomplete and/or under development (e.g., there are no stable way to express `async` closures, precluding use in iterator patterns). Nevertheless, Rust `async`/`await` is production ready and covers most common use cases. 
 
-An important property is that futures are composable, thus you can await either, all, or any combination of possible futures (allowing e.g., timeouts and/or asynchronous errors to be promptly handled). For more details and examples see Section [todo].
+An important property is that futures are composable, thus you can await either, all, or any combination of possible futures (allowing e.g., timeouts and/or asynchronous errors to be promptly handled).
 
 ## RTIC the model
 
