@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- i.MX RT support
+
 ### Fixed
 
 - Fix STM32 support for other chip families

@@ -156,6 +156,7 @@ jobs:
 
       - name: Configure rust target (v6, v7)
         run: |
+          rustup target add thumbv7em-none-eabihf
           rustup target add thumbv7m-none-eabi
           rustup target add thumbv6m-none-eabi
           rustup component add rust-src
