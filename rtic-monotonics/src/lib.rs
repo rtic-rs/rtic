@@ -33,6 +33,9 @@ pub mod systick;
 #[cfg(feature = "rp2040")]
 pub mod rp2040;
 
+#[cfg(feature = "imxrt")]
+pub mod imxrt;
+
 #[cfg(any(
     feature = "nrf52810",
     feature = "nrf52811",
@@ -64,6 +67,7 @@ pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     feature = "nrf5340-app",
     feature = "nrf5340-net",
     feature = "nrf9160",
+    feature = "imxrt",
     stm32,
 ))]
 pub(crate) unsafe fn set_monotonic_prio(

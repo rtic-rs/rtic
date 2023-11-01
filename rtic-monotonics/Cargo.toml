@@ -1,6 +1,6 @@
 [package]
 name = "rtic-monotonics"
-version = "1.2.0"
+version = "1.2.1"
 
 edition = "2021"
 authors = [
@@ -45,6 +45,9 @@ nrf9160-pac = { version = "0.12.2", optional = true }
 # STM32
 stm32-metapac = { version = "14.0.0", optional = true }
 
+# i.MX RT
+imxrt-ral = { version = "0.5.3", optional = true }
+
 [build-dependencies]
 proc-macro2 = { version = "1.0.36", optional = true }
 quote = { version = "1.0.15", optional = true }
@@ -73,6 +76,12 @@ nrf52840 = ["dep:cortex-m", "dep:nrf52840-pac", "dep:critical-section"]
 nrf5340-app = ["dep:cortex-m", "dep:nrf5340-app-pac", "dep:critical-section"]
 nrf5340-net = ["dep:cortex-m", "dep:nrf5340-net-pac", "dep:critical-section"]
 nrf9160 = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
+
+# i.MX RT Timers
+# Use as `features = ["imxrt_gpt1"]`
+imxrt = ["dep:cortex-m", "dep:imxrt-ral"]
+imxrt_gpt1 = ["imxrt"]
+imxrt_gpt2 = ["imxrt"]
 
 # STM32 timers
 # Use as `features = ["stm32g081kb", "stm32_tim15"]`

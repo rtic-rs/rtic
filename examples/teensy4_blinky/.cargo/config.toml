@@ -1,0 +1,6 @@
+[target.thumbv7em-none-eabihf]
+runner = "python3 run.py"
+rustflags = ["-C", "link-arg=-Tt4link.x"]
+
+[build]
+target = "thumbv7em-none-eabihf" # Teensy 4
