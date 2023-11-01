@@ -23,7 +23,6 @@
 #![no_std]
 #![deny(missing_docs)]
 #![allow(incomplete_features)]
-#![feature(async_fn_in_trait)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub use rtic_time::{Monotonic, TimeoutError, TimerQueue};

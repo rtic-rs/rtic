@@ -193,7 +193,7 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
 
     // Collect errors if any and return/halt
     if !error.is_empty() {
-        let mut err = error.get(0).unwrap().clone();
+        let mut err = error.first().unwrap().clone();
         error.iter().for_each(|e| err.combine(e.clone()));
         return Err(err);
     }

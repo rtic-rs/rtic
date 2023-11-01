@@ -6,7 +6,6 @@
 #![no_std]
 #![deny(missing_docs)]
 #![allow(incomplete_features)]
-#![feature(async_fn_in_trait)]
 
 use core::future::{poll_fn, Future};
 use core::pin::Pin;

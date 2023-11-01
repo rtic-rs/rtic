@@ -23,7 +23,7 @@ pub struct Target<'a> {
 }
 
 impl<'a> Target<'a> {
-    const DEFAULT_FEATURES: &str = "test-critical-section";
+    const DEFAULT_FEATURES: &'static str = "test-critical-section";
 
     pub const fn new(triple: &'a str, has_std: bool) -> Self {
         Self { triple, has_std }
