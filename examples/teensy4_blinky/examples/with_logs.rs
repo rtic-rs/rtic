@@ -60,7 +60,7 @@ mod app {
         poll_log.set_load_timer_value(LOG_POLL_INTERVAL);
         poll_log.enable();
 
-        // Initialize the systick interrupt & obtain the token to prove that we did
+        // Initialize Monotonic
         gpt1.set_clock_source(hal::gpt::ClockSource::PeripheralClock);
         let gpt1_mono_token = rtic_monotonics::create_imxrt_gpt1_token!();
         Mono::start(board::PERCLK_FREQUENCY, gpt1.release(), gpt1_mono_token);
