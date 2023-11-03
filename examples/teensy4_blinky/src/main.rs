@@ -35,7 +35,7 @@ mod app {
             ..
         } = board::t40(cx.device);
 
-        // Initialize the systick interrupt & obtain the token to prove that we did
+        // Initialize Monotonic
         gpt1.set_clock_source(hal::gpt::ClockSource::PeripheralClock);
         let gpt1_mono_token = rtic_monotonics::create_imxrt_gpt1_token!();
         Mono::start(board::PERCLK_FREQUENCY, gpt1.release(), gpt1_mono_token);
