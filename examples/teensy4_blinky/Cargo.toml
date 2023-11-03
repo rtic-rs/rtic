@@ -32,6 +32,7 @@ imxrt-log = { version = "0.1.1", default-features = false, features = [
     "lpuart",
 ] }
 log = "0.4.20"
+imxrt-uart-panic = "0.1.1"
 
 # this lets you use `cargo fix`!
 [[bin]]
