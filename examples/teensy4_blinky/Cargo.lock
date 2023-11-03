@@ -194,6 +194,7 @@ version = "0.1.0"
 dependencies = [
  "embedded-hal 0.2.7",
  "imxrt-log",
+ "imxrt-uart-panic",
  "log",
  "nb 1.1.0",
  "rtic",
@@ -276,6 +277,19 @@ checksum = "3ab95fbf48de9bd0f127ecdae1b482f4250c7c1258ff6dec484c4df92ae293c8"
 dependencies = [
  "cfg-if",
  "cortex-m-rt",
+]
+
+[[package]]
+name = "imxrt-uart-panic"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbec2a318caf77dd2299f23982a2cc3435af8cc0b99787eaba3dbff711efc1d3"
+dependencies = [
+ "cortex-m",
+ "embedded-hal 0.2.7",
+ "imxrt-hal",
+ "imxrt-ral",
+ "nb 1.1.0",
 ]
 
 [[package]]
@@ -434,7 +448,6 @@ dependencies = [
  "embedded-hal 1.0.0-rc.1",
  "fugit",
  "imxrt-ral",
- "log",
  "rtic-time",
 ]
 

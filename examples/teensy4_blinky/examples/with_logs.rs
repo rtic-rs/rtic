@@ -3,8 +3,8 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
 
-mod common;
-common::uart_panic_handler!(lpuart6, p1, p0, 115200);
+use bsp::pins::common::{P0, P1};
+imxrt_uart_panic::register!(LPUART6, P1, P0, 115200, teensy4_panic::sos);
 
 use teensy4_bsp as bsp;
 
