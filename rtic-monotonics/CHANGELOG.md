@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Fix STM32 rollover race condition
 - Fix STM32 support for other chip families
 
 ## v1.2.0 - 2023-09-19
