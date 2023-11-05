@@ -35,7 +35,7 @@
 //! ```
 
 use crate::{Monotonic, TimeoutError, TimerQueue};
-use atomic_polyfill::{AtomicU64, Ordering};
+use atomic_polyfill::{compiler_fence, AtomicU64, Ordering};
 pub use fugit::{self, ExtU64};
 use stm32_metapac as pac;
 
@@ -135,26 +135,27 @@ macro_rules! make_timer {
         static $overflow: AtomicU64 = AtomicU64::new(0);
         static $tq: TimerQueue<$mono_name> = TimerQueue::new();
 
-        fn enable_timer() {
-            _generated::$timer::enable();
-            _generated::$timer::reset();
-        }
-
         impl $mono_name {
             /// Starts the monotonic timer.
             /// - `tim_clock_hz`: `TIMx` peripheral clock frequency.
             /// - `_interrupt_token`: Required for correct timer interrupt handling.
             /// This method must be called only once.
             pub fn start(tim_clock_hz: u32, _interrupt_token: impl crate::InterruptToken<Self>) {
-                enable_timer();
+                _generated::$timer::enable();
+                _generated::$timer::reset();
 
                 $timer.cr1().modify(|r| r.set_cen(false));
 
+                assert!((tim_clock_hz % TIMER_HZ) == 0, "Unable to find suitable timer prescaler value!");
                 let psc = tim_clock_hz / TIMER_HZ - 1;
                 $timer.psc().write(|r| r.set_psc(psc as u16));
 
-                // Enable update event interrupt.
+                // Enable full-period interrupt.
                 $timer.dier().modify(|r| r.set_uie(true));
+
+                // Configure and enable half-period interrupt
+                $timer.ccr(2).write(|r| r.set_ccr($bits::MAX - ($bits::MAX >> 1)));
+                $timer.dier().modify(|r| r.set_ccie(2, true));
 
                 // Trigger an update event to load the prescaler value to the clock.
                 $timer.egr().write(|r| r.set_ug(true));
@@ -185,15 +186,12 @@ macro_rules! make_timer {
                 &$tq
             }
 
-            fn is_overflow() -> bool {
-                $timer.sr().read().uif()
-            }
-
             /// Delay for some duration of time.
             #[inline]
             pub async fn delay(duration: <Self as Monotonic>::Duration) {
                 $tq.delay(duration).await;
             }
+
             /// Timeout at a specific time.
             pub async fn timeout_at<F: core::future::Future>(
                 instant: <Self as rtic_time::Monotonic>::Instant,
@@ -245,28 +243,28 @@ macro_rules! make_timer {
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
 
             fn now() -> Self::Instant {
-                let cnt = $timer.cnt().read().cnt();
+                // Credits to the `time-driver` of `embassy-stm32`.
+                // For more info, see the `imxrt` driver.
+                fn calc_now(period: u64, counter: $bits) -> u64 {
+                    (period << ($bits::BITS - 1)) + u64::from(counter ^ (((period & 1) as $bits) << ($bits::BITS - 1)))
+                }
 
-                // If the overflow bit is set, we add this to the timer value. It means the `on_interrupt`
-                // has not yet happened, and we need to compensate here.
-                let ovf: u64 = if Self::is_overflow() {
-                    $bits::MAX as u64 + 1
-                } else {
-                    0
-                };
+                // Important: period **must** be read first.
+                let period = $overflow.load(Ordering::Relaxed);
+                compiler_fence(Ordering::Acquire);
+                let counter = $timer.cnt().read().cnt();
 
-                Self::Instant::from_ticks(cnt as u64 + ovf + $overflow.load(Ordering::SeqCst))
+                Self::Instant::from_ticks(calc_now(period, counter))
             }
 
             fn set_compare(instant: Self::Instant) {
                 let now = Self::now();
-                let max_ticks = $bits::MAX as u64;
 
                 // Since the timer may or may not overflow based on the requested compare val, we check how many ticks are left.
                 let val = match instant.checked_duration_since(now) {
                     None => 0, // In the past
-                    Some(x) if x.ticks() <= max_ticks => instant.duration_since_epoch().ticks() as $bits, // Will not overflow
-                    Some(_x) => $timer.cnt().read().cnt().wrapping_add($bits::MAX - 1), // Will overflow
+                    Some(x) if x.ticks() <= ($bits::MAX as u64) => instant.duration_since_epoch().ticks() as $bits, // Will not overflow
+                    Some(_x) => 0, // Will overflow
                 };
 
                 $timer.ccr(1).write(|r| r.set_ccr(val));
@@ -289,10 +287,15 @@ macro_rules! make_timer {
             }
 
             fn on_interrupt() {
-                if Self::is_overflow() {
+                // Full period
+                if $timer.sr().read().uif() {
                     $timer.sr().modify(|r| r.set_uif(false));
-
-                    $overflow.fetch_add($bits::MAX as u64 + 1, Ordering::SeqCst);
+                    $overflow.fetch_add(1, Ordering::Relaxed);
+                }
+                // Half period
+                if $timer.sr().read().ccif(2) {
+                    $timer.sr().modify(|r| r.set_ccif(2, false));
+                    $overflow.fetch_add(1, Ordering::Relaxed);
                 }
             }
         }
