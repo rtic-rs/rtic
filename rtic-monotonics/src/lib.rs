@@ -4,7 +4,7 @@
 //! To enable the implementations, you must enable a feature for the specific MCU you're targeting.
 //!
 //! # Cortex-M Systick
-//! The [`systick`] monotonic works on all cortex-M parts, and requires that the feature `cortex-m-systick` is enabled.
+//! The `systick` monotonic works on all cortex-M parts, and requires that the feature `cortex-m-systick` is enabled.
 //!
 //! # RP2040
 //! The RP2040 monotonics require that the `rp2040` feature is enabled.
