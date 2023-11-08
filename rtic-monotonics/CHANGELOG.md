@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+## v1.3.0 - 2023-11-08
+
 ### Added
 
 - i.MX RT support
