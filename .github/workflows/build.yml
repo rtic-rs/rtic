@@ -484,7 +484,13 @@ jobs:
 
       - name: Push to stable release branch if master contains stable version
         if: ${{ env.versionmajor == env.STABLE_VERSION }}
-        run: git push -u origin master:${{ env.branch }}
+        run: |
+          # Get the full history of the branch leading up to current commit
+          git fetch --unshallow
+          # Make git aware of the release branch
+          git fetch -u origin ${{ env.branch }}
+          # Push the full history into the release branch
+          git push -u origin master:${{ env.branch }}
 
       - name: Else case, master did not contain the stable version
         if: ${{ env.versionmajor != env.STABLE_VERSION }}
