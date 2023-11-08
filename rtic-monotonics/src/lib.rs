@@ -9,6 +9,9 @@
 //! # RP2040
 //! The RP2040 monotonics require that the `rp2040` feature is enabled.
 //!
+//! # i.MX RT
+//! The i.MX RT monotonics require that the feature `imxrt_gpt1` or `imxrt_gpt2` is enabled.
+//!
 //! # nRF
 //! nRF monotonics require that one of the available `nrf52*` features is enabled.
 //!

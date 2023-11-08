@@ -1,7 +1,7 @@
 //! [`Monotonic`] impl for the 32-bit timers of the nRF series.
 //!
 //! Not all timers are available on all parts. Ensure that only the available
-//! timers are exposed by having the correct `nrf52*` feature enabled for `rtic-monotonic`.
+//! timers are exposed by having the correct `nrf52*` feature enabled for `rtic-monotonics`.
 //!
 //! # Example
 //!

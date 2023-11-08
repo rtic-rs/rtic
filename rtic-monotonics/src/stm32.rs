@@ -1,7 +1,7 @@
 //! [`Monotonic`] impl for the STM32.
 //!
 //! Not all timers are available on all parts. Ensure that only available
-//! timers are exposed by having the correct `stm32*` feature enabled for `rtic-monotonic`.
+//! timers are exposed by having the correct `stm32*` feature enabled for `rtic-monotonics`.
 //!
 //! # Example
 //!
@@ -137,8 +137,10 @@ macro_rules! make_timer {
 
         impl $mono_name {
             /// Starts the monotonic timer.
+            ///
             /// - `tim_clock_hz`: `TIMx` peripheral clock frequency.
             /// - `_interrupt_token`: Required for correct timer interrupt handling.
+            ///
             /// This method must be called only once.
             pub fn start(tim_clock_hz: u32, _interrupt_token: impl crate::InterruptToken<Self>) {
                 _generated::$timer::enable();

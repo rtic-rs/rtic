@@ -1,4 +1,4 @@
-//! [`Monotonic`] impl for the i.MX RT.
+//! [`Monotonic`] implementations for i.MX RT's GPT peripherals.
 //!
 //! # Example
 //!
@@ -55,7 +55,7 @@ macro_rules! __internal_create_imxrt_timer_interrupt {
     }};
 }
 
-/// Register GPT1 interrupt for the monotonic.
+/// Register the GPT1 interrupt for the monotonic.
 #[cfg(feature = "imxrt_gpt1")]
 #[macro_export]
 macro_rules! create_imxrt_gpt1_token {
@@ -64,7 +64,7 @@ macro_rules! create_imxrt_gpt1_token {
     }};
 }
 
-/// Register GPT2 interrupt for the monotonic.
+/// Register the GPT2 interrupt for the monotonic.
 #[cfg(feature = "imxrt_gpt2")]
 #[macro_export]
 macro_rules! create_imxrt_gpt2_token {
@@ -98,7 +98,7 @@ fn calc_now(period: u32, counter: u32) -> u64 {
 
 macro_rules! make_timer {
     ($mono_name:ident, $timer:ident, $period:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
-        /// Monotonic timer queue implementation.
+        /// Timer implementing [`Monotonic`] which runs at 1 MHz.
         $(
             #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
         )?
@@ -113,9 +113,11 @@ macro_rules! make_timer {
 
         impl $mono_name {
             /// Starts the monotonic timer.
+            ///
             /// - `tick_freq_hz`: The tick frequency of the given timer.
             /// - `gpt`: The GPT timer register block instance.
             /// - `_interrupt_token`: Required for correct timer interrupt handling.
+            ///
             /// This method must be called only once.
             pub fn start(tick_freq_hz: u32, gpt: $timer, _interrupt_token: impl crate::InterruptToken<Self>) {
                 // Find a prescaler that creates our desired tick frequency

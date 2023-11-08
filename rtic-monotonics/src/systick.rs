@@ -5,7 +5,7 @@
 //!
 //! | Feature          | Tick rate | Precision |
 //! |:----------------:|----------:|----------:|
-//! | (none / default) |  1 Hz     |      1 ms |
+//! | (none / default) |  1 Hz     |       1 s |
 //! |   systick-100hz  | 100 Hz    |     10 ms |
 //! |   systick-10khz  | 10 KHz    |    0.1 ms |
 
@@ -67,7 +67,7 @@ cfg_if::cfg_if! {
     }
 }
 
-/// Systick implementing `rtic_monotonic::Monotonic` which runs at 1 kHz, 100Hz or 10 kHz.
+/// Systick implementing [`Monotonic`] which runs at 1 kHz, 100Hz or 10 kHz.
 pub struct Systick;
 
 impl Systick {
