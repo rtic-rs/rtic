@@ -5,9 +5,9 @@
 //!
 //! | Feature          | Tick rate | Precision |
 //! |:----------------:|----------:|----------:|
-//! | (none / default) |  1 Hz     |       1 s |
+//! | (none / default) |  1 kHz    |      1 ms |
 //! |   systick-100hz  | 100 Hz    |     10 ms |
-//! |   systick-10khz  | 10 KHz    |    0.1 ms |
+//! |   systick-10khz  | 10 kHz    |    0.1 ms |
 
 //! # Example
 //!
