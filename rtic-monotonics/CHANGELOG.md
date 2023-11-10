@@ -7,11 +7,6 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
-### Fixed
-
-- Missing documentation for i.MX RT monotonics
-- Incorrect documentation of systick monotonic timer precision
-
 ## v1.3.0 - 2023-11-08
 
 ### Added
