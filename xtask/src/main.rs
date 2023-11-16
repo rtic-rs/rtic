@@ -54,6 +54,8 @@ const ARMV6M: Target = Target::new("thumbv6m-none-eabi", false);
 const ARMV7M: Target = Target::new("thumbv7m-none-eabi", false);
 const ARMV8MBASE: Target = Target::new("thumbv8m.base-none-eabi", false);
 const ARMV8MMAIN: Target = Target::new("thumbv8m.main-none-eabi", false);
+const RISCV32IMC: Target = Target::new("riscv32imc-unknown-none-elf", false);
+const RISCV32IMAC: Target = Target::new("riscv32imac-unknown-none-elf", false);
 
 fn main() -> anyhow::Result<()> {
     // if there's an `xtask` folder, we're *probably* at the root of this repo (we can't just
@@ -163,15 +165,15 @@ fn main() -> anyhow::Result<()> {
         Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
         Commands::Clippy(args) => {
             info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(globals, &cargologlevel, &args, backend)
+            cargo_clippy(globals, &cargologlevel, args, backend)
         }
         Commands::Check(args) => {
             info!("Checking on backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Check, &cargologlevel, &args, backend)
+            cargo(globals, BuildOrCheck::Check, &cargologlevel, args, backend)
         }
         Commands::Build(args) => {
             info!("Building for backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Build, &cargologlevel, &args, backend)
+            cargo(globals, BuildOrCheck::Build, &cargologlevel, args, backend)
         }
         Commands::ExampleCheck => {
             info!("Checking on backend: {backend:?}");
@@ -221,7 +223,7 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Test(args) => {
             info!("Running cargo test on backend: {backend:?}");
-            cargo_test(globals, &args, backend)
+            cargo_test(globals, args, backend)
         }
         Commands::Book(args) => {
             info!("Running mdbook");

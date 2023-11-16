@@ -1,4 +1,7 @@
-use crate::{cargo_command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN};
+use crate::{
+    cargo_command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN, RISCV32IMAC,
+    RISCV32IMC,
+};
 use clap::{Args, Parser, Subcommand};
 use core::fmt;
 
@@ -84,7 +87,7 @@ impl Package {
                 };
 
                 features
-                    .into_iter()
+                    .iter()
                     .map(ToString::to_string)
                     .map(Some)
                     .chain(std::iter::once(None))
@@ -155,6 +158,9 @@ pub enum Backends {
     Thumbv7,
     Thumbv8Base,
     Thumbv8Main,
+    RiscvEsp32C3,
+    Ricv32ImcClint, // not working yet (issues with portable-atomic features...)
+    Ricv32ImacClint,
 }
 
 impl Backends {
@@ -165,6 +171,8 @@ impl Backends {
             Backends::Thumbv7 => ARMV7M,
             Backends::Thumbv8Base => ARMV8MBASE,
             Backends::Thumbv8Main => ARMV8MMAIN,
+            Backends::Ricv32ImcClint => RISCV32IMC,
+            Backends::RiscvEsp32C3 | Backends::Ricv32ImacClint => RISCV32IMAC,
         }
     }
 
@@ -175,6 +183,8 @@ impl Backends {
             Backends::Thumbv7 => "thumbv7-backend",
             Backends::Thumbv8Base => "thumbv8base-backend",
             Backends::Thumbv8Main => "thumbv8main-backend",
+            Backends::RiscvEsp32C3 => "riscv-esp32c3-backend",
+            Backends::Ricv32ImcClint | Backends::Ricv32ImacClint => "riscv-clint-backend",
         }
     }
     #[allow(clippy::wrong_self_convention)]
@@ -182,6 +192,8 @@ impl Backends {
         match self {
             Backends::Thumbv6 | Backends::Thumbv8Base => "cortex-m-source-masking",
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
+            Backends::RiscvEsp32C3 => "riscv-esp32c3",
+            Backends::Ricv32ImcClint | Backends::Ricv32ImacClint => "riscv-clint",
         }
     }
     #[allow(clippy::wrong_self_convention)]
@@ -189,6 +201,8 @@ impl Backends {
         match self {
             Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
             Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
+            Backends::RiscvEsp32C3 => "rtic-uitestesp32c3",
+            Backends::Ricv32ImcClint | Backends::Ricv32ImacClint => "rtic-uitestclint",
         }
     }
 }
@@ -348,7 +362,7 @@ impl UsageExamplesOpt {
         let selected_examples: Option<Vec<String>> = self
             .examples
             .clone()
-            .map(|s| s.split(",").map(ToString::to_string).collect());
+            .map(|s| s.split(',').map(ToString::to_string).collect());
 
         if let Some(selected_examples) = selected_examples {
             if let Some(unfound_example) = selected_examples

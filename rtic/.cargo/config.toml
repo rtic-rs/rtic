@@ -4,7 +4,13 @@ runner = "qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -semiho
 [target.thumbv7m-none-eabi]
 runner = "qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -kernel"
 
-[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+[target.riscv32imc-unknown-none-elf]
+runner = "qemu-system-riscv32 -machine sifive_e,revb=true -nographic -kernel"
+
+[target.riscv32imac-unknown-none-elf]
+runner = "qemu-system-riscv32 -machine sifive_e,revb=true -nographic -kernel"
+
+[target.'cfg(all(any(target_arch = "arm", target_arch = "riscv32"), target_os = "none"))']
 rustflags = [
   "-C", "link-arg=-Tlink.x",
 ]
