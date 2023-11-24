@@ -1,0 +1,21 @@
+[package]
+name = "hifive1_examples"
+categories = ["embedded", "no-std"]
+description = "Examples for the HiFive1 board"
+license = "MIT OR Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+rtic = { git = "https://github.com/romancardenas/rtic.git", branch = "master", features = ["riscv-clint-backend"] }
+# rtic = {path = "../rtic-fork-romancardenas/rtic", features = ["riscv-clint-backend"] }
+hifive1 = { git = "https://github.com/romancardenas/hifive1.git", features = ["board-redv"] }
+panic-halt = "0.2.0"
+e310x = { git = "https://github.com/greenlsi/e310x.git", branch = "master", features = ["rt"]}
+riscv-rt = {git = "https://github.com/rust-embedded/riscv-rt.git"}
+riscv = "0.10.1"
+
+[features]
+qemu = []

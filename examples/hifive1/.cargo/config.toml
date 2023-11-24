@@ -1,0 +1,11 @@
+[target.'cfg(all(target_arch = "riscv32", target_os = "none"))']
+runner = "qemu-system-riscv32 -machine sifive_e,revb=true -nographic -kernel"
+# runner = "riscv64-unknown-elf-gdb -q -x gdb_init"
+rustflags = [
+  "-C", "link-arg=-Thifive1-link.x",
+]
+
+[build]
+# Pick ONE of these compilation targets
+target = "riscv32imac-unknown-none-elf"    # non-atomic support
+# target = "riscv32imac-unknown-none-elf" # atomic support (partial)

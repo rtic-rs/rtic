@@ -1,5 +1,6 @@
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_halt as _;
 use riscv_rt as _;
