@@ -274,6 +274,95 @@ pub mod spi {
     }
 }
 
+#[cfg(feature = "unstable")]
+/// I2C bus sharing using [`Arbiter`]
+///
+/// An Example how to use it in RTIC application:
+/// ```ignore
+/// #[app(device = some_hal, peripherals = true, dispatchers = [TIM16])]
+/// mod app {
+///     use core::mem::MaybeUninit;
+///     use rtic_sync::{arbiter::{i2c::ArbiterDevice, Arbiter},
+///
+///     #[shared]
+///     struct Shared {}
+///
+///     #[local]
+///     struct Local {
+///         ens160: Ens160<ArbiterDevice<'static, I2c<'static, I2C1>>>,
+///     }
+///
+///     #[init(local = [
+///         i2c_arbiter: MaybeUninit<Arbiter<I2c<'static, I2C1>>> = MaybeUninit::uninit(),
+///     ])]
+///     fn init(cx: init::Context) -> (Shared, Local) {
+///         let i2c = I2c::new(cx.device.I2C1);
+///         let i2c_arbiter = cx.local.i2c_arbiter.write(Arbiter::new(i2c));
+///         let ens160 = Ens160::new(ArbiterDevice::new(i2c_arbiter), 0x52);
+///
+///         i2c_sensors::spawn(i2c_arbiter).ok();
+///
+///         (Shared {}, Local { ens160 })
+///     }
+///
+///     #[task(local = [ens160])]
+///     async fn i2c_sensors(cx: i2c_sensors::Context, i2c: &'static Arbiter<I2c<'static, I2C1>>) {
+///         use sensor::Asensor;
+///
+///         loop {
+///             // Use scope to make sure I2C access is dropped.
+///             {
+///                 // Read from sensor driver that wants to use I2C directly.
+///                 let mut i2c = i2c.access().await;
+///                 let status = Asensor::status(&mut i2c).await;
+///             }
+///
+///             // Read ENS160 sensor.
+///             let eco2 = cx.local.ens160.eco2().await;
+///         }
+///     }
+/// }
+/// ```
+pub mod i2c {
+    use super::Arbiter;
+    use embedded_hal::i2c::{AddressMode, ErrorType, Operation};
+    use embedded_hal_async::i2c::I2c;
+
+    /// [`Arbiter`]-based shared bus implementation for I2C.
+    pub struct ArbiterDevice<'a, BUS> {
+        bus: &'a Arbiter<BUS>,
+    }
+
+    impl<'a, BUS> ArbiterDevice<'a, BUS> {
+        /// Create a new [`ArbiterDevice`] for I2C.
+        pub fn new(bus: &'a Arbiter<BUS>) -> Self {
+            Self { bus }
+        }
+    }
+
+    impl<'a, BUS> ErrorType for ArbiterDevice<'a, BUS>
+    where
+        BUS: ErrorType,
+    {
+        type Error = BUS::Error;
+    }
+
+    impl<'a, BUS, A> I2c<A> for ArbiterDevice<'a, BUS>
+    where
+        BUS: I2c<A>,
+        A: AddressMode,
+    {
+        async fn transaction(
+            &mut self,
+            address: A,
+            operations: &mut [Operation<'_>],
+        ) -> Result<(), Self::Error> {
+            let mut bus = self.bus.access().await;
+            bus.transaction(address, operations).await
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
