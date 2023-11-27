@@ -208,7 +208,13 @@ impl embedded_hal::delay::DelayUs for Systick {
     fn delay_us(&mut self, us: u32) {
         #[cfg(feature = "systick-64bit")]
         let us = u64::from(us);
-        let done = Self::now() + us.micros_at_least();
+        let done = Self::now() + us.micros_at_least() + Self::TICK_PERIOD;
+        while Self::now() < done {}
+    }
+    fn delay_ms(&mut self, ms: u32) {
+        #[cfg(feature = "systick-64bit")]
+        let ms = u64::from(ms);
+        let done = Self::now() + ms.millis_at_least() + Self::TICK_PERIOD;
         while Self::now() < done {}
     }
 }

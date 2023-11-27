@@ -165,7 +165,11 @@ impl embedded_hal_async::delay::DelayUs for Timer {
 
 impl embedded_hal::delay::DelayUs for Timer {
     fn delay_us(&mut self, us: u32) {
-        let done = Self::now() + u64::from(us).micros_at_least();
+        let done = Self::now() + u64::from(us).micros_at_least() + Self::TICK_PERIOD;
+        while Self::now() < done {}
+    }
+    fn delay_ms(&mut self, ms: u32) {
+        let done = Self::now() + u64::from(ms).millis_at_least() + Self::TICK_PERIOD;
         while Self::now() < done {}
     }
 }
