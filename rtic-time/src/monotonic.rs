@@ -10,6 +10,9 @@ pub trait Monotonic {
     /// The time at time zero.
     const ZERO: Self::Instant;
 
+    /// The duration between two timer ticks.
+    const TICK_PERIOD: Self::Duration;
+
     /// The type for instant, defining an instant in time.
     ///
     /// **Note:** In all APIs in RTIC that use instants from this monotonic, this type will be used.
