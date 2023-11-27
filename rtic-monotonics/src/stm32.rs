@@ -243,6 +243,7 @@ macro_rules! make_timer {
             type Duration = fugit::TimerDurationU64<TIMER_HZ>;
 
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
+            const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
             fn now() -> Self::Instant {
                 // Credits to the `time-driver` of `embassy-stm32`.

@@ -17,7 +17,7 @@ static NOW: Mutex<Option<Instant>> = Mutex::new(None);
 pub struct Duration(u64);
 
 impl Duration {
-    pub fn from_ticks(millis: u64) -> Self {
+    pub const fn from_ticks(millis: u64) -> Self {
         Self(millis)
     }
 
@@ -161,6 +161,7 @@ impl TestMono {
 
 impl Monotonic for TestMono {
     const ZERO: Self::Instant = Instant::ZERO;
+    const TICK_PERIOD: Self::Duration = Duration::from_ticks(1);
 
     type Instant = Instant;
 
