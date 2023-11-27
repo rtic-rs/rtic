@@ -29,7 +29,7 @@
 use crate::{Monotonic, TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
-pub use fugit::{self, ExtU64};
+pub use fugit::{self, ExtU64, ExtU64Ceil};
 
 #[cfg(feature = "nrf52810")]
 use nrf52810_pac::{self as pac, Interrupt, TIMER0, TIMER1, TIMER2};
@@ -207,18 +207,18 @@ macro_rules! make_timer {
         impl embedded_hal_async::delay::DelayUs for $mono_name {
             #[inline]
             async fn delay_us(&mut self, us: u32) {
-                Self::delay((us as u64).micros()).await;
+                Self::delay((us as u64).micros_at_least()).await;
             }
 
             #[inline]
             async fn delay_ms(&mut self, ms: u32) {
-                Self::delay((ms as u64).millis()).await;
+                Self::delay((ms as u64).millis_at_least()).await;
             }
         }
 
         impl embedded_hal::delay::DelayUs for $mono_name {
             fn delay_us(&mut self, us: u32) {
-                let done = Self::now() + (us as u64).micros();
+                let done = Self::now() + (us as u64).micros_at_least();
                 while Self::now() < done {}
             }
         }

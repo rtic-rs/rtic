@@ -40,11 +40,11 @@ use cortex_m::peripheral::SYST;
 pub use fugit;
 cfg_if::cfg_if! {
     if #[cfg(feature = "systick-64bit")] {
-        pub use fugit::ExtU64;
+        pub use fugit::{ExtU64, ExtU64Ceil};
         use atomic_polyfill::AtomicU64;
         static SYSTICK_CNT: AtomicU64 = AtomicU64::new(0);
     } else {
-        pub use fugit::ExtU32;
+        pub use fugit::{ExtU32, ExtU32Ceil};
         use atomic_polyfill::AtomicU32;
         static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
     }
@@ -194,13 +194,13 @@ impl embedded_hal_async::delay::DelayUs for Systick {
     async fn delay_us(&mut self, us: u32) {
         #[cfg(feature = "systick-64bit")]
         let us = u64::from(us);
-        Self::delay(us.micros()).await;
+        Self::delay(us.micros_at_least()).await;
     }
 
     async fn delay_ms(&mut self, ms: u32) {
         #[cfg(feature = "systick-64bit")]
         let ms = u64::from(ms);
-        Self::delay(ms.millis()).await;
+        Self::delay(ms.millis_at_least()).await;
     }
 }
 
@@ -208,7 +208,7 @@ impl embedded_hal::delay::DelayUs for Systick {
     fn delay_us(&mut self, us: u32) {
         #[cfg(feature = "systick-64bit")]
         let us = u64::from(us);
-        let done = Self::now() + us.micros();
+        let done = Self::now() + us.micros_at_least();
         while Self::now() < done {}
     }
 }

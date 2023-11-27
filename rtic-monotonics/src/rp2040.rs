@@ -28,7 +28,7 @@ use super::Monotonic;
 
 pub use super::{TimeoutError, TimerQueue};
 use core::future::Future;
-pub use fugit::{self, ExtU64};
+pub use fugit::{self, ExtU64, ExtU64Ceil};
 use rp2040_pac::{timer, Interrupt, NVIC, RESETS, TIMER};
 
 /// Timer implementing [`Monotonic`] which runs at 1 MHz.
@@ -155,17 +155,17 @@ impl Monotonic for Timer {
 #[cfg(feature = "embedded-hal-async")]
 impl embedded_hal_async::delay::DelayUs for Timer {
     async fn delay_us(&mut self, us: u32) {
-        Self::delay((us as u64).micros()).await;
+        Self::delay((us as u64).micros_at_least()).await;
     }
 
     async fn delay_ms(&mut self, ms: u32) {
-        Self::delay((ms as u64).millis()).await;
+        Self::delay((ms as u64).millis_at_least()).await;
     }
 }
 
 impl embedded_hal::delay::DelayUs for Timer {
     fn delay_us(&mut self, us: u32) {
-        let done = Self::now() + u64::from(us).micros();
+        let done = Self::now() + u64::from(us).micros_at_least();
         while Self::now() < done {}
     }
 }
