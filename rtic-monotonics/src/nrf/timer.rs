@@ -207,18 +207,18 @@ macro_rules! make_timer {
         impl embedded_hal_async::delay::DelayUs for $mono_name {
             #[inline]
             async fn delay_us(&mut self, us: u32) {
-                Self::delay((us as u64).micros_at_least()).await;
+                Self::delay(u64::from(us).micros_at_least()).await;
             }
 
             #[inline]
             async fn delay_ms(&mut self, ms: u32) {
-                Self::delay((ms as u64).millis_at_least()).await;
+                Self::delay(u64::from(ms).millis_at_least()).await;
             }
         }
 
         impl embedded_hal::delay::DelayUs for $mono_name {
             fn delay_us(&mut self, us: u32) {
-                let done = Self::now() + (us as u64).micros_at_least();
+                let done = Self::now() + u64::from(us).micros_at_least();
                 while Self::now() < done {}
             }
         }

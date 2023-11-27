@@ -155,11 +155,11 @@ impl Monotonic for Timer {
 #[cfg(feature = "embedded-hal-async")]
 impl embedded_hal_async::delay::DelayUs for Timer {
     async fn delay_us(&mut self, us: u32) {
-        Self::delay((us as u64).micros_at_least()).await;
+        Self::delay(u64::from(us).micros_at_least()).await;
     }
 
     async fn delay_ms(&mut self, ms: u32) {
-        Self::delay((ms as u64).millis_at_least()).await;
+        Self::delay(u64::from(ms).millis_at_least()).await;
     }
 }
 

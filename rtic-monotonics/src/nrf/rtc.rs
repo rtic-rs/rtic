@@ -171,12 +171,12 @@ macro_rules! make_rtc {
         impl embedded_hal_async::delay::DelayUs for $mono_name {
             #[inline]
             async fn delay_us(&mut self, us: u32) {
-               Self::delay((us as u64).micros_at_least()).await;
+               Self::delay(u64::from(us).micros_at_least()).await;
             }
 
             #[inline]
             async fn delay_ms(&mut self, ms: u32) {
-                Self::delay((ms as u64).millis_at_least()).await;
+                Self::delay(u64::from(ms).millis_at_least()).await;
             }
         }
 
