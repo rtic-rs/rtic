@@ -104,6 +104,7 @@ impl Monotonic for Timer {
     type Duration = fugit::TimerDurationU64<1_000_000>;
 
     const ZERO: Self::Instant = Self::Instant::from_ticks(0);
+    const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
     fn now() -> Self::Instant {
         let timer = Self::timer();

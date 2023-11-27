@@ -189,6 +189,7 @@ macro_rules! make_rtc {
 
         impl Monotonic for $mono_name {
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
+            const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
             type Instant = fugit::TimerInstantU64<32_768>;
             type Duration = fugit::TimerDurationU64<32_768>;

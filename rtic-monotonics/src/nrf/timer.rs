@@ -225,6 +225,7 @@ macro_rules! make_timer {
 
         impl Monotonic for $mono_name {
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
+            const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
             type Instant = fugit::TimerInstantU64<1_000_000>;
             type Duration = fugit::TimerDurationU64<1_000_000>;
