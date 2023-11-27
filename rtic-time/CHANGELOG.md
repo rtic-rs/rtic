@@ -16,5 +16,6 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Fixed
 
 - If the queue was non-empty and a new instant was added that was earlier than `head`, then the queue would no pend the monotonic handler. This would cause the new `head` to be dequeued at the wrong time.
+- `TimerQueue` did not wait long enough in `Duration` based delays
 
 ## [v1.0.0] - 2023-05-31
