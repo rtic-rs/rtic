@@ -211,7 +211,8 @@ fn timer_queue() {
             let elapsed = start.elapsed().as_ticks();
             println!("{total_millis} ticks delay reached after {elapsed} ticks");
 
-            if elapsed != total_millis {
+            // Expect a delay of one longer, to compensate for timer uncertainty
+            if elapsed != total_millis + 1 {
                 panic!(
                     "{total_millis} ticks delay was not on time ({elapsed} ticks passed instead)"
                 );
@@ -264,25 +265,25 @@ fn timer_queue() {
 
         if Instant::now() == 0.into() {
             // First, we want to be waiting for our 300 tick delay
-            assert_eq!(TestMono::compare(), Some(300.into()));
+            assert_eq!(TestMono::compare(), Some(301.into()));
         }
 
         if Instant::now() == 100.into() {
             // After 100 ticks, we enqueue a new delay that is supposed to last
             // until the 200-tick-mark
-            assert_eq!(TestMono::compare(), Some(200.into()));
+            assert_eq!(TestMono::compare(), Some(201.into()));
         }
 
-        if Instant::now() == 200.into() {
+        if Instant::now() == 201.into() {
             // After 200 ticks, we dequeue the 200-tick-mark delay and
             // requeue the 300 tick delay
-            assert_eq!(TestMono::compare(), Some(300.into()));
+            assert_eq!(TestMono::compare(), Some(301.into()));
         }
 
-        if Instant::now() == 300.into() {
+        if Instant::now() == 301.into() {
             // After 300 ticks, we dequeue the 300-tick-mark delay and
             // go to the 400 tick delay that is already enqueued
-            assert_eq!(TestMono::compare(), Some(400.into()));
+            assert_eq!(TestMono::compare(), Some(401.into()));
         }
     }
 
