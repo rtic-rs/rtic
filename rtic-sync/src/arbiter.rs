@@ -352,6 +352,26 @@ pub mod i2c {
         BUS: I2c<A>,
         A: AddressMode,
     {
+        async fn read(&mut self, address: A, read: &mut [u8]) -> Result<(), Self::Error> {
+            let mut bus = self.bus.access().await;
+            bus.read(address, read).await
+        }
+
+        async fn write(&mut self, address: A, write: &[u8]) -> Result<(), Self::Error> {
+            let mut bus = self.bus.access().await;
+            bus.write(address, write).await
+        }
+
+        async fn write_read(
+            &mut self,
+            address: A,
+            write: &[u8],
+            read: &mut [u8],
+        ) -> Result<(), Self::Error> {
+            let mut bus = self.bus.access().await;
+            bus.write_read(address, write, read).await
+        }
+
         async fn transaction(
             &mut self,
             address: A,
