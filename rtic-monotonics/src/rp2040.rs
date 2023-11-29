@@ -60,6 +60,45 @@ impl Timer {
 
 static TIMER_QUEUE: TimerQueue<Timer> = TimerQueue::new();
 
+// Forward timerqueue interface
+impl Timer {
+    /// Used to access the underlying timer queue
+    #[doc(hidden)]
+    pub fn __tq() -> &'static TimerQueue<Timer> {
+        &TIMER_QUEUE
+    }
+
+    /// Timeout at a specific time.
+    #[inline]
+    pub async fn timeout_at<F: Future>(
+        instant: <Self as Monotonic>::Instant,
+        future: F,
+    ) -> Result<F::Output, TimeoutError> {
+        TIMER_QUEUE.timeout_at(instant, future).await
+    }
+
+    /// Timeout after a specific duration.
+    #[inline]
+    pub async fn timeout_after<F: Future>(
+        duration: <Self as Monotonic>::Duration,
+        future: F,
+    ) -> Result<F::Output, TimeoutError> {
+        TIMER_QUEUE.timeout_after(duration, future).await
+    }
+
+    /// Delay for some duration of time.
+    #[inline]
+    pub async fn delay(duration: <Self as Monotonic>::Duration) {
+        TIMER_QUEUE.delay(duration).await;
+    }
+
+    /// Delay to some specific time instant.
+    #[inline]
+    pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
+        TIMER_QUEUE.delay_until(instant).await;
+    }
+}
+
 impl Monotonic for Timer {
     type Instant = fugit::TimerInstantU64<1_000_000>;
     type Duration = fugit::TimerDurationU64<1_000_000>;
@@ -111,10 +150,6 @@ impl Monotonic for Timer {
     fn enable_timer() {}
 
     fn disable_timer() {}
-
-    fn __tq() -> &'static TimerQueue<Timer> {
-        &TIMER_QUEUE
-    }
 }
 
 rtic_time::embedded_hal_delay_impl_fugit64!(Timer);
