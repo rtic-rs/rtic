@@ -188,20 +188,29 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
         duration: Mono::Duration,
         future: F,
     ) -> Result<F::Output, TimeoutError> {
+        let now = Mono::now();
+        let mut timeout = now + duration;
+        if now != timeout {
+            timeout = timeout + Mono::TICK_PERIOD;
+        }
+
         // Wait for one period longer, because by definition timers have an uncertainty
         // of one period, so waiting for 'at least' needs to compensate for that.
-        self.timeout_at(Mono::now() + duration + Mono::TICK_PERIOD, future)
-            .await
+        self.timeout_at(timeout, future).await
     }
 
     /// Delay for at least some duration of time.
     #[inline]
     pub async fn delay(&self, duration: Mono::Duration) {
         let now = Mono::now();
+        let mut timeout = now + duration;
+        if now != timeout {
+            timeout = timeout + Mono::TICK_PERIOD;
+        }
 
         // Wait for one period longer, because by definition timers have an uncertainty
         // of one period, so waiting for 'at least' needs to compensate for that.
-        self.delay_until(now + duration + Mono::TICK_PERIOD).await;
+        self.delay_until(timeout).await;
     }
 
     /// Delay to some specific time instant.

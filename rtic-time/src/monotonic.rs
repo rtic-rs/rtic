@@ -111,12 +111,45 @@ pub trait Monotonic: Sized + 'static {
     }
 }
 
-/// Creates impl blocks for `embedded_hal::delay::DelayUs` and
-/// `embedded_hal_async::delay::DelayUs`, based on `fugit::ExtU64Ceil`.
+/// Creates impl blocks for `embedded_hal::delay::DelayUs`,
+/// based on `fugit::ExtU64Ceil`.
 #[macro_export]
 macro_rules! embedded_hal_delay_impl_fugit64 {
     ($t:ty) => {
-        #[cfg(feature = "embedded-hal-async")]
+        impl ::embedded_hal::delay::DelayUs for $t {
+            fn delay_us(&mut self, us: u32) {
+                use ::fugit::ExtU64Ceil;
+
+                let now = Self::now();
+                let mut done = now + u64::from(us).micros_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done = done + Self::TICK_PERIOD;
+                }
+
+                while Self::now() < done {}
+            }
+            fn delay_ms(&mut self, ms: u32) {
+                use ::fugit::ExtU64Ceil;
+
+                let now = Self::now();
+                let mut done = now + u64::from(ms).millis_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done = done + Self::TICK_PERIOD;
+                }
+
+                while Self::now() < done {}
+            }
+        }
+    };
+}
+
+/// Creates impl blocks for `embedded_hal_async::delay::DelayUs`,
+/// based on `fugit::ExtU64Ceil`.
+#[macro_export]
+macro_rules! embedded_hal_async_delay_impl_fugit64 {
+    ($t:ty) => {
         impl ::embedded_hal_async::delay::DelayUs for $t {
             #[inline]
             async fn delay_us(&mut self, us: u32) {
@@ -130,28 +163,48 @@ macro_rules! embedded_hal_delay_impl_fugit64 {
                 Self::delay(u64::from(ms).millis_at_least()).await;
             }
         }
+    };
+}
 
+/// Creates impl blocks for `embedded_hal::delay::DelayUs`,
+/// based on `fugit::ExtU32Ceil`.
+#[macro_export]
+macro_rules! embedded_hal_delay_impl_fugit32 {
+    ($t:ty) => {
         impl ::embedded_hal::delay::DelayUs for $t {
             fn delay_us(&mut self, us: u32) {
-                use ::fugit::ExtU64Ceil;
-                let done = Self::now() + u64::from(us).micros_at_least() + Self::TICK_PERIOD;
+                use ::fugit::ExtU32Ceil;
+
+                let now = Self::now();
+                let mut done = now + us.micros_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done = done + Self::TICK_PERIOD;
+                }
+
                 while Self::now() < done {}
             }
             fn delay_ms(&mut self, ms: u32) {
-                use ::fugit::ExtU64Ceil;
-                let done = Self::now() + u64::from(ms).millis_at_least() + Self::TICK_PERIOD;
+                use ::fugit::ExtU32Ceil;
+
+                let now = Self::now();
+                let mut done = now + ms.millis_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done = done + Self::TICK_PERIOD;
+                }
+
                 while Self::now() < done {}
             }
         }
     };
 }
 
-/// Creates impl blocks for `embedded_hal::delay::DelayUs` and
-/// `embedded_hal_async::delay::DelayUs`, based on `fugit::ExtU32Ceil`.
+/// Creates impl blocks for `embedded_hal_async::delay::DelayUs`,
+/// based on `fugit::ExtU32Ceil`.
 #[macro_export]
-macro_rules! embedded_hal_delay_impl_fugit32 {
+macro_rules! embedded_hal_async_delay_impl_fugit32 {
     ($t:ty) => {
-        #[cfg(feature = "embedded-hal-async")]
         impl ::embedded_hal_async::delay::DelayUs for $t {
             #[inline]
             async fn delay_us(&mut self, us: u32) {
@@ -163,19 +216,6 @@ macro_rules! embedded_hal_delay_impl_fugit32 {
             async fn delay_ms(&mut self, ms: u32) {
                 use ::fugit::ExtU32Ceil;
                 Self::delay(ms.millis_at_least()).await;
-            }
-        }
-
-        impl ::embedded_hal::delay::DelayUs for $t {
-            fn delay_us(&mut self, us: u32) {
-                use ::fugit::ExtU32Ceil;
-                let done = Self::now() + us.micros_at_least() + Self::TICK_PERIOD;
-                while Self::now() < done {}
-            }
-            fn delay_ms(&mut self, ms: u32) {
-                use ::fugit::ExtU32Ceil;
-                let done = Self::now() + ms.millis_at_least() + Self::TICK_PERIOD;
-                while Self::now() < done {}
             }
         }
     };

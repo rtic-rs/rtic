@@ -4,11 +4,11 @@ version = "1.0.0"
 
 edition = "2021"
 authors = [
-  "The Real-Time Interrupt-driven Concurrency developers",
-  "Emil Fresk <emil.fresk@gmail.com>",
-  "Henrik Tjäder <henrik@tjaders.com>",
-  "Jorge Aparicio <jorge@japaric.io>",
-  "Per Lindgren <per.lindgren@ltu.se>",
+    "The Real-Time Interrupt-driven Concurrency developers",
+    "Emil Fresk <emil.fresk@gmail.com>",
+    "Henrik Tjäder <henrik@tjaders.com>",
+    "Jorge Aparicio <jorge@japaric.io>",
+    "Per Lindgren <per.lindgren@ltu.se>",
 ]
 categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "rtic-time lib TODO"
@@ -22,5 +22,9 @@ futures-util = { version = "0.3.25", default-features = false }
 rtic-common = { version = "1.0.0", path = "../rtic-common" }
 
 [dev-dependencies]
+embedded-hal = { version = "1.0.0-rc.1" }
+embedded-hal-async = { version = "1.0.0-rc.1" }
+fugit = "0.3.7"
 parking_lot = "0.12"
 cassette = "0.2"
+cooked-waker = "5.0.0"
