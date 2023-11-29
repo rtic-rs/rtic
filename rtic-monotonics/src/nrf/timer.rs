@@ -160,10 +160,46 @@ macro_rules! make_timer {
                 }
             }
 
+            /// Used to access the underlying timer queue
+            #[doc(hidden)]
+            pub fn __tq() -> &'static TimerQueue<$mono_name> {
+                &$tq
+            }
+
             #[inline(always)]
             fn is_overflow() -> bool {
                 let timer = unsafe { &*$timer::PTR };
                 timer.events_compare[1].read().bits() & 1 != 0
+            }
+
+            /// Timeout at a specific time.
+            #[inline]
+            pub async fn timeout_at<F: Future>(
+                instant: <Self as Monotonic>::Instant,
+                future: F,
+            ) -> Result<F::Output, TimeoutError> {
+                $tq.timeout_at(instant, future).await
+            }
+
+            /// Timeout after a specific duration.
+            #[inline]
+            pub async fn timeout_after<F: Future>(
+                duration: <Self as Monotonic>::Duration,
+                future: F,
+            ) -> Result<F::Output, TimeoutError> {
+                $tq.timeout_after(duration, future).await
+            }
+
+            /// Delay for some duration of time.
+            #[inline]
+            pub async fn delay(duration: <Self as Monotonic>::Duration) {
+                $tq.delay(duration).await;
+            }
+
+            /// Delay to some specific time instant.
+            #[inline]
+            pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
+                $tq.delay_until(instant).await;
             }
         }
 
@@ -231,10 +267,6 @@ macro_rules! make_timer {
 
             fn pend_interrupt() {
                 pac::NVIC::pend(Interrupt::$timer);
-            }
-
-            fn __tq() -> &'static TimerQueue<$mono_name> {
-                &$tq
             }
         }
     };
