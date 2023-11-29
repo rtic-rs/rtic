@@ -69,46 +69,6 @@ pub trait Monotonic: Sized + 'static {
     ///
     /// NOTE: This may be called more than once.
     fn disable_timer() {}
-
-    /// Return a reference to the underlying timer queue
-    #[doc(hidden)]
-    fn __tq() -> &'static TimerQueue<Self>;
-
-    /// Delay for some duration of time.
-    #[inline]
-    fn delay(duration: <Self as Monotonic>::Duration) -> impl core::future::Future<Output = ()> {
-        async move {
-            Self::__tq().delay(duration).await;
-        }
-    }
-
-    /// Timeout at a specific time.
-    fn timeout_at<F: core::future::Future>(
-        instant: Self::Instant,
-        future: F,
-    ) -> impl core::future::Future<Output = Result<F::Output, TimeoutError>> {
-        async move { Self::__tq().timeout_at(instant, future).await }
-    }
-
-    /// Timeout after a specific duration.
-    #[inline]
-    fn timeout_after<F: core::future::Future>(
-        duration: <Self as Monotonic>::Duration,
-        future: F,
-    ) -> impl core::future::Future<Output = Result<F::Output, TimeoutError>> {
-        async move { Self::__tq().timeout_after(duration, future).await }
-    }
-
-    /// Delay to some specific time instant.
-    #[inline]
-    fn delay_until(
-        instant: <Self as Monotonic>::Instant,
-    ) -> impl core::future::Future<Output = ()> {
-        async move {
-            TimerQueue::<Self>::new();
-            Self::__tq().delay_until(instant).await;
-        }
-    }
 }
 
 /// Creates impl blocks for `embedded_hal::delay::DelayUs`,
