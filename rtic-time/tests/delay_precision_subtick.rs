@@ -174,11 +174,15 @@ macro_rules! subtick_test {
     ($start:expr, $min_duration:expr, $actual_duration:expr) => {{
         subtick_test!(@run $start, $actual_duration, async {
             let mut timer = SubtickTestTimer;
-            embedded_hal_async::delay::DelayUs::delay_ms(&mut timer, $min_duration).await;
+            embedded_hal_async::delay::DelayNs::delay_ms(&mut timer, $min_duration).await;
         });
         subtick_test!(@run $start, $actual_duration, async {
             let mut timer = SubtickTestTimer;
-            embedded_hal_async::delay::DelayUs::delay_us(&mut timer, 1000 * $min_duration).await;
+            embedded_hal_async::delay::DelayNs::delay_us(&mut timer, 1000 * $min_duration).await;
+        });
+        subtick_test!(@run $start, $actual_duration, async {
+            let mut timer = SubtickTestTimer;
+            embedded_hal_async::delay::DelayNs::delay_ns(&mut timer, 1000000 * $min_duration).await;
         });
         subtick_test!(@run $start, $actual_duration, async {
             SubtickTestTimer::delay($min_duration.millis_at_least()).await;
