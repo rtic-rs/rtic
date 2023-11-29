@@ -82,7 +82,7 @@ macro_rules! embedded_hal_delay_impl_fugit64 {
                 let mut done = now + u64::from(us).nanos_at_least();
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + Self::TICK_PERIOD;
+                    done += Self::TICK_PERIOD;
                 }
 
                 while Self::now() < done {}
@@ -95,7 +95,7 @@ macro_rules! embedded_hal_delay_impl_fugit64 {
                 let mut done = now + u64::from(us).micros_at_least();
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + Self::TICK_PERIOD;
+                    done += Self::TICK_PERIOD;
                 }
 
                 while Self::now() < done {}
@@ -108,7 +108,7 @@ macro_rules! embedded_hal_delay_impl_fugit64 {
                 let mut done = now + u64::from(ms).millis_at_least();
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + Self::TICK_PERIOD;
+                    done += Self::TICK_PERIOD;
                 }
 
                 while Self::now() < done {}
@@ -157,7 +157,7 @@ macro_rules! embedded_hal_delay_impl_fugit32 {
                 let mut done = now + us.nanos_at_least();
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + Self::TICK_PERIOD;
+                    done += Self::TICK_PERIOD;
                 }
 
                 while Self::now() < done {}
@@ -170,7 +170,7 @@ macro_rules! embedded_hal_delay_impl_fugit32 {
                 let mut done = now + us.micros_at_least();
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + Self::TICK_PERIOD;
+                    done += Self::TICK_PERIOD;
                 }
 
                 while Self::now() < done {}
@@ -183,7 +183,7 @@ macro_rules! embedded_hal_delay_impl_fugit32 {
                 let mut done = now + ms.millis_at_least();
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + Self::TICK_PERIOD;
+                    done += Self::TICK_PERIOD;
                 }
 
                 while Self::now() < done {}
