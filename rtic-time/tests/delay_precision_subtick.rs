@@ -13,8 +13,8 @@ use std::{
     task::Context,
 };
 
+use ::fugit::ExtU64Ceil;
 use cooked_waker::{IntoWaker, WakeRef};
-use embedded_hal_async::delay::DelayUs;
 use parking_lot::Mutex;
 use rtic_time::{Monotonic, TimerQueue};
 
@@ -108,30 +108,28 @@ impl WakeRef for WakeCounter {
 }
 
 macro_rules! subtick_test {
-    ($start:expr, $min_duration:expr, $actual_duration:expr) => {{
+    (@run $start:expr, $actual_duration:expr, $delay_fn:expr) => {{
         // forward clock to $start
         SubtickTestTimer::forward_to_subtick($start);
-        // call wait function
-        let mut timer = SubtickTestTimer;
 
-        let mut delay_ms_fut = std::pin::pin!(timer.delay_ms($min_duration));
-        let delay_ms_wakecounter = Arc::new(WakeCounter::default());
-        let delay_ms_waker = Arc::clone(&delay_ms_wakecounter).into_waker();
-        let mut delay_ms_context = Context::from_waker(&delay_ms_waker);
+        // call wait function
+        let delay_fn = $delay_fn;
+        let mut future = std::pin::pin!(delay_fn);
+
+        let wakecounter = Arc::new(WakeCounter::default());
+        let waker = Arc::clone(&wakecounter).into_waker();
+        let mut context = Context::from_waker(&waker);
 
         let mut finished_after: Option<u64> = None;
         for i in 0..10 * u64::from(SUBTICKS_PER_TICK) {
-            if Pin::new(&mut delay_ms_fut)
-                .poll(&mut delay_ms_context)
-                .is_ready()
-            {
+            if Future::poll(Pin::new(&mut future), &mut context).is_ready() {
                 if finished_after.is_none() {
                     finished_after = Some(i);
                 }
                 break;
             };
 
-            assert_eq!(delay_ms_wakecounter.get(), 0);
+            assert_eq!(wakecounter.get(), 0);
             SubtickTestTimer::tick();
         }
 
@@ -142,13 +140,13 @@ macro_rules! subtick_test {
                 1
             }
         };
-        assert_eq!(delay_ms_wakecounter.get(), expected_wakeups);
+        assert_eq!(wakecounter.get(), expected_wakeups);
 
         // Tick again to test that we don't get a second wake
         SubtickTestTimer::tick();
-        assert_eq!(delay_ms_wakecounter.get(), expected_wakeups);
+        assert_eq!(wakecounter.get(), expected_wakeups);
 
-        println!("Wake Counter: {}", delay_ms_wakecounter.get());
+        println!("Wake Counter: {}", wakecounter.get());
         assert_eq!(
             Some($actual_duration),
             finished_after,
@@ -156,6 +154,22 @@ macro_rules! subtick_test {
             $actual_duration,
             finished_after,
         );
+    }};
+    ($start:expr, $min_duration:expr, $actual_duration:expr) => {{
+        subtick_test!(@run $start, $actual_duration, async {
+            let mut timer = SubtickTestTimer;
+            embedded_hal_async::delay::DelayUs::delay_ms(&mut timer, $min_duration).await;
+        });
+        subtick_test!(@run $start, $actual_duration, async {
+            let mut timer = SubtickTestTimer;
+            embedded_hal_async::delay::DelayUs::delay_us(&mut timer, 1000 * $min_duration).await;
+        });
+        subtick_test!(@run $start, $actual_duration, async {
+            SubtickTestTimer::delay($min_duration.millis_at_least()).await;
+        });
+        subtick_test!(@run $start, $actual_duration, async {
+            let _ = SubtickTestTimer::timeout_after($min_duration.millis_at_least(), std::future::pending::<()>()).await;
+        });
     }};
 }
 
