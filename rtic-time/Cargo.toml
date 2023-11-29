@@ -3,6 +3,7 @@ name = "rtic-time"
 version = "1.0.0"
 
 edition = "2021"
+rust-version = "1.75"
 authors = [
     "The Real-Time Interrupt-driven Concurrency developers",
     "Emil Fresk <emil.fresk@gmail.com>",
