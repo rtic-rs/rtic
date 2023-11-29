@@ -189,7 +189,13 @@ impl Monotonic for Systick {
 }
 
 #[cfg(feature = "embedded-hal-async")]
-impl embedded_hal_async::delay::DelayUs for Systick {
+impl embedded_hal_async::delay::DelayNs for Systick {
+    async fn delay_ns(&mut self, ns: u32) {
+        #[cfg(feature = "systick-64bit")]
+        let ns = u64::from(ns);
+        Self::delay(ns.nanos()).await;
+    }
+
     async fn delay_us(&mut self, us: u32) {
         #[cfg(feature = "systick-64bit")]
         let us = u64::from(us);
@@ -203,7 +209,14 @@ impl embedded_hal_async::delay::DelayUs for Systick {
     }
 }
 
-impl embedded_hal::delay::DelayUs for Systick {
+impl embedded_hal::delay::DelayNs for Systick {
+    fn delay_ns(&mut self, ns: u32) {
+        #[cfg(feature = "systick-64bit")]
+        let ns = u64::from(ns);
+        let done = Self::now() + ns.nanos();
+        while Self::now() < done {}
+    }
+
     fn delay_us(&mut self, us: u32) {
         #[cfg(feature = "systick-64bit")]
         let us = u64::from(us);

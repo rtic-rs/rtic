@@ -219,7 +219,12 @@ macro_rules! make_timer {
         }
 
         #[cfg(feature = "embedded-hal-async")]
-        impl embedded_hal_async::delay::DelayUs for $mono_name {
+        impl embedded_hal_async::delay::DelayNs for $mono_name {
+            #[inline]
+            async fn delay_ns(&mut self, ns: u32) {
+                Self::delay((ns as u64).nanos()).await;
+            }
+
             #[inline]
             async fn delay_us(&mut self, us: u32) {
                 Self::delay((us as u64).micros()).await;
@@ -231,7 +236,12 @@ macro_rules! make_timer {
             }
         }
 
-        impl embedded_hal::delay::DelayUs for $mono_name {
+        impl embedded_hal::delay::DelayNs for $mono_name {
+            fn delay_ns(&mut self, ns: u32) {
+                let done = Self::now() + u64::from(ns).nanos();
+                while Self::now() < done {}
+            }
+
             fn delay_us(&mut self, us: u32) {
                 let done = Self::now() + (us as u64).micros();
                 while Self::now() < done {}
