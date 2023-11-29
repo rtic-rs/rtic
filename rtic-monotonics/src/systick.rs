@@ -35,7 +35,6 @@
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
 use atomic_polyfill::Ordering;
-use core::future::Future;
 use cortex_m::peripheral::SYST;
 pub use fugit;
 cfg_if::cfg_if! {
@@ -107,42 +106,7 @@ impl Systick {
 }
 
 // Forward timerqueue interface
-impl Systick {
-    /// Used to access the underlying timer queue
-    #[doc(hidden)]
-    pub fn __tq() -> &'static TimerQueue<Systick> {
-        &SYSTICK_TIMER_QUEUE
-    }
-
-    /// Timeout at a specific time.
-    pub async fn timeout_at<F: Future>(
-        instant: <Self as Monotonic>::Instant,
-        future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        SYSTICK_TIMER_QUEUE.timeout_at(instant, future).await
-    }
-
-    /// Timeout after a specific duration.
-    #[inline]
-    pub async fn timeout_after<F: Future>(
-        duration: <Self as Monotonic>::Duration,
-        future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        SYSTICK_TIMER_QUEUE.timeout_after(duration, future).await
-    }
-
-    /// Delay for some duration of time.
-    #[inline]
-    pub async fn delay(duration: <Self as Monotonic>::Duration) {
-        SYSTICK_TIMER_QUEUE.delay(duration).await;
-    }
-
-    /// Delay to some specific time instant.
-    #[inline]
-    pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
-        SYSTICK_TIMER_QUEUE.delay_until(instant).await;
-    }
-}
+impl Systick {}
 
 impl Monotonic for Systick {
     cfg_if::cfg_if! {
@@ -187,35 +151,17 @@ impl Monotonic for Systick {
     fn enable_timer() {}
 
     fn disable_timer() {}
-}
 
-#[cfg(feature = "embedded-hal-async")]
-impl embedded_hal_async::delay::DelayUs for Systick {
-    async fn delay_us(&mut self, us: u32) {
-        #[cfg(feature = "systick-64bit")]
-        let us = u64::from(us);
-        Self::delay(us.micros_at_least()).await;
-    }
-
-    async fn delay_ms(&mut self, ms: u32) {
-        #[cfg(feature = "systick-64bit")]
-        let ms = u64::from(ms);
-        Self::delay(ms.millis_at_least()).await;
+    fn __tq() -> &'static TimerQueue<Systick> {
+        &SYSTICK_TIMER_QUEUE
     }
 }
 
-impl embedded_hal::delay::DelayUs for Systick {
-    fn delay_us(&mut self, us: u32) {
-        #[cfg(feature = "systick-64bit")]
-        let us = u64::from(us);
-        let done = Self::now() + us.micros_at_least() + Self::TICK_PERIOD;
-        while Self::now() < done {}
-    }
-    fn delay_ms(&mut self, ms: u32) {
-        #[cfg(feature = "systick-64bit")]
-        let ms = u64::from(ms);
-        let done = Self::now() + ms.millis_at_least() + Self::TICK_PERIOD;
-        while Self::now() < done {}
+cfg_if::cfg_if! {
+    if #[cfg(feature = "systick-64bit")] {
+        rtic_time::embedded_hal_delay_impl_fugit64!(Systick);
+    } else {
+        rtic_time::embedded_hal_delay_impl_fugit32!(Systick);
     }
 }
 
