@@ -164,10 +164,10 @@ cfg_if::cfg_if! {
         #[cfg(feature = "embedded-hal-async")]
         rtic_time::embedded_hal_async_delay_impl_fugit64!(Systick);
     } else {
-        rtic_time::embedded_hal_delay_impl_fugit64!(Systick);
+        rtic_time::embedded_hal_delay_impl_fugit32!(Systick);
 
         #[cfg(feature = "embedded-hal-async")]
-        rtic_time::embedded_hal_async_delay_impl_fugit64!(Systick);
+        rtic_time::embedded_hal_async_delay_impl_fugit32!(Systick);
     }
 }
 
