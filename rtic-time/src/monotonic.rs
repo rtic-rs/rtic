@@ -75,11 +75,11 @@ pub trait Monotonic {
 macro_rules! embedded_hal_delay_impl_fugit64 {
     ($t:ty) => {
         impl ::embedded_hal::delay::DelayNs for $t {
-            fn delay_ns(&mut self, us: u32) {
+            fn delay_ns(&mut self, ns: u32) {
                 use ::fugit::ExtU64Ceil;
 
                 let now = Self::now();
-                let mut done = now + u64::from(us).nanos_at_least();
+                let mut done = now + u64::from(ns).nanos_at_least();
                 if now != done {
                     // Compensate for sub-tick uncertainty
                     done += Self::TICK_PERIOD;
@@ -124,9 +124,9 @@ macro_rules! embedded_hal_async_delay_impl_fugit64 {
     ($t:ty) => {
         impl ::embedded_hal_async::delay::DelayNs for $t {
             #[inline]
-            async fn delay_ns(&mut self, us: u32) {
+            async fn delay_ns(&mut self, ns: u32) {
                 use ::fugit::ExtU64Ceil;
-                Self::delay(u64::from(us).nanos_at_least()).await;
+                Self::delay(u64::from(ns).nanos_at_least()).await;
             }
 
             #[inline]
@@ -150,11 +150,11 @@ macro_rules! embedded_hal_async_delay_impl_fugit64 {
 macro_rules! embedded_hal_delay_impl_fugit32 {
     ($t:ty) => {
         impl ::embedded_hal::delay::DelayNs for $t {
-            fn delay_ns(&mut self, us: u32) {
+            fn delay_ns(&mut self, ns: u32) {
                 use ::fugit::ExtU32Ceil;
 
                 let now = Self::now();
-                let mut done = now + us.nanos_at_least();
+                let mut done = now + ns.nanos_at_least();
                 if now != done {
                     // Compensate for sub-tick uncertainty
                     done += Self::TICK_PERIOD;
@@ -199,9 +199,9 @@ macro_rules! embedded_hal_async_delay_impl_fugit32 {
     ($t:ty) => {
         impl ::embedded_hal_async::delay::DelayNs for $t {
             #[inline]
-            async fn delay_ns(&mut self, us: u32) {
+            async fn delay_ns(&mut self, ns: u32) {
                 use ::fugit::ExtU32Ceil;
-                Self::delay(us.nanos_at_least()).await;
+                Self::delay(ns.nanos_at_least()).await;
             }
 
             #[inline]
