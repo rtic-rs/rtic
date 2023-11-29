@@ -7,10 +7,12 @@ use std::{
     future::Future,
     pin::Pin,
     sync::{
-        atomic::{AtomicU64, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
         Arc,
     },
     task::Context,
+    thread::sleep,
+    time::Duration,
 };
 
 use ::fugit::ExtU64Ceil;
@@ -62,10 +64,10 @@ impl SubtickTestTimer {
 
         let compare = COMPARE_TICKS.lock();
 
-        println!(
-            "ticks: {ticks}, subticks: {subticks}, compare: {:?}",
-            *compare
-        );
+        // println!(
+        //     "ticks: {ticks}, subticks: {subticks}, compare: {:?}",
+        //     *compare
+        // );
         if subticks == 0 && Some(ticks) == *compare {
             unsafe {
                 Self::__tq().on_monotonic_interrupt();
@@ -78,6 +80,10 @@ impl SubtickTestTimer {
     pub fn forward_to_subtick(subtick: u64) {
         assert!(subtick < u64::from(SUBTICKS_PER_TICK));
         while Self::tick() != subtick {}
+    }
+
+    pub fn now_subticks() -> u64 {
+        NOW_SUBTICKS.load(Ordering::Relaxed)
     }
 
     fn __tq() -> &'static TimerQueue<Self> {
@@ -123,6 +129,18 @@ impl WakeRef for WakeCounter {
     }
 }
 
+struct OnDrop<F: FnOnce()>(Option<F>);
+impl<F: FnOnce()> OnDrop<F> {
+    pub fn new(f: F) -> Self {
+        Self(Some(f))
+    }
+}
+impl<F: FnOnce()> Drop for OnDrop<F> {
+    fn drop(&mut self) {
+        (self.0.take().unwrap())();
+    }
+}
+
 macro_rules! subtick_test {
     (@run $start:expr, $actual_duration:expr, $delay_fn:expr) => {{
         // forward clock to $start
@@ -162,7 +180,6 @@ macro_rules! subtick_test {
         SubtickTestTimer::tick();
         assert_eq!(wakecounter.get(), expected_wakeups);
 
-        println!("Wake Counter: {}", wakecounter.get());
         assert_eq!(
             Some($actual_duration),
             finished_after,
@@ -171,6 +188,42 @@ macro_rules! subtick_test {
             finished_after,
         );
     }};
+
+    (@run_blocking $start:expr, $actual_duration:expr, $delay_fn:expr) => {{
+        // forward clock to $start
+        SubtickTestTimer::forward_to_subtick($start);
+
+        let t_start = SubtickTestTimer::now_subticks();
+
+        let finished = AtomicBool::new(false);
+        std::thread::scope(|s|{
+            s.spawn(||{
+                let _finished_guard = OnDrop::new(|| finished.store(true, Ordering::Relaxed));
+                ($delay_fn)();
+            });
+            s.spawn(||{
+                sleep(Duration::from_millis(10));
+                while !finished.load(Ordering::Relaxed) {
+                    SubtickTestTimer::tick();
+                    sleep(Duration::from_millis(10));
+                }
+            });
+        });
+
+        let t_end = SubtickTestTimer::now_subticks();
+        let measured_duration = t_end - t_start;
+        assert_eq!(
+            $actual_duration,
+            measured_duration,
+            "Expected to wait {} ticks, but waited {:?} ticks.",
+            $actual_duration,
+            measured_duration,
+        );
+    }};
+
+
+
+
     ($start:expr, $min_duration:expr, $actual_duration:expr) => {{
         subtick_test!(@run $start, $actual_duration, async {
             let mut timer = SubtickTestTimer;
@@ -178,11 +231,11 @@ macro_rules! subtick_test {
         });
         subtick_test!(@run $start, $actual_duration, async {
             let mut timer = SubtickTestTimer;
-            embedded_hal_async::delay::DelayNs::delay_us(&mut timer, 1000 * $min_duration).await;
+            embedded_hal_async::delay::DelayNs::delay_us(&mut timer, 1_000 * $min_duration).await;
         });
         subtick_test!(@run $start, $actual_duration, async {
             let mut timer = SubtickTestTimer;
-            embedded_hal_async::delay::DelayNs::delay_ns(&mut timer, 1000000 * $min_duration).await;
+            embedded_hal_async::delay::DelayNs::delay_ns(&mut timer, 1_000_000 * $min_duration).await;
         });
         subtick_test!(@run $start, $actual_duration, async {
             SubtickTestTimer::delay($min_duration.millis_at_least()).await;
@@ -190,6 +243,23 @@ macro_rules! subtick_test {
         subtick_test!(@run $start, $actual_duration, async {
             let _ = SubtickTestTimer::timeout_after($min_duration.millis_at_least(), std::future::pending::<()>()).await;
         });
+
+        // Those are slow and unreliable; enable them when needed.
+        const ENABLE_BLOCKING_TESTS: bool = false;
+        if ENABLE_BLOCKING_TESTS {
+            subtick_test!(@run_blocking $start, $actual_duration, || {
+                let mut timer = SubtickTestTimer;
+                embedded_hal::delay::DelayNs::delay_ms(&mut timer, $min_duration);
+            });
+            subtick_test!(@run_blocking $start, $actual_duration, || {
+                let mut timer = SubtickTestTimer;
+                embedded_hal::delay::DelayNs::delay_us(&mut timer, 1_000 * $min_duration);
+            });
+            subtick_test!(@run_blocking $start, $actual_duration, || {
+                let mut timer = SubtickTestTimer;
+                embedded_hal::delay::DelayNs::delay_ns(&mut timer, 1_000_000 * $min_duration);
+            });
+        }
     }};
 }
 
