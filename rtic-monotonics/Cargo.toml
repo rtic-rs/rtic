@@ -28,8 +28,8 @@ rustdoc-flags = ["--cfg", "docsrs"]
 
 [dependencies]
 rtic-time = { version = "1.0.0", path = "../rtic-time" }
-embedded-hal = { version = "1.0.0-rc.1" }
-embedded-hal-async = { version = "1.0.0-rc.1", optional = true }
+embedded-hal = { version = "1.0.0-rc.2" }
+embedded-hal-async = { version = "1.0.0-rc.2", optional = true }
 fugit = { version = "0.3.6" }
 atomic-polyfill = "1"
 cfg-if = "1.0.0"
