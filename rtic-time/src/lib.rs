@@ -23,7 +23,7 @@ mod linked_list;
 mod monotonic;
 
 /// Holds a waker and at which time instant this waker shall be awoken.
-struct WaitingWaker<Mono: Monotonic + ?Sized> {
+struct WaitingWaker<Mono: Monotonic> {
     waker: Waker,
     release_at: Mono::Instant,
     was_popped: AtomicBool,
@@ -66,7 +66,7 @@ impl<Mono: Monotonic> PartialOrd for WaitingWaker<Mono> {
 /// complete.
 ///
 /// Do not call `mem::forget` on an awaited future, or there will be dragons!
-pub struct TimerQueue<Mono: Monotonic + ?Sized> {
+pub struct TimerQueue<Mono: Monotonic> {
     queue: LinkedList<WaitingWaker<Mono>>,
     initialized: AtomicBool,
 }

@@ -6,7 +6,7 @@
 ///
 /// The trait enforces that proper time-math is implemented between `Instant` and `Duration`. This
 /// is a requirement on the time library that the user chooses to use.
-pub trait Monotonic: Sized + 'static {
+pub trait Monotonic {
     /// The time at time zero.
     const ZERO: Self::Instant;
 
