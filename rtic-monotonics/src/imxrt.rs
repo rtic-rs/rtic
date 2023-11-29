@@ -244,6 +244,9 @@ macro_rules! make_timer {
         }
 
         rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
+
+        #[cfg(feature = "embedded-hal-async")]
+        rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
     };
 }
 
