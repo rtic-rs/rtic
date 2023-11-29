@@ -1,7 +1,5 @@
 //! A monotonic clock / counter definition.
 
-use crate::{TimeoutError, TimerQueue};
-
 /// # A monotonic clock / counter definition.
 ///
 /// ## Correctness

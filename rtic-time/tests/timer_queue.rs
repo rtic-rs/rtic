@@ -180,10 +180,6 @@ impl Monotonic for TestMono {
     fn pend_interrupt() {
         Self::tick(true);
     }
-
-    fn __tq() -> &'static TimerQueue<Self> {
-        Self::queue()
-    }
 }
 
 #[test]

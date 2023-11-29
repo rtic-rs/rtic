@@ -16,7 +16,7 @@ use std::{
 use ::fugit::ExtU64Ceil;
 use cooked_waker::{IntoWaker, WakeRef};
 use parking_lot::Mutex;
-use rtic_time::{Monotonic, TimerQueue};
+use rtic_time::{Monotonic, TimeoutError, TimerQueue};
 
 const SUBTICKS_PER_TICK: u32 = 10;
 struct SubtickTestTimer;
@@ -48,16 +48,13 @@ impl Monotonic for SubtickTestTimer {
             Self::__tq().on_monotonic_interrupt();
         }
     }
-
-    fn __tq() -> &'static TimerQueue<Self> {
-        &TIMER_QUEUE
-    }
 }
 
 impl SubtickTestTimer {
     pub fn init() {
         Self::__tq().initialize(Self)
     }
+
     pub fn tick() -> u64 {
         let now = NOW_SUBTICKS.fetch_add(1, Ordering::Relaxed) + 1;
         let ticks = now / u64::from(SUBTICKS_PER_TICK);
@@ -81,6 +78,25 @@ impl SubtickTestTimer {
     pub fn forward_to_subtick(subtick: u64) {
         assert!(subtick < u64::from(SUBTICKS_PER_TICK));
         while Self::tick() != subtick {}
+    }
+
+    fn __tq() -> &'static TimerQueue<Self> {
+        &TIMER_QUEUE
+    }
+
+    /// Delay for some duration of time.
+    #[inline]
+    pub async fn delay(duration: <Self as Monotonic>::Duration) {
+        Self::__tq().delay(duration).await;
+    }
+
+    /// Timeout after a specific duration.
+    #[inline]
+    pub async fn timeout_after<F: core::future::Future>(
+        duration: <Self as Monotonic>::Duration,
+        future: F,
+    ) -> Result<F::Output, TimeoutError> {
+        Self::__tq().timeout_after(duration, future).await
     }
 }
 
