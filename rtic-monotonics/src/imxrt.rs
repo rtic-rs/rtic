@@ -29,7 +29,7 @@
 //! }
 //! ```
 
-use crate::{Monotonic, TimerQueue};
+use crate::{Monotonic, TimeoutError, TimerQueue};
 use atomic_polyfill::{compiler_fence, AtomicU32, Ordering};
 pub use fugit::{self, ExtU64, ExtU64Ceil};
 
@@ -179,7 +179,47 @@ macro_rules! make_timer {
                     cortex_m::peripheral::NVIC::unmask(ral::Interrupt::$timer);
                 }
             }
+
+            /// Used to access the underlying timer queue
+            #[doc(hidden)]
+            pub fn __tq() -> &'static TimerQueue<$mono_name> {
+                &$tq
+            }
+
+            /// Delay for some duration of time.
+            #[inline]
+            pub async fn delay(duration: <Self as Monotonic>::Duration) {
+                $tq.delay(duration).await;
+            }
+
+            /// Timeout at a specific time.
+            pub async fn timeout_at<F: core::future::Future>(
+                instant: <Self as rtic_time::Monotonic>::Instant,
+                future: F,
+            ) -> Result<F::Output, TimeoutError> {
+                $tq.timeout_at(instant, future).await
+            }
+
+            /// Timeout after a specific duration.
+            #[inline]
+            pub async fn timeout_after<F: core::future::Future>(
+                duration: <Self as Monotonic>::Duration,
+                future: F,
+            ) -> Result<F::Output, TimeoutError> {
+                $tq.timeout_after(duration, future).await
+            }
+
+            /// Delay to some specific time instant.
+            #[inline]
+            pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
+                $tq.delay_until(instant).await;
+            }
         }
+
+        rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
+
+        #[cfg(feature = "embedded-hal-async")]
+        rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
 
         impl Monotonic for $mono_name {
             type Instant = fugit::TimerInstantU64<TIMER_HZ>;
@@ -237,16 +277,7 @@ macro_rules! make_timer {
                     ral::write_reg!(ral::gpt, gpt, SR, OF1: 1);
                 }
             }
-
-            fn __tq() -> &'static TimerQueue<Self> {
-                &$tq
-            }
         }
-
-        rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
-
-        #[cfg(feature = "embedded-hal-async")]
-        rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
     };
 }
 
