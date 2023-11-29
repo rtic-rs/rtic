@@ -197,7 +197,7 @@ pub mod spi {
     use super::Arbiter;
     use embedded_hal::digital::OutputPin;
     use embedded_hal_async::{
-        delay::DelayUs,
+        delay::DelayNs,
         spi::{ErrorType, Operation, SpiBus, SpiDevice},
     };
     use embedded_hal_bus::spi::DeviceError;
@@ -229,7 +229,7 @@ pub mod spi {
         Word: Copy + 'static,
         BUS: SpiBus<Word>,
         CS: OutputPin,
-        D: DelayUs,
+        D: DelayNs,
     {
         async fn transaction(
             &mut self,
@@ -246,10 +246,10 @@ pub mod spi {
                         Operation::Write(buf) => bus.write(buf).await,
                         Operation::Transfer(read, write) => bus.transfer(read, write).await,
                         Operation::TransferInPlace(buf) => bus.transfer_in_place(buf).await,
-                        Operation::DelayUs(us) => match bus.flush().await {
+                        Operation::DelayNs(ns) => match bus.flush().await {
                             Err(e) => Err(e),
                             Ok(()) => {
-                                self.delay.delay_us(*us).await;
+                                self.delay.delay_ns(*ns).await;
                                 Ok(())
                             }
                         },
