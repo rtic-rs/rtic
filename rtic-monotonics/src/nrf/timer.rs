@@ -160,72 +160,17 @@ macro_rules! make_timer {
                 }
             }
 
-            /// Used to access the underlying timer queue
-            #[doc(hidden)]
-            pub fn __tq() -> &'static TimerQueue<$mono_name> {
-                &$tq
-            }
-
             #[inline(always)]
             fn is_overflow() -> bool {
                 let timer = unsafe { &*$timer::PTR };
                 timer.events_compare[1].read().bits() & 1 != 0
             }
-
-            /// Timeout at a specific time.
-            #[inline]
-            pub async fn timeout_at<F: Future>(
-                instant: <Self as Monotonic>::Instant,
-                future: F,
-            ) -> Result<F::Output, TimeoutError> {
-                $tq.timeout_at(instant, future).await
-            }
-
-            /// Timeout after a specific duration.
-            #[inline]
-            pub async fn timeout_after<F: Future>(
-                duration: <Self as Monotonic>::Duration,
-                future: F,
-            ) -> Result<F::Output, TimeoutError> {
-                $tq.timeout_after(duration, future).await
-            }
-
-            /// Delay for some duration of time.
-            #[inline]
-            pub async fn delay(duration: <Self as Monotonic>::Duration) {
-                $tq.delay(duration).await;
-            }
-
-            /// Delay to some specific time instant.
-            #[inline]
-            pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
-                $tq.delay_until(instant).await;
-            }
         }
+
+        rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
 
         #[cfg(feature = "embedded-hal-async")]
-        impl embedded_hal_async::delay::DelayUs for $mono_name {
-            #[inline]
-            async fn delay_us(&mut self, us: u32) {
-                Self::delay(u64::from(us).micros_at_least()).await;
-            }
-
-            #[inline]
-            async fn delay_ms(&mut self, ms: u32) {
-                Self::delay(u64::from(ms).millis_at_least()).await;
-            }
-        }
-
-        impl embedded_hal::delay::DelayUs for $mono_name {
-            fn delay_us(&mut self, us: u32) {
-                let done = Self::now() + u64::from(us).micros_at_least() + Self::TICK_PERIOD;
-                while Self::now() < done {}
-            }
-            fn delay_ms(&mut self, ms: u32) {
-                let done = Self::now() + u64::from(ms).millis_at_least() + Self::TICK_PERIOD;
-                while Self::now() < done {}
-            }
-        }
+        rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
 
         impl Monotonic for $mono_name {
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
@@ -286,6 +231,10 @@ macro_rules! make_timer {
 
             fn pend_interrupt() {
                 pac::NVIC::pend(Interrupt::$timer);
+            }
+
+            fn __tq() -> &'static TimerQueue<$mono_name> {
+                &$tq
             }
         }
     };
