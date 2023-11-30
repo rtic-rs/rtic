@@ -42,7 +42,7 @@ impl_timer_value!(u64);
 
 /// Operations a type has to support
 /// in order to be used as the return value
-/// of [`compute_now`].
+/// of [`calculate_now`].
 pub trait TimerOps: Copy {
     /// All bits set to `1`.
     const MAX: Self;
@@ -93,7 +93,7 @@ impl_timer_ops!(u64);
 impl_timer_ops!(u128);
 
 /// TODO
-pub fn compute_now<P, T, F, O>(half_periods: &P, timer_value: F) -> O
+pub fn calculate_now<P, T, F, O>(half_periods: &P, timer_value: F) -> O
 where
     P: HalfPeriods,
     T: TimerValue,

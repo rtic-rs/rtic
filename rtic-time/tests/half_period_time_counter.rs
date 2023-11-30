@@ -1,12 +1,12 @@
 use atomic_polyfill::{AtomicU16, Ordering};
-use rtic_time::half_period_counter::compute_now;
+use rtic_time::half_period_counter::calculate_now;
 
 macro_rules! do_test {
     ($periods:literal, $counter:literal, $expected:literal) => {{
         let periods: AtomicU16 = AtomicU16::new($periods);
         let counter: u8 = $counter;
         let expected: u32 = $expected;
-        let actual: u32 = compute_now(&periods, || counter);
+        let actual: u32 = calculate_now(&periods, || counter);
         assert_eq!(
             actual,
             expected,
