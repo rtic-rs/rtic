@@ -19,7 +19,6 @@ use linked_list::{Link, LinkedList};
 pub use monotonic::Monotonic;
 use rtic_common::dropper::OnDrop;
 
-/// TODO
 pub mod half_period_counter;
 mod linked_list;
 mod monotonic;

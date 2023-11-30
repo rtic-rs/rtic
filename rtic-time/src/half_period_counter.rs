@@ -1,10 +1,14 @@
+//! Utilities to implement a race condition free half-period based monotonic.
+//!
+//! TODO: more detailed usage guide here
+
 use atomic_polyfill::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8, Ordering};
 
 /// A half period overflow counter.
 pub trait HalfPeriods {
-    /// The type of the stored value
+    /// The type of the stored value.
     type Inner: Copy;
-    /// Retreives the stored value
+    /// Retreives the stored value.
     fn load_relaxed(&self) -> Self::Inner;
 }
 macro_rules! impl_half_periods {
@@ -23,9 +27,9 @@ impl_half_periods!(AtomicU16, u16);
 impl_half_periods!(AtomicU32, u32);
 impl_half_periods!(AtomicU64, u64);
 
-/// The value of the timer's count register
+/// The value of the timer's count register.
 pub trait TimerValue {
-    /// Bit size of the register
+    /// Bit size of the register.
     const BITS: u32;
 }
 macro_rules! impl_timer_value {
@@ -92,7 +96,7 @@ impl_timer_ops!(u32);
 impl_timer_ops!(u64);
 impl_timer_ops!(u128);
 
-/// TODO
+/// Calculates the current time from the half period counter and the current timer value.
 pub fn calculate_now<P, T, F, O>(half_periods: &P, timer_value: F) -> O
 where
     P: HalfPeriods,
