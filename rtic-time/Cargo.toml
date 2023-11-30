@@ -20,6 +20,7 @@ license = "MIT OR Apache-2.0"
 critical-section = "1"
 futures-util = { version = "0.3.25", default-features = false }
 rtic-common = { version = "1.0.0", path = "../rtic-common" }
+atomic-polyfill = "1"
 
 [dev-dependencies]
 embedded-hal = { version = "1.0.0-rc.2" }
