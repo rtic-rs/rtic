@@ -114,7 +114,7 @@
 //! ```
 //!
 
-use atomic_polyfill::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8, Ordering};
+use core::sync::atomic::{compiler_fence, Ordering};
 
 /// A half period overflow counter.
 pub trait HalfPeriods {
@@ -134,10 +134,17 @@ macro_rules! impl_half_periods {
         }
     };
 }
-impl_half_periods!(AtomicU8, u8);
-impl_half_periods!(AtomicU16, u16);
-impl_half_periods!(AtomicU32, u32);
-impl_half_periods!(AtomicU64, u64);
+
+#[cfg(target_has_atomic = "8")]
+impl_half_periods!(core::sync::atomic::AtomicU8, u8);
+#[cfg(target_has_atomic = "16")]
+impl_half_periods!(core::sync::atomic::AtomicU16, u16);
+#[cfg(target_has_atomic = "32")]
+impl_half_periods!(core::sync::atomic::AtomicU32, u32);
+#[cfg(target_has_atomic = "64")]
+impl_half_periods!(core::sync::atomic::AtomicU64, u64);
+#[cfg(target_has_atomic = "128")]
+impl_half_periods!(core::sync::atomic::AtomicU128, u128);
 
 /// The value of the timer's count register.
 pub trait TimerValue {
