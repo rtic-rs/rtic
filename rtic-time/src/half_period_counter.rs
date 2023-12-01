@@ -59,6 +59,17 @@
 //! This example assumes that the underlying timer is 16-bit.
 //!
 //! ```rust
+//! # use core::sync::atomic::{AtomicU32, Ordering};
+//! # fn timer_stop() {}
+//! # fn timer_reset() {}
+//! # fn timer_enable_overflow_interrupt() {}
+//! # fn timer_enable_compare_interrupt(_val: u16) {}
+//! # fn timer_start() {}
+//! # fn overflow_interrupt_happened() -> bool { false }
+//! # fn compare_interrupt_happened() -> bool { false }
+//! # fn clear_overflow_interrupt() {}
+//! # fn clear_compare_interrupt() {}
+//! # fn timer_get_value() -> u16 { 0 }
 //! static HALF_PERIOD_COUNTER: AtomicU32 = AtomicU32::new(0);
 //!
 //! struct MyMonotonic;
@@ -67,7 +78,7 @@
 //!     fn init() {
 //!         timer_stop();
 //!         timer_reset();
-//!         HALF_PERIOD_COUNTER.store(0, Relaxed);
+//!         HALF_PERIOD_COUNTER.store(0, Ordering::Relaxed);
 //!         timer_enable_overflow_interrupt();
 //!         timer_enable_compare_interrupt(0x8000);
 //!         // The period counter is reset to zero, the timer is reset
@@ -80,11 +91,11 @@
 //!     fn on_interrupt() {
 //!         if overflow_interrupt_happened() {
 //!             clear_overflow_interrupt();
-//!             HALF_PERIOD_COUNTER.fetch_add(1, Relaxed);
+//!             HALF_PERIOD_COUNTER.fetch_add(1, Ordering::Relaxed);
 //!         }
 //!         if compare_interrupt_happened() {
 //!             clear_compare_interrupt();
-//!             HALF_PERIOD_COUNTER.fetch_add(1, Relaxed);
+//!             HALF_PERIOD_COUNTER.fetch_add(1, Ordering::Relaxed);
 //!         }
 //!     }
 //!
