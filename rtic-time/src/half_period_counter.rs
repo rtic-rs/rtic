@@ -1,4 +1,4 @@
-//! Utilities to implement a race condition free half-period based monotonic.
+//! Utility to implement a race condition free half-period based monotonic.
 //!
 //! # Background
 //!
@@ -28,19 +28,75 @@
 //! timer value and the period counter, which makes it mathematically possible to solve the
 //! race condition.
 //!
-//! So the following steps have to be fulfilled to make this reliable:
-//! - The period counter gets incremented twice per period; once at the overflow, and once
-//!   at the half-period mark. For example, a 16-bit timer would require the period to be
+//! The following steps have to be fulfilled to make this reliable:
+//! - The period counter gets incremented twice per period; once when the timer overflow happens and once
+//!   at the half-period mark. For example, a 16-bit timer would require the period counter to be
 //!   incremented at the values `0x0000` and `0x8000`.
-//! - The timer value and the period counter have to be in sync. After the overflow interrupt
+//! - The timer value and the period counter must be in sync. After the overflow interrupt
 //!   was processed, the period counter must be even, and after the half-way interrupt was
 //!   processed, the period counter must be odd.
 //! - Both the overflow interrupt and the half-way interrupt must be processed within half a
 //!   timer period. This means those interrupts should be the highest priority in the
-//!   system - disabling them for more than half a period will break the monotonic.
+//!   system - disabling them for more than half a period will cause the monotonic to misbehave.
 //!
-//! If those conditions are fulfilled, the [`calculate_now`] function will always and reliably
+//! If those conditions are fulfilled, the [`calculate_now`] function will reliably always
 //! return the current time.
+//!
+//! # Why does this work?
+//!
+//! It's complicated. In essence, this one bit of overlap can be used mathematically to make
+//! it irrelevant whether the period counter was already incremented or not.
+//! For example, during the second part of the timer period, it is irrelevant if the
+//! period counter is `2` (before the interrupt) or `3` (after the interrupt) - [`calculate_now`]
+//! will yield the same result. Then half a period later, in the first part of the next timer period,
+//! it is irrelevant if the period counter is `3` or `4` - they again will yield the same result.
+//!
+//! This means that as long as we read the period counter **before** the timer value, we will
+//! always get the correct result, given that the interrupts are not delayed by more than half a period.
+//!
+//! # Example
+//!
+//! This example assumes that the underlying timer is 16-bit.
+//!
+//! ```rust
+//! static HALF_PERIOD_COUNTER: AtomicU32 = AtomicU32::new(0);
+//!
+//! struct MyMonotonic;
+//!
+//! impl MyMonotonic {
+//!     fn init() {
+//!         timer_stop();
+//!         timer_reset();
+//!         HALF_PERIOD_COUNTER.store(0, Relaxed);
+//!         timer_enable_overflow_interrupt();
+//!         timer_enable_compare_interrupt(0x8000);
+//!         // The period counter is reset to zero, the timer is reset
+//!         // and the overflow is enabled. This means the period counter
+//!         // and the timer value are in sync, so we can now enable the
+//!         // timer.
+//!         timer_start();
+//!     }
+//!
+//!     fn on_interrupt() {
+//!         if overflow_interrupt_happened() {
+//!             clear_overflow_interrupt();
+//!             HALF_PERIOD_COUNTER.fetch_add(1, Relaxed);
+//!         }
+//!         if compare_interrupt_happened() {
+//!             clear_compare_interrupt();
+//!             HALF_PERIOD_COUNTER.fetch_add(1, Relaxed);
+//!         }
+//!     }
+//!
+//!     fn now() -> u64 {
+//!         rtic_time::half_period_counter::calculate_now(
+//!             &HALF_PERIOD_COUNTER,
+//!             || timer_get_value(),
+//!         )
+//!     }
+//! }
+//! ```
+//!
 
 use atomic_polyfill::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8, Ordering};
 
@@ -48,7 +104,7 @@ use atomic_polyfill::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8,
 pub trait HalfPeriods {
     /// The type of the stored value.
     type Inner: Copy;
-    /// Retreives the stored value.
+    /// Retrieves the stored value. Can use `Ordering::Relaxed`.
     fn load_relaxed(&self) -> Self::Inner;
 }
 macro_rules! impl_half_periods {
