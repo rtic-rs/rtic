@@ -73,7 +73,7 @@
 //! # fn clear_overflow_interrupt() {}
 //! # fn clear_compare_interrupt() {}
 //! # fn timer_get_value() -> u16 { 0 }
-//! use portable_atomic::{AtomicU32, Ordering};
+//! use core::sync::atomic::{AtomicU32, Ordering};
 //!
 //! static HALF_PERIOD_COUNTER: AtomicU32 = AtomicU32::new(0);
 //!
@@ -114,7 +114,7 @@
 //! ```
 //!
 
-use portable_atomic::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8, Ordering};
+use atomic_polyfill::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8, Ordering};
 
 /// A half period overflow counter.
 pub trait HalfPeriods {

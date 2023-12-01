@@ -27,9 +27,9 @@
 //! ```
 
 use crate::{Monotonic, TimeoutError, TimerQueue};
+use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
 pub use fugit::{self, ExtU64, ExtU64Ceil};
-use portable_atomic::{AtomicU32, Ordering};
 
 #[cfg(feature = "nrf52810")]
 use nrf52810_pac::{self as pac, Interrupt, TIMER0, TIMER1, TIMER2};

@@ -31,7 +31,7 @@ rtic-time = { version = "1.1.0", path = "../rtic-time" }
 embedded-hal = { version = "1.0.0-rc.2" }
 embedded-hal-async = { version = "1.0.0-rc.2", optional = true }
 fugit = { version = "0.3.6" }
-portable-atomic = { version = "1", default-features = false }
+atomic-polyfill = "1"
 cfg-if = "1.0.0"
 cortex-m = { version = "0.7.6", optional = true }
 critical-section = { version = "1", optional = true }

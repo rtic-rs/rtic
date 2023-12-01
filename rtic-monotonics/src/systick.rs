@@ -34,18 +34,18 @@
 
 use super::Monotonic;
 pub use super::{TimeoutError, TimerQueue};
+use atomic_polyfill::Ordering;
 use core::future::Future;
 use cortex_m::peripheral::SYST;
 pub use fugit;
-use portable_atomic::Ordering;
 cfg_if::cfg_if! {
     if #[cfg(feature = "systick-64bit")] {
         pub use fugit::{ExtU64, ExtU64Ceil};
-        use portable_atomic::AtomicU64;
+        use atomic_polyfill::AtomicU64;
         static SYSTICK_CNT: AtomicU64 = AtomicU64::new(0);
     } else {
         pub use fugit::{ExtU32, ExtU32Ceil};
-        use portable_atomic::AtomicU32;
+        use atomic_polyfill::AtomicU32;
         static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
     }
 }
