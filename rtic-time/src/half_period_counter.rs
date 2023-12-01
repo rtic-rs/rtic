@@ -123,6 +123,7 @@ pub trait HalfPeriods {
     /// Retrieves the stored value. Can use `Ordering::Relaxed`.
     fn load_relaxed(&self) -> Self::Inner;
 }
+#[allow(unused_macros)]
 macro_rules! impl_half_periods {
     ($ta:ty, $t:ty) => {
         impl HalfPeriods for $ta {
