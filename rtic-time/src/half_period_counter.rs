@@ -1,6 +1,46 @@
 //! Utilities to implement a race condition free half-period based monotonic.
 //!
-//! TODO: more detailed usage guide here
+//! # Background
+//!
+//! Monotonics are continuous and never wrap (in a reasonable amount of time), while
+//! the underlying hardware usually wraps frequently and has interrupts to indicate that
+//! a wrap happened.
+//!
+//! The biggest problem when implementing a monotonic from such hardware is that there exists
+//! a non-trivial race condition while reading data from the timer. Let's assume we increment
+//! a period counter every time an overflow interrupt happens.
+//! Which should we then read first when computing the current time? The period counter or
+//! the timer value?
+//! - When reading the timer value first, an overflow interrupt could happen before we read
+//!   the period counter, causing the calculated time to be much too high
+//! - When reading the period counter first, an the timer value could overflow before we
+//!   read it, casing the caluclated time to be much too low
+//!
+//! The reason this is non-trivil to solve is because even critical sections do not help
+//! much - the inherent problem here is that the timer value continues to change, and there
+//! is no way to read it together with the period counter in an atomic way.
+//!
+//! # Solution
+//!
+//! This module provides utilities to solve this problem in a reliable, race-condition free way.
+//! A second interrupt must be added at the half-period mark, which effectively converts the period counter
+//! to a half-period counter. This creates one bit of overlap between the
+//! timer value and the period counter, which makes it mathematically possible to solve the
+//! race condition.
+//!
+//! So the following steps have to be fulfilled to make this reliable:
+//! - The period counter gets incremented twice per period; once at the overflow, and once
+//!   at the half-period mark. For example, a 16-bit timer would require the period to be
+//!   incremented at the values `0x0000` and `0x8000`.
+//! - The timer value and the period counter have to be in sync. After the overflow interrupt
+//!   was processed, the period counter must be even, and after the half-way interrupt was
+//!   processed, the period counter must be odd.
+//! - Both the overflow interrupt and the half-way interrupt must be processed within half a
+//!   timer period. This means those interrupts should be the highest priority in the
+//!   system - disabling them for more than half a period will break the monotonic.
+//!
+//! If those conditions are fulfilled, the [`calculate_now`] function will always and reliably
+//! return the current time.
 
 use atomic_polyfill::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8, Ordering};
 
@@ -97,6 +137,11 @@ impl_timer_ops!(u64);
 impl_timer_ops!(u128);
 
 /// Calculates the current time from the half period counter and the current timer value.
+///
+/// # Arguments
+///
+/// * `half_periods` - A reference to the atomic counter that stores the half period count.
+/// * `timer_value` - A closure/function that when called produces the current timer value.
 pub fn calculate_now<P, T, F, O>(half_periods: &P, timer_value: F) -> O
 where
     P: HalfPeriods,
