@@ -118,7 +118,7 @@ use core::sync::atomic::{compiler_fence, Ordering};
 
 /// The value of the timer's count register.
 pub trait TimerValue {
-    /// Bit size of the register.
+    /// Bit size of the timer. Does not need to be a multiple of `8`.
     const BITS: u32;
 }
 macro_rules! impl_timer_value {
