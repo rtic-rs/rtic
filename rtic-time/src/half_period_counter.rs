@@ -106,7 +106,7 @@
 //!
 //!     fn now() -> u64 {
 //!         rtic_time::half_period_counter::calculate_now(
-//!             &HALF_PERIOD_COUNTER,
+//!             HALF_PERIOD_COUNTER.load(Ordering::Relaxed),
 //!             || timer_get_value(),
 //!         )
 //!     }
@@ -115,37 +115,6 @@
 //!
 
 use core::sync::atomic::{compiler_fence, Ordering};
-
-/// A half period overflow counter.
-pub trait HalfPeriods {
-    /// The type of the stored value.
-    type Inner: Copy;
-    /// Retrieves the stored value. Can use `Ordering::Relaxed`.
-    fn load_relaxed(&self) -> Self::Inner;
-}
-#[allow(unused_macros)]
-macro_rules! impl_half_periods {
-    ($ta:ty, $t:ty) => {
-        impl HalfPeriods for $ta {
-            type Inner = $t;
-            #[inline]
-            fn load_relaxed(&self) -> Self::Inner {
-                self.load(Ordering::Relaxed)
-            }
-        }
-    };
-}
-
-#[cfg(target_has_atomic = "8")]
-impl_half_periods!(core::sync::atomic::AtomicU8, u8);
-#[cfg(target_has_atomic = "16")]
-impl_half_periods!(core::sync::atomic::AtomicU16, u16);
-#[cfg(target_has_atomic = "32")]
-impl_half_periods!(core::sync::atomic::AtomicU32, u32);
-#[cfg(target_has_atomic = "64")]
-impl_half_periods!(core::sync::atomic::AtomicU64, u64);
-#[cfg(target_has_atomic = "128")]
-impl_half_periods!(core::sync::atomic::AtomicU128, u128);
 
 /// The value of the timer's count register.
 pub trait TimerValue {
@@ -220,18 +189,17 @@ impl_timer_ops!(u128);
 ///
 /// # Arguments
 ///
-/// * `half_periods` - A reference to the atomic counter that stores the half period count.
+/// * `half_periods` - The period counter value. If read from an atomic, can use `Ordering::Relaxed`.
 /// * `timer_value` - A closure/function that when called produces the current timer value.
-pub fn calculate_now<P, T, F, O>(half_periods: &P, timer_value: F) -> O
+pub fn calculate_now<P, T, F, O>(half_periods: P, timer_value: F) -> O
 where
-    P: HalfPeriods,
     T: TimerValue,
-    O: From<P::Inner> + From<T> + TimerOps,
+    O: From<P> + From<T> + TimerOps,
     F: FnOnce() -> T,
 {
     // Important: half_period **must** be read first.
     // Otherwise we have another mathematical race condition.
-    let half_periods = O::from(half_periods.load_relaxed());
+    let half_periods = O::from(half_periods);
     compiler_fence(Ordering::Acquire);
     let timer_value = O::from(timer_value());
 

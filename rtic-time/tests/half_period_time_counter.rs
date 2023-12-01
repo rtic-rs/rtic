@@ -1,38 +1,29 @@
-use core::sync::atomic::{AtomicU16, AtomicU32, Ordering};
 use rtic_time::half_period_counter::calculate_now;
 
 macro_rules! do_test_u8 {
     ($periods:literal, $counter:literal, $expected:literal) => {{
-        let periods: AtomicU32 = AtomicU32::new($periods);
+        let periods: u32 = $periods;
         let counter: u8 = $counter;
         let expected: u32 = $expected;
-        let actual: u32 = calculate_now(&periods, || counter);
+        let actual: u32 = calculate_now(periods, || counter);
         assert_eq!(
-            actual,
-            expected,
+            actual, expected,
             "Expected: ({} | {}) => {}, got: {}",
-            periods.load(Ordering::Relaxed),
-            counter,
-            expected,
-            actual
+            periods, counter, expected, actual
         );
     }};
 }
 
 macro_rules! do_test_u16 {
     ($periods:literal, $counter:literal, $expected:literal) => {{
-        let periods: AtomicU16 = AtomicU16::new($periods);
+        let periods: u16 = $periods;
         let counter: u16 = $counter;
         let expected: u32 = $expected;
-        let actual: u32 = calculate_now(&periods, || counter);
+        let actual: u32 = calculate_now(periods, || counter);
         assert_eq!(
-            actual,
-            expected,
+            actual, expected,
             "Expected: ({} | {}) => {}, got: {}",
-            periods.load(Ordering::Relaxed),
-            counter,
-            expected,
-            actual
+            periods, counter, expected, actual
         );
     }};
 }

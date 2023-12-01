@@ -232,7 +232,10 @@ macro_rules! make_timer {
             const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
             fn now() -> Self::Instant {
-                Self::Instant::from_ticks(calculate_now(&$overflow, || $timer.cnt().read().cnt()))
+                Self::Instant::from_ticks(calculate_now(
+                    $overflow.load(Ordering::Relaxed),
+                    || $timer.cnt().read().cnt()
+                ))
             }
 
             fn set_compare(instant: Self::Instant) {

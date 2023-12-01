@@ -209,7 +209,10 @@ macro_rules! make_timer {
             fn now() -> Self::Instant {
                 let gpt = unsafe{ $timer::instance() };
 
-                Self::Instant::from_ticks(calculate_now(&$period, || ral::read_reg!(ral::gpt, gpt, CNT)))
+                Self::Instant::from_ticks(calculate_now(
+                    $period.load(Ordering::Relaxed),
+                    || ral::read_reg!(ral::gpt, gpt, CNT)
+                ))
             }
 
             fn set_compare(instant: Self::Instant) {
