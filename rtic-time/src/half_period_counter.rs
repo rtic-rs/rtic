@@ -44,7 +44,7 @@
 //!
 //! # Why does this work?
 //!
-//! It's complicated. In essence, this one bit of overlap can be used mathematically to make
+//! It's complicated. In essence, this one bit of overlap is used to make
 //! it irrelevant whether the period counter was already incremented or not.
 //! For example, during the second part of the timer period, it is irrelevant if the
 //! period counter is `2` (before the interrupt) or `3` (after the interrupt) - [`calculate_now`]
