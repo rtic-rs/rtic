@@ -86,8 +86,7 @@
 //!         // Both the period counter and the timer are reset
 //!         // to zero and the interrupts are enabled.
 //!         // This means the period counter and the timer value
-//!         // are (and will stay) in sync, so we can now enable
-//!         // the timer.
+//!         // are in sync, so we can now enable the timer.
 //!         timer_start();
 //!     }
 //!
