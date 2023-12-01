@@ -14,7 +14,7 @@
 //! - When reading the timer value first, an overflow interrupt could happen before we read
 //!   the period counter, causing the calculated time to be much too high
 //! - When reading the period counter first, the timer value could overflow before we
-//!   read it, causing the caluclated time to be much too low
+//!   read it, causing the calculated time to be much too low
 //!
 //! The reason this is non-trivil to solve is because even critical sections do not help
 //! much - the inherent problem here is that the timer value continues to change, and there
@@ -39,8 +39,8 @@
 //!   timer period. This means those interrupts should be the highest priority in the
 //!   system - disabling them for more than half a period will cause the monotonic to misbehave.
 //!
-//! If those conditions are fulfilled, the [`calculate_now`] function will reliably always
-//! return the current time.
+//! If those conditions are fulfilled, the [`calculate_now`] function will reliably
+//! return the correct time value.
 //!
 //! # Why does this work?
 //!
@@ -56,7 +56,9 @@
 //!
 //! # Example
 //!
-//! This example assumes that the underlying timer is 16-bit.
+//! This example takes a 16-bit timer and uses a 32-bit period counter
+//! to extend the timer to 47-bit.
+//! The resulting time value is returned as a `u64`.
 //!
 //! ```rust
 //! # use core::sync::atomic::{AtomicU32, Ordering};
@@ -81,10 +83,11 @@
 //!         HALF_PERIOD_COUNTER.store(0, Ordering::Relaxed);
 //!         timer_enable_overflow_interrupt();
 //!         timer_enable_compare_interrupt(0x8000);
-//!         // The period counter is reset to zero, the timer is reset
-//!         // and the overflow is enabled. This means the period counter
-//!         // and the timer value are in sync, so we can now enable the
-//!         // timer.
+//!         // Both the period counter and the timer are reset
+//!         // to zero and the interrupts are enabled.
+//!         // This means the period counter and the timer value
+//!         // are (and will stay) in sync, so we can now enable
+//!         // the timer.
 //!         timer_start();
 //!     }
 //!
