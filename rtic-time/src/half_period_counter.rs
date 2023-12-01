@@ -63,7 +63,6 @@
 //! The resulting time value is returned as a `u64`.
 //!
 //! ```rust
-//! # use portable_atomic::{AtomicU32, Ordering};
 //! # fn timer_stop() {}
 //! # fn timer_reset() {}
 //! # fn timer_enable_overflow_interrupt() {}
@@ -74,6 +73,8 @@
 //! # fn clear_overflow_interrupt() {}
 //! # fn clear_compare_interrupt() {}
 //! # fn timer_get_value() -> u16 { 0 }
+//! use portable_atomic::{AtomicU32, Ordering};
+//!
 //! static HALF_PERIOD_COUNTER: AtomicU32 = AtomicU32::new(0);
 //!
 //! struct MyMonotonic;
