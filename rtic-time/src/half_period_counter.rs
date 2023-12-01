@@ -13,8 +13,8 @@
 //! the timer value?
 //! - When reading the timer value first, an overflow interrupt could happen before we read
 //!   the period counter, causing the calculated time to be much too high
-//! - When reading the period counter first, an the timer value could overflow before we
-//!   read it, casing the caluclated time to be much too low
+//! - When reading the period counter first, the timer value could overflow before we
+//!   read it, causing the caluclated time to be much too low
 //!
 //! The reason this is non-trivil to solve is because even critical sections do not help
 //! much - the inherent problem here is that the timer value continues to change, and there
