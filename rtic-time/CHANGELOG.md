@@ -9,7 +9,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
-- `should_dequeue` to the `Monotonic` trait to handle bugged timers
+- `half_period_counter` containing utilities for implementing a half-period-counter based monotonic.
+- `should_dequeue_check` to the `Monotonic` trait to handle bugged timers.
 
 ### Changed
 
