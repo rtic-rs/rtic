@@ -207,7 +207,7 @@ impl_timer_ops!(u32);
 impl_timer_ops!(u64);
 impl_timer_ops!(u128);
 
-/// Calculates the current time from the half period counter and the current timer value.
+/// Calculates the current time from the half period counter and the timer value.
 ///
 /// # Arguments
 ///
