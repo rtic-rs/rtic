@@ -222,16 +222,6 @@ where
     // the expected range for the `period` parity, we're done. If it doesn't, this means that
     // a new period start has raced us between reading `period` and `counter`, so we assume the `counter` value
     // corresponds to the next period.
-    //
-    // `period` is a 32bit integer, so it overflows on 2^32 * 2^31 / 1_000_000 seconds of uptime, which is 292471 years.
-
-    // Formula:
-    //   (half_periods << (timer_value::BITS - 1))
-    //   + u64::from(
-    //        timer_value ^ (
-    //            ((half_periods & 1) as timer_value::TYPE) << (timer_value::BITS - 1)
-    //        )
-    //     )
 
     let upper_half = half_periods.left_shift(T::BITS - 1);
     let lower_half = O::ONE.left_shift(T::BITS - 1).and(upper_half);
