@@ -41,9 +41,9 @@ use nrf5340_net_pac::{self as pac, Interrupt, RTC0_NS as RTC0, RTC1_NS as RTC1};
 use nrf9160_pac::{self as pac, Interrupt, RTC0_NS as RTC0, RTC1_NS as RTC1};
 
 use crate::{Monotonic, TimeoutError, TimerQueue};
-use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
 pub use fugit::{self, ExtU64, ExtU64Ceil};
+use portable_atomic::{AtomicU32, Ordering};
 
 #[doc(hidden)]
 #[macro_export]

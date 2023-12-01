@@ -1,4 +1,4 @@
-use atomic_polyfill::{AtomicU16, AtomicU32, Ordering};
+use portable_atomic::{AtomicU16, AtomicU32, Ordering};
 use rtic_time::half_period_counter::calculate_now;
 
 macro_rules! do_test_u8 {

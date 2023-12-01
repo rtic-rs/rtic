@@ -30,8 +30,8 @@
 //! ```
 
 use crate::{Monotonic, TimeoutError, TimerQueue};
-use atomic_polyfill::{AtomicU32, Ordering};
 pub use fugit::{self, ExtU64, ExtU64Ceil};
+use portable_atomic::{AtomicU32, Ordering};
 use rtic_time::half_period_counter::calculate_now;
 
 use imxrt_ral as ral;

@@ -109,7 +109,7 @@
 //! ```
 //!
 
-use atomic_polyfill::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8, Ordering};
+use portable_atomic::{compiler_fence, AtomicU16, AtomicU32, AtomicU64, AtomicU8, Ordering};
 
 /// A half period overflow counter.
 pub trait HalfPeriods {
