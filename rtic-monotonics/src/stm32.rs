@@ -36,7 +36,7 @@
 
 use crate::{Monotonic, TimeoutError, TimerQueue};
 use atomic_polyfill::{compiler_fence, AtomicU64, Ordering};
-pub use fugit::{self, ExtU64};
+pub use fugit::{self, ExtU64, ExtU64Ceil};
 use stm32_metapac as pac;
 
 mod _generated {
@@ -218,31 +218,17 @@ macro_rules! make_timer {
             }
         }
 
+        rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
+
         #[cfg(feature = "embedded-hal-async")]
-        impl embedded_hal_async::delay::DelayUs for $mono_name {
-            #[inline]
-            async fn delay_us(&mut self, us: u32) {
-                Self::delay((us as u64).micros()).await;
-            }
-
-            #[inline]
-            async fn delay_ms(&mut self, ms: u32) {
-                Self::delay((ms as u64).millis()).await;
-            }
-        }
-
-        impl embedded_hal::delay::DelayUs for $mono_name {
-            fn delay_us(&mut self, us: u32) {
-                let done = Self::now() + (us as u64).micros();
-                while Self::now() < done {}
-            }
-        }
+        rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
 
         impl Monotonic for $mono_name {
             type Instant = fugit::TimerInstantU64<TIMER_HZ>;
             type Duration = fugit::TimerDurationU64<TIMER_HZ>;
 
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
+            const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
             fn now() -> Self::Instant {
                 // Credits to the `time-driver` of `embassy-stm32`.

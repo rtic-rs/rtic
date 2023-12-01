@@ -10,6 +10,9 @@ pub trait Monotonic {
     /// The time at time zero.
     const ZERO: Self::Instant;
 
+    /// The duration between two timer ticks.
+    const TICK_PERIOD: Self::Duration;
+
     /// The type for instant, defining an instant in time.
     ///
     /// **Note:** In all APIs in RTIC that use instants from this monotonic, this type will be used.
@@ -64,4 +67,154 @@ pub trait Monotonic {
     ///
     /// NOTE: This may be called more than once.
     fn disable_timer() {}
+}
+
+/// Creates impl blocks for `embedded_hal::delay::DelayUs`,
+/// based on `fugit::ExtU64Ceil`.
+#[macro_export]
+macro_rules! embedded_hal_delay_impl_fugit64 {
+    ($t:ty) => {
+        impl ::embedded_hal::delay::DelayNs for $t {
+            fn delay_ns(&mut self, ns: u32) {
+                use ::fugit::ExtU64Ceil;
+
+                let now = Self::now();
+                let mut done = now + u64::from(ns).nanos_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done += Self::TICK_PERIOD;
+                }
+
+                while Self::now() < done {}
+            }
+
+            fn delay_us(&mut self, us: u32) {
+                use ::fugit::ExtU64Ceil;
+
+                let now = Self::now();
+                let mut done = now + u64::from(us).micros_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done += Self::TICK_PERIOD;
+                }
+
+                while Self::now() < done {}
+            }
+
+            fn delay_ms(&mut self, ms: u32) {
+                use ::fugit::ExtU64Ceil;
+
+                let now = Self::now();
+                let mut done = now + u64::from(ms).millis_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done += Self::TICK_PERIOD;
+                }
+
+                while Self::now() < done {}
+            }
+        }
+    };
+}
+
+/// Creates impl blocks for `embedded_hal_async::delay::DelayUs`,
+/// based on `fugit::ExtU64Ceil`.
+#[macro_export]
+macro_rules! embedded_hal_async_delay_impl_fugit64 {
+    ($t:ty) => {
+        impl ::embedded_hal_async::delay::DelayNs for $t {
+            #[inline]
+            async fn delay_ns(&mut self, ns: u32) {
+                use ::fugit::ExtU64Ceil;
+                Self::delay(u64::from(ns).nanos_at_least()).await;
+            }
+
+            #[inline]
+            async fn delay_us(&mut self, us: u32) {
+                use ::fugit::ExtU64Ceil;
+                Self::delay(u64::from(us).micros_at_least()).await;
+            }
+
+            #[inline]
+            async fn delay_ms(&mut self, ms: u32) {
+                use ::fugit::ExtU64Ceil;
+                Self::delay(u64::from(ms).millis_at_least()).await;
+            }
+        }
+    };
+}
+
+/// Creates impl blocks for `embedded_hal::delay::DelayUs`,
+/// based on `fugit::ExtU32Ceil`.
+#[macro_export]
+macro_rules! embedded_hal_delay_impl_fugit32 {
+    ($t:ty) => {
+        impl ::embedded_hal::delay::DelayNs for $t {
+            fn delay_ns(&mut self, ns: u32) {
+                use ::fugit::ExtU32Ceil;
+
+                let now = Self::now();
+                let mut done = now + ns.nanos_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done += Self::TICK_PERIOD;
+                }
+
+                while Self::now() < done {}
+            }
+
+            fn delay_us(&mut self, us: u32) {
+                use ::fugit::ExtU32Ceil;
+
+                let now = Self::now();
+                let mut done = now + us.micros_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done += Self::TICK_PERIOD;
+                }
+
+                while Self::now() < done {}
+            }
+
+            fn delay_ms(&mut self, ms: u32) {
+                use ::fugit::ExtU32Ceil;
+
+                let now = Self::now();
+                let mut done = now + ms.millis_at_least();
+                if now != done {
+                    // Compensate for sub-tick uncertainty
+                    done += Self::TICK_PERIOD;
+                }
+
+                while Self::now() < done {}
+            }
+        }
+    };
+}
+
+/// Creates impl blocks for `embedded_hal_async::delay::DelayUs`,
+/// based on `fugit::ExtU32Ceil`.
+#[macro_export]
+macro_rules! embedded_hal_async_delay_impl_fugit32 {
+    ($t:ty) => {
+        impl ::embedded_hal_async::delay::DelayNs for $t {
+            #[inline]
+            async fn delay_ns(&mut self, ns: u32) {
+                use ::fugit::ExtU32Ceil;
+                Self::delay(ns.nanos_at_least()).await;
+            }
+
+            #[inline]
+            async fn delay_us(&mut self, us: u32) {
+                use ::fugit::ExtU32Ceil;
+                Self::delay(us.micros_at_least()).await;
+            }
+
+            #[inline]
+            async fn delay_ms(&mut self, ms: u32) {
+                use ::fugit::ExtU32Ceil;
+                Self::delay(ms.millis_at_least()).await;
+            }
+        }
+    };
 }

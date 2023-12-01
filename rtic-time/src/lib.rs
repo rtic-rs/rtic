@@ -181,22 +181,36 @@ impl<Mono: Monotonic> TimerQueue<Mono> {
         }
     }
 
-    /// Timeout after a specific duration.
+    /// Timeout after at least a specific duration.
     #[inline]
     pub async fn timeout_after<F: Future>(
         &self,
         duration: Mono::Duration,
         future: F,
     ) -> Result<F::Output, TimeoutError> {
-        self.timeout_at(Mono::now() + duration, future).await
+        let now = Mono::now();
+        let mut timeout = now + duration;
+        if now != timeout {
+            timeout = timeout + Mono::TICK_PERIOD;
+        }
+
+        // Wait for one period longer, because by definition timers have an uncertainty
+        // of one period, so waiting for 'at least' needs to compensate for that.
+        self.timeout_at(timeout, future).await
     }
 
-    /// Delay for some duration of time.
+    /// Delay for at least some duration of time.
     #[inline]
     pub async fn delay(&self, duration: Mono::Duration) {
         let now = Mono::now();
+        let mut timeout = now + duration;
+        if now != timeout {
+            timeout = timeout + Mono::TICK_PERIOD;
+        }
 
-        self.delay_until(now + duration).await;
+        // Wait for one period longer, because by definition timers have an uncertainty
+        // of one period, so waiting for 'at least' needs to compensate for that.
+        self.delay_until(timeout).await;
     }
 
     /// Delay to some specific time instant.

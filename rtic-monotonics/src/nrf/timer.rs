@@ -29,7 +29,7 @@
 use crate::{Monotonic, TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
-pub use fugit::{self, ExtU64};
+pub use fugit::{self, ExtU64, ExtU64Ceil};
 
 #[cfg(feature = "nrf52810")]
 use nrf52810_pac::{self as pac, Interrupt, TIMER0, TIMER1, TIMER2};
@@ -203,28 +203,14 @@ macro_rules! make_timer {
             }
         }
 
+        rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
+
         #[cfg(feature = "embedded-hal-async")]
-        impl embedded_hal_async::delay::DelayUs for $mono_name {
-            #[inline]
-            async fn delay_us(&mut self, us: u32) {
-                Self::delay((us as u64).micros()).await;
-            }
-
-            #[inline]
-            async fn delay_ms(&mut self, ms: u32) {
-                Self::delay((ms as u64).millis()).await;
-            }
-        }
-
-        impl embedded_hal::delay::DelayUs for $mono_name {
-            fn delay_us(&mut self, us: u32) {
-                let done = Self::now() + (us as u64).micros();
-                while Self::now() < done {}
-            }
-        }
+        rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
 
         impl Monotonic for $mono_name {
             const ZERO: Self::Instant = Self::Instant::from_ticks(0);
+            const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
             type Instant = fugit::TimerInstantU64<1_000_000>;
             type Duration = fugit::TimerDurationU64<1_000_000>;

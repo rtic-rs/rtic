@@ -8,9 +8,13 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ## [Unreleased]
 
 ### Added
+
 - Unstable support for ESP32-C3
 
 ### Fixed
+
+- **Soundness fix:** Monotonics did not wait long enough in `Duration` based delays.
+  This is not directly a change for `rtic`, but required bumping the minimal version of `rtic-monotonics`.
 
 ### Changed
 

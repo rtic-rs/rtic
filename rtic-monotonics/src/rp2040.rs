@@ -28,7 +28,7 @@ use super::Monotonic;
 
 pub use super::{TimeoutError, TimerQueue};
 use core::future::Future;
-pub use fugit::{self, ExtU64};
+pub use fugit::{self, ExtU64, ExtU64Ceil};
 use rp2040_pac::{timer, Interrupt, NVIC, RESETS, TIMER};
 
 /// Timer implementing [`Monotonic`] which runs at 1 MHz.
@@ -104,6 +104,7 @@ impl Monotonic for Timer {
     type Duration = fugit::TimerDurationU64<1_000_000>;
 
     const ZERO: Self::Instant = Self::Instant::from_ticks(0);
+    const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
     fn now() -> Self::Instant {
         let timer = Self::timer();
@@ -151,23 +152,10 @@ impl Monotonic for Timer {
     fn disable_timer() {}
 }
 
+rtic_time::embedded_hal_delay_impl_fugit64!(Timer);
+
 #[cfg(feature = "embedded-hal-async")]
-impl embedded_hal_async::delay::DelayUs for Timer {
-    async fn delay_us(&mut self, us: u32) {
-        Self::delay((us as u64).micros()).await;
-    }
-
-    async fn delay_ms(&mut self, ms: u32) {
-        Self::delay((ms as u64).millis()).await;
-    }
-}
-
-impl embedded_hal::delay::DelayUs for Timer {
-    fn delay_us(&mut self, us: u32) {
-        let done = Self::now() + u64::from(us).micros();
-        while Self::now() < done {}
-    }
-}
+rtic_time::embedded_hal_async_delay_impl_fugit64!(Timer);
 
 /// Register the Timer interrupt for the monotonic.
 #[macro_export]
