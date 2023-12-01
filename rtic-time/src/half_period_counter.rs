@@ -142,7 +142,5 @@ where
 
     let upper_half = half_periods.left_shift(T::BITS - 1);
     let lower_half = O::ONE.left_shift(T::BITS - 1).and(upper_half);
-    let now = upper_half.add(lower_half.xor(timer_value));
-
-    now
+    upper_half.add(lower_half.xor(timer_value))
 }
