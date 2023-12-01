@@ -63,7 +63,7 @@
 //! The resulting time value is returned as a `u64`.
 //!
 //! ```rust
-//! # use core::sync::atomic::{AtomicU32, Ordering};
+//! # use portable_atomic::{AtomicU32, Ordering};
 //! # fn timer_stop() {}
 //! # fn timer_reset() {}
 //! # fn timer_enable_overflow_interrupt() {}
