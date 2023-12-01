@@ -57,7 +57,9 @@
 //! # Example
 //!
 //! This example takes a 16-bit timer and uses a 32-bit period counter
-//! to extend the timer to 47-bit.
+//! to extend the timer to 47-bit. Note that one bit gets lost because
+//! this method requires the period counter to be increased twice per period.
+//!
 //! The resulting time value is returned as a `u64`.
 //!
 //! ```rust
