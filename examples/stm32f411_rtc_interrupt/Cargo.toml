@@ -1,0 +1,29 @@
+[workspace]
+
+[package]
+authors = ["<Milton Sosa <milton.eduardo.sosa@gmail.com>"]
+edition = "2018"
+readme = "README.md"
+name = "rtc_wakeup_interrupt"
+version = "0.1.0"
+
+[dependencies]
+cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7.1"
+rtic = {version = "2.0.1", features=["thumbv7-backend", "rtic-monotonics"]}
+panic-halt = "0.2.0"
+embedded-hal = "0.2.7"
+defmt = "0.3.5"
+defmt-rtt = { version = "0.4.0"}
+rtic-sync = "1.0.2"
+
+[dependencies.stm32f4xx-hal]
+version = "0.18.0"
+features = ["rt", "stm32f411"] # replace the model of your microcontroller here
+
+# this lets you use `cargo fix`!
+[[bin]]
+name = "rtc_wakeup_interrupt"
+test = false
+bench = false
+
