@@ -167,12 +167,13 @@ macro_rules! make_timer {
                 // Since this is not the case, it should be cleared.
                 $timer.sr().modify(|r| r.set_uif(false));
 
+                $tq.initialize(Self {});
+                $overflow.store(0, Ordering::SeqCst);
+
                 // Start the counter.
                 $timer.cr1().modify(|r| {
                     r.set_cen(true);
                 });
-
-                $tq.initialize(Self {});
 
                 // SAFETY: We take full ownership of the peripheral and interrupt vector,
                 // plus we are not using any external shared resources so we won't impact

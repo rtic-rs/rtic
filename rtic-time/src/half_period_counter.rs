@@ -83,7 +83,7 @@
 //!     fn init() {
 //!         timer_stop();
 //!         timer_reset();
-//!         HALF_PERIOD_COUNTER.store(0, Ordering::Relaxed);
+//!         HALF_PERIOD_COUNTER.store(0, Ordering::SeqCst);
 //!         timer_enable_overflow_interrupt();
 //!         timer_enable_compare_interrupt(0x8000);
 //!         // Both the period counter and the timer are reset

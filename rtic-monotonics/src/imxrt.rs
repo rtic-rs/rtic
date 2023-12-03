@@ -120,7 +120,7 @@ macro_rules! make_timer {
                 );
 
                 // Reset period
-                $period.store(0, Ordering::Relaxed);
+                $period.store(0, Ordering::SeqCst);
 
                 // Prescaler
                 ral::modify_reg!(ral::gpt, gpt, PR,
