@@ -35,8 +35,9 @@
 //! ```
 
 use crate::{Monotonic, TimeoutError, TimerQueue};
-use atomic_polyfill::{compiler_fence, AtomicU64, Ordering};
+use atomic_polyfill::{AtomicU64, Ordering};
 pub use fugit::{self, ExtU64, ExtU64Ceil};
+use rtic_time::half_period_counter::calculate_now;
 use stm32_metapac as pac;
 
 mod _generated {
@@ -166,12 +167,13 @@ macro_rules! make_timer {
                 // Since this is not the case, it should be cleared.
                 $timer.sr().modify(|r| r.set_uif(false));
 
+                $tq.initialize(Self {});
+                $overflow.store(0, Ordering::SeqCst);
+
                 // Start the counter.
                 $timer.cr1().modify(|r| {
                     r.set_cen(true);
                 });
-
-                $tq.initialize(Self {});
 
                 // SAFETY: We take full ownership of the peripheral and interrupt vector,
                 // plus we are not using any external shared resources so we won't impact
@@ -231,18 +233,10 @@ macro_rules! make_timer {
             const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
 
             fn now() -> Self::Instant {
-                // Credits to the `time-driver` of `embassy-stm32`.
-                // For more info, see the `imxrt` driver.
-                fn calc_now(period: u64, counter: $bits) -> u64 {
-                    (period << ($bits::BITS - 1)) + u64::from(counter ^ (((period & 1) as $bits) << ($bits::BITS - 1)))
-                }
-
-                // Important: period **must** be read first.
-                let period = $overflow.load(Ordering::Relaxed);
-                compiler_fence(Ordering::Acquire);
-                let counter = $timer.cnt().read().cnt();
-
-                Self::Instant::from_ticks(calc_now(period, counter))
+                Self::Instant::from_ticks(calculate_now(
+                    $overflow.load(Ordering::Relaxed),
+                    || $timer.cnt().read().cnt()
+                ))
             }
 
             fn set_compare(instant: Self::Instant) {

@@ -79,6 +79,7 @@ impl Package {
                         "nrf5340-app,embedded-hal-async",
                         "nrf5340-net,embedded-hal-async",
                         "nrf9160,embedded-hal-async",
+                        "imxrt_gpt1,imxrt-ral/imxrt1062,embedded-hal-async",
                     ][..]
                 };
 

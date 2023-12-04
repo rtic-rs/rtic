@@ -30,8 +30,9 @@
 //! ```
 
 use crate::{Monotonic, TimeoutError, TimerQueue};
-use atomic_polyfill::{compiler_fence, AtomicU32, Ordering};
+use atomic_polyfill::{AtomicU32, Ordering};
 pub use fugit::{self, ExtU64, ExtU64Ceil};
+use rtic_time::half_period_counter::calculate_now;
 
 use imxrt_ral as ral;
 
@@ -71,29 +72,6 @@ macro_rules! create_imxrt_gpt2_token {
     () => {{
         $crate::__internal_create_imxrt_timer_interrupt!(Gpt2, GPT2, Gpt2Token)
     }};
-}
-
-// Credits to the `time-driver` of `embassy-stm32`.
-//
-// Clock timekeeping works with something we call "periods", which are time intervals
-// of 2^31 ticks. The Clock counter value is 32 bits, so one "overflow cycle" is 2 periods.
-//
-// A `period` count is maintained in parallel to the Timer hardware `counter`, like this:
-// - `period` and `counter` start at 0
-// - `period` is incremented on overflow (at counter value 0)
-// - `period` is incremented "midway" between overflows (at counter value 0x8000_0000)
-//
-// Therefore, when `period` is even, counter is in 0..0x7FFF_FFFF. When odd, counter is in 0x8000_0000..0xFFFF_FFFF
-// This allows for now() to return the correct value even if it races an overflow.
-//
-// To get `now()`, `period` is read first, then `counter` is read. If the counter value matches
-// the expected range for the `period` parity, we're done. If it doesn't, this means that
-// a new period start has raced us between reading `period` and `counter`, so we assume the `counter` value
-// corresponds to the next period.
-//
-// `period` is a 32bit integer, so it overflows on 2^32 * 2^31 / 1_000_000 seconds of uptime, which is 292471 years.
-fn calc_now(period: u32, counter: u32) -> u64 {
-    (u64::from(period) << 31) + u64::from(counter ^ ((period & 1) << 31))
 }
 
 macro_rules! make_timer {
@@ -142,7 +120,7 @@ macro_rules! make_timer {
                 );
 
                 // Reset period
-                $period.store(0, Ordering::Relaxed);
+                $period.store(0, Ordering::SeqCst);
 
                 // Prescaler
                 ral::modify_reg!(ral::gpt, gpt, PR,
@@ -231,12 +209,10 @@ macro_rules! make_timer {
             fn now() -> Self::Instant {
                 let gpt = unsafe{ $timer::instance() };
 
-                // Important: period **must** be read first.
-                let period = $period.load(Ordering::Relaxed);
-                compiler_fence(Ordering::Acquire);
-                let counter = ral::read_reg!(ral::gpt, gpt, CNT);
-
-                Self::Instant::from_ticks(calc_now(period, counter))
+                Self::Instant::from_ticks(calculate_now(
+                    $period.load(Ordering::Relaxed),
+                    || ral::read_reg!(ral::gpt, gpt, CNT)
+                ))
             }
 
             fn set_compare(instant: Self::Instant) {
