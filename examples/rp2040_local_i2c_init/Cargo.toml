@@ -40,4 +40,4 @@ lto = true        # better optimzations
 [features]
 # avoid having to use --allow-multiple-definition linker flag
 # on macOS with Apple Silicon at least
-#default = ["rp-pico/disable-intrinsics"]
+default = ["rp-pico/disable-intrinsics"]
