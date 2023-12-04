@@ -9,12 +9,16 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Added
 
-- `arbiter::spi::ArbiterDevice` for sharing SPI buses using `embedded-hal-async` traits.
-- `arbiter::i2c::ArbiterDevice` for sharing I2C buses using `embedded-hal-async` traits.
-
 ### Changed
 
 ### Fixed
+
+## [v1.1.0]
+
+### Added
+
+- `arbiter::spi::ArbiterDevice` for sharing SPI buses using `embedded-hal-async` traits.
+- `arbiter::i2c::ArbiterDevice` for sharing I2C buses using `embedded-hal-async` traits.
 
 ## [v1.0.3]
 
