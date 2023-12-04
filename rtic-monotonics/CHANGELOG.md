@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+## v1.4.0 - 2023-12-04
+
 ### Fixed
 
 - **Soundness fix:** Monotonics did not wait long enough in `Duration` based delays.
