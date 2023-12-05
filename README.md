@@ -19,8 +19,8 @@ A concurrency framework for building real-time systems.
 - **Message passing** between tasks. Specifically, messages can be passed to
   software tasks at spawn time.
 
-- **A timer queue** [^2]. Software tasks can be scheduled to run at some time
-  in the future. This feature can be used to implement periodic tasks.
+- **A timer queue** [^2]. Software tasks can be delayed or scheduled to continue running
+  at some time in the future. This feature can be used to implement periodic tasks.
 
 - Support for prioritization of tasks and, thus, **preemptive multitasking**.
 
