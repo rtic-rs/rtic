@@ -17,6 +17,17 @@ defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 nrf52840-hal = "0.16.0"
+fugit = { version = "0.3.7", features = ["defmt"] }
+
+[dependencies.rtic]
+path = "../../rtic"
+version = "2.0.1"
+features = ["thumbv7-backend"]
+
+[dependencies.rtic-monotonics]
+path = "../../rtic-monotonics"
+version = "1.4.0"
+features = ["nrf52840"]
 
 # cargo build/run
 [profile.dev]
