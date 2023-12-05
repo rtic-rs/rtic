@@ -244,13 +244,15 @@ macro_rules! make_timer {
                 let (rollover, half_rollover) = ral::read_reg!(ral::gpt, gpt, SR, ROV, OF1);
 
                 if rollover != 0 {
-                    $period.fetch_add(1, Ordering::Relaxed);
+                    let prev = $period.fetch_add(1, Ordering::Relaxed);
                     ral::write_reg!(ral::gpt, gpt, SR, ROV: 1);
+                    assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
                 }
 
                 if half_rollover != 0 {
-                    $period.fetch_add(1, Ordering::Relaxed);
+                    let prev = $period.fetch_add(1, Ordering::Relaxed);
                     ral::write_reg!(ral::gpt, gpt, SR, OF1: 1);
+                    assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
                 }
             }
         }

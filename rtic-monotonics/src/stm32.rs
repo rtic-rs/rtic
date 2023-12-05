@@ -272,12 +272,14 @@ macro_rules! make_timer {
                 // Full period
                 if $timer.sr().read().uif() {
                     $timer.sr().modify(|r| r.set_uif(false));
-                    $overflow.fetch_add(1, Ordering::Relaxed);
+                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
+                    assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
                 }
                 // Half period
                 if $timer.sr().read().ccif(2) {
                     $timer.sr().modify(|r| r.set_ccif(2, false));
-                    $overflow.fetch_add(1, Ordering::Relaxed);
+                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
+                    assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
                 }
             }
         }
