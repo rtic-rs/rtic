@@ -141,13 +141,15 @@ macro_rules! make_timer {
                 // so it gets combined with rollover interrupt
                 ral::write_reg!(ral::gpt, gpt, OCR[1], 0x0000_0000);
 
+                // Initialize timer queue
+                $tq.initialize(Self {});
+
                 // Enable the timer
                 ral::modify_reg!(ral::gpt, gpt, CR, EN: 1);
                 ral::modify_reg!(ral::gpt, gpt, CR,
                     ENMOD: 0,   // Keep state when disabled
                 );
 
-                $tq.initialize(Self {});
 
                 // SAFETY: We take full ownership of the peripheral and interrupt vector,
                 // plus we are not using any external shared resources so we won't impact

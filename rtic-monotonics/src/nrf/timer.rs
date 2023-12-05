@@ -153,29 +153,32 @@ macro_rules! make_timer {
                 timer.cc[1].write(|w| unsafe { w.cc().bits(0x0000_0000) }); // Overflow
                 timer.cc[2].write(|w| unsafe { w.cc().bits(0x8000_0000) }); // Half-period
 
-                // Reset the timer
-                timer.tasks_clear.write(|w| unsafe { w.bits(1) });
-                timer.tasks_start.write(|w| unsafe { w.bits(1) });
+                // Timing critical, make sure we don't get interrupted
+                critical_section::with(|_|{
+                    // Reset the timer
+                    timer.tasks_clear.write(|w| unsafe { w.bits(1) });
+                    timer.tasks_start.write(|w| unsafe { w.bits(1) });
 
-                // Clear pending events.
-                // Should be close enough to the timer reset that we don't miss any events.
-                timer.events_compare[0].write(|w| w);
-                timer.events_compare[1].write(|w| w);
-                timer.events_compare[2].write(|w| w);
+                    // Clear pending events.
+                    // Should be close enough to the timer reset that we don't miss any events.
+                    timer.events_compare[0].write(|w| w);
+                    timer.events_compare[1].write(|w| w);
+                    timer.events_compare[2].write(|w| w);
 
-                // Make sure overflow counter is synced with the timer value
-                $overflow.store(0, Ordering::SeqCst);
+                    // Make sure overflow counter is synced with the timer value
+                    $overflow.store(0, Ordering::SeqCst);
 
-                // Initialized the timer queue
-                $tq.initialize(Self {});
+                    // Initialized the timer queue
+                    $tq.initialize(Self {});
 
-                // Enable interrupts.
-                // Should be close enough to the timer reset that we don't miss any events.
-                timer.intenset.modify(|_, w| w
-                    .compare0().set()
-                    .compare1().set()
-                    .compare2().set()
-                );
+                    // Enable interrupts.
+                    // Should be close enough to the timer reset that we don't miss any events.
+                    timer.intenset.modify(|_, w| w
+                        .compare0().set()
+                        .compare1().set()
+                        .compare2().set()
+                    );
+                });
 
                 // SAFETY: We take full ownership of the peripheral and interrupt vector,
                 // plus we are not using any external shared resources so we won't impact
