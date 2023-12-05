@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Fixed
+
+- Race condition in `nrf::timer`.
+
 ## v1.4.0 - 2023-12-04
 
 ### Fixed
