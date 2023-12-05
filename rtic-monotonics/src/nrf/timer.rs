@@ -253,13 +253,15 @@ macro_rules! make_timer {
                 // If there is a compare match on channel 1, it is an overflow
                 if timer.events_compare[1].read().bits() & 1 != 0 {
                     timer.events_compare[1].write(|w| w);
-                    $overflow.fetch_add(1, Ordering::Relaxed);
+                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
+                    assert!(prev % 2 == 1, "Timer must have skipped an interrupt!");
                 }
 
                 // If there is a compare match on channel 2, it is a half-period overflow
                 if timer.events_compare[2].read().bits() & 1 != 0 {
                     timer.events_compare[2].write(|w| w);
-                    $overflow.fetch_add(1, Ordering::Relaxed);
+                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
+                    assert!(prev % 2 == 0, "Timer must have skipped an interrupt!");
                 }
             }
 

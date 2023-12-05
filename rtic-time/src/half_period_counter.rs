@@ -96,11 +96,13 @@
 //!     fn on_interrupt() {
 //!         if overflow_interrupt_happened() {
 //!             clear_overflow_interrupt();
-//!             HALF_PERIOD_COUNTER.fetch_add(1, Ordering::Relaxed);
+//!             let prev = HALF_PERIOD_COUNTER.fetch_add(1, Ordering::Relaxed);
+//!             assert!(prev % 2 == 1, "Timer must have skipped an interrupt!");
 //!         }
 //!         if compare_interrupt_happened() {
 //!             clear_compare_interrupt();
-//!             HALF_PERIOD_COUNTER.fetch_add(1, Ordering::Relaxed);
+//!             let prev = HALF_PERIOD_COUNTER.fetch_add(1, Ordering::Relaxed);
+//!             assert!(prev % 2 == 0, "Timer must have skipped an interrupt!");
 //!         }
 //!     }
 //!
