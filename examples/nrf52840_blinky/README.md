@@ -19,17 +19,6 @@ $ # make sure to install v0.2.0 or later
 $ cargo install probe-rs --features cli
 ```
 
-#### 3. [`cargo-generate`]:
-
-``` console
-$ cargo install cargo-generate
-```
-
-[`cargo-generate`]: https://crates.io/crates/cargo-generate
-
-> *Note:* You can also just clone this repository instead of using `cargo-generate`, but this involves additional manual adjustments.
-
-
 
 ## Run
 
