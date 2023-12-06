@@ -28,9 +28,7 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
         // Configure low frequency clock
-        hal::clocks::Clocks::new(cx.device.CLOCK)
-            .set_lfclk_src_external(hal::clocks::LfOscConfiguration::NoExternalNoBypass)
-            .start_lfclk();
+        hal::clocks::Clocks::new(cx.device.CLOCK).start_lfclk();
 
         // Initialize Monotonic
         let token = rtic_monotonics::create_nrf_rtc0_monotonic_token!();
