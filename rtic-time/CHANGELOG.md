@@ -11,6 +11,12 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+### Fixed
+
+## v1.2.0 - 2023-12-06
+
+### Changed
+
 - Docs: Add sanity check to `half_period_counter` code example
 - Deprecate `Monotonic::should_dequeue_check` as it was erroneous
 
