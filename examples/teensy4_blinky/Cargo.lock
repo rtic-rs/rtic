@@ -133,9 +133,9 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2894bc2f0457b8ca3d6b8ab8aad64d9337583672494013457f86c5a9146c0e22"
+checksum = "3e57ec6ad0bc8eb967cf9c9f144177f5e8f2f6f02dad0b8b683f9f05f6b22def"
 
 [[package]]
 name = "equivalent"
@@ -440,12 +440,12 @@ dependencies = [
 
 [[package]]
 name = "rtic-monotonics"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "atomic-polyfill",
  "cfg-if",
  "cortex-m",
- "embedded-hal 1.0.0-rc.1",
+ "embedded-hal 1.0.0-rc.2",
  "fugit",
  "imxrt-ral",
  "rtic-time",
@@ -453,7 +453,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-time"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "critical-section",
  "futures-util",
