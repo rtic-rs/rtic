@@ -30,6 +30,7 @@ use crate::{Monotonic, TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
 pub use fugit::{self, ExtU64, ExtU64Ceil};
+use rtic_time::half_period_counter::calculate_now;
 
 #[cfg(feature = "nrf52810")]
 use nrf52810_pac::{self as pac, Interrupt, TIMER0, TIMER1, TIMER2};
@@ -139,17 +140,45 @@ macro_rules! make_timer {
                 // 1 MHz
                 timer.prescaler.write(|w| unsafe { w.prescaler().bits(4) });
                 timer.bitmode.write(|w| w.bitmode()._32bit());
-                timer
-                    .intenset
-                    .modify(|_, w| w.compare0().set().compare1().set());
-                timer.cc[1].write(|w| unsafe { w.cc().bits(0) }); // Overflow
-                timer.tasks_clear.write(|w| unsafe { w.bits(1) });
-                timer.tasks_start.write(|w| unsafe { w.bits(1) });
 
-                $tq.initialize(Self {});
+                // Disable interrupts, as preparation
+                timer.intenclr.modify(|_, w| w
+                    .compare0().clear()
+                    .compare1().clear()
+                    .compare2().clear()
+                );
 
-                timer.events_compare[0].write(|w| w);
-                timer.events_compare[1].write(|w| w);
+                // Configure compare registers
+                timer.cc[0].write(|w| unsafe { w.cc().bits(0) }); // Dynamic wakeup
+                timer.cc[1].write(|w| unsafe { w.cc().bits(0x0000_0000) }); // Overflow
+                timer.cc[2].write(|w| unsafe { w.cc().bits(0x8000_0000) }); // Half-period
+
+                // Timing critical, make sure we don't get interrupted
+                critical_section::with(|_|{
+                    // Reset the timer
+                    timer.tasks_clear.write(|w| unsafe { w.bits(1) });
+                    timer.tasks_start.write(|w| unsafe { w.bits(1) });
+
+                    // Clear pending events.
+                    // Should be close enough to the timer reset that we don't miss any events.
+                    timer.events_compare[0].write(|w| w);
+                    timer.events_compare[1].write(|w| w);
+                    timer.events_compare[2].write(|w| w);
+
+                    // Make sure overflow counter is synced with the timer value
+                    $overflow.store(0, Ordering::SeqCst);
+
+                    // Initialized the timer queue
+                    $tq.initialize(Self {});
+
+                    // Enable interrupts.
+                    // Should be close enough to the timer reset that we don't miss any events.
+                    timer.intenset.modify(|_, w| w
+                        .compare0().set()
+                        .compare1().set()
+                        .compare2().set()
+                    );
+                });
 
                 // SAFETY: We take full ownership of the peripheral and interrupt vector,
                 // plus we are not using any external shared resources so we won't impact
@@ -164,12 +193,6 @@ macro_rules! make_timer {
             #[doc(hidden)]
             pub fn __tq() -> &'static TimerQueue<$mono_name> {
                 &$tq
-            }
-
-            #[inline(always)]
-            fn is_overflow() -> bool {
-                let timer = unsafe { &*$timer::PTR };
-                timer.events_compare[1].read().bits() & 1 != 0
             }
 
             /// Timeout at a specific time.
@@ -216,44 +239,34 @@ macro_rules! make_timer {
             type Duration = fugit::TimerDurationU64<1_000_000>;
 
             fn now() -> Self::Instant {
-                // In a critical section to not get a race between overflow updates and reading it
-                // and the flag here.
-                critical_section::with(|_| {
-                    let timer = unsafe { &*$timer::PTR };
-                    timer.tasks_capture[2].write(|w| unsafe { w.bits(1) });
-                    let cnt = timer.cc[2].read().bits();
+                let timer = unsafe { &*$timer::PTR };
 
-                    let unhandled_overflow = if Self::is_overflow() {
-                        // The overflow has not been handled yet, so add an extra to the read overflow.
-                        1
-                    } else {
-                        0
-                    };
-
-                    timer.tasks_capture[2].write(|w| unsafe { w.bits(1) });
-                    let new_cnt = timer.cc[2].read().bits();
-                    let cnt = if new_cnt >= cnt { cnt } else { new_cnt } as u64;
-
-                    Self::Instant::from_ticks(
-                        (unhandled_overflow + $overflow.load(Ordering::Relaxed) as u64) << 32
-                            | cnt as u64,
-                    )
-                })
+                Self::Instant::from_ticks(calculate_now(
+                    $overflow.load(Ordering::Relaxed),
+                    || {
+                        timer.tasks_capture[3].write(|w| unsafe { w.bits(1) });
+                        timer.cc[3].read().bits()
+                    }
+                ))
             }
 
             fn on_interrupt() {
                 let timer = unsafe { &*$timer::PTR };
 
                 // If there is a compare match on channel 1, it is an overflow
-                if Self::is_overflow() {
+                if timer.events_compare[1].read().bits() & 1 != 0 {
                     timer.events_compare[1].write(|w| w);
-                    $overflow.fetch_add(1, Ordering::SeqCst);
+                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
+                    assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
+                }
+
+                // If there is a compare match on channel 2, it is a half-period overflow
+                if timer.events_compare[2].read().bits() & 1 != 0 {
+                    timer.events_compare[2].write(|w| w);
+                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
+                    assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
                 }
             }
-
-            fn enable_timer() {}
-
-            fn disable_timer() {}
 
             fn set_compare(instant: Self::Instant) {
                 let timer = unsafe { &*$timer::PTR };

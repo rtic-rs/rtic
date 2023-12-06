@@ -148,7 +148,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Install rust ${{ matrix.toolchain }}
         run: |
           rustup set profile minimal
@@ -163,6 +163,9 @@ jobs:
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
+
+      - name: Install flip-link
+        run: cargo install flip-link
 
       - name: Check the examples
         run: cargo xtask usage-example-build
@@ -275,22 +278,22 @@ jobs:
           cp -r target/doc $td/api
           echo rtic
           lychee --offline --format detailed $td/api/rtic/
-        
+
           echo rtic_common
           lychee --offline --format detailed $td/api/rtic_common/
-        
+
           echo rtic_macros
           lychee --offline --format detailed $td/api/rtic_macros/
-        
+
           echo rtic_monotonics
           lychee --offline --format detailed $td/api/rtic_monotonics/
 
           echo rtic_sync
           lychee --offline --format detailed $td/api/rtic_sync/
-        
+
           echo rtic_time
           lychee --offline --format detailed $td/api/rtic_time/
-      
+
 
       - name: Archive the API docs
         run: |
@@ -336,7 +339,7 @@ jobs:
           name: apidocs
 
       - name: Extract the API docs
-        run: tar -xf apidocs.tar 
+        run: tar -xf apidocs.tar
 
       - name: Check links
         run: |
@@ -463,7 +466,7 @@ jobs:
   # master branch.
   # As master moves on to development, the work on the
   # stable version will happen in release/v"stable_version".
-  # Thus, no need to push changes 
+  # Thus, no need to push changes
   #
   # This needs to run before book is built, as bookbuilding fetches from the branch
   pushtostablebranch:
@@ -503,8 +506,8 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - pushtostablebranch
-      - docs      
-      - mdbookold      
+      - docs
+      - mdbookold
       - mdbook
 
     # Only run this when pushing to master branch
@@ -521,7 +524,7 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: mdbook-mermaid
- 
+
       - name: mdBook Action
         uses: peaceiris/actions-mdbook@v1
         with:
@@ -537,7 +540,7 @@ jobs:
 
       - name: Extract the dev-version book and API docs
         run: |
-          tar -xf book.tar 
+          tar -xf book.tar
 
       - name: Download built old versions of books and API docs
         uses: actions/download-artifact@v3
@@ -546,7 +549,7 @@ jobs:
 
       - name: Extract the old version books and API docs
         run: |
-          tar -xf mdbookold.tar 
+          tar -xf mdbookold.tar
 
       - name: Prepare books
         shell: 'script --return --quiet --command "bash {0}"'
@@ -631,7 +634,7 @@ jobs:
 
       - name: Extract the books
         run: |
-          tar -xf bookstodeploy.tar 
+          tar -xf bookstodeploy.tar
 
       - name: Deploy to GH-pages
         uses: peaceiris/actions-gh-pages@v3

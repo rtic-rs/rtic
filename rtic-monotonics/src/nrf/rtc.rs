@@ -44,6 +44,7 @@ use crate::{Monotonic, TimeoutError, TimerQueue};
 use atomic_polyfill::{AtomicU32, Ordering};
 use core::future::Future;
 pub use fugit::{self, ExtU64, ExtU64Ceil};
+use rtic_time::half_period_counter::calculate_now;
 
 #[doc(hidden)]
 #[macro_export]
@@ -92,6 +93,16 @@ macro_rules! create_nrf_rtc2_monotonic_token {
     }};
 }
 
+struct TimerValueU24(u32);
+impl rtic_time::half_period_counter::TimerValue for TimerValueU24 {
+    const BITS: u32 = 24;
+}
+impl From<TimerValueU24> for u64 {
+    fn from(value: TimerValueU24) -> Self {
+        Self::from(value.0)
+    }
+}
+
 macro_rules! make_rtc {
     ($mono_name:ident, $rtc:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer queue implementation.
@@ -107,13 +118,49 @@ macro_rules! make_rtc {
             /// Start the timer monotonic.
             pub fn start(rtc: $rtc, _interrupt_token: impl crate::InterruptToken<Self>) {
                 unsafe { rtc.prescaler.write(|w| w.bits(0)) };
-                rtc.intenset.write(|w| w.compare0().set().ovrflw().set());
-                rtc.evtenset.write(|w| w.compare0().set().ovrflw().set());
 
-                rtc.tasks_clear.write(|w| unsafe { w.bits(1) });
-                rtc.tasks_start.write(|w| unsafe { w.bits(1) });
+                // Disable interrupts, as preparation
+                rtc.intenclr.write(|w| w
+                    .compare0().clear()
+                    .compare1().clear()
+                    .ovrflw().clear()
+                );
 
-                $tq.initialize(Self {});
+                // Configure compare registers
+                rtc.cc[0].write(|w| unsafe { w.bits(0) }); // Dynamic wakeup
+                rtc.cc[1].write(|w| unsafe { w.bits(0x80_0000) }); // Half-period
+
+                // Timing critical, make sure we don't get interrupted
+                critical_section::with(|_|{
+                    // Reset the timer
+                    rtc.tasks_clear.write(|w| unsafe { w.bits(1) });
+                    rtc.tasks_start.write(|w| unsafe { w.bits(1) });
+
+                    // Clear pending events.
+                    // Should be close enough to the timer reset that we don't miss any events.
+                    rtc.events_ovrflw.write(|w| w);
+                    rtc.events_compare[0].write(|w| w);
+                    rtc.events_compare[1].write(|w| w);
+
+                    // Make sure overflow counter is synced with the timer value
+                    $overflow.store(0, Ordering::SeqCst);
+
+                    // Initialized the timer queue
+                    $tq.initialize(Self {});
+
+                    // Enable interrupts.
+                    // Should be close enough to the timer reset that we don't miss any events.
+                    rtc.intenset.write(|w| w
+                        .compare0().set()
+                        .compare1().set()
+                        .ovrflw().set()
+                    );
+                    rtc.evtenset.write(|w| w
+                        .compare0().set()
+                        .compare1().set()
+                        .ovrflw().set()
+                    );
+                });
 
                 // SAFETY: We take full ownership of the peripheral and interrupt vector,
                 // plus we are not using any external shared resources so we won't impact
@@ -128,12 +175,6 @@ macro_rules! make_rtc {
             #[doc(hidden)]
             pub fn __tq() -> &'static TimerQueue<$mono_name> {
                 &$tq
-            }
-
-            #[inline(always)]
-            fn is_overflow() -> bool {
-                let rtc = unsafe { &*$rtc::PTR };
-                rtc.events_ovrflw.read().bits() == 1
             }
 
             /// Timeout at a specific time.
@@ -181,31 +222,24 @@ macro_rules! make_rtc {
             type Duration = fugit::TimerDurationU64<32_768>;
 
             fn now() -> Self::Instant {
-                // In a critical section to not get a race between overflow updates and reading it
-                // and the flag here.
-                critical_section::with(|_| {
-                    let rtc = unsafe { &*$rtc::PTR };
-                    let cnt = rtc.counter.read().bits();
-                    // OVERFLOW HAPPENS HERE race needs to be handled
-                    let ovf = if Self::is_overflow() {
-                        $overflow.load(Ordering::Relaxed) + 1
-                    } else {
-                        $overflow.load(Ordering::Relaxed)
-                    } as u64;
-
-                    // Check and fix if above race happened
-                    let new_cnt = rtc.counter.read().bits();
-                    let cnt = if new_cnt >= cnt { cnt } else { new_cnt } as u64;
-
-                    Self::Instant::from_ticks((ovf << 24) | cnt)
-                })
+                let rtc = unsafe { &*$rtc::PTR };
+                Self::Instant::from_ticks(calculate_now(
+                    $overflow.load(Ordering::Relaxed),
+                    || TimerValueU24(rtc.counter.read().bits())
+                ))
             }
 
             fn on_interrupt() {
                 let rtc = unsafe { &*$rtc::PTR };
-                if Self::is_overflow() {
-                    $overflow.fetch_add(1, Ordering::SeqCst);
+                if rtc.events_ovrflw.read().bits() == 1 {
                     rtc.events_ovrflw.write(|w| unsafe { w.bits(0) });
+                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
+                    assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
+                }
+                if rtc.events_compare[1].read().bits() == 1 {
+                    rtc.events_compare[1].write(|w| unsafe { w.bits(0) });
+                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
+                    assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
                 }
             }
 
@@ -221,7 +255,7 @@ macro_rules! make_rtc {
 
             fn set_compare(instant: Self::Instant) {
                 let rtc = unsafe { &*$rtc::PTR };
-                unsafe { rtc.cc[0].write(|w| w.bits(instant.ticks() as u32 & 0xffffff)) };
+                unsafe { rtc.cc[0].write(|w| w.bits(instant.ticks() as u32 & 0xff_ffff)) };
             }
 
             fn clear_compare_flag() {

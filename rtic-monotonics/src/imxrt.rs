@@ -141,13 +141,15 @@ macro_rules! make_timer {
                 // so it gets combined with rollover interrupt
                 ral::write_reg!(ral::gpt, gpt, OCR[1], 0x0000_0000);
 
+                // Initialize timer queue
+                $tq.initialize(Self {});
+
                 // Enable the timer
                 ral::modify_reg!(ral::gpt, gpt, CR, EN: 1);
                 ral::modify_reg!(ral::gpt, gpt, CR,
                     ENMOD: 0,   // Keep state when disabled
                 );
 
-                $tq.initialize(Self {});
 
                 // SAFETY: We take full ownership of the peripheral and interrupt vector,
                 // plus we are not using any external shared resources so we won't impact
@@ -244,13 +246,15 @@ macro_rules! make_timer {
                 let (rollover, half_rollover) = ral::read_reg!(ral::gpt, gpt, SR, ROV, OF1);
 
                 if rollover != 0 {
-                    $period.fetch_add(1, Ordering::Relaxed);
+                    let prev = $period.fetch_add(1, Ordering::Relaxed);
                     ral::write_reg!(ral::gpt, gpt, SR, ROV: 1);
+                    assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
                 }
 
                 if half_rollover != 0 {
-                    $period.fetch_add(1, Ordering::Relaxed);
+                    let prev = $period.fetch_add(1, Ordering::Relaxed);
                     ral::write_reg!(ral::gpt, gpt, SR, OF1: 1);
+                    assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
                 }
             }
         }

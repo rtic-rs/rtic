@@ -11,6 +11,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Docs: Add sanity check to `half_period_counter` code example
+
 ### Fixed
 
 ## v1.1.0 - 2023-12-04
