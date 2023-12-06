@@ -36,11 +36,15 @@ pub trait Monotonic {
     /// queue in RTIC checks this.
     fn set_compare(instant: Self::Instant);
 
-    /// Override for the dequeue check, override with timers that have bugs.
-    ///
-    /// E.g. nRF52 RTCs needs to be dequeued if the time is within 4 ticks.
-    fn should_dequeue_check(release_at: Self::Instant) -> bool {
-        <Self as Monotonic>::now() >= release_at
+    /// This method used to be required by an errata workaround
+    /// for the nrf52 family, but it has been disabled as the
+    /// workaround was erroneous.
+    #[deprecated(
+        since = "1.2.0",
+        note = "this method is erroneous and has been disabled"
+    )]
+    fn should_dequeue_check(_: Self::Instant) -> bool {
+        panic!("This method should not be used as it is erroneous.")
     }
 
     /// Clear the compare interrupt flag.
