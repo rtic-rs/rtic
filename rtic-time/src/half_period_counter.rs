@@ -202,7 +202,7 @@ where
 {
     // This is timing critical; for fast-overflowing timers (like the 1MHz 16-bit timers on STM32),
     // it could lead to erroneous behavior if preempted in between the two reads.
-
+    // Hence the critical section.
     let (half_periods, timer_value) = critical_section::with(|_| {
         // Important: half_periods **must** be read first.
         // Otherwise the mathematical principle that prevents
