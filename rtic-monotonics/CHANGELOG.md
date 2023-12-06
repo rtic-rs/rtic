@@ -9,8 +9,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
-- Race condition in `nrf::timer`.
-- Race condition in `nrf::rtc`.
+- Fix race condition in `nrf::timer`.
+- Fix race condition in `nrf::rtc`.
+- Fix errata in `nrf::rtc`.
 - Add internal counter integrity check to all half-period based monotonics.
 
 ## v1.4.0 - 2023-12-04
