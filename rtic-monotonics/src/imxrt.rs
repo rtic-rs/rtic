@@ -212,7 +212,7 @@ macro_rules! make_timer {
                 let gpt = unsafe{ $timer::instance() };
 
                 Self::Instant::from_ticks(calculate_now(
-                    $period.load(Ordering::Relaxed),
+                    || $period.load(Ordering::Relaxed),
                     || ral::read_reg!(ral::gpt, gpt, CNT)
                 ))
             }

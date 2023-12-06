@@ -242,7 +242,7 @@ macro_rules! make_timer {
                 let timer = unsafe { &*$timer::PTR };
 
                 Self::Instant::from_ticks(calculate_now(
-                    $overflow.load(Ordering::Relaxed),
+                    || $overflow.load(Ordering::Relaxed),
                     || {
                         timer.tasks_capture[3].write(|w| unsafe { w.bits(1) });
                         timer.cc[3].read().bits()
