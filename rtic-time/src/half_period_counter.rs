@@ -204,8 +204,9 @@ where
     // it could lead to erroneous behavior if preempted in between the two reads.
 
     let (half_periods, timer_value) = critical_section::with(|_| {
-        // Important: half_period **must** be read first.
-        // Otherwise we have another mathematical race condition.
+        // Important: half_periods **must** be read first.
+        // Otherwise the mathematical principle that prevents
+        // the race condition does not work.
         let half_periods = O::from(half_periods());
         compiler_fence(Ordering::Acquire);
         let timer_value = O::from(timer_value());
