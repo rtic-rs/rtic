@@ -234,7 +234,7 @@ macro_rules! make_timer {
 
             fn now() -> Self::Instant {
                 Self::Instant::from_ticks(calculate_now(
-                    $overflow.load(Ordering::Relaxed),
+                    || $overflow.load(Ordering::Relaxed),
                     || $timer.cnt().read().cnt()
                 ))
             }

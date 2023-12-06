@@ -5,7 +5,7 @@ macro_rules! do_test_u8 {
         let periods: u32 = $periods;
         let counter: u8 = $counter;
         let expected: u32 = $expected;
-        let actual: u32 = calculate_now(periods, || counter);
+        let actual: u32 = calculate_now(|| periods, || counter);
         assert_eq!(
             actual, expected,
             "Expected: ({} | {}) => {}, got: {}",
@@ -19,7 +19,7 @@ macro_rules! do_test_u16 {
         let periods: u16 = $periods;
         let counter: u16 = $counter;
         let expected: u32 = $expected;
-        let actual: u32 = calculate_now(periods, || counter);
+        let actual: u32 = calculate_now(|| periods, || counter);
         assert_eq!(
             actual, expected,
             "Expected: ({} | {}) => {}, got: {}",

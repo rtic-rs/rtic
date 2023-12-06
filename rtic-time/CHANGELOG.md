@@ -16,6 +16,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Fix race condition in `half_period_counter::calculate_now`.
+  This sadly required a minor API change.
+
 ## v1.1.0 - 2023-12-04
 
 ### Added

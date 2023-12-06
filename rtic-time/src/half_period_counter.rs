@@ -108,7 +108,7 @@
 //!
 //!     fn now() -> u64 {
 //!         rtic_time::half_period_counter::calculate_now(
-//!             HALF_PERIOD_COUNTER.load(Ordering::Relaxed),
+//!             || HALF_PERIOD_COUNTER.load(Ordering::Relaxed),
 //!             || timer_get_value(),
 //!         )
 //!     }
@@ -191,19 +191,27 @@ impl_timer_ops!(u128);
 ///
 /// # Arguments
 ///
-/// * `half_periods` - The period counter value. If read from an atomic, can use `Ordering::Relaxed`.
+/// * `half_periods` - A closure/function that when called produces the period counter value. If read from an atomic, can use `Ordering::Relaxed`.
 /// * `timer_value` - A closure/function that when called produces the current timer value.
-pub fn calculate_now<P, T, F, O>(half_periods: P, timer_value: F) -> O
+pub fn calculate_now<P, T, F1, F2, O>(half_periods: F1, timer_value: F2) -> O
 where
     T: TimerValue,
     O: From<P> + From<T> + TimerOps,
-    F: FnOnce() -> T,
+    F1: FnOnce() -> P,
+    F2: FnOnce() -> T,
 {
-    // Important: half_period **must** be read first.
-    // Otherwise we have another mathematical race condition.
-    let half_periods = O::from(half_periods);
-    compiler_fence(Ordering::Acquire);
-    let timer_value = O::from(timer_value());
+    // This is timing critical; for fast-overflowing timers (like the 1MHz 16-bit timers on STM32),
+    // it could lead to erroneous behavior if preempted in between the two reads.
+    // Hence the critical section.
+    let (half_periods, timer_value) = critical_section::with(|_| {
+        // Important: half_periods **must** be read first.
+        // Otherwise the mathematical principle that prevents
+        // the race condition does not work.
+        let half_periods = O::from(half_periods());
+        compiler_fence(Ordering::Acquire);
+        let timer_value = O::from(timer_value());
+        (half_periods, timer_value)
+    });
 
     // Credits to the `time-driver` of `embassy-stm32`.
     //

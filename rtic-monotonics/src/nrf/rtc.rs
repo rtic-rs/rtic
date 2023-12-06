@@ -224,7 +224,7 @@ macro_rules! make_rtc {
             fn now() -> Self::Instant {
                 let rtc = unsafe { &*$rtc::PTR };
                 Self::Instant::from_ticks(calculate_now(
-                    $overflow.load(Ordering::Relaxed),
+                    || $overflow.load(Ordering::Relaxed),
                     || TimerValueU24(rtc.counter.read().bits())
                 ))
             }
