@@ -243,19 +243,29 @@ macro_rules! make_rtc {
                 }
             }
 
-            // NOTE: To fix errata for RTC, if the release time is within 4 ticks
-            // we release as the RTC will not generate a compare interrupt...
-            fn should_dequeue_check(release_at: Self::Instant) -> bool {
-                Self::now() + <Self as Monotonic>::Duration::from_ticks(4) >= release_at
-            }
-
             fn enable_timer() {}
 
             fn disable_timer() {}
 
-            fn set_compare(instant: Self::Instant) {
+            fn set_compare(mut instant: Self::Instant) {
                 let rtc = unsafe { &*$rtc::PTR };
-                unsafe { rtc.cc[0].write(|w| w.bits(instant.ticks() as u32 & 0xff_ffff)) };
+
+                // Disable interrupts because this section is timing critical.
+                // We rely on the fact that this entire section runs within one
+                // RTC clock tick. (which it will do easily if it doesn't get
+                // interrupted)
+                critical_section::with(|_|{
+                    let now = Self::now();
+                    if let Some(diff) = instant.checked_duration_since(now) {
+                        // Errata: Timer interrupts don't fire if they are scheduled less than
+                        // two ticks in the future. Make it three, because the timer could
+                        // tick right now.
+                        if diff.ticks() < 3 {
+                            instant = Self::Instant::from_ticks(now.ticks().wrapping_add(3));
+                        }
+                        unsafe { rtc.cc[0].write(|w| w.bits(instant.ticks() as u32 & 0xff_ffff)) };
+                    }
+                });
             }
 
             fn clear_compare_flag() {
