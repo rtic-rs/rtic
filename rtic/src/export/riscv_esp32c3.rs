@@ -1,6 +1,6 @@
 use esp32c3::INTERRUPT_CORE0; //priority threshold control
 pub use esp32c3::{Interrupt, Peripherals};
-pub use riscv::{interrupt, register::mcause}; //low level interrupt enable/disable
+pub use riscv::register::mcause; //low level interrupt enable/disable
 
 #[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]
 compile_error!("Building for the esp32c3, but 'riscv-esp32c3-backend not selected'");
