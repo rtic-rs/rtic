@@ -100,18 +100,6 @@ impl TimerQueueBasedMonotonic for SubtickTestTimer {
 
     type Instant = fugit::Instant<u64, SUBTICKS_PER_TICK, 1000>;
     type Duration = fugit::Duration<u64, SUBTICKS_PER_TICK, 1000>;
-
-    fn ticks_to_instant(ticks: <Self::Backend as TimerQueueBackend>::Ticks) -> Self::Instant {
-        Self::Instant::from_ticks(ticks)
-    }
-
-    fn instant_to_ticks(instant: Self::Instant) -> <Self::Backend as TimerQueueBackend>::Ticks {
-        instant.ticks()
-    }
-
-    fn duration_to_ticks(duration: Self::Duration) -> <Self::Backend as TimerQueueBackend>::Ticks {
-        duration.ticks()
-    }
 }
 
 rtic_time::impl_embedded_hal_delay_fugit!(SubtickTestTimer);

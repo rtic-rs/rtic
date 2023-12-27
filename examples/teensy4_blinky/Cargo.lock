@@ -467,6 +467,7 @@ dependencies = [
  "critical-section",
  "embedded-hal 1.0.0-rc.3",
  "embedded-hal-async",
+ "fugit",
  "futures-util",
  "rtic-common",
 ]

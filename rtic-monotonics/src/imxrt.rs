@@ -80,21 +80,6 @@ macro_rules! __internal_create_imxrt_timer_struct {
                 1,
                 { $tick_rate_hz },
             >;
-            fn ticks_to_instant(
-                ticks: <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-            ) -> Self::Instant {
-                Self::Instant::from_ticks(ticks)
-            }
-            fn instant_to_ticks(
-                instant: Self::Instant,
-            ) -> <Self::Backend as $crate::TimerQueueBackend>::Ticks {
-                instant.ticks()
-            }
-            fn duration_to_ticks(
-                duration: Self::Duration,
-            ) -> <Self::Backend as $crate::TimerQueueBackend>::Ticks {
-                duration.ticks()
-            }
         }
 
         $crate::rtic_time::impl_embedded_hal_delay_fugit!($name);

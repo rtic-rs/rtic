@@ -2,7 +2,9 @@
 
 use crate::TimeoutError;
 
-pub use timer_queue_based_monotonic::TimerQueueBasedMonotonic;
+pub use timer_queue_based_monotonic::{
+    TimerQueueBasedDuration, TimerQueueBasedInstant, TimerQueueBasedMonotonic,
+};
 
 mod embedded_hal_macros;
 mod timer_queue_based_monotonic;
@@ -23,7 +25,7 @@ pub trait Monotonic {
         + core::ops::Sub<Self::Duration, Output = Self::Instant>
         + core::ops::Sub<Self::Instant, Output = Self::Duration>;
 
-    /// The type for duration, defining an duration of time.
+    /// The type for duration, defining a duration of time.
     ///
     /// **Note:** In all APIs in RTIC that use duration from this monotonic, this type will be used.
     type Duration: Copy;
