@@ -4,12 +4,6 @@ use super::Monotonic;
 
 /// A monotonic that is backed by the [timer queue](crate::timer_queue::TimerQueue).
 pub trait TimerQueueBasedMonotonic {
-    /// The instant at time zero. Required for optimization.
-    const INSTANT_ZERO: Self::Instant;
-
-    /// One tick duration. Required for optimization.
-    const DURATION_ONE: Self::Duration;
-
     /// The backend for the timer queue
     type Backend: TimerQueueBackend;
 
@@ -36,12 +30,7 @@ pub trait TimerQueueBasedMonotonic {
 }
 
 impl<T: TimerQueueBasedMonotonic> Monotonic for T {
-    const INSTANT_ZERO: T::Instant = T::INSTANT_ZERO;
-
-    const DURATION_ONE: T::Duration = T::DURATION_ONE;
-
     type Instant = T::Instant;
-
     type Duration = T::Duration;
 
     fn now() -> Self::Instant {

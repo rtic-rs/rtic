@@ -14,12 +14,6 @@ mod timer_queue_based_monotonic;
 /// The trait enforces that proper time-math is implemented between `Instant` and `Duration`. This
 /// is a requirement on the time library that the user chooses to use.
 pub trait Monotonic {
-    /// The instant at time zero. Required for optimization.
-    const INSTANT_ZERO: Self::Instant;
-
-    /// One tick duration. Required for optimization.
-    const DURATION_ONE: Self::Duration;
-
     /// The type for instant, defining an instant in time.
     ///
     /// **Note:** In all APIs in RTIC that use instants from this monotonic, this type will be used.

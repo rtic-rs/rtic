@@ -37,6 +37,10 @@ impl SubtickTestTimer {
 }
 
 impl SubtickTestTimerBackend {
+    fn init() {
+        Self::timer_queue().initialize(Self)
+    }
+
     pub fn tick() -> u64 {
         let now = NOW_SUBTICKS.fetch_add(1, Ordering::Relaxed) + 1;
         let ticks = now / u64::from(SUBTICKS_PER_TICK);
@@ -70,10 +74,6 @@ impl SubtickTestTimerBackend {
 impl TimerQueueBackend for SubtickTestTimerBackend {
     type Ticks = u64;
 
-    fn init() {
-        Self::timer_queue().initialize(Self)
-    }
-
     fn now() -> Self::Ticks {
         NOW_SUBTICKS.load(Ordering::Relaxed) / u64::from(SUBTICKS_PER_TICK)
     }
@@ -96,9 +96,6 @@ impl TimerQueueBackend for SubtickTestTimerBackend {
 }
 
 impl TimerQueueBasedMonotonic for SubtickTestTimer {
-    const INSTANT_ZERO: Self::Instant = Self::Instant::from_ticks(0);
-    const DURATION_ONE: Self::Duration = Self::Duration::from_ticks(1);
-
     type Backend = SubtickTestTimerBackend;
 
     type Instant = fugit::Instant<u64, SUBTICKS_PER_TICK, 1000>;
@@ -117,18 +114,8 @@ impl TimerQueueBasedMonotonic for SubtickTestTimer {
     }
 }
 
-rtic_time::implement_embedded_hal_delay_trait! {
-    SubtickTestTimer,
-    millis_at_least: <u64 as ExtU64Ceil>::millis_at_least,
-    micros_at_least: <u64 as ExtU64Ceil>::micros_at_least,
-    nanos_at_least: <u64 as ExtU64Ceil>::nanos_at_least,
-}
-rtic_time::implement_embedded_hal_async_delay_trait! {
-    SubtickTestTimer,
-    millis_at_least: <u64 as ExtU64Ceil>::millis_at_least,
-    micros_at_least: <u64 as ExtU64Ceil>::micros_at_least,
-    nanos_at_least: <u64 as ExtU64Ceil>::nanos_at_least,
-}
+rtic_time::impl_embedded_hal_delay_fugit!(SubtickTestTimer);
+rtic_time::impl_embedded_hal_async_delay_fugit!(SubtickTestTimer);
 
 // A simple struct that counts the number of times it is awoken. Can't
 // be awoken by value (because that would discard the counter), so we

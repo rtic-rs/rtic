@@ -14,3 +14,8 @@ pub mod timer_queue;
 
 /// This indicates that there was a timeout.
 pub struct TimeoutError;
+
+/// Re-export for macros
+pub use embedded_hal;
+/// Re-export for macros
+pub use embedded_hal_async;

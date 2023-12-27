@@ -76,12 +76,14 @@ impl TestMonoBackend {
     }
 }
 
-impl TimerQueueBackend for TestMonoBackend {
-    type Ticks = u64;
-
+impl TestMonoBackend {
     fn init() {
         Self::timer_queue().initialize(Self);
     }
+}
+
+impl TimerQueueBackend for TestMonoBackend {
+    type Ticks = u64;
 
     fn now() -> Self::Ticks {
         peripheral::now()
