@@ -1,4 +1,4 @@
-use super::TimerQueueTicks;
+use super::{TimerQueue, TimerQueueTicks};
 
 /// # A monotonic clock / counter definition.
 ///
@@ -6,7 +6,7 @@ use super::TimerQueueTicks;
 ///
 /// The trait enforces that proper time-math is implemented between `Instant` and `Duration`. This
 /// is a requirement on the time library that the user chooses to use.
-pub trait TimerQueueBackend {
+pub trait TimerQueueBackend: 'static + Sized {
     /// The type for ticks
     type Ticks: TimerQueueTicks;
 
@@ -43,4 +43,7 @@ pub trait TimerQueueBackend {
     ///
     /// NOTE: This may be called more than once.
     fn disable_timer() {}
+
+    /// Returns a reference to the underlying timer queue.
+    fn timer_queue() -> &'static TimerQueue<Self>;
 }

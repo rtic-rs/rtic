@@ -2,13 +2,13 @@ use core::cmp;
 
 /// The ticks of a timer.
 pub trait TimerQueueTicks: Copy + PartialEq + Eq {
-    /// Represents a single tick
+    /// Represents a single tick.
     const ONE_TICK: Self;
 
-    /// Computes if another time point is later or equal to self.
+    /// Compares to another tick count.
     ///
     /// Takes into account timer wrapping; if the difference is more than
-    /// half the value range, the result will be negated.
+    /// half the value range, the result will be flipped.
     fn compare(self, other: Self) -> cmp::Ordering;
 
     /// True if `self` is at the same time as `other` or later.

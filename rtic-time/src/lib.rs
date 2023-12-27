@@ -7,12 +7,9 @@
 #![deny(missing_docs)]
 #![allow(async_fn_in_trait)]
 
-pub use monotonic::Monotonic;
-pub use timer_queue::TimerQueue;
-
 pub mod half_period_counter;
 mod linked_list;
-mod monotonic;
+pub mod monotonic;
 pub mod timer_queue;
 
 /// This indicates that there was a timeout.
