@@ -8,7 +8,7 @@ pub trait TimerQueueBasedMonotonic {
     const INSTANT_ZERO: Self::Instant;
 
     /// One tick duration. Required for optimization.
-    const PERIOD_ONE: Self::Duration;
+    const DURATION_ONE: Self::Duration;
 
     /// The backend for the timer queue
     type Backend: TimerQueueBackend;
@@ -38,7 +38,7 @@ pub trait TimerQueueBasedMonotonic {
 impl<T: TimerQueueBasedMonotonic> Monotonic for T {
     const INSTANT_ZERO: T::Instant = T::INSTANT_ZERO;
 
-    const PERIOD_ONE: T::Duration = T::PERIOD_ONE;
+    const DURATION_ONE: T::Duration = T::DURATION_ONE;
 
     type Instant = T::Instant;
 

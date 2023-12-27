@@ -97,7 +97,7 @@ impl TimerQueueBackend for SubtickTestTimerBackend {
 
 impl TimerQueueBasedMonotonic for SubtickTestTimer {
     const INSTANT_ZERO: Self::Instant = Self::Instant::from_ticks(0);
-    const PERIOD_ONE: Self::Duration = Self::Duration::from_ticks(1);
+    const DURATION_ONE: Self::Duration = Self::Duration::from_ticks(1);
 
     type Backend = SubtickTestTimerBackend;
 

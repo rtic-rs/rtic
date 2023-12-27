@@ -15,7 +15,7 @@ macro_rules! implement_embedded_hal_delay_trait {
                 let mut done = now + ($nanos_at_least)(ns.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + <Self as $crate::monotonic::Monotonic>::PERIOD_ONE;
+                    done = done + <Self as $crate::monotonic::Monotonic>::DURATION_ONE;
                 }
 
                 while <Self as $crate::monotonic::Monotonic>::now() < done {}
@@ -26,7 +26,7 @@ macro_rules! implement_embedded_hal_delay_trait {
                 let mut done = now + ($micros_at_least)(us.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + <Self as $crate::monotonic::Monotonic>::PERIOD_ONE;
+                    done = done + <Self as $crate::monotonic::Monotonic>::DURATION_ONE;
                 }
 
                 while <Self as $crate::monotonic::Monotonic>::now() < done {}
@@ -37,7 +37,7 @@ macro_rules! implement_embedded_hal_delay_trait {
                 let mut done = now + ($millis_at_least)(ms.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + <Self as $crate::monotonic::Monotonic>::PERIOD_ONE;
+                    done = done + <Self as $crate::monotonic::Monotonic>::DURATION_ONE;
                 }
 
                 while <Self as $crate::monotonic::Monotonic>::now() < done {}

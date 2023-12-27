@@ -18,7 +18,7 @@ pub trait Monotonic {
     const INSTANT_ZERO: Self::Instant;
 
     /// One tick duration. Required for optimization.
-    const PERIOD_ONE: Self::Duration;
+    const DURATION_ONE: Self::Duration;
 
     /// The type for instant, defining an instant in time.
     ///

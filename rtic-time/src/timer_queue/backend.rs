@@ -10,9 +10,6 @@ pub trait TimerQueueBackend: 'static + Sized {
     /// The type for ticks.
     type Ticks: TimerQueueTicks;
 
-    /// Initialize the peripheral and the timer queue.
-    fn init();
-
     /// Get the current time.
     fn now() -> Self::Ticks;
 
