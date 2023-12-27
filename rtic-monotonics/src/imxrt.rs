@@ -69,8 +69,6 @@ macro_rules! __internal_create_imxrt_timer_struct {
             }
         }
         impl $crate::TimerQueueBasedMonotonic for $name {
-            const INSTANT_ZERO: Self::Instant = Self::Instant::from_ticks(0);
-            const DURATION_ONE: Self::Duration = Self::Duration::from_ticks(1);
             type Backend = $crate::imxrt::$mono_backend;
             type Instant = $crate::fugit::Instant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
@@ -98,6 +96,10 @@ macro_rules! __internal_create_imxrt_timer_struct {
                 duration.ticks()
             }
         }
+
+        $crate::rtic_time::impl_embedded_hal_delay_fugit!($name);
+        #[cfg(feature = "embedded-hal-async")]
+        $crate::rtic_time::impl_embedded_hal_async_delay_fugit!($name);
     };
 }
 
@@ -208,11 +210,6 @@ macro_rules! make_timer {
                 }
             }
         }
-
-        // rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
-
-        // #[cfg(feature = "embedded-hal-async")]
-        // rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
 
         impl TimerQueueBackend for $backend_name {
             type Ticks = u64;

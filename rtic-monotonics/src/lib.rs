@@ -28,8 +28,13 @@
 #![allow(incomplete_features)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub use rtic_time::{monotonic::{Monotonic, TimerQueueBasedMonotonic}, TimeoutError, timer_queue::TimerQueueBackend};
 pub use fugit;
+pub use rtic_time::{
+    self,
+    monotonic::{Monotonic, TimerQueueBasedMonotonic},
+    timer_queue::TimerQueueBackend,
+    TimeoutError,
+};
 
 #[cfg(feature = "cortex-m-systick")]
 pub mod systick;
