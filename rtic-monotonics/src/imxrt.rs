@@ -37,7 +37,7 @@ pub use imxrt_ral as ral;
 /// Common definitions and traits for using the i.MX RT monotonics
 pub mod prelude {
     #[cfg(feature = "imxrt_gpt1")]
-    pub use crate::imxrt_gpt2_monotonic;
+    pub use crate::imxrt_gpt1_monotonic;
     #[cfg(feature = "imxrt_gpt2")]
     pub use crate::imxrt_gpt2_monotonic;
 
