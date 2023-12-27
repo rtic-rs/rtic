@@ -12,7 +12,7 @@ fn panic(_: &::core::panic::PanicInfo) -> ! {
 use teensy4_bsp::{board, hal};
 
 use rtic_monotonics::imxrt::prelude::*;
-setup_imxrt_gpt1_mono!(Mono, board::PERCLK_FREQUENCY);
+imxrt_gpt1_monotonic!(Mono, board::PERCLK_FREQUENCY);
 
 #[rtic::app(device = teensy4_bsp, dispatchers = [LPSPI1])]
 mod app {
