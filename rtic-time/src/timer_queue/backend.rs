@@ -7,8 +7,11 @@ use super::{TimerQueue, TimerQueueTicks};
 /// The trait enforces that proper time-math is implemented between `Instant` and `Duration`. This
 /// is a requirement on the time library that the user chooses to use.
 pub trait TimerQueueBackend: 'static + Sized {
-    /// The type for ticks
+    /// The type for ticks.
     type Ticks: TimerQueueTicks;
+
+    /// Initialize the peripheral and the timer queue.
+    fn init();
 
     /// Get the current time.
     fn now() -> Self::Ticks;

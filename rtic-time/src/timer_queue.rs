@@ -103,11 +103,11 @@ impl<Backend: TimerQueueBackend> TimerQueue<Backend> {
     }
 
     /// Takes the initialized monotonic to initialize the TimerQueue.
-    pub fn initialize(&self, monotonic: Backend) {
+    pub fn initialize(&self, backend: Backend) {
         self.initialized.store(true, Ordering::SeqCst);
 
         // Don't run drop on `Mono`
-        core::mem::forget(monotonic);
+        core::mem::forget(backend);
     }
 
     /// Call this in the interrupt handler of the hardware timer supporting the `Monotonic`
