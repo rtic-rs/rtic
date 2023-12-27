@@ -299,7 +299,26 @@ pub fn cargo_doc<'c>(
     backend: Backends,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
-    let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
+    let extra_doc_features = [
+        "rtic-monotonics/cortex-m-systick",
+        "rtic-monotonics/rp2040",
+        "rtic-monotonics/nrf52840",
+        "imxrt-ral/imxrt1011",
+        "rtic-monotonics/imxrt_gpt1",
+        "rtic-monotonics/imxrt_gpt2",
+        "rtic-monotonics/stm32h725ag",
+        "rtic-monotonics/stm32_tim2",
+        "rtic-monotonics/stm32_tim3",
+        "rtic-monotonics/stm32_tim4",
+        "rtic-monotonics/stm32_tim5",
+        "rtic-monotonics/stm32_tim15",
+    ];
+
+    let features = Some(format!(
+        "{},{}",
+        backend.to_target().and_features(backend.to_rtic_feature()),
+        extra_doc_features.join(",")
+    ));
 
     let command = CargoCommand::Doc {
         cargoarg,

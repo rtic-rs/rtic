@@ -5,11 +5,18 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
-## Unreleased
+## Unreleased - v2.0.0
+
 
 ### Added
 
 ### Changed
+- Full rewrite of the `Monotonic` API.
+    - Now split into multiple traits:
+        - `Monotonic` - A user-facing trait that defines what the functionality of a monotonic is.
+        - `TimerQueueBackend` - The set of functionality a backend must provide in order to be used with the `TimerQueue`.
+    - `TimerQueue` is now purely based on ticks and has no concept of real time.
+    - The `TimerQueueBasedMonotonic` trait implements a `Monotonic` based on a `TimerQueueBackend`, translating ticks into `Instant` and `Duration`.
 
 ### Fixed
 

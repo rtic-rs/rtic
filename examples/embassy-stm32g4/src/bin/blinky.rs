@@ -5,8 +5,10 @@
 
 use embassy_stm32::gpio::{Level, Output, Speed};
 use rtic::app;
-use rtic_monotonics::systick::*;
+use rtic_monotonics::systick::prelude::*;
 use {defmt_rtt as _, panic_probe as _};
+
+systick_monotonic!(Mono, 1_000);
 
 pub mod pac {
     pub use embassy_stm32::pac::Interrupt as interrupt;
@@ -26,8 +28,7 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
         // Initialize the systick interrupt & obtain the token to prove that we did
-        let systick_mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, 25_000_000, systick_mono_token);
+        Mono::start(cx.core.SYST, 25_000_000);
 
         let p = embassy_stm32::init(Default::default());
         defmt::info!("Hello World!");
@@ -53,7 +54,7 @@ mod app {
                 led.set_low();
             }
             state = !state;
-            Systick::delay(1000.millis()).await;
+            Mono::delay(1000.millis()).await;
         }
     }
 }

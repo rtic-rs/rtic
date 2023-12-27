@@ -21,14 +21,18 @@
 //! `Available on crate features X only` tag are available on any `nrf52*` feature.
 //!
 // To build these docs correctly:
-// RUSTFLAGS="--cfg docsrs" cargo doc --featuers cortex-m-systick,rp2040,nrf52840
+// RUSTFLAGS="--cfg docsrs" cargo +nightly doc --features thumbv7-backend,cortex-m-systick,rp2040,nrf52840,imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1011,stm32h725ag,stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15
 
 #![no_std]
 #![deny(missing_docs)]
 #![allow(incomplete_features)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub use rtic_time::{Monotonic, TimeoutError, TimerQueue};
+pub use fugit;
+pub use rtic_time::{
+    self, monotonic::TimerQueueBasedMonotonic, timer_queue::TimerQueueBackend, Monotonic,
+    TimeoutError,
+};
 
 #[cfg(feature = "cortex-m-systick")]
 pub mod systick;
@@ -92,13 +96,3 @@ pub(crate) unsafe fn set_monotonic_prio(
 
     nvic.set_priority(interrupt, hw_prio);
 }
-
-/// This marker is implemented on an interrupt token to enforce that the right tokens
-/// are given to the correct monotonic implementation.
-///
-/// This trait is implemented by this crate and not intended for user implementation.
-///
-/// # Safety
-///
-/// This is only safely implemented by this crate.
-pub unsafe trait InterruptToken<Periperhal> {}
