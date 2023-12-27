@@ -4,14 +4,14 @@ use super::Monotonic;
 
 /// A monotonic that is backed by the [timer queue](crate::timer_queue::TimerQueue).
 pub trait TimerQueueBasedMonotonic {
+    /// The instant at time zero. Required for optimization.
+    const INSTANT_ZERO: Self::Instant;
+
+    /// One tick duration. Required for optimization.
+    const PERIOD_ONE: Self::Duration;
+
     /// The backend for the timer queue
     type Backend: TimerQueueBackend;
-
-    /// The time at time zero.
-    const ZERO: Self::Instant;
-
-    /// The duration between two timer ticks.
-    const TICK_PERIOD: Self::Duration;
 
     /// The type for instant, defining an instant in time.
     ///
@@ -36,9 +36,9 @@ pub trait TimerQueueBasedMonotonic {
 }
 
 impl<T: TimerQueueBasedMonotonic> Monotonic for T {
-    const ZERO: T::Instant = T::ZERO;
+    const INSTANT_ZERO: T::Instant = T::INSTANT_ZERO;
 
-    const TICK_PERIOD: T::Duration = T::TICK_PERIOD;
+    const PERIOD_ONE: T::Duration = T::PERIOD_ONE;
 
     type Instant = T::Instant;
 
@@ -78,55 +78,3 @@ impl<T: TimerQueueBasedMonotonic> Monotonic for T {
             .await
     }
 }
-
-// impl<T: TimerQueueBasedMonotonic> embedded_hal::delay::DelayNs for T {
-//     fn delay_ns(&mut self, ns: u32) {
-//         let now = Self::now();
-//         let mut done = now + Self::duration_nanos_at_least(ns);
-//         if now != done {
-//             // Compensate for sub-tick uncertainty
-//             done = done + Self::TICK_PERIOD;
-//         }
-
-//         while Self::now() < done {}
-//     }
-
-//     fn delay_us(&mut self, us: u32) {
-//         let now = Self::now();
-//         let mut done = now + Self::duration_micros_at_least(us);
-//         if now != done {
-//             // Compensate for sub-tick uncertainty
-//             done = done + Self::TICK_PERIOD;
-//         }
-
-//         while Self::now() < done {}
-//     }
-
-//     fn delay_ms(&mut self, ms: u32) {
-//         let now = Self::now();
-//         let mut done = now + Self::duration_millis_at_least(ms);
-//         if now != done {
-//             // Compensate for sub-tick uncertainty
-//             done = done + Self::TICK_PERIOD;
-//         }
-
-//         while Self::now() < done {}
-//     }
-// }
-
-// impl<T: TimerQueueBasedMonotonic> embedded_hal_async::delay::DelayNs for T {
-//     #[inline]
-//     async fn delay_ns(&mut self, ns: u32) {
-//         Self::delay(Self::duration_nanos_at_least(ns)).await;
-//     }
-
-//     #[inline]
-//     async fn delay_us(&mut self, us: u32) {
-//         Self::delay(Self::duration_micros_at_least(us)).await;
-//     }
-
-//     #[inline]
-//     async fn delay_ms(&mut self, ms: u32) {
-//         Self::delay(Self::duration_millis_at_least(ms)).await;
-//     }
-// }

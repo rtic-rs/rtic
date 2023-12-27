@@ -15,48 +15,28 @@ use std::{
     time::Duration,
 };
 
-use ::fugit::ExtU64Ceil;
 use cooked_waker::{IntoWaker, WakeRef};
+use fugit::ExtU64Ceil;
 use parking_lot::Mutex;
-use rtic_time::{Monotonic, TimeoutError, TimerQueue};
+use rtic_time::{
+    monotonic::{Monotonic, TimerQueueBasedMonotonic},
+    timer_queue::{TimerQueue, TimerQueueBackend},
+};
 
 const SUBTICKS_PER_TICK: u32 = 10;
 struct SubtickTestTimer;
-static TIMER_QUEUE: TimerQueue<SubtickTestTimer> = TimerQueue::new();
+struct SubtickTestTimerBackend;
+static TIMER_QUEUE: TimerQueue<SubtickTestTimerBackend> = TimerQueue::new();
 static NOW_SUBTICKS: AtomicU64 = AtomicU64::new(0);
 static COMPARE_TICKS: Mutex<Option<u64>> = Mutex::new(None);
 
-impl Monotonic for SubtickTestTimer {
-    const ZERO: Self::Instant = Self::Instant::from_ticks(0);
-    const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
-
-    type Instant = fugit::Instant<u64, SUBTICKS_PER_TICK, 1000>;
-    type Duration = fugit::Duration<u64, SUBTICKS_PER_TICK, 1000>;
-
-    fn now() -> Self::Instant {
-        Self::Instant::from_ticks(
-            NOW_SUBTICKS.load(Ordering::Relaxed) / u64::from(SUBTICKS_PER_TICK),
-        )
-    }
-
-    fn set_compare(instant: Self::Instant) {
-        *COMPARE_TICKS.lock() = Some(instant.ticks());
-    }
-
-    fn clear_compare_flag() {}
-
-    fn pend_interrupt() {
-        unsafe {
-            Self::__tq().on_monotonic_interrupt();
-        }
+impl SubtickTestTimer {
+    pub fn init() {
+        SubtickTestTimerBackend::init();
     }
 }
 
-impl SubtickTestTimer {
-    pub fn init() {
-        Self::__tq().initialize(Self)
-    }
-
+impl SubtickTestTimerBackend {
     pub fn tick() -> u64 {
         let now = NOW_SUBTICKS.fetch_add(1, Ordering::Relaxed) + 1;
         let ticks = now / u64::from(SUBTICKS_PER_TICK);
@@ -70,7 +50,7 @@ impl SubtickTestTimer {
         // );
         if subticks == 0 && Some(ticks) == *compare {
             unsafe {
-                Self::__tq().on_monotonic_interrupt();
+                Self::timer_queue().on_monotonic_interrupt();
             }
         }
 
@@ -85,29 +65,70 @@ impl SubtickTestTimer {
     pub fn now_subticks() -> u64 {
         NOW_SUBTICKS.load(Ordering::Relaxed)
     }
+}
 
-    fn __tq() -> &'static TimerQueue<Self> {
+impl TimerQueueBackend for SubtickTestTimerBackend {
+    type Ticks = u64;
+
+    fn init() {
+        Self::timer_queue().initialize(Self)
+    }
+
+    fn now() -> Self::Ticks {
+        NOW_SUBTICKS.load(Ordering::Relaxed) / u64::from(SUBTICKS_PER_TICK)
+    }
+
+    fn set_compare(instant: Self::Ticks) {
+        *COMPARE_TICKS.lock() = Some(instant);
+    }
+
+    fn clear_compare_flag() {}
+
+    fn pend_interrupt() {
+        unsafe {
+            Self::timer_queue().on_monotonic_interrupt();
+        }
+    }
+
+    fn timer_queue() -> &'static TimerQueue<Self> {
         &TIMER_QUEUE
-    }
-
-    /// Delay for some duration of time.
-    #[inline]
-    pub async fn delay(duration: <Self as Monotonic>::Duration) {
-        Self::__tq().delay(duration).await;
-    }
-
-    /// Timeout after a specific duration.
-    #[inline]
-    pub async fn timeout_after<F: core::future::Future>(
-        duration: <Self as Monotonic>::Duration,
-        future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        Self::__tq().timeout_after(duration, future).await
     }
 }
 
-rtic_time::embedded_hal_delay_impl_fugit64!(SubtickTestTimer);
-rtic_time::embedded_hal_async_delay_impl_fugit64!(SubtickTestTimer);
+impl TimerQueueBasedMonotonic for SubtickTestTimer {
+    const INSTANT_ZERO: Self::Instant = Self::Instant::from_ticks(0);
+    const PERIOD_ONE: Self::Duration = Self::Duration::from_ticks(1);
+
+    type Backend = SubtickTestTimerBackend;
+
+    type Instant = fugit::Instant<u64, SUBTICKS_PER_TICK, 1000>;
+    type Duration = fugit::Duration<u64, SUBTICKS_PER_TICK, 1000>;
+
+    fn ticks_to_instant(ticks: <Self::Backend as TimerQueueBackend>::Ticks) -> Self::Instant {
+        Self::Instant::from_ticks(ticks)
+    }
+
+    fn instant_to_ticks(instant: Self::Instant) -> <Self::Backend as TimerQueueBackend>::Ticks {
+        instant.ticks()
+    }
+
+    fn duration_to_ticks(duration: Self::Duration) -> <Self::Backend as TimerQueueBackend>::Ticks {
+        duration.ticks()
+    }
+}
+
+rtic_time::implement_embedded_hal_delay_trait! {
+    SubtickTestTimer,
+    millis_at_least: <u64 as ExtU64Ceil>::millis_at_least,
+    micros_at_least: <u64 as ExtU64Ceil>::micros_at_least,
+    nanos_at_least: <u64 as ExtU64Ceil>::nanos_at_least,
+}
+rtic_time::implement_embedded_hal_async_delay_trait! {
+    SubtickTestTimer,
+    millis_at_least: <u64 as ExtU64Ceil>::millis_at_least,
+    micros_at_least: <u64 as ExtU64Ceil>::micros_at_least,
+    nanos_at_least: <u64 as ExtU64Ceil>::nanos_at_least,
+}
 
 // A simple struct that counts the number of times it is awoken. Can't
 // be awoken by value (because that would discard the counter), so we
@@ -144,7 +165,7 @@ impl<F: FnOnce()> Drop for OnDrop<F> {
 macro_rules! subtick_test {
     (@run $start:expr, $actual_duration:expr, $delay_fn:expr) => {{
         // forward clock to $start
-        SubtickTestTimer::forward_to_subtick($start);
+        SubtickTestTimerBackend::forward_to_subtick($start);
 
         // call wait function
         let delay_fn = $delay_fn;
@@ -164,7 +185,7 @@ macro_rules! subtick_test {
             };
 
             assert_eq!(wakecounter.get(), 0);
-            SubtickTestTimer::tick();
+            SubtickTestTimerBackend::tick();
         }
 
         let expected_wakeups = {
@@ -177,7 +198,7 @@ macro_rules! subtick_test {
         assert_eq!(wakecounter.get(), expected_wakeups);
 
         // Tick again to test that we don't get a second wake
-        SubtickTestTimer::tick();
+        SubtickTestTimerBackend::tick();
         assert_eq!(wakecounter.get(), expected_wakeups);
 
         assert_eq!(
@@ -191,9 +212,9 @@ macro_rules! subtick_test {
 
     (@run_blocking $start:expr, $actual_duration:expr, $delay_fn:expr) => {{
         // forward clock to $start
-        SubtickTestTimer::forward_to_subtick($start);
+        SubtickTestTimerBackend::forward_to_subtick($start);
 
-        let t_start = SubtickTestTimer::now_subticks();
+        let t_start = SubtickTestTimerBackend::now_subticks();
 
         let finished = AtomicBool::new(false);
         std::thread::scope(|s|{
@@ -204,13 +225,13 @@ macro_rules! subtick_test {
             s.spawn(||{
                 sleep(Duration::from_millis(10));
                 while !finished.load(Ordering::Relaxed) {
-                    SubtickTestTimer::tick();
+                    SubtickTestTimerBackend::tick();
                     sleep(Duration::from_millis(10));
                 }
             });
         });
 
-        let t_end = SubtickTestTimer::now_subticks();
+        let t_end = SubtickTestTimerBackend::now_subticks();
         let measured_duration = t_end - t_start;
         assert_eq!(
             $actual_duration,
