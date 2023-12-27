@@ -14,9 +14,8 @@ use bsp::logging;
 
 use embedded_hal::serial::Write;
 
-use rtic_monotonics::imxrt::Gpt1 as Mono;
-use rtic_monotonics::imxrt::*;
-use rtic_monotonics::Monotonic;
+use rtic_monotonics::imxrt::prelude::*;
+imxrt_gpt1_monotonic!(Mono, board::PERCLK_FREQUENCY);
 
 #[rtic::app(device = teensy4_bsp, dispatchers = [LPSPI1])]
 mod app {

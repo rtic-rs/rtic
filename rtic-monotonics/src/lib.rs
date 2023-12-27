@@ -21,14 +21,15 @@
 //! `Available on crate features X only` tag are available on any `nrf52*` feature.
 //!
 // To build these docs correctly:
-// RUSTFLAGS="--cfg docsrs" cargo doc --featuers cortex-m-systick,rp2040,nrf52840
+// RUSTFLAGS="--cfg docsrs" cargo doc --features cortex-m-systick,rp2040,nrf52840,imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1011
 
 #![no_std]
 #![deny(missing_docs)]
 #![allow(incomplete_features)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub use rtic_time::{Monotonic, TimeoutError, TimerQueue};
+pub use rtic_time::{monotonic::{Monotonic, TimerQueueBasedMonotonic}, TimeoutError, timer_queue::TimerQueueBackend};
+pub use fugit;
 
 #[cfg(feature = "cortex-m-systick")]
 pub mod systick;

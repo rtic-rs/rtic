@@ -11,8 +11,8 @@ fn panic(_: &::core::panic::PanicInfo) -> ! {
 
 use teensy4_bsp::{board, hal};
 
-use rtic_monotonics::imxrt::Gpt1 as Mono;
-use rtic_monotonics::imxrt::*;
+use rtic_monotonics::imxrt::prelude::*;
+setup_imxrt_gpt1_mono!(Mono, board::PERCLK_FREQUENCY);
 
 #[rtic::app(device = teensy4_bsp, dispatchers = [LPSPI1])]
 mod app {
@@ -37,8 +37,7 @@ mod app {
 
         // Initialize Monotonic
         gpt1.set_clock_source(hal::gpt::ClockSource::PeripheralClock);
-        let gpt1_mono_token = rtic_monotonics::create_imxrt_gpt1_token!();
-        Mono::start(board::PERCLK_FREQUENCY, gpt1.release(), gpt1_mono_token);
+        Mono::start(gpt1.release());
 
         // Setup LED
         let led = board::led(&mut gpio2, pins.p13);
