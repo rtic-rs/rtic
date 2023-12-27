@@ -63,11 +63,13 @@ macro_rules! __internal_create_imxrt_timer_interrupt {
 macro_rules! __internal_create_imxrt_timer_struct {
     ($name:ident, $mono_backend:ident, $timer:ident, $tick_rate_hz:expr) => {
         struct $name;
+
         impl $name {
             pub fn start(gpt: $crate::imxrt::ral::gpt::$timer) {
                 $crate::imxrt::$mono_backend::start(gpt);
             }
         }
+
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::imxrt::$mono_backend;
             type Instant = $crate::fugit::Instant<
