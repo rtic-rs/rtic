@@ -10,11 +10,6 @@ mod app {
     use core::{future::Future, pin::Pin, task::Context, task::Poll};
     use hifive1::{hal::prelude::*, sprintln};
 
-    #[cfg(feature = "qemu")]
-    const PERIOD: u64 = 10000000; // 10 MHz in QEMU
-    #[cfg(not(feature = "qemu"))]
-    const PERIOD: u64 = 32_768; // 32.768 kHz in HW
-
     /// Yield implementation for SW tasks
     pub async fn yield_now(task: &str) {
         /// Yield implementation
@@ -50,7 +45,7 @@ mod app {
         let mtimecmp = e310x::CLINT::mtimecmp0();
         let val = mtimecmp.read();
         sprintln!("--- update MTIMECMP (mtimecmp = {}) ---", val);
-        mtimecmp.write(val + PERIOD);
+        mtimecmp.write(val + e310x::CLINT::freq() as u64);
         // we also pend the lowest priority SW task before the RTC SW task is automatically pended
         soft_medium::spawn().unwrap();
     }
@@ -86,7 +81,7 @@ mod app {
         sprintln!("Configuring CLINT...");
         e310x::CLINT::disable();
         let mtimer = e310x::CLINT::mtimer();
-        mtimer.mtimecmp0.write(PERIOD);
+        mtimer.mtimecmp0.write(e310x::CLINT::freq() as u64);
         mtimer.mtime.write(0);
         unsafe {
             riscv_slic::set_interrupts();

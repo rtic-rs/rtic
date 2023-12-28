@@ -68,7 +68,7 @@ pub fn pre_init_preprocessing(app: &mut App, _analysis: &SyntaxAnalysis) -> pars
     if !app.args.dispatchers.is_empty() {
         return Err(parse::Error::new(
             Span::call_site(),
-            "riscv-slic does not support explicit interrupt dispatchers; remove the `dispatchers` argument from `#[app]`",
+            "this backend does not support explicit interrupt dispatchers; remove the `dispatchers` argument from `#[app]`",
         ));
     }
 
