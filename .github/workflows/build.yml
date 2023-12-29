@@ -269,7 +269,7 @@ jobs:
       - name: Install QEMU to get dependencies
         run: |
           sudo apt update
-          sudo apt install -y qemu-system-arm
+          sudo apt install -y qemu-system-arm qemu-system-riscv32
 
       - name: Download built QEMU
         uses: actions/download-artifact@v4

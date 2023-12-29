@@ -1,0 +1,6 @@
+UART1(STATE = 0)
+shared: 0 -> 1
+UART0(STATE = 0)
+shared: 1 -> 2
+UART1(STATE = 1)
+shared: 2 -> 4

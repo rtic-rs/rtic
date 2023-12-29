@@ -7,17 +7,17 @@ use riscv_rt as _;
 
 #[rtic::app(device = e310x, backend = HART0)]
 mod app {
-    use riscv_semihosting::hprintln;
+    use riscv_semihosting::{debug, hprintln};
     use core::{future::Future, pin::Pin, task::Context, task::Poll};
     use hifive1::{hal::prelude::*};
 
-    /// Yield implementation for SW tasks
+    /// Dummy asynchronous function to showcase SW tasks
     pub async fn yield_now(task: &str) {
         /// Yield implementation
         struct YieldNow {
             yielded: bool,
         }
-        hprintln!("[Yield]: {} is yielding", task);
+        hprintln!("  [{}]: Yield", task);
 
         impl Future for YieldNow {
             type Output = ();
@@ -35,20 +35,6 @@ mod app {
         }
 
         YieldNow { yielded: false }.await
-    }
-
-    /// HW handler for MachineTimer interrupts triggered by CLINT.
-    /// It also pends the middle priority SW task.
-    #[no_mangle]
-    #[allow(non_snake_case)]
-    unsafe fn MachineTimer() {
-        // increase mtimecmp to clear interrupt
-        let mtimecmp = e310x::CLINT::mtimecmp0();
-        let val = mtimecmp.read();
-        hprintln!("--- update MTIMECMP (mtimecmp = {}) ---", val);
-        mtimecmp.write(val + e310x::CLINT::freq() as u64);
-        // we also pend the lowest priority SW task before the RTC SW task is automatically pended
-        soft_medium::spawn().unwrap();
     }
 
     #[shared]
@@ -79,36 +65,41 @@ mod app {
             clocks,
         );
 
-        hprintln!("Configuring CLINT...");
-        e310x::CLINT::disable();
-        let mtimer = e310x::CLINT::mtimer();
-        mtimer.mtimecmp0.write(e310x::CLINT::freq() as u64);
-        mtimer.mtime.write(0);
+        riscv_slic::disable();
         unsafe {
             riscv_slic::set_interrupts();
-            e310x::CLINT::mtimer_enable();
             riscv_slic::enable();
         }
-        hprintln!("... done!");
         (Shared { counter: 0 }, Local {})
     }
 
-    // The idle task is executed when no other task is running.
-    // It is responsible for putting the CPU to sleep if there is nothing else to do.
-    #[idle]
-    fn idle(_: idle::Context) -> ! {
+    #[idle(shared = [counter])]
+    fn idle(mut cx: idle::Context) -> ! {
+        hprintln!("[Idle]: Started");
+        // pend the medium priority SW task only once
+        soft_medium::spawn().unwrap();
+        // check that the shared counter is correct and exit QEMU simulator
+        let counter = cx.shared.counter.lock(|counter| *counter);
+        hprintln!("[Idle]: Shared: {}", counter);
+        hprintln!("[Idle]: Finished");
+        if counter == 4 {
+            debug::exit(debug::EXIT_SUCCESS);
+        } else {
+            debug::exit(debug::EXIT_FAILURE);
+        }
+        // keep waiting for interruptions
         loop {
-            unsafe { riscv::asm::wfi() }; // wait for interruption
+            unsafe { riscv::asm::wfi() };
         }
     }
 
-    /// Medium priority SW task. It is triggered by the CLINT timer interrupt, and spawns the rest of the SW tasks
-    #[task(local = [times: u32 = 0], shared = [counter], priority = 2)]
+    /// Medium priority SW task. It is triggered by the idle and spawns the rest of the SW tasks
+    #[task(shared = [counter], priority = 2)]
     async fn soft_medium(mut cx: soft_medium::Context) {
         // Safe access to local `static mut` variable
         hprintln!("    [SoftMedium]: Started");
         cx.shared.counter.lock(|counter| {
-            // Spawn the other SW tasks INSIDE the critical section (just for testing)
+            // Spawn the other SW tasks INSIDE the critical section (just for showing priority inheritance)
             soft_low_1::spawn().unwrap();
             soft_high::spawn().unwrap();
             soft_low_2::spawn().unwrap();
@@ -116,64 +107,48 @@ mod app {
             *counter += 1;
             hprintln!("    [SoftMedium]: Shared: {}", *counter);
         });
-
-        *cx.local.times += 1;
-        hprintln!("    [SoftMedium]: Local: {}", *cx.local.times,);
-
         hprintln!("    [SoftMedium]: Finished");
     }
 
     /// Low priority SW task. It runs cooperatively with soft_low_2
-    #[task(local = [times: u32 = 0], shared = [counter], priority = 1)]
+    #[task(shared = [counter], priority = 1)]
     async fn soft_low_1(mut cx: soft_low_1::Context) {
-        hprintln!("[SoftLow1]: Started");
+        hprintln!("  [SoftLow1]: Started");
         cx.shared.counter.lock(|counter| {
             *counter += 1;
-            hprintln!("[SoftLow1]: Shared: {}", *counter);
+            hprintln!("  [SoftLow1]: Shared: {}", *counter);
         });
         // Yield to the other SW task
         yield_now("SoftLow1").await;
 
-        // Safe access to local `static mut` variable
-        *cx.local.times += 1;
-        hprintln!("[SoftLow1]: Local: {}", *cx.local.times);
-
-        hprintln!("[SoftLow1]: Finished");
+        hprintln!("  [SoftLow1]: Finished");
     }
 
     /// Low priority SW task. It runs cooperatively with soft_low_2
-    #[task(local = [times: u32 = 0], shared = [counter], priority = 1)]
+    #[task(shared = [counter], priority = 1)]
     async fn soft_low_2(mut cx: soft_low_2::Context) {
-        hprintln!("[SoftLow2]: Started");
+        hprintln!("  [SoftLow2]: Started");
         cx.shared.counter.lock(|counter| {
             *counter += 1;
-            hprintln!("[SoftLow2]: Shared: {}", *counter);
+            hprintln!("  [SoftLow2]: Shared: {}", *counter);
         });
 
         // Yield to the other SW task
         yield_now("SoftLow2").await;
 
-        // Safe access to local `static mut` variable
-        *cx.local.times += 1;
-        hprintln!("[SoftLow2]: Local: {}", *cx.local.times);
-
-        hprintln!("[SoftLow2]: Finished");
+        hprintln!("  [SoftLow2]: Finished");
     }
 
     /// High priority SW task
-    #[task(local = [times: u32 = 0], shared = [counter], priority = 3)]
+    #[task(shared = [counter], priority = 3)]
     async fn soft_high(mut cx: soft_high::Context) {
-        hprintln!("        [SoftHigh]: Started");
+        hprintln!("      [SoftHigh]: Started");
 
         cx.shared.counter.lock(|counter| {
             *counter += 1;
-            hprintln!("        [SoftHigh]: Shared: {}", counter);
+            hprintln!("      [SoftHigh]: Shared: {}", counter);
         });
 
-        // Safe access to local `static mut` variable
-        *cx.local.times += 1;
-        hprintln!("        [SoftHigh]: Local: {}", *cx.local.times);
-
-        hprintln!("        [SoftHigh]: Finished");
+        hprintln!("      [SoftHigh]: Finished");
     }
 }
