@@ -1,4 +1,4 @@
-use crate::{ExtraArguments, Target};
+use crate::{ExtraArguments, Platforms, Target};
 use core::fmt;
 use std::path::PathBuf;
 
@@ -15,6 +15,7 @@ pub enum CargoCommand<'a> {
     #[allow(dead_code)]
     Run {
         cargoarg: &'a Option<&'a str>,
+        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
         example: &'a str,
         target: Option<Target<'a>>,
         features: Option<String>,
@@ -23,6 +24,7 @@ pub enum CargoCommand<'a> {
     },
     Qemu {
         cargoarg: &'a Option<&'a str>,
+        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
         example: &'a str,
         target: Option<Target<'a>>,
         features: Option<String>,
@@ -32,6 +34,7 @@ pub enum CargoCommand<'a> {
     },
     ExampleBuild {
         cargoarg: &'a Option<&'a str>,
+        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
         example: &'a str,
         target: Option<Target<'a>>,
         features: Option<String>,
@@ -41,10 +44,12 @@ pub enum CargoCommand<'a> {
     },
     ExampleCheck {
         cargoarg: &'a Option<&'a str>,
+        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
         example: &'a str,
         target: Option<Target<'a>>,
         features: Option<String>,
         mode: BuildMode,
+        dir: Option<PathBuf>,
         deny_warnings: bool,
     },
     Build {
@@ -94,6 +99,7 @@ pub enum CargoCommand<'a> {
     },
     ExampleSize {
         cargoarg: &'a Option<&'a str>,
+        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
         example: &'a str,
         target: Option<Target<'a>>,
         features: Option<String>,
@@ -137,6 +143,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             features: &Option<String>,
             cargoarg: &&Option<&str>,
             path: Option<&PathBuf>,
+            // no need to add platform, as it is implicit in the path
         ) -> String {
             let feat = feat(features);
             let carg = carg(cargoarg);
@@ -179,6 +186,7 @@ impl core::fmt::Display for CargoCommand<'_> {
         match self {
             CargoCommand::Run {
                 cargoarg,
+                platform: _,
                 example,
                 target,
                 features,
@@ -193,6 +201,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
             CargoCommand::Qemu {
                 cargoarg,
+                platform: _,
                 example,
                 target,
                 features,
@@ -206,6 +215,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
             CargoCommand::ExampleBuild {
                 cargoarg,
+                platform: _,
                 example,
                 target,
                 features,
@@ -219,16 +229,18 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
             CargoCommand::ExampleCheck {
                 cargoarg,
+                platform: _,
                 example,
                 target,
                 features,
                 mode,
+                dir,
                 deny_warnings,
-            } => write!(
-                f,
-                "Check example {example} {}",
-                details(*deny_warnings, target, Some(mode), features, cargoarg, None)
-            ),
+            } => {
+                let warns = *deny_warnings;
+                let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
+                write!(f, "Check example {example} {details}",)
+            }
             CargoCommand::Build {
                 cargoarg,
                 package,
@@ -340,6 +352,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             CargoCommand::Book { arguments: _ } => write!(f, "Build the book"),
             CargoCommand::ExampleSize {
                 cargoarg,
+                platform: _,
                 example,
                 target,
                 features,
@@ -475,6 +488,7 @@ impl<'a> CargoCommand<'a> {
             // For future embedded-ci, for now the same as Qemu
             CargoCommand::Run {
                 cargoarg,
+                platform: _,
                 example,
                 features,
                 mode,
@@ -491,6 +505,7 @@ impl<'a> CargoCommand<'a> {
             ),
             CargoCommand::Qemu {
                 cargoarg,
+                platform: _,
                 example,
                 features,
                 mode,
@@ -606,6 +621,7 @@ impl<'a> CargoCommand<'a> {
             }
             CargoCommand::ExampleBuild {
                 cargoarg,
+                platform: _,
                 example,
                 features,
                 mode,
@@ -624,9 +640,11 @@ impl<'a> CargoCommand<'a> {
             ),
             CargoCommand::ExampleCheck {
                 cargoarg,
+                platform: _,
                 example,
                 features,
                 mode,
+                dir: _,
                 // Target is added by build_args
                 target: _,
                 // deny_warnings is exposed through `extra_env`
@@ -640,6 +658,7 @@ impl<'a> CargoCommand<'a> {
             ),
             CargoCommand::ExampleSize {
                 cargoarg,
+                platform: _,
                 example,
                 features,
                 mode,
@@ -664,6 +683,7 @@ impl<'a> CargoCommand<'a> {
     pub fn chdir(&self) -> Option<&PathBuf> {
         match self {
             CargoCommand::Qemu { dir, .. }
+            | CargoCommand::ExampleCheck { dir, .. }
             | CargoCommand::ExampleBuild { dir, .. }
             | CargoCommand::ExampleSize { dir, .. }
             | CargoCommand::Build { dir, .. }
@@ -687,20 +707,35 @@ impl<'a> CargoCommand<'a> {
         }
     }
 
-    pub fn extra_env(&self) -> Option<(&str, &str)> {
+    pub fn extra_env(&self) -> Option<(&str, String)> {
         match self {
             // Clippy is a special case: it sets deny warnings
             // through an argument to rustc.
             CargoCommand::Clippy { .. } => None,
-            CargoCommand::Doc { .. } => Some(("RUSTDOCFLAGS", "-D warnings")),
+            CargoCommand::Doc { .. } => Some(("RUSTDOCFLAGS", "-D warnings".to_string())),
 
-            CargoCommand::Qemu { deny_warnings, .. }
-            | CargoCommand::ExampleBuild { deny_warnings, .. }
-            | CargoCommand::ExampleSize { deny_warnings, .. } => {
+            CargoCommand::Qemu {
+                platform,
+                deny_warnings,
+                ..
+            }
+            | CargoCommand::ExampleBuild {
+                platform,
+                deny_warnings,
+                ..
+            }
+            | CargoCommand::ExampleSize {
+                platform,
+                deny_warnings,
+                ..
+            } => {
                 if *deny_warnings {
+                    let rust_flags = platform.rust_flags().join(" ");
+                    let rust_flags = format!("-D warnings {}", rust_flags);
                     // NOTE: this also needs the link-arg because .cargo/config.toml
                     // is ignored if you set the RUSTFLAGS env variable.
-                    Some(("RUSTFLAGS", "-D warnings -C link-arg=-Tlink.x"))
+                    Some(("RUSTFLAGS", rust_flags))
+                // TODO make this configurable
                 } else {
                     None
                 }
@@ -711,7 +746,7 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::Build { deny_warnings, .. }
             | CargoCommand::Test { deny_warnings, .. } => {
                 if *deny_warnings {
-                    Some(("RUSTFLAGS", "-D warnings"))
+                    Some(("RUSTFLAGS", "-D warnings".to_string()))
                 } else {
                     None
                 }

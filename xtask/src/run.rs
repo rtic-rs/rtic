@@ -15,7 +15,9 @@ mod iter;
 use iter::{into_iter, CoalescingRunner};
 
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, TestMetadata},
+    argument_parsing::{
+        Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, Platforms, TestMetadata,
+    },
     cargo_command::{BuildMode, CargoCommand},
 };
 
@@ -62,7 +64,12 @@ fn command_parser(
     };
 
     match *command {
-        CargoCommand::Qemu { example, .. } | CargoCommand::Run { example, .. } => {
+        CargoCommand::Qemu {
+            platform, example, ..
+        }
+        | CargoCommand::Run {
+            platform, example, ..
+        } => {
             /// Check if `run` was successful.
             /// returns Ok in case the run went as expected,
             /// Err otherwise
@@ -99,8 +106,9 @@ fn command_parser(
                 res
             }
 
+            let platform_name = platform.name();
             let run_file = format!("{example}.run");
-            let expected_output_file = ["rtic", "ci", "expected", &run_file]
+            let expected_output_file = ["ci", "expected", &platform_name, &run_file]
                 .iter()
                 .collect::<PathBuf>()
                 .into_os_string()
@@ -230,33 +238,39 @@ pub fn cargo_usage_example(
 
 /// Cargo command to either build or check all examples
 ///
-/// The examples are in rtic/examples
+/// The examples are in examples/<platform>/examples
 pub fn cargo_example<'c>(
     globals: &Globals,
     operation: BuildOrCheck,
     cargoarg: &'c Option<&'c str>,
+    platform: Platforms,
     backend: Backends,
     examples: &'c [String],
 ) -> Vec<FinalRunResult<'c>> {
     let runner = into_iter(examples).map(|example| {
+        let path = format!("examples/{}", platform.name());
+        let dir = Some(PathBuf::from(path));
         let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
 
         let command = match operation {
             BuildOrCheck::Check => CargoCommand::ExampleCheck {
                 cargoarg,
+                platform,
                 example,
                 target: Some(backend.to_target()),
                 features,
                 mode: BuildMode::Release,
+                dir,
                 deny_warnings: globals.deny_warnings,
             },
             BuildOrCheck::Build => CargoCommand::ExampleBuild {
                 cargoarg,
+                platform,
                 example,
                 target: Some(backend.to_target()),
                 features,
                 mode: BuildMode::Release,
-                dir: Some(PathBuf::from("./rtic")),
+                dir,
                 deny_warnings: globals.deny_warnings,
             },
         };
@@ -368,9 +382,12 @@ pub fn cargo_book<'c>(
 /// Run examples
 ///
 /// Supports updating the expected output via the overwrite argument
+///
+/// The examples are in examples/<platform>/examples
 pub fn qemu_run_examples<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
+    platform: Platforms,
     backend: Backends,
     examples: &'c [String],
     overwrite: bool,
@@ -380,11 +397,13 @@ pub fn qemu_run_examples<'c>(
 
     into_iter(examples)
         .flat_map(|example| {
+            let path = format!("examples/{}", platform.name());
+            let dir = Some(PathBuf::from(path));
             let target = target.into();
-            let dir = Some(PathBuf::from("./rtic"));
 
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &None,
+                platform,
                 example,
                 target,
                 features: features.clone(),
@@ -395,6 +414,7 @@ pub fn qemu_run_examples<'c>(
 
             let cmd_qemu = CargoCommand::Qemu {
                 cargoarg,
+                platform,
                 example,
                 target,
                 features: features.clone(),
@@ -413,6 +433,7 @@ pub fn qemu_run_examples<'c>(
 pub fn build_and_check_size<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
+    platform: Platforms,
     backend: Backends,
     examples: &'c [String],
     arguments: &'c Option<ExtraArguments>,
@@ -422,27 +443,31 @@ pub fn build_and_check_size<'c>(
 
     let runner = into_iter(examples)
         .flat_map(|example| {
+            let path = format!("examples/{}", platform.name());
+            let dir = Some(PathBuf::from(path));
             let target = target.into();
 
             // Make sure the requested example(s) are built
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &Some("--quiet"),
+                platform,
                 example,
                 target,
                 features: features.clone(),
                 mode: BuildMode::Release,
-                dir: Some(PathBuf::from("./rtic")),
+                dir: dir.clone(),
                 deny_warnings: globals.deny_warnings,
             };
 
             let cmd_size = CargoCommand::ExampleSize {
                 cargoarg,
+                platform,
                 example,
                 target,
                 features: features.clone(),
                 mode: BuildMode::Release,
                 arguments: arguments.clone(),
-                dir: Some(PathBuf::from("./rtic")),
+                dir,
                 deny_warnings: globals.deny_warnings,
             };
 

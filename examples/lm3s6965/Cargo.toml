@@ -17,6 +17,7 @@ cortex-m-semihosting = "0.5.0"
 rtic-time = { path = "../../rtic-time" }
 rtic-sync = { path = "../../rtic-sync" }
 rtic-monotonics = { path = "../../rtic-monotonics", features = ["cortex-m-systick"] }
+rtic = { path = "../../rtic" }
 
 [dependencies.futures]
 version = "0.3.26"
@@ -27,8 +28,9 @@ features = ["async-await"]
 features = ["exit"]
 version = "0.6.0"
 
-[target.thumbv6m-none-eabi.dependencies]
-rtic = { path = "../../rtic", features = ["thumbv6-backend", "test-critical-section"] }
-
-[target.thumbv7m-none-eabi.dependencies]
-rtic = { path = "../../rtic", features = ["thumbv7-backend", "test-critical-section"] }
+[features]
+test-critical-section = ["rtic/test-critical-section"]
+thumbv6-backend = ["rtic/thumbv6-backend"]
+thumbv7-backend = ["rtic/thumbv7-backend"]
+thumbv8base-backend = ["rtic/thumbv8base-backend"]
+thumbv8m-main-backend = ["rtic/thumbv8main-backend"]

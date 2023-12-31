@@ -159,8 +159,8 @@ pub enum Backends {
     Thumbv8Base,
     Thumbv8Main,
     RiscvEsp32C3,
-    Ricv32ImcClint, // not working yet (issues with portable-atomic features...)
-    Ricv32ImacClint,
+    Riscv32ImcClint, // not working yet (issues with portable-atomic features...)
+    Riscv32ImacClint,
 }
 
 impl Backends {
@@ -171,8 +171,8 @@ impl Backends {
             Backends::Thumbv7 => ARMV7M,
             Backends::Thumbv8Base => ARMV8MBASE,
             Backends::Thumbv8Main => ARMV8MMAIN,
-            Backends::Ricv32ImcClint => RISCV32IMC,
-            Backends::RiscvEsp32C3 | Backends::Ricv32ImacClint => RISCV32IMAC,
+            Backends::Riscv32ImcClint => RISCV32IMC,
+            Backends::RiscvEsp32C3 | Backends::Riscv32ImacClint => RISCV32IMAC,
         }
     }
 
@@ -184,7 +184,7 @@ impl Backends {
             Backends::Thumbv8Base => "thumbv8base-backend",
             Backends::Thumbv8Main => "thumbv8main-backend",
             Backends::RiscvEsp32C3 => "riscv-esp32c3-backend",
-            Backends::Ricv32ImcClint | Backends::Ricv32ImacClint => "riscv-clint-backend",
+            Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint-backend",
         }
     }
     #[allow(clippy::wrong_self_convention)]
@@ -193,7 +193,7 @@ impl Backends {
             Backends::Thumbv6 | Backends::Thumbv8Base => "cortex-m-source-masking",
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
             Backends::RiscvEsp32C3 => "riscv-esp32c3",
-            Backends::Ricv32ImcClint | Backends::Ricv32ImacClint => "riscv-clint",
+            Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
         }
     }
     #[allow(clippy::wrong_self_convention)]
@@ -202,7 +202,7 @@ impl Backends {
             Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
             Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
             Backends::RiscvEsp32C3 => "rtic-uitestesp32c3",
-            Backends::Ricv32ImcClint | Backends::Ricv32ImacClint => "rtic-uitestclint",
+            Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "rtic-uitestclint",
         }
     }
 }
@@ -214,14 +214,128 @@ pub enum BuildOrCheck {
     Build,
 }
 
+#[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
+pub enum Platforms {
+    Hifive1,
+    #[default]
+    Lm3s6965,
+    Nrf52840,
+    Rp2040,
+    Stm32f3,
+    Stm32f411,
+    Teensy4,
+}
+
+impl Platforms {
+    pub fn name(&self) -> String {
+        let name = match self {
+            Platforms::Hifive1 => "hifive1",
+            Platforms::Lm3s6965 => "lm3s6965",
+            Platforms::Nrf52840 => "nrf52840",
+            Platforms::Rp2040 => "rp2040",
+            Platforms::Stm32f3 => "stm32f3",
+            Platforms::Stm32f411 => "stm32f411",
+            Platforms::Teensy4 => "teensy4",
+        };
+        name.to_string()
+    }
+
+    /// Rust flags needed for the platform when building
+    pub fn rust_flags(&self) -> Vec<String> {
+        let c = "-C".to_string();
+        match self {
+            Platforms::Hifive1 => vec![c, "link-arg=-Thifive1-link.x".to_string()],
+            Platforms::Lm3s6965 => vec![c, "link-arg=-Tlink.x".to_string()],
+            Platforms::Nrf52840 => vec![
+                c.clone(),
+                "linker=flip-link".to_string(),
+                c.clone(),
+                "link-arg=-Tlink.x".to_string(),
+                c.clone(),
+                "link-arg=-Tdefmt.x".to_string(),
+                c,
+                "link-arg=--nmagic".to_string(),
+            ],
+            Platforms::Rp2040 => vec![
+                c.clone(),
+                "link-arg=--nmagic".to_string(),
+                c,
+                "link-arg=-Tlink.x".to_string(),
+            ],
+            Platforms::Stm32f3 => vec![
+                c.clone(),
+                "link-arg=--nmagic".to_string(),
+                c,
+                "link-arg=-Tlink.x".to_string(),
+            ],
+            Platforms::Stm32f411 => vec![
+                c.clone(),
+                "link-arg=-Tlink.x".to_string(),
+                c,
+                "link-arg=-Tdefmt.x".to_string(),
+            ],
+            Platforms::Teensy4 => vec![c, "link-arg=-Tt4link.x".to_string()],
+        }
+    }
+
+    /// Get the default backend for the platform
+    pub fn default_backend(&self) -> Backends {
+        match self {
+            Platforms::Hifive1 => Backends::Riscv32ImacClint,
+            Platforms::Lm3s6965 => Backends::Thumbv7,
+            Platforms::Nrf52840 => unimplemented!(),
+            Platforms::Rp2040 => unimplemented!(),
+            Platforms::Stm32f3 => unimplemented!(),
+            Platforms::Stm32f411 => unimplemented!(),
+            Platforms::Teensy4 => unimplemented!(),
+        }
+    }
+
+    /// Get the features needed given the selected platform and backend.
+    /// If the backend is not supported for the platform, return Err.
+    /// If the backend is supported, but no special features are needed, return Ok(None).
+    pub fn features(&self, backend: &Backends) -> Result<Option<&'static str>, ()> {
+        match self {
+            Platforms::Hifive1 => match backend.to_target() {
+                RISCV32IMAC => Ok(None),
+                RISCV32IMC => unimplemented!(),
+                _ => Err(()),
+            },
+            Platforms::Lm3s6965 => match backend.to_target() {
+                ARMV6M => Ok(Some("thumbv6-backend")),
+                ARMV7M => Ok(Some("thumbv7-backend")),
+                ARMV8MBASE => Ok(Some("thumbv8base-backend")),
+                ARMV8MMAIN => Ok(Some("thumbv8main-backend")),
+                _ => Err(()),
+            },
+            Platforms::Nrf52840 => unimplemented!(),
+            Platforms::Rp2040 => unimplemented!(),
+            Platforms::Stm32f3 => unimplemented!(),
+            Platforms::Stm32f411 => unimplemented!(),
+            Platforms::Teensy4 => unimplemented!(),
+        }
+    }
+}
+
 #[derive(Parser, Clone)]
 pub struct Globals {
     /// Error out on warnings
     #[arg(short = 'D', long)]
     pub deny_warnings: bool,
 
+    /// For which platform to build.
+    ///
+    /// If omitted, the default platform (i.e., lm3s6965) is used.
+    ///
+    /// Example: `cargo xtask --platform lm3s6965`
+    #[arg(value_enum, short, default_value = "lm3s6965", long, global = true)]
+    pub platform: Option<Platforms>,
+
     /// For which backend to build.
-    #[arg(value_enum, short, default_value = "thumbv7", long, global = true)]
+    ///
+    /// If omitted, the default backend for the selected platform is used
+    /// (check [`Platforms::default_backend`]).
+    #[arg(value_enum, short, long, global = true)]
     pub backend: Option<Backends>,
 
     /// List of comma separated examples to include, all others are excluded

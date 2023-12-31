@@ -405,6 +405,8 @@ dependencies = [
 name = "rtic_lm3s6965"
 version = "0.1.0"
 dependencies = [
+ "bare-metal 1.0.0",
+ "cortex-m",
  "cortex-m-semihosting",
  "futures",
  "heapless",

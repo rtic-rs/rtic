@@ -7,10 +7,10 @@
     [SoftMedium]: Finished
   [SoftLow1]: Started
   [SoftLow1]: Shared: 3
-  [SoftLow1]: Yielding
+  [SoftLow1]: Yield
   [SoftLow2]: Started
   [SoftLow2]: Shared: 4
-  [SoftLow2]: Yielding
+  [SoftLow2]: Yield
   [SoftLow1]: Finished
   [SoftLow2]: Finished
 [Idle]: Shared: 4
