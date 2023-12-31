@@ -1,7 +1,0 @@
-foo Instant { ticks: 0 }
-bar Instant { ticks: 10 }
-foo Instant { ticks: 30 }
-bar Instant { ticks: 40 }
-foo Instant { ticks: 60 }
-bar Instant { ticks: 70 }
-foo Instant { ticks: 90 }

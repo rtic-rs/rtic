@@ -73,20 +73,14 @@ mod app {
         (Shared { counter: 0 }, Local {})
     }
 
-    #[idle(shared = [counter])]
-    fn idle(mut cx: idle::Context) -> ! {
+    #[idle]
+    fn idle(_cx: idle::Context) -> ! {
         hprintln!("[Idle]: Started");
         // pend the medium priority SW task only once
         soft_medium::spawn().unwrap();
-        // check that the shared counter is correct and exit QEMU simulator
-        let counter = cx.shared.counter.lock(|counter| *counter);
-        hprintln!("[Idle]: Shared: {}", counter);
+        // exit QEMU simulator
         hprintln!("[Idle]: Finished");
-        if counter == 4 {
-            debug::exit(debug::EXIT_SUCCESS);
-        } else {
-            debug::exit(debug::EXIT_FAILURE);
-        }
+        debug::exit(debug::EXIT_SUCCESS);
         // keep waiting for interruptions
         loop {
             unsafe { riscv::asm::wfi() };

@@ -44,12 +44,8 @@ rtic-core = "1"
 critical-section = "1"
 
 [dev-dependencies]
-heapless = "0.8"
 lm3s6965 = "0.2"
 cortex-m-semihosting = "0.5.0"
-rtic-time = { path = "../rtic-time" }
-rtic-sync = { path = "../rtic-sync" }
-rtic-monotonics = { path = "../rtic-monotonics", features = ["cortex-m-systick"] }
 
 [dev-dependencies.futures]
 version = "0.3.26"
@@ -80,7 +76,3 @@ rtic-uitestv6 = ["thumbv6-backend"]
 rtic-uitestesp32c3 = ["riscv-esp32c3-backend"]
 rtic-uitestclint = ["riscv-clint-backend"]
 test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick-100hz"]
-
-# [[example]]
-# name = "pool"
-# required-features = ["test-critical-section"]
