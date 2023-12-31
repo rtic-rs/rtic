@@ -103,7 +103,7 @@ jobs:
       - run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} clippy
 
   # Platform lm3s6965: verify all examples, checks
-  checkexamples-lm3s6965:
+  checkexampleslm3s6965:
     name: check examples (lm3s6965)
     runs-on: ubuntu-22.04
     strategy:
@@ -142,7 +142,7 @@ jobs:
         run: cargo xtask --platform lm3s6965 --backend ${{ matrix.backend }} example-check
   
   # Platform hifive1: verify all examples, checks
-  checkexamples-hifive1:
+  checkexampleshifive1:
     name: check examples (hifive1)
     runs-on: ubuntu-22.04
     strategy:
@@ -261,7 +261,7 @@ jobs:
           path: qemu.tar
 
   # Platform lm3s6965: verify the example output with run-pass tests
-  testexamples-lm3s6965:
+  testexampleslm3s6965:
     name: QEMU run (lm3s6965)
     needs: buildqemu
     runs-on: ubuntu-22.04
@@ -333,7 +333,7 @@ jobs:
         run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} qemu
   
   # Platform hifive1: verify the example output with run-pass tests
-  testexamples-hifive1:
+  testexampleshifive1:
     name: QEMU run (hifive1)
     needs: buildqemu
     runs-on: ubuntu-22.04
@@ -809,8 +809,10 @@ jobs:
       - formatcheck
       - check
       - clippy
-      - checkexamples
-      - testexamples
+      - checkexampleslm3s6965
+      - checkexampleshifive1
+      - testexampleslm3s6965
+      - testexampleshifive1
       - tests
       - docs
       - mdbook
