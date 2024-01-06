@@ -104,7 +104,7 @@ impl<T, const N: usize> Channel<T, N> {
 /// Creates a split channel with `'static` lifetime.
 #[macro_export]
 macro_rules! make_channel {
-    ($type:path, $size:expr) => {{
+    ($type:ty, $size:expr) => {{
         static mut CHANNEL: $crate::channel::Channel<$type, $size> =
             $crate::channel::Channel::new();
 
@@ -595,5 +595,10 @@ mod tests {
     fn double_make_channel() {
         make();
         make();
+    }
+
+    #[test]
+    fn tuple_channel() {
+        let _ = make_channel!((i32, u32), 10);
     }
 }
