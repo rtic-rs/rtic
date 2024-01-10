@@ -70,9 +70,9 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "1.0.0-rc.3"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc402f79e1fd22731ca945b4f97b5ff37e7b3f379312595c42bb2e8811c29920"
+checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
 
 [[package]]
 name = "equivalent"
@@ -142,12 +142,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
 
 [[package]]
-name = "panic-halt"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de96540e0ebde571dc55c73d60ef407c653844e6f9a1e2fdbd40c07b9252d812"
-
-[[package]]
 name = "portable-atomic"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -212,7 +206,7 @@ version = "0.10.1"
 source = "git+https://github.com/rust-embedded/riscv.git?branch=add-ecall#149d917c910d056449b8571fa84682c51a69f407"
 dependencies = [
  "critical-section",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
 ]
 
 [[package]]
@@ -221,7 +215,7 @@ version = "0.10.1"
 source = "git+https://github.com/rust-embedded/riscv.git?branch=add-peripheral#5b012c0978e16e00781fbb3d2757cba8a7c4e4d7"
 dependencies = [
  "critical-section",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
 ]
 
 [[package]]
@@ -230,25 +224,16 @@ version = "0.10.1"
 source = "git+https://github.com/rust-embedded/riscv.git?branch=master#0a021ea9bcd0bbe91cf6e8046611e76985848d34"
 dependencies = [
  "critical-section",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
 ]
 
 [[package]]
 name = "riscv"
 version = "0.10.1"
-source = "git+https://github.com/rust-embedded/riscv.git?branch=semihosting#eade03842e663b0fa11ac862e1a2e30c01961c80"
+source = "git+https://github.com/rust-embedded/riscv.git#c0ce6767b8184eba71b935382ecaa50ee092378d"
 dependencies = [
  "critical-section",
- "embedded-hal 1.0.0-rc.3",
-]
-
-[[package]]
-name = "riscv"
-version = "0.10.1"
-source = "git+https://github.com/rust-embedded/riscv.git#0a021ea9bcd0bbe91cf6e8046611e76985848d34"
-dependencies = [
- "critical-section",
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
 ]
 
 [[package]]
@@ -261,7 +246,7 @@ name = "riscv-peripheral"
 version = "0.1.0"
 source = "git+https://github.com/rust-embedded/riscv.git?branch=add-peripheral#5b012c0978e16e00781fbb3d2757cba8a7c4e4d7"
 dependencies = [
- "embedded-hal 1.0.0-rc.3",
+ "embedded-hal 1.0.0",
  "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git?branch=add-peripheral)",
  "riscv-pac",
 ]
@@ -269,7 +254,7 @@ dependencies = [
 [[package]]
 name = "riscv-rt"
 version = "0.11.0"
-source = "git+https://github.com/rust-embedded/riscv.git#0a021ea9bcd0bbe91cf6e8046611e76985848d34"
+source = "git+https://github.com/rust-embedded/riscv.git#c0ce6767b8184eba71b935382ecaa50ee092378d"
 dependencies = [
  "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git)",
  "riscv-rt-macros",
@@ -278,20 +263,11 @@ dependencies = [
 [[package]]
 name = "riscv-rt-macros"
 version = "0.2.0"
-source = "git+https://github.com/rust-embedded/riscv.git#0a021ea9bcd0bbe91cf6e8046611e76985848d34"
+source = "git+https://github.com/rust-embedded/riscv.git#c0ce6767b8184eba71b935382ecaa50ee092378d"
 dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "riscv-semihosting"
-version = "0.0.1"
-source = "git+https://github.com/rust-embedded/riscv.git?branch=semihosting#eade03842e663b0fa11ac862e1a2e30c01961c80"
-dependencies = [
- "critical-section",
- "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git?branch=semihosting)",
 ]
 
 [[package]]
@@ -351,12 +327,17 @@ version = "0.1.0"
 dependencies = [
  "e310x",
  "hifive1",
- "panic-halt",
  "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git)",
  "riscv-rt",
- "riscv-semihosting",
  "rtic",
+ "semihosting",
 ]
+
+[[package]]
+name = "semihosting"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bab7a0be8d9e9893dfb5ce313aa0324396936d8bf788f5ef493c9f122ad84fd8"
 
 [[package]]
 name = "stable_deref_trait"
