@@ -301,7 +301,7 @@ jobs:
           tar -cf apidocs.tar apidocs
 
       - name: Store the API docs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: apidocs
           path: apidocs.tar
@@ -357,7 +357,7 @@ jobs:
           tar -cf book.tar bookroot
 
       - name: Store the Book + API docs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: book
           path: book.tar
@@ -433,7 +433,7 @@ jobs:
           tar -cf mdbookold.tar mdbookold
 
       - name: Store the old API docs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mdbookold
           path: mdbookold.tar
@@ -616,7 +616,7 @@ jobs:
           tar -cf bookstodeploy.tar bookstodeploy
 
       - name: Store the books
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bookstodeploy
           path: bookstodeploy.tar
