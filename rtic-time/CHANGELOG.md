@@ -11,9 +11,13 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
-- Using `embedded-hal` 1.0.
-
 ### Fixed
+
+## v1.3.0 - 2024-01-10
+
+### Changed
+
+- Using `embedded-hal` 1.0.
 
 ## v1.2.0 - 2023-12-06
 

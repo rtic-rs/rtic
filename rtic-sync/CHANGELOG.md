@@ -7,7 +7,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
-### Added
+## v1.2.0 - 2024-01-10
 
 ### Changed
 

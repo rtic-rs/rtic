@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+## v1.5.0 - 2024-01-10
+
 ### Changed
 
 - Using `embedded-hal` 1.0.
