@@ -25,9 +25,9 @@ heapless = "0.8"
 critical-section = "1"
 rtic-common = { version = "1.0.0", path = "../rtic-common" }
 portable-atomic = { version = "1", default-features = false }
-embedded-hal = { version = "1.0.0-rc.2", optional = true }
-embedded-hal-async = { version = "1.0.0-rc.2", optional = true }
-embedded-hal-bus = { version = "0.1.0-rc.2", optional = true, features = ["async"] }
+embedded-hal = { version = "1.0", optional = true }
+embedded-hal-async = { version = "1.0", optional = true }
+embedded-hal-bus = { version = "0.1.0", optional = true, features = ["async"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "macros", "time"] }
