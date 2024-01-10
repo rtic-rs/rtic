@@ -334,7 +334,7 @@ jobs:
         run: cargo xtask book
 
       - name: Download built API docs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: apidocs
 
@@ -534,7 +534,7 @@ jobs:
         run: rm -f .cargo/config
 
       - name: Download built dev-ver book and API docs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: book
 
@@ -543,7 +543,7 @@ jobs:
           tar -xf book.tar
 
       - name: Download built old versions of books and API docs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: mdbookold
 
@@ -628,7 +628,7 @@ jobs:
       - deploy
     steps:
       - name: Download books
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: bookstodeploy
 
