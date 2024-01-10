@@ -11,6 +11,8 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Changed
 
+- Using `embedded-hal` 1.0.
+
 ### Fixed
 
 - `make_channel` now accepts `Type` expressions instead of only `TypePath` expressions.
