@@ -15,14 +15,14 @@ where
         f();
         unsafe {
             (*INTERRUPT_CORE0::ptr())
-                .cpu_int_thresh
+                .cpu_int_thresh()
                 .write(|w| w.cpu_int_thresh().bits(1));
         }
     } else {
         //read current thresh
         let initial = unsafe {
             (*INTERRUPT_CORE0::ptr())
-                .cpu_int_thresh
+                .cpu_int_thresh()
                 .read()
                 .cpu_int_thresh()
                 .bits()
@@ -31,7 +31,7 @@ where
         //write back old thresh
         unsafe {
             (*INTERRUPT_CORE0::ptr())
-                .cpu_int_thresh
+                .cpu_int_thresh()
                 .write(|w| w.cpu_int_thresh().bits(initial));
         }
     }
@@ -62,7 +62,7 @@ pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) 
     } else {
         let current = unsafe {
             (*INTERRUPT_CORE0::ptr())
-                .cpu_int_thresh
+                .cpu_int_thresh()
                 .read()
                 .cpu_int_thresh()
                 .bits()
@@ -70,13 +70,13 @@ pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) 
 
         unsafe {
             (*INTERRUPT_CORE0::ptr())
-                .cpu_int_thresh
+                .cpu_int_thresh()
                 .write(|w| w.cpu_int_thresh().bits(ceiling + 1))
         } //esp32c3 lets interrupts with prio equal to threshold through so we up it by one
         let r = f(&mut *ptr);
         unsafe {
             (*INTERRUPT_CORE0::ptr())
-                .cpu_int_thresh
+                .cpu_int_thresh()
                 .write(|w| w.cpu_int_thresh().bits(current))
         }
         r
@@ -91,19 +91,19 @@ pub fn pend(int: Interrupt) {
         match int {
             Interrupt::FROM_CPU_INTR0 => peripherals
                 .SYSTEM
-                .cpu_intr_from_cpu_0
+                .cpu_intr_from_cpu_0()
                 .write(|w| w.cpu_intr_from_cpu_0().bit(true)),
             Interrupt::FROM_CPU_INTR1 => peripherals
                 .SYSTEM
-                .cpu_intr_from_cpu_1
+                .cpu_intr_from_cpu_1()
                 .write(|w| w.cpu_intr_from_cpu_1().bit(true)),
             Interrupt::FROM_CPU_INTR2 => peripherals
                 .SYSTEM
-                .cpu_intr_from_cpu_2
+                .cpu_intr_from_cpu_2()
                 .write(|w| w.cpu_intr_from_cpu_2().bit(true)),
             Interrupt::FROM_CPU_INTR3 => peripherals
                 .SYSTEM
-                .cpu_intr_from_cpu_3
+                .cpu_intr_from_cpu_3()
                 .write(|w| w.cpu_intr_from_cpu_3().bit(true)),
             _ => panic!("Unsupported software interrupt"), //should never happen, checked at compile time
         }
@@ -117,19 +117,19 @@ pub fn unpend(int: Interrupt) {
         match int {
             Interrupt::FROM_CPU_INTR0 => peripherals
                 .SYSTEM
-                .cpu_intr_from_cpu_0
+                .cpu_intr_from_cpu_0()
                 .write(|w| w.cpu_intr_from_cpu_0().bit(false)),
             Interrupt::FROM_CPU_INTR1 => peripherals
                 .SYSTEM
-                .cpu_intr_from_cpu_1
+                .cpu_intr_from_cpu_1()
                 .write(|w| w.cpu_intr_from_cpu_1().bit(false)),
             Interrupt::FROM_CPU_INTR2 => peripherals
                 .SYSTEM
-                .cpu_intr_from_cpu_2
+                .cpu_intr_from_cpu_2()
                 .write(|w| w.cpu_intr_from_cpu_2().bit(false)),
             Interrupt::FROM_CPU_INTR3 => peripherals
                 .SYSTEM
-                .cpu_intr_from_cpu_3
+                .cpu_intr_from_cpu_3()
                 .write(|w| w.cpu_intr_from_cpu_3().bit(false)),
             _ => panic!("Unsupported software interrupt"),
         }
@@ -152,10 +152,10 @@ pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
             .write_volatile(cpu_interrupt_number as u32);
         //map peripheral interrupt to CPU interrupt
         (*INTERRUPT_CORE0::ptr())
-            .cpu_int_enable
+            .cpu_int_enable()
             .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits())); //enable the CPU interupt.
         let intr = INTERRUPT_CORE0::ptr();
-        let intr_prio_base = (*intr).cpu_int_pri_0.as_ptr();
+        let intr_prio_base = (*intr).cpu_int_pri_0().as_ptr();
 
         intr_prio_base
             .offset(cpu_interrupt_number)
