@@ -13,6 +13,8 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Fixed
 
+- `make_channel` now accepts `Type` expressions instead of only `TypePath` expressions.
+
 ## v1.1.1 - 2023-12-04
 
 ### Fixed
