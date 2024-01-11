@@ -147,10 +147,9 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
     bracketed!(input in content);
 
     let mut resources = Map::new();
-    let error = Err(parse::Error::new(
-        input.span(),
-        "malformed, expected 'local = [EXPRPATH: TYPE = EXPR]', or 'local = [EXPRPATH, ...]'",
-    ));
+
+    let error_msg_no_local_resources =
+        "malformed, expected 'local = [EXPRPATH: TYPE = EXPR]', or 'local = [EXPRPATH, ...]'";
 
     loop {
         if input.is_empty() {
@@ -175,6 +174,17 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
         //          ~~~~~~~~
         let exprpath: ExprPath = input.parse()?;
 
+        let name = extract_resource_name_ident(exprpath.path)?;
+
+        // Extract attributes
+        let (cfgs, attrs) = match exprpath {
+            ExprPath { attrs, .. } => {
+                let FilterAttrs { cfgs, attrs, .. } = filter_attributes(attrs);
+
+                (cfgs, attrs)
+            }
+        };
+
         let local;
 
         // Declared requries type ascription
@@ -185,8 +195,15 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
             // Extract the type
             let ty: Box<Type> = input.parse()?;
 
-            // Handle equal sign
-            let _: Token![=] = input.parse()?;
+            if input.peek(Token![=]) {
+                // Handle equal sign
+                let _: Token![=] = input.parse()?;
+            } else {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "malformed, expected 'IDENT: TYPE = EXPR'",
+                ));
+            }
 
             // Grab the final expression right of equal
             let expr: Box<Expr> = input.parse()?;
@@ -209,14 +226,6 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
                     ))
                 }
             };
-            // Extract attributes
-            let (cfgs, attrs) = match exprpath {
-                ExprPath { attrs, .. } => {
-                    let FilterAttrs { cfgs, attrs, .. } = filter_attributes(attrs);
-
-                    (cfgs, attrs)
-                }
-            };
 
             local = TaskLocal::Declared(Local {
                 attrs,
@@ -224,7 +233,19 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
                 ty,
                 expr,
             });
+        } else if input.peek(Token![=]) {
+            // Missing type ascription is not valid
+            return Err(parse::Error::new(name.span(), "malformed, expected a type"));
         } else if input.peek(Token![,]) {
+            // Attributes not supported on non-initialized local resources!
+
+            if !attrs.is_empty() {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "attributes are not supported here",
+                ));
+            }
+
             // Remove comma
             let _: Token![,] = input.parse()?;
 
@@ -238,10 +259,8 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
             local = TaskLocal::External;
         } else {
             // Specifying local without any resources is invalid
-            return error;
+            return Err(parse::Error::new(name.span(), error_msg_no_local_resources));
         };
-
-        let name = extract_resource_name_ident(exprpath.path)?;
 
         if resources.contains_key(&name) {
             return Err(parse::Error::new(
@@ -254,7 +273,10 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
     }
 
     if resources.is_empty() {
-        return error;
+        return Err(parse::Error::new(
+            input.span(),
+            error_msg_no_local_resources,
+        ));
     }
 
     Ok(resources)
