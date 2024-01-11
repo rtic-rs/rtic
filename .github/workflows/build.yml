@@ -18,7 +18,7 @@ jobs:
   # Run cargo xtask format-check
   formatcheck:
     name: cargo fmt
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
   # Compilation check
   check:
     name: check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     strategy:
       matrix:
         backend:
@@ -65,7 +65,7 @@ jobs:
   # Clippy
   clippy:
     name: clippy
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     strategy:
       matrix:
         backend:
@@ -101,7 +101,7 @@ jobs:
   # Verify all examples, checks
   checkexamples:
     name: check examples
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     strategy:
       matrix:
         backend:
@@ -140,7 +140,7 @@ jobs:
   # Check that the usage examples build
   usageexamples:
     name: Build usage examples
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     strategy:
       matrix:
         toolchain:
@@ -173,7 +173,7 @@ jobs:
   # Verify the example output with run-pass tests
   testexamples:
     name: QEMU run
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     strategy:
       matrix:
         backend:
@@ -218,7 +218,7 @@ jobs:
   # Run test suite
   tests:
     name: tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     strategy:
       fail-fast: false
       matrix:
@@ -255,7 +255,7 @@ jobs:
   # Build documentation, check links
   docs:
     name: build docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -310,7 +310,7 @@ jobs:
   mdbook:
     name: build mdbook
     needs: docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -365,7 +365,7 @@ jobs:
   mdbookold:
     name: build docs and mdbook for older releases
     needs: pushtostablebranch
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -440,7 +440,7 @@ jobs:
 
   parseversion:
     name: Parse the master branch RTIC version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     outputs:
       branch: ${{ steps.parseversion.outputs.branch }}
       versionmajor: ${{ steps.parseversion.outputs.versionmajor }}
@@ -471,7 +471,7 @@ jobs:
   # This needs to run before book is built, as bookbuilding fetches from the branch
   pushtostablebranch:
     name: Also push branch into release/vX when pushing to master
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     needs:
       - ci-success
       - parseversion
@@ -503,7 +503,7 @@ jobs:
   # If all tests pass, then deploy stage is run
   deploy:
     name: deploy
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     needs:
       - pushtostablebranch
       - docs
@@ -623,7 +623,7 @@ jobs:
 
   ghapages:
     name: Publish rtic.rs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     needs:
       - deploy
     steps:
@@ -656,7 +656,7 @@ jobs:
       - tests
       - docs
       - mdbook
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-23.10
     steps:
       - name: Mark the job as a success
         run: exit 0
