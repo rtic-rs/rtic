@@ -177,12 +177,10 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
         let name = extract_resource_name_ident(exprpath.path)?;
 
         // Extract attributes
-        let (cfgs, attrs) = match exprpath {
-            ExprPath { attrs, .. } => {
-                let FilterAttrs { cfgs, attrs, .. } = filter_attributes(attrs);
-
-                (cfgs, attrs)
-            }
+        let ExprPath { attrs, .. } = exprpath;
+        let (cfgs, attrs) = {
+            let FilterAttrs { cfgs, attrs, .. } = filter_attributes(attrs);
+            (cfgs, attrs)
         };
 
         let local;

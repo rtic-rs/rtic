@@ -86,7 +86,7 @@ fn init_args(tokens: TokenStream2) -> parse::Result<InitArgs> {
                             ));
                         }
 
-                        local_resources = Some(util::parse_local_resources(&input)?);
+                        local_resources = Some(util::parse_local_resources(input)?);
                     }
                     _ => {
                         return Err(parse::Error::new(ident.span(), "unexpected argument"));
@@ -144,7 +144,7 @@ fn idle_args(tokens: TokenStream2) -> parse::Result<IdleArgs> {
                             ));
                         }
 
-                        shared_resources = Some(util::parse_shared_resources(&input)?);
+                        shared_resources = Some(util::parse_shared_resources(input)?);
                     }
 
                     "local" => {
@@ -155,7 +155,7 @@ fn idle_args(tokens: TokenStream2) -> parse::Result<IdleArgs> {
                             ));
                         }
 
-                        local_resources = Some(util::parse_local_resources(&input)?);
+                        local_resources = Some(util::parse_local_resources(input)?);
                     }
 
                     _ => {
@@ -256,7 +256,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                         ));
                     }
 
-                    shared_resources = Some(util::parse_shared_resources(&input)?);
+                    shared_resources = Some(util::parse_shared_resources(input)?);
                 }
 
                 "local" => {
@@ -267,7 +267,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                         ));
                     }
 
-                    local_resources = Some(util::parse_local_resources(&input)?);
+                    local_resources = Some(util::parse_local_resources(input)?);
                 }
 
                 _ => {
