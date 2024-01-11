@@ -13,6 +13,8 @@ env:
   OLDSTABLE_VERSION: 1
   OLDOLDSTABLE_VERSION: 0.5
   OLDOLDOLDSTABLE_VERSION: 0.4
+  QEMU_VERSION: 8.2.0
+  QEMU_URL: https://download.qemu.org/qemu-8.2.0.tar.xz
 
 jobs:
   # Run cargo xtask format-check
@@ -170,9 +172,64 @@ jobs:
       - name: Check the examples
         run: cargo xtask usage-example-build
 
+  buildqemu:
+    name: Get modern QEMU, build and store
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache QEMU build
+        id: cache-qemu
+        uses: actions/cache@v4
+        with:
+          path: qemu-${{ env.QEMU_VERSION }}/build
+          key: ${{ runner.OS }}-qemu-${{ env.QEMU_VERSION }}
+          restore-keys: |
+            ${{ runner.OS }}-qemu-${{ env.QEMU_VERSION }}
+            ${{ runner.OS }}-qemu-
+
+      - name: Install QEMU to get dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y qemu-system-arm
+          sudo apt-get install git libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build
+
+      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
+        name: Download QEMU
+        run: wget "${{ env.QEMU_URL }}" 
+
+      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
+        name: Extract QEMU
+        run: tar xvJf qemu-${{ env.QEMU_VERSION }}.tar.xz
+
+      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
+        name: Configure QEMU
+        run: |
+          cd qemu-${{ env.QEMU_VERSION }}
+          ./configure --target-list=arm-softmmu,riscv32-softmmu
+
+      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
+        name: Build QEMU
+        run: |
+          cd qemu-${{ env.QEMU_VERSION }}
+          make -j$(nproc)
+          
+      - name: Archive QEMU build
+        run: |
+          cd qemu-${{ env.QEMU_VERSION }}/build
+          tar -cf $GITHUB_WORKSPACE/qemu.tar *
+
+      - name: Store QEMU build
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu
+          path: qemu.tar
+
   # Verify the example output with run-pass tests
   testexamples:
     name: QEMU run
+    needs: buildqemu
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -207,10 +264,23 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install QEMU
+      - name: Install QEMU to get dependencies
         run: |
           sudo apt update
           sudo apt install -y qemu-system-arm
+
+      - name: Download built QEMU
+        uses: actions/download-artifact@v4
+        with:
+          name: qemu
+
+      - name: Extract QEMU into local path
+        run: tar -xf qemu.tar -C /usr/local/bin
+
+      - name: Check which QEMU is used
+        run: |
+          which qemu-system-arm
+          which qemu-system-riscv32
 
       - name: Run-pass tests
         run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} qemu
