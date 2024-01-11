@@ -11,6 +11,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Unstable ESP32-C3 support.
 
+### Changed
+
+- Upgraded from syn 1.x to syn 2.x
+
 ## [v2.0.1] - 2023-07-25
 
 ### Added
