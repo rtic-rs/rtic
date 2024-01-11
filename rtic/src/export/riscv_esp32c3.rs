@@ -1,5 +1,6 @@
 use esp32c3::INTERRUPT_CORE0; //priority threshold control
 pub use esp32c3::{Interrupt, Peripherals};
+pub use riscv::interrupt;
 pub use riscv::register::mcause; //low level interrupt enable/disable
 
 #[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]

@@ -65,11 +65,6 @@ mod app {
             clocks,
         );
 
-        riscv_slic::disable();
-        unsafe {
-            riscv_slic::set_interrupts();
-            riscv_slic::enable();
-        }
         (Shared { counter: 0 }, Local {})
     }
 
