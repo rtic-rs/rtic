@@ -371,7 +371,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run-pass tests
-        run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude complex qemu
+        run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} qemu
 
   # Run test suite
   tests:

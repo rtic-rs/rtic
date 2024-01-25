@@ -281,7 +281,7 @@ impl Platforms {
     /// Get the default backend for the platform
     pub fn default_backend(&self) -> Backends {
         match self {
-            Platforms::Hifive1 => Backends::Riscv32ImacClint,
+            Platforms::Hifive1 => Backends::Riscv32ImcClint,
             Platforms::Lm3s6965 => Backends::Thumbv7,
             Platforms::Nrf52840 => unimplemented!(),
             Platforms::Rp2040 => unimplemented!(),
@@ -297,8 +297,7 @@ impl Platforms {
     pub fn features(&self, backend: &Backends) -> Result<Option<&'static str>, ()> {
         match self {
             Platforms::Hifive1 => match backend.to_target() {
-                RISCV32IMAC => Ok(None),
-                RISCV32IMC => unimplemented!(),
+                RISCV32IMC | RISCV32IMAC => Ok(None),
                 _ => Err(()),
             },
             Platforms::Lm3s6965 => match backend.to_target() {
