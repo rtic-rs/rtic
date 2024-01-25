@@ -68,11 +68,14 @@ mod app {
         (Shared { counter: 0 }, Local {})
     }
 
-    #[idle]
-    fn idle(_cx: idle::Context) -> ! {
+    #[idle(shared = [counter])]
+    fn idle(mut cx: idle::Context) -> ! {
         println!("[Idle]: Started");
         // pend the medium priority SW task only once
         soft_medium::spawn().unwrap();
+        cx.shared.counter.lock(|counter| {
+            println!("[Idle]: Shared: {}", *counter);
+        });
         // exit QEMU simulator
         println!("[Idle]: Finished");
         exit(0);

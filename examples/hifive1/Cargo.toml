@@ -11,10 +11,9 @@ edition = "2021"
 [dependencies]
 rtic = { path = "../../rtic" }
 hifive1 = { git = "https://github.com/romancardenas/hifive1.git", features = ["board-redv"] }
-e310x = { git = "https://github.com/greenlsi/e310x.git", branch = "master", features = ["rt"]}
-riscv-rt = {git = "https://github.com/rust-embedded/riscv.git", features = ["single-hart"]}
-# riscv-rt = {path = "../../../riscv/riscv-rt", features = ["single-hart"]}
-riscv = {git = "https://github.com/rust-embedded/riscv.git"}
+e310x = { git = "https://github.com/greenlsi/e310x.git", features = ["rt"]}
+riscv-rt = {version = "0.12.1", features = ["single-hart"]}
+riscv = "0.11.0"
 semihosting = { version = "0.1", features = ["stdio", "panic-handler"] }
 
 [features]

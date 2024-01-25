@@ -47,11 +47,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "e310x"
+version = "0.11.0"
+source = "git+https://github.com/greenlsi/e310x.git#5739f58440f742f158c5ab58bed41f4ffcaa70a2"
+dependencies = [
+ "riscv-pac",
+ "riscv-peripheral",
+ "vcell",
+]
+
+[[package]]
 name = "e310x-hal"
 version = "0.11.0"
 source = "git+https://github.com/greenlsi/e310x-hal.git?branch=master#921c0adc87423b00d9bc004b0df9c09315bbfe7d"
 dependencies = [
- "e310x",
+ "e310x 0.11.0 (git+https://github.com/greenlsi/e310x.git?branch=master)",
  "embedded-hal 0.2.7",
  "nb 1.1.0",
  "portable-atomic",
@@ -173,18 +183,18 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.71"
+version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75cb1540fadbd5b8fbccc4dddad2734eba435053f725621c070711a14bb5f4b8"
+checksum = "e2422ad645d89c99f8f3e6b88a9fdeca7fabeac836b1002371c4367c8f984aae"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.33"
+version = "1.0.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
+checksum = "291ec9ab5efd934aaf503a6466c5d5251535d108ee747472c3977cc5acc868ef"
 dependencies = [
  "proc-macro2",
 ]
@@ -198,15 +208,6 @@ dependencies = [
  "bit_field",
  "critical-section",
  "embedded-hal 0.2.7",
-]
-
-[[package]]
-name = "riscv"
-version = "0.10.1"
-source = "git+https://github.com/rust-embedded/riscv.git?branch=add-ecall#149d917c910d056449b8571fa84682c51a69f407"
-dependencies = [
- "critical-section",
- "embedded-hal 1.0.0",
 ]
 
 [[package]]
@@ -229,8 +230,9 @@ dependencies = [
 
 [[package]]
 name = "riscv"
-version = "0.10.1"
-source = "git+https://github.com/rust-embedded/riscv.git#c0ce6767b8184eba71b935382ecaa50ee092378d"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "575e01d1b3282801143c2a09e5ddddb0be7fc9bec2f1d624b789c9e9559a0023"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
@@ -253,17 +255,19 @@ dependencies = [
 
 [[package]]
 name = "riscv-rt"
-version = "0.11.0"
-source = "git+https://github.com/rust-embedded/riscv.git#c0ce6767b8184eba71b935382ecaa50ee092378d"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5194d66aa0c400bfdda5d11cfe9de4f611fee9884fa49edbece3def499a81383"
 dependencies = [
- "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git)",
+ "riscv 0.11.0",
  "riscv-rt-macros",
 ]
 
 [[package]]
 name = "riscv-rt-macros"
-version = "0.2.0"
-source = "git+https://github.com/rust-embedded/riscv.git#c0ce6767b8184eba71b935382ecaa50ee092378d"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8d100d466dbb76681ef6a9386f3da9abc570d57394e86da0ba5af8c4408486d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -273,22 +277,22 @@ dependencies = [
 [[package]]
 name = "riscv-slic"
 version = "0.1.0"
-source = "git+https://github.com/romancardenas/riscv-slic.git?rev=38700c0#38700c02cbc85ec4d0850dc654e30a12e17003e2"
+source = "git+https://github.com/romancardenas/riscv-slic.git?rev=143c648#143c64881d96ec02fcd587b74ab9e71160956e2e"
 dependencies = [
+ "critical-section",
  "heapless",
- "portable-atomic",
- "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git?branch=add-ecall)",
+ "riscv 0.11.0",
  "riscv-slic-macros",
 ]
 
 [[package]]
 name = "riscv-slic-macros"
 version = "0.1.0"
-source = "git+https://github.com/romancardenas/riscv-slic.git?rev=38700c0#38700c02cbc85ec4d0850dc654e30a12e17003e2"
+source = "git+https://github.com/romancardenas/riscv-slic.git?rev=143c648#143c64881d96ec02fcd587b74ab9e71160956e2e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.43",
+ "syn 2.0.48",
 ]
 
 [[package]]
@@ -298,7 +302,7 @@ dependencies = [
  "atomic-polyfill",
  "bare-metal",
  "critical-section",
- "riscv 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "riscv 0.11.0",
  "riscv-slic",
  "rtic-core",
  "rtic-macros",
@@ -318,16 +322,16 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.48",
 ]
 
 [[package]]
 name = "rtic_hifive1"
 version = "0.1.0"
 dependencies = [
- "e310x",
+ "e310x 0.11.0 (git+https://github.com/greenlsi/e310x.git)",
  "hifive1",
- "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git)",
+ "riscv 0.11.0",
  "riscv-rt",
  "rtic",
  "semihosting",
@@ -358,9 +362,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.43"
+version = "2.0.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee659fb5f3d355364e1f3e5bc10fb82068efbf824a1e9d1c9504244a6469ad53"
+checksum = "0f3531638e407dfc0814761abb7c00a5b54992b849452a0646b7f65c9f770f3f"
 dependencies = [
  "proc-macro2",
  "quote",

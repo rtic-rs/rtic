@@ -340,8 +340,8 @@ jobs:
     strategy:
       matrix:
         backend:
+          - riscv32-imc-clint
           - riscv32-imac-clint
-          # - riscv32-imc-clint TODO enable when ready
         toolchain:
           - nightly
     steps:
