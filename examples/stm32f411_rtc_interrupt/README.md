@@ -6,7 +6,7 @@ After configured, it will listen to periodic wake-up interrupts happening every 
 ## How-to
 
 ### Build
-Run `cargo +nightly build` to compile the code. If you run it for the first time, it will take some time to download and compile dependencies.
+Run `cargo build --release` to compile the code. If you run it for the first time, it will take some time to download and compile dependencies.
 
 ### Run
 Install `probe-rs` and configure it using the [debugging extension for VScode](https://probe.rs/docs/tools/debugger/).

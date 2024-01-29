@@ -28,7 +28,6 @@
 ---
 
 - [Migrating from v1.0.x to v2.0.0](./migration_v1_v2.md)
-  - [Rust Nightly & features](./migration_v1_v2/nightly.md)
   - [Migrating to `rtic-monotonics`](./migration_v1_v2/monotonics.md)
   - [Software tasks must now be `async`](./migration_v1_v2/async_tasks.md)
   - [Using and understanding `rtic-sync`](./migration_v1_v2/rtic-sync.md)

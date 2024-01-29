@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Changed
+
+- Removed unused `rust-toolchain.toml`
+
 ## v1.5.0 - 2024-01-10
 
 ### Changed

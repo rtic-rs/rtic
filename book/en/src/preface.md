@@ -141,8 +141,6 @@ Asynchronous programming in various forms are getting increased popularity and l
 
 The Rust standard library provides collections for dynamically allocated data-structures which are useful to manage execution contexts at run-time. However, in the setting of resource constrained real-time systems, dynamic allocations are problematic (both regarding performance and reliability - Rust runs into a *panic* on an out-of-memory condition). Thus, static allocation is the preferable approach!
 
-RTIC provides a mechanism for `async`/`await` that relies solely on static allocations. However, the implementation relies on the `#![feature(type_alias_impl_trait)]` (TAIT) which is undergoing stabilization (thus RTIC v2.x currently requires a *nightly* toolchain). Technically, using TAIT, the compiler determines the size of each execution context allowing static allocation.
-
 From a modelling perspective `async/await` lifts the run-to-completion requirement of SRP, and each section of code between two yield points (`await`s) can be seen as an individual task. The compiler will reject any attempt to `await` while holding a resource (not doing so would break the strict LIFO requirement on resource usage under SRP).
 
 So with the technical stuff out of the way, what does `async/await` bring to the table?

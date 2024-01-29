@@ -21,6 +21,11 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                 pub core: rtic::export::Peripherals
             ));
 
+            fields.push(quote!(
+                /// The space used to allocate async executors in bytes.
+                pub executors_size: usize
+            ));
+
             if app.args.peripherals {
                 let device = &app.args.device;
 
@@ -40,6 +45,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             values.push(quote!(cs: rtic::export::CriticalSection::new()));
 
             values.push(quote!(core));
+            values.push(quote!(executors_size));
         }
 
         Context::Idle | Context::HardwareTask(_) | Context::SoftwareTask(_) => {}
@@ -92,7 +98,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
     };
 
     let core = if ctxt.is_init() {
-        Some(quote!(core: rtic::export::Peripherals,))
+        Some(quote!(core: rtic::export::Peripherals, executors_size: usize))
     } else {
         None
     };
@@ -147,10 +153,9 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         };
 
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");
+        let from_ptr_n_args = util::from_ptr_n_args_ident(spawnee.inputs.len());
         let (input_args, input_tupled, input_untupled, input_ty) =
             util::regroup_inputs(&spawnee.inputs);
-
-        let type_name = util::internal_task_ident(name, "F");
 
         // Spawn caller
         items.push(quote!(
@@ -159,18 +164,11 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             #[allow(non_snake_case)]
             #[doc(hidden)]
             pub fn #internal_spawn_ident(#(#input_args,)*) -> Result<(), #input_ty> {
-                // New TAIT requirement hack; the opaque type must be in the argument or return
-                // position of a function...
-                #[inline(always)]
-                fn tait_hack(#(#input_args,)*) -> #type_name {
-                    #name(unsafe { #name::Context::new() } #(,#input_untupled)*)
-                }
-
                 // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
                 unsafe {
-                    if #exec_name.try_allocate() {
-                        let f = tait_hack(#(#input_untupled,)*);
-                        #exec_name.spawn(f);
+                    let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
+                    if exec.try_allocate() {
+                        exec.spawn(#name(unsafe { #name::Context::new() } #(,#input_untupled)*));
                         #pend_interrupt
 
                         Ok(())

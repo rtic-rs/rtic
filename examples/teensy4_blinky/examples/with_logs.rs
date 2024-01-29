@@ -1,7 +1,6 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
-#![feature(type_alias_impl_trait)]
 
 use bsp::pins::common::{P0, P1};
 imxrt_uart_panic::register!(LPUART6, P1, P0, 115200, teensy4_panic::sos);
