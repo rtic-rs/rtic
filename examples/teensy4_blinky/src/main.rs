@@ -2,7 +2,6 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
-#![feature(type_alias_impl_trait)]
 
 #[panic_handler]
 fn panic(_: &::core::panic::PanicInfo) -> ! {

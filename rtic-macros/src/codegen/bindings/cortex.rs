@@ -29,9 +29,33 @@ fn is_exception(name: &Ident) -> bool {
             | "SysTick"
     )
 }
+
 pub fn interrupt_ident() -> Ident {
     let span = Span::call_site();
     Ident::new("interrupt", span)
+}
+
+pub fn check_stack_overflow_before_init(
+    _app: &App,
+    _analysis: &CodegenAnalysis,
+) -> Vec<TokenStream2> {
+    vec![quote!(
+        // Check for stack overflow using symbols from `cortex-m-rt`.
+        extern "C" {
+            pub static _stack_start: u32;
+            pub static __ebss: u32;
+        }
+
+        let stack_start = &_stack_start as *const _ as u32;
+        let ebss = &__ebss as *const _ as u32;
+
+        if stack_start > ebss {
+            // No flip-link usage, check the MSP for overflow.
+            if rtic::export::msp::read() <= ebss {
+                panic!("Stack overflow after allocating executors");
+            }
+        }
+    )]
 }
 
 #[cfg(feature = "cortex-m-source-masking")]

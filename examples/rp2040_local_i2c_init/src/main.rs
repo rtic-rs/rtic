@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(type_alias_impl_trait)]
 
 #[rtic::app(
     device = rp_pico::hal::pac,

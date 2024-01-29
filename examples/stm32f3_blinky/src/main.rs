@@ -2,7 +2,6 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
-#![feature(type_alias_impl_trait)]
 
 use panic_rtt_target as _;
 use rtic::app;

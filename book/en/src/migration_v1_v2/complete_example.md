@@ -97,7 +97,6 @@ _Note_: This diff may not be 100% accurate, but it displays the important change
 ``` diff
 #![no_main]
  #![no_std]
-+#![feature(type_alias_impl_trait)]
  
  use panic_rtt_target as _;
  use rtic::app;

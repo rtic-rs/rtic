@@ -19,6 +19,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- RTIC v2 now works on stable.
+
 ## [v2.0.1] - 2023-07-25
 
 ### Added

@@ -8,7 +8,6 @@ pub use super::bindings::interrupt_ident;
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
 
-
 /// Mark a name as internal
 pub fn mark_internal_name(name: &str) -> Ident {
     Ident::new(&format!("{RTIC_INTERNAL}_{name}"), Span::call_site())
@@ -165,4 +164,12 @@ pub fn rt_err_ident() -> Ident {
         "you_must_enable_the_rt_feature_for_the_pac_in_your_cargo_toml",
         Span::call_site(),
     )
+}
+
+pub fn from_ptr_n_args_ident(n: usize) -> Ident {
+    Ident::new(&format!("from_ptr_{}_args", n + 1), Span::call_site())
+}
+
+pub fn new_n_args_ident(n: usize) -> Ident {
+    Ident::new(&format!("new_{}_args", n + 1), Span::call_site())
 }

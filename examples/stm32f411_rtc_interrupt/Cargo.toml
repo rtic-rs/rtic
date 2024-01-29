@@ -18,8 +18,8 @@ defmt-rtt = { version = "0.4.0"}
 rtic-sync = "1.0.2"
 
 [dependencies.stm32f4xx-hal]
-version = "0.18.0"
-features = ["rt", "stm32f411"] # replace the model of your microcontroller here
+version = "0.20.0"
+features = ["stm32f411"] # replace the model of your microcontroller here
 
 # this lets you use `cargo fix`!
 [[bin]]
