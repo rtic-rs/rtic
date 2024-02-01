@@ -5,7 +5,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use syn::{
     parse::{self, ParseStream, Parser},
     spanned::Spanned,
-    Expr, ExprArray, Fields, ForeignItem, Ident, Item, LitBool, Path, Token, Visibility,
+    Expr, ExprArray, Fields, ForeignItem, Ident, Item, Path, Token, Visibility,
 };
 
 use crate::syntax::{
@@ -24,7 +24,6 @@ impl AppArgs {
         (|input: ParseStream<'_>| -> parse::Result<Self> {
             let mut custom = Set::new();
             let mut device = None;
-            let mut peripherals = true;
             let mut dispatchers = Dispatchers::new();
 
             loop {
@@ -55,17 +54,6 @@ impl AppArgs {
                             return Err(parse::Error::new(
                                 ident.span(),
                                 "unexpected argument value; this should be a path",
-                            ));
-                        }
-                    }
-
-                    "peripherals" => {
-                        if let Ok(p) = input.parse::<LitBool>() {
-                            peripherals = p.value;
-                        } else {
-                            return Err(parse::Error::new(
-                                ident.span(),
-                                "unexpected argument value; this should be a boolean",
                             ));
                         }
                     }
@@ -134,7 +122,6 @@ impl AppArgs {
 
             Ok(AppArgs {
                 device,
-                peripherals,
                 dispatchers,
             })
         })

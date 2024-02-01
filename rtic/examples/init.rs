@@ -8,7 +8,7 @@
 
 use panic_semihosting as _;
 
-#[rtic::app(device = lm3s6965, peripherals = true)]
+#[rtic::app(device = lm3s6965)]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
@@ -22,9 +22,6 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         // Cortex-M peripherals
         let _core: cortex_m::Peripherals = cx.core;
-
-        // Device specific peripherals
-        let _device: lm3s6965::Peripherals = cx.device;
 
         // Locals in `init` have 'static lifetime
         let _x: &'static mut u32 = cx.local.x;

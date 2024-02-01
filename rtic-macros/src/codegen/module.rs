@@ -21,17 +21,6 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                 pub core: rtic::export::Peripherals
             ));
 
-            if app.args.peripherals {
-                let device = &app.args.device;
-
-                fields.push(quote!(
-                    /// Device peripherals (PAC)
-                    pub device: #device::Peripherals
-                ));
-
-                values.push(quote!(device: #device::Peripherals::steal()));
-            }
-
             fields.push(quote!(
                 /// Critical section token for init
                 pub cs: rtic::export::CriticalSection<'a>

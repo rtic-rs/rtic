@@ -11,7 +11,7 @@ use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;
 use rtic_monotonics::systick::*;
 
-#[rtic::app(device = lm3s6965, dispatchers = [SSI0, UART0], peripherals = true)]
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0, UART0])]
 mod app {
     use super::*;
     use futures::{future::FutureExt, select_biased};
