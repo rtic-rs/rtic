@@ -1,6 +1,6 @@
 [package]
 name = "rtic-sync"
-version = "1.2.0"
+version = "1.3.0"
 
 edition = "2021"
 authors = [
@@ -17,23 +17,21 @@ repository = "https://github.com/rtic-rs/rtic"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[package.metadata.docs.rs]
-features = ["unstable"]
-
 [dependencies]
 heapless = "0.8"
 critical-section = "1"
 rtic-common = { version = "1.0.0", path = "../rtic-common" }
 portable-atomic = { version = "1", default-features = false }
-embedded-hal = { version = "1.0", optional = true }
-embedded-hal-async = { version = "1.0", optional = true }
-embedded-hal-bus = { version = "0.1.0", optional = true, features = ["async"] }
+embedded-hal = { version = "1.0.0" }
+embedded-hal-async = { version = "1.0.0" }
+embedded-hal-bus = { version = "0.1.0", features = ["async"] }
+
+defmt-03 = { package = "defmt", version = "0.3", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "macros", "time"] }
 
-
 [features]
 default = []
 testing = ["critical-section/std", "rtic-common/testing"]
-unstable = ["embedded-hal", "embedded-hal-async", "embedded-hal-bus"]
+defmt-03 = ["dep:defmt-03", "embedded-hal/defmt-03", "embedded-hal-async/defmt-03", "embedded-hal-bus/defmt-03"]

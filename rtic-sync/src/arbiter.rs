@@ -191,7 +191,6 @@ impl<'a, T> DerefMut for ExclusiveAccess<'a, T> {
     }
 }
 
-#[cfg(feature = "unstable")]
 /// SPI bus sharing using [`Arbiter`]
 pub mod spi {
     use super::Arbiter;
@@ -274,7 +273,6 @@ pub mod spi {
     }
 }
 
-#[cfg(feature = "unstable")]
 /// I2C bus sharing using [`Arbiter`]
 ///
 /// An Example how to use it in RTIC application:
