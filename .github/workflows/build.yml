@@ -316,19 +316,6 @@ jobs:
           which qemu-system-arm
           which qemu-system-riscv32
 
-      - name: Download built QEMU
-        uses: actions/download-artifact@v4
-        with:
-          name: qemu
-
-      - name: Extract QEMU into local path
-        run: tar -xf qemu.tar -C /usr/local/bin
-
-      - name: Check which QEMU is used
-        run: |
-          which qemu-system-arm
-          which qemu-system-riscv32
-
       - name: Run-pass tests
         run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} qemu
   
