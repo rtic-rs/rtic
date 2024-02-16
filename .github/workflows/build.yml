@@ -31,9 +31,9 @@ jobs:
       - name: cargo xtask fmt
         run:  cargo xtask --verbose fmt -c
 
-  # Compilation check
-  check:
-    name: check
+  # Compilation check (lm3s6965)
+  checklm3s6965:
+    name: check (lm3s6965)
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -42,7 +42,6 @@ jobs:
           - thumbv6
           - thumbv8-base
           - thumbv8-main
-          # TODO add RISC-V backends
         toolchain:
           - stable
     steps:
@@ -63,11 +62,14 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} check
+      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} check
 
-  # Clippy
-  clippy:
-    name: clippy
+  # Compilation check (hifive1) TODO
+  # checkhifive1:
+
+  # Clippy (lm3s6965)
+  clippylm3s6965:
+    name: clippy (lm3s6965)
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -76,7 +78,6 @@ jobs:
           - thumbv6
           - thumbv8-base
           - thumbv8-main
-          # TODO add RISC-V backends
         toolchain:
           - stable
     steps:
@@ -100,7 +101,10 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} clippy
+      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} clippy
+
+  # Clippy (hifive1) TODO
+  # clippyhifive1:
 
   # Platform lm3s6965: verify all examples, checks
   checkexampleslm3s6965:
@@ -148,8 +152,8 @@ jobs:
     strategy:
       matrix:
         backend:
+          - riscv32-imc-clint
           - riscv32-imac-clint
-          # - riscv32-imc-clint TODO enable when ready
         toolchain:
           - nightly
     steps:
@@ -812,8 +816,10 @@ jobs:
     if: github.event_name == 'push' && success()
     needs:
       - formatcheck
-      - check
-      - clippy
+      - checklm3s6965
+      # checkhifive1 TODO
+      - clippylm3s6965
+      # clippyhifive1 TODO
       - checkexampleslm3s6965
       - checkexampleshifive1
       - testexampleslm3s6965

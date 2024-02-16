@@ -1,27 +1,38 @@
 use std::env;
 
 fn main() {
-    let target = env::var("TARGET").unwrap();
+    // Get the backend feature selected by the user
+    let mut backends: Vec<_> = env::vars()
+        .filter_map(|(key, _value)| {
+            if key.starts_with("CARGO_FEATURE") && key.ends_with("BACKEND") {
+                // strip 'CARGO_FEATURE_', convert to lowercase, and replace '_' with '-'
+                Some(key[14..].to_lowercase().replace('_', "-"))
+            } else {
+                None
+            }
+        })
+        .collect();
+    if backends.len() > 1 {
+        panic!("More than one backend feature selected: {:?}", backends);
+    }
+    let backend = backends.pop().expect("No backend feature selected.");
 
-    // These targets all have know support for the BASEPRI register.
-    if target.starts_with("thumbv7m")
-        | target.starts_with("thumbv7em")
-        | target.starts_with("thumbv8m.main")
-    {
-        println!("cargo:rustc-cfg=feature=\"cortex-m-basepri\"");
-    } else if target.starts_with("thumbv6m") | target.starts_with("thumbv8m.base") {
-        println!("cargo:rustc-cfg=feature=\"cortex-m-source-masking\"");
-        //this should not be this general
-        //riscv processors differ in interrupt implementation
-        //even within the same target
-        //need some other way to discern
-    } else if target.starts_with("riscv32i") {
-        // println!("cargo:rustc-cfg=feature=\"riscv-esp32c3\"");
-
-        // TODO: Add feature here for risc-v targets
-        // println!("cargo:rustc-cfg=feature=\"riscv\"");
-    } else if target.starts_with("thumb") || target.starts_with("riscv32") {
-        panic!("Unknown target '{target}'. Need to update logic in build.rs.");
+    match backend.as_str() {
+        "thumbv6-backend" | "thumbv8base-backend" => {
+            println!("cargo:rustc-cfg=feature=\"cortex-m-source-masking\"");
+        }
+        "thumbv7-backend" | "thumbv8main-backend" => {
+            println!("cargo:rustc-cfg=feature=\"cortex-m-basepri\"");
+        }
+        "riscv-esp32c3-backend" => {
+            println!("cargo:rustc-cfg=feature=\"riscv-esp32c3\"");
+        }
+        "riscv-clint-backend" => {
+            println!("cargo:rustc-cfg=feature=\"riscv-slic\"");
+        }
+        _ => {
+            panic!("Unknown backend feature: {:?}", backend);
+        }
     }
 
     println!("cargo:rerun-if-changed=build.rs");

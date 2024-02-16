@@ -12,17 +12,17 @@ pub use cortex_common::*;
 mod cortex_common;
 
 // Cortex-M target with basepri support
-#[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
+#[cfg(feature = "cortex-m-basepri")]
 mod cortex_basepri;
 
-#[cfg(any(feature = "cortex-m-basepri", feature = "rtic-uitestv7"))]
+#[cfg(feature = "cortex-m-basepri")]
 pub use cortex_basepri::*;
 
 // Cortex-M target with source mask support
-#[cfg(any(feature = "cortex-m-source-masking", feature = "rtic-uitestv6"))]
+#[cfg(feature = "cortex-m-source-masking")]
 mod cortex_source_mask;
 
-#[cfg(any(feature = "cortex-m-source-masking", feature = "rtic-uitestv6"))]
+#[cfg(feature = "cortex-m-source-masking")]
 pub use cortex_source_mask::*;
 
 #[cfg(feature = "riscv-esp32c3")]
@@ -36,15 +36,7 @@ mod slic;
 pub use slic::*;
 
 #[inline(always)]
-pub fn assert_send<T>()
-where
-    T: Send,
-{
-}
+pub fn assert_send<T: Send>() {}
 
 #[inline(always)]
-pub fn assert_sync<T>()
-where
-    T: Sync,
-{
-}
+pub fn assert_sync<T: Sync>() {}
