@@ -71,8 +71,4 @@ riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]
 riscv-clint-backend = ["riscv", "riscv-slic/clint-backend", "rtic-macros/riscv-slic"]
 
 # needed for testing
-rtic-uitestv7 = ["thumbv7-backend"]
-rtic-uitestv6 = ["thumbv6-backend"]
-rtic-uitestesp32c3 = ["riscv-esp32c3-backend"]
-rtic-uitestclint = ["riscv-clint-backend"]
 test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick-100hz"]

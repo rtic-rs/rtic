@@ -104,12 +104,7 @@ impl TestMetadata {
     pub fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
-                let features = format!(
-                    "{},{}",
-                    backend.to_rtic_feature(),
-                    backend.to_rtic_uitest_feature()
-                );
-                let features = Some(backend.to_target().and_features(&features));
+                let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
                 CargoCommand::Test {
                     package: Some(package.name()),
                     features,
@@ -196,15 +191,15 @@ impl Backends {
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
         }
     }
-    #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_uitest_feature(&self) -> &'static str {
-        match self {
-            Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
-            Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
-            Backends::RiscvEsp32C3 => "rtic-uitestesp32c3",
-            Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "rtic-uitestclint",
-        }
-    }
+    // #[allow(clippy::wrong_self_convention)]
+    // pub fn to_rtic_uitest_feature(&self) -> &'static str {
+    //     match self {
+    //         Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
+    //         Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
+    //         Backends::RiscvEsp32C3 => "rtic-uitestesp32c3",
+    //         Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "rtic-uitestclint",
+    //     }
+    // }
 }
 
 #[derive(Copy, Clone, Default, Debug)]

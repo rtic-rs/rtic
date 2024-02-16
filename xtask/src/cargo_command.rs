@@ -341,13 +341,9 @@ impl core::fmt::Display for CargoCommand<'_> {
                     .clone()
                     .map(|t| format!("test {t}"))
                     .unwrap_or("all tests".into());
-                let deny_warnings = if *deny_warnings {
-                    format!("deny warnings, ")
-                } else {
-                    format!("")
-                };
-                let feat = feat(features);
-                write!(f, "Run {test} in {p} ({deny_warnings}features: {feat})")
+
+                let details = details(*deny_warnings, &None, None, features, &&None, None);
+                write!(f, "Run {test} in {p} {details}")
             }
             CargoCommand::Book { arguments: _ } => write!(f, "Build the book"),
             CargoCommand::ExampleSize {
