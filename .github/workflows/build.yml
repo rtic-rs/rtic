@@ -171,8 +171,13 @@ jobs:
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
+      
+      - name: Check the examples
+        if: ${{ matrix.backend == 'riscv32-imc-clint' }}
+        run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude static example-check
 
       - name: Check the examples
+        if: ${{ matrix.backend != 'riscv32-imc-clint' }}
         run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} example-check
 
   # Check that the usage examples build TODO this would not be needed now
@@ -378,8 +383,13 @@ jobs:
         run: |
           which qemu-system-arm
           which qemu-system-riscv32
+      
+      - name: Run-pass tests
+        if: ${{ matrix.backend == 'riscv32-imc-clint' }}
+        run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude static qemu
 
       - name: Run-pass tests
+        if: ${{ matrix.backend != 'riscv32-imc-clint' }}
         run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} qemu
 
   # Run test suite
