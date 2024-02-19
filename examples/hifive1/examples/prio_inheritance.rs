@@ -2,7 +2,6 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
 
-// use panic_halt as _;
 use riscv_rt as _;
 
 #[rtic::app(device = e310x, backend = HART0)]

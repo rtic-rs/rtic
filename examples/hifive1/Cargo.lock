@@ -18,12 +18,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
 
 [[package]]
-name = "bit_field"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc827186963e592360843fb5ba4b973e145841266c1357f7180c43526f2e5b61"
-
-[[package]]
 name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -38,7 +32,7 @@ checksum = "7059fff8937831a9ae6f0fe4d658ffabf58f2ca96aa9dec1c889f936f705f216"
 [[package]]
 name = "e310x"
 version = "0.11.0"
-source = "git+https://github.com/greenlsi/e310x.git?branch=master#5739f58440f742f158c5ab58bed41f4ffcaa70a2"
+source = "git+https://github.com/greenlsi/e310x.git?branch=master#50536cc5be2fd6adf7f879f002fdd98f66fb05f9"
 dependencies = [
  "critical-section",
  "riscv-pac",
@@ -49,7 +43,7 @@ dependencies = [
 [[package]]
 name = "e310x"
 version = "0.11.0"
-source = "git+https://github.com/greenlsi/e310x.git#5739f58440f742f158c5ab58bed41f4ffcaa70a2"
+source = "git+https://github.com/greenlsi/e310x.git#50536cc5be2fd6adf7f879f002fdd98f66fb05f9"
 dependencies = [
  "riscv-pac",
  "riscv-peripheral",
@@ -59,13 +53,13 @@ dependencies = [
 [[package]]
 name = "e310x-hal"
 version = "0.11.0"
-source = "git+https://github.com/greenlsi/e310x-hal.git?branch=master#921c0adc87423b00d9bc004b0df9c09315bbfe7d"
+source = "git+https://github.com/greenlsi/e310x-hal.git?branch=master#931aea7ab142c1eb9eaadd4150946d8452229f27"
 dependencies = [
  "e310x 0.11.0 (git+https://github.com/greenlsi/e310x.git?branch=master)",
  "embedded-hal 0.2.7",
  "nb 1.1.0",
  "portable-atomic",
- "riscv 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "riscv",
 ]
 
 [[package]]
@@ -118,19 +112,19 @@ dependencies = [
 [[package]]
 name = "hifive1"
 version = "0.11.0"
-source = "git+https://github.com/romancardenas/hifive1.git#4fff8049a94e87f4196e3a1d24adbbf4272a49bd"
+source = "git+https://github.com/romancardenas/hifive1.git#ef8cea8b90bddb04509785d3e148ff145137520a"
 dependencies = [
  "e310x-hal",
  "embedded-hal 0.2.7",
  "nb 1.1.0",
- "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git?branch=master)",
+ "riscv",
 ]
 
 [[package]]
 name = "indexmap"
-version = "2.1.0"
+version = "2.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d530e1a18b1cb4c484e6e34556a0d948706958449fca0cab753d649f2bce3d1f"
+checksum = "233cf39063f058ea2caae4091bf4a3ef70a653afbc026f5c4a4135d114e3c177"
 dependencies = [
  "equivalent",
  "hashbrown",
@@ -201,38 +195,9 @@ dependencies = [
 
 [[package]]
 name = "riscv"
-version = "0.10.1"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa3145d2fae3778b1e31ec2e827b228bdc6abd9b74bb5705ba46dcb82069bc4f"
-dependencies = [
- "bit_field",
- "critical-section",
- "embedded-hal 0.2.7",
-]
-
-[[package]]
-name = "riscv"
-version = "0.10.1"
-source = "git+https://github.com/rust-embedded/riscv.git?branch=add-peripheral#5b012c0978e16e00781fbb3d2757cba8a7c4e4d7"
-dependencies = [
- "critical-section",
- "embedded-hal 1.0.0",
-]
-
-[[package]]
-name = "riscv"
-version = "0.10.1"
-source = "git+https://github.com/rust-embedded/riscv.git?branch=master#0a021ea9bcd0bbe91cf6e8046611e76985848d34"
-dependencies = [
- "critical-section",
- "embedded-hal 1.0.0",
-]
-
-[[package]]
-name = "riscv"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "575e01d1b3282801143c2a09e5ddddb0be7fc9bec2f1d624b789c9e9559a0023"
+checksum = "2f5c1b8bf41ea746266cdee443d1d1e9125c86ce1447e1a2615abd34330d33a9"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
@@ -240,26 +205,28 @@ dependencies = [
 
 [[package]]
 name = "riscv-pac"
-version = "0.1.0"
-source = "git+https://github.com/rust-embedded/riscv.git?branch=add-peripheral#5b012c0978e16e00781fbb3d2757cba8a7c4e4d7"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18ceb4af23fdad434f938afdc35ce895a63d84f7333bb127d8065030848eb6a6"
 
 [[package]]
 name = "riscv-peripheral"
 version = "0.1.0"
-source = "git+https://github.com/rust-embedded/riscv.git?branch=add-peripheral#5b012c0978e16e00781fbb3d2757cba8a7c4e4d7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07c799fe4e144bd4dd0c68fa33a41c1485f19730eea505d195124636e1253358"
 dependencies = [
  "embedded-hal 1.0.0",
- "riscv 0.10.1 (git+https://github.com/rust-embedded/riscv.git?branch=add-peripheral)",
+ "riscv",
  "riscv-pac",
 ]
 
 [[package]]
 name = "riscv-rt"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5194d66aa0c400bfdda5d11cfe9de4f611fee9884fa49edbece3def499a81383"
+checksum = "c0d35e32cf1383183e8885d8a9aa4402a087fd094dc34c2cb6df6687d0229dfe"
 dependencies = [
- "riscv 0.11.0",
+ "riscv",
  "riscv-rt-macros",
 ]
 
@@ -277,22 +244,22 @@ dependencies = [
 [[package]]
 name = "riscv-slic"
 version = "0.1.0"
-source = "git+https://github.com/romancardenas/riscv-slic.git?rev=143c648#143c64881d96ec02fcd587b74ab9e71160956e2e"
+source = "git+https://github.com/romancardenas/riscv-slic.git?rev=d068008#d06800834aa5dd52e41574338a29ecadbd8df23b"
 dependencies = [
  "critical-section",
  "heapless",
- "riscv 0.11.0",
+ "riscv",
  "riscv-slic-macros",
 ]
 
 [[package]]
 name = "riscv-slic-macros"
 version = "0.1.0"
-source = "git+https://github.com/romancardenas/riscv-slic.git?rev=143c648#143c64881d96ec02fcd587b74ab9e71160956e2e"
+source = "git+https://github.com/romancardenas/riscv-slic.git?rev=d068008#d06800834aa5dd52e41574338a29ecadbd8df23b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.48",
+ "syn 2.0.49",
 ]
 
 [[package]]
@@ -302,7 +269,7 @@ dependencies = [
  "atomic-polyfill",
  "bare-metal",
  "critical-section",
- "riscv 0.11.0",
+ "riscv",
  "riscv-slic",
  "rtic-core",
  "rtic-macros",
@@ -322,7 +289,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "syn 2.0.48",
+ "syn 2.0.49",
 ]
 
 [[package]]
@@ -330,8 +297,9 @@ name = "rtic_hifive1"
 version = "0.1.0"
 dependencies = [
  "e310x 0.11.0 (git+https://github.com/greenlsi/e310x.git)",
+ "heapless",
  "hifive1",
- "riscv 0.11.0",
+ "riscv",
  "riscv-rt",
  "rtic",
  "semihosting",
@@ -362,9 +330,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.48"
+version = "2.0.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f3531638e407dfc0814761abb7c00a5b54992b849452a0646b7f65c9f770f3f"
+checksum = "915aea9e586f80826ee59f8453c1101f9d1c4b3964cd2460185ee8e299ada496"
 dependencies = [
  "proc-macro2",
  "quote",
