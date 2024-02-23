@@ -18,6 +18,9 @@ use rtic_common::{
     wait_queue::{Link, WaitQueue},
 };
 
+#[cfg(feature = "defmt-03")]
+use crate::defmt;
+
 /// An MPSC channel for use in no-alloc systems. `N` sets the size of the queue.
 ///
 /// This channel uses critical sections, however there are extremely small and all `memcpy`
@@ -104,7 +107,7 @@ impl<T, const N: usize> Channel<T, N> {
 /// Creates a split channel with `'static` lifetime.
 #[macro_export]
 macro_rules! make_channel {
-    ($type:path, $size:expr) => {{
+    ($type:ty, $size:expr) => {{
         static mut CHANNEL: $crate::channel::Channel<$type, $size> =
             $crate::channel::Channel::new();
 
@@ -127,9 +130,11 @@ macro_rules! make_channel {
 // -------- Sender
 
 /// Error state for when the receiver has been dropped.
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct NoReceiver<T>(pub T);
 
 /// Errors that 'try_send` can have.
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub enum TrySendError<T> {
     /// Error state for when the receiver has been dropped.
     NoReceiver(T),
@@ -196,6 +201,13 @@ unsafe impl Sync for LinkPtr {}
 impl<'a, T, const N: usize> core::fmt::Debug for Sender<'a, T, N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Sender")
+    }
+}
+
+#[cfg(feature = "defmt-03")]
+impl<'a, T, const N: usize> defmt::Format for Sender<'a, T, N> {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "Sender",)
     }
 }
 
@@ -382,8 +394,16 @@ impl<'a, T, const N: usize> core::fmt::Debug for Receiver<'a, T, N> {
     }
 }
 
+#[cfg(feature = "defmt-03")]
+impl<'a, T, const N: usize> defmt::Format for Receiver<'a, T, N> {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "Receiver",)
+    }
+}
+
 /// Possible receive errors.
-#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ReceiveError {
     /// Error state for when all senders has been dropped.
     NoSender,
@@ -595,5 +615,10 @@ mod tests {
     fn double_make_channel() {
         make();
         make();
+    }
+
+    #[test]
+    fn tuple_channel() {
+        let _ = make_channel!((i32, u32), 10);
     }
 }

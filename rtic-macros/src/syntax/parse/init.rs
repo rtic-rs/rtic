@@ -1,5 +1,4 @@
-use proc_macro2::TokenStream as TokenStream2;
-
+use crate::syntax::TokenStream2;
 use syn::{parse, ForeignItemFn, ItemFn, Stmt};
 
 use crate::syntax::{

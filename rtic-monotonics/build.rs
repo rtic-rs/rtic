@@ -158,15 +158,18 @@ fn stm32() {
     fs::write(out_file, g.to_string()).unwrap();
 }
 
+#[cfg(feature = "stm32-metapac")]
 enum GetOneError {
     None,
     Multiple,
 }
 
+#[cfg(feature = "stm32-metapac")]
 trait IteratorExt: Iterator {
     fn get_one(self) -> Result<Self::Item, GetOneError>;
 }
 
+#[cfg(feature = "stm32-metapac")]
 impl<T: Iterator> IteratorExt for T {
     fn get_one(mut self) -> Result<Self::Item, GetOneError> {
         match self.next() {

@@ -3,8 +3,8 @@ use syn::{
     parse::{self, ParseStream},
     punctuated::Punctuated,
     spanned::Spanned,
-    Abi, AttrStyle, Attribute, Expr, FnArg, ForeignItemFn, Ident, ItemFn, Pat, PatType, Path,
-    PathArguments, ReturnType, Token, Type, Visibility,
+    Abi, AttrStyle, Attribute, Expr, ExprPath, FnArg, ForeignItemFn, Ident, ItemFn, Pat, PatType,
+    Path, PathArguments, ReturnType, Token, Type, Visibility,
 };
 
 use crate::syntax::{
@@ -20,8 +20,8 @@ pub fn abi_is_rust(abi: &Abi) -> bool {
 }
 
 pub fn attr_eq(attr: &Attribute, name: &str) -> bool {
-    attr.style == AttrStyle::Outer && attr.path.segments.len() == 1 && {
-        let segment = attr.path.segments.first().unwrap();
+    attr.style == AttrStyle::Outer && attr.path().segments.len() == 1 && {
+        let segment = attr.path().segments.first().unwrap();
         segment.arguments == PathArguments::None && *segment.ident.to_string() == *name
     }
 }
@@ -143,89 +143,138 @@ fn extract_resource_name_ident(path: Path) -> parse::Result<Ident> {
 }
 
 pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalResources> {
-    let inner;
-    bracketed!(inner in content);
+    let input;
+    bracketed!(input in content);
 
     let mut resources = Map::new();
 
-    for e in inner.call(Punctuated::<Expr, Token![,]>::parse_terminated)? {
-        let err = Err(parse::Error::new(
-            e.span(),
-            "identifier appears more than once in list",
-        ));
+    let error_msg_no_local_resources =
+        "malformed, expected 'local = [EXPRPATH: TYPE = EXPR]', or 'local = [EXPRPATH, ...]'";
 
-        let (name, local) = match e {
-            // local = [IDENT],
-            Expr::Path(path) => {
-                if !path.attrs.is_empty() {
-                    return Err(parse::Error::new(
-                        path.span(),
-                        "attributes are not supported here",
-                    ));
-                }
+    loop {
+        if input.is_empty() {
+            break;
+        }
+        // Type ascription is de-RFCd from Rust in
+        // https://github.com/rust-lang/rfcs/pull/3307
+        // Manually pull out the tokens
 
-                let ident = extract_resource_name_ident(path.path)?;
-                // let (cfgs, attrs) = extract_cfgs(path.attrs);
+        // Two acceptable variants:
+        //
+        // Task local and declared (initialized in place)
+        // local = [EXPRPATH: TYPE = EXPR, ...]
+        //          ~~~~~~~~~~~~~~~~~~~~~~
+        // or
+        // Task local but not initialized
+        // local = [EXPRPATH, ...],
+        //          ~~~~~~~~~
 
-                (ident, TaskLocal::External)
-            }
+        // Common: grab first identifier EXPRPATH
+        // local = [EXPRPATH: TYPE = EXPR, ...]
+        //          ~~~~~~~~
+        let exprpath: ExprPath = input.parse()?;
 
-            // local = [IDENT: TYPE = EXPR]
-            Expr::Assign(e) => {
-                let (name, ty, cfgs, attrs) = match *e.left {
-                    Expr::Type(t) => {
-                        // Extract name and attributes
-                        let (name, cfgs, attrs) = match *t.expr {
-                            Expr::Path(path) => {
-                                let name = extract_resource_name_ident(path.path)?;
-                                let FilterAttrs { cfgs, attrs, .. } = filter_attributes(path.attrs);
+        let name = extract_resource_name_ident(exprpath.path)?;
 
-                                (name, cfgs, attrs)
-                            }
-                            _ => return err,
-                        };
-
-                        let ty = t.ty;
-
-                        // Error check
-                        match &*ty {
-                            Type::Array(_) => {}
-                            Type::Path(_) => {}
-                            Type::Ptr(_) => {}
-                            Type::Tuple(_) => {}
-                            _ => return Err(parse::Error::new(
-                                ty.span(),
-                                "unsupported type, must be an array, tuple, pointer or type path",
-                            )),
-                        };
-
-                        (name, ty, cfgs, attrs)
-                    }
-                    e => return Err(parse::Error::new(e.span(), "malformed, expected a type")),
-                };
-
-                let expr = e.right; // Expr
-
-                (
-                    name,
-                    TaskLocal::Declared(Local {
-                        attrs,
-                        cfgs,
-                        ty,
-                        expr,
-                    }),
-                )
-            }
-
-            expr => {
-                return Err(parse::Error::new(
-                    expr.span(),
-                    "malformed, expected 'IDENT: TYPE = EXPR'",
-                ))
-            }
+        // Extract attributes
+        let ExprPath { attrs, .. } = exprpath;
+        let (cfgs, attrs) = {
+            let FilterAttrs { cfgs, attrs, .. } = filter_attributes(attrs);
+            (cfgs, attrs)
         };
 
+        let local;
+
+        // Declared requries type ascription
+        if input.peek(Token![:]) {
+            // Handle colon
+            let _: Token![:] = input.parse()?;
+
+            // Extract the type
+            let ty: Box<Type> = input.parse()?;
+
+            if input.peek(Token![=]) {
+                // Handle equal sign
+                let _: Token![=] = input.parse()?;
+            } else {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "malformed, expected 'IDENT: TYPE = EXPR'",
+                ));
+            }
+
+            // Grab the final expression right of equal
+            let expr: Box<Expr> = input.parse()?;
+
+            // We got a trailing colon, remove it
+            if input.peek(Token![,]) {
+                let _: Token![,] = input.parse()?;
+            }
+
+            // Error check
+            match &*ty {
+                Type::Array(_) => {}
+                Type::Path(_) => {}
+                Type::Ptr(_) => {}
+                Type::Tuple(_) => {}
+                _ => {
+                    return Err(parse::Error::new(
+                        ty.span(),
+                        "unsupported type, must be an array, tuple, pointer or type path",
+                    ))
+                }
+            };
+
+            local = TaskLocal::Declared(Local {
+                attrs,
+                cfgs,
+                ty,
+                expr,
+            });
+        } else if input.peek(Token![=]) {
+            // Missing type ascription is not valid
+            return Err(parse::Error::new(name.span(), "malformed, expected a type"));
+        } else if input.peek(Token![,]) {
+            // Attributes not supported on non-initialized local resources!
+
+            if !attrs.is_empty() {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "attributes are not supported here",
+                ));
+            }
+
+            // Remove comma
+            let _: Token![,] = input.parse()?;
+
+            // Expected when multiple local resources
+            local = TaskLocal::External;
+        } else if input.is_empty() {
+            // There was only one single local resource
+            // Task local but not initialized
+            // local = [EXPRPATH],
+            //          ~~~~~~~~
+            local = TaskLocal::External;
+        } else {
+            // Specifying local without any resources is invalid
+            return Err(parse::Error::new(name.span(), error_msg_no_local_resources));
+        };
+
+        if resources.contains_key(&name) {
+            return Err(parse::Error::new(
+                name.span(),
+                "resource appears more than once in list",
+            ));
+        }
+
         resources.insert(name, local);
+    }
+
+    if resources.is_empty() {
+        return Err(parse::Error::new(
+            input.span(),
+            error_msg_no_local_resources,
+        ));
     }
 
     Ok(resources)
