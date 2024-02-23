@@ -7,6 +7,14 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+### Changed
+
+- Unstable features are now stable, the feature flag `unstable` is removed.
+
+### Added
+
+- `defmt v0.3` derives added and forwarded to `embedded-hal(-x)` crates.
+
 ## v1.2.0 - 2024-01-10
 
 ### Changed
