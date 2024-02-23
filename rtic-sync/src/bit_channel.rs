@@ -1,9 +1,8 @@
 //! A channel operating on bitflags.
 
-use core::{future::poll_fn, task::Poll};
-
 use atomic::AtomicType;
 use bitflags::{Bits, Flags};
+use core::{future::poll_fn, task::Poll};
 use portable_atomic::Ordering;
 use rtic_common::waker_registration::CriticalSectionWakerRegistration as CSWaker;
 
