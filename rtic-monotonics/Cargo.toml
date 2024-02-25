@@ -69,8 +69,6 @@ defmt = ["fugit/defmt"]
 
 # Systick on Cortex-M, default 1 kHz
 cortex-m-systick = ["dep:cortex-m"]
-systick-100hz = []
-systick-10khz = []
 # Use 64-bit wide backing storage for the Instant
 systick-64bit = []
 

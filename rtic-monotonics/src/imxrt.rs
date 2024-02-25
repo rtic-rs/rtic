@@ -122,7 +122,7 @@ macro_rules! imxrt_gpt1_monotonic {
 macro_rules! imxrt_gpt2_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
         mod _interrupts {
-            $crate::__internal_create_imxrt_timer_interrupt!(Gpt1Backend, GPT2);
+            $crate::__internal_create_imxrt_timer_interrupt!(Gpt2Backend, GPT2);
         }
         $crate::__internal_create_imxrt_timer_struct!($name, Gpt2Backend, GPT2, $tick_rate_hz);
     };

@@ -65,11 +65,7 @@ impl Package {
                 } else {
                     &[
                         "cortex-m-systick,embedded-hal-async",
-                        "cortex-m-systick,systick-100hz,embedded-hal-async",
-                        "cortex-m-systick,systick-10khz,embedded-hal-async",
                         "cortex-m-systick,embedded-hal-async,systick-64bit",
-                        "cortex-m-systick,systick-100hz,embedded-hal-async,systick-64bit",
-                        "cortex-m-systick,systick-10khz,embedded-hal-async,systick-64bit",
                         "rp2040,embedded-hal-async",
                         "nrf52810,embedded-hal-async",
                         "nrf52811,embedded-hal-async",
