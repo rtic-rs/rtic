@@ -93,6 +93,8 @@ macro_rules! __internal_create_imxrt_timer_struct {
 
 /// Create a GPT1 based monotonic and register the GPT1 interrupt for it.
 ///
+/// See [`crate::imxrt`] for more details.
+///
 /// # Arguments
 ///
 /// * `name` - The name that the monotonic type will have.
@@ -111,6 +113,8 @@ macro_rules! imxrt_gpt1_monotonic {
 }
 
 /// Create a GPT2 based monotonic and register the GPT2 interrupt for it.
+///
+/// See [`crate::imxrt`] for more details.
 ///
 /// # Arguments
 ///

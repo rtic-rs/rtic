@@ -187,6 +187,8 @@ macro_rules! __internal_create_systick_timer_struct {
 
 /// Create a Systick based monotonic and register the Systick interrupt for it.
 ///
+/// See [`crate::systick`] for more details.
+///
 /// # Arguments
 ///
 /// * `name` - The name that the monotonic type will have.
