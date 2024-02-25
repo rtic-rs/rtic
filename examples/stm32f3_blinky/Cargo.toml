@@ -17,6 +17,10 @@ path = "../../rtic-monotonics"
 version = "2.0.0"
 features = ["cortex-m-systick"]
 
+[dependencies.cortex-m]
+version = "0.7.7"
+features = ["critical-section-single-core"]
+
 [dependencies]
 embedded-hal = "0.2.7"
 panic-rtt-target = { version = "0.1.3" }

@@ -86,6 +86,7 @@ checksum = "8ec610d8f49840a5b376c69663b6369e71f4b34484b9b2eb29fb918d92516cb9"
 dependencies = [
  "bare-metal 0.2.5",
  "bitfield",
+ "critical-section",
  "embedded-hal 0.2.7",
  "volatile-register",
 ]
@@ -584,6 +585,7 @@ dependencies = [
 name = "stm32f3-blinky"
 version = "0.1.0"
 dependencies = [
+ "cortex-m",
  "embedded-hal 0.2.7",
  "panic-rtt-target",
  "rtic",
