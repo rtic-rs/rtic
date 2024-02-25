@@ -1,4 +1,4 @@
-//! [`Monotonic`] implementations for i.MX RT's GPT peripherals.
+//! [`Monotonic`](rtic_time::monotonic::Monotonic) implementations for i.MX RT's GPT peripherals.
 //!
 //! # Example
 //!
@@ -7,7 +7,7 @@
 //! imxrt_gpt1_monotonic!(Mono, 1_000_000);
 //!
 //! fn init() {
-//!     // Obtain ownership of the timer register block
+//!     // Obtain ownership of the timer register block.
 //!     let gpt1 = unsafe { imxrt_ral::gpt::GPT1::instance() };
 //!
 //!     // Configure the timer tick rate as specified earlier
@@ -65,6 +65,7 @@ macro_rules! __internal_create_imxrt_timer_struct {
         struct $name;
 
         impl $name {
+            /// Starts the `Monotonic`.
             pub fn start(gpt: $crate::imxrt::ral::gpt::$timer) {
                 $crate::imxrt::$mono_backend::start(gpt);
             }
@@ -130,7 +131,7 @@ macro_rules! imxrt_gpt2_monotonic {
 
 macro_rules! make_timer {
     ($mono_name:ident, $backend_name:ident, $timer:ident, $period:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
-        /// Timer implementing [`Monotonic`] which runs at 1 MHz.
+        /// GPT based [`TimerQueueBackend`].
         $(
             #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
         )?
@@ -144,11 +145,11 @@ macro_rules! make_timer {
         static $tq: TimerQueue<$backend_name> = TimerQueue::new();
 
         impl $backend_name {
-            /// Starts the monotonic timer.
+            /// Starts the timer.
             ///
-            /// - `gpt`: The GPT timer register block instance.
+            /// **Do not use this function directly.**
             ///
-            /// This method must be called only once.
+            /// Use the prelude macros instead.
             pub fn start(gpt: $timer) {
 
                 // Disable the timer.

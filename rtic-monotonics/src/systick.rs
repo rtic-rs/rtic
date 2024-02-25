@@ -1,7 +1,7 @@
-//! [`Monotonic`] based on Cortex-M SysTick. Note: this implementation is inefficient as it
+//! [`Monotonic`](rtic_time::monotonic::Monotonic) based on Cortex-M SysTick.
+//! Note: this implementation is inefficient as it
 //! ticks and generates interrupts at a constant rate.
 //!
-
 //! # Example
 //!
 //! ```
@@ -11,7 +11,7 @@
 //! fn init() {
 //!     # // This is normally provided by the selected PAC
 //!     # let systick = unsafe { core::mem::transmute(()) };
-//!
+//!     #
 //!     // Start the monotonic
 //!     Mono::start(systick, 12_000_000);
 //! }
@@ -25,24 +25,7 @@
 //! }
 //! ```
 
-use atomic_polyfill::Ordering;
-pub use cortex_m::peripheral::SYST;
-
-use rtic_time::timer_queue::TimerQueue;
-
-use crate::TimerQueueBackend;
-
-cfg_if::cfg_if! {
-    if #[cfg(feature = "systick-64bit")] {
-        use atomic_polyfill::AtomicU64;
-        static SYSTICK_CNT: AtomicU64 = AtomicU64::new(0);
-    } else {
-        use atomic_polyfill::AtomicU32;
-        static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
-    }
-}
-
-/// Common definitions and traits for using the i.MX RT monotonics
+/// Common definitions and traits for using the systick monotonic
 pub mod prelude {
     pub use crate::systick_monotonic;
 
@@ -57,21 +40,34 @@ pub mod prelude {
     }
 }
 
-static SYSTICK_TIMER_QUEUE: TimerQueue<Systick> = TimerQueue::new();
+pub use cortex_m::peripheral::SYST;
 
-/// Systick implementing [`TimerQueueBackend`].
-pub struct Systick;
+use atomic_polyfill::Ordering;
+use rtic_time::timer_queue::TimerQueue;
 
-impl Systick {
-    /// Start a `TimerQueueBackend` based on SysTick.
+use crate::TimerQueueBackend;
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "systick-64bit")] {
+        use atomic_polyfill::AtomicU64;
+        static SYSTICK_CNT: AtomicU64 = AtomicU64::new(0);
+    } else {
+        use atomic_polyfill::AtomicU32;
+        static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
+    }
+}
+
+static SYSTICK_TIMER_QUEUE: TimerQueue<SystickBackend> = TimerQueue::new();
+
+/// Systick based [`TimerQueueBackend`].
+pub struct SystickBackend;
+
+impl SystickBackend {
+    /// Starts the monotonic timer.
     ///
-    /// The `sysclk` parameter is the speed at which SysTick runs at. This value should come from
-    /// the clock generation function of the used HAL.
+    /// **Do not use this function directly.**
     ///
-    /// Notice that the actual rate of the timer is a best approximation based on the given
-    /// `sysclk` and `timer_hz`.
-    ///
-    /// Note: Give the return value to `TimerQueue::initialize()` to initialize the timer queue.
+    /// Use the prelude macros instead.
     pub fn start(mut systick: SYST, sysclk: u32, timer_hz: u32) {
         assert!(
             (sysclk % timer_hz) == 0,
@@ -88,7 +84,7 @@ impl Systick {
         systick.enable_interrupt();
         systick.enable_counter();
 
-        SYSTICK_TIMER_QUEUE.initialize(Systick {});
+        SYSTICK_TIMER_QUEUE.initialize(SystickBackend {});
     }
 
     fn systick() -> SYST {
@@ -96,8 +92,7 @@ impl Systick {
     }
 }
 
-// Forward timerqueue interface
-impl TimerQueueBackend for Systick {
+impl TimerQueueBackend for SystickBackend {
     cfg_if::cfg_if! {
         if #[cfg(feature = "systick-64bit")] {
             type Ticks = u64;
@@ -145,7 +140,7 @@ macro_rules! __internal_create_systick_timer_interrupt {
         #[allow(non_snake_case)]
         unsafe extern "C" fn SysTick() {
             use $crate::TimerQueueBackend;
-            $crate::systick::Systick::timer_queue().on_monotonic_interrupt();
+            $crate::systick::SystickBackend::timer_queue().on_monotonic_interrupt();
         }
     };
 }
@@ -154,16 +149,24 @@ macro_rules! __internal_create_systick_timer_interrupt {
 #[macro_export]
 macro_rules! __internal_create_systick_timer_struct {
     ($name:ident, $tick_rate_hz:expr) => {
+        /// A `Monotonic` based on SysTick.
         struct $name;
 
         impl $name {
+            /// Starts the `Monotonic`.
+            ///
+            /// The `sysclk` parameter is the speed at which SysTick runs at. This value should come from
+            /// the clock generation function of the used HAL.
+            ///
+            /// Panics if it is impossible to achieve the desired monotonic tick rate based
+            /// on the given `sysclk` parameter. If that happens, adjust the desired monotonic tick rate.
             pub fn start(systick: $crate::systick::SYST, sysclk: u32) {
-                $crate::systick::Systick::start(systick, sysclk, $tick_rate_hz);
+                $crate::systick::SystickBackend::start(systick, sysclk, $tick_rate_hz);
             }
         }
 
         impl $crate::TimerQueueBasedMonotonic for $name {
-            type Backend = $crate::systick::Systick;
+            type Backend = $crate::systick::SystickBackend;
             type Instant = $crate::fugit::Instant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
                 1,

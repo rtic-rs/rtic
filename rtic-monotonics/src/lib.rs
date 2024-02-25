@@ -1,4 +1,4 @@
-//! In-tree implementations of the [`rtic_time::Monotonic`] (reexported) trait for
+//! In-tree implementations of the [`rtic_time::monotonic::Monotonic`] (reexported) trait for
 //! timers & clocks found on commonly used microcontrollers.
 //!
 //! To enable the implementations, you must enable a feature for the specific MCU you're targeting.
@@ -98,13 +98,3 @@ pub(crate) unsafe fn set_monotonic_prio(
 
     nvic.set_priority(interrupt, hw_prio);
 }
-
-/// This marker is implemented on an interrupt token to enforce that the right tokens
-/// are given to the correct monotonic implementation.
-///
-/// This trait is implemented by this crate and not intended for user implementation.
-///
-/// # Safety
-///
-/// This is only safely implemented by this crate.
-pub unsafe trait InterruptToken<Periperhal> {}
