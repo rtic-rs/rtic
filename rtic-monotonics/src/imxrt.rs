@@ -67,7 +67,7 @@ macro_rules! __internal_create_imxrt_timer_struct {
         impl $name {
             /// Starts the `Monotonic`.
             pub fn start(gpt: $crate::imxrt::ral::gpt::$timer) {
-                $crate::imxrt::$mono_backend::start(gpt);
+                $crate::imxrt::$mono_backend::_start(gpt);
             }
         }
 
@@ -150,7 +150,7 @@ macro_rules! make_timer {
             /// **Do not use this function directly.**
             ///
             /// Use the prelude macros instead.
-            pub fn start(gpt: $timer) {
+            pub fn _start(gpt: $timer) {
 
                 // Disable the timer.
                 ral::modify_reg!(ral::gpt, gpt, CR, EN: 0);

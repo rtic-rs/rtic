@@ -1,11 +1,6 @@
 use super::{TimerQueue, TimerQueueTicks};
 
-/// # A monotonic clock / counter definition.
-///
-/// ## Correctness
-///
-/// The trait enforces that proper time-math is implemented between `Instant` and `Duration`. This
-/// is a requirement on the time library that the user chooses to use.
+/// A backend definition for a monotonic clock/counter.
 pub trait TimerQueueBackend: 'static + Sized {
     /// The type for ticks.
     type Ticks: TimerQueueTicks;

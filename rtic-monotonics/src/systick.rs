@@ -68,7 +68,7 @@ impl SystickBackend {
     /// **Do not use this function directly.**
     ///
     /// Use the prelude macros instead.
-    pub fn start(mut systick: SYST, sysclk: u32, timer_hz: u32) {
+    pub fn _start(mut systick: SYST, sysclk: u32, timer_hz: u32) {
         assert!(
             (sysclk % timer_hz) == 0,
             "timer_hz cannot evenly divide sysclk! Please adjust the timer or sysclk frequency."
@@ -161,7 +161,7 @@ macro_rules! __internal_create_systick_timer_struct {
             /// Panics if it is impossible to achieve the desired monotonic tick rate based
             /// on the given `sysclk` parameter. If that happens, adjust the desired monotonic tick rate.
             pub fn start(systick: $crate::systick::SYST, sysclk: u32) {
-                $crate::systick::SystickBackend::start(systick, sysclk, $tick_rate_hz);
+                $crate::systick::SystickBackend::_start(systick, sysclk, $tick_rate_hz);
             }
         }
 
