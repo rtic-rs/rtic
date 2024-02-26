@@ -66,6 +66,8 @@ macro_rules! __internal_create_imxrt_timer_struct {
 
         impl $name {
             /// Starts the `Monotonic`.
+            ///
+            /// This method must be called only once.
             pub fn start(gpt: $crate::imxrt::ral::gpt::$timer) {
                 $crate::imxrt::$mono_backend::_start(gpt);
             }

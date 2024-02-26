@@ -161,6 +161,8 @@ macro_rules! rp2040_timer_monotonic {
 
         impl $name {
             /// Starts the `Monotonic`.
+            ///
+            /// This method must be called only once.
             pub fn start(timer: $crate::rp2040::TIMER, resets: &$crate::rp2040::RESETS) {
                 $crate::rp2040::TimerBackend::_start(timer, resets);
             }

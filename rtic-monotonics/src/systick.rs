@@ -167,6 +167,8 @@ macro_rules! systick_monotonic {
             ///
             /// Panics if it is impossible to achieve the desired monotonic tick rate based
             /// on the given `sysclk` parameter. If that happens, adjust the desired monotonic tick rate.
+            ///
+            /// This method must be called only once.
             pub fn start(systick: $crate::systick::SYST, sysclk: u32) {
                 $crate::systick::SystickBackend::_start(systick, sysclk, $tick_rate_hz);
             }
