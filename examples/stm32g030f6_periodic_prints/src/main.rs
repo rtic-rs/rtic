@@ -17,13 +17,12 @@ fn panic() -> ! {
     cortex_m::asm::udf()
 }
 
+use rtic_monotonics::stm32::prelude::*;
+stm32_tim3_monotonic!(Mono, 1_000_000);
+
 #[rtic::app(device = hal::stm32, peripherals = true, dispatchers = [USART1, USART2])]
 mod app {
-    use super::hal;
-
-    use rtic_monotonics::stm32::Tim3 as Mono;
-    use rtic_monotonics::stm32::*;
-    use rtic_monotonics::Monotonic;
+    use super::*;
 
     #[local]
     struct LocalResources {}
@@ -39,8 +38,7 @@ mod app {
         defmt::println!("TIM Monotonic blinker example!");
 
         // Start the monotonic
-        let mono_token = rtic_monotonics::create_stm32_tim3_monotonic_token!();
-        Mono::start(16_000_000, mono_token);
+        Mono::start(16_000_000);
 
         print_messages::spawn().unwrap();
 
@@ -48,11 +46,11 @@ mod app {
     }
 
     #[task(priority = 2)]
-    async fn print_messages(_cx: blink::Context) {
+    async fn print_messages(_cx: print_messages::Context) {
         let mut next_update = <Mono as Monotonic>::Instant::from_ticks(0u64);
 
         loop {
-            defmt::println!("Time: {} us", Mono::now().ticks());
+            defmt::println!("Time: {} ticks", Mono::now().ticks());
             next_update += 1000u64.millis();
             Mono::delay_until(next_update).await;
         }
