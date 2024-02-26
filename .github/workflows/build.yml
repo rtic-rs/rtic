@@ -197,7 +197,7 @@ jobs:
 
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: Download QEMU
-        run: wget "${{ env.QEMU_URL }}" 
+        run: wget "${{ env.QEMU_URL }}"
 
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: Extract QEMU
@@ -214,7 +214,7 @@ jobs:
         run: |
           cd qemu-${{ env.QEMU_VERSION }}
           make -j$(nproc)
-          
+
       - name: Archive QEMU build
         run: |
           cd qemu-${{ env.QEMU_VERSION }}/build
@@ -340,7 +340,7 @@ jobs:
 
       - name: Build docs
         # TODO: Any difference between backends?
-        run: cargo doc --features thumbv7-backend
+        run: cargo doc --features thumbv7-backend,rtic-monotonics/cortex-m-systick,rtic-monotonics/rp2040,rtic-monotonics/nrf52840,rtic-monotonics/imxrt_gpt1,rtic-monotonics/imxrt_gpt2,imxrt-ral/imxrt1011,rtic-monotonics/stm32h725ag,rtic-monotonics/stm32_tim2,rtic-monotonics/stm32_tim3,rtic-monotonics/stm32_tim4,rtic-monotonics/stm32_tim5,rtic-monotonics/stm32_tim15
 
       - name: Check links
         run: |
