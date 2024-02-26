@@ -20,7 +20,7 @@
 //! async fn usage() {
 //!     loop {
 //!          // Use the monotonic
-//!          let timestamp = Mono::now().ticks();
+//!          let timestamp = Mono::now();
 //!          Mono::delay(100.millis()).await;
 //!     }
 //! }

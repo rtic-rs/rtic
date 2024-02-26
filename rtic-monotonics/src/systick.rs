@@ -19,7 +19,7 @@
 //! async fn usage() {
 //!     loop {
 //!          // Use the monotonic
-//!          let timestamp = Mono::now().ticks();
+//!          let timestamp = Mono::now();
 //!          Systick::delay(100.millis()).await;
 //!     }
 //! }
@@ -132,23 +132,30 @@ impl TimerQueueBackend for SystickBackend {
     }
 }
 
-#[doc(hidden)]
+/// Create a Systick based monotonic and register the Systick interrupt for it.
+///
+/// See [`crate::systick`] for more details.
+///
+/// # Arguments
+///
+/// * `name` - The name that the monotonic type will have.
+/// * `tick_rate_hz` - The tick rate of the timer peripheral.
+///                    Can be omitted; defaults to 1kHz.
 #[macro_export]
-macro_rules! __internal_create_systick_timer_interrupt {
-    () => {
-        #[no_mangle]
-        #[allow(non_snake_case)]
-        unsafe extern "C" fn SysTick() {
-            use $crate::TimerQueueBackend;
-            $crate::systick::SystickBackend::timer_queue().on_monotonic_interrupt();
-        }
+macro_rules! systick_monotonic {
+    ($name:ident) => {
+        $crate::systick_monotonic($name, 1_000);
     };
-}
-
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __internal_create_systick_timer_struct {
     ($name:ident, $tick_rate_hz:expr) => {
+        mod _interrupts {
+            #[no_mangle]
+            #[allow(non_snake_case)]
+            unsafe extern "C" fn SysTick() {
+                use $crate::TimerQueueBackend;
+                $crate::systick::SystickBackend::timer_queue().on_monotonic_interrupt();
+            }
+        }
+
         /// A `Monotonic` based on SysTick.
         struct $name;
 
@@ -182,27 +189,5 @@ macro_rules! __internal_create_systick_timer_struct {
         $crate::rtic_time::impl_embedded_hal_delay_fugit!($name);
         #[cfg(feature = "embedded-hal-async")]
         $crate::rtic_time::impl_embedded_hal_async_delay_fugit!($name);
-    };
-}
-
-/// Create a Systick based monotonic and register the Systick interrupt for it.
-///
-/// See [`crate::systick`] for more details.
-///
-/// # Arguments
-///
-/// * `name` - The name that the monotonic type will have.
-/// * `tick_rate_hz` - The tick rate of the timer peripheral.
-///                    Can be omitted; defaults to 1kHz.
-#[macro_export]
-macro_rules! systick_monotonic {
-    ($name:ident) => {
-        $crate::systick_monotonic($name, 1_000);
-    };
-    ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_systick_timer_interrupt!();
-        }
-        $crate::__internal_create_systick_timer_struct!($name, $tick_rate_hz);
     };
 }
