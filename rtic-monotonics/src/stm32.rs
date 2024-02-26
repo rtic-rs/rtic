@@ -44,9 +44,6 @@ pub mod prelude {
     #[cfg(feature = "stm32_tim5")]
     pub use crate::stm32_tim5_monotonic;
 
-    #[cfg(feature = "stm32_tim12")]
-    pub use crate::stm32_tim12_monotonic;
-
     #[cfg(feature = "stm32_tim15")]
     pub use crate::stm32_tim15_monotonic;
 
@@ -72,10 +69,10 @@ mod _generated {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __internal_create_stm32_timer_interrupt {
-    ($mono_backend:ident, $timer:ident) => {
+    ($mono_backend:ident, $interrupt_name:ident) => {
         #[no_mangle]
         #[allow(non_snake_case)]
-        unsafe extern "C" fn $timer() {
+        unsafe extern "C" fn $interrupt_name() {
             use $crate::TimerQueueBackend;
             $crate::stm32::$mono_backend::timer_queue().on_monotonic_interrupt();
         }
@@ -199,26 +196,6 @@ macro_rules! stm32_tim5_monotonic {
             $crate::__internal_create_stm32_timer_interrupt!(Tim5Backend, TIM5);
         }
         $crate::__internal_create_stm32_timer_struct!($name, Tim5Backend, TIM5, $tick_rate_hz);
-    };
-}
-
-/// Create a TIM12 based monotonic and register the TIM12 interrupt for it.
-///
-/// See [`crate::stm32`] for more details.
-///
-/// # Arguments
-///
-/// * `name` - The name that the monotonic type will have.
-/// * `tick_rate_hz` - The tick rate of the timer peripheral.
-///
-#[cfg(feature = "stm32_tim12")]
-#[macro_export]
-macro_rules! stm32_tim12_monotonic {
-    ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_stm32_timer_interrupt!(Tim12Backend, TIM12);
-        }
-        $crate::__internal_create_stm32_timer_struct!($name, Tim12Backend, TIM12, $tick_rate_hz);
     };
 }
 
@@ -378,9 +355,6 @@ make_timer!(Tim4Backend, TIM4, u16, TIMER4_OVERFLOWS, TIMER4_TQ);
 
 #[cfg(feature = "stm32_tim5")]
 make_timer!(Tim5Backend, TIM5, u16, TIMER5_OVERFLOWS, TIMER5_TQ);
-
-#[cfg(feature = "stm32_tim12")]
-make_timer!(Tim12Backend, TIM12, u16, TIMER12_OVERFLOWS, TIMER12_TQ);
 
 #[cfg(feature = "stm32_tim15")]
 make_timer!(Tim15Backend, TIM15, u16, TIMER15_OVERFLOWS, TIMER15_TQ);

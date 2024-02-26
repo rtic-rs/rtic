@@ -82,7 +82,7 @@ impl Package {
                         "nrf5340-net,embedded-hal-async",
                         "nrf9160,embedded-hal-async",
                         "imxrt_gpt1,imxrt-ral/imxrt1062,embedded-hal-async",
-                        "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim12,stm32_tim15,stm32h725ag,embedded-hal-async",
+                        "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag,embedded-hal-async",
                     ][..]
                 };
 

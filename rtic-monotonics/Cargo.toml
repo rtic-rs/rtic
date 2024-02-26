@@ -29,7 +29,6 @@ features = [
     "stm32_tim3",
     "stm32_tim4",
     "stm32_tim5",
-    "stm32_tim12",
     "stm32_tim15",
 ]
 rustdoc-flags = ["--cfg", "docsrs"]
@@ -104,7 +103,6 @@ stm32_tim2 = []
 stm32_tim3 = []
 stm32_tim4 = []
 stm32_tim5 = []
-stm32_tim12 = []
 stm32_tim15 = []
 
 stm32-metapac = ["dep:stm32-metapac", "dep:quote", "dep:proc-macro2"]
