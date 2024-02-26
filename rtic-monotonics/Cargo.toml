@@ -25,6 +25,12 @@ features = [
     "imxrt_gpt2",
     "imxrt-ral/imxrt1011",
     "stm32h725ag",
+    "stm32_tim2",
+    "stm32_tim3",
+    "stm32_tim4",
+    "stm32_tim5",
+    "stm32_tim12",
+    "stm32_tim15",
 ]
 rustdoc-flags = ["--cfg", "docsrs"]
 
