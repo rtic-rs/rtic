@@ -61,7 +61,13 @@ impl Package {
             }
             Package::RticMonotonics => {
                 let features = if partial {
-                    &["cortex-m-systick", "rp2040", "nrf52840"][..]
+                    &[
+                        "cortex-m-systick",
+                        "rp2040",
+                        "nrf52840",
+                        "imxrt_gpt1,imxrt-ral/imxrt1062",
+                        "stm32h725ag",
+                    ][..]
                 } else {
                     &[
                         "cortex-m-systick,embedded-hal-async",
@@ -76,6 +82,7 @@ impl Package {
                         "nrf5340-net,embedded-hal-async",
                         "nrf9160,embedded-hal-async",
                         "imxrt_gpt1,imxrt-ral/imxrt1062,embedded-hal-async",
+                        "stm32h725ag,embedded-hal-async",
                     ][..]
                 };
 

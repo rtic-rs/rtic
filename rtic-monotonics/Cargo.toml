@@ -24,6 +24,7 @@ features = [
     "imxrt_gpt1",
     "imxrt_gpt2",
     "imxrt-ral/imxrt1011",
+    "stm32h725ag",
 ]
 rustdoc-flags = ["--cfg", "docsrs"]
 

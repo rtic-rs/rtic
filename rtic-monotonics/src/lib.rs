@@ -21,7 +21,7 @@
 //! `Available on crate features X only` tag are available on any `nrf52*` feature.
 //!
 // To build these docs correctly:
-// RUSTFLAGS="--cfg docsrs" cargo doc --features cortex-m-systick,rp2040,nrf52840,imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1011
+// RUSTFLAGS="--cfg docsrs" cargo doc --features cortex-m-systick,rp2040,nrf52840,imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1011,stm32h725ag
 
 #![no_std]
 #![deny(missing_docs)]
