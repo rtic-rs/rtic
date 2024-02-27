@@ -13,6 +13,7 @@ rtic = { path = "../../rtic" }
 heapless = "0.8.0"
 hifive1 = { git = "https://github.com/romancardenas/hifive1.git", features = ["board-redv"] }
 e310x = { git = "https://github.com/greenlsi/e310x.git", features = ["rt"]}
+# riscv-rt = {path = "../../../riscv/riscv-rt", features = ["single-hart"]}
 riscv-rt = {version = "0.12.1", features = ["single-hart"]}
 riscv = "0.11.0"
 semihosting = { version = "0.1", features = ["stdio", "panic-handler"] }

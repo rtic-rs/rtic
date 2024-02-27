@@ -244,7 +244,7 @@ dependencies = [
 [[package]]
 name = "riscv-slic"
 version = "0.1.0"
-source = "git+https://github.com/romancardenas/riscv-slic.git?rev=d068008#d06800834aa5dd52e41574338a29ecadbd8df23b"
+source = "git+https://github.com/romancardenas/riscv-slic.git?rev=2a91edb#2a91edbff50bcc73169549923d278ff953d0986e"
 dependencies = [
  "critical-section",
  "heapless",
@@ -255,7 +255,7 @@ dependencies = [
 [[package]]
 name = "riscv-slic-macros"
 version = "0.1.0"
-source = "git+https://github.com/romancardenas/riscv-slic.git?rev=d068008#d06800834aa5dd52e41574338a29ecadbd8df23b"
+source = "git+https://github.com/romancardenas/riscv-slic.git?rev=2a91edb#2a91edbff50bcc73169549923d278ff953d0986e"
 dependencies = [
  "proc-macro2",
  "quote",
