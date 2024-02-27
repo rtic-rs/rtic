@@ -25,6 +25,12 @@ mod cortex_source_mask;
 #[cfg(feature = "cortex-m-source-masking")]
 pub use cortex_source_mask::*;
 
+#[cfg(feature = "riscv")]
+pub mod riscv_common;
+
+#[cfg(feature = "riscv")]
+pub use riscv_common::*;
+
 #[cfg(feature = "riscv-esp32c3")]
 mod riscv_esp32c3;
 #[cfg(feature = "riscv-esp32c3")]

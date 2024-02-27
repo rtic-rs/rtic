@@ -174,6 +174,29 @@ pub fn interrupt_exit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStrea
     vec![]
 }
 
+pub fn check_stack_overflow_before_init(
+    _app: &App,
+    _analysis: &CodegenAnalysis,
+) -> Vec<TokenStream2> {
+    vec![quote!(
+        // Check for stack overflow using symbols from `risc-v-rt`.
+        extern "C" {
+            pub static _stack_start: u32;
+            pub static _ebss: u32;
+        }
+
+        let stack_start = &_stack_start as *const _ as u32;
+        let ebss = &_ebss as *const _ as u32;
+
+        if stack_start > ebss {
+            // No flip-link usage, check the SP for overflow.
+            if rtic::export::read_sp() <= ebss {
+                panic!("Stack overflow after allocating executors");
+            }
+        }
+    )]
+}
+
 pub fn async_entry(
     _app: &App,
     _analysis: &CodegenAnalysis,

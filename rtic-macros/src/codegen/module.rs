@@ -16,6 +16,11 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
 
     match ctxt {
         Context::Init => {
+            fields.push(quote!(
+                /// The space used to allocate async executors in bytes.
+                pub executors_size: usize
+            ));
+
             if app.args.core {
                 fields.push(quote!(
                     /// Core peripherals
@@ -94,8 +99,12 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         _ => &v,
     };
 
-    let core = if ctxt.is_init() && app.args.core {
-        Some(quote!(core: rtic::export::Peripherals, executors_size: usize))
+    let core = if ctxt.is_init() {
+        if app.args.core {
+            Some(quote!(core: rtic::export::Peripherals, executors_size: usize))
+        } else {
+            Some(quote!(executors_size: usize))
+        }
     } else {
         None
     };

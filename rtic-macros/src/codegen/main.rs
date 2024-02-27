@@ -1,4 +1,3 @@
-use super::{assertions, post_init, pre_init};
 use crate::{
     analyze::Analysis,
     codegen::{bindings, util},
@@ -46,9 +45,9 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let init_name = &app.init.name;
 
     let init_args = if app.args.core {
-        quote!(core.into())
+        quote!(core.into(), executors_size)
     } else {
-        quote!()
+        quote!(executors_size)
     };
 
     let msp_check = bindings::check_stack_overflow_before_init(app, analysis);
@@ -76,7 +75,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
             // Wrap late_init_stmts in a function to ensure that stack space is reclaimed.
             __rtic_init_resources(||{
-                let (shared_resources, local_resources) = #init_name(#init_name::Context::new(#init_args, executors_size));
+                let (shared_resources, local_resources) = #init_name(#init_name::Context::new(#init_args));
 
                 #(#post_init_stmts)*
             });
