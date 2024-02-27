@@ -1,0 +1,6 @@
+foo - start
+pre baz spawn 0 0
+post baz spawn 0 0
+ baz - start
+ baz - end
+foo - end
