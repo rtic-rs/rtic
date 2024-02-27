@@ -4,7 +4,7 @@
 #![deny(warnings)]
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
-#![feature(type_alias_impl_trait)]
+// #![feature(type_alias_impl_trait)]
 
 use hifive1 as _;
 use riscv_rt as _;

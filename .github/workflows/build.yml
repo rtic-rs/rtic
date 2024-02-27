@@ -155,7 +155,7 @@ jobs:
           - riscv32-imc-clint
           - riscv32-imac-clint
         toolchain:
-          - nightly
+          - stable
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -339,7 +339,7 @@ jobs:
           - riscv32-imc-clint
           - riscv32-imac-clint
         toolchain:
-          - nightly
+          - stable
     steps:
       - name: Checkout
         uses: actions/checkout@v4
