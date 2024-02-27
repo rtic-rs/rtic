@@ -2,9 +2,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
-#![feature(type_alias_impl_trait)]
 
-use defmt::*;
 use embassy_stm32::gpio::{Level, Output, Speed};
 use rtic::app;
 use rtic_monotonics::systick::*;
@@ -32,10 +30,10 @@ mod app {
         Systick::start(cx.core.SYST, 25_000_000, systick_mono_token);
 
         let p = embassy_stm32::init(Default::default());
-        info!("Hello World!");
+        defmt::info!("Hello World!");
 
         let mut led = Output::new(p.PC6, Level::High, Speed::Low);
-        info!("high");
+        defmt::info!("high");
         led.set_high();
 
         // Schedule the blinking task
@@ -48,7 +46,7 @@ mod app {
     async fn blink(_cx: blink::Context, mut led: Output<'static, embassy_stm32::peripherals::PC6>) {
         let mut state = true;
         loop {
-            info!("blink");
+            defmt::info!("blink");
             if state {
                 led.set_high();
             } else {
