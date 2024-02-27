@@ -62,6 +62,7 @@ macro_rules! __internal_create_imxrt_timer_interrupt {
 #[macro_export]
 macro_rules! __internal_create_imxrt_timer_struct {
     ($name:ident, $mono_backend:ident, $timer:ident, $tick_rate_hz:expr) => {
+        /// A `Monotonic` based on the GPT peripheral.
         struct $name;
 
         impl $name {

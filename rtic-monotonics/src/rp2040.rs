@@ -27,7 +27,7 @@
 //! }
 //! ```
 
-/// Common definitions and traits for using the rp2040 timer monotonic
+/// Common definitions and traits for using the RP2040 timer monotonic
 pub mod prelude {
     pub use crate::rp2040_timer_monotonic;
 
@@ -117,24 +117,6 @@ impl TimerQueueBackend for TimerBackend {
     fn timer_queue() -> &'static TimerQueue<Self> {
         &TIMER_QUEUE
     }
-}
-
-/// Register the Timer interrupt for the monotonic.
-#[macro_export]
-macro_rules! create_rp2040_monotonic_token {
-    () => {{
-        #[no_mangle]
-        #[allow(non_snake_case)]
-        unsafe extern "C" fn TIMER_IRQ_0() {
-            $crate::rp2040::Timer::__tq().on_monotonic_interrupt();
-        }
-
-        pub struct Rp2040Token;
-
-        unsafe impl $crate::InterruptToken<$crate::rp2040::Timer> for Rp2040Token {}
-
-        Rp2040Token
-    }};
 }
 
 /// Create an RP2040 timer based monotonic and register the necessary interrupt for it.

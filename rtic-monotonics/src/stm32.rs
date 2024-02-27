@@ -30,7 +30,7 @@
 //! }
 //! ```
 
-/// Common definitions and traits for using the i.MX RT monotonics
+/// Common definitions and traits for using the STM32 monotonics
 pub mod prelude {
     #[cfg(feature = "stm32_tim2")]
     pub use crate::stm32_tim2_monotonic;
