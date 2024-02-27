@@ -8,17 +8,14 @@ license = "MIT OR Apache-2.0"
 
 [dependencies.rtic]
 path="../../rtic"
-version = "=2.0"
 features = ["thumbv7-backend"]
 
 [dependencies.rtic-monotonics]
 path="../../rtic-monotonics"
-version = "=1.5"
 features = ["cortex-m-systick"]
 
 [dependencies.rtic-sync]
 path="../../rtic-sync"
-version = "=1.3"
 
 [dependencies]
 # Change stm32g431cb to your chip name, if necessary. Also change .cargo/config.toml
