@@ -109,6 +109,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
 
 [[package]]
+name = "embedded-hal-async"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c4c685bbef7fe13c3c6dd4da26841ed3980ef33e841cddfa15ce8a8fb3f1884"
+dependencies = [
+ "embedded-hal 1.0.0",
+]
+
+[[package]]
+name = "embedded-hal-bus"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57b4e6ede84339ebdb418cd986e6320a34b017cdf99b5cc3efceec6450b06886"
+dependencies = [
+ "critical-section",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -334,7 +354,7 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "atomic-polyfill",
  "bare-metal 1.0.0",
@@ -361,7 +381,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "indexmap",
  "proc-macro-error",
@@ -384,9 +404,12 @@ dependencies = [
 
 [[package]]
 name = "rtic-sync"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "critical-section",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "embedded-hal-bus",
  "heapless",
  "portable-atomic",
  "rtic-common",
