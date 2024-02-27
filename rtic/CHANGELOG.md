@@ -13,6 +13,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- **Soundness fix:** `thumbv7` was subject to priority inversion.
 - **Soundness fix:** Monotonics did not wait long enough in `Duration` based delays.
   This is not directly a change for `rtic`, but required bumping the minimal version of `rtic-monotonics`.
 
