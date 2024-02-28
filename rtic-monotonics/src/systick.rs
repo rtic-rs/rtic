@@ -147,15 +147,6 @@ macro_rules! systick_monotonic {
         $crate::systick_monotonic($name, 1_000);
     };
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            #[no_mangle]
-            #[allow(non_snake_case)]
-            unsafe extern "C" fn SysTick() {
-                use $crate::TimerQueueBackend;
-                $crate::systick::SystickBackend::timer_queue().on_monotonic_interrupt();
-            }
-        }
-
         /// A `Monotonic` based on SysTick.
         struct $name;
 
@@ -170,6 +161,13 @@ macro_rules! systick_monotonic {
             ///
             /// This method must be called only once.
             pub fn start(systick: $crate::systick::SYST, sysclk: u32) {
+                #[no_mangle]
+                #[allow(non_snake_case)]
+                unsafe extern "C" fn SysTick() {
+                    use $crate::TimerQueueBackend;
+                    $crate::systick::SystickBackend::timer_queue().on_monotonic_interrupt();
+                }
+
                 $crate::systick::SystickBackend::_start(systick, sysclk, $tick_rate_hz);
             }
         }

@@ -129,15 +129,6 @@ impl TimerQueueBackend for TimerBackend {
 #[macro_export]
 macro_rules! rp2040_timer_monotonic {
     ($name:ident) => {
-        mod _interrupts {
-            #[no_mangle]
-            #[allow(non_snake_case)]
-            unsafe extern "C" fn TIMER_IRQ_0() {
-                use $crate::TimerQueueBackend;
-                $crate::rp2040::TimerBackend::timer_queue().on_monotonic_interrupt();
-            }
-        }
-
         /// A `Monotonic` based on the RP2040 Timer peripheral.
         struct $name;
 
@@ -146,6 +137,13 @@ macro_rules! rp2040_timer_monotonic {
             ///
             /// This method must be called only once.
             pub fn start(timer: $crate::rp2040::TIMER, resets: &$crate::rp2040::RESETS) {
+                #[no_mangle]
+                #[allow(non_snake_case)]
+                unsafe extern "C" fn TIMER_IRQ_0() {
+                    use $crate::TimerQueueBackend;
+                    $crate::rp2040::TimerBackend::timer_queue().on_monotonic_interrupt();
+                }
+
                 $crate::rp2040::TimerBackend::_start(timer, resets);
             }
         }

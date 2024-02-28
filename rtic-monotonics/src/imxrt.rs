@@ -70,6 +70,8 @@ macro_rules! __internal_create_imxrt_timer_struct {
             ///
             /// This method must be called only once.
             pub fn start(gpt: $crate::imxrt::ral::gpt::$timer) {
+                $crate::__internal_create_imxrt_timer_interrupt!($mono_backend, $timer);
+
                 $crate::imxrt::$mono_backend::_start(gpt);
             }
         }
@@ -108,9 +110,6 @@ macro_rules! __internal_create_imxrt_timer_struct {
 #[macro_export]
 macro_rules! imxrt_gpt1_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_imxrt_timer_interrupt!(Gpt1Backend, GPT1);
-        }
         $crate::__internal_create_imxrt_timer_struct!($name, Gpt1Backend, GPT1, $tick_rate_hz);
     };
 }
@@ -129,9 +128,6 @@ macro_rules! imxrt_gpt1_monotonic {
 #[macro_export]
 macro_rules! imxrt_gpt2_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_imxrt_timer_interrupt!(Gpt2Backend, GPT2);
-        }
         $crate::__internal_create_imxrt_timer_struct!($name, Gpt2Backend, GPT2, $tick_rate_hz);
     };
 }

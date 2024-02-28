@@ -95,6 +95,8 @@ macro_rules! __internal_create_stm32_timer_struct {
             ///
             /// This method must be called only once.
             pub fn start(tim_clock_hz: u32) {
+                $crate::__internal_create_stm32_timer_interrupt!($mono_backend, $timer);
+
                 $crate::stm32::$mono_backend::_start(tim_clock_hz, $tick_rate_hz);
             }
         }
@@ -132,9 +134,6 @@ macro_rules! __internal_create_stm32_timer_struct {
 #[macro_export]
 macro_rules! stm32_tim2_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_stm32_timer_interrupt!(Tim2Backend, TIM2);
-        }
         $crate::__internal_create_stm32_timer_struct!($name, Tim2Backend, TIM2, $tick_rate_hz);
     };
 }
@@ -152,9 +151,6 @@ macro_rules! stm32_tim2_monotonic {
 #[macro_export]
 macro_rules! stm32_tim3_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_stm32_timer_interrupt!(Tim3Backend, TIM3);
-        }
         $crate::__internal_create_stm32_timer_struct!($name, Tim3Backend, TIM3, $tick_rate_hz);
     };
 }
@@ -172,9 +168,6 @@ macro_rules! stm32_tim3_monotonic {
 #[macro_export]
 macro_rules! stm32_tim4_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_stm32_timer_interrupt!(Tim4Backend, TIM4);
-        }
         $crate::__internal_create_stm32_timer_struct!($name, Tim4Backend, TIM4, $tick_rate_hz);
     };
 }
@@ -192,9 +185,6 @@ macro_rules! stm32_tim4_monotonic {
 #[macro_export]
 macro_rules! stm32_tim5_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_stm32_timer_interrupt!(Tim5Backend, TIM5);
-        }
         $crate::__internal_create_stm32_timer_struct!($name, Tim5Backend, TIM5, $tick_rate_hz);
     };
 }
@@ -212,9 +202,6 @@ macro_rules! stm32_tim5_monotonic {
 #[macro_export]
 macro_rules! stm32_tim15_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_stm32_timer_interrupt!(Tim15Backend, TIM15);
-        }
         $crate::__internal_create_stm32_timer_struct!($name, Tim15Backend, TIM15, $tick_rate_hz);
     };
 }

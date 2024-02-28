@@ -91,6 +91,8 @@ macro_rules! __internal_create_nrf_timer_struct {
             ///
             /// This method must be called only once.
             pub fn start(timer: $crate::nrf::timer::$timer) {
+                $crate::__internal_create_nrf_timer_interrupt!($mono_backend, $timer);
+
                 const PRESCALER: u8 = match $tick_rate_hz {
                     16_000_000 => 0,
                     8_000_000 => 1,
@@ -135,9 +137,6 @@ macro_rules! __internal_create_nrf_timer_struct {
 #[macro_export]
 macro_rules! nrf_timer0_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_nrf_timer_interrupt!(Timer0Backend, TIMER0);
-        }
         $crate::__internal_create_nrf_timer_struct!($name, Timer0Backend, TIMER0, $tick_rate_hz);
     };
 }
@@ -148,9 +147,6 @@ macro_rules! nrf_timer0_monotonic {
 #[macro_export]
 macro_rules! nrf_timer1_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_nrf_timer_interrupt!(Timer1Backend, TIMER1);
-        }
         $crate::__internal_create_nrf_timer_struct!($name, Timer1Backend, TIMER1, $tick_rate_hz);
     };
 }
@@ -161,9 +157,6 @@ macro_rules! nrf_timer1_monotonic {
 #[macro_export]
 macro_rules! nrf_timer2_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_nrf_timer_interrupt!(Timer2Backend, TIMER2);
-        }
         $crate::__internal_create_nrf_timer_struct!($name, Timer2Backend, TIMER2, $tick_rate_hz);
     };
 }
@@ -179,9 +172,6 @@ macro_rules! nrf_timer2_monotonic {
 #[macro_export]
 macro_rules! nrf_timer3_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_nrf_timer_interrupt!(Timer3Backend, TIMER3);
-        }
         $crate::__internal_create_nrf_timer_struct!($name, Timer3Backend, TIMER3, $tick_rate_hz);
     };
 }
@@ -197,9 +187,6 @@ macro_rules! nrf_timer3_monotonic {
 #[macro_export]
 macro_rules! nrf_timer4_monotonic {
     ($name:ident, $tick_rate_hz:expr) => {
-        mod _interrupts {
-            $crate::__internal_create_nrf_timer_interrupt!(Timer4Backend, TIMER4);
-        }
         $crate::__internal_create_nrf_timer_struct!($name, Timer4Backend, TIMER4, $tick_rate_hz);
     };
 }

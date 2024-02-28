@@ -81,6 +81,8 @@ macro_rules! __internal_create_nrf_rtc_struct {
             ///
             /// This method must be called only once.
             pub fn start(rtc: $crate::nrf::rtc::$timer) {
+                $crate::__internal_create_nrf_rtc_interrupt!($mono_backend, $timer);
+
                 $crate::nrf::rtc::$mono_backend::_start(rtc);
             }
         }
@@ -111,9 +113,6 @@ macro_rules! __internal_create_nrf_rtc_struct {
 #[macro_export]
 macro_rules! nrf_rtc0_monotonic {
     ($name:ident) => {
-        mod _interrupts {
-            $crate::__internal_create_nrf_rtc_interrupt!(Rtc0Backend, RTC0);
-        }
         $crate::__internal_create_nrf_rtc_struct!($name, Rtc0Backend, RTC0);
     };
 }
@@ -124,9 +123,6 @@ macro_rules! nrf_rtc0_monotonic {
 #[macro_export]
 macro_rules! nrf_rtc1_monotonic {
     ($name:ident) => {
-        mod _interrupts {
-            $crate::__internal_create_nrf_rtc_interrupt!(Rtc1Backend, RTC1);
-        }
         $crate::__internal_create_nrf_rtc_struct!($name, Rtc1Backend, RTC1);
     };
 }
@@ -142,9 +138,6 @@ macro_rules! nrf_rtc1_monotonic {
 #[macro_export]
 macro_rules! nrf_rtc2_monotonic {
     ($name:ident) => {
-        mod _interrupts {
-            $crate::__internal_create_nrf_rtc_interrupt!(Rtc2Backend, RTC2);
-        }
         $crate::__internal_create_nrf_rtc_struct!($name, Rtc2Backend, RTC2);
     };
 }
