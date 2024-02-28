@@ -116,7 +116,6 @@ macro_rules! __internal_create_stm32_timer_struct {
         }
 
         $crate::rtic_time::impl_embedded_hal_delay_fugit!($name);
-        #[cfg(feature = "embedded-hal-async")]
         $crate::rtic_time::impl_embedded_hal_async_delay_fugit!($name);
     };
 }

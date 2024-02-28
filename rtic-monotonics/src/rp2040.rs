@@ -163,7 +163,6 @@ macro_rules! rp2040_timer_monotonic {
         }
 
         $crate::rtic_time::impl_embedded_hal_delay_fugit!($name);
-        #[cfg(feature = "embedded-hal-async")]
         $crate::rtic_time::impl_embedded_hal_async_delay_fugit!($name);
     };
 }
