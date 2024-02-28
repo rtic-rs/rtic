@@ -21,8 +21,8 @@ repository = "https://github.com/rtic-rs/rtic"
 critical-section = "1"
 futures-util = { version = "0.3.25", default-features = false }
 rtic-common = { version = "1.0.0", path = "../rtic-common" }
-embedded-hal = { version = "1.0.0-rc.3" }
-embedded-hal-async = { version = "1.0.0-rc.3" }
+embedded-hal = { version = "1.0.0" }
+embedded-hal-async = { version = "1.0.0" }
 fugit = "0.3.7"
 
 [dev-dependencies]
@@ -32,4 +32,5 @@ fugit = "0.3.7"
 parking_lot = "0.12"
 cassette = "0.2"
 cooked-waker = "5.0.0"
-critical-section = { version = "1", features = ["std"] }
+# TODO: Find a solution to this:
+# critical-section = { version = "1", features = ["std"] }
