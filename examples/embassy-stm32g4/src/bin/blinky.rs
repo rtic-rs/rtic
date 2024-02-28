@@ -28,7 +28,7 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
         // Initialize the systick interrupt & obtain the token to prove that we did
-        Mono::start(cx.core.SYST, 25_000_000, systick_mono_token);
+        Mono::start(cx.core.SYST, 25_000_000);
 
         let p = embassy_stm32::init(Default::default());
         defmt::info!("Hello World!");
