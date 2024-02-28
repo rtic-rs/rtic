@@ -3,7 +3,6 @@
 #![no_main]
 #![no_std]
 #![deny(warnings)]
-#![feature(type_alias_impl_trait)]
 
 use heapless::{
     pool,

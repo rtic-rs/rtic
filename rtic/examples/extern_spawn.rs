@@ -5,7 +5,6 @@
 #![deny(warnings)]
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
-#![feature(type_alias_impl_trait)]
 
 use cortex_m_semihosting::{debug, hprintln};
 use panic_semihosting as _;

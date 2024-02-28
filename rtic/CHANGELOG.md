@@ -7,16 +7,21 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+## [v2.1.0] - 2024-02-27
+
 ### Added
 
 - Unstable support for ESP32-C3
 
 ### Fixed
 
+- **Soundness fix:** `thumbv7` was subject to priority inversion.
 - **Soundness fix:** Monotonics did not wait long enough in `Duration` based delays.
   This is not directly a change for `rtic`, but required bumping the minimal version of `rtic-monotonics`.
 
 ### Changed
+
+- RTIC v2 now works on stable.
 
 ## [v2.0.1] - 2023-07-25
 

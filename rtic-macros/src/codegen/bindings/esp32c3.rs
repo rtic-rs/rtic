@@ -72,7 +72,7 @@ mod esp32c3 {
     }
     pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
-        let mut curr_cpu_id:u8 = 1; //cpu interrupt id 0 is reserved
+        let mut curr_cpu_id: u8 = 1; //cpu interrupt id 0 is reserved
         let rt_err = util::rt_err_ident();
         let max_prio: usize = 15; //unfortunately this is not part of pac, but we know that max prio is 15.
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
@@ -158,6 +158,29 @@ mod esp32c3 {
         vec![]
     }
 
+    pub fn check_stack_overflow_before_init(
+        _app: &App,
+        _analysis: &CodegenAnalysis,
+    ) -> Vec<TokenStream2> {
+        vec![quote!(
+            // Check for stack overflow using symbols from `risc-v-rt`.
+            extern "C" {
+                pub static _stack_start: u32;
+                pub static __ebss: u32;
+            }
+
+            let stack_start = &_stack_start as *const _ as u32;
+            let ebss = &__ebss as *const _ as u32;
+
+            if stack_start > ebss {
+                // No flip-link usage, check the SP for overflow.
+                if rtic::export::read_sp() <= ebss {
+                    panic!("Stack overflow after allocating executors");
+                }
+            }
+        )]
+    }
+
     pub fn async_entry(
         _app: &App,
         _analysis: &CodegenAnalysis,
@@ -199,11 +222,9 @@ mod esp32c3 {
                 .values()
                 .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
         ) {
-            if *name == dispatcher_name{
-                let ret = &("cpu_int_".to_owned()+&curr_cpu_id.to_string()+"_handler");
-                stmts.push(
-                    quote!(#[export_name = #ret])
-                );
+            if *name == dispatcher_name {
+                let ret = &("cpu_int_".to_owned() + &curr_cpu_id.to_string() + "_handler");
+                stmts.push(quote!(#[export_name = #ret]));
             }
             curr_cpu_id += 1;
         }

@@ -2,7 +2,7 @@ use crate::syntax::ast::App;
 use crate::{
     analyze::Analysis,
     codegen::{
-        bindings::{async_entry, interrupt_entry, interrupt_exit, handler_config},
+        bindings::{async_entry, handler_config, interrupt_entry, interrupt_exit},
         util,
     },
 };
@@ -17,15 +17,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     // Generate executor definition and priority in global scope
     for (name, _) in app.software_tasks.iter() {
-        let type_name = util::internal_task_ident(name, "F");
         let exec_name = util::internal_task_ident(name, "EXEC");
 
         items.push(quote!(
-            #[allow(non_camel_case_types)]
-            type #type_name = impl core::future::Future;
             #[allow(non_upper_case_globals)]
-            static #exec_name: rtic::export::executor::AsyncTaskExecutor<#type_name> =
-                rtic::export::executor::AsyncTaskExecutor::new();
+            static #exec_name: rtic::export::executor::AsyncTaskExecutorPtr =
+                rtic::export::executor::AsyncTaskExecutorPtr::new();
         ));
     }
 
@@ -50,13 +47,18 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
         for name in channel.tasks.iter() {
             let exec_name = util::internal_task_ident(name, "EXEC");
+            let from_ptr_n_args =
+                util::from_ptr_n_args_ident(app.software_tasks[name].inputs.len());
+
             // TODO: Fix cfg
             // let task = &app.software_tasks[name];
             // let cfgs = &task.cfgs;
 
             stmts.push(quote!(
-                #exec_name.poll(|| {
-                    #exec_name.set_pending();
+                let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
+                exec.poll(|| {
+                    let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
+                    exec.set_pending();
                     #pend_interrupt
                 });
             ));
@@ -68,7 +70,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let entry_stmts = interrupt_entry(app, analysis);
             let exit_stmts = interrupt_exit(app, analysis);
             let async_entry_stmts = async_entry(app, analysis, dispatcher_name.clone());
-            let config = handler_config(app,analysis,dispatcher_name.clone());
+            let config = handler_config(app, analysis, dispatcher_name.clone());
             items.push(quote!(
                 #[allow(non_snake_case)]
                 #[doc = #doc]

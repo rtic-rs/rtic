@@ -1,5 +1,5 @@
 use super::cortex_logical2hw;
-use cortex_m::register::basepri;
+use cortex_m::register::{basepri, basepri_max};
 pub use cortex_m::{
     asm::wfi,
     interrupt,
@@ -73,7 +73,7 @@ pub unsafe fn lock<T, R>(
         critical_section::with(|_| f(&mut *ptr))
     } else {
         let current = basepri::read();
-        basepri::write(cortex_logical2hw(ceiling, nvic_prio_bits));
+        basepri_max::write(cortex_logical2hw(ceiling, nvic_prio_bits));
         let r = f(&mut *ptr);
         basepri::write(current);
         r

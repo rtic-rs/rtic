@@ -7,8 +7,11 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+## [v2.1.0] - 2024-02-27
+
 ### Added
 
+- RTIC v2 now works on stable.
 - Unstable ESP32-C3 support.
 
 ### Changed

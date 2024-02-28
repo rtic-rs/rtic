@@ -6,12 +6,12 @@ Working example of simple LED blinking application for STM32 F303 Nucleo-64 boar
 
 ### Build
 
-Run `cargo +nightly build` to compile the code. If you run it for the first time, it will take some time to download and compile dependencies.
+Run `cargo build --release` to compile the code. If you run it for the first time, it will take some time to download and compile dependencies.
 
 After that, you can use for example the cargo-embed tool to flash and run it
 
 ```bash
-$ cargo +nightly embed
+$ cargo embed
 ```
 
 ### Setup environment, flash and run program

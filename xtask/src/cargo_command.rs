@@ -483,7 +483,7 @@ impl<'a> CargoCommand<'a> {
                 // Target is added by build_args
                 target: _,
             } => self.build_args(
-                true,
+                false,
                 cargoarg,
                 features,
                 Some(mode),
@@ -501,7 +501,7 @@ impl<'a> CargoCommand<'a> {
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(
-                true,
+                false,
                 cargoarg,
                 features,
                 Some(mode),
@@ -518,7 +518,7 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
+            } => self.build_args(false, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Check {
                 cargoarg,
                 package,
@@ -530,7 +530,7 @@ impl<'a> CargoCommand<'a> {
                 target: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(true, cargoarg, features, Some(mode), p(package)),
+            } => self.build_args(false, cargoarg, features, Some(mode), p(package)),
             CargoCommand::Clippy {
                 cargoarg,
                 package,
@@ -546,7 +546,7 @@ impl<'a> CargoCommand<'a> {
                 };
 
                 let extra = p(package).chain(deny_warnings);
-                self.build_args(true, cargoarg, features, None, extra)
+                self.build_args(false, cargoarg, features, None, extra)
             }
             CargoCommand::Doc {
                 cargoarg,
@@ -556,7 +556,7 @@ impl<'a> CargoCommand<'a> {
                 deny_warnings: _,
             } => {
                 let extra = Self::extra_args(arguments.as_ref());
-                self.build_args(true, cargoarg, features, None, extra)
+                self.build_args(false, cargoarg, features, None, extra)
             }
             CargoCommand::Test {
                 package,
@@ -572,7 +572,7 @@ impl<'a> CargoCommand<'a> {
                 };
                 let package = p(package);
                 let extra = extra.into_iter().chain(package);
-                self.build_args(true, &None, features, None, extra)
+                self.build_args(false, &None, features, None, extra)
             }
             CargoCommand::Book { arguments } => {
                 let mut args = vec![];
@@ -597,7 +597,7 @@ impl<'a> CargoCommand<'a> {
                 let extra = if *check_only { Some("--check") } else { None };
                 let package = p(package);
                 self.build_args(
-                    true,
+                    false,
                     cargoarg,
                     &None,
                     None,
@@ -616,7 +616,7 @@ impl<'a> CargoCommand<'a> {
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(
-                true,
+                false,
                 cargoarg,
                 features,
                 Some(mode),
@@ -632,7 +632,7 @@ impl<'a> CargoCommand<'a> {
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => self.build_args(
-                true,
+                false,
                 cargoarg,
                 features,
                 Some(mode),
@@ -655,7 +655,7 @@ impl<'a> CargoCommand<'a> {
                     .into_iter()
                     .chain(Self::extra_args(arguments.as_ref()));
 
-                self.build_args(true, cargoarg, features, Some(mode), extra)
+                self.build_args(false, cargoarg, features, Some(mode), extra)
             }
         }
     }
