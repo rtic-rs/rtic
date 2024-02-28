@@ -70,19 +70,19 @@ impl Package {
                     ][..]
                 } else {
                     &[
-                        "cortex-m-systick,embedded-hal-async",
-                        "cortex-m-systick,embedded-hal-async,systick-64bit",
-                        "rp2040,embedded-hal-async",
-                        "nrf52810,embedded-hal-async",
-                        "nrf52811,embedded-hal-async",
-                        "nrf52832,embedded-hal-async",
-                        "nrf52833,embedded-hal-async",
-                        "nrf52840,embedded-hal-async",
-                        "nrf5340-app,embedded-hal-async",
-                        "nrf5340-net,embedded-hal-async",
-                        "nrf9160,embedded-hal-async",
-                        "imxrt_gpt1,imxrt-ral/imxrt1062,embedded-hal-async",
-                        "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag,embedded-hal-async",
+                        "cortex-m-systick",
+                        "cortex-m-systick,systick-64bit",
+                        "rp2040",
+                        "nrf52810",
+                        "nrf52811",
+                        "nrf52832",
+                        "nrf52833",
+                        "nrf52840",
+                        "nrf5340-app",
+                        "nrf5340-net",
+                        "nrf9160",
+                        "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062",
+                        "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag",
                     ][..]
                 };
 
