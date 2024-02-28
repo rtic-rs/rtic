@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Changed
+
+- Remove unused dependency `rtic-monotonics`
+
 ## [v2.1.0] - 2024-02-27
 
 ### Added
