@@ -180,41 +180,6 @@ jobs:
         if: ${{ matrix.backend != 'riscv32-imc-clint' }}
         run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} example-check
 
-  # Check that the usage examples build TODO this would not be needed now
-  usageexamples:
-    name: Build usage examples
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        toolchain:
-          - stable
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install rust ${{ matrix.toolchain }}
-        run: |
-          rustup set profile minimal
-          rustup override set ${{ matrix.toolchain }}
-
-      - name: Configure rust target (v6, v7)
-        run: |
-          rustup target add thumbv7em-none-eabihf
-          rustup target add thumbv7m-none-eabi
-          rustup target add thumbv6m-none-eabi
-          rustup target add riscv32imc-unknown-none-elf
-          rustup target add riscv32imac-unknown-none-elf
-          rustup component add rust-src
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Install flip-link
-        run: cargo install flip-link
-
-      - name: Check the examples
-        run: cargo xtask usage-example-build
-
   buildqemu:
     name: Get modern QEMU, build and store
     runs-on: ubuntu-22.04

@@ -161,7 +161,7 @@ pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> 
         ));
     }
 
-    Ok(()) // TODO
+    Ok(())
 }
 
 /// Macro to add statements to be executed at the beginning of all the interrupt handlers.

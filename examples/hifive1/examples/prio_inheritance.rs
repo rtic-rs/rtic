@@ -1,6 +1,5 @@
 #![no_main]
 #![no_std]
-// #![feature(type_alias_impl_trait)]
 
 use riscv_rt as _;
 

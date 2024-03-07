@@ -249,15 +249,6 @@ fn main() -> anyhow::Result<()> {
             info!("Running mdbook");
             cargo_book(globals, &args.arguments)
         }
-        // TODO these two commands are not needed anymore
-        Commands::UsageExampleCheck(examples) => {
-            info!("Checking usage examples");
-            cargo_usage_example(globals, BuildOrCheck::Check, examples.examples()?)
-        }
-        Commands::UsageExampleBuild(examples) => {
-            info!("Building usage examples");
-            cargo_usage_example(globals, BuildOrCheck::Build, examples.examples()?)
-        }
     };
 
     handle_results(globals, final_run_results).map_err(|_| anyhow::anyhow!("Commands failed"))

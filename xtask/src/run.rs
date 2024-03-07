@@ -199,43 +199,6 @@ pub fn cargo<'c>(
     runner.run_and_coalesce()
 }
 
-/// Cargo command to build a usage example.
-///
-/// The usage examples are in examples/
-pub fn cargo_usage_example(
-    globals: &Globals,
-    operation: BuildOrCheck,
-    usage_examples: Vec<String>,
-) -> Vec<FinalRunResult<'_>> {
-    into_iter(&usage_examples)
-        .map(|example| {
-            let path = format!("examples/{example}");
-
-            let command = match operation {
-                BuildOrCheck::Check => CargoCommand::Check {
-                    cargoarg: &None,
-                    mode: BuildMode::Release,
-                    dir: Some(path.into()),
-                    package: None,
-                    target: None,
-                    features: None,
-                    deny_warnings: globals.deny_warnings,
-                },
-                BuildOrCheck::Build => CargoCommand::Build {
-                    cargoarg: &None,
-                    package: None,
-                    target: None,
-                    features: None,
-                    mode: BuildMode::Release,
-                    dir: Some(path.into()),
-                    deny_warnings: globals.deny_warnings,
-                },
-            };
-            (globals, command, false)
-        })
-        .run_and_coalesce()
-}
-
 /// Cargo command to either build or check all examples
 ///
 /// The examples are in examples/<platform>/examples

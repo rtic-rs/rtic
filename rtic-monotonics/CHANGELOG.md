@@ -9,8 +9,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Tweak `build.rs` to avoid warnings in Nightly 1.78+
 - Removed unused `rust-toolchain.toml`
-Tweak `build.rs` to avoid warnings in Nightly 1.78+
 
 ## v1.5.0 - 2024-01-10
 

@@ -1,5 +1,4 @@
 /// GENERIC RE-EXPORTS: needed for all RTIC backends
-// pub use riscv::interrupt;
 
 /// Read the stack pointer.
 #[inline(always)]

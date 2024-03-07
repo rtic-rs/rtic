@@ -191,15 +191,6 @@ impl Backends {
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
         }
     }
-    // #[allow(clippy::wrong_self_convention)]
-    // pub fn to_rtic_uitest_feature(&self) -> &'static str {
-    //     match self {
-    //         Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
-    //         Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
-    //         Backends::RiscvEsp32C3 => "rtic-uitestesp32c3",
-    //         Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "rtic-uitestclint",
-    //     }
-    // }
 }
 
 #[derive(Copy, Clone, Default, Debug)]
@@ -438,55 +429,6 @@ pub enum Commands {
 
     /// Build books with mdbook
     Book(Arg),
-
-    /// Check one or more usage examples.
-    ///
-    /// Usage examples are located in ./examples
-    UsageExampleCheck(UsageExamplesOpt),
-
-    /// Build one or more usage examples.
-    ///
-    /// Usage examples are located in ./examples
-    #[clap(alias = "./examples")]
-    UsageExampleBuild(UsageExamplesOpt),
-}
-
-#[derive(Args, Clone, Debug)]
-pub struct UsageExamplesOpt {
-    /// The usage examples to build. All usage examples are selected if this argument is not provided.
-    ///
-    /// Example: `rp2040_local_i2c_init,stm32f3_blinky`.
-    examples: Option<String>,
-}
-
-impl UsageExamplesOpt {
-    pub fn examples(&self) -> anyhow::Result<Vec<String>> {
-        let usage_examples: Vec<_> = std::fs::read_dir("./examples")?
-            .filter_map(Result::ok)
-            .filter(|p| p.metadata().ok().map(|p| p.is_dir()).unwrap_or(false))
-            .filter_map(|p| p.file_name().to_str().map(ToString::to_string))
-            .collect();
-
-        let selected_examples: Option<Vec<String>> = self
-            .examples
-            .clone()
-            .map(|s| s.split(',').map(ToString::to_string).collect());
-
-        if let Some(selected_examples) = selected_examples {
-            if let Some(unfound_example) = selected_examples
-                .iter()
-                .find(|e| !usage_examples.contains(e))
-            {
-                Err(anyhow::anyhow!(
-                    "Usage example {unfound_example} does not exist"
-                ))
-            } else {
-                Ok(selected_examples)
-            }
-        } else {
-            Ok(usage_examples)
-        }
-    }
 }
 
 #[derive(Args, Debug, Clone)]
