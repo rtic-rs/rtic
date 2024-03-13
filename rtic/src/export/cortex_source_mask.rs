@@ -134,12 +134,13 @@ pub unsafe fn lock<T, R, const M: usize>(
     } else {
         // safe to manipulate outside critical section
         let mask = compute_mask(0, ceiling, masks);
+        let old_mask = read_mask(mask);
         clear_enable_mask(mask);
 
         // execute closure under protection of raised system ceiling
         let r = f(&mut *ptr);
 
-        set_enable_mask(mask);
+        set_enable_mask(mask, old_mask);
 
         // safe to manipulate outside critical section
         r
@@ -178,11 +179,26 @@ pub const fn compute_mask<const M: usize>(
 
 // enables interrupts
 #[inline(always)]
-unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>) {
+unsafe fn read_mask<const M: usize>(mask: Mask<M>) -> Mask<M> {
+    let mut out = Mask([0; M]);
+
     for i in 0..M {
         // This check should involve compile time constants and be optimized out.
         if mask.0[i] != 0 {
-            (*NVIC::PTR).iser[i].write(mask.0[i]);
+            out.0[i] = (*NVIC::PTR).iser[i].read();
+        }
+    }
+
+    out
+}
+
+// enables interrupts
+#[inline(always)]
+unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>, old_mask: Mask<M>) {
+    for i in 0..M {
+        // This check should involve compile time constants and be optimized out.
+        if mask.0[i] != 0 {
+            (*NVIC::PTR).iser[i].write(old_mask.0[i]);
         }
     }
 }
