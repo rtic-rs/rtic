@@ -411,8 +411,7 @@ jobs:
         run: rm -f .cargo/config.toml
 
       - name: Build docs
-        # TODO: Any difference between backends?
-        run: cargo doc --features thumbv7-backend
+        run: cargo xtask doc
 
       - name: Check links
         run: |
