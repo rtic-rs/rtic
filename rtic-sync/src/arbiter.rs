@@ -276,7 +276,7 @@ pub mod spi {
 /// I2C bus sharing using [`Arbiter`]
 ///
 /// An Example how to use it in RTIC application:
-/// ```ignore
+/// ```text
 /// #[app(device = some_hal, peripherals = true, dispatchers = [TIM16])]
 /// mod app {
 ///     use core::mem::MaybeUninit;
