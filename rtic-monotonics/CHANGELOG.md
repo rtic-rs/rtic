@@ -10,6 +10,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Changed
 
 - Removed unused `rust-toolchain.toml`
+- RP2040 PAC 0.6 support
 
 ## v1.5.0 - 2024-01-10
 
