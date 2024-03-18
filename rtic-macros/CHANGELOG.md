@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed `#[cfg]` tags on hardware and software tasks.
+
 ## [v2.1.0] - 2024-02-27
 
 ### Added

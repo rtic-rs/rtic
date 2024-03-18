@@ -354,7 +354,7 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "atomic-polyfill",
  "bare-metal 1.0.0",

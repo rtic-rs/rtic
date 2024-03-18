@@ -30,14 +30,19 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     let mut executor_allocations = Vec::new();
 
-    for (name, _) in app.software_tasks.iter() {
+    for (name, task) in app.software_tasks.iter() {
         let exec_name = util::internal_task_ident(name, "EXEC");
         let new_n_args = util::new_n_args_ident(app.software_tasks[name].inputs.len());
+        let cfgs = &task.cfgs;
 
         executor_allocations.push(quote!(
+            #(#cfgs)*
             let executor = ::core::mem::ManuallyDrop::new(rtic::export::executor::AsyncTaskExecutor::#new_n_args(#name));
-            executors_size += ::core::mem::size_of_val(&executor);
-            #exec_name.set_in_main(&executor);
+            #(#cfgs)*
+            {
+                executors_size += ::core::mem::size_of_val(&executor);
+                #exec_name.set_in_main(&executor);
+            }
         ));
     }
 
