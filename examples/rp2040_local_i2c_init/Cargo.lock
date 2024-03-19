@@ -423,7 +423,7 @@ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 [[package]]
 name = "rp-pico"
 version = "0.8.0"
-source = "git+https://github.com/martinsp/rp-hal-boards/?branch=rp2040-hal-update#c42bbdf949cbd59a6b3a3c86958b7e2f37591a5d"
+source = "git+https://github.com/rp-rs/rp-hal-boards/?branch=main#3fdd6135d319c5a9fe37014d3623980335526c71"
 dependencies = [
  "cortex-m-rt",
  "fugit",

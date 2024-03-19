@@ -22,8 +22,8 @@ features = ["rp2040"]
 cortex-m = "0.7"
 embedded-hal = { version = "0.2.7", features = ["unproven"] }
 fugit = "0.3"
-# https://github.com/rp-rs/rp-hal-boards/pull/60
-rp-pico = { git = "https://github.com/martinsp/rp-hal-boards/", branch = "rp2040-hal-update" }
+# wait for next release of rp-pico
+rp-pico = { git = "https://github.com/rp-rs/rp-hal-boards/", branch = "main" }
 panic-probe = "0.3"
 
 [profile.dev]
