@@ -1,0 +1,36 @@
+[package]
+name = "rtic_lm3s6965"
+categories = ["embedded", "no-std"]
+description = "Examples of RTIC apps for the lm3s6965 chip"
+license = "MIT OR Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+heapless = "0.8"
+lm3s6965 = "0.2"
+cortex-m = "0.7.0"
+bare-metal = "1.0.0"
+cortex-m-semihosting = "0.5.0"
+rtic-time = { path = "../../rtic-time" }
+rtic-sync = { path = "../../rtic-sync" }
+rtic-monotonics = { path = "../../rtic-monotonics", features = ["cortex-m-systick"] }
+rtic = { path = "../../rtic" }
+
+[dependencies.futures]
+version = "0.3.26"
+default-features = false
+features = ["async-await"]
+
+[dependencies.panic-semihosting]
+features = ["exit"]
+version = "0.6.0"
+
+[features]
+test-critical-section = ["rtic/test-critical-section"]
+thumbv6-backend = ["rtic/thumbv6-backend"]
+thumbv7-backend = ["rtic/thumbv7-backend"]
+thumbv8base-backend = ["rtic/thumbv8base-backend"]
+thumbv8main-backend = ["rtic/thumbv8main-backend"]

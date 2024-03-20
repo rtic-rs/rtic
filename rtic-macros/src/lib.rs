@@ -14,13 +14,14 @@ macro_rules! with_backend {
             feature = "cortex-m-source-masking",
             feature = "cortex-m-basepri",
             feature = "test-template",
-            feature = "riscv-esp32c3"
+            feature = "riscv-esp32c3",
+            feature = "riscv-slic",
         ))]
         $($tokens)*
     };
 }
 
-with_backend! { mod: [analyze, check, codegen, syntax] }
+with_backend! { mod: [analyze, check, codegen, preprocess, syntax] }
 with_backend! { use std::{fs, env, path::Path}; }
 with_backend! { use proc_macro::TokenStream; }
 
@@ -47,10 +48,17 @@ with_backend! {
     /// Should never panic, cargo feeds a path which is later converted to a string
     #[proc_macro_attribute]
     pub fn app(_args: TokenStream, _input: TokenStream) -> TokenStream {
-        let (app, analysis) = match syntax::parse(_args, _input) {
+        let (mut app, analysis) = match syntax::parse(_args, _input) {
             Err(e) => return e.to_compile_error().into(),
             Ok(x) => x,
         };
+
+        // Modify app based on backend before continuing
+        if let Err(e) = preprocess::app(&mut app, &analysis) {
+            return e.to_compile_error().into();
+        }
+        let app = app;
+        // App is not mutable after this point
 
         if let Err(e) = check::app(&app, &analysis) {
             return e.to_compile_error().into();
@@ -109,6 +117,7 @@ with_backend! {
     feature = "cortex-m-source-masking",
     feature = "cortex-m-basepri",
     feature = "test-template",
-    feature = "riscv-esp32c3"
+    feature = "riscv-esp32c3",
+    feature = "riscv-slic",
 )))]
 compile_error!("Cannot compile. No backend feature selected.");

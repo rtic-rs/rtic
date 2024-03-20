@@ -31,11 +31,12 @@ features = ["rtic-macros/test-template"]
 name = "rtic"
 
 [dependencies]
+riscv-slic = { git = "https://github.com/romancardenas/riscv-slic.git", rev = "2a91edb", optional = true }
 esp32c3 = { version = "0.20.0", optional = true}
 riscv = {version = "0.11.0", optional = true}
 cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
-#portable-atomic = { version = "0.3.19" }
+# portable-atomic = { version = "0.3.19" }
 atomic-polyfill = "1"
 rtic-monotonics = { path = "../rtic-monotonics", version = "1.4.0", optional = true }
 rtic-macros = { path = "../rtic-macros", version = "=2.1.0" }
@@ -43,12 +44,8 @@ rtic-core = "1"
 critical-section = "1"
 
 [dev-dependencies]
-heapless = "0.8"
 lm3s6965 = "0.2"
 cortex-m-semihosting = "0.5.0"
-rtic-time = { path = "../rtic-time" }
-rtic-sync = { path = "../rtic-sync" }
-rtic-monotonics = { path = "../rtic-monotonics", features = ["cortex-m-systick"] }
 
 [dev-dependencies.futures]
 version = "0.3.26"
@@ -71,12 +68,7 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]
+riscv-clint-backend = ["riscv", "riscv-slic/clint-backend", "rtic-macros/riscv-slic"]
 
 # needed for testing
-rtic-uitestv7 = ["thumbv7-backend"]
-rtic-uitestv6 = ["thumbv6-backend"]
 test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick-100hz"]
-
-# [[example]]
-# name = "pool"
-# required-features = ["test-critical-section"]

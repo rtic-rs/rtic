@@ -11,6 +11,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- Unstable support for RISC-V targets compatible with `riscv-slic`
 - RTIC v2 now works on stable.
 - Unstable ESP32-C3 support.
 

@@ -1,4 +1,7 @@
-use crate::{cargo_command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN};
+use crate::{
+    cargo_command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN, RISCV32IMAC,
+    RISCV32IMC,
+};
 use clap::{Args, Parser, Subcommand};
 use core::fmt;
 
@@ -84,7 +87,7 @@ impl Package {
                 };
 
                 features
-                    .into_iter()
+                    .iter()
                     .map(ToString::to_string)
                     .map(Some)
                     .chain(std::iter::once(None))
@@ -101,12 +104,7 @@ impl TestMetadata {
     pub fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
-                let features = format!(
-                    "{},{}",
-                    backend.to_rtic_feature(),
-                    backend.to_rtic_uitest_feature()
-                );
-                let features = Some(backend.to_target().and_features(&features));
+                let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
                 CargoCommand::Test {
                     package: Some(package.name()),
                     features,
@@ -155,6 +153,9 @@ pub enum Backends {
     Thumbv7,
     Thumbv8Base,
     Thumbv8Main,
+    RiscvEsp32C3,
+    Riscv32ImcClint, // not working yet (issues with portable-atomic features...)
+    Riscv32ImacClint,
 }
 
 impl Backends {
@@ -165,6 +166,8 @@ impl Backends {
             Backends::Thumbv7 => ARMV7M,
             Backends::Thumbv8Base => ARMV8MBASE,
             Backends::Thumbv8Main => ARMV8MMAIN,
+            Backends::Riscv32ImcClint => RISCV32IMC,
+            Backends::RiscvEsp32C3 | Backends::Riscv32ImacClint => RISCV32IMAC,
         }
     }
 
@@ -175,6 +178,8 @@ impl Backends {
             Backends::Thumbv7 => "thumbv7-backend",
             Backends::Thumbv8Base => "thumbv8base-backend",
             Backends::Thumbv8Main => "thumbv8main-backend",
+            Backends::RiscvEsp32C3 => "riscv-esp32c3-backend",
+            Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint-backend",
         }
     }
     #[allow(clippy::wrong_self_convention)]
@@ -182,13 +187,8 @@ impl Backends {
         match self {
             Backends::Thumbv6 | Backends::Thumbv8Base => "cortex-m-source-masking",
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
-        }
-    }
-    #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_uitest_feature(&self) -> &'static str {
-        match self {
-            Backends::Thumbv6 | Backends::Thumbv8Base => "rtic-uitestv6",
-            Backends::Thumbv7 | Backends::Thumbv8Main => "rtic-uitestv7",
+            Backends::RiscvEsp32C3 => "riscv-esp32c3",
+            Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
         }
     }
 }
@@ -200,14 +200,127 @@ pub enum BuildOrCheck {
     Build,
 }
 
+#[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
+pub enum Platforms {
+    Hifive1,
+    #[default]
+    Lm3s6965,
+    Nrf52840,
+    Rp2040,
+    Stm32f3,
+    Stm32f411,
+    Teensy4,
+}
+
+impl Platforms {
+    pub fn name(&self) -> String {
+        let name = match self {
+            Platforms::Hifive1 => "hifive1",
+            Platforms::Lm3s6965 => "lm3s6965",
+            Platforms::Nrf52840 => "nrf52840",
+            Platforms::Rp2040 => "rp2040",
+            Platforms::Stm32f3 => "stm32f3",
+            Platforms::Stm32f411 => "stm32f411",
+            Platforms::Teensy4 => "teensy4",
+        };
+        name.to_string()
+    }
+
+    /// Rust flags needed for the platform when building
+    pub fn rust_flags(&self) -> Vec<String> {
+        let c = "-C".to_string();
+        match self {
+            Platforms::Hifive1 => vec![c, "link-arg=-Thifive1-link.x".to_string()],
+            Platforms::Lm3s6965 => vec![c, "link-arg=-Tlink.x".to_string()],
+            Platforms::Nrf52840 => vec![
+                c.clone(),
+                "linker=flip-link".to_string(),
+                c.clone(),
+                "link-arg=-Tlink.x".to_string(),
+                c.clone(),
+                "link-arg=-Tdefmt.x".to_string(),
+                c,
+                "link-arg=--nmagic".to_string(),
+            ],
+            Platforms::Rp2040 => vec![
+                c.clone(),
+                "link-arg=--nmagic".to_string(),
+                c,
+                "link-arg=-Tlink.x".to_string(),
+            ],
+            Platforms::Stm32f3 => vec![
+                c.clone(),
+                "link-arg=--nmagic".to_string(),
+                c,
+                "link-arg=-Tlink.x".to_string(),
+            ],
+            Platforms::Stm32f411 => vec![
+                c.clone(),
+                "link-arg=-Tlink.x".to_string(),
+                c,
+                "link-arg=-Tdefmt.x".to_string(),
+            ],
+            Platforms::Teensy4 => vec![c, "link-arg=-Tt4link.x".to_string()],
+        }
+    }
+
+    /// Get the default backend for the platform
+    pub fn default_backend(&self) -> Backends {
+        match self {
+            Platforms::Hifive1 => Backends::Riscv32ImcClint,
+            Platforms::Lm3s6965 => Backends::Thumbv7,
+            Platforms::Nrf52840 => unimplemented!(),
+            Platforms::Rp2040 => unimplemented!(),
+            Platforms::Stm32f3 => unimplemented!(),
+            Platforms::Stm32f411 => unimplemented!(),
+            Platforms::Teensy4 => unimplemented!(),
+        }
+    }
+
+    /// Get the features needed given the selected platform and backend.
+    /// If the backend is not supported for the platform, return Err.
+    /// If the backend is supported, but no special features are needed, return Ok(None).
+    pub fn features(&self, backend: &Backends) -> Result<Option<&'static str>, ()> {
+        match self {
+            Platforms::Hifive1 => match backend.to_target() {
+                RISCV32IMC | RISCV32IMAC => Ok(None),
+                _ => Err(()),
+            },
+            Platforms::Lm3s6965 => match backend.to_target() {
+                ARMV6M => Ok(Some("thumbv6-backend")),
+                ARMV7M => Ok(Some("thumbv7-backend")),
+                ARMV8MBASE => Ok(Some("thumbv8base-backend")),
+                ARMV8MMAIN => Ok(Some("thumbv8main-backend")),
+                _ => Err(()),
+            },
+            Platforms::Nrf52840 => unimplemented!(),
+            Platforms::Rp2040 => unimplemented!(),
+            Platforms::Stm32f3 => unimplemented!(),
+            Platforms::Stm32f411 => unimplemented!(),
+            Platforms::Teensy4 => unimplemented!(),
+        }
+    }
+}
+
 #[derive(Parser, Clone)]
 pub struct Globals {
     /// Error out on warnings
     #[arg(short = 'D', long)]
     pub deny_warnings: bool,
 
+    /// For which platform to build.
+    ///
+    /// If omitted, the default platform (i.e., lm3s6965) is used.
+    ///
+    /// Example: `cargo xtask --platform lm3s6965`
+    #[arg(value_enum, short, default_value = "lm3s6965", long, global = true)]
+    pub platform: Option<Platforms>,
+
     /// For which backend to build.
-    #[arg(value_enum, short, default_value = "thumbv7", long, global = true)]
+    ///
+    /// If omitted, the default backend for the selected platform is used
+    /// (check [`Platforms::default_backend`]).
+    #[arg(value_enum, short, long, global = true)]
     pub backend: Option<Backends>,
 
     /// List of comma separated examples to include, all others are excluded
@@ -316,55 +429,6 @@ pub enum Commands {
 
     /// Build books with mdbook
     Book(Arg),
-
-    /// Check one or more usage examples.
-    ///
-    /// Usage examples are located in ./examples
-    UsageExampleCheck(UsageExamplesOpt),
-
-    /// Build one or more usage examples.
-    ///
-    /// Usage examples are located in ./examples
-    #[clap(alias = "./examples")]
-    UsageExampleBuild(UsageExamplesOpt),
-}
-
-#[derive(Args, Clone, Debug)]
-pub struct UsageExamplesOpt {
-    /// The usage examples to build. All usage examples are selected if this argument is not provided.
-    ///
-    /// Example: `rp2040_local_i2c_init,stm32f3_blinky`.
-    examples: Option<String>,
-}
-
-impl UsageExamplesOpt {
-    pub fn examples(&self) -> anyhow::Result<Vec<String>> {
-        let usage_examples: Vec<_> = std::fs::read_dir("./examples")?
-            .filter_map(Result::ok)
-            .filter(|p| p.metadata().ok().map(|p| p.is_dir()).unwrap_or(false))
-            .filter_map(|p| p.file_name().to_str().map(ToString::to_string))
-            .collect();
-
-        let selected_examples: Option<Vec<String>> = self
-            .examples
-            .clone()
-            .map(|s| s.split(",").map(ToString::to_string).collect());
-
-        if let Some(selected_examples) = selected_examples {
-            if let Some(unfound_example) = selected_examples
-                .iter()
-                .find(|e| !usage_examples.contains(e))
-            {
-                Err(anyhow::anyhow!(
-                    "Usage example {unfound_example} does not exist"
-                ))
-            } else {
-                Ok(selected_examples)
-            }
-        } else {
-            Ok(usage_examples)
-        }
-    }
 }
 
 #[derive(Args, Debug, Clone)]

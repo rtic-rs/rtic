@@ -36,8 +36,8 @@ cortex-m-basepri = []
 riscv-esp32c3 = []
 # riscv-clic = []
 # riscv-ch32 = []
-
-
+riscv-slic = []
+ 
 # backend API test
 test-template = []
 

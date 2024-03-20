@@ -55,8 +55,18 @@ mod esp32c3 {
         Ident::new("Interrupt", span)
     }
 
+    pub fn interrupt_mod(app: &App) -> TokenStream2 {
+        let device = &app.args.device;
+        let interrupt = interrupt_ident();
+        quote!(#device::#interrupt)
+    }
+
     pub fn extra_assertions(_: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
         vec![]
+    }
+
+    pub fn pre_init_preprocessing(_app: &mut App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+        Ok(())
     }
 
     pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
@@ -231,4 +241,8 @@ mod esp32c3 {
 
         stmts
     }
+}
+
+pub fn extra_modules(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
+    vec![]
 }

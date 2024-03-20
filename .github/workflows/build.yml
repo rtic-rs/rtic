@@ -31,9 +31,9 @@ jobs:
       - name: cargo xtask fmt
         run:  cargo xtask --verbose fmt -c
 
-  # Compilation check
-  check:
-    name: check
+  # Compilation check (lm3s6965)
+  checklm3s6965:
+    name: check (lm3s6965)
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -62,11 +62,14 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} check
+      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} check
 
-  # Clippy
-  clippy:
-    name: clippy
+  # Compilation check (hifive1) TODO
+  # checkhifive1:
+
+  # Clippy (lm3s6965)
+  clippylm3s6965:
+    name: clippy (lm3s6965)
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -98,11 +101,14 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} clippy
+      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} clippy
 
-  # Verify all examples, checks
-  checkexamples:
-    name: check examples
+  # Clippy (hifive1) TODO
+  # clippyhifive1:
+
+  # Platform lm3s6965: verify all examples, checks
+  checkexampleslm3s6965:
+    name: check examples (lm3s6965)
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -133,44 +139,46 @@ jobs:
 
       - name: Check the examples
         if: ${{ matrix.backend == 'thumbv8-base' }}
-        run: cargo xtask --backend ${{ matrix.backend }} --exampleexclude pool example-check
+        run: cargo xtask --platform lm3s6965 --backend ${{ matrix.backend }} --exampleexclude pool example-check
 
       - name: Check the examples
         if: ${{ matrix.backend != 'thumbv8-base' }}
-        run: cargo xtask --backend ${{ matrix.backend }} example-check
-
-  # Check that the usage examples build
-  usageexamples:
-    name: Build usage examples
+        run: cargo xtask --platform lm3s6965 --backend ${{ matrix.backend }} example-check
+  
+  # Platform hifive1: verify all examples, checks
+  checkexampleshifive1:
+    name: check examples (hifive1)
     runs-on: ubuntu-22.04
     strategy:
       matrix:
+        backend:
+          - riscv32-imc-clint
+          - riscv32-imac-clint
         toolchain:
           - stable
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install rust ${{ matrix.toolchain }}
+      - name: Install Rust ${{ matrix.toolchain }}
         run: |
-          rustup set profile minimal
           rustup override set ${{ matrix.toolchain }}
 
-      - name: Configure rust target (v6, v7)
+      - name: Configure Rust target
         run: |
-          rustup target add thumbv7em-none-eabihf
-          rustup target add thumbv7m-none-eabi
-          rustup target add thumbv6m-none-eabi
-          rustup component add rust-src
+          rustup target add riscv32imac-unknown-none-elf
+          rustup target add riscv32imc-unknown-none-elf
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
-
-      - name: Install flip-link
-        run: cargo install flip-link
+      
+      - name: Check the examples
+        if: ${{ matrix.backend == 'riscv32-imc-clint' }}
+        run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude static example-check
 
       - name: Check the examples
-        run: cargo xtask usage-example-build
+        if: ${{ matrix.backend != 'riscv32-imc-clint' }}
+        run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} example-check
 
   buildqemu:
     name: Get modern QEMU, build and store
@@ -192,7 +200,7 @@ jobs:
       - name: Install QEMU to get dependencies
         run: |
           sudo apt update
-          sudo apt install -y qemu-system-arm
+          sudo apt install -y qemu-system-arm qemu-system-riscv32
           sudo apt-get install git libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build
 
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
@@ -226,9 +234,9 @@ jobs:
           name: qemu
           path: qemu.tar
 
-  # Verify the example output with run-pass tests
-  testexamples:
-    name: QEMU run
+  # Platform lm3s6965: verify the example output with run-pass tests
+  testexampleslm3s6965:
+    name: QEMU run (lm3s6965)
     needs: buildqemu
     runs-on: ubuntu-22.04
     strategy:
@@ -283,7 +291,71 @@ jobs:
           which qemu-system-riscv32
 
       - name: Run-pass tests
-        run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} qemu
+        run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} qemu
+  
+  # Platform hifive1: verify the example output with run-pass tests
+  testexampleshifive1:
+    name: QEMU run (hifive1)
+    needs: buildqemu
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        backend:
+          - riscv32-imc-clint
+          - riscv32-imac-clint
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target
+        run: |
+          rustup target add riscv32imac-unknown-none-elf
+          rustup target add riscv32imc-unknown-none-elf
+
+      - name: Add Rust component llvm-tools-preview
+        run: rustup component add llvm-tools-preview
+
+      # Use precompiled binutils
+      - name: Install cargo-binutils
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binutils
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Install QEMU to get dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y qemu-system-riscv32
+
+      - name: Download built QEMU
+        uses: actions/download-artifact@v4
+        with:
+          name: qemu
+      
+      - name: Extract QEMU into local path
+        run: tar -xf qemu.tar -C /usr/local/bin
+
+      - name: Check which QEMU is used
+        run: |
+          which qemu-system-arm
+          which qemu-system-riscv32
+      
+      - name: Run-pass tests
+        if: ${{ matrix.backend == 'riscv32-imc-clint' }}
+        run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude static qemu
+
+      - name: Run-pass tests
+        if: ${{ matrix.backend != 'riscv32-imc-clint' }}
+        run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} qemu
 
   # Run test suite
   tests:
@@ -719,10 +791,14 @@ jobs:
     if: github.event_name == 'push' && success()
     needs:
       - formatcheck
-      - check
-      - clippy
-      - checkexamples
-      - testexamples
+      - checklm3s6965
+      # checkhifive1 TODO
+      - clippylm3s6965
+      # clippyhifive1 TODO
+      - checkexampleslm3s6965
+      - checkexampleshifive1
+      - testexampleslm3s6965
+      - testexampleshifive1
       - tests
       - docs
       - mdbook

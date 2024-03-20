@@ -11,10 +11,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> Vec<TokenStream2> {
     // Disable interrupts -- `init` must run with interrupts disabled
     stmts.push(quote!(rtic::export::interrupt::disable();));
 
-    stmts.push(quote!(
-        // To set the variable in cortex_m so the peripherals cannot be taken multiple times
-        let mut core: rtic::export::Peripherals = rtic::export::Peripherals::steal().into();
-    ));
+    if app.args.core {
+        stmts.push(quote!(
+            // To set the variable in cortex_m so the peripherals cannot be taken multiple times
+            let mut core: rtic::export::Peripherals = rtic::export::Peripherals::steal().into();
+        ));
+    }
 
     stmts.append(&mut pre_init_checks(app, analysis));
 
