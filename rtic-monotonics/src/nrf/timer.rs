@@ -40,24 +40,32 @@ pub mod prelude {
 }
 
 #[cfg(feature = "nrf52810")]
+#[doc(hidden)]
 pub use nrf52810_pac::{self as pac, TIMER0, TIMER1, TIMER2};
 #[cfg(feature = "nrf52811")]
+#[doc(hidden)]
 pub use nrf52811_pac::{self as pac, TIMER0, TIMER1, TIMER2};
 #[cfg(feature = "nrf52832")]
+#[doc(hidden)]
 pub use nrf52832_pac::{self as pac, TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 #[cfg(feature = "nrf52833")]
+#[doc(hidden)]
 pub use nrf52833_pac::{self as pac, TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 #[cfg(feature = "nrf52840")]
+#[doc(hidden)]
 pub use nrf52840_pac::{self as pac, TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 #[cfg(feature = "nrf5340-app")]
+#[doc(hidden)]
 pub use nrf5340_app_pac::{
     self as pac, TIMER0_NS as TIMER0, TIMER1_NS as TIMER1, TIMER2_NS as TIMER2,
 };
 #[cfg(feature = "nrf5340-net")]
+#[doc(hidden)]
 pub use nrf5340_net_pac::{
     self as pac, TIMER0_NS as TIMER0, TIMER1_NS as TIMER1, TIMER2_NS as TIMER2,
 };
 #[cfg(feature = "nrf9160")]
+#[doc(hidden)]
 pub use nrf9160_pac::{self as pac, TIMER0_NS as TIMER0, TIMER1_NS as TIMER1, TIMER2_NS as TIMER2};
 
 use atomic_polyfill::{AtomicU32, Ordering};
