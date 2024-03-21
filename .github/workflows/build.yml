@@ -187,7 +187,7 @@ jobs:
     strategy:
       matrix:
         backend:
-          - riscv32-esp32-c3
+          - riscv-esp32-c3
         toolchain:
           - nightly
     steps:
@@ -206,7 +206,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
       
       - name: Check the examples
-        run: cargo xtask --platform esp32c3 --backend ${{ matrix.backend }} example-check
+        run: cargo xtask --platform esp32-c3 --backend ${{ matrix.backend }} example-check
 
 
   buildqemu:
