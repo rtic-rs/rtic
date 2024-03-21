@@ -180,6 +180,35 @@ jobs:
         if: ${{ matrix.backend != 'riscv32-imc-clint' }}
         run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} example-check
 
+  # Platform hifive1: verify all examples, checks
+  checkexamplesesp32c3:
+    name: check examples (esp32c3)
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        backend:
+          - riscv32-esp32-c3
+        toolchain:
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup toolchain install nightly-2023-11-14 --component rust-src --target riscv32imc-unknown-none-elf
+
+      - name: Configure Rust target
+        run: |
+          rustup target add riscv32imc-unknown-none-elf
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Check the examples
+        run: cargo xtask --platform esp32c3 --backend ${{ matrix.backend }} example-check
+
+
   buildqemu:
     name: Get modern QEMU, build and store
     runs-on: ubuntu-22.04

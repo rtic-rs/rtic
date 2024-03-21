@@ -166,8 +166,8 @@ impl Backends {
             Backends::Thumbv7 => ARMV7M,
             Backends::Thumbv8Base => ARMV8MBASE,
             Backends::Thumbv8Main => ARMV8MMAIN,
-            Backends::Riscv32ImcClint => RISCV32IMC,
-            Backends::RiscvEsp32C3 | Backends::Riscv32ImacClint => RISCV32IMAC,
+            Backends::Riscv32ImcClint | Backends::RiscvEsp32C3 => RISCV32IMC,
+            Backends::Riscv32ImacClint => RISCV32IMAC,
         }
     }
 
@@ -202,6 +202,7 @@ pub enum BuildOrCheck {
 
 #[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
 pub enum Platforms {
+    Esp32C3,
     Hifive1,
     #[default]
     Lm3s6965,
@@ -215,6 +216,7 @@ pub enum Platforms {
 impl Platforms {
     pub fn name(&self) -> String {
         let name = match self {
+            Platforms::Esp32C3 => "esp32c3",
             Platforms::Hifive1 => "hifive1",
             Platforms::Lm3s6965 => "lm3s6965",
             Platforms::Nrf52840 => "nrf52840",
@@ -230,6 +232,7 @@ impl Platforms {
     pub fn rust_flags(&self) -> Vec<String> {
         let c = "-C".to_string();
         match self {
+            Platforms::Esp32C3 => vec![c, "link-arg=-Tlinkall.x".to_string()],
             Platforms::Hifive1 => vec![c, "link-arg=-Thifive1-link.x".to_string()],
             Platforms::Lm3s6965 => vec![c, "link-arg=-Tlink.x".to_string()],
             Platforms::Nrf52840 => vec![
@@ -267,6 +270,7 @@ impl Platforms {
     /// Get the default backend for the platform
     pub fn default_backend(&self) -> Backends {
         match self {
+            Platforms::Esp32C3 => Backends::RiscvEsp32C3,
             Platforms::Hifive1 => Backends::Riscv32ImcClint,
             Platforms::Lm3s6965 => Backends::Thumbv7,
             Platforms::Nrf52840 => unimplemented!(),
@@ -282,6 +286,10 @@ impl Platforms {
     /// If the backend is supported, but no special features are needed, return Ok(None).
     pub fn features(&self, backend: &Backends) -> Result<Option<&'static str>, ()> {
         match self {
+            Platforms::Esp32C3 => match backend.to_target() {
+                RISCV32IMC => Ok(None),
+                _ => Err(()),
+            },
             Platforms::Hifive1 => match backend.to_target() {
                 RISCV32IMC | RISCV32IMAC => Ok(None),
                 _ => Err(()),
