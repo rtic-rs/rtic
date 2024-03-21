@@ -5,10 +5,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
-## Unreleased
+## Unreleased - v2.0.0
 
 ### Changed
 
+- Rework all timers based on `rtic-time 2.0.0`
+- Most timer tick rates are now configurable
 - Tweak `build.rs` to avoid warnings in Nightly 1.78+
 - Removed unused `rust-toolchain.toml`
 

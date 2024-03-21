@@ -2,63 +2,24 @@
 //!
 //! To run this test, you need to activate the `critical-section/std` feature.
 
-use std::{
-    fmt::Debug,
-    task::{Poll, Waker},
-};
-
 use cassette::Cassette;
 use parking_lot::Mutex;
-use rtic_time::{Monotonic, TimerQueue};
+use rtic_time::timer_queue::{TimerQueue, TimerQueueBackend};
 
-static NOW: Mutex<Option<Instant>> = Mutex::new(None);
+mod peripheral {
+    use parking_lot::Mutex;
+    use std::{
+        sync::atomic::{AtomicU64, Ordering},
+        task::{Poll, Waker},
+    };
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
-pub struct Duration(u64);
+    use super::TestMonoBackend;
 
-impl Duration {
-    pub const fn from_ticks(millis: u64) -> Self {
-        Self(millis)
-    }
-
-    pub fn as_ticks(&self) -> u64 {
-        self.0
-    }
-}
-
-impl core::ops::Add<Duration> for Duration {
-    type Output = Duration;
-
-    fn add(self, rhs: Duration) -> Self::Output {
-        Self(self.0 + rhs.0)
-    }
-}
-
-impl From<Duration> for Instant {
-    fn from(value: Duration) -> Self {
-        Instant(value.0)
-    }
-}
-
-static WAKERS: Mutex<Vec<Waker>> = Mutex::new(Vec::new());
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
-pub struct Instant(u64);
-
-impl Instant {
-    const ZERO: Self = Self(0);
+    static NOW: AtomicU64 = AtomicU64::new(0);
+    static WAKERS: Mutex<Vec<Waker>> = Mutex::new(Vec::new());
 
     pub fn tick() -> bool {
-        // If we've never ticked before, initialize the clock.
-        if NOW.lock().is_none() {
-            *NOW.lock() = Some(Instant::ZERO);
-        }
-        // We've ticked before, add one to the clock
-        else {
-            let now = Instant::now();
-            let new_time = now + Duration(1);
-            *NOW.lock() = Some(new_time);
-        }
+        NOW.fetch_add(1, Ordering::Release);
 
         let had_wakers = !WAKERS.lock().is_empty();
         // Wake up all things waiting for a specific time to happen.
@@ -66,22 +27,18 @@ impl Instant {
             waker.wake_by_ref();
         }
 
-        let had_interrupt = TestMono::tick(false);
+        let had_interrupt = TestMonoBackend::tick(false);
 
         had_interrupt || had_wakers
     }
 
-    pub fn now() -> Self {
-        NOW.lock().clone().unwrap_or(Instant::ZERO)
+    pub fn now() -> u64 {
+        NOW.load(Ordering::Acquire)
     }
 
-    pub fn elapsed(&self) -> Duration {
-        Duration(Self::now().0 - self.0)
-    }
-
-    pub async fn wait_until(time: Instant) {
+    pub async fn wait_until(time: u64) {
         core::future::poll_fn(|ctx| {
-            if Instant::now() >= time {
+            if now() >= time {
                 Poll::Ready(())
             } else {
                 WAKERS.lock().push(ctx.waker().clone());
@@ -92,51 +49,21 @@ impl Instant {
     }
 }
 
-impl From<u64> for Instant {
-    fn from(value: u64) -> Self {
-        Self(value)
-    }
-}
+static COMPARE: Mutex<Option<u64>> = Mutex::new(None);
+static TIMER_QUEUE: TimerQueue<TestMonoBackend> = TimerQueue::new();
 
-impl core::ops::Add<Duration> for Instant {
-    type Output = Instant;
+pub struct TestMonoBackend;
 
-    fn add(self, rhs: Duration) -> Self::Output {
-        Self(self.0 + rhs.0)
-    }
-}
-
-impl core::ops::Sub<Duration> for Instant {
-    type Output = Instant;
-
-    fn sub(self, rhs: Duration) -> Self::Output {
-        Self(self.0 - rhs.0)
-    }
-}
-
-impl core::ops::Sub<Instant> for Instant {
-    type Output = Duration;
-
-    fn sub(self, rhs: Instant) -> Self::Output {
-        Duration(self.0 - rhs.0)
-    }
-}
-
-static COMPARE: Mutex<Option<Instant>> = Mutex::new(None);
-static TIMER_QUEUE: TimerQueue<TestMono> = TimerQueue::new();
-
-pub struct TestMono;
-
-impl TestMono {
+impl TestMonoBackend {
     pub fn tick(force_interrupt: bool) -> bool {
-        let now = Instant::now();
+        let now = peripheral::now();
 
         let compare_reached = Some(now) == Self::compare();
         let interrupt = compare_reached || force_interrupt;
 
         if interrupt {
             unsafe {
-                TestMono::queue().on_monotonic_interrupt();
+                TestMonoBackend::timer_queue().on_monotonic_interrupt();
             }
             true
         } else {
@@ -144,35 +71,26 @@ impl TestMono {
         }
     }
 
-    /// Initialize the monotonic.
-    pub fn init() {
-        Self::queue().initialize(Self);
-    }
-
-    /// Used to access the underlying timer queue
-    pub fn queue() -> &'static TimerQueue<TestMono> {
-        &TIMER_QUEUE
-    }
-
-    pub fn compare() -> Option<Instant> {
+    pub fn compare() -> Option<u64> {
         COMPARE.lock().clone()
     }
 }
 
-impl Monotonic for TestMono {
-    const ZERO: Self::Instant = Instant::ZERO;
-    const TICK_PERIOD: Self::Duration = Duration::from_ticks(1);
+impl TestMonoBackend {
+    fn init() {
+        Self::timer_queue().initialize(Self);
+    }
+}
 
-    type Instant = Instant;
+impl TimerQueueBackend for TestMonoBackend {
+    type Ticks = u64;
 
-    type Duration = Duration;
-
-    fn now() -> Self::Instant {
-        Instant::now()
+    fn now() -> Self::Ticks {
+        peripheral::now()
     }
 
-    fn set_compare(instant: Self::Instant) {
-        let _ = COMPARE.lock().insert(instant);
+    fn set_compare(instant: Self::Ticks) {
+        *COMPARE.lock() = Some(instant);
     }
 
     fn clear_compare_flag() {}
@@ -180,42 +98,40 @@ impl Monotonic for TestMono {
     fn pend_interrupt() {
         Self::tick(true);
     }
+
+    fn timer_queue() -> &'static TimerQueue<Self> {
+        &TIMER_QUEUE
+    }
 }
 
 #[test]
 fn timer_queue() {
-    TestMono::init();
-    let start = Instant::ZERO;
+    TestMonoBackend::init();
+    let start = 0;
 
     let build_delay_test = |pre_delay: Option<u64>, delay: u64| {
-        let delay = Duration::from_ticks(delay);
-        let pre_delay = pre_delay.map(Duration::from_ticks);
-
         let total = if let Some(pre_delay) = pre_delay {
             pre_delay + delay
         } else {
             delay
         };
-        let total_millis = total.as_ticks();
 
         async move {
             // A `pre_delay` simulates a delay in scheduling,
             // without the `pre_delay` being present in the timer
             // queue
             if let Some(pre_delay) = pre_delay {
-                Instant::wait_until(start + pre_delay).await;
+                peripheral::wait_until(start + pre_delay).await;
             }
 
-            TestMono::queue().delay(delay).await;
+            TestMonoBackend::timer_queue().delay(delay).await;
 
-            let elapsed = start.elapsed().as_ticks();
-            println!("{total_millis} ticks delay reached after {elapsed} ticks");
+            let elapsed = peripheral::now() - start;
+            println!("{total} ticks delay reached after {elapsed} ticks");
 
             // Expect a delay of one longer, to compensate for timer uncertainty
-            if elapsed != total_millis + 1 {
-                panic!(
-                    "{total_millis} ticks delay was not on time ({elapsed} ticks passed instead)"
-                );
+            if elapsed != total + 1 {
+                panic!("{total} ticks delay was not on time ({elapsed} ticks passed instead)");
             }
         }
     };
@@ -259,31 +175,31 @@ fn timer_queue() {
         // We only poll the waiting futures if an
         // interrupt occured or if an artificial delay
         // has passed.
-        if Instant::tick() {
+        if peripheral::tick() {
             poll!(d1, d2, d3);
         }
 
-        if Instant::now() == 0.into() {
+        if peripheral::now() == 0 {
             // First, we want to be waiting for our 300 tick delay
-            assert_eq!(TestMono::compare(), Some(301.into()));
+            assert_eq!(TestMonoBackend::compare(), Some(301));
         }
 
-        if Instant::now() == 100.into() {
+        if peripheral::now() == 100 {
             // After 100 ticks, we enqueue a new delay that is supposed to last
             // until the 200-tick-mark
-            assert_eq!(TestMono::compare(), Some(201.into()));
+            assert_eq!(TestMonoBackend::compare(), Some(201));
         }
 
-        if Instant::now() == 201.into() {
+        if peripheral::now() == 201 {
             // After 200 ticks, we dequeue the 200-tick-mark delay and
             // requeue the 300 tick delay
-            assert_eq!(TestMono::compare(), Some(301.into()));
+            assert_eq!(TestMonoBackend::compare(), Some(301));
         }
 
-        if Instant::now() == 301.into() {
+        if peripheral::now() == 301 {
             // After 300 ticks, we dequeue the 300-tick-mark delay and
             // go to the 400 tick delay that is already enqueued
-            assert_eq!(TestMono::compare(), Some(401.into()));
+            assert_eq!(TestMonoBackend::compare(), Some(401));
         }
     }
 

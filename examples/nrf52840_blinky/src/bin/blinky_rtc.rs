@@ -5,16 +5,15 @@
 
 use nrf52840_blinky::hal;
 
+use rtic_monotonics::nrf::rtc::prelude::*;
+nrf_rtc0_monotonic!(Mono);
+
 #[rtic::app(device = hal::pac, dispatchers = [SWI0_EGU0])]
 mod app {
     use super::*;
 
     use hal::gpio::{Level, Output, Pin, PushPull};
     use hal::prelude::*;
-
-    use rtic_monotonics::nrf::rtc::Rtc0 as Mono;
-    use rtic_monotonics::nrf::rtc::*;
-    use rtic_monotonics::Monotonic;
 
     #[shared]
     struct Shared {}
@@ -30,8 +29,7 @@ mod app {
         hal::clocks::Clocks::new(cx.device.CLOCK).start_lfclk();
 
         // Initialize Monotonic
-        let token = rtic_monotonics::create_nrf_rtc0_monotonic_token!();
-        Mono::start(cx.device.RTC0, token);
+        Mono::start(cx.device.RTC0);
 
         // Setup LED
         let port0 = hal::gpio::p0::Parts::new(cx.device.P0);

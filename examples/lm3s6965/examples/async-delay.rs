@@ -11,7 +11,9 @@ use panic_semihosting as _;
 #[rtic::app(device = lm3s6965, dispatchers = [SSI0, UART0], peripherals = true)]
 mod app {
     use cortex_m_semihosting::{debug, hprintln};
-    use rtic_monotonics::systick::*;
+    use rtic_monotonics::systick::prelude::*;
+
+    systick_monotonic!(Mono, 100);
 
     #[shared]
     struct Shared {}
@@ -23,8 +25,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         hprintln!("init");
 
-        let systick_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, 12_000_000, systick_token);
+        Mono::start(cx.core.SYST, 12_000_000);
 
         foo::spawn().ok();
         bar::spawn().ok();
@@ -36,21 +37,21 @@ mod app {
     #[task]
     async fn foo(_cx: foo::Context) {
         hprintln!("hello from foo");
-        Systick::delay(100.millis()).await;
+        Mono::delay(100.millis()).await;
         hprintln!("bye from foo");
     }
 
     #[task]
     async fn bar(_cx: bar::Context) {
         hprintln!("hello from bar");
-        Systick::delay(200.millis()).await;
+        Mono::delay(200.millis()).await;
         hprintln!("bye from bar");
     }
 
     #[task]
     async fn baz(_cx: baz::Context) {
         hprintln!("hello from baz");
-        Systick::delay(300.millis()).await;
+        Mono::delay(300.millis()).await;
         hprintln!("bye from baz");
 
         debug::exit(debug::EXIT_SUCCESS);
