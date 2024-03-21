@@ -6,3 +6,6 @@
 Cargo.lock
 *.hex
 book-target/
+
+.DS_Store
+.vscode/

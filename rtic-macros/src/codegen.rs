@@ -8,6 +8,7 @@ pub mod bindings;
 
 mod assertions;
 mod async_dispatchers;
+mod extra_mods;
 mod hardware_tasks;
 mod idle;
 mod init;

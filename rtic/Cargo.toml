@@ -1,22 +1,28 @@
 [package]
 authors = [
-    "The Real-Time Interrupt-driven Concurrency developers",
-    "Emil Fresk <emil.fresk@gmail.com>",
-    "Henrik Tjäder <henrik@tjaders.com>",
-    "Jorge Aparicio <jorge@japaric.io>",
-    "Per Lindgren <per.lindgren@ltu.se>",
+  "The Real-Time Interrupt-driven Concurrency developers",
+  "Emil Fresk <emil.fresk@gmail.com>",
+  "Henrik Tjäder <henrik@tjaders.com>",
+  "Jorge Aparicio <jorge@japaric.io>",
+  "Per Lindgren <per.lindgren@ltu.se>",
 ]
 categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "Real-Time Interrupt-driven Concurrency (RTIC): a concurrency framework for building real-time systems"
 documentation = "https://rtic.rs/"
 edition = "2021"
-keywords = ["embedded", "async", "runtime", "no-std", "rtos"]
+keywords = [
+  "embedded",
+  "async",
+  "runtime",
+  "no-std",
+  "rtos",
+]
 license = "MIT OR Apache-2.0"
 name = "rtic"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
-version = "2.1.0"
+version = "2.1.1"
 
 [package.metadata.docs.rs]
 features = ["rtic-macros/test-template"]
@@ -25,25 +31,20 @@ features = ["rtic-macros/test-template"]
 name = "rtic"
 
 [dependencies]
-esp32c3 = { version = "0.20.0", optional = true }
-riscv = { version = "0.11.0", optional = true }
+riscv-slic = { git = "https://github.com/romancardenas/riscv-slic.git", rev = "2a91edb", optional = true }
+esp32c3 = { version = "0.20.0", optional = true}
+riscv = {version = "0.11.0", optional = true}
 cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
-#portable-atomic = { version = "0.3.19" }
+# portable-atomic = { version = "0.3.19" }
 atomic-polyfill = "1"
 rtic-macros = { path = "../rtic-macros", version = "=2.1.0" }
 rtic-core = "1"
 critical-section = "1"
 
 [dev-dependencies]
-heapless = "0.8"
 lm3s6965 = "0.2"
 cortex-m-semihosting = "0.5.0"
-rtic-time = { path = "../rtic-time" }
-rtic-sync = { path = "../rtic-sync" }
-rtic-monotonics = { path = "../rtic-monotonics", version = "2.0.0", features = [
-    "cortex-m-systick",
-] }
 
 [dev-dependencies.futures]
 version = "0.3.26"
@@ -66,12 +67,7 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]
+riscv-clint-backend = ["riscv", "riscv-slic/clint-backend", "rtic-macros/riscv-slic"]
 
 # needed for testing
-rtic-uitestv7 = ["thumbv7-backend"]
-rtic-uitestv6 = ["thumbv6-backend"]
 test-critical-section = ["cortex-m/critical-section-single-core"]
-
-# [[example]]
-# name = "pool"
-# required-features = ["test-critical-section"]

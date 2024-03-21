@@ -11,6 +11,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Rework all timers based on `rtic-time 2.0.0`
 - Most timer tick rates are now configurable
+- Tweak `build.rs` to avoid warnings in Nightly 1.78+
 - Removed unused `rust-toolchain.toml`
 
 ## v1.5.0 - 2024-01-10

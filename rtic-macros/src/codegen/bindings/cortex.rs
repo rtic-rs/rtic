@@ -35,6 +35,12 @@ pub fn interrupt_ident() -> Ident {
     Ident::new("interrupt", span)
 }
 
+pub fn interrupt_mod(app: &App) -> TokenStream2 {
+    let device = &app.args.device;
+    let interrupt = interrupt_ident();
+    quote!(#device::#interrupt)
+}
+
 pub fn check_stack_overflow_before_init(
     _app: &App,
     _analysis: &CodegenAnalysis,
@@ -199,12 +205,16 @@ mod basepri {
     }
 }
 
+pub fn pre_init_preprocessing(_app: &mut App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+    Ok(())
+}
+
 pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
     // check that all dispatchers exists in the `Interrupt` enumeration regardless of whether
     // they are used or not
-    let interrupt = util::interrupt_ident();
+    let interrupt = interrupt_ident();
     let rt_err = util::rt_err_ident();
 
     for name in app.args.dispatchers.keys() {
@@ -217,7 +227,7 @@ pub fn pre_init_checks(app: &App, _: &SyntaxAnalysis) -> Vec<TokenStream2> {
 pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
-    let interrupt = util::interrupt_ident();
+    let interrupt = interrupt_ident();
     let rt_err = util::rt_err_ident();
     let device = &app.args.device;
     let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
@@ -379,5 +389,9 @@ pub fn handler_config(
     _analysis: &CodegenAnalysis,
     _dispatcher_name: Ident,
 ) -> Vec<TokenStream2> {
+    vec![]
+}
+
+pub fn extra_modules(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
     vec![]
 }

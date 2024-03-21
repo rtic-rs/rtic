@@ -13,6 +13,7 @@ use crate::syntax::{
         App, AppArgs, Dispatcher, Dispatchers, HardwareTask, Idle, IdleArgs, Init, InitArgs,
         LocalResource, SharedResource, SoftwareTask,
     },
+    backend::BackendArgs,
     parse::{self as syntax_parse, util},
     Either, Map, Set,
 };
@@ -24,8 +25,10 @@ impl AppArgs {
         (|input: ParseStream<'_>| -> parse::Result<Self> {
             let mut custom = Set::new();
             let mut device = None;
+            let mut core = true;
             let mut peripherals = true;
             let mut dispatchers = Dispatchers::new();
+            let mut backend = None;
 
             loop {
                 if input.is_empty() {
@@ -55,6 +58,17 @@ impl AppArgs {
                             return Err(parse::Error::new(
                                 ident.span(),
                                 "unexpected argument value; this should be a path",
+                            ));
+                        }
+                    }
+
+                    "core" => {
+                        if let Ok(p) = input.parse::<LitBool>() {
+                            core = p.value;
+                        } else {
+                            return Err(parse::Error::new(
+                                ident.span(),
+                                "unexpected argument value; this should be a boolean",
                             ));
                         }
                     }
@@ -113,6 +127,18 @@ impl AppArgs {
                             ));
                         }
                     }
+
+                    "backend" => {
+                        if let Ok(p) = input.parse::<BackendArgs>() {
+                            backend = Some(p);
+                        } else {
+                            return Err(parse::Error::new(
+                                ident.span(),
+                                "unable to parse backend configuration",
+                            ));
+                        }
+                    }
+
                     _ => {
                         return Err(parse::Error::new(ident.span(), "unexpected argument"));
                     }
@@ -134,8 +160,10 @@ impl AppArgs {
 
             Ok(AppArgs {
                 device,
+                core,
                 peripherals,
                 dispatchers,
+                backend,
             })
         })
         .parse2(tokens)

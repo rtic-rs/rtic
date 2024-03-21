@@ -1,0 +1,6 @@
+foo accessing shared2 resource start
+pending bar
+bar pended
+foo accessing shared2 resource end
+bar running
+bar accesing shared2 resource

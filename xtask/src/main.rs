@@ -11,12 +11,12 @@ use std::{path::Path, str};
 use log::{error, info, log_enabled, trace, Level};
 
 use crate::{
-    argument_parsing::{Backends, BuildOrCheck, Cli, Commands},
+    argument_parsing::{BuildOrCheck, Cli, Commands, Platforms},
     build::init_build_dir,
     run::*,
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Target<'a> {
     triple: &'a str,
     has_std: bool,
@@ -54,6 +54,8 @@ const ARMV6M: Target = Target::new("thumbv6m-none-eabi", false);
 const ARMV7M: Target = Target::new("thumbv7m-none-eabi", false);
 const ARMV8MBASE: Target = Target::new("thumbv8m.base-none-eabi", false);
 const ARMV8MMAIN: Target = Target::new("thumbv8m.main-none-eabi", false);
+const RISCV32IMC: Target = Target::new("riscv32imc-unknown-none-elf", false);
+const RISCV32IMAC: Target = Target::new("riscv32imac-unknown-none-elf", false);
 
 fn main() -> anyhow::Result<()> {
     // if there's an `xtask` folder, we're *probably* at the root of this repo (we can't just
@@ -64,13 +66,6 @@ fn main() -> anyhow::Result<()> {
             "xtasks can only be executed from the root of the `rtic` repository"
         ));
     }
-
-    let examples: Vec<_> = std::fs::read_dir("./rtic/examples")?
-        .filter_map(|p| p.ok())
-        .map(|p| p.path())
-        .filter(|p| p.display().to_string().ends_with(".rs"))
-        .map(|path| path.file_stem().unwrap().to_str().unwrap().to_string())
-        .collect();
 
     let cli = Cli::parse();
 
@@ -94,11 +89,34 @@ fn main() -> anyhow::Result<()> {
     );
     log::debug!("Partial features: {}", globals.partial);
 
+    let platform = if let Some(platform) = globals.platform {
+        platform
+    } else {
+        Platforms::default()
+    };
+
     let backend = if let Some(backend) = globals.backend {
         backend
     } else {
-        Backends::default()
+        platform.default_backend()
     };
+
+    // Check if the platform supports the backend
+    if platform.features(&backend).is_err() {
+        return Err(anyhow::anyhow!(
+            "platform {:?} does not support backend {:?}",
+            platform,
+            backend
+        ));
+    }
+
+    let examples_path = format!("./examples/{}/examples", platform.name());
+    let examples: Vec<_> = std::fs::read_dir(examples_path)?
+        .filter_map(|p| p.ok())
+        .map(|p| p.path())
+        .filter(|p| p.display().to_string().ends_with(".rs"))
+        .map(|path| path.file_stem().unwrap().to_str().unwrap().to_string())
+        .collect();
 
     let example = globals.example.clone();
     let exampleexclude = globals.exampleexclude.clone();
@@ -163,42 +181,45 @@ fn main() -> anyhow::Result<()> {
         Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
         Commands::Clippy(args) => {
             info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(globals, &cargologlevel, &args, backend)
+            cargo_clippy(globals, &cargologlevel, args, backend)
         }
         Commands::Check(args) => {
             info!("Checking on backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Check, &cargologlevel, &args, backend)
+            cargo(globals, BuildOrCheck::Check, &cargologlevel, args, backend)
         }
         Commands::Build(args) => {
             info!("Building for backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Build, &cargologlevel, &args, backend)
+            cargo(globals, BuildOrCheck::Build, &cargologlevel, args, backend)
         }
         Commands::ExampleCheck => {
-            info!("Checking on backend: {backend:?}");
+            info!("Checking on platform: {platform:?}, backend: {backend:?}");
             cargo_example(
                 globals,
                 BuildOrCheck::Check,
                 &cargologlevel,
+                platform,
                 backend,
                 &examples_to_run,
             )
         }
         Commands::ExampleBuild => {
-            info!("Building for backend: {backend:?}");
+            info!("Building for platform: {platform:?}, backend: {backend:?}");
             cargo_example(
                 globals,
                 BuildOrCheck::Build,
                 &cargologlevel,
+                platform,
                 backend,
                 &examples_to_run,
             )
         }
         Commands::Size(args) => {
             // x86_64 target not valid
-            info!("Measuring for backend: {backend:?}");
+            info!("Measuring for platform: {platform:?}, backend: {backend:?}");
             build_and_check_size(
                 globals,
                 &cargologlevel,
+                platform,
                 backend,
                 &examples_to_run,
                 &args.arguments,
@@ -206,10 +227,11 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
-            info!("Testing for backend: {backend:?}");
+            info!("Testing for platform: {platform:?}, backend: {backend:?}");
             qemu_run_examples(
                 globals,
                 &cargologlevel,
+                platform,
                 backend,
                 &examples_to_run,
                 args.overwrite_expected,
@@ -221,19 +243,11 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Test(args) => {
             info!("Running cargo test on backend: {backend:?}");
-            cargo_test(globals, &args, backend)
+            cargo_test(globals, args, backend)
         }
         Commands::Book(args) => {
             info!("Running mdbook");
             cargo_book(globals, &args.arguments)
-        }
-        Commands::UsageExampleCheck(examples) => {
-            info!("Checking usage examples");
-            cargo_usage_example(globals, BuildOrCheck::Check, examples.examples()?)
-        }
-        Commands::UsageExampleBuild(examples) => {
-            info!("Building usage examples");
-            cargo_usage_example(globals, BuildOrCheck::Build, examples.examples()?)
         }
     };
 

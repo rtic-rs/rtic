@@ -10,11 +10,17 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Changed
 
 - Remove unused dependency `rtic-monotonics`
+## [v2.1.1] - 2024-03-13
+
+### Fixed
+
+- **Soundness fix:** `thumbv6` was subject to race in source mask.
 
 ## [v2.1.0] - 2024-02-27
 
 ### Added
 
+- Unstable support for RISC-V targets compatible with `riscv-slic`
 - Unstable support for ESP32-C3
 
 ### Fixed
