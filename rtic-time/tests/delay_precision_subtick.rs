@@ -273,7 +273,7 @@ fn timer_queue_subtick_precision() {
     // then we will actually wait c subticks.
     // The important part is that c is never smaller than b,
     // in all cases, as that would violate the contract of
-    // embedded-hal's DelayUs.
+    // embedded-hal's DelayNs.
 
     subtick_test!(0, 0, 0);
     subtick_test!(0, 1, 20);

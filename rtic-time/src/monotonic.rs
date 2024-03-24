@@ -73,8 +73,11 @@ pub trait Monotonic {
     fn disable_timer() {}
 }
 
-/// Creates impl blocks for `embedded_hal::delay::DelayUs`,
-/// based on `fugit::ExtU64Ceil`.
+/// Creates impl blocks for [`embedded_hal::delay::DelayNs`][DelayNs],
+/// based on [`fugit::ExtU64Ceil`][ExtU64Ceil].
+///
+/// [DelayNs]: https://docs.rs/embedded-hal/latest/embedded_hal/delay/trait.DelayNs.html
+/// [ExtU64Ceil]: https://docs.rs/fugit/latest/fugit/trait.ExtU64Ceil.html
 #[macro_export]
 macro_rules! embedded_hal_delay_impl_fugit64 {
     ($t:ty) => {
@@ -121,8 +124,11 @@ macro_rules! embedded_hal_delay_impl_fugit64 {
     };
 }
 
-/// Creates impl blocks for `embedded_hal_async::delay::DelayUs`,
-/// based on `fugit::ExtU64Ceil`.
+/// Creates impl blocks for [`embedded_hal_async::delay::DelayNs`][DelayNs],
+/// based on [`fugit::ExtU64Ceil`][ExtU64Ceil].
+///
+/// [DelayNs]: https://docs.rs/embedded-hal-async/latest/embedded_hal_async/delay/trait.DelayNs.html
+/// [ExtU64Ceil]: https://docs.rs/fugit/latest/fugit/trait.ExtU64Ceil.html
 #[macro_export]
 macro_rules! embedded_hal_async_delay_impl_fugit64 {
     ($t:ty) => {
@@ -148,8 +154,11 @@ macro_rules! embedded_hal_async_delay_impl_fugit64 {
     };
 }
 
-/// Creates impl blocks for `embedded_hal::delay::DelayUs`,
-/// based on `fugit::ExtU32Ceil`.
+/// Creates impl blocks for [`embedded_hal::delay::DelayNs`][DelayNs],
+/// based on [`fugit::ExtU32Ceil`][ExtU32Ceil].
+///
+/// [DelayNs]: https://docs.rs/embedded-hal/latest/embedded_hal/delay/trait.DelayNs.html
+/// [ExtU32Ceil]: https://docs.rs/fugit/latest/fugit/trait.ExtU32Ceil.html
 #[macro_export]
 macro_rules! embedded_hal_delay_impl_fugit32 {
     ($t:ty) => {
@@ -196,8 +205,11 @@ macro_rules! embedded_hal_delay_impl_fugit32 {
     };
 }
 
-/// Creates impl blocks for `embedded_hal_async::delay::DelayUs`,
-/// based on `fugit::ExtU32Ceil`.
+/// Creates impl blocks for [`embedded_hal_async::delay::DelayNs`][DelayNs],
+/// based on [`fugit::ExtU32Ceil`][ExtU32Ceil].
+///
+/// [DelayNs]: https://docs.rs/embedded-hal-async/latest/embedded_hal_async/delay/trait.DelayNs.html
+/// [ExtU32Ceil]: https://docs.rs/fugit/latest/fugit/trait.ExtU32Ceil.html
 #[macro_export]
 macro_rules! embedded_hal_async_delay_impl_fugit32 {
     ($t:ty) => {

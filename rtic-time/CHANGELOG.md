@@ -13,6 +13,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Docs: Rename `DelayUs` to `DelayNs` in docs.
+
 ## v1.3.0 - 2024-01-10
 
 ### Changed
