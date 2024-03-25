@@ -41,9 +41,9 @@ impl Timer {
         resets: &RESETS,
         _interrupt_token: impl crate::InterruptToken<Self>,
     ) {
-        resets.reset.modify(|_, w| w.timer().clear_bit());
-        while resets.reset_done.read().timer().bit_is_clear() {}
-        timer.inte.modify(|_, w| w.alarm_0().bit(true));
+        resets.reset().modify(|_, w| w.timer().clear_bit());
+        while resets.reset_done().read().timer().bit_is_clear() {}
+        timer.inte().modify(|_, w| w.alarm_0().bit(true));
 
         TIMER_QUEUE.initialize(Self {});
 
@@ -109,10 +109,10 @@ impl Monotonic for Timer {
     fn now() -> Self::Instant {
         let timer = Self::timer();
 
-        let mut hi0 = timer.timerawh.read().bits();
+        let mut hi0 = timer.timerawh().read().bits();
         loop {
-            let low = timer.timerawl.read().bits();
-            let hi1 = timer.timerawh.read().bits();
+            let low = timer.timerawl().read().bits();
+            let hi1 = timer.timerawh().read().bits();
             if hi0 == hi1 {
                 break Self::Instant::from_ticks((u64::from(hi0) << 32) | u64::from(low));
             }
@@ -133,12 +133,12 @@ impl Monotonic for Timer {
         };
 
         Self::timer()
-            .alarm0
+            .alarm0()
             .write(|w| unsafe { w.bits(val as u32) });
     }
 
     fn clear_compare_flag() {
-        Self::timer().intr.modify(|_, w| w.alarm_0().bit(true));
+        Self::timer().intr().modify(|_, w| w.alarm_0().bit(true));
     }
 
     fn pend_interrupt() {

@@ -8,8 +8,10 @@
 mod app {
     use rp_pico::hal::{
         clocks, gpio,
-        gpio::pin::bank0::{Gpio2, Gpio25, Gpio3},
-        gpio::pin::PushPullOutput,
+        gpio::{
+            bank0::{Gpio2, Gpio25, Gpio3},
+            FunctionSio, PullDown, PullUp, SioOutput,
+        },
         pac,
         sio::Sio,
         watchdog::Watchdog,
@@ -27,8 +29,8 @@ mod app {
     type I2CBus = I2C<
         pac::I2C1,
         (
-            gpio::Pin<Gpio2, gpio::FunctionI2C>,
-            gpio::Pin<Gpio3, gpio::FunctionI2C>,
+            gpio::Pin<Gpio2, gpio::FunctionI2C, PullUp>,
+            gpio::Pin<Gpio3, gpio::FunctionI2C, PullUp>,
         ),
     >;
 
@@ -37,7 +39,7 @@ mod app {
 
     #[local]
     struct Local {
-        led: gpio::Pin<Gpio25, PushPullOutput>,
+        led: gpio::Pin<Gpio25, FunctionSio<SioOutput>, PullDown>,
         i2c: &'static mut I2CBus,
     }
 
@@ -78,8 +80,8 @@ mod app {
         led.set_low().unwrap();
 
         // Init I2C pins
-        let sda_pin = gpioa.gpio2.into_mode::<gpio::FunctionI2C>();
-        let scl_pin = gpioa.gpio3.into_mode::<gpio::FunctionI2C>();
+        let sda_pin: gpio::Pin<_, gpio::FunctionI2C, _> = gpioa.gpio2.reconfigure();
+        let scl_pin: gpio::Pin<_, gpio::FunctionI2C, _> = gpioa.gpio3.reconfigure();
 
         // Init I2C itself, using MaybeUninit to overwrite the previously
         // uninitialized i2c_ctx variable without dropping its value
