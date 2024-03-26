@@ -11,6 +11,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Replace `async` implementations of `delay`/`delay_until`/`timeout`/`timeout_at` with strucs to reduce memory usage.
+
 ### Fixed
 
 - Docs: Rename `DelayUs` to `DelayNs` in docs.
