@@ -73,10 +73,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
         if !task.is_extern {
             let attrs = &task.attrs;
+            let cfgs = &task.cfgs;
             let context = &task.context;
             let stmts = &task.stmts;
             user_tasks.push(quote!(
                 #(#attrs)*
+                #(#cfgs)*
                 #[allow(non_snake_case)]
                 fn #name(#context: #name::Context) {
                     use rtic::Mutex as _;
