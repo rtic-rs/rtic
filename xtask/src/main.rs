@@ -109,7 +109,6 @@ fn main() -> anyhow::Result<()> {
             backend
         ));
     }
-
     let examples_path = format!("./examples/{}/examples", platform.name());
     let examples: Vec<_> = std::fs::read_dir(examples_path)?
         .filter_map(|p| p.ok())
