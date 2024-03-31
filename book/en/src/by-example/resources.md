@@ -9,7 +9,7 @@ Declaration of system-wide resources is done by annotating **two** `struct`s wit
 Each task must declare the resources it intends to access in its corresponding metadata attribute using the `local` and `shared` arguments. Each argument takes a list of resource identifiers. The listed resources are made available to the context under the `local` and `shared` fields of the `Context` structure.
 
 The `init` task returns the initial values for the system-wide (`#[shared]` and `#[local]`) resources.
- 
+
 <!-- and the set of initialized timers used by the application. The monotonic timers will be
 further discussed in [Monotonic & `spawn_{at/after}`](./monotonic.md). -->
 
@@ -25,18 +25,18 @@ Types of `#[local]` resources must implement a [`Send`] trait as they are being 
 
 The example application shown below contains three tasks `foo`, `bar` and `idle`, each having access to its own `#[local]` resource.
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/locals.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/locals.rs}}
 ```
 
 Running the example:
 
-``` console
+```console
 $ cargo run --target thumbv7m-none-eabi --example locals
 ```
 
-``` console
-{{#include ../../../../rtic/ci/expected/locals.run}}
+```console
+{{#include ../../../../ci/expected/lm3s6965/locals.run}}
 ```
 
 Local resources in `#[init]` and `#[idle]` have `'static` lifetimes. This is safe since both tasks are not re-entrant.
@@ -51,16 +51,17 @@ Types of `#[task(local = [..])]` resources have to be neither [`Send`] nor [`Syn
 
 In the example below the different uses and lifetimes are shown:
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/declared_locals.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/declared_locals.rs}}
 ```
 
 You can run the application, but as the example is designed merely to showcase the lifetime properties there is no output (it suffices to build the application).
 
-``` console
+```console
 $ cargo build --target thumbv7m-none-eabi --example declared_locals
 ```
-<!-- {{#include ../../../../rtic/ci/expected/declared_locals.run}} -->
+
+<!-- {{#include ../../../../ci/expected/lm3s6965/declared_locals.run}} -->
 
 ## `#[shared]` resources and `lock`
 
@@ -69,23 +70,23 @@ Critical sections are required to access `#[shared]` resources in a data race-fr
 [`Mutex`]: ../../../api/rtic/trait.Mutex.html
 [`lock`]: ../../../api/rtic/trait.Mutex.html#method.lock
 
-The critical section created by the `lock` API is based on dynamic priorities: it temporarily raises the dynamic priority of the context to a *ceiling* priority that prevents other tasks from preempting the critical section. This synchronization protocol is known as the [Immediate Ceiling Priority Protocol (ICPP)][icpp], and complies with [Stack Resource Policy (SRP)][srp] based scheduling of RTIC.
+The critical section created by the `lock` API is based on dynamic priorities: it temporarily raises the dynamic priority of the context to a _ceiling_ priority that prevents other tasks from preempting the critical section. This synchronization protocol is known as the [Immediate Ceiling Priority Protocol (ICPP)][icpp], and complies with [Stack Resource Policy (SRP)][srp] based scheduling of RTIC.
 
 [icpp]: https://en.wikipedia.org/wiki/Priority_ceiling_protocol
 [srp]: https://en.wikipedia.org/wiki/Stack_Resource_Policy
 
 In the example below we have three interrupt handlers with priorities ranging from one to three. The two handlers with the lower priorities contend for a `shared` resource and need to succeed in locking the resource in order to access its data. The highest priority handler, which does not access the `shared` resource, is free to preempt a critical section created by the lowest priority handler.
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/lock.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/lock.rs}}
 ```
 
-``` console
+```console
 $ cargo run --target thumbv7m-none-eabi --example lock
 ```
 
-``` console
-{{#include ../../../../rtic/ci/expected/lock.run}}
+```console
+{{#include ../../../../ci/expected/lm3s6965/lock.run}}
 ```
 
 Types of `#[shared]` resources have to be [`Send`].
@@ -94,16 +95,16 @@ Types of `#[shared]` resources have to be [`Send`].
 
 As an extension to `lock`, and to reduce rightward drift, locks can be taken as tuples. The following examples show this in use:
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/multilock.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/multilock.rs}}
 ```
 
-``` console
+```console
 $ cargo run --target thumbv7m-none-eabi --example multilock
 ```
 
-``` console
-{{#include ../../../../rtic/ci/expected/multilock.run}}
+```console
+{{#include ../../../../ci/expected/lm3s6965/multilock.run}}
 ```
 
 ## Only shared (`&-`) access
@@ -112,44 +113,44 @@ By default, the framework assumes that all tasks require exclusive mutable acces
 
 The advantage of specifying shared access (`&-`) to a resource is that no locks are required to access the resource even if the resource is contended by more than one task running at different priorities. The downside is that the task only gets a shared reference (`&-`) to the resource, limiting the operations it can perform on it, but where a shared reference is enough this approach reduces the number of required locks. In addition to simple immutable data, this shared access can be useful where the resource type safely implements interior mutability, with appropriate locking or atomic operations of its own.
 
-Note that in this release of RTIC it is not possible to request both exclusive access (`&mut-`) and shared access (`&-`) to the *same* resource from different tasks. Attempting to do so will result in a compile error.
+Note that in this release of RTIC it is not possible to request both exclusive access (`&mut-`) and shared access (`&-`) to the _same_ resource from different tasks. Attempting to do so will result in a compile error.
 
 In the example below a key (e.g. a cryptographic key) is loaded (or created) at runtime (returned by `init`) and then used from two tasks that run at different priorities without any kind of lock.
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/only-shared-access.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/only-shared-access.rs}}
 ```
 
-``` console
+```console
 $ cargo run --target thumbv7m-none-eabi --example only-shared-access
 ```
 
-``` console
-{{#include ../../../../rtic/ci/expected/only-shared-access.run}}
+```console
+{{#include ../../../../ci/expected/lm3s6965/only-shared-access.run}}
 ```
 
 ## Lock-free access of shared resources
 
-A critical section is *not* required to access a `#[shared]` resource that's only accessed by tasks running at the *same* priority. In this case, you can opt out of the `lock` API by adding the `#[lock_free]` field-level attribute to the resource declaration (see example below). 
+A critical section is _not_ required to access a `#[shared]` resource that's only accessed by tasks running at the _same_ priority. In this case, you can opt out of the `lock` API by adding the `#[lock_free]` field-level attribute to the resource declaration (see example below).
 
 <!-- Note that this is merely a convenience to reduce needless resource locking code, because even if the
 `lock` API is used, at runtime the framework will **not** produce a critical section due to how
 the underlying resource-ceiling preemption works. -->
 
-To adhere to the Rust [aliasing] rule, a resource may be either accessed through multiple immutable references or a singe mutable reference (but not both at the same time). 
+To adhere to the Rust [aliasing] rule, a resource may be either accessed through multiple immutable references or a singe mutable reference (but not both at the same time).
 
 [aliasing]: https://doc.rust-lang.org/nomicon/aliasing.html
 
-Using `#[lock_free]` on resources shared by tasks running at different priorities will result in a *compile-time* error -- not using the `lock` API would violate the aforementioned alias rule. Similarly, for each priority there can be only a single *software* task accessing a shared resource (as an `async` task may yield execution to other *software* or *hardware* tasks running at the same priority). However, under this single-task restriction, we make the observation that the resource is in effect no longer `shared` but rather `local`. Thus, using a `#[lock_free]` shared resource will result in a *compile-time* error -- where applicable, use a `#[local]` resource instead.
+Using `#[lock_free]` on resources shared by tasks running at different priorities will result in a _compile-time_ error -- not using the `lock` API would violate the aforementioned alias rule. Similarly, for each priority there can be only a single _software_ task accessing a shared resource (as an `async` task may yield execution to other _software_ or _hardware_ tasks running at the same priority). However, under this single-task restriction, we make the observation that the resource is in effect no longer `shared` but rather `local`. Thus, using a `#[lock_free]` shared resource will result in a _compile-time_ error -- where applicable, use a `#[local]` resource instead.
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/lock-free.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/lock-free.rs}}
 ```
 
-``` console
+```console
 $ cargo run --target thumbv7m-none-eabi --example lock-free
 ```
 
-``` console
-{{#include ../../../../rtic/ci/expected/lock-free.run}}
+```console
+{{#include ../../../../ci/expected/lm3s6965/lock-free.run}}
 ```

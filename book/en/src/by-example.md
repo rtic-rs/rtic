@@ -22,14 +22,14 @@ either `--examples` (run all examples) or `--example NAME` to run a specific exa
 
 Assuming dependencies in place, running:
 
-``` console
+```console
 $ cargo run --target thumbv7m-none-eabi --example locals
 ```
 
 Yields this output:
 
-``` console
-{{#include ../../../rtic/ci/expected/locals.run}}
+```console
+{{#include ../../../ci/expected/lm3s6965/locals.run}}
 ```
 
 > **NOTE**: You can choose target device by passing a target
