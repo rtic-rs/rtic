@@ -13,14 +13,14 @@ As this example of approach goes completely outside of RTIC resource model with 
 
 Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 
-``` rust,noplayground
-{{#include ../../../../../rtic/examples/pool.rs}}
+```rust,noplayground
+{{#include ../../../../../examples/lm3s6965/examples/pool.rs}}
 ```
 
-``` console
+```console
 $ cargo run --target thumbv7m-none-eabi --example pool
 ```
 
-``` console
-{{#include ../../../../../rtic/ci/expected/pool.run}}
+```console
+{{#include ../../../../../ci/expected/lm3s6965/pool.run}}
 ```
