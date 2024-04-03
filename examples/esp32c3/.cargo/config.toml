@@ -1,5 +1,9 @@
 [target.riscv32imc-unknown-none-elf]
-runner = "espflash flash --monitor"
+# Real hardware
+#runner = "espflash flash --monitor"
+
+# QEMU emulator
+runner = "./runner.sh"
 
 [build]
 rustflags = [

@@ -15,6 +15,8 @@ env:
   OLDOLDOLDSTABLE_VERSION: 0.4
   QEMU_VERSION: 8.2.0
   QEMU_URL: https://download.qemu.org/qemu-8.2.0.tar.xz
+  QEMU_ESP: qemu_esp
+  QEMU_ESP_URL: https://github.com/espressif/qemu/releases/download/esp-develop-8.2.0-20240122/qemu-riscv32-softmmu-esp_develop_8.2.0_20240122-x86_64-linux-gnu.tar.xz
 
 jobs:
   # Run cargo xtask format-check
@@ -230,7 +232,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y qemu-system-arm qemu-system-riscv32
-          sudo apt-get install git libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build
+          sudo apt install -y git libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build
 
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: Download QEMU
@@ -250,8 +252,16 @@ jobs:
         name: Build QEMU
         run: |
           cd qemu-${{ env.QEMU_VERSION }}
-          make -j$(nproc)
+          ninja -C build
           
+      - name: Download ESP32 QEMU
+        run: wget "${{ env.QEMU_ESP_URL }}" --output-document=${{ env.QEMU_ESP}}.tar.xz
+
+      - name: Extract ESP32 QEMU
+        run: |
+          mkdir -p qemu-${{ env.QEMU_VERSION }}/build/esp32
+          tar --strip-components=1 -xvJf ${{ env.QEMU_ESP }}.tar.xz -C qemu-${{ env.QEMU_VERSION }}/build/esp32 qemu
+
       - name: Archive QEMU build
         run: |
           cd qemu-${{ env.QEMU_VERSION }}/build
@@ -385,6 +395,75 @@ jobs:
       - name: Run-pass tests
         if: ${{ matrix.backend != 'riscv32-imc-clint' }}
         run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} qemu
+
+  # Platform esp32c3: verify the example output with run-pass tests
+  testexamplesesp32c3:
+    name: QEMU run (esp32c3)
+    needs: buildqemu
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.toolchain }}
+
+      - name: Configure Rust target
+        run: |
+          rustup target add riscv32imac-unknown-none-elf
+          rustup target add riscv32imc-unknown-none-elf
+
+      - name: Add Rust component llvm-tools-preview
+        run: rustup component add llvm-tools-preview
+
+      - name: Install libudev espflash dependency
+        run: |
+          sudo apt update
+          sudo apt install -y libudev-dev
+
+      # Use precompiled binutils
+      - name: Install cargo-binutils
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binutils
+
+      # Use precompiled if possible
+      - name: Install cargo-binutils
+        uses: taiki-e/install-action@v2
+        with:
+          tool: espflash
+
+      - name: Install esptool.py
+        run: pip install esptool
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install QEMU to get dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y qemu-system-riscv32
+
+      - name: Download built QEMU
+        uses: actions/download-artifact@v4
+        with:
+          name: qemu
+      
+      - name: Extract ESP32 QEMU into local path
+        run: sudo tar --strip-components=1 -xf qemu.tar -C /usr/local/ esp32/
+
+      - name: Check which QEMU is used
+        run: |
+          which qemu-system-riscv32
+      
+      - name: Run-pass tests
+        run: cargo xtask -vvv --platform esp32-c3 qemu
 
   # Run test suite
   tests:
@@ -829,6 +908,7 @@ jobs:
       - checkexamplesesp32c3
       - testexampleslm3s6965
       - testexampleshifive1
+      - testexamplesesp32c3
       - tests
       - docs
       - mdbook
