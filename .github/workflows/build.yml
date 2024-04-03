@@ -180,7 +180,7 @@ jobs:
         if: ${{ matrix.backend != 'riscv32-imc-clint' }}
         run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} example-check
 
-  # Platform hifive1: verify all examples, checks
+  # Platform esp32c3: verify all examples, checks
   checkexamplesesp32c3:
     name: check examples (esp32c3)
     runs-on: ubuntu-22.04
