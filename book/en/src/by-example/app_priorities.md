@@ -38,7 +38,7 @@ The following example showcases the priority based scheduling of tasks:
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example preempt
+$ cargo xtask qemu --verbose --example preempt
 {{#include ../../../../ci/expected/lm3s6965/preempt.run}}
 ```
 

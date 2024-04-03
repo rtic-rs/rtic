@@ -15,7 +15,7 @@ In the following example two different tasks share a [`heapless::spsc::Queue`] f
 Running this program produces the expected output.
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example static
+$ cargo xtask qemu --verbose --example static
 ```
 
 ```console

@@ -18,7 +18,7 @@ Here's an example where `heapless::Pool` is used to "box" buffers of 128 bytes.
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example pool
+$ cargo xtask qemu --verbose --example pool
 ```
 
 ```console

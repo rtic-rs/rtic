@@ -16,7 +16,7 @@ The example below shows that `idle` runs after `init`.
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example idle
+$ cargo xtask qemu --verbose --example idle
 ```
 
 ```console
@@ -43,7 +43,7 @@ The following example shows how to enable sleep by setting the
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example idle-wfi
+$ cargo xtask qemu --verbose --example idle-wfi
 ```
 
 ```console

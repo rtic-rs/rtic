@@ -32,7 +32,7 @@ The example application shown below contains three tasks `foo`, `bar` and `idle`
 Running the example:
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example locals
+$ cargo xtask qemu --verbose --example locals
 ```
 
 ```console
@@ -82,7 +82,7 @@ In the example below we have three interrupt handlers with priorities ranging fr
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example lock
+$ cargo xtask qemu --verbose --example lock
 ```
 
 ```console
@@ -100,7 +100,7 @@ As an extension to `lock`, and to reduce rightward drift, locks can be taken as 
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example multilock
+$ cargo xtask qemu --verbose --example multilock
 ```
 
 ```console
@@ -122,7 +122,7 @@ In the example below a key (e.g. a cryptographic key) is loaded (or created) at 
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example only-shared-access
+$ cargo xtask qemu --verbose --example only-shared-access
 ```
 
 ```console
@@ -148,7 +148,7 @@ Using `#[lock_free]` on resources shared by tasks running at different prioritie
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example lock-free
+$ cargo xtask qemu --verbose --example lock-free
 ```
 
 ```console

@@ -18,7 +18,7 @@ The example below shows how to place the higher priority task, `bar`, in RAM.
 Running this program produces the expected output.
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example ramfunc
+$ cargo xtask qemu --verbose --example ramfunc
 ```
 
 ```console

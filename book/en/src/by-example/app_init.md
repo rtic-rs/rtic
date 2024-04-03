@@ -25,7 +25,7 @@ In the rare case you want to implement an ultra-slim application you can explici
 Running the example will print `init` to the console and then exit the QEMU process.
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example init
+$ cargo xtask qemu --verbose --example init
 ```
 
 ```console

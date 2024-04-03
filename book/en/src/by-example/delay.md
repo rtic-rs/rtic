@@ -35,7 +35,7 @@ async fn foo(_cx: foo::Context) {
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example async-delay --features test-critical-section
+$ cargo xtask qemu --verbose --example async-delay --features test-critical-section
 ```
 
 ```console
@@ -97,7 +97,7 @@ For the third iteration, with `n == 2`, `hal_get` will take 550ms to finish, in 
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example async-timeout --features test-critical-section
+$ cargo xtask qemu --verbose --example async-timeout --features test-critical-section
 ```
 
 ```console

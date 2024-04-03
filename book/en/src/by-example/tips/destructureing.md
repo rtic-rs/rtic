@@ -8,7 +8,7 @@ resources. Here are two examples on how to split up the resource struct:
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example destructure
+$ cargo xtask qemu --verbose --example destructure
 ```
 
 ```console

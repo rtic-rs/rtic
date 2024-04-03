@@ -27,7 +27,7 @@ See the following example:
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example spawn
+$ cargo xtask qemu --verbose --example spawn
 ```
 
 ```console
@@ -45,7 +45,7 @@ Technically the async executor will `poll` the `foo` _future_ which in this case
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example spawn_loop
+$ cargo xtask qemu --verbose --example spawn_loop
 ```
 
 ```console
@@ -61,7 +61,7 @@ Technically, a `spawn` to a _future_ that is not in _completed_ state is conside
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example spawn_err
+$ cargo xtask qemu --verbose --example spawn_err
 ```
 
 ```console
@@ -77,7 +77,7 @@ You can also pass arguments at spawn as follows.
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example spawn_arguments
+$ cargo xtask qemu --verbose --example spawn_arguments
 ```
 
 ```console
@@ -97,7 +97,7 @@ Conceptually, one can see such tasks as running in the `main` thread of the appl
 ```
 
 ```console
-$ cargo run --target thumbv7m-none-eabi --example zero-prio-task
+$ cargo xtask qemu --verbose --example zero-prio-task
 ```
 
 ```console
