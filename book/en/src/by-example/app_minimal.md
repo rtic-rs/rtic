@@ -2,18 +2,19 @@
 
 This is the smallest possible RTIC application:
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/smallest.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/smallest.rs}}
 ```
 
 RTIC is designed with resource efficiency in mind. RTIC itself does not rely on any dynamic memory allocation, thus RAM requirement is dependent only on the application. The flash memory footprint is below 1kB including the interrupt vector table.
 
 For a minimal example you can expect something like:
-``` console
+
+```console
 $ cargo size --example smallest --target thumbv7m-none-eabi --release
 ```
 
-``` console
+```console
 Finished release [optimized] target(s) in 0.07s
    text    data     bss     dec     hex filename
     924       0       0     924     39c smallest

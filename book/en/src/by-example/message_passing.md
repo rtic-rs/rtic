@@ -15,6 +15,6 @@ The number of arguments to a task is not limited:
 ```
 
 ``` console
-$ cargo run --target thumbv7m-none-eabi --example message_passing
+$ cargo xtask qemu --verbose --example message_passing
 {{#include ../../../../ci/expected/message_passing.run}}
 ```

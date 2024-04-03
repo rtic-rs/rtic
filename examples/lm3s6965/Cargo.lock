@@ -354,7 +354,7 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "atomic-polyfill",
  "bare-metal 1.0.0",
@@ -429,6 +429,7 @@ name = "rtic_lm3s6965"
 version = "0.1.0"
 dependencies = [
  "bare-metal 1.0.0",
+ "cfg-if",
  "cortex-m",
  "cortex-m-semihosting",
  "futures",
