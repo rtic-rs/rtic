@@ -826,6 +826,7 @@ jobs:
       # clippyhifive1 TODO
       - checkexampleslm3s6965
       - checkexampleshifive1
+      - checkexamplesesp32c3
       - testexampleslm3s6965
       - testexampleshifive1
       - tests
