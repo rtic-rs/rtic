@@ -18,6 +18,7 @@ rtic-time = { path = "../../rtic-time" }
 rtic-sync = { path = "../../rtic-sync" }
 rtic-monotonics = { path = "../../rtic-monotonics", features = ["cortex-m-systick"] }
 rtic = { path = "../../rtic" }
+cfg-if = "1.0"
 
 [dependencies.futures]
 version = "0.3.26"
