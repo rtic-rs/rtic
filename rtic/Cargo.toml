@@ -32,7 +32,6 @@ name = "rtic"
 
 [dependencies]
 riscv-slic = { git = "https://github.com/romancardenas/riscv-slic.git", rev = "2a91edb", optional = true }
-#esp32c3 = { git = "https://github.com/esp-rs/esp-pacs", rev = "963c280621f0b7ec26546a5eff24a5032305437f", optional = true }
 esp32c3 = {version="0.21.0",optional=true}
 riscv = {version = "0.11.0", optional = true}
 cortex-m = { version = "0.7.0", optional = true }
