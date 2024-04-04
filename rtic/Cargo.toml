@@ -10,13 +10,7 @@ categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "Real-Time Interrupt-driven Concurrency (RTIC): a concurrency framework for building real-time systems"
 documentation = "https://rtic.rs/"
 edition = "2021"
-keywords = [
-  "embedded",
-  "async",
-  "runtime",
-  "no-std",
-  "rtos",
-]
+keywords = ["embedded", "async", "runtime", "no-std", "rtos"]
 license = "MIT OR Apache-2.0"
 name = "rtic"
 readme = "../README.md"
@@ -32,8 +26,8 @@ name = "rtic"
 
 [dependencies]
 riscv-slic = { git = "https://github.com/romancardenas/riscv-slic.git", rev = "2a91edb", optional = true }
-esp32c3 = { version = "0.20.0", optional = true}
-riscv = {version = "0.11.0", optional = true}
+esp32c3 = { version = "0.21.0", optional = true }
+riscv = { version = "0.11.0", optional = true }
 cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
 # portable-atomic = { version = "0.3.19" }
@@ -68,7 +62,14 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]
-riscv-clint-backend = ["riscv", "riscv-slic/clint-backend", "rtic-macros/riscv-slic"]
+riscv-clint-backend = [
+  "riscv",
+  "riscv-slic/clint-backend",
+  "rtic-macros/riscv-slic",
+]
 
 # needed for testing
-test-critical-section = ["cortex-m/critical-section-single-core", "rtic-monotonics/systick-100hz"]
+test-critical-section = [
+  "cortex-m/critical-section-single-core",
+  "rtic-monotonics/systick-100hz",
+]
