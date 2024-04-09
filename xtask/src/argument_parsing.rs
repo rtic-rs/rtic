@@ -154,6 +154,7 @@ pub enum Backends {
     Thumbv8Base,
     Thumbv8Main,
     RiscvEsp32C3,
+    RiscvEsp32C6,
     Riscv32ImcClint, // not working yet (issues with portable-atomic features...)
     Riscv32ImacClint,
 }
@@ -167,7 +168,7 @@ impl Backends {
             Backends::Thumbv8Base => ARMV8MBASE,
             Backends::Thumbv8Main => ARMV8MMAIN,
             Backends::Riscv32ImcClint | Backends::RiscvEsp32C3 => RISCV32IMC,
-            Backends::Riscv32ImacClint => RISCV32IMAC,
+            Backends::Riscv32ImacClint | Backends::RiscvEsp32C6 => RISCV32IMAC,
         }
     }
 
@@ -179,6 +180,7 @@ impl Backends {
             Backends::Thumbv8Base => "thumbv8base-backend",
             Backends::Thumbv8Main => "thumbv8main-backend",
             Backends::RiscvEsp32C3 => "riscv-esp32c3-backend",
+            Backends::RiscvEsp32C6 => "riscv-esp32c6-backend",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint-backend",
         }
     }
@@ -188,6 +190,7 @@ impl Backends {
             Backends::Thumbv6 | Backends::Thumbv8Base => "cortex-m-source-masking",
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
             Backends::RiscvEsp32C3 => "riscv-esp32c3",
+            Backends::RiscvEsp32C6 => "riscv-esp32c6",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
         }
     }
@@ -203,6 +206,7 @@ pub enum BuildOrCheck {
 #[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
 pub enum Platforms {
     Esp32C3,
+    Esp32C6,
     Hifive1,
     #[default]
     Lm3s6965,
@@ -217,6 +221,7 @@ impl Platforms {
     pub fn name(&self) -> String {
         let name = match self {
             Platforms::Esp32C3 => "esp32c3",
+            Platforms::Esp32C6 => "esp32c6",
             Platforms::Hifive1 => "hifive1",
             Platforms::Lm3s6965 => "lm3s6965",
             Platforms::Nrf52840 => "nrf52840",
@@ -232,7 +237,7 @@ impl Platforms {
     pub fn rust_flags(&self) -> Vec<String> {
         let c = "-C".to_string();
         match self {
-            Platforms::Esp32C3 => vec![c, "link-arg=-Tlinkall.x".to_string()],
+            Platforms::Esp32C3 | Platforms::Esp32C6 => vec![c, "link-arg=-Tlinkall.x".to_string()],
             Platforms::Hifive1 => vec![c, "link-arg=-Thifive1-link.x".to_string()],
             Platforms::Lm3s6965 => vec![c, "link-arg=-Tlink.x".to_string()],
             Platforms::Nrf52840 => vec![
@@ -271,6 +276,7 @@ impl Platforms {
     pub fn default_backend(&self) -> Backends {
         match self {
             Platforms::Esp32C3 => Backends::RiscvEsp32C3,
+            Platforms::Esp32C6 => Backends::RiscvEsp32C6,
             Platforms::Hifive1 => Backends::Riscv32ImcClint,
             Platforms::Lm3s6965 => Backends::Thumbv7,
             Platforms::Nrf52840 => unimplemented!(),
@@ -288,6 +294,10 @@ impl Platforms {
         match self {
             Platforms::Esp32C3 => match backend.to_target() {
                 RISCV32IMC => Ok(None),
+                _ => Err(()),
+            },
+            Platforms::Esp32C6 => match backend.to_target() {
+                RISCV32IMAC => Ok(None),
                 _ => Err(()),
             },
             Platforms::Hifive1 => match backend.to_target() {

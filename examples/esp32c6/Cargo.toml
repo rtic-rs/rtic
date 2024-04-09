@@ -1,0 +1,24 @@
+[package]
+name = "esp32-c6"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace]
+
+[dependencies]
+rtic = {path = "../../rtic/"}
+esp-hal = { version = "0.16.1", features = ["esp32c6", "direct-vectoring", "interrupt-preemption"] }
+esp-backtrace = { version = "0.11.0", features = [
+    "esp32c6",
+    "panic-handler",
+    "exception-handler",
+    "println",
+] }
+
+esp32c6 = {version = "0.12.0", features = ["critical-section"]}
+esp-println = { version = "0.9.0", default-features=false, features = ["esp32c6", "uart"] }
+
+[features]
+test-critical-section = []
+riscv-esp32c6-backend = ["rtic/riscv-esp32c6-backend"]
