@@ -39,7 +39,7 @@ See the following example:
 ```
 
 ``` console
-$ cargo run --target thumbv7m-none-eabi --example schedule
+$ cargo xtask qemu --verbose --example schedule
 {{#include ../../../../ci/expected/schedule.run}}
 ```
 
@@ -59,6 +59,6 @@ too late and that the task is already sent for execution. The following example 
 ```
 
 ``` console
-$ cargo run --target thumbv7m-none-eabi --example cancel-reschedule
+$ cargo xtask qemu --verbose --example cancel-reschedule
 {{#include ../../../../ci/expected/cancel-reschedule.run}}
 ```

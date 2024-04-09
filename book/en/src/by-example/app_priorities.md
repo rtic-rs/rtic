@@ -33,16 +33,16 @@ Task Priority
 
 The following example showcases the priority based scheduling of tasks:
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/preempt.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/preempt.rs}}
 ```
 
-``` console
-$ cargo run --target thumbv7m-none-eabi --example preempt
-{{#include ../../../../rtic/ci/expected/preempt.run}}
+```console
+$ cargo xtask qemu --verbose --example preempt
+{{#include ../../../../ci/expected/lm3s6965/preempt.run}}
 ```
 
-Note that the task `bar` does *not* preempt task `baz` because its priority is the *same* as `baz`'s. The higher priority task `bar` runs before `foo` when `baz`returns. When `bar` returns `foo` can resume.
+Note that the task `bar` does _not_ preempt task `baz` because its priority is the _same_ as `baz`'s. The higher priority task `bar` runs before `foo` when `baz`returns. When `bar` returns `foo` can resume.
 
 One more note about priorities: choosing a priority higher than what the device supports will result in a compilation error. The error is cryptic due to limitations in the Rust language, if `priority = 9` for task `uart0_interrupt` in `example/common.rs` this looks like:
 

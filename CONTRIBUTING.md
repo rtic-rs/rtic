@@ -36,30 +36,23 @@ Please make sure that tests passes locally before submitting.
 ### Example check
 
 ```shell
-> cargo check --examples --target thumbv7m-none-eabi
+> cargo xtask example-check
 ```
 
-and/or
+### Run examples/tests on QEMU device
 
 ```shell
-> cargo check --examples --target thumbv6m-none-eabi
+> cargo xtask qemu
 ```
 
-### Run tests with xtask
+Will execute examples on your local `qemu` install.
 
-```shell
-> cargo xtask --target all
-```
-
-Will execute `run` tests on your local `qemu` install.
-(You may also pass a single target `--target thumbv6m-none-eabi/thumbv7m-none-eabi` during development).
-
-#### Adding tests to xtask
+#### Adding examples/tests to xtask
 
 If you have added further tests, you need to add the expected output in the `ci/expected` folder.
 
 ```shell
->  cargo run --example <NAME> --target thumbv7m-none-eabi > ci/expected/<NAME>.run
+>  cargo xtask qemu --overwrite-expected
 ```
 
 ### Internal tests
@@ -67,7 +60,7 @@ If you have added further tests, you need to add the expected output in the `ci/
 Run internal fail tests locally with:
 
 ```shell
-> cargo test --tests
+> cargo xtask test
 ```
 
 #### Adding tests to internal tests
@@ -76,7 +69,7 @@ If you have added fail tests or changed the expected behavior, the expected outp
 Inspect the error output, when sure that `ACTUAL OUTPUT` is correct you can re-run the test as:
 
 ```shell
-> TRYBUILD=overwrite cargo test --tests
+> TRYBUILD=overwrite cargo xtask test
 ```
 
 This will update the expected output to match the `ACTUAL OUTPUT`.

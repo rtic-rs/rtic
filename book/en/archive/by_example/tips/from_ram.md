@@ -11,35 +11,35 @@ improve performance in some cases.
 
 The example below shows how to place the higher priority task, `bar`, in RAM.
 
-``` rust,noplayground
-{{#include ../../../../../rtic/examples/ramfunc.rs}}
+```rust,noplayground
+{{#include ../../../../../examples/lm3s6965/examples/ramfunc.rs}}
 ```
 
 Running this program produces the expected output.
 
-``` console
-$ cargo run --target thumbv7m-none-eabi --example ramfunc
+```console
+$ cargo xtask qemu --verbose --example ramfunc
 ```
 
-``` console
-{{#include ../../../../../rtic/ci/expected/ramfunc.run}}
+```console
+{{#include ../../../../../ci/expected/lm3s6965/ramfunc.run}}
 ```
 
 One can look at the output of `cargo-nm` to confirm that `bar` ended in RAM
 (`0x2000_0000`), whereas `foo` ended in Flash (`0x0000_0000`).
 
-``` console
+```console
 $ cargo nm --example ramfunc --release | grep ' foo::'
 ```
 
-``` console
-{{#include ../../../../../rtic/ci/expected/ramfunc.run.grep.foo}}
+```console
+{{#include ../../../../../ci/expected/lm3s6965/ramfunc.run.grep.foo}}
 ```
 
-``` console
+```console
 $ cargo nm --example ramfunc  --target thumbv7m-none-eabi --release | grep '*bar::'
 ```
 
-``` console
-{{#include ../../../../../rtic/ci/expected/ramfunc.run.grep.bar}}
+```console
+{{#include ../../../../../ci/expected/lm3s6965/ramfunc.run.grep.bar}}
 ```

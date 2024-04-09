@@ -4,7 +4,7 @@
 
 All RTIC applications use the [`app`] attribute (`#[app(..)]`). This attribute only applies to a `mod`-item containing the RTIC application.
 
-The `app` attribute has a mandatory `device` argument that takes a *path* as a value. This must be a full path pointing to a *peripheral access crate* (PAC) generated using [`svd2rust`] **v0.14.x** or newer.
+The `app` attribute has a mandatory `device` argument that takes a _path_ as a value. This must be a full path pointing to a _peripheral access crate_ (PAC) generated using [`svd2rust`] **v0.14.x** or newer.
 
 The `app` attribute will expand into a suitable entry point and thus replaces the use of the [`cortex_m_rt::entry`] attribute.
 
@@ -14,13 +14,13 @@ The `app` attribute will expand into a suitable entry point and thus replaces th
 
 ## Structure and zero-cost concurrency
 
-An RTIC `app` is an executable system model for single-core applications, declaring a set of `local` and `shared` resources operated on by a set of `init`, `idle`, *hardware* and *software* tasks. 
+An RTIC `app` is an executable system model for single-core applications, declaring a set of `local` and `shared` resources operated on by a set of `init`, `idle`, _hardware_ and _software_ tasks.
 
-* `init`  runs before any other task, and returns the `local` and `shared` resources.
-* Tasks (both hardware and software) run preemptively based on their associated static priority.
-* Hardware tasks are bound to underlying hardware interrupts.
-* Software tasks are schedulied by an set of asynchronous executors, one for each software task priority.
-* `idle` has the lowest priority, and can be used for background work, and/or to put the system to sleep until it is woken by some event.
+- `init` runs before any other task, and returns the `local` and `shared` resources.
+- Tasks (both hardware and software) run preemptively based on their associated static priority.
+- Hardware tasks are bound to underlying hardware interrupts.
+- Software tasks are schedulied by an set of asynchronous executors, one for each software task priority.
+- `idle` has the lowest priority, and can be used for background work, and/or to put the system to sleep until it is woken by some event.
 
 At compile time the task/resource model is analyzed under the Stack Resource Policy (SRP) and executable code generated with the following outstanding properties:
 
@@ -41,6 +41,6 @@ Priorities in RTIC follow a higher value = more important scheme. For examples, 
 To give a taste of RTIC, the following example contains commonly used features.
 In the following sections we will go through each feature in detail.
 
-``` rust,noplayground
-{{#include ../../../../rtic/examples/common.rs}}
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/common.rs}}
 ```

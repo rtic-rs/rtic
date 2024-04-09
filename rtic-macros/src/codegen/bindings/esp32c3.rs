@@ -176,11 +176,11 @@ mod esp32c3 {
             // Check for stack overflow using symbols from `risc-v-rt`.
             extern "C" {
                 pub static _stack_start: u32;
-                pub static __ebss: u32;
+                pub static _bss_end: u32;
             }
 
             let stack_start = &_stack_start as *const _ as u32;
-            let ebss = &__ebss as *const _ as u32;
+            let ebss = &_bss_end as *const _ as u32;
 
             if stack_start > ebss {
                 // No flip-link usage, check the SP for overflow.
@@ -248,3 +248,5 @@ mod esp32c3 {
     }
 
 }
+}
+
