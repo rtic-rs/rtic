@@ -242,11 +242,7 @@ mod esp32c3 {
         stmts
     }
 
-
     pub fn extra_modules(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
         vec![]
     }
-
 }
-}
-
