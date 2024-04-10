@@ -1,4 +1,4 @@
-//! [`Monotonic`] impl for the STM32.
+//! [`Monotonic`](rtic_time::Monotonic) implementations for STM32 chips.
 //!
 //! Not all timers are available on all parts. Ensure that only available
 //! timers are exposed by having the correct `stm32*` feature enabled for `rtic-monotonics`.
@@ -6,38 +6,56 @@
 //! # Example
 //!
 //! ```
-//! use rtic_monotonics::stm32::*;
-//! use rtic_monotonics::stm32::Tim2 as Mono;
-//! use rtic_monotonics::Monotonic;
-//! use embassy_stm32::peripherals::TIM2;
-//! use embassy_stm32::rcc::low_level::RccPeripheral;
+//! use rtic_monotonics::stm32::prelude::*;
+//!
+//! // Define the monotonic and set it to 1MHz tick rate
+//! stm32_tim2_monotonic!(Mono, 1_000_000);
 //!
 //! fn init() {
-//!     // Generate timer token to ensure correct timer interrupt handler is used.
-//!     let token = rtic_monotonics::create_stm32_tim2_monotonic_token!();
-//!
 //!     // If using `embassy-stm32` HAL, timer clock can be read out like this:
-//!     let timer_clock_hz = TIM2::frequency();
+//!     let timer_clock_hz = embassy_stm32::peripherals::TIM2::frequency();
 //!     // Or define it manually if you are using other HAL or know correct frequency:
 //!     let timer_clock_hz = 64_000_000;
 //!
 //!     // Start the monotonic
-//!     Mono::start(timer_clock_hz, token);
+//!     Mono::start(timer_clock_hz);
 //! }
 //!
 //! async fn usage() {
 //!     loop {
 //!          // Use the monotonic
-//!          let timestamp = Mono::now().ticks();
+//!          let timestamp = Mono::now();
 //!          Mono::delay(100.millis()).await;
 //!     }
 //! }
 //! ```
 
-use crate::{Monotonic, TimeoutError, TimerQueue};
+/// Common definitions and traits for using the STM32 monotonics
+pub mod prelude {
+    #[cfg(feature = "stm32_tim2")]
+    pub use crate::stm32_tim2_monotonic;
+
+    #[cfg(feature = "stm32_tim3")]
+    pub use crate::stm32_tim3_monotonic;
+
+    #[cfg(feature = "stm32_tim4")]
+    pub use crate::stm32_tim4_monotonic;
+
+    #[cfg(feature = "stm32_tim5")]
+    pub use crate::stm32_tim5_monotonic;
+
+    #[cfg(feature = "stm32_tim15")]
+    pub use crate::stm32_tim15_monotonic;
+
+    pub use crate::Monotonic;
+    pub use fugit::{self, ExtU64, ExtU64Ceil};
+}
+
 use atomic_polyfill::{AtomicU64, Ordering};
-pub use fugit::{self, ExtU64, ExtU64Ceil};
-use rtic_time::half_period_counter::calculate_now;
+use rtic_time::{
+    half_period_counter::calculate_now,
+    timer_queue::{TimerQueue, TimerQueueBackend},
+};
 use stm32_metapac as pac;
 
 mod _generated {
@@ -48,116 +66,180 @@ mod _generated {
     include!(concat!(env!("OUT_DIR"), "/_generated.rs"));
 }
 
-const TIMER_HZ: u32 = 1_000_000;
-
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __internal_create_stm32_timer_interrupt {
-    ($mono_timer:ident, $timer:ident, $timer_token:ident) => {{
+    ($mono_backend:ident, $interrupt_name:ident) => {
         #[no_mangle]
         #[allow(non_snake_case)]
-        unsafe extern "C" fn $timer() {
-            $crate::stm32::$mono_timer::__tq().on_monotonic_interrupt();
+        unsafe extern "C" fn $interrupt_name() {
+            use $crate::TimerQueueBackend;
+            $crate::stm32::$mono_backend::timer_queue().on_monotonic_interrupt();
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __internal_create_stm32_timer_struct {
+    ($name:ident, $mono_backend:ident, $timer:ident, $tick_rate_hz:expr) => {
+        struct $name;
+
+        impl $name {
+            /// Starts the `Monotonic`.
+            ///
+            /// - `tim_clock_hz`: `TIMx` peripheral clock frequency.
+            ///
+            /// Panics if it is impossible to achieve the desired monotonic tick rate based
+            /// on the given `tim_clock_hz` parameter. If that happens, adjust the desired monotonic tick rate.
+            ///
+            /// This method must be called only once.
+            pub fn start(tim_clock_hz: u32) {
+                $crate::__internal_create_stm32_timer_interrupt!($mono_backend, $timer);
+
+                $crate::stm32::$mono_backend::_start(tim_clock_hz, $tick_rate_hz);
+            }
         }
 
-        pub struct $timer_token;
+        impl $crate::TimerQueueBasedMonotonic for $name {
+            type Backend = $crate::stm32::$mono_backend;
+            type Instant = $crate::fugit::Instant<
+                <Self::Backend as $crate::TimerQueueBackend>::Ticks,
+                1,
+                { $tick_rate_hz },
+            >;
+            type Duration = $crate::fugit::Duration<
+                <Self::Backend as $crate::TimerQueueBackend>::Ticks,
+                1,
+                { $tick_rate_hz },
+            >;
+        }
 
-        unsafe impl $crate::InterruptToken<$crate::stm32::$mono_timer> for $timer_token {}
-
-        $timer_token
-    }};
+        $crate::rtic_time::impl_embedded_hal_delay_fugit!($name);
+        $crate::rtic_time::impl_embedded_hal_async_delay_fugit!($name);
+    };
 }
 
-/// Register TIM2 interrupt for the monotonic.
+/// Create a TIM2 based monotonic and register the TIM2 interrupt for it.
+///
+/// See [`crate::stm32`] for more details.
+///
+/// # Arguments
+///
+/// * `name` - The name that the monotonic type will have.
+/// * `tick_rate_hz` - The tick rate of the timer peripheral.
+///
 #[cfg(feature = "stm32_tim2")]
 #[macro_export]
-macro_rules! create_stm32_tim2_monotonic_token {
-    () => {{
-        $crate::__internal_create_stm32_timer_interrupt!(Tim2, TIM2, Tim2Token)
-    }};
+macro_rules! stm32_tim2_monotonic {
+    ($name:ident, $tick_rate_hz:expr) => {
+        $crate::__internal_create_stm32_timer_struct!($name, Tim2Backend, TIM2, $tick_rate_hz);
+    };
 }
 
-/// Register TIM3 interrupt for the monotonic.
+/// Create a TIM3 based monotonic and register the TIM3 interrupt for it.
+///
+/// See [`crate::stm32`] for more details.
+///
+/// # Arguments
+///
+/// * `name` - The name that the monotonic type will have.
+/// * `tick_rate_hz` - The tick rate of the timer peripheral.
+///
 #[cfg(feature = "stm32_tim3")]
 #[macro_export]
-macro_rules! create_stm32_tim3_monotonic_token {
-    () => {{
-        $crate::__internal_create_stm32_timer_interrupt!(Tim3, TIM3, Tim3Token)
-    }};
+macro_rules! stm32_tim3_monotonic {
+    ($name:ident, $tick_rate_hz:expr) => {
+        $crate::__internal_create_stm32_timer_struct!($name, Tim3Backend, TIM3, $tick_rate_hz);
+    };
 }
 
-/// Register TIM4 interrupt for the monotonic.
+/// Create a TIM4 based monotonic and register the TIM4 interrupt for it.
+///
+/// See [`crate::stm32`] for more details.
+///
+/// # Arguments
+///
+/// * `name` - The name that the monotonic type will have.
+/// * `tick_rate_hz` - The tick rate of the timer peripheral.
+///
 #[cfg(feature = "stm32_tim4")]
 #[macro_export]
-macro_rules! create_stm32_tim4_monotonic_token {
-    () => {{
-        $crate::__internal_create_stm32_timer_interrupt!(Tim4, TIM4, Tim4Token)
-    }};
+macro_rules! stm32_tim4_monotonic {
+    ($name:ident, $tick_rate_hz:expr) => {
+        $crate::__internal_create_stm32_timer_struct!($name, Tim4Backend, TIM4, $tick_rate_hz);
+    };
 }
 
-/// Register TIM5 interrupt for the monotonic.
+/// Create a TIM5 based monotonic and register the TIM5 interrupt for it.
+///
+/// See [`crate::stm32`] for more details.
+///
+/// # Arguments
+///
+/// * `name` - The name that the monotonic type will have.
+/// * `tick_rate_hz` - The tick rate of the timer peripheral.
+///
 #[cfg(feature = "stm32_tim5")]
 #[macro_export]
-macro_rules! create_stm32_tim5_monotonic_token {
-    () => {{
-        $crate::__internal_create_stm32_timer_interrupt!(Tim5, TIM5, Tim5Token)
-    }};
+macro_rules! stm32_tim5_monotonic {
+    ($name:ident, $tick_rate_hz:expr) => {
+        $crate::__internal_create_stm32_timer_struct!($name, Tim5Backend, TIM5, $tick_rate_hz);
+    };
 }
 
-/// Register TIM12 interrupt for the monotonic.
-#[cfg(feature = "stm32_tim12")]
-#[macro_export]
-macro_rules! create_stm32_tim12_monotonic_token {
-    () => {{
-        $crate::__internal_create_stm32_timer_interrupt!(Tim12, TIM12, Tim12Token)
-    }};
-}
-
-/// Register TIM15 interrupt for the monotonic.
+/// Create a TIM15 based monotonic and register the TIM15 interrupt for it.
+///
+/// See [`crate::stm32`] for more details.
+///
+/// # Arguments
+///
+/// * `name` - The name that the monotonic type will have.
+/// * `tick_rate_hz` - The tick rate of the timer peripheral.
+///
 #[cfg(feature = "stm32_tim15")]
 #[macro_export]
-macro_rules! create_stm32_tim15_monotonic_token {
-    () => {{
-        $crate::__internal_create_stm32_timer_interrupt!(Tim15, TIM15, Tim15Token)
-    }};
+macro_rules! stm32_tim15_monotonic {
+    ($name:ident, $tick_rate_hz:expr) => {
+        $crate::__internal_create_stm32_timer_struct!($name, Tim15Backend, TIM15, $tick_rate_hz);
+    };
 }
 
 macro_rules! make_timer {
-    ($mono_name:ident, $timer:ident, $bits:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
-        /// Monotonic timer queue implementation.
+    ($backend_name:ident, $timer:ident, $bits:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
+        /// Monotonic timer backend implementation.
         $(
             #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
         )?
 
-        pub struct $mono_name;
+        pub struct $backend_name;
 
         use pac::$timer;
 
         static $overflow: AtomicU64 = AtomicU64::new(0);
-        static $tq: TimerQueue<$mono_name> = TimerQueue::new();
+        static $tq: TimerQueue<$backend_name> = TimerQueue::new();
 
-        impl $mono_name {
-            /// Starts the monotonic timer.
+        impl $backend_name {
+            /// Starts the timer.
             ///
-            /// - `tim_clock_hz`: `TIMx` peripheral clock frequency.
-            /// - `_interrupt_token`: Required for correct timer interrupt handling.
+            /// **Do not use this function directly.**
             ///
-            /// This method must be called only once.
-            pub fn start(tim_clock_hz: u32, _interrupt_token: impl crate::InterruptToken<Self>) {
+            /// Use the prelude macros instead.
+            pub fn _start(tim_clock_hz: u32, timer_hz: u32) {
                 _generated::$timer::enable();
                 _generated::$timer::reset();
 
                 $timer.cr1().modify(|r| r.set_cen(false));
 
-                assert!((tim_clock_hz % TIMER_HZ) == 0, "Unable to find suitable timer prescaler value!");
-                let psc = tim_clock_hz / TIMER_HZ - 1;
+                assert!((tim_clock_hz % timer_hz) == 0, "Unable to find suitable timer prescaler value!");
+                let psc = tim_clock_hz / timer_hz - 1;
                 $timer.psc().write(|r| r.set_psc(psc as u16));
 
                 // Enable full-period interrupt.
                 $timer.dier().modify(|r| r.set_uie(true));
 
                 // Configure and enable half-period interrupt
-                $timer.ccr(2).write(|r| r.set_ccr($bits::MAX - ($bits::MAX >> 1)));
+                $timer.ccr(2).write(|r| r.set_ccr(($bits::MAX - ($bits::MAX >> 1)).into()));
                 $timer.dier().modify(|r| r.set_ccie(2, true));
 
                 // Trigger an update event to load the prescaler value to the clock.
@@ -183,73 +265,31 @@ macro_rules! make_timer {
                     cortex_m::peripheral::NVIC::unmask(pac::Interrupt::$timer);
                 }
             }
-
-            /// Used to access the underlying timer queue
-            #[doc(hidden)]
-            pub fn __tq() -> &'static TimerQueue<$mono_name> {
-                &$tq
-            }
-
-            /// Delay for some duration of time.
-            #[inline]
-            pub async fn delay(duration: <Self as Monotonic>::Duration) {
-                $tq.delay(duration).await;
-            }
-
-            /// Timeout at a specific time.
-            pub async fn timeout_at<F: core::future::Future>(
-                instant: <Self as rtic_time::Monotonic>::Instant,
-                future: F,
-            ) -> Result<F::Output, TimeoutError> {
-                $tq.timeout_at(instant, future).await
-            }
-
-            /// Timeout after a specific duration.
-            #[inline]
-            pub async fn timeout_after<F: core::future::Future>(
-                duration: <Self as Monotonic>::Duration,
-                future: F,
-            ) -> Result<F::Output, TimeoutError> {
-                $tq.timeout_after(duration, future).await
-            }
-
-            /// Delay to some specific time instant.
-            #[inline]
-            pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
-                $tq.delay_until(instant).await;
-            }
         }
 
-        rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
+        impl TimerQueueBackend for $backend_name {
+            type Ticks = u64;
 
-        #[cfg(feature = "embedded-hal-async")]
-        rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
-
-        impl Monotonic for $mono_name {
-            type Instant = fugit::TimerInstantU64<TIMER_HZ>;
-            type Duration = fugit::TimerDurationU64<TIMER_HZ>;
-
-            const ZERO: Self::Instant = Self::Instant::from_ticks(0);
-            const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
-
-            fn now() -> Self::Instant {
-                Self::Instant::from_ticks(calculate_now(
+            fn now() -> Self::Ticks {
+                calculate_now(
                     || $overflow.load(Ordering::Relaxed),
                     || $timer.cnt().read().cnt()
-                ))
+                )
             }
 
-            fn set_compare(instant: Self::Instant) {
+            fn set_compare(instant: Self::Ticks) {
                 let now = Self::now();
 
                 // Since the timer may or may not overflow based on the requested compare val, we check how many ticks are left.
-                let val = match instant.checked_duration_since(now) {
-                    None => 0, // In the past
-                    Some(x) if x.ticks() <= ($bits::MAX as u64) => instant.duration_since_epoch().ticks() as $bits, // Will not overflow
-                    Some(_x) => 0, // Will overflow
+                // `wrapping_sup` takes care of the u64 integer overflow special case.
+                let val = if instant.wrapping_sub(now) <= ($bits::MAX as u64) {
+                    instant as $bits
+                } else {
+                    // In the past or will overflow
+                    0
                 };
 
-                $timer.ccr(1).write(|r| r.set_ccr(val));
+                $timer.ccr(1).write(|r| r.set_ccr(val.into()));
             }
 
             fn clear_compare_flag() {
@@ -282,24 +322,25 @@ macro_rules! make_timer {
                     assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
                 }
             }
+
+            fn timer_queue() -> &'static TimerQueue<$backend_name> {
+                &$tq
+            }
         }
     };
 }
 
 #[cfg(feature = "stm32_tim2")]
-make_timer!(Tim2, TIM2, u32, TIMER2_OVERFLOWS, TIMER2_TQ);
+make_timer!(Tim2Backend, TIM2, u32, TIMER2_OVERFLOWS, TIMER2_TQ);
 
 #[cfg(feature = "stm32_tim3")]
-make_timer!(Tim3, TIM3, u16, TIMER3_OVERFLOWS, TIMER3_TQ);
+make_timer!(Tim3Backend, TIM3, u16, TIMER3_OVERFLOWS, TIMER3_TQ);
 
 #[cfg(feature = "stm32_tim4")]
-make_timer!(Tim4, TIM4, u16, TIMER4_OVERFLOWS, TIMER4_TQ);
+make_timer!(Tim4Backend, TIM4, u16, TIMER4_OVERFLOWS, TIMER4_TQ);
 
 #[cfg(feature = "stm32_tim5")]
-make_timer!(Tim5, TIM5, u16, TIMER5_OVERFLOWS, TIMER5_TQ);
-
-#[cfg(feature = "stm32_tim12")]
-make_timer!(Tim12, TIM12, u16, TIMER12_OVERFLOWS, TIMER12_TQ);
+make_timer!(Tim5Backend, TIM5, u16, TIMER5_OVERFLOWS, TIMER5_TQ);
 
 #[cfg(feature = "stm32_tim15")]
-make_timer!(Tim15, TIM15, u16, TIMER15_OVERFLOWS, TIMER15_TQ);
+make_timer!(Tim15Backend, TIM15, u16, TIMER15_OVERFLOWS, TIMER15_TQ);

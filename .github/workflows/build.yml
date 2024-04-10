@@ -463,7 +463,7 @@ jobs:
           which qemu-system-riscv32
       
       - name: Run-pass tests
-        run: cargo xtask -vvv --platform esp32-c3 qemu
+        run: cargo xtask -v --platform esp32-c3 qemu
 
   # Run test suite
   tests:

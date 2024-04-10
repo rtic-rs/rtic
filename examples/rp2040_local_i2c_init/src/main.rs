@@ -1,15 +1,21 @@
 #![no_std]
 #![no_main]
 
-#[rtic::app(
-    device = rp_pico::hal::pac,
-    dispatchers = [TIMER_IRQ_1]
-)]
+use rtic_monotonics::rp2040::prelude::*;
+
+rp2040_timer_monotonic!(Mono);
+
+#[rtic::app(device = rp_pico::hal::pac)]
 mod app {
+    use super::*;
+
     use rp_pico::hal::{
-        clocks, gpio,
-        gpio::pin::bank0::{Gpio2, Gpio25, Gpio3},
-        gpio::pin::PushPullOutput,
+        clocks,
+        gpio::{
+            self,
+            bank0::{Gpio2, Gpio25, Gpio3},
+            FunctionSioOutput, PullNone, PullUp,
+        },
         pac,
         sio::Sio,
         watchdog::Watchdog,
@@ -20,15 +26,13 @@ mod app {
     use core::mem::MaybeUninit;
     use embedded_hal::digital::v2::{OutputPin, ToggleableOutputPin};
     use fugit::RateExtU32;
-    use rtic_monotonics::rp2040::*;
-
     use panic_probe as _;
 
     type I2CBus = I2C<
         pac::I2C1,
         (
-            gpio::Pin<Gpio2, gpio::FunctionI2C>,
-            gpio::Pin<Gpio3, gpio::FunctionI2C>,
+            gpio::Pin<Gpio2, gpio::FunctionI2C, PullUp>,
+            gpio::Pin<Gpio3, gpio::FunctionI2C, PullUp>,
         ),
     >;
 
@@ -37,7 +41,7 @@ mod app {
 
     #[local]
     struct Local {
-        led: gpio::Pin<Gpio25, PushPullOutput>,
+        led: gpio::Pin<Gpio25, FunctionSioOutput, PullNone>,
         i2c: &'static mut I2CBus,
     }
 
@@ -48,11 +52,8 @@ mod app {
         i2c_ctx: MaybeUninit<I2CBus> = MaybeUninit::uninit()
     ])]
     fn init(mut ctx: init::Context) -> (Shared, Local) {
-        // Initialize the interrupt for the RP2040 timer and obtain the token
-        // proving that we have.
-        let rp2040_timer_token = rtic_monotonics::create_rp2040_monotonic_token!();
         // Configure the clocks, watchdog - The default is to generate a 125 MHz system clock
-        Timer::start(ctx.device.TIMER, &mut ctx.device.RESETS, rp2040_timer_token); // default rp2040 clock-rate is 125MHz
+        Mono::start(ctx.device.TIMER, &mut ctx.device.RESETS); // default rp2040 clock-rate is 125MHz
         let mut watchdog = Watchdog::new(ctx.device.WATCHDOG);
         let clocks = clocks::init_clocks_and_plls(
             XOSC_CRYSTAL_FREQ,
@@ -74,12 +75,21 @@ mod app {
             sio.gpio_bank0,
             &mut ctx.device.RESETS,
         );
-        let mut led = gpioa.led.into_push_pull_output();
+        let mut led = gpioa
+            .led
+            .into_pull_type::<PullNone>()
+            .into_push_pull_output();
         led.set_low().unwrap();
 
         // Init I2C pins
-        let sda_pin = gpioa.gpio2.into_mode::<gpio::FunctionI2C>();
-        let scl_pin = gpioa.gpio3.into_mode::<gpio::FunctionI2C>();
+        let sda_pin = gpioa
+            .gpio2
+            .into_pull_up_disabled()
+            .into_function::<gpio::FunctionI2C>();
+        let scl_pin = gpioa
+            .gpio3
+            .into_pull_up_disabled()
+            .into_function::<gpio::FunctionI2C>();
 
         // Init I2C itself, using MaybeUninit to overwrite the previously
         // uninitialized i2c_ctx variable without dropping its value
@@ -118,7 +128,7 @@ mod app {
             // now to do something with it!
 
             // Delay for 1 second
-            Timer::delay(1000.millis()).await;
+            Mono::delay(1000.millis()).await;
         }
     }
 }

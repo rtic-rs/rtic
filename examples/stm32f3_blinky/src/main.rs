@@ -5,10 +5,12 @@
 
 use panic_rtt_target as _;
 use rtic::app;
-use rtic_monotonics::systick::*;
+use rtic_monotonics::systick::prelude::*;
 use rtt_target::{rprintln, rtt_init_print};
 use stm32f3xx_hal::gpio::{Output, PushPull, PA5};
 use stm32f3xx_hal::prelude::*;
+
+systick_monotonic!(Mono, 1000);
 
 #[app(device = stm32f3xx_hal::pac, peripherals = true, dispatchers = [SPI1])]
 mod app {
@@ -30,8 +32,7 @@ mod app {
         let mut rcc = cx.device.RCC.constrain();
 
         // Initialize the systick interrupt & obtain the token to prove that we did
-        let systick_mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, 36_000_000, systick_mono_token); // default STM32F303 clock-rate is 36MHz
+        Mono::start(cx.core.SYST, 36_000_000); // default STM32F303 clock-rate is 36MHz
 
         rtt_init_print!();
         rprintln!("init");
@@ -67,7 +68,7 @@ mod app {
                 cx.local.led.set_low().unwrap();
                 *cx.local.state = true;
             }
-            Systick::delay(1000.millis()).await;
+            Mono::delay(1000.millis()).await;
         }
     }
 }

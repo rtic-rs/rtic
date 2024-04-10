@@ -1,96 +1,152 @@
-//! [`Monotonic`] implementation for the nRF Real Time Clocks (RTC).
+//! [`Monotonic`](rtic_time::Monotonic) implementation for the nRF Real Time Clocks (RTC).
 //!
 //! # Example
 //!
 //! ```
-//! use rtic_monotonics::nrf::rtc::*;
+//! use rtic_monotonics::nrf::rtc::prelude::*;
+//! nrf_rtc0_monotonic!(Mono);
 //!
 //! fn init() {
 //!     # // This is normally provided by the selected PAC
 //!     # let rtc = unsafe { core::mem::transmute(()) };
-//!     // Generate the required token
-//!     let token = rtic_monotonics::create_nrf_rtc0_monotonic_token!();
-//!
 //!     // Start the monotonic
-//!     Rtc0::start(rtc, token);
+//!     Mono::start(rtc);
 //! }
 //!
 //! async fn usage() {
 //!     loop {
 //!          // Use the monotonic
-//!          Rtc0::delay(100.millis()).await;
+//!          let timestamp = Mono::now();
+//!          Mono::delay(100.millis()).await;
 //!     }
 //! }
 //! ```
 
-#[cfg(feature = "nrf52810")]
-use nrf52810_pac::{self as pac, Interrupt, RTC0, RTC1};
-#[cfg(feature = "nrf52811")]
-use nrf52811_pac::{self as pac, Interrupt, RTC0, RTC1};
-#[cfg(feature = "nrf52832")]
-use nrf52832_pac::{self as pac, Interrupt, RTC0, RTC1, RTC2};
-#[cfg(feature = "nrf52833")]
-use nrf52833_pac::{self as pac, Interrupt, RTC0, RTC1, RTC2};
-#[cfg(feature = "nrf52840")]
-use nrf52840_pac::{self as pac, Interrupt, RTC0, RTC1, RTC2};
-#[cfg(feature = "nrf5340-app")]
-use nrf5340_app_pac::{self as pac, Interrupt, RTC0_NS as RTC0, RTC1_NS as RTC1};
-#[cfg(feature = "nrf5340-net")]
-use nrf5340_net_pac::{self as pac, Interrupt, RTC0_NS as RTC0, RTC1_NS as RTC1};
-#[cfg(feature = "nrf9160")]
-use nrf9160_pac::{self as pac, Interrupt, RTC0_NS as RTC0, RTC1_NS as RTC1};
+/// Common definitions and traits for using the nRF RTC monotonics
+pub mod prelude {
+    pub use crate::nrf_rtc0_monotonic;
+    pub use crate::nrf_rtc1_monotonic;
+    #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
+    pub use crate::nrf_rtc2_monotonic;
 
-use crate::{Monotonic, TimeoutError, TimerQueue};
+    pub use crate::Monotonic;
+    pub use fugit::{self, ExtU64, ExtU64Ceil};
+}
+
+#[cfg(feature = "nrf52810")]
+#[doc(hidden)]
+pub use nrf52810_pac::{self as pac, RTC0, RTC1};
+#[cfg(feature = "nrf52811")]
+#[doc(hidden)]
+pub use nrf52811_pac::{self as pac, RTC0, RTC1};
+#[cfg(feature = "nrf52832")]
+#[doc(hidden)]
+pub use nrf52832_pac::{self as pac, RTC0, RTC1, RTC2};
+#[cfg(feature = "nrf52833")]
+#[doc(hidden)]
+pub use nrf52833_pac::{self as pac, RTC0, RTC1, RTC2};
+#[cfg(feature = "nrf52840")]
+#[doc(hidden)]
+pub use nrf52840_pac::{self as pac, RTC0, RTC1, RTC2};
+#[cfg(feature = "nrf5340-app")]
+#[doc(hidden)]
+pub use nrf5340_app_pac::{self as pac, RTC0_NS as RTC0, RTC1_NS as RTC1};
+#[cfg(feature = "nrf5340-net")]
+#[doc(hidden)]
+pub use nrf5340_net_pac::{self as pac, RTC0_NS as RTC0, RTC1_NS as RTC1};
+#[cfg(feature = "nrf9160")]
+#[doc(hidden)]
+pub use nrf9160_pac::{self as pac, RTC0_NS as RTC0, RTC1_NS as RTC1};
+
 use atomic_polyfill::{AtomicU32, Ordering};
-use core::future::Future;
-pub use fugit::{self, ExtU64, ExtU64Ceil};
-use rtic_time::half_period_counter::calculate_now;
+use rtic_time::{
+    half_period_counter::calculate_now,
+    timer_queue::{TimerQueue, TimerQueueBackend},
+};
 
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __internal_create_nrf_rtc_interrupt {
-    ($mono_timer:ident, $rtc:ident, $rtc_token:ident) => {{
+    ($mono_backend:ident, $rtc:ident) => {
         #[no_mangle]
         #[allow(non_snake_case)]
         unsafe extern "C" fn $rtc() {
-            $crate::nrf::rtc::$mono_timer::__tq().on_monotonic_interrupt();
+            use $crate::TimerQueueBackend;
+            $crate::nrf::rtc::$mono_backend::timer_queue().on_monotonic_interrupt();
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __internal_create_nrf_rtc_struct {
+    ($name:ident, $mono_backend:ident, $timer:ident) => {
+        /// A `Monotonic` based on the nRF RTC peripheral.
+        struct $name;
+
+        impl $name {
+            /// Starts the `Monotonic`.
+            ///
+            /// This method must be called only once.
+            pub fn start(rtc: $crate::nrf::rtc::$timer) {
+                $crate::__internal_create_nrf_rtc_interrupt!($mono_backend, $timer);
+
+                $crate::nrf::rtc::$mono_backend::_start(rtc);
+            }
         }
 
-        pub struct $rtc_token;
+        impl $crate::TimerQueueBasedMonotonic for $name {
+            type Backend = $crate::nrf::rtc::$mono_backend;
+            type Instant = $crate::fugit::Instant<
+                <Self::Backend as $crate::TimerQueueBackend>::Ticks,
+                1,
+                32_768,
+            >;
+            type Duration = $crate::fugit::Duration<
+                <Self::Backend as $crate::TimerQueueBackend>::Ticks,
+                1,
+                32_768,
+            >;
+        }
 
-        unsafe impl $crate::InterruptToken<$crate::nrf::rtc::$mono_timer> for $rtc_token {}
-
-        $rtc_token
-    }};
+        $crate::rtic_time::impl_embedded_hal_delay_fugit!($name);
+        $crate::rtic_time::impl_embedded_hal_async_delay_fugit!($name);
+    };
 }
 
-/// Register the Rtc0 interrupt for the monotonic.
+/// Create an RTC0 based monotonic and register the RTC0 interrupt for it.
+///
+/// See [`crate::nrf::rtc`] for more details.
 #[macro_export]
-macro_rules! create_nrf_rtc0_monotonic_token {
-    () => {{
-        $crate::__internal_create_nrf_rtc_interrupt!(Rtc0, RTC0, Rtc0Token)
-    }};
+macro_rules! nrf_rtc0_monotonic {
+    ($name:ident) => {
+        $crate::__internal_create_nrf_rtc_struct!($name, Rtc0Backend, RTC0);
+    };
 }
 
-/// Register the Rtc1 interrupt for the monotonic.
+/// Create an RTC1 based monotonic and register the RTC1 interrupt for it.
+///
+/// See [`crate::nrf::rtc`] for more details.
 #[macro_export]
-macro_rules! create_nrf_rtc1_monotonic_token {
-    () => {{
-        $crate::__internal_create_nrf_rtc_interrupt!(Rtc1, RTC1, Rtc1Token)
-    }};
+macro_rules! nrf_rtc1_monotonic {
+    ($name:ident) => {
+        $crate::__internal_create_nrf_rtc_struct!($name, Rtc1Backend, RTC1);
+    };
 }
 
-/// Register the Rtc2 interrupt for the monotonic.
+/// Create an RTC2 based monotonic and register the RTC2 interrupt for it.
+///
+/// See [`crate::nrf::rtc`] for more details.
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
 #[cfg_attr(
     docsrs,
     doc(cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")))
 )]
 #[macro_export]
-macro_rules! create_nrf_rtc2_monotonic_token {
-    () => {{
-        $crate::__internal_create_nrf_rtc_interrupt!(Rtc2, RTC2, Rtc2Token)
-    }};
+macro_rules! nrf_rtc2_monotonic {
+    ($name:ident) => {
+        $crate::__internal_create_nrf_rtc_struct!($name, Rtc2Backend, RTC2);
+    };
 }
 
 struct TimerValueU24(u32);
@@ -104,19 +160,23 @@ impl From<TimerValueU24> for u64 {
 }
 
 macro_rules! make_rtc {
-    ($mono_name:ident, $rtc:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
-        /// Monotonic timer queue implementation.
+    ($backend_name:ident, $rtc:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
+        /// RTC based [`TimerQueueBackend`].
         $(
             #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
         )?
-        pub struct $mono_name;
+        pub struct $backend_name;
 
         static $overflow: AtomicU32 = AtomicU32::new(0);
-        static $tq: TimerQueue<$mono_name> = TimerQueue::new();
+        static $tq: TimerQueue<$backend_name> = TimerQueue::new();
 
-        impl $mono_name {
-            /// Start the timer monotonic.
-            pub fn start(rtc: $rtc, _interrupt_token: impl crate::InterruptToken<Self>) {
+        impl $backend_name {
+            /// Starts the timer.
+            ///
+            /// **Do not use this function directly.**
+            ///
+            /// Use the prelude macros instead.
+            pub fn _start(rtc: $rtc) {
                 unsafe { rtc.prescaler.write(|w| w.bits(0)) };
 
                 // Disable interrupts, as preparation
@@ -166,67 +226,21 @@ macro_rules! make_rtc {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(pac::NVIC_PRIO_BITS, Interrupt::$rtc);
-                    pac::NVIC::unmask(Interrupt::$rtc);
+                    crate::set_monotonic_prio(pac::NVIC_PRIO_BITS, pac::Interrupt::$rtc);
+                    pac::NVIC::unmask(pac::Interrupt::$rtc);
                 }
-            }
-
-            /// Used to access the underlying timer queue
-            #[doc(hidden)]
-            pub fn __tq() -> &'static TimerQueue<$mono_name> {
-                &$tq
-            }
-
-            /// Timeout at a specific time.
-            #[inline]
-            pub async fn timeout_at<F: Future>(
-                instant: <Self as Monotonic>::Instant,
-                future: F,
-            ) -> Result<F::Output, TimeoutError> {
-                $tq.timeout_at(instant, future).await
-            }
-
-            /// Timeout after a specific duration.
-            #[inline]
-            pub async fn timeout_after<F: Future>(
-                duration: <Self as Monotonic>::Duration,
-                future: F,
-            ) -> Result<F::Output, TimeoutError> {
-                $tq.timeout_after(duration, future).await
-            }
-
-            /// Delay for some duration of time.
-            #[inline]
-            pub async fn delay(duration: <Self as Monotonic>::Duration) {
-                $tq.delay(duration).await;
-            }
-
-            /// Delay to some specific time instant.
-            #[inline]
-            pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
-                $tq.delay_until(instant).await;
             }
         }
 
+        impl TimerQueueBackend for $backend_name {
+            type Ticks = u64;
 
-        rtic_time::embedded_hal_delay_impl_fugit64!($mono_name);
-
-        #[cfg(feature = "embedded-hal-async")]
-        rtic_time::embedded_hal_async_delay_impl_fugit64!($mono_name);
-
-        impl Monotonic for $mono_name {
-            const ZERO: Self::Instant = Self::Instant::from_ticks(0);
-            const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
-
-            type Instant = fugit::TimerInstantU64<32_768>;
-            type Duration = fugit::TimerDurationU64<32_768>;
-
-            fn now() -> Self::Instant {
+            fn now() -> Self::Ticks {
                 let rtc = unsafe { &*$rtc::PTR };
-                Self::Instant::from_ticks(calculate_now(
+                calculate_now(
                     || $overflow.load(Ordering::Relaxed),
                     || TimerValueU24(rtc.counter.read().bits())
-                ))
+                )
             }
 
             fn on_interrupt() {
@@ -243,12 +257,10 @@ macro_rules! make_rtc {
                 }
             }
 
-            fn enable_timer() {}
-
-            fn disable_timer() {}
-
-            fn set_compare(mut instant: Self::Instant) {
+            fn set_compare(mut instant: Self::Ticks) {
                 let rtc = unsafe { &*$rtc::PTR };
+
+                const MAX: u64 = 0xff_ffff;
 
                 // Disable interrupts because this section is timing critical.
                 // We rely on the fact that this entire section runs within one
@@ -256,15 +268,24 @@ macro_rules! make_rtc {
                 // interrupted)
                 critical_section::with(|_|{
                     let now = Self::now();
-                    if let Some(diff) = instant.checked_duration_since(now) {
+                    // wrapping_sub deals with the u64 overflow corner case
+                    let diff = instant.wrapping_sub(now);
+                    let val = if diff <= MAX {
+                        // Now we know `instant` whill happen within one `MAX` time duration.
+
                         // Errata: Timer interrupts don't fire if they are scheduled less than
                         // two ticks in the future. Make it three, because the timer could
                         // tick right now.
-                        if diff.ticks() < 3 {
-                            instant = Self::Instant::from_ticks(now.ticks().wrapping_add(3));
+                        if diff < 3 {
+                            instant = now.wrapping_add(3);
                         }
-                        unsafe { rtc.cc[0].write(|w| w.bits(instant.ticks() as u32 & 0xff_ffff)) };
-                    }
+
+                        (instant & MAX) as u32
+                    } else {
+                        0
+                    };
+
+                    unsafe { rtc.cc[0].write(|w| w.bits(val)) };
                 });
             }
 
@@ -274,13 +295,17 @@ macro_rules! make_rtc {
             }
 
             fn pend_interrupt() {
-                pac::NVIC::pend(Interrupt::$rtc);
+                pac::NVIC::pend(pac::Interrupt::$rtc);
+            }
+
+            fn timer_queue() -> &'static TimerQueue<Self> {
+                &$tq
             }
         }
     };
 }
 
-make_rtc!(Rtc0, RTC0, RTC0_OVERFLOWS, RTC0_TQ);
-make_rtc!(Rtc1, RTC1, RTC1_OVERFLOWS, RTC1_TQ);
+make_rtc!(Rtc0Backend, RTC0, RTC0_OVERFLOWS, RTC0_TQ);
+make_rtc!(Rtc1Backend, RTC1, RTC1_OVERFLOWS, RTC1_TQ);
 #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
-make_rtc!(Rtc2, RTC2, RTC2_OVERFLOWS, RTC2_TQ, doc: (any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")));
+make_rtc!(Rtc2Backend, RTC2, RTC2_OVERFLOWS, RTC2_TQ, doc: (any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840")));
