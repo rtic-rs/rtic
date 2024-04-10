@@ -19,12 +19,6 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [v2.1.0] - 2024-02-27
 
-### Changed
-
-- Remove unused dependency `rtic-monotonics`
-
-## [v2.1.0] - 2024-02-27
-
 ### Added
 
 - Unstable support for RISC-V targets compatible with `riscv-slic`
