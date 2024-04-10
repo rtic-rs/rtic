@@ -13,6 +13,12 @@ mod esp32c6 {
     use std::collections::HashSet;
     use syn::{parse, Attribute, Ident};
 
+    // Section 1.6.2 technical reference manual specifies which interrupts can be configured.
+    const EXTERNAL_INTERRUPTS: [u8; 28] = [
+        1, 2, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+        28, 29, 30, 31,
+    ];
+
     #[allow(clippy::too_many_arguments)]
     pub fn impl_mutex(
         _app: &App,
@@ -82,16 +88,15 @@ mod esp32c6 {
     }
     pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
-        let mut curr_cpu_id: u8 = 1; //cpu interrupt id 0 is reserved
         let rt_err = util::rt_err_ident();
         let max_prio: usize = 15; //unfortunately this is not part of pac, but we know that max prio is 15.
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
         // Unmask interrupts and set their priorities
-        for (&priority, name) in interrupt_ids.chain(
+        for ((&priority, name), curr_cpu_id) in interrupt_ids.chain(
             app.hardware_tasks
                 .values()
                 .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
-        ) {
+        ).zip(EXTERNAL_INTERRUPTS) {
             let es = format!(
                 "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
             );
@@ -106,7 +111,6 @@ mod esp32c6 {
                     #curr_cpu_id,
                 );
             ));
-            curr_cpu_id += 1;
         }
         stmts
     }
@@ -224,26 +228,22 @@ mod esp32c6 {
         dispatcher_name: Ident,
     ) -> Vec<TokenStream2> {
         let mut stmts = vec![];
-        let mut curr_cpu_id = 1;
-        //let mut ret = "";
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
-        for (_, name) in interrupt_ids.chain(
+        for ((_, name), curr_cpu_id) in interrupt_ids.chain(
             app.hardware_tasks
                 .values()
                 .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
-        ) {
+        ).zip(EXTERNAL_INTERRUPTS) {
             if *name == dispatcher_name {
                 let ret = &("cpu_int_".to_owned() + &curr_cpu_id.to_string() + "_handler");
                 stmts.push(quote!(#[export_name = #ret]));
             }
-            curr_cpu_id += 1;
         }
 
         stmts
     }
 
-pub fn extra_modules(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
-    vec![]
+    pub fn extra_modules(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
+        vec![]
+    }
 }
-}
-
