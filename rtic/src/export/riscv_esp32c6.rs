@@ -1,7 +1,7 @@
-use esp32c6::INTPRI; //priority threshold control
+use esp32c6::{INTERRUPT_CORE0, INTPRI};
 pub use esp32c6::{Interrupt, Peripherals};
 pub use riscv::interrupt;
-pub use riscv::register::mcause; //low level interrupt enable/disable
+pub use riscv::register::mcause;
 
 #[cfg(all(feature = "riscv-esp32c6", not(feature = "riscv-esp32c6-backend")))]
 compile_error!("Building for the esp32c6, but 'riscv-esp32c6-backend not selected'");
@@ -138,7 +138,7 @@ pub fn unpend(int: Interrupt) {
 }
 
 pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
-    const INTERRUPT_MAP_BASE: u32 = 0x60010000;
+    const INTERRUPT_MAP_BASE: *mut u32 = unsafe { core::mem::transmute::<_, *mut u32>(INTERRUPT_CORE0::ptr()) };
     let interrupt_number = int as isize;
     let cpu_interrupt_number = cpu_int_id as isize;
 
@@ -147,15 +147,14 @@ pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
         intr_map_base
             .offset(interrupt_number)
             .write_volatile(cpu_interrupt_number as u32);
-        //map peripheral interrupt to CPU interrupt
-        (*INTPRI::ptr())
-            .cpu_int_enable()
-            .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits())); //enable the CPU interupt.
-        let intr = INTPRI::ptr();
-        let intr_prio_base = (*intr).cpu_int_pri_0().as_ptr();
 
+        let intr_prio_base = (*INTPRI::ptr()).cpu_int_pri_0().as_ptr();
         intr_prio_base
             .offset(cpu_interrupt_number)
             .write_volatile(prio as u32);
+
+        (*INTPRI::ptr())
+            .cpu_int_enable()
+            .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits()));
     }
 }
