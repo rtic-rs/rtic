@@ -208,6 +208,33 @@ jobs:
       - name: Check the examples
         run: cargo xtask --platform esp32-c3 --backend ${{ matrix.backend }} example-check
 
+  # Platform esp32c6: verify all examples, checks
+  checkexamplesesp32c6:
+    name: check examples (esp32c6)
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        backend:
+          - riscv-esp32-c6
+        toolchain:
+          - nightly
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ matrix.toolchain }}
+        run: |
+          rustup toolchain install nightly-2023-11-14 --component rust-src --target riscv32imac-unknown-none-elf
+
+      - name: Configure Rust target
+        run: |
+          rustup target add riscv32imac-unknown-none-elf
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Check the examples
+        run: cargo xtask --platform esp32-c6 --backend ${{ matrix.backend }} example-check
 
   buildqemu:
     name: Get modern QEMU, build and store
@@ -823,6 +850,7 @@ jobs:
       - checkexampleslm3s6965
       - checkexampleshifive1
       - checkexamplesesp32c3
+      - checkexamplesesp32c6
       - testexampleslm3s6965
       - testexampleshifive1
       - tests
