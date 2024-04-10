@@ -26,4 +26,6 @@ sleep 3s
 
 # Kill QEMU nicely by sending 'q' (quit) over tcp
 echo q | nc -N 127.0.0.1 55555
-cat "$logfile"
+# Output that will be compared, remove the esp_image segments as they change
+# between runs
+cat "$logfile" | sed 's/esp_image: .*$/esp_image: REDACTED/'
