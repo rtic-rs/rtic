@@ -13,6 +13,11 @@ The main contribution of this crate is to define the [`Monotonic`](https://docs.
 
 Additionally, this crate provides tools and utilities that help with implementing monotonic timers.
 
+## Implementations of the `Monotonic` trait
+
+For implementations of [`Monotonic`](https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html)
+on various hardware, see [`rtic-monotonics`](https://docs.rs/rtic-monotonics/).
+
 
 ## Chat
 
