@@ -1,5 +1,5 @@
-use esp32c6::{INTERRUPT_CORE0, INTPRI};
 pub use esp32c6::{Interrupt, Peripherals};
+use esp32c6::{INTERRUPT_CORE0, INTPRI};
 pub use riscv::interrupt;
 pub use riscv::register::mcause;
 
@@ -138,7 +138,8 @@ pub fn unpend(int: Interrupt) {
 }
 
 pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
-    const INTERRUPT_MAP_BASE: *mut u32 = unsafe { core::mem::transmute::<_, *mut u32>(INTERRUPT_CORE0::ptr()) };
+    const INTERRUPT_MAP_BASE: *mut u32 =
+        unsafe { core::mem::transmute::<_, *mut u32>(INTERRUPT_CORE0::ptr()) };
     let interrupt_number = int as isize;
     let cpu_interrupt_number = cpu_int_id as isize;
 
