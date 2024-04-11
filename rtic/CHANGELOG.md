@@ -10,6 +10,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Changed
 
 - Remove unused dependency `rtic-monotonics`
+- Use `riscv-slic` from `crates.io`
 
 ## [v2.1.1] - 2024-03-13
 

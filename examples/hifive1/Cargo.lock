@@ -243,8 +243,9 @@ dependencies = [
 
 [[package]]
 name = "riscv-slic"
-version = "0.1.0"
-source = "git+https://github.com/romancardenas/riscv-slic.git?rev=2a91edb#2a91edbff50bcc73169549923d278ff953d0986e"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6e12f8155a8ba8ed8dae9d68c36becb651308416592e7b45a4769d5d545385b"
 dependencies = [
  "critical-section",
  "heapless",
@@ -255,7 +256,8 @@ dependencies = [
 [[package]]
 name = "riscv-slic-macros"
 version = "0.1.0"
-source = "git+https://github.com/romancardenas/riscv-slic.git?rev=2a91edb#2a91edbff50bcc73169549923d278ff953d0986e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d246759b5f1486fffb3153b5d74c964a53e88d2176dbc57c3c00aba5587a81a6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -264,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "atomic-polyfill",
  "bare-metal",
