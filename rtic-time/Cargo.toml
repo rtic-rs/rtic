@@ -27,5 +27,5 @@ fugit = "0.3.7"
 
 [dev-dependencies]
 parking_lot = "0.12"
-cassette = "0.2"
+cassette = "0.3"
 cooked-waker = "5.0.0"
