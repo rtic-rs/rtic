@@ -3,15 +3,6 @@
 version = 3
 
 [[package]]
-name = "atomic-polyfill"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cf2bce30dfe09ef0bfaef228b9d414faaf7e563035494d7fe092dba54b300f4"
-dependencies = [
- "critical-section",
-]
-
-[[package]]
 name = "bare-metal"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -268,9 +259,9 @@ dependencies = [
 name = "rtic"
 version = "2.1.1"
 dependencies = [
- "atomic-polyfill",
  "bare-metal",
  "critical-section",
+ "portable-atomic",
  "riscv",
  "riscv-slic",
  "rtic-core",

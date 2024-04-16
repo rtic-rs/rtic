@@ -18,15 +18,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0952808a6c2afd1aa8947271f3a60f1a6763c7b912d210184c5149b5cf147247"
 
 [[package]]
-name = "atomic-polyfill"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cf2bce30dfe09ef0bfaef228b9d414faaf7e563035494d7fe092dba54b300f4"
-dependencies = [
- "critical-section",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -611,10 +602,10 @@ dependencies = [
 name = "rtic"
 version = "2.1.1"
 dependencies = [
- "atomic-polyfill",
  "bare-metal",
  "critical-section",
  "esp32c3 0.22.0",
+ "portable-atomic",
  "riscv",
  "rtic-core",
  "rtic-macros",
