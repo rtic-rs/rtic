@@ -67,4 +67,4 @@ riscv-clint-backend = [
 ]
 
 # needed for testing
-test-critical-section = ["cortex-m/critical-section-single-core"]
+test-critical-section = ["portable-atomic/critical-section"]
