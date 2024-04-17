@@ -10,6 +10,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Added
 
 - Unstable support for ESP32-C6
+### Changed
+
+- Remove unused dependency `rtic-monotonics`
 
 ## [v2.1.1] - 2024-03-13
 

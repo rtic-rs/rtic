@@ -362,7 +362,6 @@ dependencies = [
  "critical-section",
  "rtic-core",
  "rtic-macros",
- "rtic-monotonics",
 ]
 
 [[package]]
@@ -392,12 +391,11 @@ dependencies = [
 
 [[package]]
 name = "rtic-monotonics"
-version = "1.5.0"
+version = "2.0.0"
 dependencies = [
  "atomic-polyfill",
  "cfg-if",
  "cortex-m",
- "embedded-hal 1.0.0",
  "fugit",
  "rtic-time",
 ]
@@ -417,9 +415,12 @@ dependencies = [
 
 [[package]]
 name = "rtic-time"
-version = "1.3.0"
+version = "2.0.0"
 dependencies = [
  "critical-section",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "fugit",
  "futures-util",
  "rtic-common",
 ]

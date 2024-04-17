@@ -136,7 +136,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.51",
 ]
 
 [[package]]
@@ -179,9 +179,18 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "1.0.0-rc.2"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e57ec6ad0bc8eb967cf9c9f144177f5e8f2f6f02dad0b8b683f9f05f6b22def"
+checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
+
+[[package]]
+name = "embedded-hal-async"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c4c685bbef7fe13c3c6dd4da26841ed3980ef33e841cddfa15ce8a8fb3f1884"
+dependencies = [
+ "embedded-hal 1.0.0",
+]
 
 [[package]]
 name = "embedded-storage"
@@ -412,18 +421,18 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.70"
+version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39278fbbf5fb4f646ce651690877f89d1c5811a3d4acb27700c1cb3cdb78fd3b"
+checksum = "e2422ad645d89c99f8f3e6b88a9fdeca7fabeac836b1002371c4367c8f984aae"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.33"
+version = "1.0.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
+checksum = "291ec9ab5efd934aaf503a6466c5d5251535d108ee747472c3977cc5acc868ef"
 dependencies = [
  "proc-macro2",
 ]
@@ -468,18 +477,18 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.51",
 ]
 
 [[package]]
 name = "rtic-monotonics"
-version = "1.4.0"
+version = "2.0.0"
 dependencies = [
  "atomic-polyfill",
  "cfg-if",
  "cortex-m",
  "critical-section",
- "embedded-hal 1.0.0-rc.2",
+ "embedded-hal 1.0.0",
  "fugit",
  "nrf52840-pac",
  "rtic-time",
@@ -487,9 +496,12 @@ dependencies = [
 
 [[package]]
 name = "rtic-time"
-version = "1.1.0"
+version = "2.0.0"
 dependencies = [
  "critical-section",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "fugit",
  "futures-util",
  "rtic-common",
 ]
@@ -537,9 +549,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.39"
+version = "2.0.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23e78b90f2fcf45d3e842032ce32e3f2d1545ba6636271dcbf24fa306d87be7a"
+checksum = "6ab617d94515e94ae53b8406c628598680aa0c9587474ecbe58188f7b345d66c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -563,7 +575,7 @@ checksum = "266b2e40bc00e5a6c09c3584011e08b06f123c00362c92b975ba9843aaaa14b8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.51",
 ]
 
 [[package]]

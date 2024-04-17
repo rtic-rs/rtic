@@ -1,46 +1,56 @@
-//! [`Monotonic`] implementation for RP2040's Timer peripheral.
+//! [`Monotonic`](rtic_time::Monotonic) implementation for RP2040's Timer peripheral.
+//!
+//! Always runs at a fixed rate of 1 MHz.
 //!
 //! # Example
 //!
 //! ```
-//! use rtic_monotonics::rp2040::*;
+//! use rtic_monotonics::rp2040::prelude::*;
+//!
+//! rp2040_timer_monotonic!(Mono);
 //!
 //! fn init() {
 //!     # // This is normally provided by the selected PAC
 //!     # let timer = unsafe { core::mem::transmute(()) };
 //!     # let mut resets = unsafe { core::mem::transmute(()) };
-//!     // Generate the required token
-//!     let token = rtic_monotonics::create_rp2040_monotonic_token!();
-//!
+//!     #
 //!     // Start the monotonic
-//!     Timer::start(timer, &mut resets, token);
+//!     Mono::start(timer, &mut resets);
 //! }
 //!
 //! async fn usage() {
 //!     loop {
 //!          // Use the monotonic
-//!          Timer::delay(100.millis()).await;
+//!          let timestamp = Mono::now();
+//!          Mono::delay(100.millis()).await;
 //!     }
 //! }
 //! ```
 
-use super::Monotonic;
+/// Common definitions and traits for using the RP2040 timer monotonic
+pub mod prelude {
+    pub use crate::rp2040_timer_monotonic;
 
-pub use super::{TimeoutError, TimerQueue};
-use core::future::Future;
-pub use fugit::{self, ExtU64, ExtU64Ceil};
-use rp2040_pac::{timer, Interrupt, NVIC, RESETS, TIMER};
+    pub use crate::Monotonic;
 
-/// Timer implementing [`Monotonic`] which runs at 1 MHz.
-pub struct Timer;
+    pub use fugit::{self, ExtU64, ExtU64Ceil};
+}
 
-impl Timer {
-    /// Start a `Monotonic` based on RP2040's Timer.
-    pub fn start(
-        timer: TIMER,
-        resets: &RESETS,
-        _interrupt_token: impl crate::InterruptToken<Self>,
-    ) {
+use crate::TimerQueueBackend;
+use rp2040_pac::{timer, Interrupt, NVIC};
+pub use rp2040_pac::{RESETS, TIMER};
+use rtic_time::timer_queue::TimerQueue;
+
+/// Timer implementing [`TimerQueueBackend`].
+pub struct TimerBackend;
+
+impl TimerBackend {
+    /// Starts the monotonic timer.
+    ///
+    /// **Do not use this function directly.**
+    ///
+    /// Use the prelude macros instead.
+    pub fn _start(timer: TIMER, resets: &RESETS) {
         resets.reset.modify(|_, w| w.timer().clear_bit());
         while resets.reset_done.read().timer().bit_is_clear() {}
         timer.inte.modify(|_, w| w.alarm_0().bit(true));
@@ -58,55 +68,12 @@ impl Timer {
     }
 }
 
-static TIMER_QUEUE: TimerQueue<Timer> = TimerQueue::new();
+static TIMER_QUEUE: TimerQueue<TimerBackend> = TimerQueue::new();
 
-// Forward timerqueue interface
-impl Timer {
-    /// Used to access the underlying timer queue
-    #[doc(hidden)]
-    pub fn __tq() -> &'static TimerQueue<Timer> {
-        &TIMER_QUEUE
-    }
+impl TimerQueueBackend for TimerBackend {
+    type Ticks = u64;
 
-    /// Timeout at a specific time.
-    #[inline]
-    pub async fn timeout_at<F: Future>(
-        instant: <Self as Monotonic>::Instant,
-        future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        TIMER_QUEUE.timeout_at(instant, future).await
-    }
-
-    /// Timeout after a specific duration.
-    #[inline]
-    pub async fn timeout_after<F: Future>(
-        duration: <Self as Monotonic>::Duration,
-        future: F,
-    ) -> Result<F::Output, TimeoutError> {
-        TIMER_QUEUE.timeout_after(duration, future).await
-    }
-
-    /// Delay for some duration of time.
-    #[inline]
-    pub async fn delay(duration: <Self as Monotonic>::Duration) {
-        TIMER_QUEUE.delay(duration).await;
-    }
-
-    /// Delay to some specific time instant.
-    #[inline]
-    pub async fn delay_until(instant: <Self as Monotonic>::Instant) {
-        TIMER_QUEUE.delay_until(instant).await;
-    }
-}
-
-impl Monotonic for Timer {
-    type Instant = fugit::TimerInstantU64<1_000_000>;
-    type Duration = fugit::TimerDurationU64<1_000_000>;
-
-    const ZERO: Self::Instant = Self::Instant::from_ticks(0);
-    const TICK_PERIOD: Self::Duration = Self::Duration::from_ticks(1);
-
-    fn now() -> Self::Instant {
+    fn now() -> Self::Ticks {
         let timer = Self::timer();
 
         let mut hi0 = timer.timerawh.read().bits();
@@ -114,22 +81,24 @@ impl Monotonic for Timer {
             let low = timer.timerawl.read().bits();
             let hi1 = timer.timerawh.read().bits();
             if hi0 == hi1 {
-                break Self::Instant::from_ticks((u64::from(hi0) << 32) | u64::from(low));
+                break ((u64::from(hi0) << 32) | u64::from(low));
             }
             hi0 = hi1;
         }
     }
 
-    fn set_compare(instant: Self::Instant) {
+    fn set_compare(instant: Self::Ticks) {
         let now = Self::now();
 
-        let max = u32::MAX as u64;
+        const MAX: u64 = u32::MAX as u64;
 
         // Since the timer may or may not overflow based on the requested compare val, we check
         // how many ticks are left.
-        let val = match instant.checked_duration_since(now) {
-            Some(x) if x.ticks() <= max => instant.duration_since_epoch().ticks() & max, // Will not overflow
-            _ => 0, // Will overflow or in the past, set the same value as after overflow to not get extra interrupts
+        // `wrapping_sup` takes care of the u64 integer overflow special case.
+        let val = if instant.wrapping_sub(now) <= MAX {
+            instant & MAX
+        } else {
+            0
         };
 
         Self::timer()
@@ -145,32 +114,55 @@ impl Monotonic for Timer {
         rp2040_pac::NVIC::pend(Interrupt::TIMER_IRQ_0);
     }
 
-    fn on_interrupt() {}
-
-    fn enable_timer() {}
-
-    fn disable_timer() {}
+    fn timer_queue() -> &'static TimerQueue<Self> {
+        &TIMER_QUEUE
+    }
 }
 
-rtic_time::embedded_hal_delay_impl_fugit64!(Timer);
-
-#[cfg(feature = "embedded-hal-async")]
-rtic_time::embedded_hal_async_delay_impl_fugit64!(Timer);
-
-/// Register the Timer interrupt for the monotonic.
+/// Create an RP2040 timer based monotonic and register the necessary interrupt for it.
+///
+/// See [`crate::rp2040`] for more details.
+///
+/// # Arguments
+///
+/// * `name` - The name that the monotonic type will have.
 #[macro_export]
-macro_rules! create_rp2040_monotonic_token {
-    () => {{
-        #[no_mangle]
-        #[allow(non_snake_case)]
-        unsafe extern "C" fn TIMER_IRQ_0() {
-            $crate::rp2040::Timer::__tq().on_monotonic_interrupt();
+macro_rules! rp2040_timer_monotonic {
+    ($name:ident) => {
+        /// A `Monotonic` based on the RP2040 Timer peripheral.
+        struct $name;
+
+        impl $name {
+            /// Starts the `Monotonic`.
+            ///
+            /// This method must be called only once.
+            pub fn start(timer: $crate::rp2040::TIMER, resets: &$crate::rp2040::RESETS) {
+                #[no_mangle]
+                #[allow(non_snake_case)]
+                unsafe extern "C" fn TIMER_IRQ_0() {
+                    use $crate::TimerQueueBackend;
+                    $crate::rp2040::TimerBackend::timer_queue().on_monotonic_interrupt();
+                }
+
+                $crate::rp2040::TimerBackend::_start(timer, resets);
+            }
         }
 
-        pub struct Rp2040Token;
+        impl $crate::TimerQueueBasedMonotonic for $name {
+            type Backend = $crate::rp2040::TimerBackend;
+            type Instant = $crate::fugit::Instant<
+                <Self::Backend as $crate::TimerQueueBackend>::Ticks,
+                1,
+                1_000_000,
+            >;
+            type Duration = $crate::fugit::Duration<
+                <Self::Backend as $crate::TimerQueueBackend>::Ticks,
+                1,
+                1_000_000,
+            >;
+        }
 
-        unsafe impl $crate::InterruptToken<$crate::rp2040::Timer> for Rp2040Token {}
-
-        Rp2040Token
-    }};
+        $crate::rtic_time::impl_embedded_hal_delay_fugit!($name);
+        $crate::rtic_time::impl_embedded_hal_async_delay_fugit!($name);
+    };
 }
