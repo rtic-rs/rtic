@@ -14,7 +14,7 @@ mod app {
         gpio::{
             self,
             bank0::{Gpio2, Gpio25, Gpio3},
-            FunctionSioOutput, PullNone, PullUp,
+            FunctionSio, PullNone, PullUp, SioOutput,
         },
         pac,
         sio::Sio,
@@ -41,7 +41,7 @@ mod app {
 
     #[local]
     struct Local {
-        led: gpio::Pin<Gpio25, FunctionSioOutput, PullNone>,
+        led: gpio::Pin<Gpio25, FunctionSio<SioOutput>, PullNone>,
         i2c: &'static mut I2CBus,
     }
 
@@ -82,14 +82,14 @@ mod app {
         led.set_low().unwrap();
 
         // Init I2C pins
-        let sda_pin = gpioa
+        let sda_pin: gpio::Pin<_, gpio::FunctionI2C, _> = gpioa
             .gpio2
             .into_pull_up_disabled()
-            .into_function::<gpio::FunctionI2C>();
-        let scl_pin = gpioa
+            .reconfigure();
+        let scl_pin: gpio::Pin<_, gpio::FunctionI2C, _> = gpioa
             .gpio3
             .into_pull_up_disabled()
-            .into_function::<gpio::FunctionI2C>();
+            .reconfigure();
 
         // Init I2C itself, using MaybeUninit to overwrite the previously
         // uninitialized i2c_ctx variable without dropping its value
