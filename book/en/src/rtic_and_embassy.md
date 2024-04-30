@@ -4,7 +4,7 @@
 
 Embassy provides both Hardware Abstraction Layers, and an executor/runtime, while RTIC aims to only provide an execution framework. For example, embassy provides `embassy-stm32` (a HAL), and `embassy-executor` (an executor). On the other hand, RTIC provides the framework in the form of [`rtic`], and the user is responsible for providing a PAC and HAL implementation (generally from the [`stm32-rs`] project).
 
-Additionally, RTIC aims to provide exclusive access to resources on as low a level of possible, ideally guarded by some form of hardware protection. This allows for access to hardware while not necessarily requiring locking mechanisms on the software level.
+Additionally, RTIC aims to provide exclusive access to resources at as low a level as possible, ideally guarded by some form of hardware protection. This allows for access to hardware without necessarily requiring locking mechanisms at the software level.
 
 ## Mixing use of Embassy and RTIC
 
