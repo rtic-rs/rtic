@@ -75,7 +75,7 @@ impl<T, const N: usize> Channel<T, N> {
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
         // Fill free queue
         for idx in 0..N as u8 {
-            debug_assert!(!self.freeq.get_mut().is_full());
+            assert!(!self.freeq.get_mut().is_full());
 
             // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue.
             unsafe {
@@ -83,7 +83,7 @@ impl<T, const N: usize> Channel<T, N> {
             }
         }
 
-        debug_assert!(self.freeq.get_mut().is_full());
+        assert!(self.freeq.get_mut().is_full());
 
         // There is now 1 sender
         *self.num_senders.get_mut() = 1;
@@ -224,7 +224,7 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
 
         // Write the value into the ready queue.
         critical_section::with(|cs| {
-            debug_assert!(!self.0.access(cs).readyq.is_full());
+            assert!(!self.0.access(cs).readyq.is_full());
             unsafe { self.0.access(cs).readyq.push_back_unchecked(idx) }
         });
 
@@ -312,7 +312,7 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
                     }
                 }
 
-                debug_assert!(!self.0.access(cs).freeq.is_empty());
+                assert!(!self.0.access(cs).freeq.is_empty());
                 // Get index as the queue is guaranteed not empty and the wait queue is empty
                 let idx = unsafe { self.0.access(cs).freeq.pop_front_unchecked() };
 
@@ -423,7 +423,7 @@ impl<'a, T, const N: usize> Receiver<'a, T, N> {
 
             // Return the index to the free queue after we've read the value.
             critical_section::with(|cs| {
-                debug_assert!(!self.0.access(cs).freeq.is_full());
+                assert!(!self.0.access(cs).freeq.is_full());
                 unsafe { self.0.access(cs).freeq.push_back_unchecked(rs) }
             });
 
