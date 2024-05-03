@@ -11,7 +11,7 @@ macro_rules! impl_embedded_hal_delay_fugit {
                     now + <Self as $crate::Monotonic>::Duration::nanos_at_least(ns.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + <Self as $crate::Monotonic>::Duration::from_ticks(1);
+                    done += <Self as $crate::Monotonic>::Duration::from_ticks(1);
                 }
 
                 while <Self as $crate::Monotonic>::now() < done {}
@@ -35,7 +35,7 @@ macro_rules! impl_embedded_hal_delay_fugit {
                     now + <Self as $crate::Monotonic>::Duration::millis_at_least(ms.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + <Self as $crate::Monotonic>::Duration::from_ticks(1);
+                    done += <Self as $crate::Monotonic>::Duration::from_ticks(1);
                 }
 
                 while <Self as $crate::Monotonic>::now() < done {}
