@@ -1,33 +1,4 @@
 //! A "latest only" value store with unlimited writers and async waiting.
-//!
-//! Example usage:
-//!
-//! ```rust
-//! fn init(ctx: init::Context) -> (Shared, Local) {
-//!     // mono set up among other things...
-//!
-//!     let (writer, reader) = make_signal!(u8);
-//!
-//!     writer_task::spawn(writer);
-//!     reader_task::spawn(reader);
-//! }
-//!
-//! #[task]
-//! async fn writer_task(_ctx: writer_task::Context, mut writer: SignalWriter<u8>) {
-//!     for i in 0..10 {
-//!         writer.write(i);
-//!         Mono::delay(500.millis()).await;
-//!     }
-//! }
-//!
-//! #[task]
-//! async fn reader_task(_ctx: reader_task::Context, mut reader: SignalReader<u8>) {
-//!     loop {
-//!         let value = reader.wait().await;
-//!         defmt::info("received value: {}", value);
-//!     }
-//! }
-//! ```
 
 use core::{
     cell::UnsafeCell,
@@ -45,7 +16,7 @@ enum Store<T> {
     Unset,
 }
 
-/// An async message passing structure with unlimited writers and one reader.
+/// A "latest only" value store with unlimited writers and async waiting.
 pub struct Signal<T: Copy> {
     waker: CriticalSectionWakerRegistration,
     store: UnsafeCell<Store<T>>,
