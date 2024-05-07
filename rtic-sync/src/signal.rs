@@ -1,11 +1,6 @@
 //! A "latest only" value store with unlimited writers and async waiting.
 
-use core::{
-    cell::UnsafeCell,
-    future::poll_fn,
-    sync::atomic::{fence, Ordering},
-    task::Poll,
-};
+use core::{cell::UnsafeCell, future::poll_fn, task::Poll};
 use rtic_common::waker_registration::CriticalSectionWakerRegistration;
 
 /// Basically an Option but for indicating
@@ -49,8 +44,6 @@ pub struct SignalWriter<'a, T: Copy> {
 impl<'a, T: Copy> SignalWriter<'a, T> {
     /// Write a raw Store value to the Signal.
     fn write_inner(&mut self, value: Store<T>) {
-        fence(Ordering::SeqCst);
-
         critical_section::with(|_| {
             // SAFETY: in a cs: exclusive access
             unsafe { self.parent.store.get().replace(value) };
