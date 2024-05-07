@@ -35,18 +35,18 @@ impl<T: Copy> Signal<T> {
     }
 
     /// Split the signal into a writer and reader.
-    pub fn split(&'static self) -> (SignalWriter<T>, SignalReader<T>) {
+    pub fn split<'a>(&'a self) -> (SignalWriter<T>, SignalReader<T>) {
         (SignalWriter { parent: self }, SignalReader { parent: self })
     }
 }
 
 /// Fascilitates the writing of values to a Signal.
 #[derive(Clone)]
-pub struct SignalWriter<T: 'static + Copy> {
-    parent: &'static Signal<T>,
+pub struct SignalWriter<'a, T: Copy> {
+    parent: &'a Signal<T>,
 }
 
-impl<T: Copy> SignalWriter<T> {
+impl<'a, T: Copy> SignalWriter<'a, T> {
     /// Write a raw Store value to the Signal.
     fn write_inner(&mut self, value: Store<T>) {
         fence(Ordering::SeqCst);
@@ -71,11 +71,11 @@ impl<T: Copy> SignalWriter<T> {
 }
 
 /// Fascilitates the async reading of values from the Signal.
-pub struct SignalReader<T: 'static + Copy> {
-    parent: &'static Signal<T>,
+pub struct SignalReader<'a, T: Copy> {
+    parent: &'a Signal<T>,
 }
 
-impl<T: Copy> SignalReader<T> {
+impl<'a, T: Copy> SignalReader<'a, T> {
     /// Immediately read and evict the latest value stored in the Signal.
     fn take(&mut self) -> Store<T> {
         critical_section::with(|_| {
@@ -88,12 +88,12 @@ impl<T: Copy> SignalReader<T> {
     ///
     /// If a value is already pending it will be returned immediately.
     pub async fn wait(&mut self) -> T {
-        poll_fn(|ctx| match self.take() {
-            Store::Unset => {
-                self.parent.waker.register(ctx.waker());
-                Poll::Pending
+        poll_fn(|ctx| {
+            self.parent.waker.register(ctx.waker());
+            match self.take() {
+                Store::Unset => Poll::Pending,
+                Store::Set(value) => Poll::Ready(value),
             }
-            Store::Set(value) => Poll::Ready(value),
         })
         .await
     }
