@@ -30,7 +30,7 @@ impl<T: Copy> Signal<T> {
     }
 
     /// Split the signal into a writer and reader.
-    pub fn split<'a>(&'a self) -> (SignalWriter<T>, SignalReader<T>) {
+    pub fn split(&self) -> (SignalWriter<T>, SignalReader<T>) {
         (SignalWriter { parent: self }, SignalReader { parent: self })
     }
 }
