@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+- Unstable support for ESP32-C6
+
 ## [v2.1.0] - 2024-02-27
 
 ### Added

@@ -7,6 +7,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+- Unstable support for ESP32-C6
 ### Changed
 
 - Use `riscv-slic` from `crates.io`
