@@ -2,7 +2,7 @@ use crate::{
     analyze::Analysis as CodegenAnalysis,
     syntax::{analyze::Analysis as SyntaxAnalysis, ast::App},
 };
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{parse, Attribute, Ident};
 
