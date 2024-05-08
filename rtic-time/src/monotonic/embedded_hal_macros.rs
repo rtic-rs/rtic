@@ -23,7 +23,7 @@ macro_rules! impl_embedded_hal_delay_fugit {
                     now + <Self as $crate::Monotonic>::Duration::micros_at_least(us.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
-                    done = done + <Self as $crate::Monotonic>::Duration::from_ticks(1);
+                    done += <Self as $crate::Monotonic>::Duration::from_ticks(1);
                 }
 
                 while <Self as $crate::Monotonic>::now() < done {}
