@@ -77,9 +77,21 @@ impl<'a, T: Copy> SignalReader<'a, T> {
         })
     }
 
+    /// Returns a pending value if present, or None if no value is available.
+    ///
+    /// Upon read, the stored value is evicted.
+    pub fn try_read(&mut self) -> Option<T> {
+        match self.take() {
+            Store::Unset => None,
+            Store::Set(value) => Some(value),
+        }
+    }
+
     /// Wait for a new value to be written and read it.
     ///
     /// If a value is already pending it will be returned immediately.
+    ///
+    /// Upon read, the stored value is evicted.
     pub async fn wait(&mut self) -> T {
         poll_fn(|ctx| {
             self.parent.waker.register(ctx.waker());
@@ -95,6 +107,8 @@ impl<'a, T: Copy> SignalReader<'a, T> {
     ///
     /// If a value is already pending, it will be evicted and a new
     /// value must be written for the wait to resolve.
+    ///
+    /// Upon read, the stored value is evicted.
     pub async fn wait_fresh(&mut self) -> T {
         self.take();
         self.wait().await
@@ -109,4 +123,73 @@ macro_rules! make_signal {
 
         SIGNAL.split()
     }};
+}
+
+#[cfg(test)]
+mod tests {
+    use static_cell::StaticCell;
+
+    use super::*;
+
+    #[test]
+    fn empty() {
+        let (_writer, mut reader) = make_signal!(u32);
+
+        assert!(reader.try_read().is_none());
+    }
+
+    #[test]
+    fn ping_pong() {
+        let (mut writer, mut reader) = make_signal!(u32);
+
+        writer.write(0xde);
+        assert!(reader.try_read().is_some_and(|value| value == 0xde));
+    }
+
+    #[test]
+    fn latest() {
+        let (mut writer, mut reader) = make_signal!(u32);
+
+        writer.write(0xde);
+        writer.write(0xad);
+        writer.write(0xbe);
+        writer.write(0xef);
+        assert!(reader.try_read().is_some_and(|value| value == 0xef));
+    }
+
+    #[test]
+    fn consumption() {
+        let (mut writer, mut reader) = make_signal!(u32);
+
+        writer.write(0xaa);
+        assert!(reader.try_read().is_some_and(|value| value == 0xaa));
+        assert!(reader.try_read().is_none());
+    }
+
+    #[tokio::test]
+    async fn pending() {
+        let (mut writer, mut reader) = make_signal!(u32);
+
+        writer.write(0xaa);
+
+        assert_eq!(reader.wait().await, 0xaa);
+    }
+
+    #[tokio::test]
+    async fn waiting() {
+        static READER: StaticCell<SignalReader<u32>> = StaticCell::new();
+        let (mut writer, reader) = make_signal!(u32);
+
+        writer.write(0xaa);
+
+        let reader = READER.init(reader);
+        let handle = tokio::spawn(reader.wait_fresh());
+
+        tokio::task::yield_now().await; // encourage tokio executor to poll reader future
+        assert!(!handle.is_finished()); // verify reader future did not resolve after poll
+
+        writer.write(0xab);
+
+        assert!(handle.await.is_ok_and(|value| value == 0xab));
+    }
 }
