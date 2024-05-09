@@ -220,7 +220,7 @@ dependencies = [
  "esp-riscv-rt",
  "esp32",
  "esp32c2",
- "esp32c3",
+ "esp32c3 0.21.0",
  "esp32c6",
  "esp32h2",
  "esp32p4",
@@ -292,7 +292,7 @@ dependencies = [
  "esp-backtrace",
  "esp-hal",
  "esp-println",
- "esp32c3",
+ "esp32c3 0.22.0",
  "rtic",
 ]
 
@@ -311,6 +311,16 @@ name = "esp32c3"
 version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a7ee710c1e4f16b5e840cdfec3f4e7642b7517a877c5c4b7e1cafa9a14117c5"
+dependencies = [
+ "critical-section",
+ "vcell",
+]
+
+[[package]]
+name = "esp32c3"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c22d8c27e7d675ef79db212b9e41df80aef6db1a5c819e4e726735f64ee0700"
 dependencies = [
  "critical-section",
  "vcell",
@@ -604,7 +614,7 @@ dependencies = [
  "atomic-polyfill",
  "bare-metal",
  "critical-section",
- "esp32c3",
+ "esp32c3 0.22.0",
  "riscv",
  "rtic-core",
  "rtic-macros",
