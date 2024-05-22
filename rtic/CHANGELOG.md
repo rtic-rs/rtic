@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Updated esp32c3 dependency to v0.22.0
 - Use `riscv-slic` from `crates.io`
 - Remove unused dependency `rtic-monotonics`
 
