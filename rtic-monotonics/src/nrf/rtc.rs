@@ -33,6 +33,9 @@ pub mod prelude {
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
 
+#[cfg(feature = "nrf52805")]
+#[doc(hidden)]
+pub use nrf52805_pac::{self as pac, RTC0, RTC1};
 #[cfg(feature = "nrf52810")]
 #[doc(hidden)]
 pub use nrf52810_pac::{self as pac, RTC0, RTC1};

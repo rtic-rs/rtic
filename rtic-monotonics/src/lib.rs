@@ -44,6 +44,7 @@ pub mod rp2040;
 pub mod imxrt;
 
 #[cfg(any(
+    feature = "nrf52805",
     feature = "nrf52810",
     feature = "nrf52811",
     feature = "nrf52832",
@@ -66,6 +67,7 @@ pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
 
 #[cfg(any(
     feature = "rp2040",
+    feature = "nrf52805",
     feature = "nrf52810",
     feature = "nrf52811",
     feature = "nrf52832",

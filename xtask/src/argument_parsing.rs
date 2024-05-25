@@ -76,6 +76,7 @@ impl Package {
                         "cortex-m-systick",
                         "cortex-m-systick,systick-64bit",
                         "rp2040",
+                        "nrf52805",
                         "nrf52810",
                         "nrf52811",
                         "nrf52832",
