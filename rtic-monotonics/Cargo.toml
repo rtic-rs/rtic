@@ -45,6 +45,7 @@ critical-section = { version = "1", optional = true }
 rp2040-pac = { version = "0.6", optional = true }
 
 # nRF52
+nrf52805-pac = { version = "0.12.2", optional = true }
 nrf52810-pac = { version = "0.12.2", optional = true }
 nrf52811-pac = { version = "0.12.2", optional = true }
 nrf52832-pac = { version = "0.12.2", optional = true }
@@ -80,6 +81,7 @@ systick-64bit = []
 rp2040 = ["dep:cortex-m", "dep:rp2040-pac"]
 
 # nRF Timers and RTC
+nrf52805 = ["dep:cortex-m", "dep:nrf52805-pac", "dep:critical-section"]
 nrf52810 = ["dep:cortex-m", "dep:nrf52810-pac", "dep:critical-section"]
 nrf52811 = ["dep:cortex-m", "dep:nrf52811-pac", "dep:critical-section"]
 nrf52832 = ["dep:cortex-m", "dep:nrf52832-pac", "dep:critical-section"]
