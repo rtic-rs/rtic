@@ -64,3 +64,9 @@ impl CriticalSectionWakerRegistration {
         });
     }
 }
+
+impl Default for CriticalSectionWakerRegistration {
+    fn default() -> Self {
+        Self::new()
+    }
+}

@@ -52,6 +52,12 @@ impl AsyncTaskExecutorPtr {
     }
 }
 
+impl Default for AsyncTaskExecutorPtr {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Executor for an async task.
 pub struct AsyncTaskExecutor<F: Future> {
     // `task` is protected by the `running` flag.
@@ -78,6 +84,12 @@ macro_rules! from_ptr_n_args {
             &*(ptr.get() as *const _)
         }
     };
+}
+
+impl<F: Future> Default for AsyncTaskExecutor<F> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<F: Future> AsyncTaskExecutor<F> {

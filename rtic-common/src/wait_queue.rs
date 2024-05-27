@@ -29,6 +29,12 @@ impl<T> DoublyLinkedList<T> {
     }
 }
 
+impl<T> Default for DoublyLinkedList<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Clone> DoublyLinkedList<T> {
     const R: Ordering = Ordering::Relaxed;
 

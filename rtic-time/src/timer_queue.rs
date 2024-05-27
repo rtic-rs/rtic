@@ -87,6 +87,12 @@ impl<Backend: TimerQueueBackend> LinkPtr<Backend> {
 unsafe impl<Backend: TimerQueueBackend> Send for LinkPtr<Backend> {}
 unsafe impl<Backend: TimerQueueBackend> Sync for LinkPtr<Backend> {}
 
+impl<Backend: TimerQueueBackend> Default for TimerQueue<Backend> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<Backend: TimerQueueBackend> TimerQueue<Backend> {
     /// Make a new queue.
     pub const fn new() -> Self {
