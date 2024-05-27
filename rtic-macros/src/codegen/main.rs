@@ -21,7 +21,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
     let call_idle = if let Some(idle) = &app.idle {
         let name = &idle.name;
         quote!(#name(#name::Context::new()))
-    } else if analysis.channels.get(&0).is_some() {
+    } else if analysis.channels.contains_key(&0) {
         let dispatcher = util::zero_prio_dispatcher_ident();
         quote!(#dispatcher();)
     } else {

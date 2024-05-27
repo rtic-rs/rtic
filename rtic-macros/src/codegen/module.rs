@@ -147,7 +147,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         let priority = spawnee.args.priority;
         let cfgs = &spawnee.cfgs;
         // Store a copy of the task cfgs
-        task_cfgs = cfgs.clone();
+        task_cfgs.clone_from(cfgs);
 
         let pend_interrupt = if priority > 0 {
             let int_mod = interrupt_mod(app);
