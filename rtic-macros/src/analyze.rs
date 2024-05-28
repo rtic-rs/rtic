@@ -24,7 +24,7 @@ impl ops::Deref for Analysis {
 
 // Assign an interrupt to each priority level
 pub fn app(analysis: analyze::Analysis, app: &App) -> Analysis {
-    let mut available_interrupt = app.args.dispatchers.clone();
+    let mut available_dispatchers = app.args.dispatchers.clone();
 
     // the set of priorities (each priority only once)
     let priorities = app
@@ -35,12 +35,26 @@ pub fn app(analysis: analyze::Analysis, app: &App) -> Analysis {
 
     // map from priorities to interrupts (holding name and attributes)
 
-    let interrupts: BTreeMap<Priority, _> = priorities
+    let nonzero_priorities = priorities
         .iter()
-        .filter(|prio| **prio > 0) // 0 prio tasks are run in main
+        // 0 prio tasks are run in main
+        .filter(|prio| **prio > 0);
+    assert!(
+        available_dispatchers.len() >= nonzero_priorities.clone().count(),
+        "The number of dispatchers must be equal to or greater than the number of distinct task priorities."
+    );
+    let interrupts: BTreeMap<Priority, _> = nonzero_priorities
         .copied()
         .rev()
-        .map(|p| (p, available_interrupt.pop().expect("UNREACHABLE")))
+        .map(|p| {
+            (
+                p,
+                available_dispatchers
+                    .pop()
+                    // EXPECT: covered by above assertion
+                    .expect("UNREACHABLE"),
+            )
+        })
         .collect();
 
     let max_async_prio = app
