@@ -85,7 +85,7 @@ macro_rules! __internal_create_nrf_rtc_interrupt {
 macro_rules! __internal_create_nrf_rtc_struct {
     ($name:ident, $mono_backend:ident, $timer:ident) => {
         /// A `Monotonic` based on the nRF RTC peripheral.
-        struct $name;
+        pub struct $name;
 
         impl $name {
             /// Starts the `Monotonic`.
