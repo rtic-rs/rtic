@@ -557,7 +557,7 @@ dependencies = [
  "cortex-m-rt",
  "defmt",
  "defmt-rtt",
- "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0",
  "panic-halt",
  "rtic",
  "rtic-sync",
@@ -566,9 +566,9 @@ dependencies = [
 
 [[package]]
 name = "stm32f4xx-hal"
-version = "0.20.0"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10c41454f262c0be0c35b8cfc0d971e598281f7a9be32e894dc97a0b21deadfe"
+checksum = "ceed60591531f4da636d828701c74861a3d100e5c4e36677cadbd2eb6f46eb67"
 dependencies = [
  "bare-metal 1.0.0",
  "cortex-m",
