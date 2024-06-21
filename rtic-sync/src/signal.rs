@@ -12,6 +12,7 @@ enum Store<T> {
 }
 
 /// A "latest only" value store with unlimited writers and async waiting.
+#[derive(Default)]
 pub struct Signal<T: Copy> {
     waker: CriticalSectionWakerRegistration,
     store: UnsafeCell<Store<T>>,
