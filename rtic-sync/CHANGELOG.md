@@ -7,7 +7,14 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+- Add `arbiter::{i2c, spi}::BlockingArbiterDevice` which allows sharing of `embedded_hal` (non-async) buses. This also helps during initialization of RTIC apps as you can use the arbiter while in `init`. After initialization is complete, convert an `BlockingArbiterDevice` into an `ArbiterDevice` using `BlockingArbiterDevice::into_non_blocking()`.
+
+### Fixed
+
 - Avoid a critical section when a `send`-link is popped and when returning `free_slot`.
+
 ### Changed
 
 - Add `loom` support.
