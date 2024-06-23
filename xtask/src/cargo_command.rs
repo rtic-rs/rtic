@@ -44,6 +44,7 @@ pub enum CargoCommand<'a> {
     },
     ExampleCheck {
         cargoarg: &'a Option<&'a str>,
+        #[allow(dead_code)]
         platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
         example: &'a str,
         target: Option<Target<'a>>,

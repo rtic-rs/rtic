@@ -42,17 +42,17 @@ pub mod prelude {
 
 pub use cortex_m::peripheral::SYST;
 
-use atomic_polyfill::Ordering;
+use portable_atomic::Ordering;
 use rtic_time::timer_queue::TimerQueue;
 
 use crate::TimerQueueBackend;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "systick-64bit")] {
-        use atomic_polyfill::AtomicU64;
+        use portable_atomic::AtomicU64;
         static SYSTICK_CNT: AtomicU64 = AtomicU64::new(0);
     } else {
-        use atomic_polyfill::AtomicU32;
+        use portable_atomic::AtomicU32;
         static SYSTICK_CNT: AtomicU32 = AtomicU32::new(0);
     }
 }

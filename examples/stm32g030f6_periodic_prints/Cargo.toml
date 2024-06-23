@@ -25,6 +25,7 @@ defmt = "0.3.4"
 defmt-rtt = "0.4.0"
 fugit = "0.3.7"
 panic-probe = { version = "0.3.1", features = ["print-defmt"] }
+portable-atomic = { version = "1", features = ["unsafe-assume-single-core"] }
 
 stm32g0xx-hal = { version = "0.2.0", features = ["rt", "stm32g030"] }
 

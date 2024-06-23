@@ -92,10 +92,19 @@ impl Package {
 
                 features
                     .iter()
-                    .map(ToString::to_string)
+                    .map(|&s| {
+                        if matches!(backend, Backends::Thumbv6) {
+                            format!("{s},portable-atomic/critical-section")
+                        } else {
+                            s.to_string()
+                        }
+                    })
                     .map(Some)
                     .chain(std::iter::once(None))
                     .collect()
+            }
+            Package::RticSync if matches!(backend, Backends::Thumbv6) => {
+                vec![Some("portable-atomic/critical-section".into())]
             }
             _ => vec![None],
         }

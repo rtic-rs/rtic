@@ -11,6 +11,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Updated esp32c3 dependency to v0.22.0
 - Use `riscv-slic` from `crates.io`
+- Replace `atomic-polyfill` with `portable-atomic`
 - Remove unused dependency `rtic-monotonics`
 
 ## [v2.1.1] - 2024-03-13

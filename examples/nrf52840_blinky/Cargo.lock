@@ -3,15 +3,6 @@
 version = 3
 
 [[package]]
-name = "atomic-polyfill"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cf2bce30dfe09ef0bfaef228b9d414faaf7e563035494d7fe092dba54b300f4"
-dependencies = [
- "critical-section",
-]
-
-[[package]]
 name = "az"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -391,9 +382,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "portable-atomic"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bccab0e7fd7cc19f820a1c8c91720af652d0c88dc9664dd72aef2614f04af3b"
+checksum = "7170ef9988bc169ba16dd36a7fa041e5c4cbeb6a35b76d4c03daded371eae7c0"
 
 [[package]]
 name = "proc-macro-error"
@@ -445,12 +436,12 @@ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 
 [[package]]
 name = "rtic"
-version = "2.0.1"
+version = "2.1.1"
 dependencies = [
- "atomic-polyfill",
  "bare-metal 1.0.0",
  "cortex-m",
  "critical-section",
+ "portable-atomic",
  "rtic-core",
  "rtic-macros",
 ]
@@ -471,7 +462,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "indexmap",
  "proc-macro-error",
@@ -484,13 +475,12 @@ dependencies = [
 name = "rtic-monotonics"
 version = "2.0.0"
 dependencies = [
- "atomic-polyfill",
  "cfg-if",
  "cortex-m",
  "critical-section",
- "embedded-hal 1.0.0",
  "fugit",
  "nrf52840-pac",
+ "portable-atomic",
  "rtic-time",
 ]
 

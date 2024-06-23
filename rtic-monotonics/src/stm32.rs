@@ -51,7 +51,7 @@ pub mod prelude {
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
 
-use atomic_polyfill::{AtomicU64, Ordering};
+use portable_atomic::{AtomicU64, Ordering};
 use rtic_time::{
     half_period_counter::calculate_now,
     timer_queue::{TimerQueue, TimerQueueBackend},

@@ -70,6 +70,7 @@ pub struct AppArgs {
     pub dispatchers: Dispatchers,
 
     /// Backend-specific arguments
+    #[allow(dead_code)]
     pub backend: Option<BackendArgs>,
 }
 

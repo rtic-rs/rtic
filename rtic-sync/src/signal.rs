@@ -17,6 +17,12 @@ pub struct Signal<T: Copy> {
     store: UnsafeCell<Store<T>>,
 }
 
+impl<T: Copy> Default for Signal<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 unsafe impl<T: Copy> Send for Signal<T> {}
 unsafe impl<T: Copy> Sync for Signal<T> {}
 
