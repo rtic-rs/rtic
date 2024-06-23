@@ -24,7 +24,7 @@ rtic-common = { version = "1.0.0", path = "../rtic-common" }
 portable-atomic = { version = "1", default-features = false }
 embedded-hal = { version = "1.0.0" }
 embedded-hal-async = { version = "1.0.0" }
-embedded-hal-bus = { version = "0.1.0", features = ["async"] }
+embedded-hal-bus = { version = "0.2.0", features = ["async"] }
 
 defmt-03 = { package = "defmt", version = "0.3", optional = true }
 
