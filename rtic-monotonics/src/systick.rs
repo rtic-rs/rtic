@@ -148,7 +148,7 @@ macro_rules! systick_monotonic {
     };
     ($name:ident, $tick_rate_hz:expr) => {
         /// A `Monotonic` based on SysTick.
-        struct $name;
+        pub struct $name;
 
         impl $name {
             /// Starts the `Monotonic`.

@@ -130,7 +130,7 @@ impl TimerQueueBackend for TimerBackend {
 macro_rules! rp2040_timer_monotonic {
     ($name:ident) => {
         /// A `Monotonic` based on the RP2040 Timer peripheral.
-        struct $name;
+        pub struct $name;
 
         impl $name {
             /// Starts the `Monotonic`.

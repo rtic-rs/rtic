@@ -5,12 +5,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
-## Unreleased - v2.0.0
+## Unreleased
 
+## v2.0.0 - 2024-05-29
 
 ### Added
 
 ### Changed
+
 - Full rewrite of the `Monotonic` API.
     - Now split into multiple traits:
         - `Monotonic` - A user-facing trait that defines what the functionality of a monotonic is.

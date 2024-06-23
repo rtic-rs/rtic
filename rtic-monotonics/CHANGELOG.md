@@ -5,7 +5,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
-## Unreleased - v2.0.0
+## Unreleased
+
+## v2.0.1 - 2024-06-02
+
+### Changed
+
+- Make monotonics created with their respective macros public
+
+## v2.0.0 - 2024-05-29
 
 ### Changed
 

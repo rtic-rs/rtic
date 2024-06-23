@@ -83,7 +83,8 @@ macro_rules! __internal_create_stm32_timer_interrupt {
 #[macro_export]
 macro_rules! __internal_create_stm32_timer_struct {
     ($name:ident, $mono_backend:ident, $timer:ident, $tick_rate_hz:expr) => {
-        struct $name;
+        /// A `Monotonic` based on an STM32 timer peripheral.
+        pub struct $name;
 
         impl $name {
             /// Starts the `Monotonic`.

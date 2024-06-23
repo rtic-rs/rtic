@@ -14,6 +14,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 ### Added
 
 - `defmt v0.3` derives added and forwarded to `embedded-hal(-x)` crates.
+- signal structure
 
 ## v1.2.0 - 2024-01-10
 
