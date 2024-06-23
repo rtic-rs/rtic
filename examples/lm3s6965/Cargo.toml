@@ -30,7 +30,10 @@ features = ["exit"]
 version = "0.6.0"
 
 [features]
-test-critical-section = ["rtic/test-critical-section"]
+test-critical-section = [
+  "rtic/test-critical-section",
+  "cortex-m/critical-section-single-core",
+]
 thumbv6-backend = ["rtic/thumbv6-backend"]
 thumbv7-backend = ["rtic/thumbv7-backend"]
 thumbv8base-backend = ["rtic/thumbv8base-backend"]

@@ -24,6 +24,7 @@ embedded-hal = { version = "0.2.7", features = ["unproven"] }
 fugit = "0.3"
 rp-pico = "0.9.0"
 panic-probe = "0.3"
+portable-atomic = { version = "1", features = ["critical-section"] }
 
 [profile.dev]
 opt-level = 1

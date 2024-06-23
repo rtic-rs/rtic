@@ -3,15 +3,6 @@
 version = 3
 
 [[package]]
-name = "atomic-polyfill"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cf2bce30dfe09ef0bfaef228b9d414faaf7e563035494d7fe092dba54b300f4"
-dependencies = [
- "critical-section",
-]
-
-[[package]]
 name = "bare-metal"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -298,12 +289,12 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.0.1"
+version = "2.1.1"
 dependencies = [
- "atomic-polyfill",
  "bare-metal 1.0.0",
  "cortex-m",
  "critical-section",
+ "portable-atomic",
  "rtic-core",
  "rtic-macros",
 ]
@@ -324,7 +315,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "indexmap",
  "proc-macro-error",
@@ -337,11 +328,10 @@ dependencies = [
 name = "rtic-monotonics"
 version = "2.0.0"
 dependencies = [
- "atomic-polyfill",
  "cfg-if",
  "cortex-m",
- "embedded-hal 1.0.0",
  "fugit",
+ "portable-atomic",
  "proc-macro2",
  "quote",
  "rtic-time",
@@ -415,6 +405,7 @@ dependencies = [
  "defmt-rtt",
  "fugit",
  "panic-probe",
+ "portable-atomic",
  "rtic",
  "rtic-monotonics",
  "stm32g0xx-hal",

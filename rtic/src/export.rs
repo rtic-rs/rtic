@@ -1,6 +1,5 @@
 pub use bare_metal::CriticalSection;
-//pub use portable_atomic as atomic;
-pub use atomic_polyfill as atomic;
+pub use portable_atomic as atomic;
 
 pub mod executor;
 

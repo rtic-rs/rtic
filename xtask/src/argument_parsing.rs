@@ -73,20 +73,20 @@ impl Package {
                     ][..]
                 } else {
                     &[
-                        "cortex-m-systick",
-                        "cortex-m-systick,systick-64bit",
-                        "rp2040",
-                        "nrf52805",
-                        "nrf52810",
-                        "nrf52811",
-                        "nrf52832",
-                        "nrf52833",
-                        "nrf52840",
-                        "nrf5340-app",
-                        "nrf5340-net",
-                        "nrf9160",
-                        "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062",
-                        "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag",
+                        "cortex-m-systick,portable-atomic/critical-section",
+                        "cortex-m-systick,systick-64bit,portable-atomic/critical-section",
+                        "rp2040,portable-atomic/critical-section",
+                        "nrf52805,portable-atomic/critical-section",
+                        "nrf52810,portable-atomic/critical-section",
+                        "nrf52811,portable-atomic/critical-section",
+                        "nrf52832,portable-atomic/critical-section",
+                        "nrf52833,portable-atomic/critical-section",
+                        "nrf52840,portable-atomic/critical-section",
+                        "nrf5340-app,portable-atomic/critical-section",
+                        "nrf5340-net,portable-atomic/critical-section",
+                        "nrf9160,portable-atomic/critical-section",
+                        "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062,portable-atomic/critical-section",
+                        "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag,portable-atomic/critical-section",
                     ][..]
                 };
 
