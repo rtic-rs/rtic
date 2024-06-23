@@ -10,6 +10,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 ### Changed
 
 - Unstable features are now stable, the feature flag `unstable` is removed.
+- Update `embedded-hal-bus` to 0.2
 
 ### Added
 

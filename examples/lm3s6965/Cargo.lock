@@ -110,13 +110,14 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal-bus"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57b4e6ede84339ebdb418cd986e6320a34b017cdf99b5cc3efceec6450b06886"
+checksum = "0d3980bf28e8577db59fe2bdb3df868a419469d2cecb363644eea2b6f7797669"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
+ "portable-atomic",
 ]
 
 [[package]]
@@ -385,7 +386,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-monotonics"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "cfg-if",
  "cortex-m",
@@ -396,7 +397,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-sync"
-version = "1.3.0"
+version = "1.3.1-alpha.1"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
