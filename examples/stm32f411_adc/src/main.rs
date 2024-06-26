@@ -58,7 +58,7 @@ mod app {
         // 3) Create delay handle
         let delay = dp.TIM1.delay_ms(&clocks);
 
-        // Configure the LED pin as a push pull ouput and obtain handle
+        // Configure the LED pin as a push pull output and obtain handle
         // On the Blackpill STM32F411CEU6 there is an on-board LED connected to pin PC13
         // 1) Promote the GPIOC PAC struct
         let gpioc = dp.GPIOC.split();
