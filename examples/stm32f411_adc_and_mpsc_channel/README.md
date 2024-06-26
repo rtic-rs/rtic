@@ -2,7 +2,7 @@
 This example is a continuation of the **stm32f411_adc**.
 In this variant, there are 3 tasks (1 HW & 2 SW) involved and communication between them by means of an MPSC channel.
 
-In the `#[init]` before spawning any task, an MPSC channel is created and splitted in its two parts.  
+In the `#[init]` before spawning any task, an MPSC channel is created and split in its two parts.  
 Immediately after separating the `Receiver` and `Sender` the software task `printer_actor` is spawned and receives the `Receiver` end of the channel and starts listening.  
 
 Then two clones of the `Sender` type are created. The first one is stored as Local resource for the HW task and the second, is passed as an argument when the `pinger` software task is spawned.
