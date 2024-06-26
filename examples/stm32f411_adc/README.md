@@ -16,4 +16,21 @@ Run `cargo build --release` to compile the code. If you run it for the first tim
 
 ### Run
 Install `probe-rs` and configure it using the [debugging extension for VScode](https://probe.rs/docs/tools/debugger/).  
-The output should look like this ![scrrenshot](./screenshot.png)
+The output should look like this:
+
+```
+INFO Current delay value 1900
+INFO Current ADC value 665
+
+INFO Current delay value 1800
+INFO Current ADC value 1138
+
+INFO Current delay value 1700
+INFO Current ADC value 1136
+
+INFO Current delay value 1600
+INFO Current ADC value 811
+
+INFO Current delay value 1500
+INFO Current ADC value 1752
+```
