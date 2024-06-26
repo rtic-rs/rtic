@@ -28,4 +28,19 @@ Run `cargo build --release` to compile the code. If you run it for the first tim
 
 ### Run
 Install `probe-rs` and configure it using the [debugging extension for VScode](https://probe.rs/docs/tools/debugger/).  
-The output should look like this ![scrrenshot](./screenshot.png)
+
+The output should look like this:
+
+```
+INFO Printer actor received a PING from software task
+INFO Current delay value 1900
+INFO Printer actor received a new PotentiometerValue: 607 from hardware task.
+
+INFO Current delay value 1800
+INFO Printer actor received a new PotentiometerValue: 1011 from hardware task.
+
+INFO Current delay value 1700
+INFO Printer actor received a new PotentiometerValue: 819 from hardware task.
+
+INFO Printer actor received a PING from software task
+```
