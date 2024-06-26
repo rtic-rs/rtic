@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SETUP_1_SPEC"],"type":["DOTW_R","DOTW_W","HOUR_R","HOUR_W","MIN_R","MIN_W","R","SEC_R","SEC_W","W"]};
