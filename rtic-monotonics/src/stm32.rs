@@ -294,7 +294,7 @@ macro_rules! make_timer {
             }
 
             fn clear_compare_flag() {
-                $timer.sr().modify(|r| r.set_ccif(1, false));
+                // Do nothing, because the flags are cleared below in on_interrupt
             }
 
             fn pend_interrupt() {
