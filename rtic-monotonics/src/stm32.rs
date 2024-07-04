@@ -301,14 +301,6 @@ macro_rules! make_timer {
                 cortex_m::peripheral::NVIC::pend(pac::Interrupt::$timer);
             }
 
-            fn enable_timer() {
-                $timer.dier().modify(|r| r.set_ccie(1, true));
-            }
-
-            fn disable_timer() {
-                $timer.dier().modify(|r| r.set_ccie(1, false));
-            }
-
             fn on_interrupt() {
                 // Full period
                 if $timer.sr().read().uif() {
