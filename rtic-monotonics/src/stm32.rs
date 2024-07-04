@@ -240,8 +240,8 @@ macro_rules! make_timer {
                 $timer.dier().modify(|r| r.set_uie(true));
 
                 // Configure and enable half-period interrupt
-                $timer.ccr(2).write(|r| r.set_ccr(($bits::MAX - ($bits::MAX >> 1)).into()));
-                $timer.dier().modify(|r| r.set_ccie(2, true));
+                $timer.ccr(1).write(|r| r.set_ccr(($bits::MAX - ($bits::MAX >> 1)).into()));
+                $timer.dier().modify(|r| r.set_ccie(1, true));
 
                 // Trigger an update event to load the prescaler value to the clock.
                 $timer.egr().write(|r| r.set_ug(true));
@@ -309,8 +309,8 @@ macro_rules! make_timer {
                     assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
                 }
                 // Half period
-                if $timer.sr().read().ccif(2) {
-                    $timer.sr().modify(|r| r.set_ccif(2, false));
+                if $timer.sr().read().ccif(1) {
+                    $timer.sr().modify(|r| r.set_ccif(1, false));
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
                     assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
                 }
