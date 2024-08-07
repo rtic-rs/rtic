@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IRQ_SETUP_1_SPEC"],"type":["DOTW_ENA_R","DOTW_ENA_W","DOTW_R","DOTW_W","HOUR_ENA_R","HOUR_ENA_W","HOUR_R","HOUR_W","MIN_ENA_R","MIN_ENA_W","MIN_R","MIN_W","R","SEC_ENA_R","SEC_ENA_W","SEC_R","SEC_W","W"]};

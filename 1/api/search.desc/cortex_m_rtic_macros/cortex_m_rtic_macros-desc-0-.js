@@ -1,0 +1,1 @@
+searchState.loadedDescShard("cortex_m_rtic_macros", 0, "Attribute used to declare a RTIC application")

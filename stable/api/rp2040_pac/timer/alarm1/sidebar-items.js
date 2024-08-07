@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ALARM1_SPEC"],"type":["R","W"]};
