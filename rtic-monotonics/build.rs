@@ -2,6 +2,7 @@ fn main() {
     #[cfg(feature = "stm32-metapac")]
     stm32();
 
+    println!("cargo::rustc-check-cfg=cfg(stm32)");
     println!("cargo:rerun-if-changed=build.rs");
 }
 
