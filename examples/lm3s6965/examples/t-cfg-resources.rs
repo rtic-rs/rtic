@@ -5,6 +5,7 @@
 #![deny(warnings)]
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
+#![allow(unexpected_cfgs)]
 
 use panic_semihosting as _;
 

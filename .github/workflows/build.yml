@@ -434,10 +434,11 @@ jobs:
           tool: cargo-binutils
 
       # Use precompiled if possible
-      - name: Install cargo-binutils
-        uses: taiki-e/install-action@v2
-        with:
-          tool: espflash
+      - name: Install espflash
+        run: cargo install espflash --version 3.1.0 --force
+        # uses: taiki-e/install-action@v2
+        # with:
+        #   tool: espflash
 
       - name: Install esptool.py
         run: pip install esptool
