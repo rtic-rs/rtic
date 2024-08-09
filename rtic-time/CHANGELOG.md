@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Changed
+
+- Replace `async` implementations of `delay`/`delay_until`/`timeout`/`timeout_at` with structs to reduce memory usage.
+
 ## v2.0.0 - 2024-05-29
 
 ### Added
