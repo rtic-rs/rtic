@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Fix codegen emitting unqualified `Result`
 - Improve error output for prios > dispatchers
 
 ## [v2.1.0] - 2024-02-27

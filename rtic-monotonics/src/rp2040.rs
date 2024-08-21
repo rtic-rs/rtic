@@ -94,7 +94,7 @@ impl TimerQueueBackend for TimerBackend {
 
         // Since the timer may or may not overflow based on the requested compare val, we check
         // how many ticks are left.
-        // `wrapping_sup` takes care of the u64 integer overflow special case.
+        // `wrapping_sub` takes care of the u64 integer overflow special case.
         let val = if instant.wrapping_sub(now) <= MAX {
             instant & MAX
         } else {

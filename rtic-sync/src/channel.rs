@@ -62,15 +62,13 @@ impl<T, const N: usize> Default for Channel<T, N> {
 impl<T, const N: usize> Channel<T, N> {
     const _CHECK: () = assert!(N < 256, "This queue support a maximum of 255 entries");
 
-    const INIT_SLOTS: UnsafeCell<MaybeUninit<T>> = UnsafeCell::new(MaybeUninit::uninit());
-
     /// Create a new channel.
     pub const fn new() -> Self {
         Self {
             freeq: UnsafeCell::new(Deque::new()),
             readyq: UnsafeCell::new(Deque::new()),
             receiver_waker: WakerRegistration::new(),
-            slots: [Self::INIT_SLOTS; N],
+            slots: [const { UnsafeCell::new(MaybeUninit::uninit()) }; N],
             wait_queue: WaitQueue::new(),
             receiver_dropped: UnsafeCell::new(false),
             num_senders: UnsafeCell::new(0),

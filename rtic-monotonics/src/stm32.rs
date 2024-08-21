@@ -240,8 +240,8 @@ macro_rules! make_timer {
                 $timer.dier().modify(|r| r.set_uie(true));
 
                 // Configure and enable half-period interrupt
-                $timer.ccr(2).write(|r| r.set_ccr(($bits::MAX - ($bits::MAX >> 1)).into()));
-                $timer.dier().modify(|r| r.set_ccie(2, true));
+                $timer.ccr(0).write(|r| r.set_ccr(($bits::MAX - ($bits::MAX >> 1)).into()));
+                $timer.dier().modify(|r| r.set_ccie(0, true));
 
                 // Trigger an update event to load the prescaler value to the clock.
                 $timer.egr().write(|r| r.set_ug(true));
@@ -282,7 +282,7 @@ macro_rules! make_timer {
                 let now = Self::now();
 
                 // Since the timer may or may not overflow based on the requested compare val, we check how many ticks are left.
-                // `wrapping_sup` takes care of the u64 integer overflow special case.
+                // `wrapping_sub` takes care of the u64 integer overflow special case.
                 let val = if instant.wrapping_sub(now) <= ($bits::MAX as u64) {
                     instant as $bits
                 } else {
@@ -317,8 +317,8 @@ macro_rules! make_timer {
                     assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
                 }
                 // Half period
-                if $timer.sr().read().ccif(2) {
-                    $timer.sr().modify(|r| r.set_ccif(2, false));
+                if $timer.sr().read().ccif(0) {
+                    $timer.sr().modify(|r| r.set_ccif(0, false));
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
                     assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
                 }

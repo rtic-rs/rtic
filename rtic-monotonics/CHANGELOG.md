@@ -7,6 +7,12 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+## v2.0.2 - 2024-07-05
+
+### Fixed
+
+- Fix `stm32` monotonic for timer peripherals with only two clock compare modules
+
 ## v2.0.1 - 2024-06-02
 
 ### Changed

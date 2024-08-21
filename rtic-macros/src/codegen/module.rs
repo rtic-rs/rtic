@@ -168,7 +168,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             /// Spawns the task directly
             #[allow(non_snake_case)]
             #[doc(hidden)]
-            pub fn #internal_spawn_ident(#(#input_args,)*) -> Result<(), #input_ty> {
+            pub fn #internal_spawn_ident(#(#input_args,)*) -> ::core::result::Result<(), #input_ty> {
                 // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
                 unsafe {
                     let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
