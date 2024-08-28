@@ -1,4 +1,4 @@
-# Using `async` softare tasks.
+# Using `async` software tasks.
 
 There have been a few changes to software tasks. They are outlined below.
 
