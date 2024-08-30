@@ -40,6 +40,9 @@ pub mod systick;
 #[cfg(feature = "rp2040")]
 pub mod rp2040;
 
+#[cfg(feature = "rp235x")]
+pub mod rp235x;
+
 #[cfg(feature = "imxrt")]
 pub mod imxrt;
 
@@ -66,6 +69,7 @@ pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
 }
 
 #[cfg(any(
+    feature = "rp235x",
     feature = "rp2040",
     feature = "nrf52805",
     feature = "nrf52810",

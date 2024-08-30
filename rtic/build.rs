@@ -21,7 +21,7 @@ fn main() {
         "thumbv6-backend" | "thumbv8base-backend" => {
             println!("cargo:rustc-cfg=feature=\"cortex-m-source-masking\"");
         }
-        "thumbv7-backend" | "thumbv8main-backend" => {
+        "thumbv7-backend" | "thumbv8main-backend" | "thumbv8mainhf-backend" => {
             println!("cargo:rustc-cfg=feature=\"cortex-m-basepri\"");
         }
         "riscv-esp32c3-backend" => {

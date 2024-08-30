@@ -20,6 +20,7 @@ repository = "https://github.com/rtic-rs/rtic"
 features = [
     "cortex-m-systick",
     "rp2040",
+    "rp235x",
     "nrf52840",
     "imxrt_gpt1",
     "imxrt_gpt2",
@@ -43,6 +44,9 @@ critical-section = { version = "1", optional = true }
 
 # RP2040
 rp2040-pac = { version = "0.6", optional = true }
+
+# RP235x
+rp235x-pac = { version = "0.1.0", features = ["critical-section", "rt"], optional = true }
 
 # nRF52
 nrf52805-pac = { version = "0.12.2", optional = true }
@@ -69,7 +73,7 @@ stm32-metapac = { version = "15.0.0", default-features = false, features = [
 ], optional = true }
 
 [features]
-default = []
+default = ["rp235x"]
 defmt = ["fugit/defmt"]
 
 # Systick on Cortex-M, default 1 kHz
@@ -79,6 +83,9 @@ systick-64bit = []
 
 # Timer peripheral on the RP2040
 rp2040 = ["dep:cortex-m", "dep:rp2040-pac"]
+
+# Timer peripheral on the RP235x
+rp235x = ["dep:cortex-m", "dep:rp235x-pac"]
 
 # nRF Timers and RTC
 nrf52805 = ["dep:cortex-m", "dep:nrf52805-pac", "dep:critical-section"]
