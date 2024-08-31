@@ -9,6 +9,9 @@
 //! # RP2040
 //! The RP2040 monotonics require that the `rp2040` feature is enabled.
 //!
+//! # RP235x
+//! The RP235x monotonics require that the `rp235x` feature is enabled.
+//!
 //! # i.MX RT
 //! The i.MX RT monotonics require that the feature `imxrt_gpt1` or `imxrt_gpt2` is enabled.
 //!
@@ -40,6 +43,9 @@ pub mod systick;
 #[cfg(feature = "rp2040")]
 pub mod rp2040;
 
+#[cfg(feature = "rp235x")]
+pub mod rp235x;
+
 #[cfg(feature = "imxrt")]
 pub mod imxrt;
 
@@ -67,6 +73,7 @@ pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
 
 #[cfg(any(
     feature = "rp2040",
+    feature = "rp235x",
     feature = "nrf52805",
     feature = "nrf52810",
     feature = "nrf52811",
