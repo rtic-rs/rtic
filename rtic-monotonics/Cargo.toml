@@ -73,7 +73,7 @@ stm32-metapac = { version = "15.0.0", default-features = false, features = [
 ], optional = true }
 
 [features]
-default = ["rp235x"]
+default = []
 defmt = ["fugit/defmt"]
 
 # Systick on Cortex-M, default 1 kHz
