@@ -9,6 +9,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## v2.0.2 - 2024-07-05
 
+### Added
+- `SYSTIMER` based monotonic for the ESP32-C3
+
 ### Fixed
 
 - Fix `stm32` monotonic for timer peripherals with only two clock compare modules

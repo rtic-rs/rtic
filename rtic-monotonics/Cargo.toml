@@ -30,6 +30,7 @@ features = [
     "stm32_tim4",
     "stm32_tim5",
     "stm32_tim15",
+    "esp32c3-systimer",
 ]
 rustdoc-flags = ["--cfg", "docsrs"]
 
@@ -60,6 +61,11 @@ stm32-metapac = { version = "15.0.0", optional = true }
 
 # i.MX RT
 imxrt-ral = { version = "0.5.3", optional = true }
+
+
+esp32c3 = {version = "0.22.0", optional = true }
+riscv = {version = "0.11.1", optional = true }
+
 
 [build-dependencies]
 proc-macro2 = { version = "1.0.36", optional = true }
@@ -96,6 +102,9 @@ nrf9160 = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
 imxrt = ["dep:cortex-m", "dep:imxrt-ral"]
 imxrt_gpt1 = ["imxrt"]
 imxrt_gpt2 = ["imxrt"]
+
+# ESP32-C3 Timer
+esp32c3-systimer = ["dep:esp32c3", "dep:riscv"]
 
 # STM32 timers
 # Use as `features = ["stm32g081kb", "stm32_tim15"]`
