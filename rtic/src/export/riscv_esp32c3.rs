@@ -138,28 +138,30 @@ pub fn unpend(int: Interrupt) {
 }
 
 pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
-    const INTERRUPT_MAP_BASE: u32 = 0x600c2000; //this isn't exposed properly in the PAC,
-                                                //should maybe figure out a workaround that
-                                                //doesnt involve raw pointers.
-                                                //Again, this is how they do it in the HAL
-                                                //but i'm really not a fan.
-    let interrupt_number = int as isize;
-    let cpu_interrupt_number = cpu_int_id as isize;
+    const INTERRUPT_MAP_BASE: u32 = 0x600C_2000;
+    const RESERVED_INTERRUPTS: &[u8] = &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+
+    if RESERVED_INTERRUPTS.contains(&cpu_int_id) {
+        panic!("interrupt {cpu_int_id} is reserved!");
+    }
+    if prio == 0 {
+        panic!("interrupt {prio} is invalid!");
+    }
 
     unsafe {
-        let intr_map_base = INTERRUPT_MAP_BASE as *mut u32;
-        intr_map_base
-            .offset(interrupt_number)
-            .write_volatile(cpu_interrupt_number as u32);
-        //map peripheral interrupt to CPU interrupt
-        (*INTERRUPT_CORE0::ptr())
-            .cpu_int_enable()
-            .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits())); //enable the CPU interupt.
-        let intr = INTERRUPT_CORE0::ptr();
-        let intr_prio_base = (*intr).cpu_int_pri_0().as_ptr();
+        // Map the peripheral interrupt to a CPU interrupt:
+        (INTERRUPT_MAP_BASE as *mut u32)
+            .offset(int as isize)
+            .write_volatile(cpu_int_id as u32);
 
-        intr_prio_base
-            .offset(cpu_interrupt_number)
-            .write_volatile(prio as u32);
+        // Set the interrupt's priority:
+        (*esp32c3::INTERRUPT_CORE0::ptr())
+            .cpu_int_pri(cpu_int_id as usize)
+            .modify(|_, w| w.bits(prio as u32));
+
+        // Finally, enable the CPU interrupt:
+        (*esp32c3::INTERRUPT_CORE0::ptr())
+            .cpu_int_enable()
+            .modify(|r, w| w.bits((1 << cpu_int_id) | r.bits()));
     }
 }
