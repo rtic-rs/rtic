@@ -31,3 +31,6 @@ entry 0x403cc710
 init
 Inside high prio task, press button now!
 Leaving high prio task.
+idle
+Inside low prio task, press button now!
+Leaving low prio task.
