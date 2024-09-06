@@ -1,7 +1,6 @@
-use esp32c3::INTERRUPT_CORE0; //priority threshold control
+use esp32c3::INTERRUPT_CORE0;
 pub use esp32c3::{Interrupt, Peripherals};
-pub use riscv::interrupt;
-pub use riscv::register::mcause; //low level interrupt enable/disable
+pub use riscv::{interrupt, register::mcause};
 
 #[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]
 compile_error!("Building for the esp32c3, but 'riscv-esp32c3-backend not selected'");
@@ -138,20 +137,19 @@ pub fn unpend(int: Interrupt) {
 }
 
 pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
-    const INTERRUPT_MAP_BASE: u32 = 0x600C_2000;
     unsafe {
         // Map the peripheral interrupt to a CPU interrupt:
-        (INTERRUPT_MAP_BASE as *mut u32)
+        (INTERRUPT_CORE0::ptr() as *mut u32)
             .offset(int as isize)
             .write_volatile(cpu_int_id as u32);
 
         // Set the interrupt's priority:
-        (*esp32c3::INTERRUPT_CORE0::ptr())
+        (*INTERRUPT_CORE0::ptr())
             .cpu_int_pri(cpu_int_id as usize)
             .modify(|_, w| w.bits(prio as u32));
 
         // Finally, enable the CPU interrupt:
-        (*esp32c3::INTERRUPT_CORE0::ptr())
+        (*INTERRUPT_CORE0::ptr())
             .cpu_int_enable()
             .modify(|r, w| w.bits((1 << cpu_int_id) | r.bits()));
     }
