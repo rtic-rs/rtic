@@ -139,15 +139,6 @@ pub fn unpend(int: Interrupt) {
 
 pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
     const INTERRUPT_MAP_BASE: u32 = 0x600C_2000;
-    const RESERVED_INTERRUPTS: &[u8] = &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-
-    if RESERVED_INTERRUPTS.contains(&cpu_int_id) {
-        panic!("interrupt {cpu_int_id} is reserved!");
-    }
-    if prio == 0 {
-        panic!("interrupt {prio} is invalid!");
-    }
-
     unsafe {
         // Map the peripheral interrupt to a CPU interrupt:
         (INTERRUPT_MAP_BASE as *mut u32)
