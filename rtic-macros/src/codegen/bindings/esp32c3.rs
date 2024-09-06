@@ -86,6 +86,7 @@ mod esp32c3 {
         let mut curr_cpu_id: u8 = 16; // cpu interrupt ids 0-15 are reserved
         let rt_err = util::rt_err_ident();
         let max_prio: usize = 15; //unfortunately this is not part of pac, but we know that max prio is 15.
+        let min_prio: usize = 1;
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
         // Unmask interrupts and set their priorities
         for (&priority, name) in interrupt_ids.chain(
@@ -96,9 +97,11 @@ mod esp32c3 {
             let es = format!(
                 "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
             );
+            let es_zero = format!("Priority {priority} used by interrupt vector '{name}' is less than supported by hardware");
             // Compile time assert that this priority is supported by the device
             stmts.push(quote!(
                 const _: () =  if (#max_prio) <= #priority as usize { ::core::panic!(#es); };
+                const _: () =  if (#min_prio) > #priority as usize { ::core::panic!(#es_zero);};
             ));
             stmts.push(quote!(
                 rtic::export::enable(

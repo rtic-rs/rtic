@@ -23,14 +23,11 @@ entry 0x403cc710
 [0;32mI (1) boot:  2 factory          factory app      00 00 00010000 003f0000[0m
 [0;32mI (1) boot: End of partition table[0m
 [0;32mI (1) esp_image: REDACTED
-[0;32mI (3) esp_image: REDACTED
+[0;32mI (2) esp_image: REDACTED
 [0;32mI (3) esp_image: REDACTED
 [0;32mI (8) esp_image: REDACTED
-[0;32mI (11) boot: Loaded app from partition at offset 0x10000[0m
-[0;32mI (11) boot: Disabling RNG early entropy source...[0m
+[0;32mI (10) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (10) boot: Disabling RNG early entropy source...[0m
 init
 Inside high prio task, press button now!
 Leaving high prio task.
-idle
-Inside low prio task, press button now!
-Leaving low prio task.
