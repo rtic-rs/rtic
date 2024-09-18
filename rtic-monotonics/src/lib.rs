@@ -1,6 +1,11 @@
 //! In-tree implementations of the [`rtic_time::Monotonic`] (reexported) trait for
 //! timers & clocks found on commonly used microcontrollers.
 //!
+//! If you are using a microcontroller where CAS operations are not available natively, you might
+//! have to enable the `critical-section` or `unsafe-assume-single-core` feature of the
+//! [`portable-atomic`](https://docs.rs/portable-atomic/latest/portable_atomic/) dependency
+//! yourself for this dependency to compile.
+//!
 //! To enable the implementations, you must enable a feature for the specific MCU you're targeting.
 //!
 //! # Cortex-M Systick
