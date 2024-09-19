@@ -144,7 +144,7 @@ impl TimerQueueBackend for SystickBackend {
 #[macro_export]
 macro_rules! systick_monotonic {
     ($name:ident) => {
-        $crate::systick_monotonic($name, 1_000);
+        $crate::systick_monotonic!($name, 1_000);
     };
     ($name:ident, $tick_rate_hz:expr) => {
         /// A `Monotonic` based on SysTick.
