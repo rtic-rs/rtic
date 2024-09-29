@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 rtic = {path = "../../rtic/"}
+rtic-monotonics = {path = "../../rtic-monotonics/"}
 esp-hal = { version = "0.16.1", features = ["esp32c3", "direct-vectoring", "interrupt-preemption"] }
 esp-backtrace = { version = "0.11.0", features = [
     "esp32c3",
@@ -21,4 +22,4 @@ esp-println = { version = "0.9.0", features = ["esp32c3", "uart"] }
 
 [features]
 test-critical-section = []
-riscv-esp32c3-backend = ["rtic/riscv-esp32c3-backend"]
+riscv-esp32c3-backend = ["rtic/riscv-esp32c3-backend", "rtic-monotonics/esp32c3-systimer"]

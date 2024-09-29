@@ -1,0 +1,34 @@
+QEMU 8.2.0 monitor - type 'help' for more information
+(qemu) q[K
+ESP-ROM:esp32c3-api1-20210207
+Build:Feb  7 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fcd5820,len:0x1714
+load:0x403cc710,len:0x968
+load:0x403ce710,len:0x2f9c
+entry 0x403cc710
+[0;32mI (0) boot: ESP-IDF v5.1.2-342-gbcf1645e44 2nd stage bootloader[0m
+[0;32mI (0) boot: compile time Dec 12 2023 10:50:58[0m
+[0;32mI (0) boot: chip revision: v0.3[0m
+[0;32mI (0) boot.esp32c3: SPI Speed      : 40MHz[0m
+[0;32mI (0) boot.esp32c3: SPI Mode       : SLOW READ[0m
+[0;32mI (0) boot.esp32c3: SPI Flash Size : 4MB[0m
+[0;32mI (0) boot: Enabling RNG early entropy source...[0m
+[0;32mI (1) boot: Partition Table:[0m
+[0;32mI (1) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (1) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (1) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (1) boot:  2 factory          factory app      00 00 00010000 003f0000[0m
+[0;32mI (1) boot: End of partition table[0m
+[0;32mI (1) esp_image: REDACTED
+[0;32mI (3) esp_image: REDACTED
+[0;32mI (3) esp_image: REDACTED
+[0;32mI (8) esp_image: REDACTED
+[0;32mI (11) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (11) boot: Disabling RNG early entropy source...[0m
+init
+hello from bar
+hello from baz
+hello from foo

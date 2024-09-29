@@ -39,6 +39,9 @@ pub use rtic_time::{
     TimeoutError,
 };
 
+#[cfg(feature = "esp32c3-systimer")]
+pub mod esp32c3;
+
 #[cfg(feature = "cortex-m-systick")]
 pub mod systick;
 
