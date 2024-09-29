@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+- Replace `proc-macro-error` with `proc-macro-error2`
+
 ### Changed
 
 - Fix codegen emitting unqualified `Result`
