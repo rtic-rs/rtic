@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- RP235x support
+
 ## v2.0.2 - 2024-07-05
 
 ### Fixed
