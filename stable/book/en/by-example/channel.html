@@ -1,0 +1,567 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Channel based communication - Real-Time Interrupt-driven Concurrency</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../preface.html">Preface</a></li><li class="chapter-item expanded affix "><li class="spacer"></li><li class="chapter-item expanded "><a href="../starting_a_project.html"><strong aria-hidden="true">1.</strong> Starting a new project</a></li><li class="chapter-item expanded "><a href="../by-example.html"><strong aria-hidden="true">2.</strong> RTIC by example</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../by-example/app.html"><strong aria-hidden="true">2.1.</strong> The app</a></li><li class="chapter-item expanded "><a href="../by-example/hardware_tasks.html"><strong aria-hidden="true">2.2.</strong> Hardware tasks</a></li><li class="chapter-item expanded "><a href="../by-example/software_tasks.html"><strong aria-hidden="true">2.3.</strong> Software tasks & spawn</a></li><li class="chapter-item expanded "><a href="../by-example/resources.html"><strong aria-hidden="true">2.4.</strong> Resources</a></li><li class="chapter-item expanded "><a href="../by-example/app_init.html"><strong aria-hidden="true">2.5.</strong> The init task</a></li><li class="chapter-item expanded "><a href="../by-example/app_idle.html"><strong aria-hidden="true">2.6.</strong> The idle task</a></li><li class="chapter-item expanded "><a href="../by-example/channel.html" class="active"><strong aria-hidden="true">2.7.</strong> Channel based communication</a></li><li class="chapter-item expanded "><a href="../by-example/delay.html"><strong aria-hidden="true">2.8.</strong> Delay and Timeout using Monotonics</a></li><li class="chapter-item expanded "><a href="../by-example/app_minimal.html"><strong aria-hidden="true">2.9.</strong> The minimal app</a></li><li class="chapter-item expanded "><a href="../by-example/tips/index.html"><strong aria-hidden="true">2.10.</strong> Tips & Tricks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../by-example/tips/destructureing.html"><strong aria-hidden="true">2.10.1.</strong> Resource de-structure-ing</a></li><li class="chapter-item expanded "><a href="../by-example/tips/indirection.html"><strong aria-hidden="true">2.10.2.</strong> Avoid copies when message passing</a></li><li class="chapter-item expanded "><a href="../by-example/tips/static_lifetimes.html"><strong aria-hidden="true">2.10.3.</strong> 'static super-powers</a></li><li class="chapter-item expanded "><a href="../by-example/tips/view_code.html"><strong aria-hidden="true">2.10.4.</strong> Inspecting generated code</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="../monotonic_impl.html"><strong aria-hidden="true">3.</strong> Monotonics & the Timer Queue</a></li><li class="chapter-item expanded "><a href="../rtic_vs.html"><strong aria-hidden="true">4.</strong> RTIC vs. the world</a></li><li class="chapter-item expanded "><a href="../rtic_and_embassy.html"><strong aria-hidden="true">5.</strong> RTIC and Embassy</a></li><li class="chapter-item expanded "><a href="../awesome_rtic.html"><strong aria-hidden="true">6.</strong> Awesome RTIC examples</a></li><li class="chapter-item expanded affix "><li class="spacer"></li><li class="chapter-item expanded "><a href="../migration_v1_v2.html"><strong aria-hidden="true">7.</strong> Migrating from v1.0.x to v2.0.0</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../migration_v1_v2/monotonics.html"><strong aria-hidden="true">7.1.</strong> Migrating to rtic-monotonics</a></li><li class="chapter-item expanded "><a href="../migration_v1_v2/async_tasks.html"><strong aria-hidden="true">7.2.</strong> Software tasks must now be async</a></li><li class="chapter-item expanded "><a href="../migration_v1_v2/rtic-sync.html"><strong aria-hidden="true">7.3.</strong> Using and understanding rtic-sync</a></li><li class="chapter-item expanded "><a href="../migration_v1_v2/complete_example.html"><strong aria-hidden="true">7.4.</strong> A code example on migration</a></li></ol></li><li class="chapter-item expanded "><li class="spacer"></li><li class="chapter-item expanded "><a href="../internals.html"><strong aria-hidden="true">8.</strong> Under the hood</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../internals/targets.html"><strong aria-hidden="true">8.1.</strong> Cortex-M architectures</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Real-Time Interrupt-driven Concurrency</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/rtic-rs/rtic" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="communication-over-channels"><a class="header" href="#communication-over-channels">Communication over channels.</a></h1>
+<p>Channels can be used to communicate data between running tasks. The channel is essentially a wait queue, allowing tasks with multiple producers and a single receiver. A channel is constructed in the <code>init</code> task and backed by statically allocated memory. Send and receive endpoints are distributed to <em>software</em> tasks:</p>
+<pre><code class="language-rust noplayground">...
+const CAPACITY: usize = 5;
+#[init]
+    fn init(_: init::Context) -&gt; (Shared, Local) {
+        let (s, r) = make_channel!(u32, CAPACITY);
+        receiver::spawn(r).unwrap();
+        sender1::spawn(s.clone()).unwrap();
+        sender2::spawn(s.clone()).unwrap();
+        ...</code></pre>
+<p>In this case the channel holds data of <code>u32</code> type with a capacity of 5 elements.</p>
+<p>Channels can also be used from <em>hardware</em> tasks, but only in a non-<code>async</code> manner using the <a href="#try-api">Try API</a>.</p>
+<h2 id="sending-data"><a class="header" href="#sending-data">Sending data</a></h2>
+<p>The <code>send</code> method post a message on the channel as shown below:</p>
+<pre><code class="language-rust noplayground">#[task]
+async fn sender1(_c: sender1::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+    hprintln!("Sender 1 sending: 1");
+    sender.send(1).await.unwrap();
+}</code></pre>
+<h2 id="receiving-data"><a class="header" href="#receiving-data">Receiving data</a></h2>
+<p>The receiver can <code>await</code> incoming messages:</p>
+<pre><code class="language-rust noplayground">#[task]
+async fn receiver(_c: receiver::Context, mut receiver: Receiver&lt;'static, u32, CAPACITY&gt;) {
+    while let Ok(val) = receiver.recv().await {
+        hprintln!("Receiver got: {}", val);
+        ...
+    }
+}</code></pre>
+<p>Channels are implemented using a small (global) <em>Critical Section</em> (CS) for protection against race-conditions. The user must provide an CS implementation. Compiling the examples given the <code>--features test-critical-section</code> gives one possible implementation.</p>
+<p>For a complete example:</p>
+<pre><code class="language-rust noplayground">//! examples/async-channel.rs
+
+#![no_main]
+#![no_std]
+#![deny(warnings)]
+#![deny(unsafe_code)]
+#![deny(missing_docs)]
+
+use panic_semihosting as _;
+
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
+mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use rtic_sync::{channel::*, make_channel};
+
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
+    const CAPACITY: usize = 5;
+    #[init]
+    fn init(_: init::Context) -&gt; (Shared, Local) {
+        let (s, r) = make_channel!(u32, CAPACITY);
+
+        receiver::spawn(r).unwrap();
+        sender1::spawn(s.clone()).unwrap();
+        sender2::spawn(s.clone()).unwrap();
+        sender3::spawn(s).unwrap();
+
+        (Shared {}, Local {})
+    }
+
+    #[task]
+    async fn receiver(_c: receiver::Context, mut receiver: Receiver&lt;'static, u32, CAPACITY&gt;) {
+        while let Ok(val) = receiver.recv().await {
+            hprintln!("Receiver got: {}", val);
+            if val == 3 {
+                debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+            }
+        }
+    }
+
+    #[task]
+    async fn sender1(_c: sender1::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Sender 1 sending: 1");
+        sender.send(1).await.unwrap();
+    }
+
+    #[task]
+    async fn sender2(_c: sender2::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Sender 2 sending: 2");
+        sender.send(2).await.unwrap();
+    }
+
+    #[task]
+    async fn sender3(_c: sender3::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Sender 3 sending: 3");
+        sender.send(3).await.unwrap();
+    }
+}</code></pre>
+<pre><code class="language-console">$ cargo xtask qemu --verbose --example async-channel --features test-critical-section
+</code></pre>
+<pre><code class="language-console">Sender 1 sending: 1
+Sender 2 sending: 2
+Sender 3 sending: 3
+Receiver got: 1
+Receiver got: 2
+Receiver got: 3
+</code></pre>
+<p>Also sender endpoint can be awaited. In case the channel capacity has not yet been reached, <code>await</code>-ing the sender can progress immediately, while in the case the capacity is reached, the sender is blocked until there is free space in the queue. In this way data is never lost.</p>
+<p>In the following example the <code>CAPACITY</code> has been reduced to 1, forcing sender tasks to wait until the data in the channel has been received.</p>
+<pre><code class="language-rust noplayground">//! examples/async-channel-done.rs
+
+#![no_main]
+#![no_std]
+#![deny(warnings)]
+#![deny(unsafe_code)]
+#![deny(missing_docs)]
+
+use panic_semihosting as _;
+
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
+mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use rtic_sync::{channel::*, make_channel};
+
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
+    const CAPACITY: usize = 1;
+    #[init]
+    fn init(_: init::Context) -&gt; (Shared, Local) {
+        let (s, r) = make_channel!(u32, CAPACITY);
+
+        receiver::spawn(r).unwrap();
+        sender1::spawn(s.clone()).unwrap();
+        sender2::spawn(s.clone()).unwrap();
+        sender3::spawn(s).unwrap();
+
+        (Shared {}, Local {})
+    }
+
+    #[task]
+    async fn receiver(_c: receiver::Context, mut receiver: Receiver&lt;'static, u32, CAPACITY&gt;) {
+        while let Ok(val) = receiver.recv().await {
+            hprintln!("Receiver got: {}", val);
+            if val == 3 {
+                debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+            }
+        }
+    }
+
+    #[task]
+    async fn sender1(_c: sender1::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Sender 1 sending: 1");
+        sender.send(1).await.unwrap();
+        hprintln!("Sender 1 done");
+    }
+
+    #[task]
+    async fn sender2(_c: sender2::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Sender 2 sending: 2");
+        sender.send(2).await.unwrap();
+        hprintln!("Sender 2 done");
+    }
+
+    #[task]
+    async fn sender3(_c: sender3::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Sender 3 sending: 3");
+        sender.send(3).await.unwrap();
+        hprintln!("Sender 3 done");
+    }
+}</code></pre>
+<p>Looking at the output, we find that <code>Sender 2</code> will wait until the data sent by <code>Sender 1</code> as been received.</p>
+<blockquote>
+<p><strong>NOTICE</strong> <em>Software</em> tasks at the same priority are executed asynchronously to each other, thus <strong>NO</strong> strict order can be assumed. (The presented order here applies only to the current implementation, and may change between RTIC framework releases.)</p>
+</blockquote>
+<pre><code class="language-console">$ cargo xtask qemu --verbose --example async-channel-done --features test-critical-section
+Sender 1 sending: 1
+Sender 1 done
+Sender 2 sending: 2
+Sender 3 sending: 3
+Receiver got: 1
+Sender 2 done
+Receiver got: 2
+Sender 3 done
+Receiver got: 3
+</code></pre>
+<h2 id="error-handling"><a class="header" href="#error-handling">Error handling</a></h2>
+<p>In case all senders have been dropped <code>await</code>-ing on an empty receiver channel results in an error. This allows to gracefully implement different types of shutdown operations.</p>
+<pre><code class="language-rust noplayground">//! examples/async-channel-no-sender.rs
+
+#![no_main]
+#![no_std]
+#![deny(warnings)]
+#![deny(unsafe_code)]
+#![deny(missing_docs)]
+
+use panic_semihosting as _;
+
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
+mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use rtic_sync::{channel::*, make_channel};
+
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
+    const CAPACITY: usize = 1;
+    #[init]
+    fn init(_: init::Context) -&gt; (Shared, Local) {
+        let (_s, r) = make_channel!(u32, CAPACITY);
+
+        receiver::spawn(r).unwrap();
+
+        (Shared {}, Local {})
+    }
+
+    #[task]
+    async fn receiver(_c: receiver::Context, mut receiver: Receiver&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Receiver got: {:?}", receiver.recv().await);
+
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+    }
+}</code></pre>
+<pre><code class="language-console">$ cargo xtask qemu --verbose --example async-channel-no-sender --features test-critical-section
+</code></pre>
+<pre><code class="language-console">Receiver got: Err(NoSender)
+</code></pre>
+<p>Similarly, <code>await</code>-ing on a send channel results in an error in case the receiver has been dropped. This allows to gracefully implement application level error handling.</p>
+<p>The resulting error returns the data back to the sender, allowing the sender to take appropriate action (e.g., storing the data to later retry sending it).</p>
+<pre><code class="language-rust noplayground">//! examples/async-channel-no-receiver.rs
+
+#![no_main]
+#![no_std]
+#![deny(warnings)]
+#![deny(unsafe_code)]
+#![deny(missing_docs)]
+
+use panic_semihosting as _;
+
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
+mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use rtic_sync::{channel::*, make_channel};
+
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
+    const CAPACITY: usize = 1;
+    #[init]
+    fn init(_: init::Context) -&gt; (Shared, Local) {
+        let (s, _r) = make_channel!(u32, CAPACITY);
+
+        sender1::spawn(s.clone()).unwrap();
+
+        (Shared {}, Local {})
+    }
+
+    #[task]
+    async fn sender1(_c: sender1::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Sender 1 sending: 1 {:?}", sender.send(1).await);
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+    }
+}</code></pre>
+<pre><code class="language-console">$ cargo xtask qemu --verbose --example async-channel-no-receiver --features test-critical-section
+</code></pre>
+<pre><code class="language-console">Sender 1 sending: 1 Err(NoReceiver(1))
+</code></pre>
+<h2 id="try-api"><a class="header" href="#try-api">Try API</a></h2>
+<p>Using the Try API, you can send or receive data from or to a channel without requiring that the operation succeeds, and in non-<code>async</code> contexts.</p>
+<p>This API is exposed through <code>Receiver::try_recv</code> and <code>Sender::try_send</code>.</p>
+<pre><code class="language-rust noplayground">//! examples/async-channel-try.rs
+
+#![no_main]
+#![no_std]
+#![deny(warnings)]
+#![deny(unsafe_code)]
+#![deny(missing_docs)]
+
+use panic_semihosting as _;
+
+#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
+mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+    use rtic_sync::{channel::*, make_channel};
+
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {
+        sender: Sender&lt;'static, u32, CAPACITY&gt;,
+    }
+
+    const CAPACITY: usize = 1;
+    #[init]
+    fn init(_: init::Context) -&gt; (Shared, Local) {
+        let (s, r) = make_channel!(u32, CAPACITY);
+
+        receiver::spawn(r).unwrap();
+        sender1::spawn(s.clone()).unwrap();
+
+        (Shared {}, Local { sender: s.clone() })
+    }
+
+    #[task]
+    async fn receiver(_c: receiver::Context, mut receiver: Receiver&lt;'static, u32, CAPACITY&gt;) {
+        while let Ok(val) = receiver.recv().await {
+            hprintln!("Receiver got: {}", val);
+        }
+    }
+
+    #[task]
+    async fn sender1(_c: sender1::Context, mut sender: Sender&lt;'static, u32, CAPACITY&gt;) {
+        hprintln!("Sender 1 sending: 1");
+        sender.send(1).await.unwrap();
+        hprintln!("Sender 1 try sending: 2 {:?}", sender.try_send(2));
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+    }
+
+    // This interrupt is never triggered, but is used to demonstrate that
+    // one can (try to) send data into a channel from a hardware task.
+    #[task(binds = GPIOA, local = [sender])]
+    fn hw_task(cx: hw_task::Context) {
+        cx.local.sender.try_send(3).ok();
+    }
+}</code></pre>
+<pre><code class="language-console">$ cargo xtask qemu --verbose --example async-channel-try --features test-critical-section
+</code></pre>
+<pre><code class="language-console">Sender 1 sending: 1
+Sender 1 try sending: 2 Err(Full(2))
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../by-example/app_idle.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../by-example/delay.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../by-example/app_idle.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../by-example/delay.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+    </div>
+    </body>
+</html>

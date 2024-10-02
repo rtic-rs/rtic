@@ -1,0 +1,350 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Preface - Real-Time Interrupt-driven Concurrency</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="preface.html" class="active">Preface</a></li><li class="chapter-item expanded "><a href="by-example.html"><strong aria-hidden="true">1.</strong> RTIC by example</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="by-example/app.html"><strong aria-hidden="true">1.1.</strong> The app</a></li><li class="chapter-item expanded "><a href="by-example/resources.html"><strong aria-hidden="true">1.2.</strong> Resources</a></li><li class="chapter-item expanded "><a href="by-example/app_init.html"><strong aria-hidden="true">1.3.</strong> The init task</a></li><li class="chapter-item expanded "><a href="by-example/app_idle.html"><strong aria-hidden="true">1.4.</strong> The idle task</a></li><li class="chapter-item expanded "><a href="by-example/app_task.html"><strong aria-hidden="true">1.5.</strong> Defining tasks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="by-example/hardware_tasks.html"><strong aria-hidden="true">1.5.1.</strong> Hardware tasks</a></li><li class="chapter-item expanded "><a href="by-example/software_tasks.html"><strong aria-hidden="true">1.5.2.</strong> Software tasks & spawn</a></li><li class="chapter-item expanded "><a href="by-example/message_passing.html"><strong aria-hidden="true">1.5.3.</strong> Message passing & capacity</a></li><li class="chapter-item expanded "><a href="by-example/app_priorities.html"><strong aria-hidden="true">1.5.4.</strong> Task priorities</a></li><li class="chapter-item expanded "><a href="by-example/monotonic.html"><strong aria-hidden="true">1.5.5.</strong> Monotonic & spawn_{at/after}</a></li></ol></li><li class="chapter-item expanded "><a href="by-example/starting_a_project.html"><strong aria-hidden="true">1.6.</strong> Starting a new project</a></li><li class="chapter-item expanded "><a href="by-example/app_minimal.html"><strong aria-hidden="true">1.7.</strong> The minimal app</a></li><li class="chapter-item expanded "><a href="by-example/tips.html"><strong aria-hidden="true">1.8.</strong> Tips & Tricks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="by-example/tips_monotonic_impl.html"><strong aria-hidden="true">1.8.1.</strong> Implementing Monotonic</a></li><li class="chapter-item expanded "><a href="by-example/tips_destructureing.html"><strong aria-hidden="true">1.8.2.</strong> Resource de-structure-ing</a></li><li class="chapter-item expanded "><a href="by-example/tips_indirection.html"><strong aria-hidden="true">1.8.3.</strong> Avoid copies when message passing</a></li><li class="chapter-item expanded "><a href="by-example/tips_static_lifetimes.html"><strong aria-hidden="true">1.8.4.</strong> 'static super-powers</a></li><li class="chapter-item expanded "><a href="by-example/tips_view_code.html"><strong aria-hidden="true">1.8.5.</strong> Inspecting generated code</a></li><li class="chapter-item expanded "><a href="by-example/tips_from_ram.html"><strong aria-hidden="true">1.8.6.</strong> Running tasks from RAM</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="awesome_rtic.html"><strong aria-hidden="true">2.</strong> Awesome RTIC examples</a></li><li class="chapter-item expanded "><a href="migration.html"><strong aria-hidden="true">3.</strong> Migration Guides</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="migration/migration_v5.html"><strong aria-hidden="true">3.1.</strong> v0.5.x to v1.0.x</a></li><li class="chapter-item expanded "><a href="migration/migration_v4.html"><strong aria-hidden="true">3.2.</strong> v0.4.x to v0.5.x</a></li><li class="chapter-item expanded "><a href="migration/migration_rtic.html"><strong aria-hidden="true">3.3.</strong> RTFM to RTIC</a></li></ol></li><li class="chapter-item expanded "><a href="internals.html"><strong aria-hidden="true">4.</strong> Under the hood</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="internals/targets.html"><strong aria-hidden="true">4.1.</strong> Cortex-M architectures</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Real-Time Interrupt-driven Concurrency</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/rtic-rs/cortex-m-rtic" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <div align="center"><img width="300" height="300" src="RTIC.svg"></div>
+<div style="font-size: 6em; font-weight: bolder;" align="center">RTIC</div>
+<h1 align="center">Real-Time Interrupt-driven Concurrency</h1>
+<p align="center">A concurrency framework for building real-time systems</p>
+<h1 id="preface"><a class="header" href="#preface">Preface</a></h1>
+<p>This book contains user level documentation for the Real-Time Interrupt-driven Concurrency
+(RTIC) framework. The API reference is available <a href="../../api/">here</a>.</p>
+<p>Formerly known as Real-Time For the Masses.</p>
+<!--There is a translation of this book in [Russian].-->
+<!--[Russian]: ../ru/index.html-->
+<p>This is the documentation of v1.0.x of RTIC; for the documentation of version</p>
+<ul>
+<li>v0.5.x go <a href="/0.5">here</a>.</li>
+<li>v0.4.x go <a href="/0.4">here</a>.</li>
+</ul>
+<h2 id="is-rtic-an-rtos"><a class="header" href="#is-rtic-an-rtos">Is RTIC an RTOS?</a></h2>
+<p>A common question is whether RTIC is an RTOS or not, and depending on your background the
+answer may vary. From RTIC's developers point of view; RTIC is a hardware accelerated
+RTOS that utilizes the NVIC in Cortex-M MCUs to perform scheduling, rather than the more
+classical software kernel.</p>
+<p>Another common view from the community is that RTIC is a concurrency framework as there
+is no software kernel and that it relies on external HALs.</p>
+<hr />
+<p><a href="https://crates.io/crates/cortex-m-rtic"><img src="https://img.shields.io/crates/v/cortex-m-rtic" alt="crates.io" /></a>
+<a href="https://docs.rs/cortex-m-rtic"><img src="https://docs.rs/cortex-m-rtic/badge.svg" alt="docs.rs" /></a>
+<a href="https://rtic.rs/"><img src="https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&amp;label=book&amp;colorB=d33847" alt="book" /></a>
+<a href="https://matrix.to/#/#rtic:matrix.org"><img src="https://img.shields.io/matrix/rtic:matrix.org" alt="matrix" /></a>
+<a href="https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH"><img src="https://hackmd.io/badge.svg" alt="Meeting notes" /></a></p>
+<h2 id="features"><a class="header" href="#features">Features</a></h2>
+<ul>
+<li>
+<p><strong>Tasks</strong> as the unit of concurrency <sup class="footnote-reference"><a href="#1">1</a></sup>. Tasks can be <em>event triggered</em>
+(fired in response to asynchronous stimuli) or spawned by the application on
+demand.</p>
+</li>
+<li>
+<p><strong>Message passing</strong> between tasks. Specifically, messages can be passed to
+software tasks at spawn time.</p>
+</li>
+<li>
+<p><strong>A timer queue</strong> <sup class="footnote-reference"><a href="#2">2</a></sup>. Software tasks can be scheduled to run at some time
+in the future. This feature can be used to implement periodic tasks.</p>
+</li>
+<li>
+<p>Support for prioritization of tasks and, thus, <strong>preemptive multitasking</strong>.</p>
+</li>
+<li>
+<p><strong>Efficient and data race free memory sharing</strong> through fine grained <em>priority
+based</em> critical sections <sup class="footnote-reference"><a href="#1">1</a></sup>.</p>
+</li>
+<li>
+<p><strong>Deadlock free execution</strong> guaranteed at compile time. This is a stronger
+guarantee than what's provided by <a href="https://doc.rust-lang.org/std/sync/struct.Mutex.html">the standard <code>Mutex</code>
+abstraction</a>.</p>
+</li>
+</ul>
+<ul>
+<li>
+<p><strong>Minimal scheduling overhead</strong>. The task scheduler has minimal software
+footprint; the hardware does the bulk of the scheduling.</p>
+</li>
+<li>
+<p><strong>Highly efficient memory usage</strong>: All the tasks share a single call stack and
+there's no hard dependency on a dynamic memory allocator.</p>
+</li>
+<li>
+<p><strong>All Cortex-M devices are fully supported</strong>.</p>
+</li>
+<li>
+<p>This task model is amenable to known WCET (Worst Case Execution Time) analysis
+and scheduling analysis techniques.</p>
+</li>
+</ul>
+<h3 id="crate-cortex-m-06-vs-07-in-rtic-05x"><a class="header" href="#crate-cortex-m-06-vs-07-in-rtic-05x">Crate <code>cortex-m</code> 0.6 vs 0.7 in RTIC 0.5.x</a></h3>
+<p>The crate <code>cortex-m</code> 0.7 started using trait <code>InterruptNumber</code> for interrupts instead of <code>Nr</code> from <code>bare-metal</code>. In order to preserve backwards compatibility, RTIC 0.5.x will keep using <code>cortex-m</code> 0.6 by default. <code>cortex-m</code> 0.7 can be enabled using the feature <code>cortex-m-7</code> and disabling default features:</p>
+<pre><code>cortex-m-rtic = { version = "0.5.8", default-features = false, features = ["cortex-m-7"] }
+</code></pre>
+<p>RTIC 1.0.0 already uses <code>cortex-m</code> 0.7 by default.</p>
+<h2 id="user-documentation"><a class="header" href="#user-documentation"><a href="https://rtic.rs">User documentation</a></a></h2>
+<p>Documentation for the <a href="https://rtic.rs/dev">development version</a>.</p>
+<h2 id="api-reference"><a class="header" href="#api-reference"><a href="https://rtic.rs/stable/api/">API reference</a></a></h2>
+<h2 id="community-provided-examples-repo"><a class="header" href="#community-provided-examples-repo"><a href="https://github.com/rtic-rs/rtic-examples">Community provided examples repo</a></a></h2>
+<h2 id="chat"><a class="header" href="#chat">Chat</a></h2>
+<p>Join us and talk about RTIC in the <a href="https://matrix.to/#/#rtic:matrix.org">Matrix room</a>.</p>
+<p>Weekly meeting notes can be found over at <a href="https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH">HackMD</a></p>
+<h2 id="contributing"><a class="header" href="#contributing">Contributing</a></h2>
+<p>New features and big changes should go through the RFC process in the
+<a href="https://github.com/rtic-rs/rfcs">dedicated RFC repository</a>.</p>
+<h2 id="running-tests-locally"><a class="header" href="#running-tests-locally">Running tests locally</a></h2>
+<p>To check all <code>Run-pass tests</code> locally on your <code>thumbv6m-none-eabi</code> or <code>thumbv7m-none-eabi</code> target device, run</p>
+<pre><code class="language-console">$ cargo xtask --target &lt;your target&gt;
+#                       ˆˆˆˆˆˆˆˆˆˆˆˆ
+#                   e.g. thumbv7m-none-eabi
+</code></pre>
+<h2 id="acknowledgments"><a class="header" href="#acknowledgments">Acknowledgments</a></h2>
+<p>This crate is based on the <a href="http://www.rtfm-lang.org/">Real-Time For the Masses language</a>
+created by the Embedded Systems group at <a href="https://www.ltu.se/?l=en">Luleå University of Technology</a>,
+led by <a href="https://www.ltu.se/staff/p/pln-1.11258?l=en">Prof. Per Lindgren</a>.</p>
+<h2 id="references"><a class="header" href="#references">References</a></h2>
+<div class="footnote-definition" id="1"><sup class="footnote-definition-label">1</sup>
+<p>Eriksson, J., Häggström, F., Aittamaa, S., Kruglyak, A., &amp; Lindgren, P.
+(2013, June). Real-time for the masses, step 1: Programming API and static
+priority SRP kernel primitives. In Industrial Embedded Systems (SIES), 2013
+8th IEEE International Symposium on (pp. 110-113). IEEE.</p>
+</div>
+<div class="footnote-definition" id="2"><sup class="footnote-definition-label">2</sup>
+<p>Lindgren, P., Fresk, E., Lindner, M., Lindner, A., Pereira, D., &amp; Pinho,
+L. M. (2016). Abstract timers and their implementation onto the arm cortex-m
+family of mcus. ACM SIGBED Review, 13(1), 48-53.</p>
+</div>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>All source code (including code snippets) is licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0 (<a href="LICENSE-APACHE">LICENSE-APACHE</a> or
+<a href="https://www.apache.org/licenses/LICENSE-2.0">https://www.apache.org/licenses/LICENSE-2.0</a>)</li>
+<li>MIT license (<a href="LICENSE-MIT">LICENSE-MIT</a> or
+<a href="https://opensource.org/licenses/MIT">https://opensource.org/licenses/MIT</a>)</li>
+</ul>
+<p>at your option.</p>
+<p>The written prose contained within the book is licensed under the terms of the
+Creative Commons CC-BY-SA v4.0 license (<a href="LICENSE-CC-BY-SA">LICENSE-CC-BY-SA</a> or
+<a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode">https://creativecommons.org/licenses/by-sa/4.0/legalcode</a>).</p>
+<h3 id="contribution"><a class="header" href="#contribution">Contribution</a></h3>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+licensed as above, without any additional terms or conditions.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+                            <a rel="next prefetch" href="by-example.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+                    <a rel="next prefetch" href="by-example.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

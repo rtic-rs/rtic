@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["RXFIFO_OFF_ON_0","RXFIFO_OFF_ON_1"]};
