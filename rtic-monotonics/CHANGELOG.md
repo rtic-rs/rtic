@@ -11,6 +11,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - RP235x support
 
+### Changed
+
+- Update `esp32c3` dependency
+
 ## v2.0.2 - 2024-07-05
 
 ### Added
