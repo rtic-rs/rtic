@@ -14,6 +14,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Added
 
+- Add `arbiter::{i2c, spi}::BlockingArbiterDevice` that helps during initialization of RTIC apps. After initialization is complete, convert an `BlockingArbiterDevice` into an `ArbiterDevice` using `BlockingArbiterDevice::into_non_blocking()`
 - `defmt v0.3` derives added and forwarded to `embedded-hal(-x)` crates.
 - signal structure
 

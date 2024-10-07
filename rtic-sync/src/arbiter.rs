@@ -195,9 +195,10 @@ impl<'a, T> DerefMut for ExclusiveAccess<'a, T> {
 pub mod spi {
     use super::Arbiter;
     use embedded_hal::digital::OutputPin;
+    use embedded_hal::spi::SpiBus as BlockingSpiBus;
     use embedded_hal_async::{
         delay::DelayNs,
-        spi::{ErrorType, Operation, SpiBus, SpiDevice},
+        spi::{ErrorType, Operation, SpiBus as AsyncSpiBus, SpiDevice},
     };
     use embedded_hal_bus::spi::DeviceError;
 
@@ -226,7 +227,7 @@ pub mod spi {
     impl<'a, Word, BUS, CS, D> SpiDevice<Word> for ArbiterDevice<'a, BUS, CS, D>
     where
         Word: Copy + 'static,
-        BUS: SpiBus<Word>,
+        BUS: AsyncSpiBus<Word>,
         CS: OutputPin,
         D: DelayNs,
     {
@@ -262,6 +263,89 @@ pub mod spi {
 
             // On failure, it's important to still flush and deassert CS.
             let flush_res = bus.flush().await;
+            let cs_res = self.cs.set_high();
+
+            op_res.map_err(DeviceError::Spi)?;
+            flush_res.map_err(DeviceError::Spi)?;
+            cs_res.map_err(DeviceError::Cs)?;
+
+            Ok(())
+        }
+    }
+
+    /// [`Arbiter`]-based shared bus implementation.
+    pub struct BlockingArbiterDevice<'a, BUS, CS, D> {
+        bus: &'a Arbiter<BUS>,
+        cs: CS,
+        delay: D,
+    }
+
+    impl<'a, BUS, CS, D> BlockingArbiterDevice<'a, BUS, CS, D> {
+        /// Create a new [`BlockingArbiterDevice`].
+        pub fn new(bus: &'a Arbiter<BUS>, cs: CS, delay: D) -> Self {
+            Self { bus, cs, delay }
+        }
+
+        /// Create an `ArbiterDevice` from an `BlockingArbiterDevice`.
+        pub fn into_non_blocking(self) -> ArbiterDevice<'a, BUS, CS, D>
+        where
+            BUS: AsyncSpiBus,
+        {
+            ArbiterDevice {
+                bus: self.bus,
+                cs: self.cs,
+                delay: self.delay,
+            }
+        }
+    }
+
+    impl<'a, BUS, CS, D> ErrorType for BlockingArbiterDevice<'a, BUS, CS, D>
+    where
+        BUS: ErrorType,
+        CS: OutputPin,
+    {
+        type Error = DeviceError<BUS::Error, CS::Error>;
+    }
+
+    impl<'a, Word, BUS, CS, D> SpiDevice<Word> for BlockingArbiterDevice<'a, BUS, CS, D>
+    where
+        Word: Copy + 'static,
+        BUS: BlockingSpiBus<Word>,
+        CS: OutputPin,
+        D: DelayNs,
+    {
+        async fn transaction(
+            &mut self,
+            operations: &mut [Operation<'_, Word>],
+        ) -> Result<(), DeviceError<BUS::Error, CS::Error>> {
+            let mut bus = self.bus.access().await;
+
+            self.cs.set_low().map_err(DeviceError::Cs)?;
+
+            let op_res = 'ops: {
+                for op in operations {
+                    let res = match op {
+                        Operation::Read(buf) => bus.read(buf),
+                        Operation::Write(buf) => bus.write(buf),
+                        Operation::Transfer(read, write) => bus.transfer(read, write),
+                        Operation::TransferInPlace(buf) => bus.transfer_in_place(buf),
+                        Operation::DelayNs(ns) => match bus.flush() {
+                            Err(e) => Err(e),
+                            Ok(()) => {
+                                self.delay.delay_ns(*ns).await;
+                                Ok(())
+                            }
+                        },
+                    };
+                    if let Err(e) = res {
+                        break 'ops Err(e);
+                    }
+                }
+                Ok(())
+            };
+
+            // On failure, it's important to still flush and deassert CS.
+            let flush_res = bus.flush();
             let cs_res = self.cs.set_high();
 
             op_res.map_err(DeviceError::Spi)?;
@@ -323,8 +407,8 @@ pub mod spi {
 /// ```
 pub mod i2c {
     use super::Arbiter;
-    use embedded_hal::i2c::{AddressMode, ErrorType, Operation};
-    use embedded_hal_async::i2c::I2c;
+    use embedded_hal::i2c::{AddressMode, ErrorType, I2c as BlockingI2c, Operation};
+    use embedded_hal_async::i2c::I2c as AsyncI2c;
 
     /// [`Arbiter`]-based shared bus implementation for I2C.
     pub struct ArbiterDevice<'a, BUS> {
@@ -345,9 +429,9 @@ pub mod i2c {
         type Error = BUS::Error;
     }
 
-    impl<'a, BUS, A> I2c<A> for ArbiterDevice<'a, BUS>
+    impl<'a, BUS, A> AsyncI2c<A> for ArbiterDevice<'a, BUS>
     where
-        BUS: I2c<A>,
+        BUS: AsyncI2c<A>,
         A: AddressMode,
     {
         async fn read(&mut self, address: A, read: &mut [u8]) -> Result<(), Self::Error> {
@@ -377,6 +461,68 @@ pub mod i2c {
         ) -> Result<(), Self::Error> {
             let mut bus = self.bus.access().await;
             bus.transaction(address, operations).await
+        }
+    }
+
+    /// [`Arbiter`]-based shared bus implementation for I2C.
+    pub struct BlockingArbiterDevice<'a, BUS> {
+        bus: &'a Arbiter<BUS>,
+    }
+
+    impl<'a, BUS> BlockingArbiterDevice<'a, BUS> {
+        /// Create a new [`BlockingArbiterDevice`] for I2C.
+        pub fn new(bus: &'a Arbiter<BUS>) -> Self {
+            Self { bus }
+        }
+
+        /// Create an `ArbiterDevice` from an `BlockingArbiterDevice`.
+        pub fn into_non_blocking(self) -> ArbiterDevice<'a, BUS>
+        where
+            BUS: AsyncI2c,
+        {
+            ArbiterDevice { bus: self.bus }
+        }
+    }
+
+    impl<'a, BUS> ErrorType for BlockingArbiterDevice<'a, BUS>
+    where
+        BUS: ErrorType,
+    {
+        type Error = BUS::Error;
+    }
+
+    impl<'a, BUS, A> AsyncI2c<A> for BlockingArbiterDevice<'a, BUS>
+    where
+        BUS: BlockingI2c<A>,
+        A: AddressMode,
+    {
+        async fn read(&mut self, address: A, read: &mut [u8]) -> Result<(), Self::Error> {
+            let mut bus = self.bus.access().await;
+            bus.read(address, read)
+        }
+
+        async fn write(&mut self, address: A, write: &[u8]) -> Result<(), Self::Error> {
+            let mut bus = self.bus.access().await;
+            bus.write(address, write)
+        }
+
+        async fn write_read(
+            &mut self,
+            address: A,
+            write: &[u8],
+            read: &mut [u8],
+        ) -> Result<(), Self::Error> {
+            let mut bus = self.bus.access().await;
+            bus.write_read(address, write, read)
+        }
+
+        async fn transaction(
+            &mut self,
+            address: A,
+            operations: &mut [Operation<'_>],
+        ) -> Result<(), Self::Error> {
+            let mut bus = self.bus.access().await;
+            bus.transaction(address, operations)
         }
     }
 }
