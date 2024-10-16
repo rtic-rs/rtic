@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ctr_acc","ctr_hit","ctrl","flush","stat","stream_addr","stream_ctr","stream_fifo"],"struct":["RegisterBlock"],"type":["CTRL","CTR_ACC","CTR_HIT","FLUSH","STAT","STREAM_ADDR","STREAM_CTR","STREAM_FIFO"]};

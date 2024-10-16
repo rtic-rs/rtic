@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["SEL40","SEL41"]};

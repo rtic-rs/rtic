@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SRE_0_SLOW_SLEW_RATE","SRE_1_FAST_SLEW_RATE"]};

@@ -1,0 +1,334 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Task priorities - Real-Time Interrupt-driven Concurrency</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../preface.html">Preface</a></li><li class="chapter-item expanded "><a href="../by-example.html"><strong aria-hidden="true">1.</strong> RTIC by example</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../by-example/app.html"><strong aria-hidden="true">1.1.</strong> The app</a></li><li class="chapter-item expanded "><a href="../by-example/resources.html"><strong aria-hidden="true">1.2.</strong> Resources</a></li><li class="chapter-item expanded "><a href="../by-example/app_init.html"><strong aria-hidden="true">1.3.</strong> The init task</a></li><li class="chapter-item expanded "><a href="../by-example/app_idle.html"><strong aria-hidden="true">1.4.</strong> The idle task</a></li><li class="chapter-item expanded "><a href="../by-example/app_task.html"><strong aria-hidden="true">1.5.</strong> Defining tasks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../by-example/hardware_tasks.html"><strong aria-hidden="true">1.5.1.</strong> Hardware tasks</a></li><li class="chapter-item expanded "><a href="../by-example/software_tasks.html"><strong aria-hidden="true">1.5.2.</strong> Software tasks & spawn</a></li><li class="chapter-item expanded "><a href="../by-example/message_passing.html"><strong aria-hidden="true">1.5.3.</strong> Message passing & capacity</a></li><li class="chapter-item expanded "><a href="../by-example/app_priorities.html" class="active"><strong aria-hidden="true">1.5.4.</strong> Task priorities</a></li><li class="chapter-item expanded "><a href="../by-example/monotonic.html"><strong aria-hidden="true">1.5.5.</strong> Monotonic & spawn_{at/after}</a></li></ol></li><li class="chapter-item expanded "><a href="../by-example/starting_a_project.html"><strong aria-hidden="true">1.6.</strong> Starting a new project</a></li><li class="chapter-item expanded "><a href="../by-example/app_minimal.html"><strong aria-hidden="true">1.7.</strong> The minimal app</a></li><li class="chapter-item expanded "><a href="../by-example/tips.html"><strong aria-hidden="true">1.8.</strong> Tips & Tricks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../by-example/tips_monotonic_impl.html"><strong aria-hidden="true">1.8.1.</strong> Implementing Monotonic</a></li><li class="chapter-item expanded "><a href="../by-example/tips_destructureing.html"><strong aria-hidden="true">1.8.2.</strong> Resource de-structure-ing</a></li><li class="chapter-item expanded "><a href="../by-example/tips_indirection.html"><strong aria-hidden="true">1.8.3.</strong> Avoid copies when message passing</a></li><li class="chapter-item expanded "><a href="../by-example/tips_static_lifetimes.html"><strong aria-hidden="true">1.8.4.</strong> 'static super-powers</a></li><li class="chapter-item expanded "><a href="../by-example/tips_view_code.html"><strong aria-hidden="true">1.8.5.</strong> Inspecting generated code</a></li><li class="chapter-item expanded "><a href="../by-example/tips_from_ram.html"><strong aria-hidden="true">1.8.6.</strong> Running tasks from RAM</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="../awesome_rtic.html"><strong aria-hidden="true">2.</strong> Awesome RTIC examples</a></li><li class="chapter-item expanded "><a href="../migration.html"><strong aria-hidden="true">3.</strong> Migration Guides</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../migration/migration_v5.html"><strong aria-hidden="true">3.1.</strong> v0.5.x to v1.0.x</a></li><li class="chapter-item expanded "><a href="../migration/migration_v4.html"><strong aria-hidden="true">3.2.</strong> v0.4.x to v0.5.x</a></li><li class="chapter-item expanded "><a href="../migration/migration_rtic.html"><strong aria-hidden="true">3.3.</strong> RTFM to RTIC</a></li></ol></li><li class="chapter-item expanded "><a href="../internals.html"><strong aria-hidden="true">4.</strong> Under the hood</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../internals/targets.html"><strong aria-hidden="true">4.1.</strong> Cortex-M architectures</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Real-Time Interrupt-driven Concurrency</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/rtic-rs/cortex-m-rtic" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="task-priorities"><a class="header" href="#task-priorities">Task priorities</a></h1>
+<h2 id="priorities"><a class="header" href="#priorities">Priorities</a></h2>
+<p>The <code>priority</code> argument declares the static priority of each <code>task</code>.</p>
+<p>For Cortex-M, tasks can have priorities in the range <code>1..=(1 &lt;&lt; NVIC_PRIO_BITS)</code>
+where <code>NVIC_PRIO_BITS</code> is a constant defined in the <code>device</code> crate.</p>
+<p>Omitting the <code>priority</code> argument the task priority defaults to <code>1</code>.
+The <code>idle</code> task has a non-configurable static priority of <code>0</code>, the lowest priority.</p>
+<blockquote>
+<p>A higher number means a higher priority in RTIC, which is the opposite from what
+Cortex-M does in the NVIC peripheral.
+Explicitly, this means that number <code>10</code> has a <strong>higher</strong> priority than number <code>9</code>.</p>
+</blockquote>
+<p>The highest static priority task takes precedence when more than one
+task are ready to execute.</p>
+<p>The following scenario demonstrates task prioritization:
+Spawning a higher priority task A during execution of a lower priority task B suspends
+task B. Task A has higher priority thus preempting task B which gets suspended
+until task A completes execution. Thus, when task A completes task B resumes execution.</p>
+<pre><code class="language-text">Task Priority
+  ┌────────────────────────────────────────────────────────┐
+  │                                                        │
+  │                                                        │
+3 │                      Preempts                          │
+2 │                    A─────────►                         │
+1 │          B─────────► - - - - B────────►                │
+0 │Idle┌─────►                   Resumes  ┌──────────►     │
+  ├────┴──────────────────────────────────┴────────────────┤
+  │                                                        │
+  └────────────────────────────────────────────────────────┘Time
+</code></pre>
+<p>The following example showcases the priority based scheduling of tasks:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>//! examples/preempt.rs
+
+#![no_main]
+#![no_std]
+
+use panic_semihosting as _;
+use rtic::app;
+
+#[app(device = lm3s6965, dispatchers = [SSI0, QEI0])]
+mod app {
+    use cortex_m_semihosting::{debug, hprintln};
+
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
+    #[init]
+    fn init(_: init::Context) -&gt; (Shared, Local, init::Monotonics) {
+        foo::spawn().unwrap();
+
+        (Shared {}, Local {}, init::Monotonics())
+    }
+
+    #[task(priority = 1)]
+    fn foo(_: foo::Context) {
+        hprintln!("foo - start");
+        baz::spawn().unwrap();
+        hprintln!("foo - end");
+        debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
+    }
+
+    #[task(priority = 2)]
+    fn bar(_: bar::Context) {
+        hprintln!(" bar");
+    }
+
+    #[task(priority = 2)]
+    fn baz(_: baz::Context) {
+        hprintln!(" baz - start");
+        bar::spawn().unwrap();
+        hprintln!(" baz - end");
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<pre><code class="language-console">$ cargo run --target thumbv7m-none-eabi --example preempt
+foo - start
+ baz - start
+ baz - end
+ bar
+foo - end
+</code></pre>
+<p>Note that the task <code>bar</code> does <em>not</em> preempt task <code>baz</code> because its priority
+is the <em>same</em> as <code>baz</code>'s. The higher priority task <code>bar</code> runs before <code>foo</code>
+when <code>baz</code>returns. When <code>bar</code> returns <code>foo</code> can resume.</p>
+<p>One more note about priorities: choosing a priority higher than what the device
+supports will result in a compilation error.</p>
+<p>The error is cryptic due to limitations in the Rust language
+if <code>priority = 9</code> for task <code>uart0_interrupt</code> in <code>example/common.rs</code> this looks like:</p>
+<pre><code class="language-text">   error[E0080]: evaluation of constant value failed
+  --&gt; examples/common.rs:10:1
+   |
+10 | #[rtic::app(device = lm3s6965, dispatchers = [SSI0, QEI0])]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to compute `8_usize - 9_usize`, which would overflow
+   |
+   = note: this error originates in the attribute macro `rtic::app` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+</code></pre>
+<p>The error message incorrectly points to the starting point of the macro, but at least the
+value subtracted (in this case 9) will suggest which task causes the error.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../by-example/message_passing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../by-example/monotonic.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../by-example/message_passing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../by-example/monotonic.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

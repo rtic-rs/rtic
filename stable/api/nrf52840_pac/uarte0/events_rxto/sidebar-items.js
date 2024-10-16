@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EVENTS_RXTO_SPEC","R","W"],"type":["EVENTS_RXTO_R","EVENTS_RXTO_W"]};

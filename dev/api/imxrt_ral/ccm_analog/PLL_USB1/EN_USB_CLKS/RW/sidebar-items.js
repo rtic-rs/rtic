@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EN_USB_CLKS_0","EN_USB_CLKS_1"]};
