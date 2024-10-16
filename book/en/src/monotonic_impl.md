@@ -22,7 +22,7 @@ Contributing new implementations of `Monotonic` can be done in multiple ways:
 
 [`rtic-monotonics`]: https://github.com/rtic-rs/rtic/tree/master/rtic-monotonics/
 [`fugit`]: https://docs.rs/fugit/
-[`Systick based`]: https://github.com/rtic-monotonics
+[`Systick based`]: https://github.com/rtic-rs/rtic/blob/master/rtic-monotonics/src/systick.rs
 [`rtic-monotonics`]:  https://github.com/rtic-rs/rtic/blob/master/rtic-monotonics
 [`RP2040 Timer`]: https://github.com/rtic-rs/rtic/blob/master/rtic-monotonics/src/rp2040.rs
 [`nRF52 timers`]: https://github.com/rtic-rs/rtic/blob/master/rtic-monotonics/src/nrf.rs
