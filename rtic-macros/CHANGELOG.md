@@ -14,6 +14,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 - Fix codegen emitting unqualified `Result`
 - Improve error output for prios > dispatchers
 
+### Fixed
+
+- Fix interrupt handlers when targeting esp32c3 and using latest version of esp-hal
+
 ## [v2.1.0] - 2024-02-27
 
 ### Added

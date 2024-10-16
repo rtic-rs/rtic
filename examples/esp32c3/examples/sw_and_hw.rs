@@ -4,17 +4,17 @@
 mod app {
     use esp_backtrace as _;
     use esp_hal::{
-        gpio::{Event, Gpio9, Input, PullDown, IO},
+        gpio::{Event, GpioPin, Input, Io, Pull},
         peripherals::Peripherals,
-        prelude::*,
     };
     use esp_println::println;
+
     #[shared]
     struct Shared {}
 
     #[local]
     struct Local {
-        button: Gpio9<Input<PullDown>>,
+        button: Input<'static, GpioPin<9>>,
     }
 
     // do nothing in init
@@ -22,14 +22,14 @@ mod app {
     fn init(_: init::Context) -> (Shared, Local) {
         println!("init");
         let peripherals = Peripherals::take();
-        let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-        let mut button = io.pins.gpio9.into_pull_down_input();
+        let io = Io::new_no_bind_interrupt(peripherals.GPIO, peripherals.IO_MUX);
+        let mut button = Input::new(io.pins.gpio9, Pull::Up);
         button.listen(Event::FallingEdge);
         foo::spawn().unwrap();
         (Shared {}, Local { button })
     }
 
-    #[idle()]
+    #[idle]
     fn idle(_: idle::Context) -> ! {
         println!("idle");
         loop {}
@@ -46,6 +46,7 @@ mod app {
         }
         println!("Leaving high prio task.");
     }
+
     #[task(priority = 2)]
     async fn bar(_: bar::Context) {
         println!("Inside low prio task, press button now!");
