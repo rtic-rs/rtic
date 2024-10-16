@@ -25,6 +25,13 @@ sleep 3s
 
 # Kill QEMU nicely by sending 'q' (quit) over tcp
 echo q | nc -N 127.0.0.1 55555
-# Output that will be compared, remove the esp_image segments as they change
-# between runs
-cat "$logfile" | sed 's/esp_image: .*$/esp_image: REDACTED/'
+
+# Output that will be compared must be printed to stdout
+
+# Make boot phase silent, for debugging change, run with e.g.  $ `env DEBUGGING=true` cargo xtask....
+if [ -n "${DEBUGGING}" ]; then
+  # Debugging: strip leading "I (xyz)" where xyz is an incrementing number, and esp_image specifics
+  sed -e 's/esp_image: .*$/esp_image: REDACTED/' -e 's/I\s\([0-9]*\)(.*)/\1/' < $logfile
+else
+  tail -n +12 "$logfile" | sed -e '/I\s\([0-9]*\)(.*)/d'
+fi
