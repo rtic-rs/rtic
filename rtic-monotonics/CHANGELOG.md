@@ -15,6 +15,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Update `esp32c3` dependency
 
+### Fixed
+
+- Race condition that caused missed interrupts on STM32 timers
+
 ## v2.0.2 - 2024-07-05
 
 ### Added
