@@ -17,7 +17,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
-- Race condition that caused missed interrupts on STM32 timers
+- STM32: Make initialization more deterministic
+- STM32: Fix race condition that caused missed interrupts
 
 ## v2.0.2 - 2024-07-05
 
