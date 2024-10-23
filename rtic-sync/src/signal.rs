@@ -17,6 +17,18 @@ pub struct Signal<T: Copy> {
     store: UnsafeCell<Store<T>>,
 }
 
+impl<T> core::fmt::Debug for Signal<T>
+where
+    T: core::marker::Copy,
+{
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        fmt.write_fmt(format_args!(
+            "Signal<{}>{{ .. }}",
+            core::any::type_name::<T>()
+        ))
+    }
+}
+
 impl<T: Copy> Default for Signal<T> {
     fn default() -> Self {
         Self::new()
@@ -41,10 +53,22 @@ impl<T: Copy> Signal<T> {
     }
 }
 
-/// Fascilitates the writing of values to a Signal.
+/// Facilitates the writing of values to a Signal.
 #[derive(Clone)]
 pub struct SignalWriter<'a, T: Copy> {
     parent: &'a Signal<T>,
+}
+
+impl<T> core::fmt::Debug for SignalWriter<'_, T>
+where
+    T: core::marker::Copy,
+{
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        fmt.write_fmt(format_args!(
+            "SignalWriter<{}>{{ .. }}",
+            core::any::type_name::<T>()
+        ))
+    }
 }
 
 impl<'a, T: Copy> SignalWriter<'a, T> {
@@ -69,9 +93,21 @@ impl<'a, T: Copy> SignalWriter<'a, T> {
     }
 }
 
-/// Fascilitates the async reading of values from the Signal.
+/// Facilitates the async reading of values from the Signal.
 pub struct SignalReader<'a, T: Copy> {
     parent: &'a Signal<T>,
+}
+
+impl<T> core::fmt::Debug for SignalReader<'_, T>
+where
+    T: core::marker::Copy,
+{
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        fmt.write_fmt(format_args!(
+            "SignalReader<{}>{{ .. }}",
+            core::any::type_name::<T>()
+        ))
+    }
 }
 
 impl<'a, T: Copy> SignalReader<'a, T> {
