@@ -246,9 +246,17 @@ macro_rules! make_timer {
                 // Trigger an update event to load the prescaler value to the clock.
                 $timer.egr().write(|r| r.set_ug(true));
 
-                // The above line raises an update event which will indicate that the timer is already finished.
-                // Since this is not the case, it should be cleared.
-                $timer.sr().modify(|r| r.set_uif(false));
+                // Clear timer value so it is known that we are at the first half period
+                $timer.cnt().write(|r| r.set_cnt(1));
+
+                // Triggering the update event might have raised overflow interrupts.
+                // Clear them to return to a known state.
+                $timer.sr().write(|r| {
+                    r.0 = !0;
+                    r.set_uif(false);
+                    r.set_ccif(0, false);
+                    r.set_ccif(1, false);
+                });
 
                 $tq.initialize(Self {});
                 $overflow.store(0, Ordering::SeqCst);
@@ -294,7 +302,10 @@ macro_rules! make_timer {
             }
 
             fn clear_compare_flag() {
-                $timer.sr().modify(|r| r.set_ccif(1, false));
+                $timer.sr().write(|r| {
+                    r.0 = !0;
+                    r.set_ccif(1, false);
+                });
             }
 
             fn pend_interrupt() {
@@ -312,13 +323,19 @@ macro_rules! make_timer {
             fn on_interrupt() {
                 // Full period
                 if $timer.sr().read().uif() {
-                    $timer.sr().modify(|r| r.set_uif(false));
+                    $timer.sr().write(|r| {
+                        r.0 = !0;
+                        r.set_uif(false);
+                    });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
                     assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
                 }
                 // Half period
                 if $timer.sr().read().ccif(0) {
-                    $timer.sr().modify(|r| r.set_ccif(0, false));
+                    $timer.sr().write(|r| {
+                        r.0 = !0;
+                        r.set_ccif(0, false);
+                    });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
                     assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
                 }
