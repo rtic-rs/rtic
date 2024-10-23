@@ -246,11 +246,16 @@ macro_rules! make_timer {
                 // Trigger an update event to load the prescaler value to the clock.
                 $timer.egr().write(|r| r.set_ug(true));
 
+                // Clear timer value so it is known that we are at the first half period
+                $timer.cnt().write(|r| r.set_cnt(1));
+
                 // The above line raises an update event which will indicate that the timer is already finished.
                 // Since this is not the case, it should be cleared.
                 $timer.sr().write(|r| {
                     r.0 = !0;
                     r.set_uif(false);
+                    r.set_ccif(0, false);
+                    r.set_ccif(1, false);
                 });
 
                 $tq.initialize(Self {});
