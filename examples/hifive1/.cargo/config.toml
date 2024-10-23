@@ -3,9 +3,9 @@ runner = "qemu-system-riscv32 -machine sifive_e,revb=true -nographic -semihostin
 # runner = "riscv64-unknown-elf-gdb -q -x gdb_init"
 rustflags = [
   "-C", "link-arg=-Thifive1-link.x",
+  "--cfg", "portable_atomic_target_feature=\"zaamo\"",
 ]
 
 [build]
 # Pick ONE of these compilation targets
-# target = "riscv32imc-unknown-none-elf"    # non-atomic support
-target = "riscv32imac-unknown-none-elf" # atomic support (partial)
+target = "riscv32imc-unknown-none-elf"
