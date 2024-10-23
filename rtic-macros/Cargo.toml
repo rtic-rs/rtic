@@ -40,6 +40,8 @@ riscv-esp32c3 = []
 # riscv-clic = []
 # riscv-ch32 = []
 riscv-slic = []
+riscv-clint = ["riscv-slic"]
+riscv-mecall= ["riscv-slic"]
 
 # backend API test
 test-template = []

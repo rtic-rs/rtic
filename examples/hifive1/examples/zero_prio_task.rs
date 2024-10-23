@@ -6,7 +6,7 @@
 #![deny(missing_docs)]
 
 use core::marker::PhantomData;
-use hifive1 as _;
+use hifive1::hal::e310x;
 use riscv_rt as _;
 
 /// Does not impl send
@@ -14,8 +14,10 @@ pub struct NotSend {
     _0: PhantomData<*const ()>,
 }
 
-#[rtic::app(device = e310x, backend = HART0)]
+#[cfg_attr(feature = "riscv-mecall-backend", rtic::app(device = e310x))]
+#[cfg_attr(feature = "riscv-clint-backend", rtic::app(device = e310x, backend = H0))]
 mod app {
+    use super::e310x;
     use super::NotSend;
     use core::marker::PhantomData;
     use semihosting::{println, process::exit};

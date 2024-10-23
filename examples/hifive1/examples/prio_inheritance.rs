@@ -1,10 +1,13 @@
 #![no_main]
 #![no_std]
 
+use hifive1::hal::e310x;
 use riscv_rt as _;
 
-#[rtic::app(device = e310x, backend = HART0)]
+#[cfg_attr(feature = "riscv-mecall-backend", rtic::app(device = e310x))]
+#[cfg_attr(feature = "riscv-clint-backend", rtic::app(device = e310x, backend = H0))]
 mod app {
+    use super::e310x;
     use core::{future::Future, pin::Pin, task::Context, task::Poll};
     use hifive1::hal::prelude::*;
     use semihosting::{println, process::exit};

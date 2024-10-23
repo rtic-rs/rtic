@@ -5,13 +5,15 @@
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
 
-use hifive1 as _;
+use hifive1::hal::e310x;
 use riscv_rt as _;
 
-#[rtic::app(device = e310x, backend = HART0)]
+#[cfg_attr(feature = "riscv-mecall-backend", rtic::app(device = e310x))]
+#[cfg_attr(feature = "riscv-clint-backend", rtic::app(device = e310x, backend = H0))]
 mod app {
-    use semihosting::{process::exit, println};
+    use super::e310x;
     use heapless::spsc::{Consumer, Producer, Queue};
+    use semihosting::{println, process::exit};
 
     #[shared]
     struct Shared {}
