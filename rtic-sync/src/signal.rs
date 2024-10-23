@@ -41,7 +41,7 @@ impl<T: Copy> Signal<T> {
     }
 }
 
-/// Fascilitates the writing of values to a Signal.
+/// Facilitates the writing of values to a Signal.
 #[derive(Clone)]
 pub struct SignalWriter<'a, T: Copy> {
     parent: &'a Signal<T>,
@@ -69,7 +69,7 @@ impl<'a, T: Copy> SignalWriter<'a, T> {
     }
 }
 
-/// Fascilitates the async reading of values from the Signal.
+/// Facilitates the async reading of values from the Signal.
 pub struct SignalReader<'a, T: Copy> {
     parent: &'a Signal<T>,
 }
