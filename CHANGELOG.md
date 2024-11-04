@@ -11,6 +11,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Removed unused `proc-macro-error` crate from dependencies
+
 ### Changed
 
 - Bump lm3s6965 to 0.2.0
