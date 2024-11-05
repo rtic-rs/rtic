@@ -11,6 +11,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- CFG: Make `have_basepri` an expected cfg
+- Removed unused `proc-macro-error` crate from dependencies
+
 ### Changed
 
 ## [v1.1.4] - 2023-02-26

@@ -88,6 +88,7 @@ pub struct Barrier {
 }
 
 impl Barrier {
+    #[allow(clippy::new_without_default)]
     pub const fn new() -> Self {
         Barrier {
             inner: AtomicBool::new(false),
@@ -264,7 +265,7 @@ pub unsafe fn lock<T, R, const M: usize>(
 ///     - we execute the closure in a global critical section (interrupt free)
 ///     - CS entry cost, single write to core register
 ///     - CS exit cost, single write to core register
-///   else
+///   - else
 ///     - The `mask` value is folded to a constant at compile time
 ///     - CS entry, single write of the 32 bit `mask` to the `icer` register
 ///     - CS exit, single write of the 32 bit `mask` to the `iser` register

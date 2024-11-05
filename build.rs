@@ -7,6 +7,9 @@ fn main() {
         println!("cargo:rustc-cfg=rustc_is_nightly");
     }
 
+    // Make `have_basepri` an expected cfg.
+    println!("cargo::rustc-check-cfg=cfg(have_basepri)");
+
     // These targets all have know support for the BASEPRI register.
     if target.starts_with("thumbv7m")
         | target.starts_with("thumbv7em")
