@@ -25,14 +25,6 @@
 //!          Mono::delay(100.millis()).await;
 //!     }
 //! }
-//!
-//! // FIXME: the interrupt handler is not working, but re-implementing it in a RTIC task does
-//! // Comment the interrupt handler `unsafe extern "C" fn TC4()` and add the following RTIC task
-//! #[task(binds = TC4)]
-//! fn tc4(_cx: tc4::Context) {
-//!     use rtic_time::timer_queue::TimerQueueBackend;
-//!     unsafe { Tc4Tc5Backend::timer_queue().on_monotonic_interrupt() };
-//! }
 //! ```
 
 /// Common definitions and traits for using the ATSAMD21 TC4/5 monotonic
@@ -114,6 +106,11 @@ impl Tc4Tc5Backend {
         // Enable the timer
         tc4.ctrla().modify(|_, w| w.enable().set_bit());
         Self::sync();
+
+        unsafe {
+            crate::set_monotonic_prio(pac::NVIC_PRIO_BITS, pac::Interrupt::TC4);
+            pac::NVIC::unmask(pac::Interrupt::TC4);
+        }
     }
 }
 

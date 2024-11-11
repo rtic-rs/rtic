@@ -118,7 +118,7 @@ imxrt_gpt2 = ["imxrt"]
 esp32c3-systimer = ["dep:esp32c3", "dep:riscv"]
 
 # ATSAMD21 Timer
-atsamd21g = ["dep:atsamd21g"]
+atsamd21g = ["dep:cortex-m", "dep:atsamd21g"]
 
 
 # STM32 timers
