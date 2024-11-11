@@ -192,7 +192,6 @@ macro_rules! atsamd21_tc4_tc5_monotonic {
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe extern "C" fn TC4() {
-                    defmt::info!("test");
                     use $crate::TimerQueueBackend;
                     $crate::atsamd21::Tc4Tc5Backend::timer_queue().on_monotonic_interrupt();
                 }
