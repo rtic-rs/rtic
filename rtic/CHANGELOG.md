@@ -3,18 +3,31 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
+-------------------
+
+For each category, *Added*, *Changed*, *Fixed* add **new entries at the top**!
+
+Example:
+
+```
+### Changed
+
+- My new entry goes here
+- Previous change
+
+```
+-------------------
 
 ## [Unreleased]
 
 ### Changed
 
+- Updated esp32c3 dependency to v0.26.0
+- Updated esp32c3 dependency to v0.25.0
+- Replace `atomic-polyfill` with `portable-atomic`
 - Updated esp32c3 dependency to v0.22.0
 - Use `riscv-slic` from `crates.io`
-- Replace `atomic-polyfill` with `portable-atomic`
 - Remove unused dependency `rtic-monotonics`
-- Updated esp32c3 dependency to v0.25.0
-- Updated esp32c3 dependency to v0.26.0
 
 ## [v2.1.1] - 2024-03-13
 
