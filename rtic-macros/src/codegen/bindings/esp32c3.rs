@@ -211,9 +211,7 @@ mod esp32c3 {
         let max = if let Some(max) = analysis.max_async_prio {
             quote!(#max)
         } else {
-            // No limit
-            let device = &app.args.device;
-            quote!(1 << #device::NVIC_PRIO_BITS)
+            quote!(u8::MAX) // No limit
         };
 
         vec![quote!(

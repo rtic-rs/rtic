@@ -17,6 +17,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Fixed
 
 - Fix interrupt handlers when targeting esp32c3 and using latest version of esp-hal
+- Do not limit async priority with `NVIC_PRIO_BITS` when targeting esp32c3
 
 ## [v2.1.0] - 2024-02-27
 
