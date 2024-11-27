@@ -71,13 +71,13 @@ pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) 
         unsafe {
             (*INTERRUPT_CORE0::ptr())
                 .cpu_int_thresh()
-                .write(|w| w.cpu_int_thresh().bits(ceiling + 1))
+                .write(|w| w.cpu_int_thresh().bits(ceiling + 1));
         } //esp32c3 lets interrupts with prio equal to threshold through so we up it by one
         let r = f(&mut *ptr);
         unsafe {
             (*INTERRUPT_CORE0::ptr())
                 .cpu_int_thresh()
-                .write(|w| w.cpu_int_thresh().bits(current))
+                .write(|w| w.cpu_int_thresh().bits(current));
         }
         r
     }
@@ -106,7 +106,7 @@ pub fn pend(int: Interrupt) {
                 .cpu_intr_from_cpu_3()
                 .write(|w| w.cpu_intr_from_cpu_3().bit(true)),
             _ => panic!("Unsupported software interrupt"), //should never happen, checked at compile time
-        }
+        };
     }
 }
 
@@ -132,7 +132,7 @@ pub fn unpend(int: Interrupt) {
                 .cpu_intr_from_cpu_3()
                 .write(|w| w.cpu_intr_from_cpu_3().bit(false)),
             _ => panic!("Unsupported software interrupt"),
-        }
+        };
     }
 }
 
