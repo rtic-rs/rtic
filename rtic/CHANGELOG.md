@@ -3,7 +3,20 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
+-------------------
+
+For each category, *Added*, *Changed*, *Fixed* add **new entries at the top**!
+
+Example:
+
+```
+### Changed
+
+- My new entry goes here
+- Previous change
+
+```
+-------------------
 
 ## [Unreleased]
 
