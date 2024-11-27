@@ -15,6 +15,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Updated esp32c3 dependency to v0.26.0
 - Update `esp32c3` dependency
 
 ### Fixed
