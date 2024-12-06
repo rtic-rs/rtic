@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Blocking I2C API"><title>embedded_hal::blocking::i2c - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="embedded_hal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../embedded_hal/index.html">embedded_<wbr>hal</a><span class="version">0.2.7</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module i2c</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a><ul><li><a href="#embedded-hal-implementation-for-an-mcu" title="`embedded-hal` implementation for an MCU"><code>embedded-hal</code> implementation for an MCU</a></li><li><a href="#device-driver-compatible-only-with-7-bit-addresses" title="Device driver compatible only with 7-bit addresses">Device driver compatible only with 7-bit addresses</a></li><li><a href="#device-driver-compatible-only-with-10-bit-addresses" title="Device driver compatible only with 10-bit addresses">Device driver compatible only with 10-bit addresses</a></li></ul></li></ul><h3><a href="#enums">Module Items</a></h3><ul class="block"><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In embedded_<wbr>hal::<wbr>blocking</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="../../index.html">embedded_hal</a>::<wbr><a href="../index.html">blocking</a></span><h1>Module <span>i2c</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/embedded_hal/blocking/i2c.rs.html#1-297">source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Blocking I2C API</p>
+<p>This API supports 7-bit and 10-bit addresses. Traits feature an <code>AddressMode</code>
+marker type parameter. Two implementation of the <code>AddressMode</code> exist:
+<code>SevenBitAddress</code> and <code>TenBitAddress</code>.</p>
+<p>Through this marker types it is possible to implement each address mode for
+the traits independently in <code>embedded-hal</code> implementations and device drivers
+can depend only on the mode that they support.</p>
+<p>Additionally, the I2C 10-bit address mode has been developed to be fully
+backwards compatible with the 7-bit address mode. This allows for a
+software-emulated 10-bit addressing implementation if the address mode
+is not supported by the hardware.</p>
+<p>Since 7-bit addressing is the mode of the majority of I2C devices,
+<code>SevenBitAddress</code> has been set as default mode and thus can be omitted if desired.</p>
+<h3 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h3><h4 id="embedded-hal-implementation-for-an-mcu"><a class="doc-anchor" href="#embedded-hal-implementation-for-an-mcu">§</a><code>embedded-hal</code> implementation for an MCU</h4>
+<p>Here is an example of an embedded-hal implementation of the <code>Write</code> trait
+for both modes:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="doccomment">/// I2C0 hardware peripheral which supports both 7-bit and 10-bit addressing.
+</span><span class="kw">pub struct </span>I2c0;
+
+<span class="kw">impl </span>Write&lt;SevenBitAddress&gt; <span class="kw">for </span>I2c0
+{
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, addr: u8, output: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
+        <span class="comment">// ...
+    </span>}
+}
+
+<span class="kw">impl </span>Write&lt;TenBitAddress&gt; <span class="kw">for </span>I2c0
+{
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, addr: u16, output: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
+        <span class="comment">// ...
+    </span>}
+}</code></pre></div>
+<h4 id="device-driver-compatible-only-with-7-bit-addresses"><a class="doc-anchor" href="#device-driver-compatible-only-with-7-bit-addresses">§</a>Device driver compatible only with 7-bit addresses</h4>
+<p>For demonstration purposes the address mode parameter has been omitted in this example.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">const </span>ADDR: u8  = <span class="number">0x15</span>;
+<span class="kw">pub struct </span>TemperatureSensorDriver&lt;I2C&gt; {
+    i2c: I2C,
+}
+
+<span class="kw">impl</span>&lt;I2C, E&gt; TemperatureSensorDriver&lt;I2C&gt;
+<span class="kw">where
+    </span>I2C: WriteRead&lt;Error = E&gt;,
+{
+    <span class="kw">pub fn </span>read_temperature(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u8, E&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>temp = [<span class="number">0</span>];
+        <span class="self">self</span>.i2c
+            .write_read(ADDR, <span class="kw-2">&amp;</span>[TEMP_REGISTER], <span class="kw-2">&amp;mut </span>temp)
+            .and(<span class="prelude-val">Ok</span>(temp[<span class="number">0</span>]))
+    }
+}</code></pre></div>
+<h4 id="device-driver-compatible-only-with-10-bit-addresses"><a class="doc-anchor" href="#device-driver-compatible-only-with-10-bit-addresses">§</a>Device driver compatible only with 10-bit addresses</h4>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">const </span>ADDR: u16  = <span class="number">0x158</span>;
+<span class="kw">pub struct </span>TemperatureSensorDriver&lt;I2C&gt; {
+    i2c: I2C,
+}
+
+<span class="kw">impl</span>&lt;I2C, E&gt; TemperatureSensorDriver&lt;I2C&gt;
+<span class="kw">where
+    </span>I2C: WriteRead&lt;TenBitAddress, Error = E&gt;,
+{
+    <span class="kw">pub fn </span>read_temperature(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u8, E&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>temp = [<span class="number">0</span>];
+        <span class="self">self</span>.i2c
+            .write_read(ADDR, <span class="kw-2">&amp;</span>[TEMP_REGISTER], <span class="kw-2">&amp;mut </span>temp)
+            .and(<span class="prelude-val">Ok</span>(temp[<span class="number">0</span>]))
+    }
+}</code></pre></div>
+</div></details><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.Operation.html" title="enum embedded_hal::blocking::i2c::Operation">Operation</a></div><div class="desc docblock-short">Transactional I2C operation.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.AddressMode.html" title="trait embedded_hal::blocking::i2c::AddressMode">Address<wbr>Mode</a></div><div class="desc docblock-short">Address mode (7-bit / 10-bit)</div></li><li><div class="item-name"><a class="trait" href="trait.Read.html" title="trait embedded_hal::blocking::i2c::Read">Read</a></div><div class="desc docblock-short">Blocking read</div></li><li><div class="item-name"><a class="trait" href="trait.Transactional.html" title="trait embedded_hal::blocking::i2c::Transactional">Transactional</a></div><div class="desc docblock-short">Transactional I2C interface.</div></li><li><div class="item-name"><a class="trait" href="trait.TransactionalIter.html" title="trait embedded_hal::blocking::i2c::TransactionalIter">Transactional<wbr>Iter</a></div><div class="desc docblock-short">Transactional I2C interface (iterator version).</div></li><li><div class="item-name"><a class="trait" href="trait.Write.html" title="trait embedded_hal::blocking::i2c::Write">Write</a></div><div class="desc docblock-short">Blocking write</div></li><li><div class="item-name"><a class="trait" href="trait.WriteIter.html" title="trait embedded_hal::blocking::i2c::WriteIter">Write<wbr>Iter</a></div><div class="desc docblock-short">Blocking write (iterator version)</div></li><li><div class="item-name"><a class="trait" href="trait.WriteIterRead.html" title="trait embedded_hal::blocking::i2c::WriteIterRead">Write<wbr>Iter<wbr>Read</a></div><div class="desc docblock-short">Blocking write (iterator version) + read</div></li><li><div class="item-name"><a class="trait" href="trait.WriteRead.html" title="trait embedded_hal::blocking::i2c::WriteRead">Write<wbr>Read</a></div><div class="desc docblock-short">Blocking write + read</div></li></ul><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.SevenBitAddress.html" title="type embedded_hal::blocking::i2c::SevenBitAddress">Seven<wbr>BitAddress</a></div><div class="desc docblock-short">7-bit address mode type</div></li><li><div class="item-name"><a class="type" href="type.TenBitAddress.html" title="type embedded_hal::blocking::i2c::TenBitAddress">TenBit<wbr>Address</a></div><div class="desc docblock-short">10-bit address mode type</div></li></ul></section></div></main></body></html>

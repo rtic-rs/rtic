@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Declares the fields of struct."><title>bitfield_fields in bitfield - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bitfield" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bitfield/index.html">bitfield</a><span class="version">0.13.2</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">bitfield_<wbr>fields</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate bitfield</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">bitfield</a></span><h1>Macro <span class="macro">bitfield_fields</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/bitfield/lib.rs.html#82-237">source</a> </span></div><pre class="rust item-decl"><span class="macro">macro_rules!</span> bitfield_fields {
+    (@field $(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)* ($(<span class="macro-nonterminal">$vis</span>:tt)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$from</span>:ty, <span class="macro-nonterminal">$into</span>:ty, <span class="kw">_</span>, <span class="macro-nonterminal">$setter</span>:ident: <span class="macro-nonterminal">$msb</span>:expr,
+     <span class="macro-nonterminal">$lsb</span>:expr, <span class="macro-nonterminal">$count</span>:expr) =&gt; { ... };
+    (@field $(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)* ($(<span class="macro-nonterminal">$vis</span>:tt)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$from</span>:ty, <span class="macro-nonterminal">$into</span>:ty, <span class="kw">_</span>, <span class="macro-nonterminal">$setter</span>:ident: <span class="macro-nonterminal">$msb</span>:expr,
+     <span class="macro-nonterminal">$lsb</span>:expr) =&gt; { ... };
+    (@field $(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)* ($(<span class="macro-nonterminal">$vis</span>:tt)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$from</span>:ty, <span class="macro-nonterminal">$into</span>:ty, <span class="kw">_</span>, <span class="macro-nonterminal">$setter</span>:ident: <span class="macro-nonterminal">$bit</span>:expr) =&gt; { ... };
+    (@field $(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)* ($(<span class="macro-nonterminal">$vis</span>:tt)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$from</span>:ty, <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:ident, <span class="kw">_</span>: <span class="macro-nonterminal">$msb</span>:expr,
+     <span class="macro-nonterminal">$lsb</span>:expr, <span class="macro-nonterminal">$count</span>:expr) =&gt; { ... };
+    (@field $(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)* ($(<span class="macro-nonterminal">$vis</span>:tt)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$from</span>:ty, <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:ident, <span class="kw">_</span>: <span class="macro-nonterminal">$msb</span>:expr,
+     <span class="macro-nonterminal">$lsb</span>:expr) =&gt; { ... };
+    (@field $(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)* ($(<span class="macro-nonterminal">$vis</span>:tt)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$from</span>:ty, <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:ident, <span class="kw">_</span>: <span class="macro-nonterminal">$bit</span>:expr) =&gt; { ... };
+    (@field $(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)* ($(<span class="macro-nonterminal">$vis</span>:tt)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$from</span>:ty, <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:ident, <span class="macro-nonterminal">$setter</span>:ident:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$t</span>:ty;) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; <span class="kw">pub </span>$(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; <span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta] </span>$(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attributes</span>:meta]</span>)<span class="kw-2">*</span>) <span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta] </span>$(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="kw">pub </span><span class="macro-nonterminal">$t</span>:ty, from into <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="kw">pub </span><span class="macro-nonterminal">$t</span>:ty, into <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="kw">pub </span><span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:  $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>;
+     $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="kw">pub </span>from into <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="kw">pub </span>into <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="kw">pub </span><span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:  $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>;
+     $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, from into <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, into <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="macro-nonterminal">$t</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:  $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>;
+     $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) from into <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) into <span class="macro-nonterminal">$into</span>:ty, <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:
+     $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; ($(<span class="attr">#[<span class="macro-nonterminal">$attribute</span>:meta]</span>)<span class="kw-2">*</span>) <span class="macro-nonterminal">$getter</span>:tt, <span class="macro-nonterminal">$setter</span>:tt:  $(<span class="macro-nonterminal">$exprs</span>:expr),<span class="kw-2">*</span>;
+     $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$previous_default_ty</span>:ty; <span class="macro-nonterminal">$default_ty</span>:ty; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    (<span class="macro-nonterminal">$default_ty</span>:ty; $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+    ($(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; { ... };
+}</pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Declares the fields of struct.</p>
+<p>This macro will generate the methods to access the fields of a bitfield. It must be called
+from an <code>impl</code> block for a type that implements the <code>BitRange</code> and/or the <code>Bit</code> traits
+(which traits are required depending on what type of fields are used).</p>
+<p>The syntax of this macro is composed of declarations ended by semicolons. There are two types
+of declarations: default type, and fields.</p>
+<p>A default type is just a type followed by a semicolon. This will affect all the following field
+declarations.</p>
+<p>A field declaration is composed of the following:</p>
+<ul>
+<li>Optional attributes (<code>#[...]</code>), documentation comments (<code>///</code>) are attributes;</li>
+<li>An optional pub keyword to make the methods public</li>
+<li>An optional type followed by a comma</li>
+<li>Optionally, the word <code>into</code> followed by a type, followed by a comma</li>
+<li>The getter and setter idents, separated by a comma</li>
+<li>A colon</li>
+<li>One to three expressions of type <code>usize</code></li>
+</ul>
+<p>The attributes and pub will be applied to the two methods generated.</p>
+<p>If the <code>into</code> part is used, the getter will convert the field after reading it.</p>
+<p>The getter and setter idents can be <code>_</code> to not generate one of the two. For example, if the
+setter is <code>_</code>, the field will be read-only.</p>
+<p>The expressions at the end are the bit positions. Their meaning depends on the number of
+expressions:</p>
+<ul>
+<li>One expression: the field is a single bit. The type is ignored and <code>bool</code> is used. The trait
+<code>Bit</code> is used.</li>
+<li>Two expressions: <code>msb, lsb</code>, the field is composed of the bits from <code>msb</code> to <code>lsb</code>, included.</li>
+<li>Three expressions: <code>msb, lsb, count</code>, the field is an array. The first element is composed of
+the bits from <code>msb</code> to <code>lsb</code>. The following elements are consecutive bits range of the same
+size.</li>
+</ul>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">bitfield_fields!</span>{
+    <span class="comment">// The default type will be `u64
+    </span>u64;
+    <span class="comment">// filed1 is read-write, public, the methods are inline
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub </span>field1, set_field1: <span class="number">10</span>, <span class="number">0</span>;
+    <span class="comment">// `field2` is  read-only, private, and of type bool.
+    </span>field2, <span class="kw">_ </span>: <span class="number">0</span>;
+    <span class="comment">// `field3` will be read as an `u32` and then converted to `FooBar`.
+    // The setter is not affected, it still need an `u32` value.
+    </span>u32, into FooBar, field3, set_field3: <span class="number">10</span>, <span class="number">0</span>;
+    <span class="comment">// `field4` will be read as an `u32` and then converted to `FooBar`.
+    // The setter will take a `FooBar`, and converted back to an `u32`.
+    </span>u32, from into FooBar, field4, set_field4: <span class="number">10</span>, <span class="number">0</span>;
+}</code></pre></div>
+</div></details></section></div></main></body></html>
