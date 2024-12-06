@@ -71,7 +71,7 @@ where
     }
 }
 
-impl<'a, T: Copy> SignalWriter<'a, T> {
+impl<T: Copy> SignalWriter<'_, T> {
     /// Write a raw Store value to the Signal.
     fn write_inner(&mut self, value: Store<T>) {
         critical_section::with(|_| {
