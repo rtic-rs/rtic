@@ -22,7 +22,10 @@ name = "rtic-macros"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
-version = "2.1.1"
+version = "2.1.2"
+
+[package.metadata.docs.rs]
+features = ["test-template"]
 
 [lib]
 proc-macro = true
