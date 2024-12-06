@@ -7,10 +7,11 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
-- Replace `proc-macro-error` with `proc-macro-error2`
+## [v2.1.1] - 2024-12-06
 
 ### Changed
 
+- Replace `proc-macro-error` with `proc-macro-error2`
 - Fix codegen emitting unqualified `Result`
 - Improve error output for prios > dispatchers
 

@@ -161,7 +161,7 @@ pub struct ExclusiveAccess<'a, T> {
     inner: &'a mut T,
 }
 
-impl<'a, T> Drop for ExclusiveAccess<'a, T> {
+impl<T> Drop for ExclusiveAccess<'_, T> {
     fn drop(&mut self) {
         critical_section::with(|_| {
             fence(Ordering::SeqCst);
@@ -177,7 +177,7 @@ impl<'a, T> Drop for ExclusiveAccess<'a, T> {
     }
 }
 
-impl<'a, T> Deref for ExclusiveAccess<'a, T> {
+impl<T> Deref for ExclusiveAccess<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -185,7 +185,7 @@ impl<'a, T> Deref for ExclusiveAccess<'a, T> {
     }
 }
 
-impl<'a, T> DerefMut for ExclusiveAccess<'a, T> {
+impl<T> DerefMut for ExclusiveAccess<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.inner
     }
@@ -215,7 +215,7 @@ pub mod spi {
         }
     }
 
-    impl<'a, BUS, CS, D> ErrorType for ArbiterDevice<'a, BUS, CS, D>
+    impl<BUS, CS, D> ErrorType for ArbiterDevice<'_, BUS, CS, D>
     where
         BUS: ErrorType,
         CS: OutputPin,
@@ -223,7 +223,7 @@ pub mod spi {
         type Error = DeviceError<BUS::Error, CS::Error>;
     }
 
-    impl<'a, Word, BUS, CS, D> SpiDevice<Word> for ArbiterDevice<'a, BUS, CS, D>
+    impl<Word, BUS, CS, D> SpiDevice<Word> for ArbiterDevice<'_, BUS, CS, D>
     where
         Word: Copy + 'static,
         BUS: SpiBus<Word>,
@@ -338,14 +338,14 @@ pub mod i2c {
         }
     }
 
-    impl<'a, BUS> ErrorType for ArbiterDevice<'a, BUS>
+    impl<BUS> ErrorType for ArbiterDevice<'_, BUS>
     where
         BUS: ErrorType,
     {
         type Error = BUS::Error;
     }
 
-    impl<'a, BUS, A> I2c<A> for ArbiterDevice<'a, BUS>
+    impl<BUS, A> I2c<A> for ArbiterDevice<'_, BUS>
     where
         BUS: I2c<A>,
         A: AddressMode,

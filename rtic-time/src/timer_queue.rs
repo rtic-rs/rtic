@@ -211,7 +211,7 @@ pub struct Delay<'q, Backend: TimerQueueBackend> {
     marker: AtomicUsize,
 }
 
-impl<'q, Backend: TimerQueueBackend> Future for Delay<'q, Backend> {
+impl<Backend: TimerQueueBackend> Future for Delay<'_, Backend> {
     type Output = ();
 
     fn poll(self: Pin<&mut Self>, cx: &mut core::task::Context<'_>) -> Poll<Self::Output> {
@@ -249,7 +249,7 @@ impl<'q, Backend: TimerQueueBackend> Future for Delay<'q, Backend> {
     }
 }
 
-impl<'q, Backend: TimerQueueBackend> Drop for Delay<'q, Backend> {
+impl<Backend: TimerQueueBackend> Drop for Delay<'_, Backend> {
     fn drop(&mut self) {
         // SAFETY: Drop cannot be run at the same time as poll, so we can't end up
         // derefencing this concurrently to the one in `poll`.
@@ -269,7 +269,7 @@ pub struct Timeout<'q, Backend: TimerQueueBackend, F> {
     future: F,
 }
 
-impl<'q, Backend: TimerQueueBackend, F: Future> Future for Timeout<'q, Backend, F> {
+impl<Backend: TimerQueueBackend, F: Future> Future for Timeout<'_, Backend, F> {
     type Output = Result<F::Output, TimeoutError>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut core::task::Context<'_>) -> Poll<Self::Output> {

@@ -127,7 +127,10 @@ macro_rules! make_channel {
 
         // SAFETY: This is safe as we hide the static mut from others to access it.
         // Only this point is where the mutable access happens.
-        unsafe { CHANNEL.split() }
+        #[allow(static_mut_refs)]
+        unsafe {
+            CHANNEL.split()
+        }
     }};
 }
 
@@ -184,7 +187,7 @@ where
 /// A `Sender` can send to the channel and can be cloned.
 pub struct Sender<'a, T, const N: usize>(&'a Channel<T, N>);
 
-unsafe impl<'a, T, const N: usize> Send for Sender<'a, T, N> {}
+unsafe impl<T, const N: usize> Send for Sender<'_, T, N> {}
 
 /// This is needed to make the async closure in `send` accept that we "share"
 /// the link possible between threads.
@@ -202,20 +205,20 @@ unsafe impl Send for LinkPtr {}
 
 unsafe impl Sync for LinkPtr {}
 
-impl<'a, T, const N: usize> core::fmt::Debug for Sender<'a, T, N> {
+impl<T, const N: usize> core::fmt::Debug for Sender<'_, T, N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Sender")
     }
 }
 
 #[cfg(feature = "defmt-03")]
-impl<'a, T, const N: usize> defmt::Format for Sender<'a, T, N> {
+impl<T, const N: usize> defmt::Format for Sender<'_, T, N> {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(f, "Sender",)
     }
 }
 
-impl<'a, T, const N: usize> Sender<'a, T, N> {
+impl<T, const N: usize> Sender<'_, T, N> {
     #[inline(always)]
     fn send_footer(&mut self, idx: u8, val: T) {
         // Write the value to the slots, note; this memcpy is not under a critical section.
@@ -360,7 +363,7 @@ impl<'a, T, const N: usize> Sender<'a, T, N> {
     }
 }
 
-impl<'a, T, const N: usize> Drop for Sender<'a, T, N> {
+impl<T, const N: usize> Drop for Sender<'_, T, N> {
     fn drop(&mut self) {
         // Count down the reference counter
         let num_senders = critical_section::with(|cs| {
@@ -376,7 +379,7 @@ impl<'a, T, const N: usize> Drop for Sender<'a, T, N> {
     }
 }
 
-impl<'a, T, const N: usize> Clone for Sender<'a, T, N> {
+impl<T, const N: usize> Clone for Sender<'_, T, N> {
     fn clone(&self) -> Self {
         // Count up the reference counter
         critical_section::with(|cs| *self.0.access(cs).num_senders += 1);
@@ -390,16 +393,16 @@ impl<'a, T, const N: usize> Clone for Sender<'a, T, N> {
 /// A receiver of the channel. There can only be one receiver at any time.
 pub struct Receiver<'a, T, const N: usize>(&'a Channel<T, N>);
 
-unsafe impl<'a, T, const N: usize> Send for Receiver<'a, T, N> {}
+unsafe impl<T, const N: usize> Send for Receiver<'_, T, N> {}
 
-impl<'a, T, const N: usize> core::fmt::Debug for Receiver<'a, T, N> {
+impl<T, const N: usize> core::fmt::Debug for Receiver<'_, T, N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Receiver")
     }
 }
 
 #[cfg(feature = "defmt-03")]
-impl<'a, T, const N: usize> defmt::Format for Receiver<'a, T, N> {
+impl<T, const N: usize> defmt::Format for Receiver<'_, T, N> {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(f, "Receiver",)
     }
@@ -415,7 +418,7 @@ pub enum ReceiveError {
     Empty,
 }
 
-impl<'a, T, const N: usize> Receiver<'a, T, N> {
+impl<T, const N: usize> Receiver<'_, T, N> {
     /// Receives a value if there is one in the channel, non-blocking.
     pub fn try_recv(&mut self) -> Result<T, ReceiveError> {
         // Try to get a ready slot.
@@ -487,7 +490,7 @@ impl<'a, T, const N: usize> Receiver<'a, T, N> {
     }
 }
 
-impl<'a, T, const N: usize> Drop for Receiver<'a, T, N> {
+impl<T, const N: usize> Drop for Receiver<'_, T, N> {
     fn drop(&mut self) {
         // Mark the receiver as dropped and wake all waiters
         critical_section::with(|cs| *self.0.access(cs).receiver_dropped = true);
