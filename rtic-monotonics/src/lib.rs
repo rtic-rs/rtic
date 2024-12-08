@@ -78,6 +78,9 @@ pub mod nrf;
 #[cfg(stm32)]
 pub mod stm32;
 
+#[cfg(feature = "atsamd21g")]
+pub mod atsamd21;
+
 #[allow(dead_code)]
 pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
@@ -96,6 +99,7 @@ pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     feature = "nrf5340-net",
     feature = "nrf9160",
     feature = "imxrt",
+    feature = "atsamd21g",
     stm32,
 ))]
 pub(crate) unsafe fn set_monotonic_prio(

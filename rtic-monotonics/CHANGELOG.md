@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- ATSAMD21G support
+
 ## v2.0.3 - 2024-10-23
 
 ### Added
