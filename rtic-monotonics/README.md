@@ -9,11 +9,13 @@
 
 For RTIC v1 see [`rtic-monotonic`](https://github.com/rtic-rs/rtic-monotonic)
 
-# [Documentation](https://docs.rs/rtic-monotonics)
+## [Documentation](https://docs.rs/rtic-monotonics)
 
 [RTIC book: chapter on monotonics](https://rtic.rs/2/book/en/by-example/delay.html)
 
-# License
+### [Changelog `rtic-monotonics`](https://github.com/rtic-rs/rtic/blob/master/rtic-monotonics/CHANGELOG.md)
+
+## License
 
 Licensed under either of
 
