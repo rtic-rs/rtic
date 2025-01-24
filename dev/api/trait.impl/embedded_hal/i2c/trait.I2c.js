@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["embedded_hal",[]],["embedded_hal_bus",[["impl&lt;'a, T&gt; <a class=\"trait\" href=\"embedded_hal/i2c/trait.I2c.html\" title=\"trait embedded_hal::i2c::I2c\">I2c</a> for <a class=\"struct\" href=\"embedded_hal_bus/i2c/struct.AtomicDevice.html\" title=\"struct embedded_hal_bus::i2c::AtomicDevice\">AtomicDevice</a>&lt;'a, T&gt;<div class=\"where\">where\n    T: <a class=\"trait\" href=\"embedded_hal/i2c/trait.I2c.html\" title=\"trait embedded_hal::i2c::I2c\">I2c</a>,</div>"],["impl&lt;'a, T&gt; <a class=\"trait\" href=\"embedded_hal/i2c/trait.I2c.html\" title=\"trait embedded_hal::i2c::I2c\">I2c</a> for <a class=\"struct\" href=\"embedded_hal_bus/i2c/struct.CriticalSectionDevice.html\" title=\"struct embedded_hal_bus::i2c::CriticalSectionDevice\">CriticalSectionDevice</a>&lt;'a, T&gt;<div class=\"where\">where\n    T: <a class=\"trait\" href=\"embedded_hal/i2c/trait.I2c.html\" title=\"trait embedded_hal::i2c::I2c\">I2c</a>,</div>"],["impl&lt;'a, T&gt; <a class=\"trait\" href=\"embedded_hal/i2c/trait.I2c.html\" title=\"trait embedded_hal::i2c::I2c\">I2c</a> for <a class=\"struct\" href=\"embedded_hal_bus/i2c/struct.RefCellDevice.html\" title=\"struct embedded_hal_bus::i2c::RefCellDevice\">RefCellDevice</a>&lt;'a, T&gt;<div class=\"where\">where\n    T: <a class=\"trait\" href=\"embedded_hal/i2c/trait.I2c.html\" title=\"trait embedded_hal::i2c::I2c\">I2c</a>,</div>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[19,1370]}
