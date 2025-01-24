@@ -15,6 +15,16 @@ For RTIC v1 see [`rtic-monotonic`](https://github.com/rtic-rs/rtic-monotonic)
 
 ### [Changelog `rtic-monotonics`](https://github.com/rtic-rs/rtic/blob/master/rtic-monotonics/CHANGELOG.md)
 
+## Supported Platforms
+
+The following microcontroller families feature efficient monotonics using peripherals.
+Refer to the [crate documentation](https://docs.rs/rtic-monotonics) for more details.
+
+- RP2040
+- i.MX RT
+- nRF
+- ATSAMD
+
 ## License
 
 Licensed under either of
