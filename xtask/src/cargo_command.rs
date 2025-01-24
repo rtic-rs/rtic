@@ -424,7 +424,7 @@ impl<'a> CargoCommand<'a> {
         features: &'i Option<String>,
         mode: Option<&'i BuildMode>,
         extra: T,
-    ) -> Vec<&str> {
+    ) -> Vec<&'i str> {
         let mut args: Vec<&str> = Vec::new();
 
         if nightly {

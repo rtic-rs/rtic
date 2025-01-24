@@ -110,7 +110,7 @@ where
     }
 }
 
-impl<'a, T: Copy> SignalReader<'a, T> {
+impl<T: Copy> SignalReader<'_, T> {
     /// Immediately read and evict the latest value stored in the Signal.
     fn take(&mut self) -> Store<T> {
         critical_section::with(|_| {
