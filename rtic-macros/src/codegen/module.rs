@@ -192,7 +192,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             #[allow(non_snake_case)]
             #[doc(hidden)]
             pub fn #internal_waker_ident() -> ::core::task::Waker {
-                // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
+                // SAFETY: #exec_name is a valid pointer to an executor.
                 unsafe {
                     let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
                     exec.waker(|| {
