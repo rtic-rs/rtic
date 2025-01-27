@@ -20,6 +20,10 @@ Example:
 
 ## [Unreleased]
 
+### Added
+
+- Added public `waker` constructor to the executor.
+
 ## [v2.1.3] - 2025-06-08
 
 ### Fixed
