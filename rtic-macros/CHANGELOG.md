@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+- Added `waker` getter to software tasks
+
 ## [v2.1.1] - 2024-12-06
 
 ### Changed
