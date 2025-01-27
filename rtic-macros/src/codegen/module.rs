@@ -158,6 +158,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         };
 
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");
+        let internal_waker_ident = util::internal_task_ident(name, "waker");
         let from_ptr_n_args = util::from_ptr_n_args_ident(spawnee.inputs.len());
         let (input_args, input_tupled, input_untupled, input_ty) =
             util::regroup_inputs(&spawnee.inputs);
@@ -184,10 +185,35 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             }
         ));
 
+        // Waker
+        items.push(quote!(
+            #(#cfgs)*
+            /// Gives waker to the task
+            #[allow(non_snake_case)]
+            #[doc(hidden)]
+            pub fn #internal_waker_ident() -> ::core::task::Waker {
+                // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
+                unsafe {
+                    let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
+                    exec.waker(|| {
+                        let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
+                        exec.set_pending();
+                        #pend_interrupt
+                    })
+                }
+            }
+        ));
+
         module_items.push(quote!(
             #(#cfgs)*
             #[doc(inline)]
             pub use super::#internal_spawn_ident as spawn;
+        ));
+
+        module_items.push(quote!(
+            #(#cfgs)*
+            #[doc(inline)]
+            pub use super::#internal_waker_ident as waker;
         ));
     }
 
