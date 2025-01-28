@@ -155,7 +155,7 @@ jobs:
       matrix:
         backend:
           - riscv32-imc-clint
-          - riscv32-imac-clint
+          - riscv32-imc-mecall
         toolchain:
           - stable
     steps:
@@ -168,18 +168,12 @@ jobs:
 
       - name: Configure Rust target
         run: |
-          rustup target add riscv32imac-unknown-none-elf
           rustup target add riscv32imc-unknown-none-elf
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
       
       - name: Check the examples
-        if: ${{ matrix.backend == 'riscv32-imc-clint' }}
-        run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude static example-check
-
-      - name: Check the examples
-        if: ${{ matrix.backend != 'riscv32-imc-clint' }}
         run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} example-check
 
   # Platform esp32c3: verify all examples, checks
@@ -341,7 +335,7 @@ jobs:
       matrix:
         backend:
           - riscv32-imc-clint
-          - riscv32-imac-clint
+          - riscv32-imc-mecall
         toolchain:
           - stable
     steps:
@@ -355,7 +349,6 @@ jobs:
 
       - name: Configure Rust target
         run: |
-          rustup target add riscv32imac-unknown-none-elf
           rustup target add riscv32imc-unknown-none-elf
 
       - name: Add Rust component llvm-tools-preview
@@ -389,11 +382,6 @@ jobs:
           which qemu-system-riscv32
       
       - name: Run-pass tests
-        if: ${{ matrix.backend == 'riscv32-imc-clint' }}
-        run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude static qemu
-
-      - name: Run-pass tests
-        if: ${{ matrix.backend != 'riscv32-imc-clint' }}
         run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} qemu
 
   # Platform esp32c3: verify the example output with run-pass tests
@@ -897,9 +885,9 @@ jobs:
     needs:
       - formatcheck
       - checklm3s6965
-      # checkhifive1 TODO
+      # - checkhifive1 # TODO
       - clippylm3s6965
-      # clippyhifive1 TODO
+      # - clippyhifive1 # TODO
       - checkexampleslm3s6965
       - checkexampleshifive1
       - checkexamplesesp32c3
