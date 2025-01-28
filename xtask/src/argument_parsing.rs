@@ -252,12 +252,7 @@ impl Platforms {
         let c = "-C".to_string();
         match self {
             Platforms::Esp32C3 => vec![c, "link-arg=-Tlinkall.x".to_string()],
-            Platforms::Hifive1 => vec![
-                c.clone(),
-                "link-arg=-Thifive1-link.x".to_string(),
-                c,
-                "portable_atomic_target_feature=\"zaamo\"".to_string(),
-            ],
+            Platforms::Hifive1 => vec![c, "link-arg=-Thifive1-link.x".to_string()],
             Platforms::Lm3s6965 => vec![c, "link-arg=-Tlink.x".to_string()],
             Platforms::Nrf52840 => vec![
                 c.clone(),
@@ -315,7 +310,7 @@ impl Platforms {
                 _ => Err(()),
             },
             Platforms::Hifive1 => match backend.to_target() {
-                RISCV32IMC | RISCV32IMAC => Ok(None),
+                RISCV32IMC => Ok(None),
                 _ => Err(()),
             },
             Platforms::Lm3s6965 => match backend.to_target() {
