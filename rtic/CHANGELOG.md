@@ -23,6 +23,9 @@ Example:
 ### Changed
 
 - Updated esp32c3 dependency to v0.27.0
+### Added
+
+- Support for RISC-V targets compatible with `riscv-slic` using machine-level environment call exceptions.
 
 ## [v2.1.2] - 2024-12-06
 
