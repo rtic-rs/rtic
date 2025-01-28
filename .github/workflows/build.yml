@@ -155,7 +155,7 @@ jobs:
       matrix:
         backend:
           - riscv32-imc-clint
-          - riscv32-imac-clint
+          - riscv32-imc-mecall
         toolchain:
           - stable
     steps:
@@ -175,12 +175,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
       
       - name: Check the examples
-        if: ${{ matrix.backend == 'riscv32-imc-clint' }}
         run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude static example-check
-
-      - name: Check the examples
-        if: ${{ matrix.backend != 'riscv32-imc-clint' }}
-        run: cargo xtask --platform hifive1 --backend ${{ matrix.backend }} example-check
 
   # Platform esp32c3: verify all examples, checks
   checkexamplesesp32c3:
@@ -341,7 +336,7 @@ jobs:
       matrix:
         backend:
           - riscv32-imc-clint
-          - riscv32-imac-clint
+          - riscv32-imc-mecall
         toolchain:
           - stable
     steps:
@@ -389,12 +384,7 @@ jobs:
           which qemu-system-riscv32
       
       - name: Run-pass tests
-        if: ${{ matrix.backend == 'riscv32-imc-clint' }}
         run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} --exampleexclude static qemu
-
-      - name: Run-pass tests
-        if: ${{ matrix.backend != 'riscv32-imc-clint' }}
-        run: cargo xtask --deny-warnings --platform hifive1 --backend ${{ matrix.backend }} qemu
 
   # Platform esp32c3: verify the example output with run-pass tests
   testexamplesesp32c3:
