@@ -30,6 +30,8 @@ Example:
 - Updated esp32c3 dependency to v0.22.0
 - Use `riscv-slic` from `crates.io`
 - Remove unused dependency `rtic-monotonics`
+- Updated esp32c3 dependency to v0.25.0
+- Use `riscv-slic` from `crates.io`
 
 ## [v2.1.1] - 2024-03-13
 
