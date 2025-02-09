@@ -20,6 +20,10 @@ Example:
 
 ## [Unreleased]
 
+### Changed
+
+- Updated esp32c3 dependency to v0.27.0
+
 ## [v2.1.2] - 2024-12-06
 
 ### Changed
