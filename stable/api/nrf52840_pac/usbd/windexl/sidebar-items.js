@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["R","WINDEXL_SPEC"],"type":["WINDEXL_R"]};

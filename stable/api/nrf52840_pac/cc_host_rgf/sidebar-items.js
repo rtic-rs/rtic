@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["host_cryptokey_sel","host_iot_kdr0","host_iot_kdr1","host_iot_kdr2","host_iot_kdr3","host_iot_kprtl_lock","host_iot_lcs"],"struct":["RegisterBlock"],"type":["HOST_CRYPTOKEY_SEL","HOST_IOT_KDR0","HOST_IOT_KDR1","HOST_IOT_KDR2","HOST_IOT_KDR3","HOST_IOT_KPRTL_LOCK","HOST_IOT_LCS"]};

@@ -1,0 +1,573 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/nrf52840-pac-0.12.2/src/nfct.rs`."><title>nfct.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="nrf52840_pac" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.1 (e71f9a9a9 2025-01-27)" data-channel="1.84.1" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">nrf52840_pac/</div>nfct.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
+<a href="#2" id="2">2</a>
+<a href="#3" id="3">3</a>
+<a href="#4" id="4">4</a>
+<a href="#5" id="5">5</a>
+<a href="#6" id="6">6</a>
+<a href="#7" id="7">7</a>
+<a href="#8" id="8">8</a>
+<a href="#9" id="9">9</a>
+<a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
+<a href="#12" id="12">12</a>
+<a href="#13" id="13">13</a>
+<a href="#14" id="14">14</a>
+<a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
+<a href="#49" id="49">49</a>
+<a href="#50" id="50">50</a>
+<a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a></pre></div><pre class="rust"><code><span class="attr">#[doc = <span class="string">r"Register block"</span>]
+#[repr(C)]
+</span><span class="kw">pub struct </span>RegisterBlock {
+    <span class="attr">#[doc = <span class="string">"0x00 - Activate NFCT peripheral for incoming and outgoing frames, change state to activated"</span>]
+    </span><span class="kw">pub </span>tasks_activate: TASKS_ACTIVATE,
+    <span class="attr">#[doc = <span class="string">"0x04 - Disable NFCT peripheral"</span>]
+    </span><span class="kw">pub </span>tasks_disable: TASKS_DISABLE,
+    <span class="attr">#[doc = <span class="string">"0x08 - Enable NFC sense field mode, change state to sense mode"</span>]
+    </span><span class="kw">pub </span>tasks_sense: TASKS_SENSE,
+    <span class="attr">#[doc = <span class="string">"0x0c - Start transmission of an outgoing frame, change state to transmit"</span>]
+    </span><span class="kw">pub </span>tasks_starttx: TASKS_STARTTX,
+    _reserved4: [u8; <span class="number">0x0c</span>],
+    <span class="attr">#[doc = <span class="string">"0x1c - Initializes the EasyDMA for receive."</span>]
+    </span><span class="kw">pub </span>tasks_enablerxdata: TASKS_ENABLERXDATA,
+    _reserved5: [u8; <span class="number">0x04</span>],
+    <span class="attr">#[doc = <span class="string">"0x24 - Force state machine to IDLE state"</span>]
+    </span><span class="kw">pub </span>tasks_goidle: TASKS_GOIDLE,
+    <span class="attr">#[doc = <span class="string">"0x28 - Force state machine to SLEEP_A state"</span>]
+    </span><span class="kw">pub </span>tasks_gosleep: TASKS_GOSLEEP,
+    _reserved7: [u8; <span class="number">0xd4</span>],
+    <span class="attr">#[doc = <span class="string">"0x100 - The NFCT peripheral is ready to receive and send frames"</span>]
+    </span><span class="kw">pub </span>events_ready: EVENTS_READY,
+    <span class="attr">#[doc = <span class="string">"0x104 - Remote NFC field detected"</span>]
+    </span><span class="kw">pub </span>events_fielddetected: EVENTS_FIELDDETECTED,
+    <span class="attr">#[doc = <span class="string">"0x108 - Remote NFC field lost"</span>]
+    </span><span class="kw">pub </span>events_fieldlost: EVENTS_FIELDLOST,
+    <span class="attr">#[doc = <span class="string">"0x10c - Marks the start of the first symbol of a transmitted frame"</span>]
+    </span><span class="kw">pub </span>events_txframestart: EVENTS_TXFRAMESTART,
+    <span class="attr">#[doc = <span class="string">"0x110 - Marks the end of the last transmitted on-air symbol of a frame"</span>]
+    </span><span class="kw">pub </span>events_txframeend: EVENTS_TXFRAMEEND,
+    <span class="attr">#[doc = <span class="string">"0x114 - Marks the end of the first symbol of a received frame"</span>]
+    </span><span class="kw">pub </span>events_rxframestart: EVENTS_RXFRAMESTART,
+    <span class="attr">#[doc = <span class="string">"0x118 - Received data has been checked (CRC, parity) and transferred to RAM, and EasyDMA has ended accessing the RX buffer"</span>]
+    </span><span class="kw">pub </span>events_rxframeend: EVENTS_RXFRAMEEND,
+    <span class="attr">#[doc = <span class="string">"0x11c - NFC error reported. The ERRORSTATUS register contains details on the source of the error."</span>]
+    </span><span class="kw">pub </span>events_error: EVENTS_ERROR,
+    _reserved15: [u8; <span class="number">0x08</span>],
+    <span class="attr">#[doc = <span class="string">"0x128 - NFC RX frame error reported. The FRAMESTATUS.RX register contains details on the source of the error."</span>]
+    </span><span class="kw">pub </span>events_rxerror: EVENTS_RXERROR,
+    <span class="attr">#[doc = <span class="string">"0x12c - RX buffer (as defined by PACKETPTR and MAXLEN) in Data RAM full."</span>]
+    </span><span class="kw">pub </span>events_endrx: EVENTS_ENDRX,
+    <span class="attr">#[doc = <span class="string">"0x130 - Transmission of data in RAM has ended, and EasyDMA has ended accessing the TX buffer"</span>]
+    </span><span class="kw">pub </span>events_endtx: EVENTS_ENDTX,
+    _reserved18: [u8; <span class="number">0x04</span>],
+    <span class="attr">#[doc = <span class="string">"0x138 - Auto collision resolution process has started"</span>]
+    </span><span class="kw">pub </span>events_autocolresstarted: EVENTS_AUTOCOLRESSTARTED,
+    _reserved19: [u8; <span class="number">0x0c</span>],
+    <span class="attr">#[doc = <span class="string">"0x148 - NFC auto collision resolution error reported."</span>]
+    </span><span class="kw">pub </span>events_collision: EVENTS_COLLISION,
+    <span class="attr">#[doc = <span class="string">"0x14c - NFC auto collision resolution successfully completed"</span>]
+    </span><span class="kw">pub </span>events_selected: EVENTS_SELECTED,
+    <span class="attr">#[doc = <span class="string">"0x150 - EasyDMA is ready to receive or send frames."</span>]
+    </span><span class="kw">pub </span>events_started: EVENTS_STARTED,
+    _reserved22: [u8; <span class="number">0xac</span>],
+    <span class="attr">#[doc = <span class="string">"0x200 - Shortcut register"</span>]
+    </span><span class="kw">pub </span>shorts: SHORTS,
+    _reserved23: [u8; <span class="number">0xfc</span>],
+    <span class="attr">#[doc = <span class="string">"0x300 - Enable or disable interrupt"</span>]
+    </span><span class="kw">pub </span>inten: INTEN,
+    <span class="attr">#[doc = <span class="string">"0x304 - Enable interrupt"</span>]
+    </span><span class="kw">pub </span>intenset: INTENSET,
+    <span class="attr">#[doc = <span class="string">"0x308 - Disable interrupt"</span>]
+    </span><span class="kw">pub </span>intenclr: INTENCLR,
+    _reserved26: [u8; <span class="number">0xf8</span>],
+    <span class="attr">#[doc = <span class="string">"0x404 - NFC Error Status register"</span>]
+    </span><span class="kw">pub </span>errorstatus: ERRORSTATUS,
+    _reserved27: [u8; <span class="number">0x04</span>],
+    <span class="attr">#[doc = <span class="string">"0x40c - Unspecified"</span>]
+    </span><span class="kw">pub </span>framestatus: FRAMESTATUS,
+    <span class="attr">#[doc = <span class="string">"0x410 - NfcTag state register"</span>]
+    </span><span class="kw">pub </span>nfctagstate: NFCTAGSTATE,
+    _reserved29: [u8; <span class="number">0x0c</span>],
+    <span class="attr">#[doc = <span class="string">"0x420 - Sleep state during automatic collision resolution"</span>]
+    </span><span class="kw">pub </span>sleepstate: SLEEPSTATE,
+    _reserved30: [u8; <span class="number">0x18</span>],
+    <span class="attr">#[doc = <span class="string">"0x43c - Indicates the presence or not of a valid field"</span>]
+    </span><span class="kw">pub </span>fieldpresent: FIELDPRESENT,
+    _reserved31: [u8; <span class="number">0xc4</span>],
+    <span class="attr">#[doc = <span class="string">"0x504 - Minimum frame delay"</span>]
+    </span><span class="kw">pub </span>framedelaymin: FRAMEDELAYMIN,
+    <span class="attr">#[doc = <span class="string">"0x508 - Maximum frame delay"</span>]
+    </span><span class="kw">pub </span>framedelaymax: FRAMEDELAYMAX,
+    <span class="attr">#[doc = <span class="string">"0x50c - Configuration register for the Frame Delay Timer"</span>]
+    </span><span class="kw">pub </span>framedelaymode: FRAMEDELAYMODE,
+    <span class="attr">#[doc = <span class="string">"0x510 - Packet pointer for TXD and RXD data storage in Data RAM"</span>]
+    </span><span class="kw">pub </span>packetptr: PACKETPTR,
+    <span class="attr">#[doc = <span class="string">"0x514 - Size of the RAM buffer allocated to TXD and RXD data storage each"</span>]
+    </span><span class="kw">pub </span>maxlen: MAXLEN,
+    <span class="attr">#[doc = <span class="string">"0x518..0x520 - Unspecified"</span>]
+    </span><span class="kw">pub </span>txd: TXD,
+    <span class="attr">#[doc = <span class="string">"0x520..0x528 - Unspecified"</span>]
+    </span><span class="kw">pub </span>rxd: RXD,
+    _reserved38: [u8; <span class="number">0x68</span>],
+    <span class="attr">#[doc = <span class="string">"0x590 - Last NFCID1 part (4, 7 or 10 bytes ID)"</span>]
+    </span><span class="kw">pub </span>nfcid1_last: NFCID1_LAST,
+    <span class="attr">#[doc = <span class="string">"0x594 - Second last NFCID1 part (7 or 10 bytes ID)"</span>]
+    </span><span class="kw">pub </span>nfcid1_2nd_last: NFCID1_2ND_LAST,
+    <span class="attr">#[doc = <span class="string">"0x598 - Third last NFCID1 part (10 bytes ID)"</span>]
+    </span><span class="kw">pub </span>nfcid1_3rd_last: NFCID1_3RD_LAST,
+    <span class="attr">#[doc = <span class="string">"0x59c - Controls the auto collision resolution function. This setting must be done before the NFCT peripheral is enabled."</span>]
+    </span><span class="kw">pub </span>autocolresconfig: AUTOCOLRESCONFIG,
+    <span class="attr">#[doc = <span class="string">"0x5a0 - NFC-A SENS_RES auto-response settings"</span>]
+    </span><span class="kw">pub </span>sensres: SENSRES,
+    <span class="attr">#[doc = <span class="string">"0x5a4 - NFC-A SEL_RES auto-response settings"</span>]
+    </span><span class="kw">pub </span>selres: SELRES,
+}
+<span class="attr">#[doc = <span class="string">"TASKS_ACTIVATE (w) register accessor: an alias for `Reg&lt;TASKS_ACTIVATE_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>TASKS_ACTIVATE = <span class="kw">crate</span>::Reg&lt;tasks_activate::TASKS_ACTIVATE_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Activate NFCT peripheral for incoming and outgoing frames, change state to activated"</span>]
+</span><span class="kw">pub mod </span>tasks_activate;
+<span class="attr">#[doc = <span class="string">"TASKS_DISABLE (w) register accessor: an alias for `Reg&lt;TASKS_DISABLE_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>TASKS_DISABLE = <span class="kw">crate</span>::Reg&lt;tasks_disable::TASKS_DISABLE_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Disable NFCT peripheral"</span>]
+</span><span class="kw">pub mod </span>tasks_disable;
+<span class="attr">#[doc = <span class="string">"TASKS_SENSE (w) register accessor: an alias for `Reg&lt;TASKS_SENSE_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>TASKS_SENSE = <span class="kw">crate</span>::Reg&lt;tasks_sense::TASKS_SENSE_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Enable NFC sense field mode, change state to sense mode"</span>]
+</span><span class="kw">pub mod </span>tasks_sense;
+<span class="attr">#[doc = <span class="string">"TASKS_STARTTX (w) register accessor: an alias for `Reg&lt;TASKS_STARTTX_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>TASKS_STARTTX = <span class="kw">crate</span>::Reg&lt;tasks_starttx::TASKS_STARTTX_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Start transmission of an outgoing frame, change state to transmit"</span>]
+</span><span class="kw">pub mod </span>tasks_starttx;
+<span class="attr">#[doc = <span class="string">"TASKS_ENABLERXDATA (w) register accessor: an alias for `Reg&lt;TASKS_ENABLERXDATA_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>TASKS_ENABLERXDATA = <span class="kw">crate</span>::Reg&lt;tasks_enablerxdata::TASKS_ENABLERXDATA_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Initializes the EasyDMA for receive."</span>]
+</span><span class="kw">pub mod </span>tasks_enablerxdata;
+<span class="attr">#[doc = <span class="string">"TASKS_GOIDLE (w) register accessor: an alias for `Reg&lt;TASKS_GOIDLE_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>TASKS_GOIDLE = <span class="kw">crate</span>::Reg&lt;tasks_goidle::TASKS_GOIDLE_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Force state machine to IDLE state"</span>]
+</span><span class="kw">pub mod </span>tasks_goidle;
+<span class="attr">#[doc = <span class="string">"TASKS_GOSLEEP (w) register accessor: an alias for `Reg&lt;TASKS_GOSLEEP_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>TASKS_GOSLEEP = <span class="kw">crate</span>::Reg&lt;tasks_gosleep::TASKS_GOSLEEP_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Force state machine to SLEEP_A state"</span>]
+</span><span class="kw">pub mod </span>tasks_gosleep;
+<span class="attr">#[doc = <span class="string">"EVENTS_READY (rw) register accessor: an alias for `Reg&lt;EVENTS_READY_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_READY = <span class="kw">crate</span>::Reg&lt;events_ready::EVENTS_READY_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"The NFCT peripheral is ready to receive and send frames"</span>]
+</span><span class="kw">pub mod </span>events_ready;
+<span class="attr">#[doc = <span class="string">"EVENTS_FIELDDETECTED (rw) register accessor: an alias for `Reg&lt;EVENTS_FIELDDETECTED_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_FIELDDETECTED = <span class="kw">crate</span>::Reg&lt;events_fielddetected::EVENTS_FIELDDETECTED_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Remote NFC field detected"</span>]
+</span><span class="kw">pub mod </span>events_fielddetected;
+<span class="attr">#[doc = <span class="string">"EVENTS_FIELDLOST (rw) register accessor: an alias for `Reg&lt;EVENTS_FIELDLOST_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_FIELDLOST = <span class="kw">crate</span>::Reg&lt;events_fieldlost::EVENTS_FIELDLOST_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Remote NFC field lost"</span>]
+</span><span class="kw">pub mod </span>events_fieldlost;
+<span class="attr">#[doc = <span class="string">"EVENTS_TXFRAMESTART (rw) register accessor: an alias for `Reg&lt;EVENTS_TXFRAMESTART_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_TXFRAMESTART = <span class="kw">crate</span>::Reg&lt;events_txframestart::EVENTS_TXFRAMESTART_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Marks the start of the first symbol of a transmitted frame"</span>]
+</span><span class="kw">pub mod </span>events_txframestart;
+<span class="attr">#[doc = <span class="string">"EVENTS_TXFRAMEEND (rw) register accessor: an alias for `Reg&lt;EVENTS_TXFRAMEEND_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_TXFRAMEEND = <span class="kw">crate</span>::Reg&lt;events_txframeend::EVENTS_TXFRAMEEND_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Marks the end of the last transmitted on-air symbol of a frame"</span>]
+</span><span class="kw">pub mod </span>events_txframeend;
+<span class="attr">#[doc = <span class="string">"EVENTS_RXFRAMESTART (rw) register accessor: an alias for `Reg&lt;EVENTS_RXFRAMESTART_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_RXFRAMESTART = <span class="kw">crate</span>::Reg&lt;events_rxframestart::EVENTS_RXFRAMESTART_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Marks the end of the first symbol of a received frame"</span>]
+</span><span class="kw">pub mod </span>events_rxframestart;
+<span class="attr">#[doc = <span class="string">"EVENTS_RXFRAMEEND (rw) register accessor: an alias for `Reg&lt;EVENTS_RXFRAMEEND_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_RXFRAMEEND = <span class="kw">crate</span>::Reg&lt;events_rxframeend::EVENTS_RXFRAMEEND_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Received data has been checked (CRC, parity) and transferred to RAM, and EasyDMA has ended accessing the RX buffer"</span>]
+</span><span class="kw">pub mod </span>events_rxframeend;
+<span class="attr">#[doc = <span class="string">"EVENTS_ERROR (rw) register accessor: an alias for `Reg&lt;EVENTS_ERROR_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_ERROR = <span class="kw">crate</span>::Reg&lt;events_error::EVENTS_ERROR_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"NFC error reported. The ERRORSTATUS register contains details on the source of the error."</span>]
+</span><span class="kw">pub mod </span>events_error;
+<span class="attr">#[doc = <span class="string">"EVENTS_RXERROR (rw) register accessor: an alias for `Reg&lt;EVENTS_RXERROR_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_RXERROR = <span class="kw">crate</span>::Reg&lt;events_rxerror::EVENTS_RXERROR_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"NFC RX frame error reported. The FRAMESTATUS.RX register contains details on the source of the error."</span>]
+</span><span class="kw">pub mod </span>events_rxerror;
+<span class="attr">#[doc = <span class="string">"EVENTS_ENDRX (rw) register accessor: an alias for `Reg&lt;EVENTS_ENDRX_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_ENDRX = <span class="kw">crate</span>::Reg&lt;events_endrx::EVENTS_ENDRX_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"RX buffer (as defined by PACKETPTR and MAXLEN) in Data RAM full."</span>]
+</span><span class="kw">pub mod </span>events_endrx;
+<span class="attr">#[doc = <span class="string">"EVENTS_ENDTX (rw) register accessor: an alias for `Reg&lt;EVENTS_ENDTX_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_ENDTX = <span class="kw">crate</span>::Reg&lt;events_endtx::EVENTS_ENDTX_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Transmission of data in RAM has ended, and EasyDMA has ended accessing the TX buffer"</span>]
+</span><span class="kw">pub mod </span>events_endtx;
+<span class="attr">#[doc = <span class="string">"EVENTS_AUTOCOLRESSTARTED (rw) register accessor: an alias for `Reg&lt;EVENTS_AUTOCOLRESSTARTED_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_AUTOCOLRESSTARTED =
+    <span class="kw">crate</span>::Reg&lt;events_autocolresstarted::EVENTS_AUTOCOLRESSTARTED_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Auto collision resolution process has started"</span>]
+</span><span class="kw">pub mod </span>events_autocolresstarted;
+<span class="attr">#[doc = <span class="string">"EVENTS_COLLISION (rw) register accessor: an alias for `Reg&lt;EVENTS_COLLISION_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_COLLISION = <span class="kw">crate</span>::Reg&lt;events_collision::EVENTS_COLLISION_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"NFC auto collision resolution error reported."</span>]
+</span><span class="kw">pub mod </span>events_collision;
+<span class="attr">#[doc = <span class="string">"EVENTS_SELECTED (rw) register accessor: an alias for `Reg&lt;EVENTS_SELECTED_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_SELECTED = <span class="kw">crate</span>::Reg&lt;events_selected::EVENTS_SELECTED_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"NFC auto collision resolution successfully completed"</span>]
+</span><span class="kw">pub mod </span>events_selected;
+<span class="attr">#[doc = <span class="string">"EVENTS_STARTED (rw) register accessor: an alias for `Reg&lt;EVENTS_STARTED_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>EVENTS_STARTED = <span class="kw">crate</span>::Reg&lt;events_started::EVENTS_STARTED_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"EasyDMA is ready to receive or send frames."</span>]
+</span><span class="kw">pub mod </span>events_started;
+<span class="attr">#[doc = <span class="string">"SHORTS (rw) register accessor: an alias for `Reg&lt;SHORTS_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>SHORTS = <span class="kw">crate</span>::Reg&lt;shorts::SHORTS_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Shortcut register"</span>]
+</span><span class="kw">pub mod </span>shorts;
+<span class="attr">#[doc = <span class="string">"INTEN (rw) register accessor: an alias for `Reg&lt;INTEN_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>INTEN = <span class="kw">crate</span>::Reg&lt;inten::INTEN_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Enable or disable interrupt"</span>]
+</span><span class="kw">pub mod </span>inten;
+<span class="attr">#[doc = <span class="string">"INTENSET (rw) register accessor: an alias for `Reg&lt;INTENSET_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>INTENSET = <span class="kw">crate</span>::Reg&lt;intenset::INTENSET_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Enable interrupt"</span>]
+</span><span class="kw">pub mod </span>intenset;
+<span class="attr">#[doc = <span class="string">"INTENCLR (rw) register accessor: an alias for `Reg&lt;INTENCLR_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>INTENCLR = <span class="kw">crate</span>::Reg&lt;intenclr::INTENCLR_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Disable interrupt"</span>]
+</span><span class="kw">pub mod </span>intenclr;
+<span class="attr">#[doc = <span class="string">"ERRORSTATUS (rw) register accessor: an alias for `Reg&lt;ERRORSTATUS_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>ERRORSTATUS = <span class="kw">crate</span>::Reg&lt;errorstatus::ERRORSTATUS_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"NFC Error Status register"</span>]
+</span><span class="kw">pub mod </span>errorstatus;
+<span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+</span><span class="kw">pub use </span>framestatus::FRAMESTATUS;
+<span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+#[doc = <span class="string">"Unspecified"</span>]
+</span><span class="kw">pub mod </span>framestatus;
+<span class="attr">#[doc = <span class="string">"NFCTAGSTATE (r) register accessor: an alias for `Reg&lt;NFCTAGSTATE_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>NFCTAGSTATE = <span class="kw">crate</span>::Reg&lt;nfctagstate::NFCTAGSTATE_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"NfcTag state register"</span>]
+</span><span class="kw">pub mod </span>nfctagstate;
+<span class="attr">#[doc = <span class="string">"SLEEPSTATE (r) register accessor: an alias for `Reg&lt;SLEEPSTATE_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>SLEEPSTATE = <span class="kw">crate</span>::Reg&lt;sleepstate::SLEEPSTATE_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Sleep state during automatic collision resolution"</span>]
+</span><span class="kw">pub mod </span>sleepstate;
+<span class="attr">#[doc = <span class="string">"FIELDPRESENT (r) register accessor: an alias for `Reg&lt;FIELDPRESENT_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>FIELDPRESENT = <span class="kw">crate</span>::Reg&lt;fieldpresent::FIELDPRESENT_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Indicates the presence or not of a valid field"</span>]
+</span><span class="kw">pub mod </span>fieldpresent;
+<span class="attr">#[doc = <span class="string">"FRAMEDELAYMIN (rw) register accessor: an alias for `Reg&lt;FRAMEDELAYMIN_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>FRAMEDELAYMIN = <span class="kw">crate</span>::Reg&lt;framedelaymin::FRAMEDELAYMIN_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Minimum frame delay"</span>]
+</span><span class="kw">pub mod </span>framedelaymin;
+<span class="attr">#[doc = <span class="string">"FRAMEDELAYMAX (rw) register accessor: an alias for `Reg&lt;FRAMEDELAYMAX_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>FRAMEDELAYMAX = <span class="kw">crate</span>::Reg&lt;framedelaymax::FRAMEDELAYMAX_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Maximum frame delay"</span>]
+</span><span class="kw">pub mod </span>framedelaymax;
+<span class="attr">#[doc = <span class="string">"FRAMEDELAYMODE (rw) register accessor: an alias for `Reg&lt;FRAMEDELAYMODE_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>FRAMEDELAYMODE = <span class="kw">crate</span>::Reg&lt;framedelaymode::FRAMEDELAYMODE_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Configuration register for the Frame Delay Timer"</span>]
+</span><span class="kw">pub mod </span>framedelaymode;
+<span class="attr">#[doc = <span class="string">"PACKETPTR (rw) register accessor: an alias for `Reg&lt;PACKETPTR_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>PACKETPTR = <span class="kw">crate</span>::Reg&lt;packetptr::PACKETPTR_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Packet pointer for TXD and RXD data storage in Data RAM"</span>]
+</span><span class="kw">pub mod </span>packetptr;
+<span class="attr">#[doc = <span class="string">"MAXLEN (rw) register accessor: an alias for `Reg&lt;MAXLEN_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>MAXLEN = <span class="kw">crate</span>::Reg&lt;maxlen::MAXLEN_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Size of the RAM buffer allocated to TXD and RXD data storage each"</span>]
+</span><span class="kw">pub mod </span>maxlen;
+<span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+</span><span class="kw">pub use </span>txd::TXD;
+<span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+#[doc = <span class="string">"Unspecified"</span>]
+</span><span class="kw">pub mod </span>txd;
+<span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+</span><span class="kw">pub use </span>rxd::RXD;
+<span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+#[doc = <span class="string">"Unspecified"</span>]
+</span><span class="kw">pub mod </span>rxd;
+<span class="attr">#[doc = <span class="string">"NFCID1_LAST (rw) register accessor: an alias for `Reg&lt;NFCID1_LAST_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>NFCID1_LAST = <span class="kw">crate</span>::Reg&lt;nfcid1_last::NFCID1_LAST_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Last NFCID1 part (4, 7 or 10 bytes ID)"</span>]
+</span><span class="kw">pub mod </span>nfcid1_last;
+<span class="attr">#[doc = <span class="string">"NFCID1_2ND_LAST (rw) register accessor: an alias for `Reg&lt;NFCID1_2ND_LAST_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>NFCID1_2ND_LAST = <span class="kw">crate</span>::Reg&lt;nfcid1_2nd_last::NFCID1_2ND_LAST_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Second last NFCID1 part (7 or 10 bytes ID)"</span>]
+</span><span class="kw">pub mod </span>nfcid1_2nd_last;
+<span class="attr">#[doc = <span class="string">"NFCID1_3RD_LAST (rw) register accessor: an alias for `Reg&lt;NFCID1_3RD_LAST_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>NFCID1_3RD_LAST = <span class="kw">crate</span>::Reg&lt;nfcid1_3rd_last::NFCID1_3RD_LAST_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Third last NFCID1 part (10 bytes ID)"</span>]
+</span><span class="kw">pub mod </span>nfcid1_3rd_last;
+<span class="attr">#[doc = <span class="string">"AUTOCOLRESCONFIG (rw) register accessor: an alias for `Reg&lt;AUTOCOLRESCONFIG_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>AUTOCOLRESCONFIG = <span class="kw">crate</span>::Reg&lt;autocolresconfig::AUTOCOLRESCONFIG_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"Controls the auto collision resolution function. This setting must be done before the NFCT peripheral is enabled."</span>]
+</span><span class="kw">pub mod </span>autocolresconfig;
+<span class="attr">#[doc = <span class="string">"SENSRES (rw) register accessor: an alias for `Reg&lt;SENSRES_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>SENSRES = <span class="kw">crate</span>::Reg&lt;sensres::SENSRES_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"NFC-A SENS_RES auto-response settings"</span>]
+</span><span class="kw">pub mod </span>sensres;
+<span class="attr">#[doc = <span class="string">"SELRES (rw) register accessor: an alias for `Reg&lt;SELRES_SPEC&gt;`"</span>]
+</span><span class="kw">pub type </span>SELRES = <span class="kw">crate</span>::Reg&lt;selres::SELRES_SPEC&gt;;
+<span class="attr">#[doc = <span class="string">"NFC-A SEL_RES auto-response settings"</span>]
+</span><span class="kw">pub mod </span>selres;
+</code></pre></div></section></main></body></html>

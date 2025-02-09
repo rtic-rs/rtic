@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CSNPOL_A"],"struct":["CSNPOL_SPEC","R","W"],"type":["CSNPOL_R","CSNPOL_W"]};
