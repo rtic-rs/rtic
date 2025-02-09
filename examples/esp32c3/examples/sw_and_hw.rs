@@ -3,10 +3,7 @@
 #[rtic::app(device = esp32c3, dispatchers=[FROM_CPU_INTR0, FROM_CPU_INTR1])]
 mod app {
     use esp_backtrace as _;
-    use esp_hal::{
-        gpio::{Event, GpioPin, Input, Io, Pull},
-        peripherals::Peripherals,
-    };
+    use esp_hal::gpio::{Event, Input, Pull};
     use esp_println::println;
 
     #[shared]
@@ -14,16 +11,15 @@ mod app {
 
     #[local]
     struct Local {
-        button: Input<'static, GpioPin<9>>,
+        button: Input<'static>,
     }
 
     // do nothing in init
     #[init]
     fn init(_: init::Context) -> (Shared, Local) {
         println!("init");
-        let peripherals = Peripherals::take();
-        let io = Io::new_no_bind_interrupt(peripherals.GPIO, peripherals.IO_MUX);
-        let mut button = Input::new(io.pins.gpio9, Pull::Up);
+        let peripherals = esp_hal::init(esp_hal::Config::default());
+        let mut button = Input::new(peripherals.GPIO9, Pull::Up);
         button.listen(Event::FallingEdge);
         foo::spawn().unwrap();
         (Shared {}, Local { button })
