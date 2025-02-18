@@ -12,6 +12,25 @@ protection using [`flip-link`]. There is also a multitude of examples provided b
 
 For inspiration, you may look at the [RTIC examples].
 
+## RTIC on RISC-V devices
+
+Even though RTIC was initially developed for ARM Cortex-M, it is possible to use RTIC on RISC-V devices.
+However, the RISC-V ecosystem is more heterogeneous.
+To tackle this issue, currently, RTIC implements three different backends:
+
+- **`riscv-esp32c3-backend`**: This backend provides support for the ESP32-C3 SoC.
+  In these devices, RTIC is very similar to its Cortex-M counterpart.
+
+- **`riscv-mecall-backend`**: This backend provides support for **any** RISC-V device.
+  In this backend, pending tasks trigger Machine Environment Call exceptions.
+  The handler for this exception source dispatches pending tasks according to their priority.
+  The behavior of this backend is equivalent to `riscv-clint-backend`.
+  The main difference of this backend is that all the tasks **must be** [software tasks](./by-example/software_tasks.md).
+  Additionally, it is not required to provide a list of dispatchers in the `#[app]` attribute, as RTIC will generate them at compile time.
+
+- **`riscv-clint-backend`**: This backend supports devices with a CLINT peripheral.
+  It is equivallent to `riscv-mecall-backend`, but instead of triggering exceptions, it triggers software interrupts via the `MSIP` register of the CLINT.
+
 [`defmt`]: https://github.com/knurling-rs/defmt/
 [`flip-link`]: https://github.com/knurling-rs/flip-link/
 [RTIC examples]: https://github.com/rtic-rs/rtic/tree/master/examples
