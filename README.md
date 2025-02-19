@@ -41,6 +41,9 @@ A concurrency framework for building real-time systems.
 
 - **All Cortex-M devices are fully supported**.
 
+- **Most RISC-V devices are supported**. Refer to the [RTIC book]((https://rtic.rs/))
+  to learn more about RISC-V backends, their particularities, and their limitations.
+
 - This task model is amenable to known WCET (Worst Case Execution Time) analysis
   and scheduling analysis techniques.
 
