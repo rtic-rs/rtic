@@ -7,18 +7,19 @@ license = "MIT OR Apache-2.0"
 [workspace]
 
 [dependencies]
-rtic = {path = "../../rtic/"}
-esp-hal = { version = "0.16.1", features = ["esp32c6", "direct-vectoring", "interrupt-preemption"] }
-esp-backtrace = { version = "0.11.0", features = [
+rtic = { path = "../../rtic/" }
+rtic-monotonics = {path = "../../rtic-monotonics/"}
+esp-hal = { version = "0.23.1", features = ["esp32c6"] }
+esp-backtrace = { version = "0.15.1", features = [
     "esp32c6",
     "panic-handler",
     "exception-handler",
     "println",
 ] }
 
-esp32c6 = {version = "0.12.0", features = ["critical-section"]}
-esp-println = { version = "0.9.0", default-features=false, features = ["esp32c6", "uart"] }
+esp32c6 = {version = "0.18.0", features = ["critical-section"]}
+esp-println = { version = "0.13.1", features = ["esp32c6", "auto"] }
 
 [features]
 test-critical-section = []
-riscv-esp32c6-backend = ["rtic/riscv-esp32c6-backend"]
+riscv-esp32c6-backend = ["rtic/riscv-esp32c6-backend", "rtic-monotonics/esp32c6-systimer"]

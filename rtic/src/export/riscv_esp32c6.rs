@@ -72,13 +72,13 @@ pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) 
         unsafe {
             (*INTPRI::ptr())
                 .cpu_int_thresh()
-                .write(|w| w.cpu_int_thresh().bits(ceiling + 1))
+                .write(|w| w.cpu_int_thresh().bits(ceiling + 1));
         } //esp32c6 lets interrupts with prio equal to threshold through so we up it by one
         let r = f(&mut *ptr);
         unsafe {
             (*INTPRI::ptr())
                 .cpu_int_thresh()
-                .write(|w| w.cpu_int_thresh().bits(current))
+                .write(|w| w.cpu_int_thresh().bits(current));
         }
         r
     }
@@ -107,7 +107,7 @@ pub fn pend(int: Interrupt) {
                 .cpu_intr_from_cpu_3()
                 .write(|w| w.cpu_intr_from_cpu_3().bit(true)),
             _ => panic!("Unsupported software interrupt"), //should never happen, checked at compile time
-        }
+        };
     }
 }
 
@@ -133,29 +133,25 @@ pub fn unpend(int: Interrupt) {
                 .cpu_intr_from_cpu_3()
                 .write(|w| w.cpu_intr_from_cpu_3().bit(false)),
             _ => panic!("Unsupported software interrupt"),
-        }
+        };
     }
 }
 
 pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
-    const INTERRUPT_MAP_BASE: *mut u32 =
-        unsafe { core::mem::transmute::<_, *mut u32>(INTERRUPT_CORE0::ptr()) };
-    let interrupt_number = int as isize;
-    let cpu_interrupt_number = cpu_int_id as isize;
-
     unsafe {
-        let intr_map_base = INTERRUPT_MAP_BASE as *mut u32;
-        intr_map_base
-            .offset(interrupt_number)
-            .write_volatile(cpu_interrupt_number as u32);
+        // Map the peripheral interrupt to a CPU interrupt:
+        (INTERRUPT_CORE0::ptr() as *mut u32)
+            .offset(int as isize)
+            .write_volatile(cpu_int_id as u32);
 
-        let intr_prio_base = (*INTPRI::ptr()).cpu_int_pri_0().as_ptr();
-        intr_prio_base
-            .offset(cpu_interrupt_number)
-            .write_volatile(prio as u32);
+        // Set the interrupt's priority:
+        (*INTPRI::ptr())
+            .cpu_int_pri(cpu_int_id as usize)
+            .write(|w| w.bits(prio as u32));
 
+        // Finally, enable the CPU interrupt:
         (*INTPRI::ptr())
             .cpu_int_enable()
-            .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits()));
+            .modify(|r, w| w.bits((1 << cpu_int_id) | r.bits()));
     }
 }
