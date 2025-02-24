@@ -1,4 +1,4 @@
-### ESP32-C3 RTIC template
+### ESP32-C6 RTIC template
 This crate showcases a simple RTIC application for the ESP32-C6.
 
 ## Prerequisites
@@ -20,7 +20,7 @@ This crate uses the most convenient option in ``cargo-espflash`` and ``espflash`
 should do the trick.
 
 # Expected behavior
-The program
+The example ``sw_and_hw``
 - Prints ``init``
 - Enters a high prio task
 - During the execution of the high prio task, the button should be non-functional
@@ -31,3 +31,9 @@ The program
 - Exits the low prio task
 - Prints ``idle``
 
+The example ``monotonic``
+- Prints ``init``
+- Spawns the ``foo``, ``bar``, ``baz`` tasks (because of hardware interrupt latency dispatch, the order here may vary).
+- Each task prints ``hello from $TASK`` on entry
+- The tasks wait for 1, 2, 3 seconds respectively
+- Once the wait period is over, each task exits printing ``bye from $TASK`` (now in the proper order).

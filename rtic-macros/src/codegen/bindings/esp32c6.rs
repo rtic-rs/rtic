@@ -86,23 +86,30 @@ mod esp32c6 {
         }
         stmts
     }
+
     pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
         let rt_err = util::rt_err_ident();
         let max_prio: usize = 15; //unfortunately this is not part of pac, but we know that max prio is 15.
+        let min_prio: usize = 1;
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
         // Unmask interrupts and set their priorities
-        for ((&priority, name), curr_cpu_id) in interrupt_ids.chain(
-            app.hardware_tasks
-                .values()
-                .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
-        ).zip(EXTERNAL_INTERRUPTS) {
+        for ((&priority, name), curr_cpu_id) in interrupt_ids
+            .chain(
+                app.hardware_tasks
+                    .values()
+                    .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
+            )
+            .zip(EXTERNAL_INTERRUPTS)
+        {
             let es = format!(
                 "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
             );
+            let es_zero = format!("Priority {priority} used by interrupt vector '{name}' is less than supported by hardware");
             // Compile time assert that this priority is supported by the device
             stmts.push(quote!(
                 const _: () =  if (#max_prio) <= #priority as usize { ::core::panic!(#es); };
+                const _: () =  if (#min_prio) > #priority as usize { ::core::panic!(#es_zero);};
             ));
             stmts.push(quote!(
                 rtic::export::enable(
@@ -207,13 +214,11 @@ mod esp32c6 {
         stmts
     }
 
-    pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    pub fn async_prio_limit(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let max = if let Some(max) = analysis.max_async_prio {
             quote!(#max)
         } else {
-            // No limit
-            let device = &app.args.device;
-            quote!(1 << #device::NVIC_PRIO_BITS)
+            quote!(u8::MAX) // No limit
         };
 
         vec![quote!(
@@ -222,6 +227,7 @@ mod esp32c6 {
             static RTIC_ASYNC_MAX_LOGICAL_PRIO: u8 = #max;
         )]
     }
+
     pub fn handler_config(
         app: &App,
         analysis: &CodegenAnalysis,
@@ -229,14 +235,20 @@ mod esp32c6 {
     ) -> Vec<TokenStream2> {
         let mut stmts = vec![];
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
-        for ((_, name), curr_cpu_id) in interrupt_ids.chain(
-            app.hardware_tasks
-                .values()
-                .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
-        ).zip(EXTERNAL_INTERRUPTS) {
-            if *name == dispatcher_name {
-                let ret = &("cpu_int_".to_owned() + &curr_cpu_id.to_string() + "_handler");
-                stmts.push(quote!(#[export_name = #ret]));
+        for ((_, name), curr_cpu_id) in interrupt_ids
+            .chain(
+                app.hardware_tasks
+                    .values()
+                    .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
+            )
+            .zip(EXTERNAL_INTERRUPTS)
+        {
+            // interrupt1...interrupt19 are already defined in esp_hal
+            if curr_cpu_id > 19 {
+                if *name == dispatcher_name {
+                    let ret = &("interrupt".to_owned() + &curr_cpu_id.to_string());
+                    stmts.push(quote!(#[export_name = #ret]));
+                }
             }
         }
 
