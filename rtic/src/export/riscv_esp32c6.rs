@@ -1,5 +1,5 @@
 pub use esp32c6::{Interrupt, Peripherals};
-use esp32c6::{INTERRUPT_CORE0, INTPRI};
+use esp32c6::{INTERRUPT_CORE0, INTPRI, PLIC_MX};
 pub use riscv::interrupt;
 pub use riscv::register::mcause;
 
@@ -15,25 +15,25 @@ where
         //if priority is 1, priority thresh should be 1
         f();
         unsafe {
-            (*INTPRI::ptr())
-                .cpu_int_thresh()
-                .write(|w| w.cpu_int_thresh().bits(1));
+            (*PLIC_MX::ptr())
+                .mxint_thresh()
+                .write(|w| w.cpu_mxint_thresh().bits(1));
         }
     } else {
         //read current thresh
         let initial = unsafe {
-            (*INTPRI::ptr())
-                .cpu_int_thresh()
+            (*PLIC_MX::ptr())
+                .mxint_thresh()
                 .read()
-                .cpu_int_thresh()
+                .cpu_mxint_thresh()
                 .bits()
         };
         f();
         //write back old thresh
         unsafe {
-            (*INTPRI::ptr())
-                .cpu_int_thresh()
-                .write(|w| w.cpu_int_thresh().bits(initial));
+            (*PLIC_MX::ptr())
+                .mxint_thresh()
+                .write(|w| w.cpu_mxint_thresh().bits(initial));
         }
     }
 }
@@ -57,29 +57,33 @@ where
 #[inline(always)]
 pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) -> R {
     if ceiling == (15) {
-        //turn off interrupts completely, were at max prio
+        // Turn off interrupts completely, we're at max prio
         let r = critical_section::with(|_| f(&mut *ptr));
         r
     } else {
         let current = unsafe {
-            (*INTPRI::ptr())
-                .cpu_int_thresh()
+            (*PLIC_MX::ptr())
+                .mxint_thresh()
                 .read()
-                .cpu_int_thresh()
+                .cpu_mxint_thresh()
                 .bits()
         };
 
+        // esp32c6 lets interrupts with prio equal to threshold through so we up it by one
         unsafe {
-            (*INTPRI::ptr())
-                .cpu_int_thresh()
-                .write(|w| w.cpu_int_thresh().bits(ceiling + 1));
-        } //esp32c6 lets interrupts with prio equal to threshold through so we up it by one
-        let r = f(&mut *ptr);
-        unsafe {
-            (*INTPRI::ptr())
-                .cpu_int_thresh()
-                .write(|w| w.cpu_int_thresh().bits(current));
+            (*PLIC_MX::ptr())
+                .mxint_thresh()
+                .write(|w| w.cpu_mxint_thresh().bits(ceiling + 1));
         }
+
+        let r = f(&mut *ptr);
+
+        unsafe {
+            (*PLIC_MX::ptr())
+                .mxint_thresh()
+                .write(|w| w.cpu_mxint_thresh().bits(current));
+        }
+
         r
     }
 }
@@ -144,14 +148,32 @@ pub fn enable(int: Interrupt, prio: u8, cpu_int_id: u8) {
             .offset(int as isize)
             .write_volatile(cpu_int_id as u32);
 
-        // Set the interrupt's priority:
-        (*INTPRI::ptr())
-            .cpu_int_pri(cpu_int_id as usize)
-            .write(|w| w.bits(prio as u32));
+        match int {
+            Interrupt::FROM_CPU_INTR0
+            | Interrupt::FROM_CPU_INTR1
+            | Interrupt::FROM_CPU_INTR2
+            | Interrupt::FROM_CPU_INTR3 => {
+                // Set the interrupt's priority:
+                (*INTPRI::ptr())
+                    .cpu_int_pri(cpu_int_id as usize)
+                    .write(|w| w.bits(prio as u32));
 
-        // Finally, enable the CPU interrupt:
-        (*INTPRI::ptr())
-            .cpu_int_enable()
-            .modify(|r, w| w.bits((1 << cpu_int_id) | r.bits()));
+                // Finally, enable the CPU interrupt:
+                (*INTPRI::ptr())
+                    .cpu_int_enable()
+                    .modify(|r, w| w.bits((1 << cpu_int_id) | r.bits()));
+            }
+            _ => {
+                // Set the interrupt's priority:
+                (*PLIC_MX::ptr())
+                    .mxint_pri(cpu_int_id as usize)
+                    .write(|w| w.bits(prio as u32));
+
+                // Finally, enable the CPU interrupt:
+                (*PLIC_MX::ptr())
+                    .mxint_enable()
+                    .modify(|r, w| w.bits((1 << cpu_int_id) | r.bits()));
+            }
+        }
     }
 }
