@@ -35,7 +35,7 @@ pub mod prelude {
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
 use crate::TimerQueueBackend;
-use esp32c6::{INTERRUPT_CORE0, INTPRI, SYSTIMER};
+use esp32c6::{INTERRUPT_CORE0, PLIC_MX, SYSTIMER};
 use rtic_time::timer_queue::TimerQueue;
 
 /// Timer implementing [`TimerQueueBackend`].
@@ -57,13 +57,13 @@ impl TimerBackend {
                 .write_volatile(cpu_interrupt_number as u32);
 
             // Set the interrupt's priority:
-            (*INTPRI::ptr())
-                .cpu_int_pri(cpu_interrupt_number as usize)
+            (*PLIC_MX::ptr())
+                .mxint_pri(cpu_interrupt_number as usize)
                 .write(|w| w.bits(15 as u32));
 
             // Finally, enable the CPU interrupt:
-            (*INTPRI::ptr())
-                .cpu_int_enable()
+            (*PLIC_MX::ptr())
+                .mxint_enable()
                 .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits()));
         }
 
