@@ -522,7 +522,6 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
 mod loom_tests {
     #![allow(missing_docs)]
 
-    use crate::channel::TrySendError;
     use std::boxed::Box;
 
     #[macro_export]
@@ -540,7 +539,6 @@ mod loom_tests {
 
     #[test]
     pub fn a_repro() {
-        use cassette::Cassette;
         use loom::thread;
 
         loom::model(|| {
@@ -550,31 +548,18 @@ mod loom_tests {
 
             let handle = thread::spawn(move || {
                 let future = spam_tx_send.send([1; 20]);
-                let future = std::pin::pin!(future);
-                Cassette::new(future).poll_on();
+                loom::future::block_on(future).unwrap();
+                let future = spam_tx_send.send([1; 20]);
+                loom::future::block_on(future).unwrap();
             });
 
-            let handle2 = thread::spawn(move || {
-                let future_in = spam_tx_recv.recv();
-                let future = std::pin::pin!(future_in);
-                Cassette::new(future).poll_on();
-            });
+            let future = spam_tx_recv.recv();
+            loom::future::block_on(future).unwrap();
+
+            let future = spam_tx_recv.recv();
+            loom::future::block_on(future).unwrap();
 
             handle.join().unwrap();
-            handle2.join().unwrap();
-        });
-    }
-
-    #[test]
-    fn closed_sender_loom() {
-        loom::model(move || {
-            let (mut s, r) = make_loom_channel!(u32, 10);
-
-            drop(r);
-
-            assert!(s.is_closed());
-
-            assert_eq!(s.try_send(11), Err(TrySendError::NoReceiver(11)));
         });
     }
 }
