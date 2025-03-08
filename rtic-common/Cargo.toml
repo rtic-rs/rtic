@@ -19,8 +19,10 @@ repository = "https://github.com/rtic-rs/rtic"
 
 [dependencies]
 critical-section = "1"
+loom = { version = "0.7.2", optional = true }
 portable-atomic = { version = "1", default-features = false }
 
 [features]
 default = []
-testing = ["critical-section/std"]
+loom = [ "dep:loom", "critical-section/restore-state-bool" ]
+testing = []

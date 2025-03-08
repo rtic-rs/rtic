@@ -5,7 +5,14 @@ use core::pin::Pin;
 use core::ptr::null_mut;
 use core::task::Waker;
 use critical_section as cs;
-use portable_atomic::{AtomicBool, AtomicPtr, Ordering};
+
+use portable_atomic::Ordering;
+
+#[cfg(not(feature = "loom"))]
+use portable_atomic::{AtomicBool, AtomicPtr};
+
+#[cfg(feature = "loom")]
+use loom::sync::atomic::{AtomicBool, AtomicPtr};
 
 /// A helper definition of a wait queue.
 pub type WaitQueue = DoublyLinkedList<Waker>;
@@ -21,7 +28,17 @@ pub struct DoublyLinkedList<T> {
 
 impl<T> DoublyLinkedList<T> {
     /// Create a new linked list.
+    #[cfg(not(feature = "loom"))]
     pub const fn new() -> Self {
+        Self {
+            head: AtomicPtr::new(null_mut()),
+            tail: AtomicPtr::new(null_mut()),
+        }
+    }
+
+    /// Create a new linked list.
+    #[cfg(feature = "loom")]
+    pub fn new() -> Self {
         Self {
             head: AtomicPtr::new(null_mut()),
             tail: AtomicPtr::new(null_mut()),
@@ -123,7 +140,20 @@ impl<T: Clone> Link<T> {
     const R: Ordering = Ordering::Relaxed;
 
     /// Create a new link.
+    #[cfg(not(feature = "loom"))]
     pub const fn new(val: T) -> Self {
+        Self {
+            val,
+            next: AtomicPtr::new(null_mut()),
+            prev: AtomicPtr::new(null_mut()),
+            is_popped: AtomicBool::new(false),
+            _up: PhantomPinned,
+        }
+    }
+
+    /// Create a new link.
+    #[cfg(feature = "loom")]
+    pub fn new(val: T) -> Self {
         Self {
             val,
             next: AtomicPtr::new(null_mut()),
