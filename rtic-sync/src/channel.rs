@@ -9,6 +9,7 @@ use core::{
     sync::atomic::{fence, Ordering},
     task::{Poll, Waker},
 };
+
 #[doc(hidden)]
 pub use critical_section;
 use heapless::Deque;
@@ -63,12 +64,27 @@ impl<T, const N: usize> Channel<T, N> {
     const _CHECK: () = assert!(N < 256, "This queue support a maximum of 255 entries");
 
     /// Create a new channel.
+    #[cfg(not(feature = "loom"))]
     pub const fn new() -> Self {
         Self {
             freeq: UnsafeCell::new(Deque::new()),
             readyq: UnsafeCell::new(Deque::new()),
             receiver_waker: WakerRegistration::new(),
             slots: [const { UnsafeCell::new(MaybeUninit::uninit()) }; N],
+            wait_queue: WaitQueue::new(),
+            receiver_dropped: UnsafeCell::new(false),
+            num_senders: UnsafeCell::new(0),
+        }
+    }
+
+    /// Create a new channel.
+    #[cfg(feature = "loom")]
+    pub fn new() -> Self {
+        Self {
+            freeq: UnsafeCell::new(Deque::new()),
+            readyq: UnsafeCell::new(Deque::new()),
+            receiver_waker: WakerRegistration::new(),
+            slots: [Self::INIT_SLOTS; N],
             wait_queue: WaitQueue::new(),
             receiver_dropped: UnsafeCell::new(false),
             num_senders: UnsafeCell::new(0),
@@ -502,6 +518,69 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "loom")]
+mod loom_tests {
+    #![allow(missing_docs)]
+
+    use crate::channel::TrySendError;
+    use std::boxed::Box;
+
+    #[macro_export]
+    macro_rules! make_loom_channel {
+        ($type:ty, $size:expr) => {{
+            let channel: crate::channel::Channel<$type, $size> = super::Channel::new();
+            let boxed = Box::new(channel);
+            let boxed = Box::leak(boxed);
+
+            // SAFETY: This is safe as we hide the static mut from others to access it.
+            // Only this point is where the mutable access happens.
+            boxed.split()
+        }};
+    }
+
+    #[test]
+    pub fn a_repro() {
+        use cassette::Cassette;
+        use loom::thread;
+
+        loom::model(|| {
+            let (mut spam_tx_send, mut spam_tx_recv) = make_loom_channel!([u8; 20], 1);
+
+            spam_tx_send.try_send([1; 20]).unwrap();
+
+            let handle = thread::spawn(move || {
+                let future = spam_tx_send.send([1; 20]);
+                let future = std::pin::pin!(future);
+                Cassette::new(future).poll_on();
+            });
+
+            let handle2 = thread::spawn(move || {
+                let future_in = spam_tx_recv.recv();
+                let future = std::pin::pin!(future_in);
+                Cassette::new(future).poll_on();
+            });
+
+            handle.join().unwrap();
+            handle2.join().unwrap();
+        });
+    }
+
+    #[test]
+    fn closed_sender_loom() {
+        loom::model(move || {
+            let (mut s, r) = make_loom_channel!(u32, 10);
+
+            drop(r);
+
+            assert!(s.is_closed());
+
+            assert_eq!(s.try_send(11), Err(TrySendError::NoReceiver(11)));
+        });
+    }
+}
+
+#[cfg(test)]
+#[cfg(not(feature = "loom"))]
 mod tests {
     use super::*;
 
