@@ -22,7 +22,7 @@ portable-atomic = { version = "1", default-features = false }
 
 [features]
 default = []
-testing = []
+testing = [ "critical-section/std" ]
 
 [target.'cfg(not(loom))'.dependencies]
 critical-section = "1"
