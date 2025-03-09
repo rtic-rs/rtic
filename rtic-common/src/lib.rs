@@ -12,7 +12,6 @@ pub mod wait_queue;
 pub mod waker_registration;
 
 #[cfg(loom)]
-#[allow(missing_docs)]
 pub mod loom_cs;
 
 #[cfg(not(loom))]
