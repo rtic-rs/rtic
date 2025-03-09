@@ -2,10 +2,10 @@
 
 use core::task::Waker;
 
-#[cfg(not(feature = "loom"))]
-use core::cell::UnsafeCell;
+#[cfg(not(loom))]
+use crate::unsafecell::UnsafeCell;
 
-#[cfg(feature = "loom")]
+#[cfg(loom)]
 use loom::cell::UnsafeCell;
 
 /// A critical section based waker handler.
@@ -18,7 +18,7 @@ unsafe impl Sync for CriticalSectionWakerRegistration {}
 
 impl CriticalSectionWakerRegistration {
     /// Create a new waker registration.
-    #[cfg(not(feature = "loom"))]
+    #[cfg(not(loom))]
     pub const fn new() -> Self {
         Self {
             waker: UnsafeCell::new(None),
@@ -26,7 +26,7 @@ impl CriticalSectionWakerRegistration {
     }
 
     /// Create a new waker registration.
-    #[cfg(feature = "loom")]
+    #[cfg(loom)]
     pub fn new() -> Self {
         Self {
             waker: UnsafeCell::new(None),

@@ -12,8 +12,11 @@ use core::{
 
 #[doc(hidden)]
 pub use critical_section;
+
 use heapless::Deque;
+
 use rtic_common::waker_registration::CriticalSectionWakerRegistration as WakerRegistration;
+
 use rtic_common::{
     dropper::OnDrop,
     wait_queue::{Link, WaitQueue},
@@ -518,7 +521,7 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "loom")]
+#[cfg(loom)]
 mod loom_tests {
     #![allow(missing_docs)]
 
@@ -567,7 +570,6 @@ mod loom_tests {
 }
 
 #[cfg(test)]
-#[cfg(not(feature = "loom"))]
 mod tests {
     use super::*;
 
