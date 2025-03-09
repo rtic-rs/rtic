@@ -154,7 +154,7 @@ impl<T, const N: usize> Channel<T, N> {
     }
 }
 
-/// Creates a split channel with `'static` lifetime.
+/// Creates a split channel with `'static` lifetime.R
 #[macro_export]
 macro_rules! make_channel {
     ($type:ty, $size:expr) => {{
@@ -484,16 +484,16 @@ impl<T, const N: usize> Receiver<'_, T, N> {
                     assert!(!freeq.is_full());
                     unsafe { freeq.push_back_unchecked(rs) }
                 });
-            });
 
-            fence(Ordering::SeqCst);
+                fence(Ordering::SeqCst);
 
-            // If someone is waiting in the WaiterQueue, wake the first one up.
-            if let Some(wait_head) = self.0.wait_queue.pop() {
-                wait_head.wake();
-            }
+                // If someone is waiting in the WaiterQueue, wake the first one up.
+                if let Some(wait_head) = self.0.wait_queue.pop() {
+                    wait_head.wake();
+                }
 
-            Ok(r)
+                Ok(r)
+            })
         } else if self.is_closed() {
             Err(ReceiveError::NoSender)
         } else {
@@ -603,6 +603,7 @@ mod loom_tests {
 }
 
 #[cfg(test)]
+#[cfg(not(loom))]
 mod tests {
     use super::*;
 
@@ -685,6 +686,26 @@ mod tests {
         assert_eq!(s.try_send(11), Err(TrySendError::NoReceiver(11)));
     }
 
+    fn make() {
+        let _ = make_channel!(u32, 10);
+    }
+
+    #[test]
+    #[should_panic]
+    fn double_make_channel() {
+        make();
+        make();
+    }
+
+    #[test]
+    fn tuple_channel() {
+        let _ = make_channel!((i32, u32), 10);
+    }
+}
+
+#[cfg(test)]
+#[cfg(not(loom))]
+mod stress_test {
     #[tokio::test]
     async fn stress_channel() {
         const NUM_RUNS: usize = 1_000;
@@ -712,21 +733,5 @@ mod tests {
         for v in v {
             v.await.unwrap();
         }
-    }
-
-    fn make() {
-        let _ = make_channel!(u32, 10);
-    }
-
-    #[test]
-    #[should_panic]
-    fn double_make_channel() {
-        make();
-        make();
-    }
-
-    #[test]
-    fn tuple_channel() {
-        let _ = make_channel!((i32, u32), 10);
     }
 }
