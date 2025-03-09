@@ -37,8 +37,8 @@ impl CriticalSectionWakerRegistration {
     /// This will overwrite the previous waker if there was one.
     pub fn register(&self, new_waker: &Waker) {
         critical_section::with(|_| {
-            // SAFETY: This access is protected by the critical section.
             self.waker.with_mut(|self_waker| {
+                // SAFETY: This access is protected by the critical section.
                 let self_waker = unsafe { &mut *self_waker };
 
                 // From embassy
