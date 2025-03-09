@@ -60,7 +60,7 @@ unsafe impl<T> Sync for Arbiter<T> {}
 
 impl<T> Arbiter<T> {
     /// Create a new arbiter.
-    #[cfg(not(feature = "loom"))]
+    #[cfg(not(loom))]
     pub const fn new(inner: T) -> Self {
         Self {
             wait_queue: WaitQueue::new(),
@@ -383,7 +383,7 @@ pub mod i2c {
 }
 
 #[cfg(test)]
-#[cfg(not(feature = "loom"))]
+#[cfg(not(loom))]
 mod tests {
     use super::*;
 

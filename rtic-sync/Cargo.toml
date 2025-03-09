@@ -29,7 +29,9 @@ defmt-03 = { package = "defmt", version = "0.3", optional = true }
 
 [dev-dependencies]
 static_cell = "2.1.0"
-tokio = { version = "1", features = ["rt", "macros", "time"] }
+
+[target.'cfg(not(loom))'.dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros", "time"], default-features = false }
 
 [features]
 default = []

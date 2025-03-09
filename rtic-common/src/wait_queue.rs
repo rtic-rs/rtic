@@ -8,10 +8,10 @@ use critical_section as cs;
 
 use portable_atomic::Ordering;
 
-#[cfg(not(feature = "loom"))]
+#[cfg(not(loom))]
 use portable_atomic::{AtomicBool, AtomicPtr};
 
-#[cfg(feature = "loom")]
+#[cfg(loom)]
 use loom::sync::atomic::{AtomicBool, AtomicPtr};
 
 /// A helper definition of a wait queue.
@@ -28,7 +28,7 @@ pub struct DoublyLinkedList<T> {
 
 impl<T> DoublyLinkedList<T> {
     /// Create a new linked list.
-    #[cfg(not(feature = "loom"))]
+    #[cfg(not(loom))]
     pub const fn new() -> Self {
         Self {
             head: AtomicPtr::new(null_mut()),
@@ -37,7 +37,7 @@ impl<T> DoublyLinkedList<T> {
     }
 
     /// Create a new linked list.
-    #[cfg(feature = "loom")]
+    #[cfg(loom)]
     pub fn new() -> Self {
         Self {
             head: AtomicPtr::new(null_mut()),
@@ -140,7 +140,7 @@ impl<T: Clone> Link<T> {
     const R: Ordering = Ordering::Relaxed;
 
     /// Create a new link.
-    #[cfg(not(feature = "loom"))]
+    #[cfg(not(loom))]
     pub const fn new(val: T) -> Self {
         Self {
             val,
@@ -152,7 +152,7 @@ impl<T: Clone> Link<T> {
     }
 
     /// Create a new link.
-    #[cfg(feature = "loom")]
+    #[cfg(loom)]
     pub fn new(val: T) -> Self {
         Self {
             val,
