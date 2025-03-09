@@ -1,4 +1,4 @@
-//! A loom-based implementation of CriticalSection.
+//! A loom-based implementation of CriticalSection, effectively copied from the critical_section::std module.
 
 use core::cell::RefCell;
 use core::mem::MaybeUninit;
