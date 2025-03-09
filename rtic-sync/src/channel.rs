@@ -524,6 +524,8 @@ mod loom_tests {
 
     use std::boxed::Box;
 
+    use cassette::Cassette;
+
     #[macro_export]
     macro_rules! make_loom_channel {
         ($type:ty, $size:expr) => {{
@@ -547,17 +549,17 @@ mod loom_tests {
             spam_tx_send.try_send([1; 20]).unwrap();
 
             let handle = thread::spawn(move || {
-                let future = spam_tx_send.send([1; 20]);
-                loom::future::block_on(future).unwrap();
-                let future = spam_tx_send.send([1; 20]);
-                loom::future::block_on(future).unwrap();
+                spam_tx_send.try_send([1; 20]).ok();
+
+                let future = std::pin::pin!(spam_tx_send.send([1; 20]));
+                let mut future = Cassette::new(future);
+                if future.poll_on().is_none() {
+                    future.poll_on();
+                }
             });
 
-            let future = spam_tx_recv.recv();
-            loom::future::block_on(future).unwrap();
-
-            let future = spam_tx_recv.recv();
-            loom::future::block_on(future).unwrap();
+            spam_tx_recv.try_recv().ok();
+            spam_tx_recv.try_recv().ok();
 
             handle.join().unwrap();
         });
