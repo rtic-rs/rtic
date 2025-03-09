@@ -9,10 +9,10 @@ use core::{
     task::{Poll, Waker},
 };
 
-#[cfg(not(feature = "loom"))]
-use core::cell::UnsafeCell;
+#[cfg(not(loom))]
+use rtic_common::unsafecell::UnsafeCell;
 
-#[cfg(feature = "loom")]
+#[cfg(loom)]
 use loom::cell::UnsafeCell;
 
 #[doc(hidden)]
@@ -59,7 +59,7 @@ impl<T, const N: usize> Channel<T, N> {
     const _CHECK: () = assert!(N < 256, "This queue support a maximum of 255 entries");
 
     /// Create a new channel.
-    #[cfg(not(feature = "loom"))]
+    #[cfg(not(loom))]
     pub const fn new() -> Self {
         Self {
             freeq: UnsafeCell::new(Deque::new()),
@@ -73,7 +73,7 @@ impl<T, const N: usize> Channel<T, N> {
     }
 
     /// Create a new channel.
-    #[cfg(feature = "loom")]
+    #[cfg(loom)]
     pub fn new() -> Self {
         Self {
             freeq: UnsafeCell::new(Deque::new()),
@@ -106,7 +106,7 @@ impl<T, const N: usize> Channel<T, N> {
         });
 
         // There is now 1 sender
-        self.num_senders.get_mut().with(|v| unsafe {
+        self.num_senders.with_mut(|v| unsafe {
             *v = 1;
         });
 
