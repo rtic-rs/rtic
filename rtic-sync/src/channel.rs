@@ -269,10 +269,9 @@ impl<T, const N: usize> Sender<'_, T, N> {
     fn send_footer(&mut self, idx: u8, val: T) {
         // Write the value to the slots, note; this memcpy is not under a critical section.
         unsafe {
-            ptr::write(
-                self.0.slots.get_unchecked(idx as usize).get() as *mut T,
-                val,
-            )
+            let ptr = (&raw const self.0.slots[0]).add(idx as _);
+            let ptr = ptr as *mut UnsafeCell<MaybeUninit<T>>;
+            ptr::write(ptr, UnsafeCell::new(MaybeUninit::new(val)));
         }
 
         // Write the value into the ready queue.
@@ -474,7 +473,10 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
         if let Some(rs) = ready_slot {
             // Read the value from the slots, note; this memcpy is not under a critical section.
-            let r = unsafe { ptr::read(self.0.slots.get_unchecked(rs as usize).get() as *const T) };
+            let r = unsafe {
+                let ptr = (&raw const self.0.slots[0]).add(rs as _);
+                ptr::read(ptr).into_inner().assume_init()
+            };
 
             // Return the index to the free queue after we've read the value.
             critical_section::with(|cs| {
