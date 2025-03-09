@@ -1,7 +1,6 @@
 //! An async aware MPSC channel that can be used on no-alloc systems.
 
 use core::{
-    cell::UnsafeCell,
     future::poll_fn,
     mem::MaybeUninit,
     pin::Pin,
@@ -9,6 +8,12 @@ use core::{
     sync::atomic::{fence, Ordering},
     task::{Poll, Waker},
 };
+
+#[cfg(not(feature = "loom"))]
+use core::cell::UnsafeCell;
+
+#[cfg(feature = "loom")]
+use loom::cell::UnsafeCell;
 
 #[doc(hidden)]
 pub use critical_section;
@@ -50,19 +55,6 @@ unsafe impl<T, const N: usize> Send for Channel<T, N> {}
 
 unsafe impl<T, const N: usize> Sync for Channel<T, N> {}
 
-struct UnsafeAccess<'a, const N: usize> {
-    freeq: &'a mut Deque<u8, N>,
-    readyq: &'a mut Deque<u8, N>,
-    receiver_dropped: &'a mut bool,
-    num_senders: &'a mut usize,
-}
-
-impl<T, const N: usize> Default for Channel<T, N> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<T, const N: usize> Channel<T, N> {
     const _CHECK: () = assert!(N < 256, "This queue support a maximum of 255 entries");
 
@@ -87,7 +79,7 @@ impl<T, const N: usize> Channel<T, N> {
             freeq: UnsafeCell::new(Deque::new()),
             readyq: UnsafeCell::new(Deque::new()),
             receiver_waker: WakerRegistration::new(),
-            slots: [Self::INIT_SLOTS; N],
+            slots: core::array::from_fn(|_| UnsafeCell::new(MaybeUninit::uninit())),
             wait_queue: WaitQueue::new(),
             receiver_dropped: UnsafeCell::new(false),
             num_senders: UnsafeCell::new(0),
@@ -98,32 +90,67 @@ impl<T, const N: usize> Channel<T, N> {
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
         // Fill free queue
         for idx in 0..N as u8 {
-            assert!(!self.freeq.get_mut().is_full());
+            self.freeq.with_mut(|freeq| {
+                let freeq = unsafe { &mut *freeq };
+                assert!(!freeq.is_full());
 
-            // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue.
-            unsafe {
-                self.freeq.get_mut().push_back_unchecked(idx);
-            }
+                // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue.
+                unsafe {
+                    freeq.push_back_unchecked(idx);
+                }
+            });
         }
 
-        assert!(self.freeq.get_mut().is_full());
+        self.freeq.with(|freeq| {
+            assert!(unsafe { &*freeq }.is_full());
+        });
 
         // There is now 1 sender
-        *self.num_senders.get_mut() = 1;
+        self.num_senders.get_mut().with(|v| unsafe {
+            *v = 1;
+        });
 
         (Sender(self), Receiver(self))
     }
 
-    fn access<'a>(&'a self, _cs: critical_section::CriticalSection) -> UnsafeAccess<'a, N> {
-        // SAFETY: This is safe as are in a critical section.
-        unsafe {
-            UnsafeAccess {
-                freeq: &mut *self.freeq.get(),
-                readyq: &mut *self.readyq.get(),
-                receiver_dropped: &mut *self.receiver_dropped.get(),
-                num_senders: &mut *self.num_senders.get(),
-            }
-        }
+    fn freeq<F, R>(&self, _cs: critical_section::CriticalSection, f: F) -> R
+    where
+        F: FnOnce(&mut Deque<u8, N>) -> R,
+    {
+        self.freeq.with_mut(|freeq| {
+            let queue = unsafe { &mut *freeq };
+            f(queue)
+        })
+    }
+
+    fn readyq<F, R>(&self, _cs: critical_section::CriticalSection, f: F) -> R
+    where
+        F: FnOnce(&mut Deque<u8, N>) -> R,
+    {
+        self.readyq.with_mut(|readyq| {
+            let queue = unsafe { &mut *readyq };
+            f(queue)
+        })
+    }
+
+    fn receiver_dropped<F, R>(&self, _cs: critical_section::CriticalSection, f: F) -> R
+    where
+        F: FnOnce(&mut bool) -> R,
+    {
+        self.receiver_dropped.with_mut(|receiver_dropped| {
+            let receiver_dropped = unsafe { &mut *receiver_dropped };
+            f(receiver_dropped)
+        })
+    }
+
+    fn num_senders<F, R>(&self, _cs: critical_section::CriticalSection, f: F) -> R
+    where
+        F: FnOnce(&mut usize) -> R,
+    {
+        self.num_senders.with_mut(|num_senders| {
+            let num_senders = unsafe { &mut *num_senders };
+            f(num_senders)
+        })
     }
 }
 
@@ -250,8 +277,8 @@ impl<T, const N: usize> Sender<'_, T, N> {
 
         // Write the value into the ready queue.
         critical_section::with(|cs| {
-            assert!(!self.0.access(cs).readyq.is_full());
-            unsafe { self.0.access(cs).readyq.push_back_unchecked(idx) }
+            assert!(!self.0.readyq(cs, |q| q.is_full()));
+            unsafe { self.0.readyq(cs, |q| q.push_back_unchecked(idx)) }
         });
 
         fence(Ordering::SeqCst);
@@ -273,7 +300,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
         }
 
         let idx =
-            if let Some(idx) = critical_section::with(|cs| self.0.access(cs).freeq.pop_front()) {
+            if let Some(idx) = critical_section::with(|cs| self.0.freeq(cs, |q| q.pop_front())) {
                 idx
             } else {
                 return Err(TrySendError::Full(val));
@@ -311,7 +338,8 @@ impl<T, const N: usize> Sender<'_, T, N> {
             //  Do all this in one critical section, else there can be race conditions
             let queue_idx = critical_section::with(|cs| {
                 let wq_empty = self.0.wait_queue.is_empty();
-                let fq_empty = self.0.access(cs).freeq.is_empty();
+                let fq_empty = self.0.freeq(cs, |q| q.is_empty());
+
                 if !wq_empty || fq_empty {
                     // SAFETY: This pointer is only dereferenced here and on drop of the future
                     // which happens outside this `poll_fn`'s stack frame.
@@ -338,9 +366,9 @@ impl<T, const N: usize> Sender<'_, T, N> {
                     }
                 }
 
-                assert!(!self.0.access(cs).freeq.is_empty());
+                assert!(!self.0.freeq(cs, |q| q.is_empty()));
                 // Get index as the queue is guaranteed not empty and the wait queue is empty
-                let idx = unsafe { self.0.access(cs).freeq.pop_front_unchecked() };
+                let idx = unsafe { self.0.freeq(cs, |q| q.pop_front_unchecked()) };
 
                 Some(idx)
             });
@@ -368,17 +396,17 @@ impl<T, const N: usize> Sender<'_, T, N> {
 
     /// Returns true if there is no `Receiver`s.
     pub fn is_closed(&self) -> bool {
-        critical_section::with(|cs| *self.0.access(cs).receiver_dropped)
+        critical_section::with(|cs| self.0.receiver_dropped(cs, |v| *v))
     }
 
     /// Is the queue full.
     pub fn is_full(&self) -> bool {
-        critical_section::with(|cs| self.0.access(cs).freeq.is_empty())
+        critical_section::with(|cs| self.0.freeq(cs, |q| q.is_empty()))
     }
 
     /// Is the queue empty.
     pub fn is_empty(&self) -> bool {
-        critical_section::with(|cs| self.0.access(cs).freeq.is_full())
+        critical_section::with(|cs| self.0.freeq(cs, |q| q.is_full()))
     }
 }
 
@@ -386,9 +414,10 @@ impl<T, const N: usize> Drop for Sender<'_, T, N> {
     fn drop(&mut self) {
         // Count down the reference counter
         let num_senders = critical_section::with(|cs| {
-            *self.0.access(cs).num_senders -= 1;
-
-            *self.0.access(cs).num_senders
+            self.0.num_senders(cs, |v| {
+                *v -= 1;
+                *v
+            })
         });
 
         // If there are no senders, wake the receiver to do error handling.
@@ -401,7 +430,7 @@ impl<T, const N: usize> Drop for Sender<'_, T, N> {
 impl<T, const N: usize> Clone for Sender<'_, T, N> {
     fn clone(&self) -> Self {
         // Count up the reference counter
-        critical_section::with(|cs| *self.0.access(cs).num_senders += 1);
+        critical_section::with(|cs| self.0.num_senders(cs, |v| *v += 1));
 
         Self(self.0)
     }
@@ -441,7 +470,7 @@ impl<T, const N: usize> Receiver<'_, T, N> {
     /// Receives a value if there is one in the channel, non-blocking.
     pub fn try_recv(&mut self) -> Result<T, ReceiveError> {
         // Try to get a ready slot.
-        let ready_slot = critical_section::with(|cs| self.0.access(cs).readyq.pop_front());
+        let ready_slot = critical_section::with(|cs| self.0.readyq(cs, |q| q.pop_front()));
 
         if let Some(rs) = ready_slot {
             // Read the value from the slots, note; this memcpy is not under a critical section.
@@ -449,8 +478,10 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
             // Return the index to the free queue after we've read the value.
             critical_section::with(|cs| {
-                assert!(!self.0.access(cs).freeq.is_full());
-                unsafe { self.0.access(cs).freeq.push_back_unchecked(rs) }
+                self.0.freeq(cs, |freeq| {
+                    assert!(!freeq.is_full());
+                    unsafe { freeq.push_back_unchecked(rs) }
+                });
 
                 fence(Ordering::SeqCst);
 
@@ -495,24 +526,24 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
     /// Returns true if there are no `Sender`s.
     pub fn is_closed(&self) -> bool {
-        critical_section::with(|cs| *self.0.access(cs).num_senders == 0)
+        critical_section::with(|cs| self.0.num_senders(cs, |v| *v == 0))
     }
 
     /// Is the queue full.
     pub fn is_full(&self) -> bool {
-        critical_section::with(|cs| self.0.access(cs).readyq.is_full())
+        critical_section::with(|cs| self.0.readyq(cs, |q| q.is_full()))
     }
 
     /// Is the queue empty.
     pub fn is_empty(&self) -> bool {
-        critical_section::with(|cs| self.0.access(cs).readyq.is_empty())
+        critical_section::with(|cs| self.0.readyq(cs, |q| q.is_empty()))
     }
 }
 
 impl<T, const N: usize> Drop for Receiver<'_, T, N> {
     fn drop(&mut self) {
         // Mark the receiver as dropped and wake all waiters
-        critical_section::with(|cs| *self.0.access(cs).receiver_dropped = true);
+        critical_section::with(|cs| self.0.receiver_dropped(cs, |v| *v = true));
 
         while let Some(waker) = self.0.wait_queue.pop() {
             waker.wake();
