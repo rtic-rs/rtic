@@ -432,16 +432,16 @@ impl<T, const N: usize> Receiver<'_, T, N> {
             critical_section::with(|cs| {
                 assert!(!self.0.access(cs).freeq.is_full());
                 unsafe { self.0.access(cs).freeq.push_back_unchecked(rs) }
-            });
 
-            fence(Ordering::SeqCst);
+                fence(Ordering::SeqCst);
 
-            // If someone is waiting in the WaiterQueue, wake the first one up.
-            if let Some(wait_head) = self.0.wait_queue.pop() {
-                wait_head.wake();
-            }
+                // If someone is waiting in the WaiterQueue, wake the first one up.
+                if let Some(wait_head) = self.0.wait_queue.pop() {
+                    wait_head.wake();
+                }
 
-            Ok(r)
+                Ok(r)
+            })
         } else if self.is_closed() {
             Err(ReceiveError::NoSender)
         } else {
