@@ -1,3 +1,5 @@
+//! A loom-based implementation of CriticalSection.
+
 use core::cell::RefCell;
 use core::mem::MaybeUninit;
 

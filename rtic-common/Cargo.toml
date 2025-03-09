@@ -18,11 +18,18 @@ repository = "https://github.com/rtic-rs/rtic"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-critical-section = "1"
-loom = { version = "0.7.2", optional = true }
 portable-atomic = { version = "1", default-features = false }
 
 [features]
 default = []
-loom = [ "dep:loom", "critical-section/restore-state-bool" ]
 testing = []
+
+[target.'cfg(not(loom))'.dependencies]
+critical-section = "1"
+
+[target.'cfg(loom)'.dependencies]
+loom = { version = "0.7.2" }
+critical-section = { version = "1", features = [ "restore-state-bool" ] }
+
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = ['cfg(loom)'] }
