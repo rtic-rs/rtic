@@ -72,6 +72,12 @@ macro_rules! cs_access {
     };
 }
 
+impl<T, const N: usize> Default for Channel<T, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T, const N: usize> Channel<T, N> {
     const _CHECK: () = assert!(N < 256, "This queue support a maximum of 255 entries");
 
