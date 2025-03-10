@@ -27,6 +27,11 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 - `defmt v0.3` derives added and forwarded to `embedded-hal(-x)` crates.
 - signal structure
 
+### Fixed
+- Fix [#780].
+
+[#780]: https://github.com/rtic-rs/rtic/issues/780
+
 ## v1.2.0 - 2024-01-10
 
 ### Changed
