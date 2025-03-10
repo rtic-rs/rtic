@@ -167,8 +167,10 @@ pub enum Backends {
     Thumbv8Base,
     Thumbv8Main,
     RiscvEsp32C3,
-    Riscv32ImcClint, // not working yet (issues with portable-atomic features...)
+    Riscv32ImcClint,
+    Riscv32ImcMecall,
     Riscv32ImacClint,
+    Riscv32ImacMecall,
 }
 
 impl Backends {
@@ -179,8 +181,10 @@ impl Backends {
             Backends::Thumbv7 => ARMV7M,
             Backends::Thumbv8Base => ARMV8MBASE,
             Backends::Thumbv8Main => ARMV8MMAIN,
-            Backends::Riscv32ImcClint | Backends::RiscvEsp32C3 => RISCV32IMC,
-            Backends::Riscv32ImacClint => RISCV32IMAC,
+            Backends::Riscv32ImcClint | Backends::Riscv32ImcMecall | Backends::RiscvEsp32C3 => {
+                RISCV32IMC
+            }
+            Backends::Riscv32ImacClint | Backends::Riscv32ImacMecall => RISCV32IMAC,
         }
     }
 
@@ -193,6 +197,7 @@ impl Backends {
             Backends::Thumbv8Main => "thumbv8main-backend",
             Backends::RiscvEsp32C3 => "riscv-esp32c3-backend",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint-backend",
+            Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall-backend",
         }
     }
     #[allow(clippy::wrong_self_convention)]
@@ -202,6 +207,7 @@ impl Backends {
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
             Backends::RiscvEsp32C3 => "riscv-esp32c3",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
+            Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall",
         }
     }
 }
@@ -304,7 +310,7 @@ impl Platforms {
                 _ => Err(()),
             },
             Platforms::Hifive1 => match backend.to_target() {
-                RISCV32IMC | RISCV32IMAC => Ok(None),
+                RISCV32IMC => Ok(None),
                 _ => Err(()),
             },
             Platforms::Lm3s6965 => match backend.to_target() {
