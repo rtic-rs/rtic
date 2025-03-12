@@ -1,0 +1,59 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Low level access to Cortex-M processors"><title>cortex_m - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="cortex_m" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../cortex_m/index.html">cortex_<wbr>m</a><span class="version">0.7.7</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#optional-features" title="Optional features">Optional features</a><ul><li><a href="#inline-asm" title="`inline-asm`"><code>inline-asm</code></a></li><li><a href="#critical-section-single-core" title="`critical-section-single-core`"><code>critical-section-single-core</code></a></li><li><a href="#cm7-r0p1" title="`cm7-r0p1`"><code>cm7-r0p1</code></a></li><li><a href="#linker-plugin-lto" title="`linker-plugin-lto`"><code>linker-plugin-lto</code></a></li></ul></li><li><a href="#minimum-supported-rust-version-msrv" title="Minimum Supported Rust Version (MSRV)">Minimum Supported Rust Version (MSRV)</a></li></ul><h3><a href="#reexports">Crate Items</a></h3><ul class="block"><li><a href="#reexports" title="Re-exports">Re-exports</a></li><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#macros" title="Macros">Macros</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>cortex_m</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/cortex_m/lib.rs.html#1-112">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Low level access to Cortex-M processors</p>
+<p>This crate provides:</p>
+<ul>
+<li>Access to core peripherals like NVIC, SCB and SysTick.</li>
+<li>Access to core registers like CONTROL, MSP and PSR.</li>
+<li>Interrupt manipulation mechanisms</li>
+<li>Safe wrappers around Cortex-M specific instructions like <code>bkpt</code></li>
+</ul>
+<h2 id="optional-features"><a class="doc-anchor" href="#optional-features">§</a>Optional features</h2><h3 id="inline-asm"><a class="doc-anchor" href="#inline-asm">§</a><code>inline-asm</code></h3>
+<p>When this feature is enabled the implementation of all the functions inside the <code>asm</code> and
+<code>register</code> modules use inline assembly (<code>asm!</code>) instead of external assembly (FFI into separate
+assembly files pre-compiled using <code>arm-none-eabi-gcc</code>). The advantages of enabling <code>inline-asm</code>
+are:</p>
+<ul>
+<li>
+<p>Reduced overhead. FFI eliminates the possibility of inlining so all operations include a
+function call overhead when <code>inline-asm</code> is not enabled.</p>
+</li>
+<li>
+<p>Some of the <code>register</code> API only becomes available only when <code>inline-asm</code> is enabled. Check the
+API docs for details.</p>
+</li>
+</ul>
+<p>The disadvantage is that <code>inline-asm</code> requires a Rust version at least 1.59 to use the <code>asm!()</code>
+macro. In the future 0.8 and above versions of <code>cortex-m</code>, this feature will always be enabled.</p>
+<h3 id="critical-section-single-core"><a class="doc-anchor" href="#critical-section-single-core">§</a><code>critical-section-single-core</code></h3>
+<p>This feature enables a <a href="https://github.com/rust-embedded/critical-section"><code>critical-section</code></a>
+implementation suitable for single-core targets, based on disabling interrupts globally.</p>
+<p>It is <strong>unsound</strong> to enable it on multi-core targets or for code running in unprivileged mode,
+and may cause functional problems in systems where some interrupts must be not be disabled
+or critical sections are managed as part of an RTOS. In these cases, you should use
+a target-specific implementation instead, typically provided by a HAL or RTOS crate.</p>
+<h3 id="cm7-r0p1"><a class="doc-anchor" href="#cm7-r0p1">§</a><code>cm7-r0p1</code></h3>
+<p>This feature enables workarounds for errata found on Cortex-M7 chips with revision r0p1. Some
+functions in this crate only work correctly on those chips if this Cargo feature is enabled
+(the functions are documented accordingly).</p>
+<h3 id="linker-plugin-lto"><a class="doc-anchor" href="#linker-plugin-lto">§</a><code>linker-plugin-lto</code></h3>
+<p>This feature links against prebuilt assembly blobs that are compatible with <a href="https://doc.rust-lang.org/stable/rustc/linker-plugin-lto.html">Linker-Plugin LTO</a>.
+This allows inlining assembly routines into the caller, even without the <code>inline-asm</code> feature,
+and works on stable Rust (but note the drawbacks below!).</p>
+<p>If you want to use this feature, you need to be aware of a few things:</p>
+<ul>
+<li>
+<p>You need to make sure that <code>-Clinker-plugin-lto</code> is passed to rustc. Please refer to the
+<a href="https://doc.rust-lang.org/stable/rustc/linker-plugin-lto.html">Linker-Plugin LTO</a> documentation for details.</p>
+</li>
+<li>
+<p>You have to use a Rust version whose LLVM version is compatible with the toolchain in
+<code>asm-toolchain</code>.</p>
+</li>
+<li>
+<p>Due to a <a href="https://github.com/rust-lang/rust/issues/75940">Rust bug</a> in compiler versions <strong>before 1.49</strong>, this option
+does not work with optimization levels <code>s</code> and <code>z</code>.</p>
+</li>
+</ul>
+<h2 id="minimum-supported-rust-version-msrv"><a class="doc-anchor" href="#minimum-supported-rust-version-msrv">§</a>Minimum Supported Rust Version (MSRV)</h2>
+<p>This crate is guaranteed to compile on stable Rust 1.38 and up. It <em>might</em>
+compile with older versions but that may change in any new patch release.</p>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name" id="reexport.Peripherals"><code>pub use crate::peripheral::<a class="struct" href="peripheral/struct.Peripherals.html" title="struct cortex_m::peripheral::Peripherals">Peripherals</a>;</code></div></li></ul><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="asm/index.html" title="mod cortex_m::asm">asm</a></div><div class="desc docblock-short">Miscellaneous assembly instructions</div></li><li><div class="item-name"><a class="mod" href="delay/index.html" title="mod cortex_m::delay">delay</a></div><div class="desc docblock-short">A delay driver based on SysTick.</div></li><li><div class="item-name"><a class="mod" href="interrupt/index.html" title="mod cortex_m::interrupt">interrupt</a></div><div class="desc docblock-short">Interrupts</div></li><li><div class="item-name"><a class="mod" href="itm/index.html" title="mod cortex_m::itm">itm</a></div><div class="desc docblock-short">Instrumentation Trace Macrocell</div></li><li><div class="item-name"><a class="mod" href="peripheral/index.html" title="mod cortex_m::peripheral">peripheral</a></div><div class="desc docblock-short">Core peripherals.</div></li><li><div class="item-name"><a class="mod" href="prelude/index.html" title="mod cortex_m::prelude">prelude</a></div><div class="desc docblock-short">Prelude</div></li><li><div class="item-name"><a class="mod" href="register/index.html" title="mod cortex_m::register">register</a></div><div class="desc docblock-short">Processor core registers</div></li></ul><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.iprint.html" title="macro cortex_m::iprint">iprint</a></div><div class="desc docblock-short">Macro for sending a formatted string through an ITM channel</div></li><li><div class="item-name"><a class="macro" href="macro.iprintln.html" title="macro cortex_m::iprintln">iprintln</a></div><div class="desc docblock-short">Macro for sending a formatted string through an ITM channel, with a newline.</div></li><li><div class="item-name"><a class="macro" href="macro.singleton.html" title="macro cortex_m::singleton">singleton</a></div><div class="desc docblock-short">Macro to create a mutable reference to a statically allocated value</div></li></ul></section></div></main></body></html>

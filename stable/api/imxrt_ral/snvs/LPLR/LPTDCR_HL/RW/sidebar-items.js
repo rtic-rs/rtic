@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LPTDCR_HL_0","LPTDCR_HL_1"]};

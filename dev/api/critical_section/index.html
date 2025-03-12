@@ -1,0 +1,161 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="critical-section"><title>critical_section - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="critical_section" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../critical_section/index.html">critical_<wbr>section</a><span class="version">1.2.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#critical-section" title="critical-section">critical-section</a><ul><li><a href="#usage-in-no-std-binaries" title="Usage in `no-std` binaries.">Usage in <code>no-std</code> binaries.</a></li><li><a href="#usage-in-std-binaries" title="Usage in `std` binaries.">Usage in <code>std</code> binaries.</a></li><li><a href="#usage-in-libraries" title="Usage in libraries">Usage in libraries</a></li><li><a href="#usage-in-std-tests-for-no-std-libraries" title="Usage in `std` tests for `no-std` libraries.">Usage in <code>std</code> tests for <code>no-std</code> libraries.</a></li><li><a href="#providing-an-implementation" title="Providing an implementation">Providing an implementation</a></li><li><a href="#troubleshooting" title="Troubleshooting">Troubleshooting</a></li><li><a href="#why-not-generics" title="Why not generics?">Why not generics?</a></li><li><a href="#minimum-supported-rust-version-msrv" title="Minimum Supported Rust Version (MSRV)">Minimum Supported Rust Version (MSRV)</a></li><li><a href="#license" title="License">License</a></li><li><a href="#contribution" title="Contribution">Contribution</a></li><li><a href="#code-of-conduct" title="Code of Conduct">Code of Conduct</a></li></ul></li></ul><h3><a href="#macros">Crate Items</a></h3><ul class="block"><li><a href="#macros" title="Macros">Macros</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>critical_section</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/critical_section/lib.rs.html#1-308">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="critical-section"><a class="doc-anchor" href="#critical-section">§</a>critical-section</h2>
+<p><a href="https://crates.io/crates/critical-section"><img src="https://img.shields.io/crates/d/critical-section.svg" alt="crates.io" /></a>
+<a href="https://crates.io/crates/critical-section"><img src="https://img.shields.io/crates/v/critical-section.svg" alt="crates.io" /></a>
+<a href="https://docs.rs/critical-section"><img src="https://docs.rs/critical-section/badge.svg" alt="Documentation" /></a></p>
+<p>This project is developed and maintained by the <a href="https://github.com/rust-embedded/wg#the-hal-team">HAL team</a>.</p>
+<p>A critical section that works everywhere!</p>
+<p>When writing software for embedded systems, it’s common to use a “critical section”
+as a basic primitive to control concurrency. A critical section is essentially a
+mutex global to the whole process, that can be acquired by only one thread at a time.
+This can be used to protect data behind mutexes, to <a href="https://crates.io/crates/portable-atomic">emulate atomics</a> in
+targets that don’t support them, etc.</p>
+<p>There’s a wide range of possible implementations depending on the execution environment:</p>
+<ul>
+<li>For bare-metal single core, disabling interrupts in the current (only) core.</li>
+<li>For bare-metal multicore, disabling interrupts in the current core and acquiring a hardware spinlock to prevent other cores from entering a critical section concurrently.</li>
+<li>For bare-metal using a RTOS, using library functions for acquiring a critical section, often named “scheduler lock” or “kernel lock”.</li>
+<li>For bare-metal running in non-privileged mode, calling some system call is usually needed.</li>
+<li>For <code>std</code> targets, acquiring a global <code>std::sync::Mutex</code>.</li>
+</ul>
+<p>Libraries often need to use critical sections, but there’s no universal API for this in <code>core</code>. This leads
+library authors to hard-code them for their target, or at best add some <code>cfg</code>s to support a few targets.
+This doesn’t scale since there are many targets out there, and in the general case it’s impossible to know
+which critical section implementation is needed from the Rust target alone. For example, the <code>thumbv7em-none-eabi</code> target
+could be cases 1-4 from the above list.</p>
+<p>This crate solves the problem by providing this missing universal API.</p>
+<ul>
+<li>It provides functions <code>acquire</code>, <code>release</code> and <code>with</code> that libraries can directly use.</li>
+<li>It provides a way for any crate to supply an implementation. This allows “target support” crates such as architecture crates (<code>cortex-m</code>, <code>riscv</code>), RTOS bindings, or HALs for multicore chips to supply the correct implementation so that all the crates in the dependency tree automatically use it.</li>
+</ul>
+<h3 id="usage-in-no-std-binaries"><a class="doc-anchor" href="#usage-in-no-std-binaries">§</a>Usage in <code>no-std</code> binaries.</h3>
+<p>First, add a dependency on a crate providing a critical section implementation. Enable the <code>critical-section-*</code> Cargo feature if required by the crate.</p>
+<p>Implementations are typically provided by either architecture-support crates, HAL crates, and OS/RTOS bindings, including:</p>
+<ul>
+<li>The <a href="https://crates.io/crates/cortex-m"><code>cortex-m</code></a> crate provides an implementation for all single-core Cortex-M microcontrollers via its <code>critical-section-single-core</code> feature</li>
+<li>The <a href="https://crates.io/crates/riscv"><code>riscv</code></a> crate provides an implementation for all single-hart RISC-V microcontrollers via its <code>critical-section-single-hart</code> feature</li>
+<li>The <a href="https://crates.io/crates/msp430"><code>msp430</code></a> crate provides an implementation for all MSP430 microcontrollers via its <code>critical-section-single-core</code> feature</li>
+<li>The <a href="https://crates.io/crates/rp2040-hal"><code>rp2040-hal</code></a> crate provides a multi-core-safe critical section for the RP2040 microcontroller via its <code>critical-section-impl</code> feature</li>
+<li>The <a href="https://crates.io/crates/avr-device"><code>avr-device</code></a> crate provides an implementation for all AVR microcontrollers via its <code>critical-section-impl</code> feature</li>
+<li>The <a href="https://crates.io/crates/esp-hal-common"><code>esp-hal-common</code></a> crate provides an implementation for ESP32 microcontrollers which is used by the ESP HALs</li>
+<li>The <a href="https://docs.embassy.dev/embassy-rp"><code>embassy-rp</code></a> crate provides a multi-core-safe critical section for the RP2040 microcontroller via its <code>critical-section-impl</code> feature</li>
+<li>The <a href="https://docs.embassy.dev/nrf-softdevice"><code>nrf-softdevice</code></a> crate provides a critical section that’s compatible with the nRF soft-device firmware via its <code>critical-section-impl</code> feature</li>
+</ul>
+<p>For example, for single-core Cortex-M targets, you can use:</p>
+<div class="example-wrap"><pre class="language-toml"><code>[dependencies]
+cortex-m = { version = &quot;0.7.6&quot;, features = [&quot;critical-section-single-core&quot;]}</code></pre></div>
+<p>Then you can use <code>critical_section::with()</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>core::cell::Cell;
+<span class="kw">use </span>critical_section::Mutex;
+
+<span class="kw">static </span>MY_VALUE: Mutex&lt;Cell&lt;u32&gt;&gt; = Mutex::new(Cell::new(<span class="number">0</span>));
+
+critical_section::with(|cs| {
+    <span class="comment">// This code runs within a critical section.
+
+    // `cs` is a token that you can use to "prove" that to some API,
+    // for example to a `Mutex`:
+    </span>MY_VALUE.borrow(cs).set(<span class="number">42</span>);
+});
+</code></pre></div>
+<h3 id="usage-in-std-binaries"><a class="doc-anchor" href="#usage-in-std-binaries">§</a>Usage in <code>std</code> binaries.</h3>
+<p>Add the <code>critical-section</code> dependency to <code>Cargo.toml</code> enabling the <code>std</code> feature. This makes the <code>critical-section</code> crate itself
+provide an implementation based on <code>std::sync::Mutex</code>, so you don’t have to add any other dependency.</p>
+<div class="example-wrap"><pre class="language-toml"><code>[dependencies]
+critical-section = { version = &quot;1.1&quot;, features = [&quot;std&quot;]}</code></pre></div><h3 id="usage-in-libraries"><a class="doc-anchor" href="#usage-in-libraries">§</a>Usage in libraries</h3>
+<p>If you’re writing a library intended to be portable across many targets, simply add a dependency on <code>critical-section</code>
+and use <code>critical_section::free</code> and/or <code>Mutex</code> as usual.</p>
+<p><strong>Do not</strong> add any dependency supplying a critical section implementation. Do not enable any <code>critical-section-*</code> Cargo feature.
+This has to be done by the end user, enabling the correct implementation for their target.</p>
+<p><strong>Do not</strong> enable any Cargo feature in <code>critical-section</code>.</p>
+<h3 id="usage-in-std-tests-for-no-std-libraries"><a class="doc-anchor" href="#usage-in-std-tests-for-no-std-libraries">§</a>Usage in <code>std</code> tests for <code>no-std</code> libraries.</h3>
+<p>If you want to run <code>std</code>-using tests in otherwise <code>no-std</code> libraries, enable the <code>std</code> feature in <code>dev-dependencies</code> only.
+This way the main target will use the <code>no-std</code> implementation chosen by the end-user’s binary, and only the test targets
+will use the <code>std</code> implementation.</p>
+<div class="example-wrap"><pre class="language-toml"><code>[dependencies]
+critical-section = &quot;1.1&quot;
+
+[dev-dependencies]
+critical-section = { version = &quot;1.1&quot;, features = [&quot;std&quot;]}</code></pre></div><h3 id="providing-an-implementation"><a class="doc-anchor" href="#providing-an-implementation">§</a>Providing an implementation</h3>
+<p>Crates adding support for a particular architecture, chip or operating system should provide a critical section implementation.
+It is <strong>strongly recommended</strong> to gate the implementation behind a feature, so the user can still use another implementation
+if needed (having two implementations in the same binary will cause linking to fail).</p>
+<p>Add the dependency, and a <code>critical-section-*</code> feature to your <code>Cargo.toml</code>:</p>
+<div class="example-wrap"><pre class="language-toml"><code>[features]
+# Enable critical section implementation that does &quot;foo&quot;
+critical-section-foo = [&quot;critical-section/restore-state-bool&quot;]
+
+[dependencies]
+critical-section = { version = &quot;1.0&quot;, optional = true }</code></pre></div>
+<p>Then, provide the critical implementation like this:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// This is a type alias for the enabled `restore-state-*` feature.
+// For example, it is `bool` if you enable `restore-state-bool`.
+</span><span class="kw">use </span>critical_section::RawRestoreState;
+
+<span class="kw">struct </span>MyCriticalSection;
+<span class="macro">critical_section::set_impl!</span>(MyCriticalSection);
+
+<span class="kw">unsafe impl </span>critical_section::Impl <span class="kw">for </span>MyCriticalSection {
+    <span class="kw">unsafe fn </span>acquire() -&gt; RawRestoreState {
+        <span class="comment">// TODO
+    </span>}
+
+    <span class="kw">unsafe fn </span>release(token: RawRestoreState) {
+        <span class="comment">// TODO
+    </span>}
+}</code></pre></div>
+<h3 id="troubleshooting"><a class="doc-anchor" href="#troubleshooting">§</a>Troubleshooting</h3><h4 id="undefined-reference-errors"><a class="doc-anchor" href="#undefined-reference-errors">§</a>Undefined reference errors</h4>
+<p>If you get an error like these:</p>
+<div class="example-wrap"><pre class="language-not_rust"><code>undefined reference to `_critical_section_1_0_acquire&#39;
+undefined reference to `_critical_section_1_0_release&#39;</code></pre></div>
+<p>it is because you (or a library) are using <code>critical_section::with</code> without providing a critical section implementation.
+Make sure you’re depending on a crate providing the implementation, and have enabled the <code>critical-section-*</code> feature in it if required. See the <code>Usage</code> section above.</p>
+<p>The error can also be caused by having the dependency but never <code>use</code>ing it. This can be fixed by adding a dummy <code>use</code>:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>the_cs_impl_crate <span class="kw">as _</span>;</code></pre></div>
+<h4 id="duplicate-symbol-errors"><a class="doc-anchor" href="#duplicate-symbol-errors">§</a>Duplicate symbol errors</h4>
+<p>If you get errors like these:</p>
+<div class="example-wrap"><pre class="language-not_rust"><code>error: symbol `_critical_section_1_0_acquire` is already defined</code></pre></div>
+<p>it is because you have two crates trying to provide a critical section implementation. You can only
+have one implementation in a program.</p>
+<p>You can use <code>cargo tree --format '{p} {f}'</code> to view all dependencies and their enabled features. Make sure
+that in the whole dependency tree, exactly one implementation is provided.</p>
+<p>Check for multiple versions of the same crate as well. For example, check the <code>critical-section-single-core</code>
+feature is not enabled for both <code>cortex-m</code> 0.7 and 0.8.</p>
+<h3 id="why-not-generics"><a class="doc-anchor" href="#why-not-generics">§</a>Why not generics?</h3>
+<p>An alternative solution would be to use a <code>CriticalSection</code> trait, and make all
+code that needs acquiring the critical section generic over it. This has a few problems:</p>
+<ul>
+<li>It would require passing it as a generic param to a very big amount of code, which
+would be quite unergonomic.</li>
+<li>It’s common to put <code>Mutex</code>es in <code>static</code> variables, and <code>static</code>s can’t
+be generic.</li>
+<li>It would allow mixing different critical section implementations in the same program,
+which would be unsound.</li>
+</ul>
+<h3 id="minimum-supported-rust-version-msrv"><a class="doc-anchor" href="#minimum-supported-rust-version-msrv">§</a>Minimum Supported Rust Version (MSRV)</h3>
+<p>This crate is guaranteed to compile on the following Rust versions:</p>
+<ul>
+<li>If the <code>std</code> feature is not enabled: stable Rust 1.54 and up.</li>
+<li>If the <code>std</code> feature is enabled: stable Rust 1.63 and up.</li>
+</ul>
+<p>It might compile with older versions but that may change in any new patch release.</p>
+<p>See <a href="docs/msrv.md">here</a> for details on how the MSRV may be upgraded.</p>
+<h3 id="license"><a class="doc-anchor" href="#license">§</a>License</h3>
+<p>This work is licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0 (<a href="LICENSE-APACHE">LICENSE-APACHE</a> or
+<a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a>)</li>
+<li>MIT license (<a href="LICENSE-MIT">LICENSE-MIT</a> or <a href="http://opensource.org/licenses/MIT">http://opensource.org/licenses/MIT</a>)</li>
+</ul>
+<p>at your option.</p>
+<h3 id="contribution"><a class="doc-anchor" href="#contribution">§</a>Contribution</h3>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+<h3 id="code-of-conduct"><a class="doc-anchor" href="#code-of-conduct">§</a>Code of Conduct</h3>
+<p>Contribution to this crate is organized under the terms of the <a href="CODE_OF_CONDUCT.md">Rust Code of
+Conduct</a>, the maintainer of this crate, the <a href="https://github.com/rust-embedded/wg#the-hal-team">HAL team</a>, promises
+to intervene to uphold that code of conduct.</p>
+</div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.set_impl.html" title="macro critical_section::set_impl">set_<wbr>impl</a></div><div class="desc docblock-short">Set the critical section implementation.</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.CriticalSection.html" title="struct critical_section::CriticalSection">Critical<wbr>Section</a></div><div class="desc docblock-short">Critical section token.</div></li><li><div class="item-name"><a class="struct" href="struct.Mutex.html" title="struct critical_section::Mutex">Mutex</a></div><div class="desc docblock-short">A mutex based on critical sections.</div></li><li><div class="item-name"><a class="struct" href="struct.RestoreState.html" title="struct critical_section::RestoreState">Restore<wbr>State</a></div><div class="desc docblock-short">Opaque “restore state”.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Impl.html" title="trait critical_section::Impl">Impl</a></div><div class="desc docblock-short">Methods required for a critical section implementation.</div></li></ul><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.acquire.html" title="fn critical_section::acquire">acquire</a><sup title="unsafe function">⚠</sup></div><div class="desc docblock-short">Acquire a critical section in the current thread.</div></li><li><div class="item-name"><a class="fn" href="fn.release.html" title="fn critical_section::release">release</a><sup title="unsafe function">⚠</sup></div><div class="desc docblock-short">Release the critical section.</div></li><li><div class="item-name"><a class="fn" href="fn.with.html" title="fn critical_section::with">with</a></div><div class="desc docblock-short">Execute closure <code>f</code> in a critical section.</div></li></ul><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.RawRestoreState.html" title="type critical_section::RawRestoreState">RawRestore<wbr>State</a></div><div class="desc docblock-short">Raw, transparent “restore state”.</div></li></ul></section></div></main></body></html>

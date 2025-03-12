@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["USBNC"],"fn":["number"],"mod":["USB_OTG1_CTRL","USB_OTG1_PHY_CTRL_0"],"struct":["RegisterBlock"],"type":["Instance","USBNC"]};

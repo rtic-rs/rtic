@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Combines `bitfield_bitrange` and `bitfield_fields`."><title>bitfield in bitfield - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bitfield" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bitfield/index.html">bitfield</a><span class="version">0.13.2</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">bitfield</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate bitfield</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">bitfield</a></span><h1>Macro <span class="macro">bitfield</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/bitfield/lib.rs.html#503-567">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! bitfield {
+    ($(#[$attribute:meta])* pub struct $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* struct $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($($type:tt)*); impl Debug; no default BitRange; $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; impl Debug; $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); no default BitRange; $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; impl Debug; $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; $($rest:tt)*) =&gt; { ... };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Combines <code>bitfield_bitrange</code> and <code>bitfield_fields</code>.</p>
+<p>The syntax of this macro is the syntax of a tuple struct, including attributes and
+documentation comments, followed by a semicolon, some optional elements, and finally the fields
+as described in the <code>bitfield_fields</code> documentation.</p>
+<p>The first optional element is <code>no default BitRange;</code>. With that, no implementation of
+<code>BitRange</code> will be generated.</p>
+<p>The second optional element is <code>impl Debug;</code>. This will generate an implementation of
+<code>fmt::Debug</code> with the <code>bitfield_debug</code> macro.</p>
+<p>The difference with calling those macros separately is that <code>bitfield_fields</code> is called
+from an appropriate <code>impl</code> block. If you use the non-slice form of <code>bitfield_bitrange</code>, the
+default type for <code>bitfield_fields</code> will be set to the wrapped fields.</p>
+<p>See the documentation of these macros for more information on their respective syntax.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">bitfield!</span>{
+  <span class="kw">pub struct </span>BitField1(u16);
+  <span class="kw">impl </span>Debug;
+  <span class="comment">// The fields default to u16
+  </span>field1, set_field1: <span class="number">10</span>, <span class="number">0</span>;
+  <span class="kw">pub </span>field2, <span class="kw">_ </span>: <span class="number">12</span>, <span class="number">3</span>;
+}</code></pre></div>
+<p>or with a custom <code>BitRange</code> implementation :</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">bitfield!</span>{
+  <span class="kw">pub struct </span>BitField1(u16);
+  no default BitRange;
+  <span class="kw">impl </span>Debug;
+  u8;
+  field1, set_field1: <span class="number">10</span>, <span class="number">0</span>;
+  <span class="kw">pub </span>field2, <span class="kw">_ </span>: <span class="number">12</span>, <span class="number">3</span>;
+}
+<span class="kw">impl </span>BitRange&lt;u8&gt; <span class="kw">for </span>BitField1 {
+    <span class="kw">fn </span>bit_range(<span class="kw-2">&amp;</span><span class="self">self</span>, msb: usize, lsb: usize) -&gt; u8 {
+        <span class="kw">let </span>width = msb - lsb + <span class="number">1</span>;
+        <span class="kw">let </span>mask = (<span class="number">1 </span>&lt;&lt; width) - <span class="number">1</span>;
+        ((<span class="self">self</span>.<span class="number">0 </span>&gt;&gt; lsb) &amp; mask) <span class="kw">as </span>u8
+    }
+    <span class="kw">fn </span>set_bit_range(<span class="kw-2">&amp;mut </span><span class="self">self</span>, msb: usize, lsb: usize, value: u8) {
+        <span class="self">self</span>.<span class="number">0 </span>= (value <span class="kw">as </span>u16) &lt;&lt; lsb;
+    }
+}</code></pre></div>
+</div></details></section></div></main></body></html>

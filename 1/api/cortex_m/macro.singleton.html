@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Macro to create a mutable reference to a statically allocated value"><title>singleton in cortex_m - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="cortex_m" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../cortex_m/index.html">cortex_<wbr>m</a><span class="version">0.7.7</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">singleton</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#notes" title="Notes">Notes</a></li><li><a href="#example" title="Example">Example</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate cortex_<wbr>m</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">cortex_m</a></span><h1>Macro <span class="macro">singleton</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/cortex_m/macros.rs.html#63-91">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! singleton {
+    ($name:ident: $ty:ty = $expr:expr) =&gt; { ... };
+    (: $ty:ty = $expr:expr) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Macro to create a mutable reference to a statically allocated value</p>
+<p>This macro returns a value with type <code>Option&lt;&amp;'static mut $ty&gt;</code>. <code>Some($expr)</code> will be returned
+the first time the macro is executed; further calls will return <code>None</code>. To avoid <code>unwrap</code>ping a
+<code>None</code> variant the caller must ensure that the macro is called from a function that’s executed
+at most once in the whole lifetime of the program.</p>
+<h2 id="notes"><a class="doc-anchor" href="#notes">§</a>Notes</h2>
+<p>This macro is unsound on multi core systems.</p>
+<p>For debuggability, you can set an explicit name for a singleton.  This name only shows up the
+the debugger and is not referencable from other code.  See example below.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>cortex_m::singleton;
+
+<span class="kw">fn </span>main() {
+    <span class="comment">// OK if `main` is executed only once
+    </span><span class="kw">let </span>x: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">mut </span>bool = <span class="macro">singleton!</span>(: bool = <span class="bool-val">false</span>).unwrap();
+
+    <span class="kw">let </span>y = alias();
+    <span class="comment">// BAD this second call to `alias` will definitively `panic!`
+    </span><span class="kw">let </span>y_alias = alias();
+}
+
+<span class="kw">fn </span>alias() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">mut </span>bool {
+    <span class="macro">singleton!</span>(: bool = <span class="bool-val">false</span>).unwrap()
+}
+
+<span class="kw">fn </span>singleton_with_name() {
+    <span class="comment">// A name only for debugging purposes
+    </span><span class="macro">singleton!</span>(FOO_BUFFER: [u8; <span class="number">1024</span>] = [<span class="number">0u8</span>; <span class="number">1024</span>]);
+}</code></pre></div>
+</div></details></section></div></main></body></html>
