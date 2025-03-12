@@ -147,7 +147,7 @@ So with the technical stuff out of the way, what does `async/await` bring to the
 
 The answer is - improved ergonomics! A recurring use case is to have task perform a sequence of requests and then await their results in order to progress. Without `async`/`await` the programmer would be forced to split the task into individual sub-tasks and maintain some sort of state encoding (and manually progress by selecting sub-task). Using `async/await` each yield point (`await`) essentially represents a state, and the progression mechanism is built automatically for you at compile time by means of `Futures`. 
 
-Rust `async`/`await` support is still incomplete and/or under development (e.g., there are no stable way to express `async` closures, precluding use in iterator patterns). Nevertheless, Rust `async`/`await` is production ready and covers most common use cases. 
+Rust `async`/`await` support is still incomplete and/or under development. Nevertheless, it covers most common use cases and can be considered production ready. 
 
 An important property is that futures are composable, thus you can await either, all, or any combination of possible futures (allowing e.g., timeouts and/or asynchronous errors to be promptly handled).
 
