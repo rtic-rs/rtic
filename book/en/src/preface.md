@@ -81,15 +81,15 @@ graph LR
 
 SRP itself is compatible with both dynamic and static priority scheduling. For the implementation of RTIC we leverage on the underlying hardware for accelerated static priority scheduling.
 
-In the case of the `ARM Cortex-M` architecture, each interrupt vector entry `v[i]` is associated a function pointer (`v[i].fn`), and a static priority (`v[i].priority`), an enabled- (`v[i].enabled`) and a pending-bit (`v[i].pending`). 
+In the case of the `ARM Cortex-M` architecture, each interrupt vector entry `v[i]` is associated a function pointer (`v[i].fn`), a static priority (`v[i].priority`), an enabled- (`v[i].enabled`) and a pending-bit (`v[i].pending`). 
 
 An interrupt `i` is scheduled (run) by the hardware under the conditions:
-1. is `pended` and `enabled` and has a priority higher than the (optional `BASEPRI`) register, and
+1. is `pending` and `enabled` and has a priority higher than the (optional `BASEPRI`) register, and
 1. has the highest priority among interrupts meeting 1.
 
-The first condition (1) can be seen a filter allowing RTIC to take control over which tasks should be allowed to start (and which should be prevented from starting).
+The first condition (1) can be seen as a filter, allowing RTIC to take control over which tasks should be allowed to start (and which should be prevented from starting).
 
-The SPR model for single-core static scheduling on the other hand states that a task should be scheduled (run) under the conditions:
+The SRP model for single-core static scheduling, on the other hand, states that a task should be scheduled (run) under the conditions:
 1. it is `requested` to run and has a static priority higher than the current system ceiling (𝜫)
 1. it has the highest static priority among tasks meeting 1.
 
@@ -97,7 +97,7 @@ The similarities are striking and it is not by chance/luck/coincidence. The hard
 
 In order to map the SRP scheduling onto the hardware we need to take a closer look at the system ceiling (𝜫). Under SRP 𝜫 is computed as the maximum priority ceiling of the currently held resources, and will thus change dynamically during the system operation.
 
-## Example
+### Example
 
 Assume the task model above. Starting from an idle system, 𝜫 is 0, (no task is holding any resource). Assume that `A` is requested for execution, it will immediately be scheduled. Assume that `A` claims (locks) the resource `R`. During the claim (lock of `R`) any request `B` will be blocked from starting (by 𝜫 = `max(𝝅(R) = 4) = 4`, `p(B) = 4`, thus SRP scheduling condition 1 is not met).
 
@@ -108,14 +108,14 @@ The mapping of static priority SRP based scheduling to the Cortex M hardware is 
 - each task `t` are mapped to an interrupt vector index `i` with a corresponding function `v[i].fn = t` and given the static priority `v[i].priority = p(t)`. 
 - the current system ceiling is mapped to the `BASEPRI` register or implemented through masking the interrupt enable bits accordingly.
 
-## Example
+### Example
 
 For the running example, a snapshot of the ARM Cortex M [Nested Vectored Interrupt Controller (NVIC)][NVIC] may have the following configuration (after task `A` has been pended for execution.)
 
-| Index | Fn  | Priority | Enabled | Pended |
-| ----- | --- | -------- | ------- | ------ |
-| 0     | A   | 2        | true    | true   |
-| 1     | B   | 4        | true    | false  |
+| Index | Fn  | Priority | Enabled | Pending |
+| ----- | --- | -------- | ------- | ------- |
+| 0     | A   | 2        | true    | true    |
+| 1     | B   | 4        | true    | false   |
 
 [NVIC]: https://developer.arm.com/documentation/ddi0337/h/nested-vectored-interrupt-controller/about-the-nvic
 
@@ -127,7 +127,7 @@ A claim (lock(r)) will change the current system ceiling (𝜫) and can be imple
   - execute code within critical section
   - old_ceiling = 𝜫
 
-This amounts to a resource protection mechanism requiring only two machine instructions on enter and one on exit the critical section for managing the `BASEPRI` register. For architectures lacking `BASEPRI`, we can implement the system ceiling through a set of machine instructions for disabling/enabling interrupts on entry/exit for the named critical section. The number of machine instructions vary depending on the number of mask registers that needs to be updated (a single machine operation can operate on up to 32 interrupts, so for the M0/M0+ architecture a single instruction suffice). RTIC will determine the ceiling values and masking constants at compile time, thus all operations is in Rust terms zero-cost.
+This amounts to a resource protection mechanism, requiring only two machine instructions on enter and one on exit the critical section, for managing the `BASEPRI` register. For architectures lacking `BASEPRI`, we can implement the system ceiling through a set of machine instructions for disabling/enabling interrupts on entry/exit for the named critical section. The number of machine instructions vary depending on the number of mask registers that needs to be updated (a single machine operation can operate on up to 32 interrupts, so for the M0/M0+ architecture a single instruction suffice). RTIC will determine the ceiling values and masking constants at compile time, thus all operations is in Rust terms zero-cost.
 
 In this way RTIC fuses SRP based preemptive scheduling with a zero-cost hardware accelerated implementation, resulting in "best in class" guarantees and performance. 
 
