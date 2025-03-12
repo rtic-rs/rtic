@@ -7,6 +7,16 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+## v1.3.1 - 2025-03-12
+
+### Fixed
+
+- Fix [#780]
+
+[#780]: https://github.com/rtic-rs/rtic/issues/780
+
+## v1.3.0 - 2024-05-01
+
 ### Changed
 
 - Unstable features are now stable, the feature flag `unstable` is removed.
@@ -16,11 +26,6 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 - `defmt v0.3` derives added and forwarded to `embedded-hal(-x)` crates.
 - signal structure
-
-### Fixed
-- Fix [#780]
-
-[#780]: https://github.com/rtic-rs/rtic/issues/780
 
 ## v1.2.0 - 2024-01-10
 
