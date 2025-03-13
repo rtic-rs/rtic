@@ -323,12 +323,12 @@ impl<T, const N: usize> Sender<'_, T, N> {
         });
 
         let idx = poll_fn(|cx| {
-            if self.is_closed() {
-                return Poll::Ready(Err(()));
-            }
-
             //  Do all this in one critical section, else there can be race conditions
-            let queue_idx = critical_section::with(|cs| {
+            critical_section::with(|cs| {
+                if self.is_closed() {
+                    return Poll::Ready(Err(()));
+                }
+
                 let wq_empty = self.0.wait_queue.is_empty();
                 let fq_empty = unsafe {
                     // SAFETY: the closure does not call `freeq`
@@ -341,7 +341,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
                     let link = unsafe { link_ptr.get() };
                     if let Some(link) = link {
                         if !link.is_popped() {
-                            return None;
+                            return Poll::Pending;
                         } else {
                             // Fall through to dequeue
                         }
@@ -357,7 +357,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
                         // `link_ptr` lives until the end of the stack frame.
                         unsafe { self.0.wait_queue.push(Pin::new_unchecked(link_ref)) };
 
-                        return None;
+                        return Poll::Pending;
                     }
                 }
 
@@ -369,15 +369,8 @@ impl<T, const N: usize> Sender<'_, T, N> {
                 // Get index as the queue is guaranteed not empty and the wait queue is empty
                 let idx = unsafe { self.0.freeq(cs, |q| q.pop_front_unchecked()) };
 
-                Some(idx)
-            });
-
-            if let Some(idx) = queue_idx {
-                // Return the index
                 Poll::Ready(Ok(idx))
-            } else {
-                Poll::Pending
-            }
+            })
         })
         .await;
 
@@ -513,6 +506,7 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
                 // If someone is waiting in the WaiterQueue, wake the first one up.
                 if let Some(wait_head) = self.0.wait_queue.pop() {
+                    assert!(unsafe { !self.0.freeq(cs, |q| q.is_empty()) });
                     wait_head.wake();
                 }
 
@@ -625,12 +619,11 @@ mod loom_tests {
 
         loom::model(|| {
             let (mut spam_tx_send, mut spam_tx_recv) = make_loom_channel!([u8; 20], 1);
+            let mut cloned = spam_tx_send.clone();
 
             spam_tx_send.try_send([1; 20]).unwrap();
 
-            let handle = thread::spawn(move || {
-                spam_tx_send.try_send([1; 20]).ok();
-
+            let handle1 = thread::spawn(move || {
                 let future = std::pin::pin!(spam_tx_send.send([1; 20]));
                 let mut future = Cassette::new(future);
                 if future.poll_on().is_none() {
@@ -638,10 +631,17 @@ mod loom_tests {
                 }
             });
 
+            let handle2 = thread::spawn(move || {
+                cloned.try_send([1; 20]).ok();
+            });
+
             spam_tx_recv.try_recv().ok();
             spam_tx_recv.try_recv().ok();
 
-            handle.join().unwrap();
+            drop(spam_tx_recv);
+
+            handle1.join().unwrap();
+            handle2.join().unwrap();
         });
     }
 }
