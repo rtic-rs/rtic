@@ -332,6 +332,10 @@ impl<T, const N: usize> Sender<'_, T, N> {
         let idx = poll_fn(|cx| {
             //  Do all this in one critical section, else there can be race conditions
             critical_section::with(|cs| {
+                if self.is_closed() {
+                    return Poll::Ready(Err(()));
+                }
+
                 let wq_empty = self.0.wait_queue.is_empty();
                 let freeq_empty = self.0.access(cs).freeq.is_empty();
 
