@@ -215,7 +215,9 @@ struct SlotPtr(*mut Option<u8>);
 impl SlotPtr {
     /// Replace the value of this slot with `new_value`, and return
     /// the old value.
-    fn replace(
+    ///
+    /// SAFETY: the pointer in this `SlotPtr` must still be valid.
+    unsafe fn replace(
         &mut self,
         new_value: Option<u8>,
         _cs: critical_section::CriticalSection,
@@ -314,8 +316,10 @@ impl<T, const N: usize> Sender<'_, T, N> {
             // Potentially unnecessary c-s because our link was already popped, so there
             // is no way for anything else to access the free slot ptr. Gotta think
             // about this a bit more...
+            //
+            // SAFETY(replace): the data pointed to by `free_slot_ptr2` is still alive.
             critical_section::with(|cs| {
-                if let Some(freed_slot) = free_slot_ptr2.replace(None, cs) {
+                if let Some(freed_slot) = unsafe { free_slot_ptr2.replace(None, cs) } {
                     debug_assert!(!self.0.access(cs).freeq.is_full());
                     // SAFETY: freeq is not full.
                     unsafe {
@@ -358,8 +362,8 @@ impl<T, const N: usize> Sender<'_, T, N> {
                     }
                 }
 
-                let slot = free_slot_ptr
-                    .replace(None, cs)
+                // SAFETY: the value pointed to by `free_slot_ptr` is still alive.
+                let slot = unsafe { free_slot_ptr.replace(None, cs) }
                     .or_else(|| self.0.access(cs).freeq.pop_back());
 
                 if let Some(slot) = slot {
@@ -471,7 +475,9 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
                 // If someone is waiting in the WaiterQueue, wake the first one up & hand it the free slot.
                 if let Some((wait_head, mut freeq_slot)) = self.0.wait_queue.pop() {
-                    freeq_slot.replace(Some(rs), cs);
+                    // SAFETY: the value pointed to by `freeq_slot` is still alive: we are in a critical
+                    // section & the `SlotPtr` lives for at least the duration of the wait queue link.
+                    unsafe { freeq_slot.replace(Some(rs), cs) };
                     wait_head.wake();
                 } else {
                     assert!(!self.0.access(cs).freeq.is_full());
