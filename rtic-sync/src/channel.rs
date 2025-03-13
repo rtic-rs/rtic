@@ -363,7 +363,8 @@ impl<T, const N: usize> Sender<'_, T, N> {
                 }
 
                 // SAFETY: `free_slot_ptr` is valid for writes, as `free_slot_ptr` is still alive.
-                let slot = unsafe { free_slot_ptr.replace(None, cs) };
+                let slot = unsafe { free_slot_ptr.replace(None, cs) }
+                    .or_else(|| self.0.access(cs).freeq.pop_back());
 
                 if let Some(slot) = slot {
                     Poll::Ready(Ok(slot))
