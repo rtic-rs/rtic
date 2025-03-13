@@ -216,7 +216,7 @@ impl SlotPtr {
     /// Replace the value of this slot with `new_value`, and return
     /// the old value.
     ///
-    /// SAFETY: the pointer in this `SlotPtr` must still be valid.
+    /// SAFETY: the pointer in this `SlotPtr` must be valid for writes.
     unsafe fn replace(
         &mut self,
         new_value: Option<u8>,
@@ -317,7 +317,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
             // is no way for anything else to access the free slot ptr. Gotta think
             // about this a bit more...
             //
-            // SAFETY(replace): the data pointed to by `free_slot_ptr2` is still alive.
+            // SAFETY(replace): `free_slot_ptr2` is valid for writes.
             critical_section::with(|cs| {
                 if let Some(freed_slot) = unsafe { free_slot_ptr2.replace(None, cs) } {
                     debug_assert!(!self.0.access(cs).freeq.is_full());
@@ -362,9 +362,8 @@ impl<T, const N: usize> Sender<'_, T, N> {
                     }
                 }
 
-                // SAFETY: the value pointed to by `free_slot_ptr` is still alive.
-                let slot = unsafe { free_slot_ptr.replace(None, cs) }
-                    .or_else(|| self.0.access(cs).freeq.pop_back());
+                // SAFETY: `free_slot_ptr` is valid for writes, as `free_slot_ptr` is still alive.
+                let slot = unsafe { free_slot_ptr.replace(None, cs) };
 
                 if let Some(slot) = slot {
                     Poll::Ready(Ok(slot))
@@ -475,7 +474,7 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
                 // If someone is waiting in the WaiterQueue, wake the first one up & hand it the free slot.
                 if let Some((wait_head, mut freeq_slot)) = self.0.wait_queue.pop() {
-                    // SAFETY: the value pointed to by `freeq_slot` is still alive: we are in a critical
+                    // SAFETY: `freeq_slot` is valid for writes: we are in a critical
                     // section & the `SlotPtr` lives for at least the duration of the wait queue link.
                     unsafe { freeq_slot.replace(Some(rs), cs) };
                     wait_head.wake();
