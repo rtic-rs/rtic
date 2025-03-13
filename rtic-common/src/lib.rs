@@ -1,6 +1,6 @@
 //! Utility structs that can be useful to other subcrates.
 
-#![no_std]
+#![cfg_attr(not(loom), no_std)]
 #![deny(missing_docs)]
 
 #[cfg(test)]
@@ -10,3 +10,9 @@ extern crate std;
 pub mod dropper;
 pub mod wait_queue;
 pub mod waker_registration;
+
+#[cfg(loom)]
+pub mod loom_cs;
+
+#[cfg(not(loom))]
+pub mod unsafecell;

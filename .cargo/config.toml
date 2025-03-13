@@ -4,3 +4,5 @@ pxtask = "run --package xtask --features rayon --"
 
 # Don't define the RUSTFLAGS link.x thing here: it messes
 # up compilation of the usage examples.
+[build]
+rustflags = [ "--cfg", "loom" ]
