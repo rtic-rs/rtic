@@ -285,12 +285,12 @@ impl<T, const N: usize> Sender<'_, T, N> {
         });
 
         let idx = poll_fn(|cx| {
-            if self.is_closed() {
-                return Poll::Ready(Err(()));
-            }
-
             //  Do all this in one critical section, else there can be race conditions
-            let queue_idx = critical_section::with(|cs| {
+            critical_section::with(|cs| {
+                if self.is_closed() {
+                    return Poll::Ready(Err(()));
+                }
+
                 let wq_empty = self.0.wait_queue.is_empty();
                 let fq_empty = self.0.access(cs).freeq.is_empty();
                 if !wq_empty || fq_empty {
@@ -299,7 +299,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
                     let link = unsafe { link_ptr.get() };
                     if let Some(link) = link {
                         if !link.is_popped() {
-                            return None;
+                            return Poll::Pending;
                         } else {
                             // Fall through to dequeue
                         }
@@ -315,7 +315,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
                         // `link_ptr` lives until the end of the stack frame.
                         unsafe { self.0.wait_queue.push(Pin::new_unchecked(link_ref)) };
 
-                        return None;
+                        return Poll::Pending;
                     }
                 }
 
@@ -323,15 +323,9 @@ impl<T, const N: usize> Sender<'_, T, N> {
                 // Get index as the queue is guaranteed not empty and the wait queue is empty
                 let idx = unsafe { self.0.access(cs).freeq.pop_front_unchecked() };
 
-                Some(idx)
-            });
-
-            if let Some(idx) = queue_idx {
                 // Return the index
                 Poll::Ready(Ok(idx))
-            } else {
-                Poll::Pending
-            }
+            })
         })
         .await;
 
