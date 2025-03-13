@@ -342,11 +342,12 @@ impl<T, const N: usize> Sender<'_, T, N> {
                 // We are already in the wait queue.
                 if let Some(link) = link {
                     if link.is_popped() {
+                        // SAFETY: `free_slot_ptr` is valid for writes until the end of this future.
+                        let slot = unsafe { free_slot_ptr.replace(None, cs) };
+
                         // If our link is popped, then:
                         // 1. We were popped by `try_recv` and it provided us with a slot.
                         // 2. We were popped by `Receiver::drop` and it did not provide us with a slot, and the channel is closed.
-                        let slot = unsafe { free_slot_ptr.replace(None, cs) };
-
                         if let Some(slot) = slot {
                             Poll::Ready(Ok(slot))
                         } else {
@@ -365,10 +366,10 @@ impl<T, const N: usize> Sender<'_, T, N> {
 
                     // SAFETY(new_unchecked): The address to the link is stable as it is defined
                     // outside this stack frame.
-                    // SAFETY(push): `link_ref` lifetime comes from `link_ptr` that is shadowed,
-                    // and  we make sure in `dropper` that the link is removed from the queue
+                    // SAFETY(push): `link_ref` lifetime comes from `link_ptr` and `free_slot_ptr` that
+                    // are shadowed and we make sure in `dropper` that the link is removed from the queue
                     // before dropping `link_ptr` AND `dropper` makes sure that the shadowed
-                    // `link_ptr` lives until the end of the stack frame.
+                    // `ptr`s live until the end of the stack frame.
                     unsafe { self.0.wait_queue.push(Pin::new_unchecked(link_ref)) };
 
                     Poll::Pending
