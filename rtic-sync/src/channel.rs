@@ -559,6 +559,8 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
 
 #[cfg(test)]
 mod tests {
+    use cassette::Cassette;
+
     use super::*;
 
     #[test]
@@ -683,5 +685,44 @@ mod tests {
     #[test]
     fn tuple_channel() {
         let _ = make_channel!((i32, u32), 10);
+    }
+
+    fn freeq<const N: usize, T, F, R>(channel: &Channel<T, N>, f: F) -> R
+    where
+        F: FnOnce(&mut Deque<u8, N>) -> R,
+    {
+        critical_section::with(|cs| f(channel.access(cs).freeq))
+    }
+
+    #[test]
+    fn dropping_waked_send_returns_freeq_item() {
+        let (mut tx, mut rx) = make_channel!(u8, 1);
+
+        tx.try_send(0).unwrap();
+        assert!(freeq(&rx.0, |q| q.is_empty()));
+
+        // Running this in a separate thread scope to ensure that `pinned_future` is dropped fully.
+        //
+        // Calling drop explicitly gets hairy because dropping things behind a `Pin` is not easy.
+        std::thread::scope(|scope| {
+            scope.spawn(|| {
+                let pinned_future = core::pin::pin!(tx.send(1));
+                let mut future = Cassette::new(pinned_future);
+
+                future.poll_on();
+
+                assert!(freeq(&rx.0, |q| q.is_empty()));
+                assert!(!rx.0.wait_queue.is_empty());
+
+                assert_eq!(rx.try_recv(), Ok(0));
+
+                assert!(freeq(&rx.0, |q| q.is_empty()));
+            });
+        });
+
+        assert!(!freeq(&rx.0, |q| q.is_empty()));
+
+        // Make sure that rx & tx are alive until here for good measure.
+        drop((tx, rx));
     }
 }
