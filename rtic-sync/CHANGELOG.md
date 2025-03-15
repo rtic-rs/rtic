@@ -7,6 +7,9 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+### Fixed
+- Improve handling of free slots for `send` by explicitly writing the free slot to the awoken future.
+
 ## v1.3.1 - 2025-03-12
 
 ### Fixed
