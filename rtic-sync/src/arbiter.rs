@@ -381,6 +381,7 @@ pub mod i2c {
     }
 }
 
+#[cfg(not(loom))]
 #[cfg(test)]
 mod tests {
     use super::*;

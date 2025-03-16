@@ -168,10 +168,10 @@ macro_rules! make_signal {
 }
 
 #[cfg(test)]
+#[cfg(not(loom))]
 mod tests {
-    use static_cell::StaticCell;
-
     use super::*;
+    use static_cell::StaticCell;
 
     #[test]
     fn empty() {
