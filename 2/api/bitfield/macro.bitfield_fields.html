@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Declares the fields of struct."><title>bitfield_fields in bitfield - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bitfield" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bitfield/index.html">bitfield</a><span class="version">0.13.2</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">bitfield_<wbr>fields</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate bitfield</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">bitfield</a></span><h1>Macro <span class="macro">bitfield_fields</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/bitfield/lib.rs.html#82-237">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! bitfield_fields {
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $msb:expr,
+     $lsb:expr, $count:expr) =&gt; { ... };
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $msb:expr,
+     $lsb:expr) =&gt; { ... };
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $bit:expr) =&gt; { ... };
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $msb:expr,
+     $lsb:expr, $count:expr) =&gt; { ... };
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $msb:expr,
+     $lsb:expr) =&gt; { ... };
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $bit:expr) =&gt; { ... };
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, $setter:ident:
+     $($exprs:expr),*) =&gt; { ... };
+    ($t:ty;) =&gt; { ... };
+    ($default_ty:ty; pub $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; #[$attribute:meta] $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attributes:meta])*) #[$attribute:meta] $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; ($(#[$attribute:meta])*) $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) =&gt; { ... };
+    ($previous_default_ty:ty; $default_ty:ty; $($rest:tt)*) =&gt; { ... };
+    ($default_ty:ty; $($rest:tt)*) =&gt; { ... };
+    ($($rest:tt)*) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Declares the fields of struct.</p>
+<p>This macro will generate the methods to access the fields of a bitfield. It must be called
+from an <code>impl</code> block for a type that implements the <code>BitRange</code> and/or the <code>Bit</code> traits
+(which traits are required depending on what type of fields are used).</p>
+<p>The syntax of this macro is composed of declarations ended by semicolons. There are two types
+of declarations: default type, and fields.</p>
+<p>A default type is just a type followed by a semicolon. This will affect all the following field
+declarations.</p>
+<p>A field declaration is composed of the following:</p>
+<ul>
+<li>Optional attributes (<code>#[...]</code>), documentation comments (<code>///</code>) are attributes;</li>
+<li>An optional pub keyword to make the methods public</li>
+<li>An optional type followed by a comma</li>
+<li>Optionally, the word <code>into</code> followed by a type, followed by a comma</li>
+<li>The getter and setter idents, separated by a comma</li>
+<li>A colon</li>
+<li>One to three expressions of type <code>usize</code></li>
+</ul>
+<p>The attributes and pub will be applied to the two methods generated.</p>
+<p>If the <code>into</code> part is used, the getter will convert the field after reading it.</p>
+<p>The getter and setter idents can be <code>_</code> to not generate one of the two. For example, if the
+setter is <code>_</code>, the field will be read-only.</p>
+<p>The expressions at the end are the bit positions. Their meaning depends on the number of
+expressions:</p>
+<ul>
+<li>One expression: the field is a single bit. The type is ignored and <code>bool</code> is used. The trait
+<code>Bit</code> is used.</li>
+<li>Two expressions: <code>msb, lsb</code>, the field is composed of the bits from <code>msb</code> to <code>lsb</code>, included.</li>
+<li>Three expressions: <code>msb, lsb, count</code>, the field is an array. The first element is composed of
+the bits from <code>msb</code> to <code>lsb</code>. The following elements are consecutive bits range of the same
+size.</li>
+</ul>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">bitfield_fields!</span>{
+    <span class="comment">// The default type will be `u64
+    </span>u64;
+    <span class="comment">// filed1 is read-write, public, the methods are inline
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub </span>field1, set_field1: <span class="number">10</span>, <span class="number">0</span>;
+    <span class="comment">// `field2` is  read-only, private, and of type bool.
+    </span>field2, <span class="kw">_ </span>: <span class="number">0</span>;
+    <span class="comment">// `field3` will be read as an `u32` and then converted to `FooBar`.
+    // The setter is not affected, it still need an `u32` value.
+    </span>u32, into FooBar, field3, set_field3: <span class="number">10</span>, <span class="number">0</span>;
+    <span class="comment">// `field4` will be read as an `u32` and then converted to `FooBar`.
+    // The setter will take a `FooBar`, and converted back to an `u32`.
+    </span>u32, from into FooBar, field4, set_field4: <span class="number">10</span>, <span class="number">0</span>;
+}</code></pre></div>
+</div></details></section></div></main></body></html>

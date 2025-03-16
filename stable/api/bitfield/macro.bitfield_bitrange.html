@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Implements `BitRange` for a tuple struct (or “newtype”)."><title>bitfield_bitrange in bitfield - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bitfield" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bitfield/index.html">bitfield</a><span class="version">0.13.2</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">bitfield_<wbr>bitrange</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate bitfield</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">bitfield</a></span><h1>Macro <span class="macro">bitfield_bitrange</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/bitfield/lib.rs.html#357-444">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! bitfield_bitrange {
+    (@impl_bitrange_slice $name:ident, $slice_ty:ty, $bitrange_ty:ty) =&gt; { ... };
+    (@impl_bitrange_slice_msb0 $name:ident, $slice_ty:ty, $bitrange_ty:ty) =&gt; { ... };
+    (struct $name:ident([$t:ty])) =&gt; { ... };
+    (struct $name:ident(MSB0 [$t:ty])) =&gt; { ... };
+    (struct $name:ident($t:ty)) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Implements <code>BitRange</code> for a tuple struct (or “newtype”).</p>
+<p>This macro will generate an implementation of the <code>BitRange</code> trait for an existing single
+element tuple struct.</p>
+<p>The syntax is more or less the same as declaring a “newtype”, <strong>without</strong> the attributes,
+documentation comments and pub keyword.</p>
+<p>The difference with a normal “newtype” is the type in parentheses. If the type is <code>[t]</code> (where
+<code>t</code> is any of the unsigned integer type), the “newtype” will be generic and implement
+<code>BitRange</code> for <code>T: AsMut&lt;[t]&gt; + AsRef&lt;[t]&gt;</code> (for example a slice, an array or a <code>Vec</code>). You can
+also use <code>MSB0 [t]</code>. The difference will be the positions of the bit. You can use the
+<code>bits_positions</code> example to see where each bits is. If the type is neither of this two, the
+“newtype” will wrap a value of the specified type and implements <code>BitRange</code> the same ways as
+the wrapped type.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">struct </span>BitField1(u32);
+<span class="macro">bitfield_bitrange!</span>{<span class="kw">struct </span>BitField1(u32)}
+
+<span class="kw">struct </span>BitField2&lt;T&gt;(T);
+<span class="macro">bitfield_bitrange!</span>{<span class="kw">struct </span>BitField2([u8])}
+
+<span class="kw">struct </span>BitField3&lt;T&gt;(T);
+<span class="macro">bitfield_bitrange!</span>{<span class="kw">struct </span>BitField3(MSB0 [u8])}</code></pre></div>
+</div></details></section></div></main></body></html>

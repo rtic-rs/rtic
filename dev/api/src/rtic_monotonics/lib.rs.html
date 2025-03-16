@@ -1,0 +1,249 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `rtic-monotonics/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rtic_monotonics" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rtic_monotonics/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
+<a href="#2" id="2">2</a>
+<a href="#3" id="3">3</a>
+<a href="#4" id="4">4</a>
+<a href="#5" id="5">5</a>
+<a href="#6" id="6">6</a>
+<a href="#7" id="7">7</a>
+<a href="#8" id="8">8</a>
+<a href="#9" id="9">9</a>
+<a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
+<a href="#12" id="12">12</a>
+<a href="#13" id="13">13</a>
+<a href="#14" id="14">14</a>
+<a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
+<a href="#49" id="49">49</a>
+<a href="#50" id="50">50</a>
+<a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a></pre></div><pre class="rust"><code><span class="doccomment">//! In-tree implementations of the [`rtic_time::Monotonic`] (reexported) trait for
+//! timers &amp; clocks found on commonly used microcontrollers.
+//!
+//! If you are using a microcontroller where CAS operations are not available natively, you might
+//! have to enable the `critical-section` or `unsafe-assume-single-core` feature of the
+//! [`portable-atomic`](https://docs.rs/portable-atomic/latest/portable_atomic/) dependency
+//! yourself for this dependency to compile.
+//!
+//! To enable the implementations, you must enable a feature for the specific MCU you're targeting.
+//!
+//! # Cortex-M Systick
+//! The `systick` monotonic works on all cortex-M parts, and requires that the feature `cortex-m-systick` is enabled.
+//!
+//! # RP2040
+//! The RP2040 monotonics require that the `rp2040` feature is enabled.
+//!
+//! # i.MX RT
+//! The i.MX RT monotonics require that the feature `imxrt_gpt1` or `imxrt_gpt2` is enabled.
+//!
+//! # nRF
+//! nRF monotonics require that one of the available `nrf52*` features is enabled.
+//!
+//! All implementations of timers for the nRF52 family are documented here. Monotonics that
+//! are not available on all parts in this family will have an `Available on crate features X only`
+//! tag, describing what parts _do_ support that monotonic. Monotonics without an
+//! `Available on crate features X only` tag are available on any `nrf52*` feature.
+//!
+//! # ATSAMD
+//! Monotonics for the ATSAMD family of parts using the real time clock (RTC) are provided in the
+//! [`atsamd-hal`](https://docs.rs/atsamd-hal/latest/atsamd_hal/rtc/rtic/index.html)
+//! crate with the `rtic` feature enabled.
+//!
+//! # Priority of interrupt handlers
+//!
+//! The priority of timer interrupts are based on `RTIC_ASYNC_MAX_LOGICAL_PRIO` generated by RTIC.
+//! It is calculated to be 1 less than the maximum hardware task priority (to not have impact on
+//! hardware tasks), or, if no hardware task is available, is set to the maximum priority in the
+//! system.
+
+</span><span class="comment">// To build these docs correctly:
+// RUSTFLAGS="--cfg docsrs" cargo +nightly doc --features thumbv7-backend,cortex-m-systick,rp2040,nrf52840,imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1011,stm32h725ag,stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15
+
+</span><span class="attr">#![no_std]
+#![deny(missing_docs)]
+#![allow(incomplete_features)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
+</span><span class="kw">pub use </span>fugit;
+<span class="kw">pub use </span>rtic_time::{
+    <span class="self">self</span>, monotonic::TimerQueueBasedMonotonic, timer_queue::TimerQueueBackend, Monotonic,
+    TimeoutError,
+};
+
+<span class="attr">#[cfg(feature = <span class="string">"esp32c3-systimer"</span>)]
+</span><span class="kw">pub mod </span>esp32c3;
+
+<span class="attr">#[cfg(feature = <span class="string">"cortex-m-systick"</span>)]
+</span><span class="kw">pub mod </span>systick;
+
+<span class="attr">#[cfg(feature = <span class="string">"rp2040"</span>)]
+</span><span class="kw">pub mod </span>rp2040;
+
+<span class="attr">#[cfg(feature = <span class="string">"rp235x"</span>)]
+</span><span class="kw">pub mod </span>rp235x;
+
+<span class="attr">#[cfg(feature = <span class="string">"imxrt"</span>)]
+</span><span class="kw">pub mod </span>imxrt;
+
+<span class="attr">#[cfg(any(
+    feature = <span class="string">"nrf52805"</span>,
+    feature = <span class="string">"nrf52810"</span>,
+    feature = <span class="string">"nrf52811"</span>,
+    feature = <span class="string">"nrf52832"</span>,
+    feature = <span class="string">"nrf52833"</span>,
+    feature = <span class="string">"nrf52840"</span>,
+    feature = <span class="string">"nrf5340-app"</span>,
+    feature = <span class="string">"nrf5340-net"</span>,
+    feature = <span class="string">"nrf9160"</span>,
+))]
+</span><span class="kw">pub mod </span>nrf;
+
+<span class="comment">// Notice that `stm32` is not a feature, it is a compilation flag set in build.rs.
+</span><span class="attr">#[cfg(stm32)]
+</span><span class="kw">pub mod </span>stm32;
+
+<span class="attr">#[allow(dead_code)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const fn </span>cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -&gt; u8 {
+    ((<span class="number">1 </span>&lt;&lt; nvic_prio_bits) - logical) &lt;&lt; (<span class="number">8 </span>- nvic_prio_bits)
+}
+
+<span class="attr">#[cfg(any(
+    feature = <span class="string">"rp235x"</span>,
+    feature = <span class="string">"rp2040"</span>,
+    feature = <span class="string">"nrf52805"</span>,
+    feature = <span class="string">"nrf52810"</span>,
+    feature = <span class="string">"nrf52811"</span>,
+    feature = <span class="string">"nrf52832"</span>,
+    feature = <span class="string">"nrf52833"</span>,
+    feature = <span class="string">"nrf52840"</span>,
+    feature = <span class="string">"nrf5340-app"</span>,
+    feature = <span class="string">"nrf5340-net"</span>,
+    feature = <span class="string">"nrf9160"</span>,
+    feature = <span class="string">"imxrt"</span>,
+    stm32,
+))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>set_monotonic_prio(
+    prio_bits: u8,
+    interrupt: <span class="kw">impl </span>cortex_m::interrupt::InterruptNumber,
+) {
+    <span class="kw">extern </span><span class="string">"C" </span>{
+        <span class="kw">static </span>RTIC_ASYNC_MAX_LOGICAL_PRIO: u8;
+    }
+
+    <span class="kw">let </span>max_prio = RTIC_ASYNC_MAX_LOGICAL_PRIO.max(<span class="number">1</span>).min(<span class="number">1 </span>&lt;&lt; prio_bits);
+
+    <span class="kw">let </span>hw_prio = <span class="kw">crate</span>::cortex_logical2hw(max_prio, prio_bits);
+
+    <span class="comment">// We take ownership of the entire IRQ and all settings to it, we only change settings
+    // for the IRQ we control.
+    // This will also compile-error in case the NVIC changes in size.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>nvic: cortex_m::peripheral::NVIC = core::mem::transmute(());
+
+    nvic.set_priority(interrupt, hw_prio);
+}
+</code></pre></div></section></main></body></html>

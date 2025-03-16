@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["BOOT_CFG1","BOOT_CFG2","BOOT_CFG3","BOOT_CFG4"]};

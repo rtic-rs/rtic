@@ -1,0 +1,99 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="crates.io crates.io Documentation Minimum Supported Rust Version"><title>embedded_hal - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="embedded_hal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../embedded_hal/index.html">embedded_<wbr>hal</a><span class="version">1.0.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#embedded-hal" title="`embedded-hal`"><code>embedded-hal</code></a><ul><li><a href="#companion-crates" title="Companion crates">Companion crates</a></li><li><a href="#serialuart-traits" title="Serial/UART traits">Serial/UART traits</a></li><li><a href="#design-goals" title="Design goals">Design goals</a></li><li><a href="#out-of-scope" title="Out of scope">Out of scope</a></li><li><a href="#platform-agnostic-drivers" title="Platform agnostic drivers">Platform agnostic drivers</a></li><li><a href="#optional-cargo-features" title="Optional Cargo features">Optional Cargo features</a></li><li><a href="#minimum-supported-rust-version-msrv" title="Minimum Supported Rust Version (MSRV)">Minimum Supported Rust Version (MSRV)</a></li><li><a href="#license" title="License">License</a></li></ul></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>embedded_hal</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/embedded_hal/lib.rs.html#1-21">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><a href="https://crates.io/crates/embedded-hal"><img src="https://img.shields.io/crates/d/embedded-hal.svg" alt="crates.io" /></a>
+<a href="https://crates.io/crates/embedded-hal"><img src="https://img.shields.io/crates/v/embedded-hal.svg" alt="crates.io" /></a>
+<a href="https://docs.rs/embedded-hal"><img src="https://docs.rs/embedded-hal/badge.svg" alt="Documentation" /></a>
+<img src="https://img.shields.io/badge/rustc-1.60+-blue.svg" alt="Minimum Supported Rust Version" /></p>
+<h2 id="embedded-hal"><a class="doc-anchor" href="#embedded-hal">§</a><code>embedded-hal</code></h2>
+<blockquote>
+<p>A Hardware Abstraction Layer (HAL) for embedded systems</p>
+</blockquote>
+<p>This project is developed and maintained by the <a href="https://github.com/rust-embedded/wg#the-hal-team">HAL team</a>.</p>
+<h3 id="companion-crates"><a class="doc-anchor" href="#companion-crates">§</a>Companion crates</h3>
+<p>The main <code>embedded-hal</code> crate contains only blocking traits, where the operation is done
+synchronously before returning. Check out the following crates, which contain versions
+of the traits for other execution models:</p>
+<ul>
+<li><a href="https://docs.rs/embedded-hal-async"><code>embedded-hal-async</code></a>: async/await-based.</li>
+<li><a href="https://docs.rs/embedded-hal-nb"><code>embedded-hal-nb</code></a>: polling-based, using the <code>nb</code> crate.</li>
+</ul>
+<p>The <a href="https://docs.rs/embedded-hal-bus"><code>embedded-hal-bus</code></a> crate provides utilities for sharing
+SPI and I2C buses.</p>
+<p>Additionally, more domain-specific traits are available in separate crates:</p>
+<ul>
+<li><a href="https://docs.rs/embedded-can"><code>embedded-can</code></a>: Controller Area Network (CAN)</li>
+<li><a href="https://docs.rs/embedded-io"><code>embedded-io</code></a>: I/O byte streams (like <code>std::io</code>, but <code>no-std</code>-compatible).</li>
+</ul>
+<h3 id="serialuart-traits"><a class="doc-anchor" href="#serialuart-traits">§</a>Serial/UART traits</h3>
+<p>There is no serial traits in <code>embedded-hal</code>. Instead, use <a href="https://crates.io/crates/embedded-io"><code>embedded-io</code></a>.
+A serial port is essentially a byte-oriented stream, and that’s what <code>embedded-io</code> models. Sharing the traits
+with all byte streams has some advantages. For example, it allows generic code providing a command-line interface
+or a console to operate either on hardware serial ports or on virtual ones like Telnet or USB CDC-ACM.</p>
+<h3 id="design-goals"><a class="doc-anchor" href="#design-goals">§</a>Design goals</h3>
+<p>The HAL</p>
+<ul>
+<li>
+<p>Must <em>erase</em> device specific details. Neither register, register blocks, nor magic values should
+appear in the API.</p>
+</li>
+<li>
+<p>Must be generic <em>within</em> a device and <em>across</em> devices. The API to use a serial interface must
+be the same regardless of whether the implementation uses the USART1 or UART4 peripheral of a
+device or the UART0 peripheral of another device.</p>
+</li>
+<li>
+<p>Where possible must <em>not</em> be tied to a specific asynchronous model. The API should be usable
+in blocking mode, with the <code>futures</code> model, with an async/await model or with a callback model.
+(cf. the <a href="https://docs.rs/nb"><code>nb</code></a> crate)</p>
+</li>
+<li>
+<p>Must be minimal, and thus easy to implement and zero cost, yet highly composable. People that
+want higher level abstraction should <em>prefer to use this HAL</em> rather than <em>re-implement</em>
+register manipulation code.</p>
+</li>
+<li>
+<p>Serve as a foundation for building an ecosystem of platform-agnostic drivers. Here driver
+means a library crate that lets a target platform interface an external device like a digital
+sensor or a wireless transceiver. The advantage of this system is that by writing the driver as
+a generic library on top of <code>embedded-hal</code> driver authors can support any number of target
+platforms (e.g. Cortex-M microcontrollers, AVR microcontrollers, embedded Linux, etc.). The
+advantage for application developers is that by adopting <code>embedded-hal</code> they can unlock all
+these drivers for their platform.</p>
+</li>
+<li>
+<p>Trait methods must be fallible so that they can be used in any possible situation.
+Nevertheless, HAL implementations can additionally provide infallible versions of the same methods
+if they can never fail in their platform. This way, generic code can use the fallible abstractions
+provided here but platform-specific code can avoid fallibility-related boilerplate if possible.</p>
+</li>
+</ul>
+<h3 id="out-of-scope"><a class="doc-anchor" href="#out-of-scope">§</a>Out of scope</h3>
+<ul>
+<li>Initialization and configuration stuff like “ensure this serial interface and that SPI
+interface are not using the same pins”. The HAL will focus on <em>doing I/O</em>.</li>
+</ul>
+<h3 id="platform-agnostic-drivers"><a class="doc-anchor" href="#platform-agnostic-drivers">§</a>Platform agnostic drivers</h3>
+<p>You can find platform-agnostic drivers built on top of <code>embedded-hal</code> on crates.io by <a href="https://crates.io/keywords/embedded-hal">searching
+for the <em>embedded-hal</em> keyword</a>.</p>
+<p>If you are writing a platform-agnostic driver yourself you are highly encouraged to <a href="https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata">add the
+embedded-hal keyword</a>
+to your crate before publishing it!</p>
+<h3 id="optional-cargo-features"><a class="doc-anchor" href="#optional-cargo-features">§</a>Optional Cargo features</h3>
+<ul>
+<li><strong><code>defmt-03</code></strong>: Derive <code>defmt::Format</code> from <code>defmt</code> 0.3 for enums and structs.</li>
+</ul>
+<h3 id="minimum-supported-rust-version-msrv"><a class="doc-anchor" href="#minimum-supported-rust-version-msrv">§</a>Minimum Supported Rust Version (MSRV)</h3>
+<p>This crate is guaranteed to compile on stable Rust 1.60 and up. It <em>might</em>
+compile with older versions but that may change in any new patch release.</p>
+<p>See <a href="../docs/msrv.md">here</a> for details on how the MSRV may be upgraded.</p>
+<h3 id="license"><a class="doc-anchor" href="#license">§</a>License</h3>
+<p>Licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0 (<a href="LICENSE-APACHE">LICENSE-APACHE</a> or
+<a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a>)</li>
+<li>MIT license (<a href="LICENSE-MIT">LICENSE-MIT</a> or <a href="http://opensource.org/licenses/MIT">http://opensource.org/licenses/MIT</a>)</li>
+</ul>
+<p>at your option.</p>
+<h4 id="contribution"><a class="doc-anchor" href="#contribution">§</a>Contribution</h4>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="delay/index.html" title="mod embedded_hal::delay">delay</a></div><div class="desc docblock-short">Delays.</div></li><li><div class="item-name"><a class="mod" href="digital/index.html" title="mod embedded_hal::digital">digital</a></div><div class="desc docblock-short">Digital I/O.</div></li><li><div class="item-name"><a class="mod" href="i2c/index.html" title="mod embedded_hal::i2c">i2c</a></div><div class="desc docblock-short">Blocking I2C API.</div></li><li><div class="item-name"><a class="mod" href="pwm/index.html" title="mod embedded_hal::pwm">pwm</a></div><div class="desc docblock-short">Pulse Width Modulation (PWM) traits.</div></li><li><div class="item-name"><a class="mod" href="spi/index.html" title="mod embedded_hal::spi">spi</a></div><div class="desc docblock-short">Blocking SPI master mode traits.</div></li></ul></section></div></main></body></html>
