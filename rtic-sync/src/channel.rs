@@ -836,3 +836,57 @@ mod tokio_tests {
         }
     }
 }
+
+#[cfg(test)]
+#[cfg(loom)]
+mod loom_test {
+    use cassette::Cassette;
+    use loom::thread;
+
+    #[macro_export]
+    #[allow(missing_docs)]
+    macro_rules! make_loom_channel {
+        ($type:ty, $size:expr) => {{
+            let channel: crate::channel::Channel<$type, $size> = super::Channel::new();
+            let boxed = Box::new(channel);
+            let boxed = Box::leak(boxed);
+
+            // SAFETY: This is safe as we hide the static mut from others to access it.
+            // Only this point is where the mutable access happens.
+            boxed.split()
+        }};
+    }
+
+    // This test tests the following scenarios:
+    // 1. Receiver is dropped while concurrent senders are waiting to send.
+    // 2. Concurrent senders are competing for the same free slot.
+    #[test]
+    pub fn concurrent_send_while_full_and_drop() {
+        loom::model(|| {
+            let (mut tx, mut rx) = make_loom_channel!([u8; 20], 1);
+            let mut cloned = tx.clone();
+
+            tx.try_send([1; 20]).unwrap();
+
+            let handle1 = thread::spawn(move || {
+                let future = std::pin::pin!(tx.send([1; 20]));
+                let mut future = Cassette::new(future);
+                if future.poll_on().is_none() {
+                    future.poll_on();
+                }
+            });
+
+            rx.try_recv().ok();
+
+            let future = std::pin::pin!(cloned.send([1; 20]));
+            let mut future = Cassette::new(future);
+            if future.poll_on().is_none() {
+                future.poll_on();
+            }
+
+            drop(rx);
+
+            handle1.join().unwrap();
+        });
+    }
+}
