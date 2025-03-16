@@ -161,7 +161,7 @@ impl<T: Copy> SignalReader<'_, T> {
 #[macro_export]
 macro_rules! make_signal {
     ( $T:ty ) => {{
-        static SIGNAL: Signal<$T> = Signal::new();
+        static SIGNAL: $crate::signal::Signal<$T> = $crate::signal::Signal::new();
 
         SIGNAL.split()
     }};
