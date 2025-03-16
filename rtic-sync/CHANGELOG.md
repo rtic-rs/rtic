@@ -7,8 +7,12 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+## v1.3.2 - 2025-03-16
+
 ### Fixed
+
 - Improve handling of free slots for `send` by explicitly writing the free slot to the awoken future.
+- Fix all known instances of #780
 
 ## v1.3.1 - 2025-03-12
 
