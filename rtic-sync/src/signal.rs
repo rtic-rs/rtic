@@ -157,7 +157,7 @@ impl<T: Copy> SignalReader<'_, T> {
     }
 }
 
-/// Convenience macro for creating a Signal.
+/// Creates a split signal with `'static` lifetime.
 #[macro_export]
 macro_rules! make_signal {
     ( $T:ty ) => {{
