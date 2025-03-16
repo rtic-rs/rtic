@@ -7,6 +7,10 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+### Changed
+
+- Add `loom` support.
+
 ## v1.3.2 - 2025-03-16
 
 ### Fixed
