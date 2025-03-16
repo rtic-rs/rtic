@@ -491,6 +491,16 @@ jobs:
       - name: Run cargo test
         run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} test ${{ matrix.package }}
 
+  loom-tests:
+    name: rtic-sync loom tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Run cargo test
+        run: RUSTFLAGS="--cfg loom" cargo test -p rtic-sync --release --lib 
+
   # Build documentation, check links
   docs:
     name: build docs
