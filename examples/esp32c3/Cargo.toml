@@ -16,7 +16,7 @@ esp-backtrace = { version = "0.15.0", features = [
     "exception-handler",
     "println",
 ] }
-esp32c3 = {version = "0.27.0", features = ["critical-section"]}
+esp32c3 = {version = "0.28.0", features = ["critical-section"]}
 esp-println = { version = "0.13.0", features = ["esp32c3"] }
 
 [features]
