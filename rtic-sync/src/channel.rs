@@ -77,8 +77,58 @@ impl<T, const N: usize> Channel<T, N> {
         }
     }
 
+    /// Clear any remaining items from this `Channel`.
+    pub fn clear(&mut self) {
+        for _ in self.queued_items() {}
+    }
+
+    /// Return an iterator over the still-queued items, removing them
+    /// from this channel.
+    pub fn queued_items(&mut self) -> impl Iterator<Item = T> + '_ {
+        struct Iter<'a, T, const N: usize> {
+            inner: &'a mut Channel<T, N>,
+        }
+
+        impl<T, const N: usize> Iterator for Iter<'_, T, N> {
+            type Item = T;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                let slot = self.inner.readyq.get_mut().pop_back()?;
+
+                let value = unsafe {
+                    // SAFETY: `ready` is a valid slot.
+                    let ptr = self.inner.slots.get_unchecked(slot as usize).get() as *const T;
+                    // SAFETY: `ptr` points to an initialized `T`.
+                    core::ptr::read(ptr)
+                };
+
+                assert!(!self.inner.freeq.get_mut().is_full());
+                unsafe {
+                    // SAFETY: `freeq` is not ful.
+                    self.inner.freeq.get_mut().push_back_unchecked(slot);
+                }
+
+                Some(value)
+            }
+        }
+
+        Iter { inner: self }
+    }
+
     /// Split the queue into a `Sender`/`Receiver` pair.
+    ///
+    /// # Panics
+    /// This function panics if there are items in this channel while splitting.
+    ///
+    /// Call [`Channel::clear`] to clear all items from it, or [`Channel::queued_items`] to retrieve
+    /// an iterator that yields the values.
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
+        assert!(
+            self.readyq.get_mut().is_empty(),
+            "Cannot re-split non-empty queue. Call `Channel::clear()`."
+        );
+        self.freeq.get_mut().clear();
+
         // Fill free queue
         for idx in 0..N as u8 {
             assert!(!self.freeq.get_mut().is_full());
@@ -131,6 +181,12 @@ impl<T, const N: usize> Channel<T, N> {
                 unsafe { self.access(cs).freeq.push_back_unchecked(slot) }
             }
         })
+    }
+}
+
+impl<T, const N: usize> Drop for Channel<T, N> {
+    fn drop(&mut self) {
+        self.clear();
     }
 }
 
