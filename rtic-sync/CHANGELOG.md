@@ -7,10 +7,12 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
-- Avoid a critical section when a `send`-link is popped and when returning `free_slot`.
 ### Changed
 
+- Actually drop items left over in `Channel` on drop of `Channel`.
+- Allow for `split()`-ing a channel more than once without immediately panicking.
 - Add `loom` support.
+- Avoid a critical section when a `send`-link is popped and when returning `free_slot`.
 - Don't force `Signal` import when using `make_signal` macro
 - Update `make_signal`'s documentation to match `make_channel`'s
 
