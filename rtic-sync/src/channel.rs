@@ -664,6 +664,9 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
 #[cfg(test)]
 #[cfg(not(loom))]
 mod tests {
+    use core::sync::atomic::AtomicBool;
+    use std::sync::Arc;
+
     use cassette::Cassette;
 
     use super::*;
@@ -800,6 +803,76 @@ mod tests {
 
         // Make sure that rx & tx are alive until here for good measure.
         drop((tx, rx));
+    }
+
+    #[derive(Debug)]
+    struct SetToTrueOnDrop(Arc<AtomicBool>);
+
+    impl Drop for SetToTrueOnDrop {
+        fn drop(&mut self) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+
+    #[test]
+    fn non_popped_item_is_dropped() {
+        let mut channel: Channel<SetToTrueOnDrop, 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        let value = Arc::new(AtomicBool::new(false));
+        tx.try_send(SetToTrueOnDrop(value.clone())).unwrap();
+
+        drop((tx, rx));
+        drop(channel);
+
+        assert!(value.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    pub fn cleared_item_is_dropped() {
+        let mut channel: Channel<SetToTrueOnDrop, 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        let value = Arc::new(AtomicBool::new(false));
+        tx.try_send(SetToTrueOnDrop(value.clone())).unwrap();
+
+        drop((tx, rx));
+
+        assert!(!value.load(Ordering::SeqCst));
+
+        channel.clear();
+
+        assert!(value.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    #[should_panic]
+    pub fn splitting_non_empty_channel_panics() {
+        let mut channel: Channel<(), 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        tx.try_send(()).unwrap();
+
+        drop((tx, rx));
+
+        channel.split();
+    }
+
+    #[test]
+    pub fn splitting_empty_channel_works() {
+        let mut channel: Channel<(), 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        tx.try_send(()).unwrap();
+
+        drop((tx, rx));
+
+        channel.clear();
+        channel.split();
     }
 }
 
