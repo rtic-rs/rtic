@@ -128,6 +128,9 @@ impl<T, const N: usize> Channel<T, N> {
                     core::ptr::read(ptr)
                 };
 
+                // NOTE: do not `return_free_slot`, as we have mutable
+                // access to this `Channel` and no `Receiver` or `Sender`
+                // exist.
                 assert!(!self.inner.freeq.as_mut().is_full());
                 unsafe {
                     // SAFETY: `freeq` is not ful.
