@@ -7,8 +7,9 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+- Avoid a critical section when a `send`-link is popped and when returning `free_slot`.
 - Don't force `Signal` import when using `make_signal` macro
-- Update `make_signal`'s documentation to match `make_channel`'s 
+- Update `make_signal`'s documentation to match `make_channel`'s
 
 ## v1.3.2 - 2025-03-16
 
