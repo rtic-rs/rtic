@@ -366,10 +366,15 @@ impl<T, const N: usize> Sender<'_, T, N> {
                 let link = unsafe { link_ptr.get() };
 
                 // We are already in the wait queue.
-                if let Some(link) = link {
-                    if link.is_popped() {
+                if let Some(queue_link) = link {
+                    if queue_link.is_popped() {
                         // SAFETY: `free_slot_ptr` is valid for writes until the end of this future.
                         let slot = unsafe { free_slot_ptr.replace(None, cs) };
+
+                        // Our link was popped, so it is most definitely not in the list.
+                        // We can safely & correctly `take` it to prevent ourselves from
+                        // redundantly attempting to remove it from the list a 2nd time.
+                        link.take();
 
                         // If our link is popped, then:
                         // 1. We were popped by `return_free_lot` and provided us with a slot.
