@@ -77,8 +77,61 @@ impl<T, const N: usize> Channel<T, N> {
         }
     }
 
+    /// Clear any remaining items from this `Channel`.
+    pub fn clear(&mut self) {
+        for _ in self.queued_items() {}
+    }
+
+    /// Return an iterator over the still-queued items, removing them
+    /// from this channel.
+    pub fn queued_items(&mut self) -> impl Iterator<Item = T> + '_ {
+        struct Iter<'a, T, const N: usize> {
+            inner: &'a mut Channel<T, N>,
+        }
+
+        impl<T, const N: usize> Iterator for Iter<'_, T, N> {
+            type Item = T;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                let slot = self.inner.readyq.get_mut().pop_back()?;
+
+                let value = unsafe {
+                    // SAFETY: `ready` is a valid slot.
+                    let ptr = self.inner.slots.get_unchecked(slot as usize).get() as *const T;
+                    // SAFETY: `ptr` points to an initialized `T`.
+                    core::ptr::read(ptr)
+                };
+
+                // NOTE: do not `return_free_slot`, as we have mutable
+                // access to this `Channel` and no `Receiver` or `Sender`
+                // exist.
+                assert!(!self.inner.freeq.get_mut().is_full());
+                unsafe {
+                    // SAFETY: `freeq` is not ful.
+                    self.inner.freeq.get_mut().push_back_unchecked(slot);
+                }
+
+                Some(value)
+            }
+        }
+
+        Iter { inner: self }
+    }
+
     /// Split the queue into a `Sender`/`Receiver` pair.
+    ///
+    /// # Panics
+    /// This function panics if there are items in this channel while splitting.
+    ///
+    /// Call [`Channel::clear`] to clear all items from it, or [`Channel::queued_items`] to retrieve
+    /// an iterator that yields the values.
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
+        assert!(
+            self.readyq.get_mut().is_empty(),
+            "Cannot re-split non-empty queue. Call `Channel::clear()`."
+        );
+        self.freeq.get_mut().clear();
+
         // Fill free queue
         for idx in 0..N as u8 {
             assert!(!self.freeq.get_mut().is_full());
@@ -131,6 +184,12 @@ impl<T, const N: usize> Channel<T, N> {
                 unsafe { self.access(cs).freeq.push_back_unchecked(slot) }
             }
         })
+    }
+}
+
+impl<T, const N: usize> Drop for Channel<T, N> {
+    fn drop(&mut self) {
+        self.clear();
     }
 }
 
@@ -569,6 +628,9 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
 
 #[cfg(test)]
 mod tests {
+    use core::sync::atomic::AtomicBool;
+    use std::sync::Arc;
+
     use cassette::Cassette;
 
     use super::*;
@@ -734,5 +796,75 @@ mod tests {
 
         // Make sure that rx & tx are alive until here for good measure.
         drop((tx, rx));
+    }
+
+    #[derive(Debug)]
+    struct SetToTrueOnDrop(Arc<AtomicBool>);
+
+    impl Drop for SetToTrueOnDrop {
+        fn drop(&mut self) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+
+    #[test]
+    fn non_popped_item_is_dropped() {
+        let mut channel: Channel<SetToTrueOnDrop, 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        let value = Arc::new(AtomicBool::new(false));
+        tx.try_send(SetToTrueOnDrop(value.clone())).unwrap();
+
+        drop((tx, rx));
+        drop(channel);
+
+        assert!(value.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    pub fn cleared_item_is_dropped() {
+        let mut channel: Channel<SetToTrueOnDrop, 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        let value = Arc::new(AtomicBool::new(false));
+        tx.try_send(SetToTrueOnDrop(value.clone())).unwrap();
+
+        drop((tx, rx));
+
+        assert!(!value.load(Ordering::SeqCst));
+
+        channel.clear();
+
+        assert!(value.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    #[should_panic]
+    pub fn splitting_non_empty_channel_panics() {
+        let mut channel: Channel<(), 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        tx.try_send(()).unwrap();
+
+        drop((tx, rx));
+
+        channel.split();
+    }
+
+    #[test]
+    pub fn splitting_empty_channel_works() {
+        let mut channel: Channel<(), 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        tx.try_send(()).unwrap();
+
+        drop((tx, rx));
+
+        channel.clear();
+        channel.split();
     }
 }
