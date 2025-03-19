@@ -25,15 +25,23 @@ portable-atomic = { version = "1", default-features = false }
 embedded-hal = { version = "1.0.0" }
 embedded-hal-async = { version = "1.0.0" }
 embedded-hal-bus = { version = "0.2.0", features = ["async"] }
-
 defmt-03 = { package = "defmt", version = "0.3", optional = true }
 
 [dev-dependencies]
 cassette = "0.3.0"
 static_cell = "2.1.0"
-tokio = { version = "1", features = ["rt", "macros", "time"] }
+
+[target.'cfg(not(loom))'.dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros", "time"], default-features = false }
 
 [features]
 default = []
 testing = ["critical-section/std", "rtic-common/testing"]
 defmt-03 = ["dep:defmt-03", "embedded-hal/defmt-03", "embedded-hal-async/defmt-03", "embedded-hal-bus/defmt-03"]
+
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = ['cfg(loom)'] }
+
+[target.'cfg(loom)'.dependencies]
+loom = { version = "0.7.2", features = [ "futures" ] }
+critical-section = { version = "1", features = [ "restore-state-bool" ] }
