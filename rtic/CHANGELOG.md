@@ -22,6 +22,7 @@ Example:
 
 ### Changed
 
+- Updated esp32c3 dependency to v0.28.0
 - Updated esp32c3 dependency to v0.27.0
 
 ### Added
