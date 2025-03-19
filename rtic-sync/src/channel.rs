@@ -246,7 +246,19 @@ impl SlotPtr {
         new_value: Option<u8>,
         _cs: critical_section::CriticalSection,
     ) -> Option<u8> {
-        // SAFETY: we are in a critical section.
+        // SAFETY: the critical section guarantees exclusive access, and the
+        // caller guarantees that the pointer is valid.
+        self.replace_exclusive(new_value)
+    }
+
+    /// Replace the value of this slot with `new_value`, and return
+    /// the old value.
+    ///
+    /// SAFETY: the pointer in this `SlotPtr` must be valid for writes, and the caller must guarantee exclusive
+    /// access to the underlying value..
+    unsafe fn replace_exclusive(&mut self, new_value: Option<u8>) -> Option<u8> {
+        // SAFETY: the caller has ensured that we have exclusive access & that
+        // the pointer is valid.
         unsafe { core::ptr::replace(self.0, new_value) }
     }
 }
@@ -338,17 +350,14 @@ impl<T, const N: usize> Sender<'_, T, N> {
             }
 
             // Return our potentially-unused free slot.
-            // Potentially unnecessary c-s because our link was already popped, so there
-            // is no way for anything else to access the free slot ptr. Gotta think
-            // about this a bit more...
-            critical_section::with(|cs| {
-                if let Some(freed_slot) = unsafe { free_slot_ptr2.replace(None, cs) } {
-                    // SAFETY: freed slot is passed to us from `return_free_slot`, which either
-                    // directly (through `try_recv`), or indirectly (through another `return_free_slot`)
-                    // comes from `readyq`.
-                    unsafe { self.0.return_free_slot(freed_slot) };
-                }
-            });
+            // Since we are certain that our link has been removed from the list (either
+            // pop-ed or removed just above), we have exclusive access to the free slot pointer.
+            if let Some(freed_slot) = unsafe { free_slot_ptr2.replace_exclusive(None) } {
+                // SAFETY: freed slot is passed to us from `return_free_slot`, which either
+                // directly (through `try_recv`), or indirectly (through another `return_free_slot`)
+                // comes from `readyq`.
+                unsafe { self.0.return_free_slot(freed_slot) };
+            }
         });
 
         let idx = poll_fn(|cx| {
