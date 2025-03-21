@@ -13,11 +13,10 @@ mod esp32c6 {
     use std::collections::HashSet;
     use syn::{parse, Attribute, Ident};
 
-    // Section 1.6.2 technical reference manual specifies which interrupts can be configured.
-    const EXTERNAL_INTERRUPTS: [u8; 28] = [
-        1, 2, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
-        28, 29, 30, 31,
-    ];
+    // esp-hal reserves interrupts 1-19:
+    // https://github.com/esp-rs/esp-hal/blob/esp-hal-v1.0.0-beta.0/esp-hal/src/interrupt/riscv.rs#L200
+    // https://github.com/esp-rs/esp-hal/blob/esp-hal-v1.0.0-beta.0/esp-hal/src/interrupt/riscv.rs#L725
+    const EXTERNAL_INTERRUPTS: [u8; 12] = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
 
     #[allow(clippy::too_many_arguments)]
     pub fn impl_mutex(
@@ -243,12 +242,9 @@ mod esp32c6 {
             )
             .zip(EXTERNAL_INTERRUPTS)
         {
-            // interrupt1...interrupt19 are already defined in esp_hal
-            if curr_cpu_id > 19 {
-                if *name == dispatcher_name {
-                    let ret = &("interrupt".to_owned() + &curr_cpu_id.to_string());
-                    stmts.push(quote!(#[export_name = #ret]));
-                }
+            if *name == dispatcher_name {
+                let ret = &("interrupt".to_owned() + &curr_cpu_id.to_string());
+                stmts.push(quote!(#[export_name = #ret]));
             }
         }
 
