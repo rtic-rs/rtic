@@ -25,6 +25,7 @@ Example:
 - Updated esp32c3 dependency to v0.28.0
 - Placate clippy
 - Updated esp32c3 dependency to v0.27.0
+- Allow software tasks to be diverging (return `!`) and give them `'static` context.
 
 ### Added
 
