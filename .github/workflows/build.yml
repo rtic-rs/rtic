@@ -65,7 +65,7 @@ jobs:
       - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.input.backend }} check
 
   # Clippy
-  # TODO: clippy hifive1, esp32-c3
+  # TODO: clippy esp32-c3
   clippy:
     name: clippy
     runs-on: ubuntu-22.04
@@ -73,16 +73,28 @@ jobs:
       matrix:
         input:
           - backend: thumbv7
+            platform: lm3s6965
             rustup-target: thumbv7m-none-eabi
 
           - backend: thumbv6
+            platform: lm3s6965
             rustup-target: thumbv6m-none-eabi
 
           - backend: thumbv8-base
+            platform: lm3s6965
             rustup-target: thumbv8m.base-none-eabi
 
           - backend: thumbv8-main
+            platform: lm3s6965
             rustup-target: thumbv8m.main-none-eabi
+
+          - backend: riscv32-imc-clint
+            platform: hifive1
+            rustup-target: riscv32imc-unknown-none-elf
+
+          - backend: riscv32-imc-mecall
+            platform: hifive1
+            rustup-target: riscv32imc-unknown-none-elf
 
     steps:
       - name: Checkout
@@ -97,7 +109,7 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.input.backend }} clippy
+      - run: cargo xtask --deny-warnings --platform ${{ matrix.input.platform }} --backend ${{ matrix.input.backend }} clippy
 
   # Verify all examples, checks
   checkexamples:
@@ -184,7 +196,7 @@ jobs:
 
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: Download QEMU
-        run: wget "${{ env.QEMU_URL }}" 
+        run: wget "${{ env.QEMU_URL }}"
 
       - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
         name: Extract QEMU

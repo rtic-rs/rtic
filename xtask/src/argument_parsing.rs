@@ -63,47 +63,26 @@ impl Package {
                 vec![Some(backend.to_rtic_macros_feature().to_string())]
             }
             Package::RticMonotonics => {
-                let features = if partial {
-                    &[
-                        "cortex-m-systick",
-                        "rp2040",
-                        "nrf52840",
-                        "imxrt_gpt1,imxrt-ral/imxrt1062",
-                        "stm32_tim2,stm32h725ag",
-                    ][..]
-                } else {
-                    &[
-                        "cortex-m-systick",
-                        "cortex-m-systick,systick-64bit",
-                        "rp2040",
-                        "nrf52805",
-                        "nrf52810",
-                        "nrf52811",
-                        "nrf52832",
-                        "nrf52833",
-                        "nrf52840",
-                        "nrf5340-app",
-                        "nrf5340-net",
-                        "nrf9160",
-                        "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062",
-                        "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag",
-                    ][..]
-                };
+                let features = backend.to_rtic_monotonics_features(partial);
 
-                features
-                    .iter()
-                    .map(|&s| {
-                        if matches!(backend, Backends::Thumbv6) {
-                            format!("{s},portable-atomic/critical-section")
-                        } else {
-                            s.to_string()
-                        }
-                    })
-                    .map(Some)
-                    .chain(std::iter::once(None))
-                    .collect()
+                if let Some(features) = features {
+                    features
+                        .iter()
+                        .map(|&s| {
+                            if matches!(backend, Backends::Thumbv6) {
+                                format!("{s},portable-atomic/critical-section")
+                            } else {
+                                s.to_string()
+                            }
+                        })
+                        .map(Some)
+                        .chain(std::iter::once(None))
+                        .collect()
+                } else {
+                    vec![None]
+                }
             }
-            Package::RticSync if matches!(backend, Backends::Thumbv6) => {
+            Package::RticSync if matches!(backend, Backends::Thumbv6) || !backend.is_arm() => {
                 vec![Some("portable-atomic/critical-section".into())]
             }
             _ => vec![None],
@@ -200,6 +179,7 @@ impl Backends {
             Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall-backend",
         }
     }
+
     #[allow(clippy::wrong_self_convention)]
     pub fn to_rtic_macros_feature(&self) -> &'static str {
         match self {
@@ -209,6 +189,45 @@ impl Backends {
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
             Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall",
         }
+    }
+
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_rtic_monotonics_features(&self, partial: bool) -> Option<&[&str]> {
+        if !self.is_arm() {
+            None
+        } else if partial {
+            Some(&[
+                "cortex-m-systick",
+                "rp2040",
+                "nrf52840",
+                "imxrt_gpt1,imxrt-ral/imxrt1062",
+                "stm32_tim2,stm32h725ag",
+            ])
+        } else {
+            Some(&[
+                "cortex-m-systick",
+                "cortex-m-systick,systick-64bit",
+                "rp2040",
+                "nrf52805",
+                "nrf52810",
+                "nrf52811",
+                "nrf52832",
+                "nrf52833",
+                "nrf52840",
+                "nrf5340-app",
+                "nrf5340-net",
+                "nrf9160",
+                "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062",
+                "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag",
+            ])
+        }
+    }
+
+    pub fn is_arm(&self) -> bool {
+        matches!(
+            self,
+            Self::Thumbv6 | Self::Thumbv7 | Self::Thumbv8Base | Self::Thumbv8Main
+        )
     }
 }
 
