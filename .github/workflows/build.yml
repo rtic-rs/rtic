@@ -69,33 +69,32 @@ jobs:
   # Compilation check (hifive1) TODO
   # checkhifive1:
 
-  # Clippy (lm3s6965)
-  clippylm3s6965:
-    name: clippy (lm3s6965)
+  # Clippy
+  # TODO: clippy hifive1, esp32-c3
+  clippy:
+    name: clippy
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        backend:
-          - thumbv7
-          - thumbv6
-          - thumbv8-base
-          - thumbv8-main
-        toolchain:
-          - stable
+        input:
+          - backend: thumbv7
+            rustup-target: thumbv7m-none-eabi
+
+          - backend: thumbv6
+            rustup-target: thumbv6m-none-eabi
+
+          - backend: thumbv8-base
+            rustup-target: thumbv8m.base-none-eabi
+
+          - backend: thumbv8-main
+            rustup-target: thumbv8m.main-none-eabi
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust ${{ matrix.toolchain }}
-        run: |
-          rustup override set ${{ matrix.toolchain }}
-
-      - name: Configure Rust target (v6, v7, v8.b v8.m)
-        run: |
-          rustup target add thumbv7m-none-eabi
-          rustup target add thumbv6m-none-eabi
-          rustup target add thumbv8m.base-none-eabi
-          rustup target add thumbv8m.main-none-eabi
+      - name: Configure Rust target
+        run:  rustup target add ${{ matrix.input.rustup-target }}
 
       - name: Add Rust component clippy
         run: rustup component add clippy
@@ -103,10 +102,7 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} clippy
-
-  # Clippy (hifive1) TODO
-  # clippyhifive1:
+      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.input.backend }} clippy
 
   # Verify all examples, checks
   checkexamples:
@@ -749,8 +745,7 @@ jobs:
       - formatcheck
       - checklm3s6965
       # - checkhifive1 # TODO
-      - clippylm3s6965
-      # - clippyhifive1 # TODO
+      - clippy
       - checkexamples
       - testexamples
       - tests
