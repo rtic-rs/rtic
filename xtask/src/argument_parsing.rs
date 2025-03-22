@@ -138,7 +138,7 @@ impl TestMetadata {
     }
 }
 
-#[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
+#[derive(clap::ValueEnum, Copy, Clone, Default, Debug, PartialEq)]
 pub enum Backends {
     Thumbv6,
     #[default]
@@ -193,7 +193,9 @@ impl Backends {
 
     #[allow(clippy::wrong_self_convention)]
     pub fn to_rtic_monotonics_features(&self, partial: bool) -> Option<&[&str]> {
-        if !self.is_arm() {
+        if self == &Self::RiscvEsp32C3 {
+            Some(&["esp32c3-systimer"])
+        } else if !self.is_arm() {
             None
         } else if partial {
             Some(&[
