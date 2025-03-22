@@ -1,4 +1,4 @@
-/// GENERIC RE-EXPORTS: needed for all RTIC backends
+//! GENERIC RE-EXPORTS: needed for all RTIC backends
 
 /// Read the stack pointer.
 #[inline(always)]
