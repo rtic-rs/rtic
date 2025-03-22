@@ -34,35 +34,47 @@ jobs:
         run:  cargo xtask --verbose fmt -c
 
   # Compilation check
-  # TODO: check hifive1, esp32-c3
+  # TODO: check esp32-c3
   check:
-    name: check (lm3s6965)
+    name: check
     runs-on: ubuntu-22.04
     strategy:
       matrix:
         input:
           - backend: thumbv7
+            platform: lm3s6965
             rustup-target: thumbv7m-none-eabi
 
           - backend: thumbv6
+            platform: lm3s6965
             rustup-target: thumbv6m-none-eabi
 
           - backend: thumbv8-base
+            platform: lm3s6965
             rustup-target: thumbv8m.base-none-eabi
 
           - backend: thumbv8-main
+            platform: lm3s6965
             rustup-target: thumbv8m.main-none-eabi
+
+          - backend: riscv32-imc-clint
+            platform: hifive1
+            rustup-target: riscv32imc-unknown-none-elf
+
+          - backend: riscv32-imc-mecall
+            platform: hifive1
+            rustup-target: riscv32imc-unknown-none-elf
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Rust target (v6, v7, v8.b v8.m)
+      - name: Configure Rust target
         run: rustup target add ${{ matrix.input.rustup-target }}
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.input.backend }} check
+      - run: cargo xtask --deny-warnings --platform ${{ matrix.input.platform }} --backend ${{ matrix.input.backend }} check
 
   # Clippy
   # TODO: clippy esp32-c3
