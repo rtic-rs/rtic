@@ -152,25 +152,18 @@ jobs:
           - backend: riscv32-imc-clint
             platform: hifive1
             rustup-target: riscv32imc-unknown-none-elf
-            custom-toolchain: rustup toolchain install nightly-2023-11-14 --component rust-src --target riscv32imc-unknown-none-elf && rustup override set nightly
 
           - backend: riscv32-imc-mecall
             platform: hifive1
             rustup-target: riscv32imc-unknown-none-elf
-            custom-toolchain: rustup toolchain install nightly-2023-11-14 --component rust-src --target riscv32imc-unknown-none-elf && rustup override set nightly
 
           - backend: riscv-esp32-c3
             platform: esp32-c3
             rustup-target: riscv32imc-unknown-none-elf
-            custom-toolchain: rustup toolchain install nightly-2023-11-14 --component rust-src --target riscv32imc-unknown-none-elf && rustup override set nightly
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install optional custom toolchain
-        if: matrix.input.custom-toolchain
-        run: ${{ matrix.input.custom-toolchain }}
 
       - name: Configure Rust target
         run: rustup target add ${{ matrix.input.rustup-target }}
