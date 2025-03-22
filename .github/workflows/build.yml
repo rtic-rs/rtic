@@ -71,7 +71,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Rust target
+      - name: Configure Rust target ${{ matrix.input.rustup-target }}
         run: rustup target add ${{ matrix.input.rustup-target }}
 
       - name: Cache Dependencies
@@ -115,7 +115,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Rust target
+      - name: Configure Rust target ${{ matrix.input.rustup-target }}
         run:  rustup target add ${{ matrix.input.rustup-target }}
 
       - name: Add Rust component clippy
@@ -165,7 +165,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Rust target
+      - name: Configure Rust target ${{ matrix.input.rustup-target }}
         run: rustup target add ${{ matrix.input.rustup-target }}
 
       - name: Cache Dependencies
@@ -278,7 +278,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Rust target
+      - name: Configure Rust target ${{ matrix.input.rustup-target }}
         run: rustup target add ${{ matrix.input.rustup-target }}
 
       - name: Add Rust component llvm-tools-preview
