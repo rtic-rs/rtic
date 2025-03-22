@@ -33,41 +33,36 @@ jobs:
       - name: cargo xtask fmt
         run:  cargo xtask --verbose fmt -c
 
-  # Compilation check (lm3s6965)
-  checklm3s6965:
+  # Compilation check
+  # TODO: check hifive1, esp32-c3
+  check:
     name: check (lm3s6965)
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        backend:
-          - thumbv7
-          - thumbv6
-          - thumbv8-base
-          - thumbv8-main
-        toolchain:
-          - stable
+        input:
+          - backend: thumbv7
+            rustup-target: thumbv7m-none-eabi
+
+          - backend: thumbv6
+            rustup-target: thumbv6m-none-eabi
+
+          - backend: thumbv8-base
+            rustup-target: thumbv8m.base-none-eabi
+
+          - backend: thumbv8-main
+            rustup-target: thumbv8m.main-none-eabi
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust ${{ matrix.toolchain }}
-        run: |
-          rustup override set ${{ matrix.toolchain }}
-
       - name: Configure Rust target (v6, v7, v8.b v8.m)
-        run: |
-          rustup target add thumbv7m-none-eabi
-          rustup target add thumbv6m-none-eabi
-          rustup target add thumbv8m.base-none-eabi
-          rustup target add thumbv8m.main-none-eabi
+        run: rustup target add ${{ matrix.input.rustup-target }}
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.backend }} check
-
-  # Compilation check (hifive1) TODO
-  # checkhifive1:
+      - run: cargo xtask --deny-warnings --platform lm3s6965 --backend ${{ matrix.input.backend }} check
 
   # Clippy
   # TODO: clippy hifive1, esp32-c3
@@ -743,8 +738,7 @@ jobs:
     if: github.event_name == 'push' && success()
     needs:
       - formatcheck
-      - checklm3s6965
-      # - checkhifive1 # TODO
+      - check
       - clippy
       - checkexamples
       - testexamples
