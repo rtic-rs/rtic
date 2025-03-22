@@ -8,6 +8,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ## [Unreleased]
 
 - Adapt `slic` backends to new version with `mecall`
+- Allow software tasks to be diverging (return `!`) and give them `'static` context.
 
 ## [v2.1.1] - 2024-12-06
 

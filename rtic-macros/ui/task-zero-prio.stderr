@@ -1,4 +1,4 @@
-error: this task handler must have type signature `async fn(foo::Context, ..)`
+error: this task handler must have type signature `async fn(foo::Context, ..)` or `async fn(foo::Context, ..) -> !`
   --> ui/task-zero-prio.rs:15:8
    |
 15 |     fn foo(_: foo::Context) {}
