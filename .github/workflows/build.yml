@@ -34,7 +34,6 @@ jobs:
         run:  cargo xtask --verbose fmt -c
 
   # Compilation check
-  # TODO: check esp32-c3
   check:
     name: check
     runs-on: ubuntu-22.04
@@ -63,6 +62,10 @@ jobs:
 
           - backend: riscv32-imc-mecall
             platform: hifive1
+            rustup-target: riscv32imc-unknown-none-elf
+
+          - backend: riscv-esp32-c3
+            platform: esp32-c3
             rustup-target: riscv32imc-unknown-none-elf
     steps:
       - name: Checkout
