@@ -1,0 +1,56 @@
+name: check-clippy-examples
+on:
+  workflow_call:
+    inputs:
+      backend:
+        description: The backend to execute for
+        required: true
+        type: string
+
+      platform:
+        description: The platform to execute for
+        required: true
+        type: string
+
+      # TODO: get this from `cargo xtask`!
+      rustup-target:
+        description: The rustup target to install
+        required: true
+        type: string
+
+      example-args:
+        description: Extra args to pass when checking examples
+        required: false
+        type: string
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    name: Validate platform ${{ inputs.platform }}, backend ${{ inputs.backend }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Rust target ${{ inputs.rustup-target }}
+        run: rustup target add ${{ inputs.rustup-target }}
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - run: cargo xtask --deny-warnings check -p ${{ inputs.platform }} -b ${{ inputs.backend }}
+
+  check-examples:
+    runs-on: ubuntu-22.04
+    name: Check examples
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Rust target ${{ inputs.rustup-target }}
+        run: rustup target add ${{ inputs.rustup-target }}
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check the examples
+        run: cargo xtask example-check --platform ${{ inputs.platform }} --backend ${{ inputs.backend }} ${{ inputs.example-args }}
