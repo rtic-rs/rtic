@@ -31,24 +31,38 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             mod_app.push(constructor);
         }
 
-        if !&task.is_extern {
+        if !task.is_extern {
             let context = &task.context;
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
             let inputs = &task.inputs;
 
-            user_tasks.push(quote!(
-                #(#attrs)*
-                #(#cfgs)*
-                #[allow(non_snake_case)]
-                async fn #name<'a>(#context: #name::Context<'a> #(,#inputs)*) {
-                    use rtic::Mutex as _;
-                    use rtic::mutex::prelude::*;
+            user_tasks.push(if task.is_bottom {
+                quote!(
+                    #(#attrs)*
+                    #(#cfgs)*
+                    #[allow(non_snake_case)]
+                    async fn #name(#context: #name::Context<'static> #(,#inputs)*) {
+                        use rtic::Mutex as _;
+                        use rtic::mutex::prelude::*;
 
-                    #(#stmts)*
-                }
-            ));
+                        #(#stmts)*
+                    }
+                )
+            } else {
+                quote!(
+                    #(#attrs)*
+                    #(#cfgs)*
+                    #[allow(non_snake_case)]
+                    async fn #name<'a>(#context: #name::Context<'a> #(,#inputs)*) {
+                        use rtic::Mutex as _;
+                        use rtic::mutex::prelude::*;
+
+                        #(#stmts)*
+                    }
+                )
+            });
         }
 
         root.push(module::codegen(Context::SoftwareTask(name), app, analysis));

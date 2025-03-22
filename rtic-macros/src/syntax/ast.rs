@@ -236,6 +236,9 @@ pub struct SoftwareTask {
 
     /// The task is declared externally
     pub is_extern: bool,
+
+    /// The task will never return `Poll::Ready`
+    pub is_bottom: bool,
 }
 
 /// Software task metadata
