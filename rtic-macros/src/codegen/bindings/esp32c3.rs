@@ -2,6 +2,7 @@
 pub use esp32c3::*;
 
 #[cfg(feature = "riscv-esp32c3")]
+#[allow(clippy::module_inception)]
 mod esp32c3 {
     use crate::{
         analyze::Analysis as CodegenAnalysis,
@@ -92,7 +93,7 @@ mod esp32c3 {
         for (&priority, name) in interrupt_ids.chain(
             app.hardware_tasks
                 .values()
-                .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
+                .map(|task| (&task.args.priority, &task.args.binds)),
         ) {
             let es = format!(
                 "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
@@ -207,7 +208,7 @@ mod esp32c3 {
         stmts
     }
 
-    pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    pub fn async_prio_limit(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let max = if let Some(max) = analysis.max_async_prio {
             quote!(#max)
         } else {
@@ -232,7 +233,7 @@ mod esp32c3 {
         for (_, name) in interrupt_ids.chain(
             app.hardware_tasks
                 .values()
-                .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
+                .map(|task| (&task.args.priority, &task.args.binds)),
         ) {
             if *name == dispatcher_name {
                 let ret = &("interrupt".to_owned() + &curr_cpu_id.to_string());

@@ -54,3 +54,21 @@ jobs:
 
       - name: Check the examples
         run: cargo xtask example-check --platform ${{ inputs.platform }} --backend ${{ inputs.backend }} ${{ inputs.example-args }}
+
+  clippy:
+    runs-on: ubuntu-22.04
+    name: Run clippy
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure Rust target ${{ inputs.rustup-target }}
+      run:  rustup target add ${{ inputs.rustup-target }}
+
+    - name: Add Rust component clippy
+      run: rustup component add clippy
+
+    - name: Cache Dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - run: cargo xtask --deny-warnings --platform ${{ inputs.platform }} --backend ${{ inputs.backend }} clippy
