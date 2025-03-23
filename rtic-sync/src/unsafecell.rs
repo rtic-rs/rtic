@@ -23,19 +23,15 @@ mod core {
         pub fn get_mut(&self) -> MutPtr<T> {
             MutPtr(self.0.get())
         }
-
-        pub unsafe fn with_mut<F, R>(&self, f: F) -> R
-        where
-            F: FnOnce(*mut T) -> R,
-        {
-            f(self.0.get())
-        }
     }
 
     pub struct MutPtr<T>(*mut T);
 
     impl<T> MutPtr<T> {
         #[allow(clippy::mut_from_ref)]
+        /// SAFETY: the caller must guarantee that the contained `*mut T` is not
+        /// null, and must uphold the same safety requirements as for
+        /// [`core::primitive::pointer::as_mut`] for the contained `*mut T`.
         pub unsafe fn deref(&self) -> &mut T {
             &mut *self.0
         }

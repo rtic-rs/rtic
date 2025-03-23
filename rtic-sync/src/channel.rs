@@ -57,10 +57,10 @@ macro_rules! cs_access {
         where
             F: FnOnce(&mut $type) -> R,
         {
-            self.$name.with_mut(|v| {
-                let v = unsafe { &mut *v };
-                f(v)
-            })
+            let v = self.$name.get_mut();
+            // SAFETY: we have exclusive access due to the critical section.
+            let v = unsafe { v.deref() };
+            f(v)
         }
     };
 }
