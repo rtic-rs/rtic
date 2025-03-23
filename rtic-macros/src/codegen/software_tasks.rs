@@ -44,7 +44,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                async fn #name#generics(#context: #name::Context<#lifetime> #(,#inputs)*) {
+                async fn #name #generics(#context: #name::Context<#lifetime> #(,#inputs)*) {
                     use rtic::Mutex as _;
                     use rtic::mutex::prelude::*;
 
