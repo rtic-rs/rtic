@@ -104,7 +104,9 @@ impl<T, const N: usize> Channel<T, N> {
 
     /// Clear any remaining items from this `Channel`.
     pub fn clear(&mut self) {
-        for _ in self.queued_items() {}
+        for item in self.queued_items() {
+            drop(item);
+        }
     }
 
     /// Return an iterator over the still-queued items, removing them
@@ -131,7 +133,7 @@ impl<T, const N: usize> Channel<T, N> {
                 // NOTE: do not `return_free_slot`, as we have mutable
                 // access to this `Channel` and no `Receiver` or `Sender`
                 // exist.
-                assert!(!self.inner.freeq.as_mut().is_full());
+                debug_assert!(!self.inner.freeq.as_mut().is_full());
                 unsafe {
                     // SAFETY: `freeq` is not ful.
                     self.inner.freeq.as_mut().push_back_unchecked(slot);
@@ -163,11 +165,10 @@ impl<T, const N: usize> Channel<T, N> {
 
         // Fill free queue
         for idx in 0..N as u8 {
-            // NOTE(assert): `split`-ing does not put `freeq` into a known-empty
-            // state, so `debug_assert` is not good enough.
-            assert!(!freeq.is_full());
+            debug_assert!(!freeq.is_full());
 
-            // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue.
+            // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue,
+            // and the queue is cleared beforehand.
             unsafe {
                 freeq.push_back_unchecked(idx);
             }
@@ -207,7 +208,7 @@ impl<T, const N: usize> Channel<T, N> {
                 // SAFETY: `self.freeq` is not called recursively.
                 unsafe {
                     self.freeq(cs, |freeq| {
-                        assert!(!freeq.is_full());
+                        debug_assert!(!freeq.is_full());
                         // SAFETY: `freeq` is not full.
                         freeq.push_back_unchecked(slot);
                     });
@@ -385,7 +386,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
             // SAFETY: `self.0.readyq` is not called recursively.
             unsafe {
                 self.0.readyq(cs, |readyq| {
-                    assert!(!readyq.is_full());
+                    debug_assert!(!readyq.is_full());
                     // SAFETY: ready is not full.
                     readyq.push_back_unchecked(idx);
                 });
@@ -519,7 +520,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
                     // SAFETY: `self.0.freeq` is not called recursively.
                     unsafe {
                         self.0.freeq(cs, |freeq| {
-                            assert!(!freeq.is_empty());
+                            debug_assert!(!freeq.is_empty());
                             // SAFETY: `freeq` is non-empty
                             let slot = freeq.pop_back_unchecked();
                             Poll::Ready(Ok(slot))
