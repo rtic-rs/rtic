@@ -1,6 +1,6 @@
 # 'static super-powers
 
-In `#[init]` and `#[idle]` `local` resources have `'static` lifetime.
+In `#[init]`, `#[idle]` and divergent software tasks `local` resources have `'static` lifetime.
 
 Useful when pre-allocating and/or splitting resources between tasks, drivers or some other object. This comes in handy when drivers, such as USB drivers, need to allocate memory and when using splittable data structures such as [`heapless::spsc::Queue`].
 
