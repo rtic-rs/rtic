@@ -86,7 +86,7 @@ $ cargo xtask qemu --verbose --example spawn_arguments
 
 ## Divergent tasks
 
-A task can have one of two signatures: `async fn({name}::Context, ..)` or `async fn({name}::Context, ..) -> !`. The latter defines a *divergent* task — one that never returns. The key advantage of divergent tasks is that they receive a `'static` context, and `local` resources have `'static` lifetime. Additionally, using this signature makes the task’s intent explicit, clearly distinguishing between short-lived tasks and those that run indefinitely.
+A task can have one of two signatures: `async fn({name}::Context, ..)` or `async fn({name}::Context, ..) -> !`. The latter defines a *divergent* task — one that never returns. The key advantage of divergent tasks is that they receive a `'static` context, and `local` resources have `'static` lifetime. Additionally, using this signature makes the task’s intent explicit, clearly distinguishing between short-lived tasks and those that run indefinitely. Be mindful not to starve other tasks at the same priority level by ensuring you yield control with `.await`.
 
 ## Priority zero tasks
 
