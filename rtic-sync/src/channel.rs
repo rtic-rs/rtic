@@ -104,9 +104,7 @@ impl<T, const N: usize> Channel<T, N> {
 
     /// Split the queue into a `Sender`/`Receiver` pair.
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
-        // SAFETY: we have exclusive access to `self`.
-        let freeq = self.freeq.get_mut();
-        let freeq = unsafe { freeq.deref() };
+        let freeq = self.freeq.as_mut();
 
         // Fill free queue
         for idx in 0..N as u8 {
@@ -123,8 +121,7 @@ impl<T, const N: usize> Channel<T, N> {
         debug_assert!(freeq.is_full());
 
         // There is now 1 sender
-        // SAFETY: we have exclusive access to `self`.
-        unsafe { *self.num_senders.get_mut().deref() = 1 };
+        *self.num_senders.as_mut() = 1;
 
         (Sender(self), Receiver(self))
     }
