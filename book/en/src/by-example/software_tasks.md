@@ -84,6 +84,10 @@ $ cargo xtask qemu --verbose --example spawn_arguments
 {{#include ../../../../ci/expected/lm3s6965/spawn_arguments.run}}
 ```
 
+## Divergent tasks
+
+A task can have one of two signatures: `async fn({name}::Context, ..)` or `async fn({name}::Context, ..) -> !`. The latter defines a *divergent* task — one that never returns. The key advantage of divergent tasks is that they receive a `'static` context, and `local` resources have `'static` lifetime. Additionally, using this signature makes the task’s intent explicit, clearly distinguishing between short-lived tasks and those that run indefinitely.
+
 ## Priority zero tasks
 
 In RTIC tasks run preemptively to each other, with priority zero (0) the lowest priority. You can use priority zero tasks for background work, without any strict real-time requirements.
