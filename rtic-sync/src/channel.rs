@@ -110,6 +110,8 @@ impl<T, const N: usize> Channel<T, N> {
 
         // Fill free queue
         for idx in 0..N as u8 {
+            // NOTE(assert): `split`-ing does not put `freeq` into a known-empty
+            // state, so `debug_assert` is not good enough.
             assert!(!freeq.is_full());
 
             // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue.
@@ -118,7 +120,7 @@ impl<T, const N: usize> Channel<T, N> {
             }
         }
 
-        assert!(freeq.is_full());
+        debug_assert!(freeq.is_full());
 
         // There is now 1 sender
         // SAFETY: we have exclusive access to `self`.
