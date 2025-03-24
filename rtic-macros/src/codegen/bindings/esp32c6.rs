@@ -2,6 +2,7 @@
 pub use esp32c6::*;
 
 #[cfg(feature = "riscv-esp32c6")]
+#[allow(clippy::module_inception)]
 mod esp32c6 {
     use crate::{
         analyze::Analysis as CodegenAnalysis,
@@ -97,7 +98,7 @@ mod esp32c6 {
             .chain(
                 app.hardware_tasks
                     .values()
-                    .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
+                    .map(|task| (&task.args.priority, &task.args.binds)),
             )
             .zip(EXTERNAL_INTERRUPTS)
         {
@@ -238,7 +239,7 @@ mod esp32c6 {
             .chain(
                 app.hardware_tasks
                     .values()
-                    .filter_map(|task| Some((&task.args.priority, &task.args.binds))),
+                    .map(|task| (&task.args.priority, &task.args.binds)),
             )
             .zip(EXTERNAL_INTERRUPTS)
         {
