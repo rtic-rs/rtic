@@ -665,7 +665,7 @@ jobs:
   # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
   ci-success:
     name: ci
-    if: github.event_name == 'push' && success()
+    if: success()
     needs:
       - formatcheck
       - check-clippy
