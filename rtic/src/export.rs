@@ -35,6 +35,11 @@ mod riscv_esp32c3;
 #[cfg(feature = "riscv-esp32c3")]
 pub use riscv_esp32c3::*;
 
+#[cfg(feature = "riscv-esp32c6")]
+mod riscv_esp32c6;
+#[cfg(feature = "riscv-esp32c6")]
+pub use riscv_esp32c6::*;
+
 #[cfg(feature = "riscv-slic")]
 mod slic;
 #[cfg(feature = "riscv-slic")]

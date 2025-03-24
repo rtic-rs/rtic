@@ -74,6 +74,10 @@ jobs:
             platform: esp32-c3
             rustup-target: riscv32imc-unknown-none-elf
 
+          - backend: riscv-esp32-c6
+            platform: esp32-c6
+            rustup-target: riscv32imac-unknown-none-elf
+
   buildqemu:
     name: Get modern QEMU, build and store
     runs-on: ubuntu-22.04
@@ -180,7 +184,7 @@ jobs:
         run: rustup component add llvm-tools-preview
 
       - name: Install lubudev espflash dependency
-        if: ${{ matrix.input.platform == 'esp32-c3' }}
+        if: contains(matrix.input.platform, 'esp32')
         run: |
           sudo apt update
           sudo apt install -y libudev-dev
@@ -193,11 +197,11 @@ jobs:
 
       # Use precompiled if possible
       - name: Install espflash
-        if: ${{ matrix.input.platform == 'esp32-c3' }}
+        if: contains(matrix.input.platform, 'esp32')
         run: cargo install espflash --version 3.1.0 --force
 
       - name: Install esptool.py
-        if: ${{ matrix.input.platform == 'esp32-c3' }}
+        if: contains(matrix.input.platform, 'esp32')
         run: pip install esptool
 
       - name: Cache Dependencies
@@ -214,11 +218,11 @@ jobs:
           name: qemu
 
       - name: Extract QEMU into local path
-        if: ${{ matrix.input.platform != 'esp32-c3' }}
+        if: contains(matrix.input.platform, 'esp32')
         run: tar -xf qemu.tar -C /usr/local/bin
 
       - name: Extract ESP32 QEMU into local path
-        if: ${{ matrix.input.platform == 'esp32-c3' }}
+        if: contains(matrix.input.platform, 'esp32')
         run: sudo tar --strip-components=1 -xf qemu.tar -C /usr/local/ esp32/
 
       - name: Check which QEMU is used

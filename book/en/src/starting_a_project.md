@@ -21,6 +21,9 @@ To tackle this issue, currently, RTIC implements three different backends:
 - **`riscv-esp32c3-backend`**: This backend provides support for the ESP32-C3 SoC.
   In these devices, RTIC is very similar to its Cortex-M counterpart.
 
+- **`riscv-esp32c6-backend`**: This backend provides support for the ESP32-C6 SoC.
+  In these devices, RTIC is very similar to its Cortex-M counterpart.
+
 - **`riscv-mecall-backend`**: This backend provides support for **any** RISC-V device.
   In this backend, pending tasks trigger Machine Environment Call exceptions.
   The handler for this exception source dispatches pending tasks according to their priority.

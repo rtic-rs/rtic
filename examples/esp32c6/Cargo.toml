@@ -1,0 +1,25 @@
+[package]
+name = "esp32-c6"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace]
+
+[dependencies]
+rtic = { path = "../../rtic/" }
+rtic-monotonics = {path = "../../rtic-monotonics/"}
+esp-hal = { version = "1.0.0-beta.0", features = ["esp32c6", "unstable"] }
+esp-backtrace = { version = "0.15.1", features = [
+    "esp32c6",
+    "panic-handler",
+    "exception-handler",
+    "println",
+] }
+
+esp32c6 = {version = "0.19.0", features = ["critical-section"]}
+esp-println = { version = "0.13.1", features = ["esp32c6", "auto"] }
+
+[features]
+test-critical-section = []
+riscv-esp32c6-backend = ["rtic/riscv-esp32c6-backend", "rtic-monotonics/esp32c6-systimer"]

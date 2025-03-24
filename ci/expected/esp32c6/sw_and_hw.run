@@ -1,0 +1,8 @@
+QEMU 8.2.0 monitor - type 'help' for more information
+(qemu) q[K
+init
+Inside high prio task, press button now!
+Leaving high prio task.
+idle
+Inside low prio task, press button now!
+Leaving low prio task.

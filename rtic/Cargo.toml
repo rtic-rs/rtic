@@ -27,7 +27,8 @@ name = "rtic"
 [dependencies]
 riscv-slic = { version = "0.2.0", optional = true }
 esp32c3 = { version = "0.27.0", optional = true }
-riscv = { version = "0.12.1", optional = true }
+esp32c6 = { version = "0.19.0", optional = true }
+riscv = { version = "0.13.0", optional = true }
 cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
 portable-atomic = { version = "1", default-features = false }
@@ -60,6 +61,7 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]
+riscv-esp32c6-backend = ["esp32c6", "riscv", "rtic-macros/riscv-esp32c6"]
 riscv-clint-backend = [
   "riscv",
   "riscv-slic/clint-backend",

@@ -1,0 +1,6 @@
+QEMU 8.2.0 monitor - type 'help' for more information
+(qemu) q[K
+init
+hello from bar
+hello from baz
+hello from foo
