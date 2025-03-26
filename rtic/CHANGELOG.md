@@ -22,8 +22,8 @@ Example:
 
 ### Changed
 
-- Placate clippy
 - Updated esp32c3 dependency to v0.28.0
+- Placate clippy
 - Updated esp32c3 dependency to v0.27.0
 
 ### Added
