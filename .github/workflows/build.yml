@@ -73,8 +73,8 @@ jobs:
             platform: esp32-c3
             rustup-target: riscv32imc-unknown-none-elf
 
-  buildqemu:
-    name: Get modern QEMU, build and store
+  installqemu:
+    name: Get modern QEMU and cache it
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -117,7 +117,7 @@ jobs:
   # Verify the example output with run-pass tests
   testexamples:
     name: QEMU run
-    needs: buildqemu
+    needs: installqemu
     runs-on: ubuntu-24.04
     strategy:
       matrix:
