@@ -97,26 +97,6 @@ jobs:
           sudo apt install -y qemu-system-arm qemu-system-riscv32
           sudo apt install -y git libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build
 
-      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
-        name: Download QEMU
-        run: wget "${{ env.QEMU_URL }}"
-
-      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
-        name: Extract QEMU
-        run: tar xvJf qemu-${{ env.QEMU_VERSION }}.tar.xz
-
-      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
-        name: Configure QEMU
-        run: |
-          cd qemu-${{ env.QEMU_VERSION }}
-          ./configure --target-list=arm-softmmu,riscv32-softmmu
-
-      - if: ${{ steps.cache-qemu.outputs.cache-hit != 'true' }}
-        name: Build QEMU
-        run: |
-          cd qemu-${{ env.QEMU_VERSION }}
-          ninja -C build
-
       - name: Download ESP32 QEMU
         run: wget "${{ env.QEMU_ESP_URL }}" --output-document=${{ env.QEMU_ESP}}.tar.xz
 
