@@ -22,7 +22,7 @@ jobs:
   # Run cargo xtask format-check
   formatcheck:
     name: cargo fmt
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,7 +76,7 @@ jobs:
 
   buildqemu:
     name: Get modern QEMU, build and store
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -140,7 +140,7 @@ jobs:
   testexamples:
     name: QEMU run
     needs: buildqemu
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         input:
@@ -231,7 +231,7 @@ jobs:
   # Run test suite
   tests:
     name: tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -267,7 +267,7 @@ jobs:
 
   loom-tests:
     name: rtic-sync loom tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -278,7 +278,7 @@ jobs:
   # Build documentation, check links
   docs:
     name: build docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -329,7 +329,7 @@ jobs:
   mdbook:
     name: build mdbook
     needs: docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -384,7 +384,7 @@ jobs:
   mdbookold:
     name: build docs and mdbook for older releases
     needs: pushtostablebranch
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -459,7 +459,7 @@ jobs:
 
   parseversion:
     name: Parse the master branch RTIC version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       branch: ${{ steps.parseversion.outputs.branch }}
       versionmajor: ${{ steps.parseversion.outputs.versionmajor }}
@@ -490,7 +490,7 @@ jobs:
   # This needs to run before book is built, as bookbuilding fetches from the branch
   pushtostablebranch:
     name: Also push branch into release/vX when pushing to master
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - ci-success
       - parseversion
@@ -522,7 +522,7 @@ jobs:
   # If all tests pass, then deploy stage is run
   deploy:
     name: deploy
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - pushtostablebranch
       - docs
@@ -642,7 +642,7 @@ jobs:
 
   ghapages:
     name: Publish rtic.rs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - deploy
     steps:
@@ -674,7 +674,7 @@ jobs:
       - loom-tests
       - docs
       - mdbook
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Mark the job as a success
         run: exit 0
