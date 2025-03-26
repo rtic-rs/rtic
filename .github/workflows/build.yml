@@ -16,7 +16,7 @@ env:
   QEMU_VERSION: 8.2.0
   QEMU_URL: https://download.qemu.org/qemu-8.2.0.tar.xz
   QEMU_ESP: qemu_esp
-  QEMU_ESP_URL: https://github.com/espressif/qemu/releases/download/esp-develop-8.2.0-20240122/qemu-riscv32-softmmu-esp_develop_8.2.0_20240122-x86_64-linux-gnu.tar.xz
+  QEMU_ESP_URL: https://github.com/espressif/qemu/releases/download/esp-develop-9.2.2-20250228/qemu-riscv32-softmmu-esp_develop_9.2.2_20250228-x86_64-linux-gnu.tar.xz
 
 jobs:
   # Run cargo xtask format-check
