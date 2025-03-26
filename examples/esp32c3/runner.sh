@@ -18,14 +18,13 @@ espflash save-image --chip esp32c3 --merge "$outputfilenamecargo" "$outputfilena
 esptool.py image_info --version 2 "$outputfilename" 1>&2
 
 # Run in QEMU
-$qemuexec -nographic -monitor tcp:127.0.0.1:55555,server,nowait -icount 3 -machine esp32c3 -drive file="$outputfilename",if=mtd,format=raw -serial file:"$logfile" &
+$qemuexec -nographic -monitor tcp:127.0.0.1:55555,server,nowait -icount 3 -machine esp32c3 -drive file="$outputfilename",if=mtd,format=raw -serial file:"$logfile" > qemuoutput.log 2>&1 &
 
 # Let it run
 sleep 3s
 
 # Kill QEMU nicely by sending 'q' (quit) over tcp
-echo q | nc -N 127.0.0.1 55555
-
+echo q | nc -N 127.0.0.1 55555  >> qemuoutput.log 2>&1
 # Output that will be compared must be printed to stdout
 
 # Make boot phase silent, for debugging change, run with e.g.  $ `env DEBUGGING=true` cargo xtask....
