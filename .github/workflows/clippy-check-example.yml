@@ -25,7 +25,7 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Validate platform ${{ inputs.platform }}, backend ${{ inputs.backend }}
     steps:
       - name: Checkout
@@ -40,7 +40,7 @@ jobs:
       - run: cargo xtask --deny-warnings check -p ${{ inputs.platform }} -b ${{ inputs.backend }}
 
   check-examples:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Check examples
     steps:
       - name: Checkout
@@ -56,7 +56,7 @@ jobs:
         run: cargo xtask example-check --platform ${{ inputs.platform }} --backend ${{ inputs.backend }} ${{ inputs.example-args }}
 
   clippy:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Run clippy
     steps:
     - name: Checkout
