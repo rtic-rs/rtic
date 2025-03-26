@@ -80,7 +80,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache QEMU build
+      - name: Cache QEMU
         id: cache-qemu
         uses: actions/cache@v4
         with:
@@ -90,11 +90,10 @@ jobs:
             ${{ runner.OS }}-qemu-${{ env.QEMU_VERSION }}
             ${{ runner.OS }}-qemu-
 
-      - name: Install QEMU to get dependencies
+      - name: Install QEMU
         run: |
           sudo apt update
           sudo apt install -y qemu-system-arm qemu-system-riscv32
-          sudo apt install -y git libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build
 
       - name: Download ESP32 QEMU
         run: wget "${{ env.QEMU_ESP_URL }}" --output-document=${{ env.QEMU_ESP}}.tar.xz
@@ -104,12 +103,12 @@ jobs:
           mkdir -p qemu-${{ env.QEMU_VERSION }}/build/esp32
           tar --strip-components=1 -xvJf ${{ env.QEMU_ESP }}.tar.xz -C qemu-${{ env.QEMU_VERSION }}/build/esp32 qemu
 
-      - name: Archive QEMU build
+      - name: Archive QEMU
         run: |
           cd qemu-${{ env.QEMU_VERSION }}/build
           tar -cf $GITHUB_WORKSPACE/qemu.tar *
 
-      - name: Store QEMU build
+      - name: Store QEMU
         uses: actions/upload-artifact@v4
         with:
           name: qemu
