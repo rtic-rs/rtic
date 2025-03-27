@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SSPDMACR_SPEC"],"type":["R","RXDMAE_R","RXDMAE_W","TXDMAE_R","TXDMAE_W","W"]};

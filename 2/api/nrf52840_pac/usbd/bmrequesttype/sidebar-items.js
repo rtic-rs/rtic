@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DIRECTION_A","RECIPIENT_A","TYPE_A"],"struct":["BMREQUESTTYPE_SPEC","R"],"type":["DIRECTION_R","RECIPIENT_R","TYPE_R"]};

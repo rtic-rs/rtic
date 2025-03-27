@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["VALDE_0","VALDE_1"]};
