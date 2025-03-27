@@ -9,15 +9,15 @@ In the following example two different tasks share a [`heapless::spsc::Queue`] f
 [`heapless::spsc::Queue`]: https://docs.rs/heapless/0.7.5/heapless/spsc/struct.Queue.html
 
 ```rust,noplayground
-{{#include ../../../../../examples/lm3s6965/examples/static.rs}}
+{{#include ../../../../../examples/lm3s6965/examples/static-resources-in-init.rs}}
 ```
 
 Running this program produces the expected output.
 
 ```console
-$ cargo xtask qemu --verbose --example static
+$ cargo xtask qemu --verbose --example static-resources-in-init
 ```
 
 ```console
-{{#include ../../../../../ci/expected/lm3s6965/static.run}}
+{{#include ../../../../../ci/expected/lm3s6965/static-resources-in-init.run}}
 ```
