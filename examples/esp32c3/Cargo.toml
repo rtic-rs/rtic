@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 rtic = { path = "../../rtic/" }
 rtic-monotonics = {path = "../../rtic-monotonics/"}
-esp-hal = { version = "0.23.1", features = ["esp32c3"] }
+esp-hal = { version = "1.0.0-beta.0", features = ["esp32c3", "unstable"] }
 esp-backtrace = { version = "0.15.0", features = [
     "esp32c3",
     "panic-handler",
