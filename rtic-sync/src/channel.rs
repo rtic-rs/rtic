@@ -371,7 +371,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
     /// # Safety
     ///
     /// This method assumes that the future returned by this method is not forgotten. Apis like [`core::mem::forget`],
-    /// [`core::mem::ManuallyDrop::new`] and [`std::boxed::Box::leak`] may cause undefined behavior.
+    /// [`core::mem::ManuallyDrop::new`] and `Box::leak` may cause undefined behavior.
     pub async fn send(&mut self, val: T) -> Result<(), NoReceiver<T>> {
         let mut free_slot_ptr: Option<u8> = None;
         let mut link_ptr: Option<Link<WaitQueueData>> = None;

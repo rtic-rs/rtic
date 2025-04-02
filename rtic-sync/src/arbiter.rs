@@ -74,7 +74,7 @@ impl<T> Arbiter<T> {
     /// # Safety
     ///
     /// This method assumes that the future returned by this method is not forgotten. Apis like [`core::mem::forget`],
-    /// [`core::mem::ManuallyDrop::new`] and [`std::boxed::Box::leak`] may cause undefined behavior.
+    /// [`core::mem::ManuallyDrop::new`] and `Box::leak` may cause undefined behavior.
     pub async fn access(&self) -> ExclusiveAccess<'_, T> {
         let mut link_ptr: Option<Link<Waker>> = None;
 
