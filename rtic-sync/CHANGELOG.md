@@ -8,6 +8,8 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 ## [Unreleased]
 
 - Avoid a critical section when a `send`-link is popped and when returning `free_slot`.
+- Add safety notices to `Sender::send` and `Arbiter::access` (you cant `forget` them).
+
 ### Changed
 
 - Add `loom` support.
