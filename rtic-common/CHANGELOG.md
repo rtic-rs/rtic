@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+- Fix minor unsoundnes in `Link::remove_from_list`.
+
 ### Added
 
 ### Changed
