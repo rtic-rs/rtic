@@ -70,6 +70,11 @@ impl<T> Arbiter<T> {
 
     /// Get access to the inner value in the [`Arbiter`]. This will wait until access is granted,
     /// for non-blocking access use `try_access`.
+    ///
+    /// # Safety
+    ///
+    /// This method assumes that the future returned by this method is not forgotten. Apis like [`core::mem::forget`],
+    /// [`core::mem::ManuallyDrop::new`] and [`std::boxed::Box::leak`] may cause undefined behavior.
     pub async fn access(&self) -> ExclusiveAccess<'_, T> {
         let mut link_ptr: Option<Link<Waker>> = None;
 
@@ -114,7 +119,8 @@ impl<T> Arbiter<T> {
                     // SAFETY(push): `link_ref` lifetime comes from `link_ptr` that is shadowed,
                     // and  we make sure in `dropper` that the link is removed from the queue
                     // before dropping `link_ptr` AND `dropper` makes sure that the shadowed
-                    // `link_ptr` lives until the end of the stack frame.
+                    // `link_ptr` lives until the end of the stack frame. Documentation asserts that `Drop`
+                    // handler will not be skipped, ensuring that the link is removed from the queue.
                     unsafe { self.wait_queue.push(Pin::new_unchecked(link_ref)) };
                 }
 

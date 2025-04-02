@@ -367,6 +367,11 @@ impl<T, const N: usize> Sender<'_, T, N> {
 
     /// Send a value. If there is no place left in the queue this will wait until there is.
     /// If the receiver does not exist this will return an error.
+    ///
+    /// # Safety
+    ///
+    /// This method assumes that the future returned by this method is not forgotten. Apis like [`core::mem::forget`],
+    /// [`core::mem::ManuallyDrop::new`] and [`std::boxed::Box::leak`] may cause undefined behavior.
     pub async fn send(&mut self, val: T) -> Result<(), NoReceiver<T>> {
         let mut free_slot_ptr: Option<u8> = None;
         let mut link_ptr: Option<Link<WaitQueueData>> = None;
@@ -448,7 +453,8 @@ impl<T, const N: usize> Sender<'_, T, N> {
                     // SAFETY(push): `link_ref` lifetime comes from `link_ptr` and `free_slot_ptr` that
                     // are shadowed and we make sure in `dropper` that the link is removed from the queue
                     // before dropping `link_ptr` AND `dropper` makes sure that the shadowed
-                    // `ptr`s live until the end of the stack frame.
+                    // `ptr`s live until the end of the stack frame. Documentation asserts that `Drop`
+                    // handler will not be skipped, ensuring that the link is removed from the queue.
                     unsafe { self.0.wait_queue.push(Pin::new_unchecked(link_ref)) };
 
                     Poll::Pending
