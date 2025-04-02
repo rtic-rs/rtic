@@ -140,11 +140,10 @@ impl<T: Clone> Link<T> {
 
     /// Remove this link from a linked list.
     pub fn remove_from_list(&self, list: &DoublyLinkedList<T>) {
-        if self.is_popped() {
-            return;
-        }
-
         cs::with(|_| {
+            if self.is_popped() {
+                return;
+            }
             // Make sure all previous writes are visible
             core::sync::atomic::fence(Ordering::SeqCst);
 
