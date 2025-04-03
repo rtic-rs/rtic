@@ -141,11 +141,12 @@ impl<T: Clone> Link<T> {
     /// Remove this link from a linked list.
     pub fn remove_from_list(&self, list: &DoublyLinkedList<T>) {
         cs::with(|_| {
+            // Make sure all previous writes are visible
+            core::sync::atomic::fence(Ordering::SeqCst);
+
             if self.is_popped() {
                 return;
             }
-            // Make sure all previous writes are visible
-            core::sync::atomic::fence(Ordering::SeqCst);
 
             let prev = self.prev.load(Self::R);
             let next = self.next.load(Self::R);
