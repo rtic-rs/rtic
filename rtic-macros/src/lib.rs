@@ -88,7 +88,7 @@ with_backend! {
             //
             // If no "target" directory is found, <project_dir>/<out_dir_root> is used
             for path in out_dir.ancestors() {
-                if let Some(dir) = path.components().last() {
+                if let Some(dir) = path.components().next_back() {
                     let dir = dir.as_os_str().to_str().unwrap();
 
                     if dir.starts_with("thumbv") || dir.starts_with("riscv") {
