@@ -228,7 +228,7 @@ impl DoublyLinkedList<Waker> {
 
         let mut link_guard = OnDropWith::new(link_place, |link| {
             if let Some(link) = link.as_ref().as_pin_ref() {
-                link.remove_from_list(&self);
+                link.remove_from_list(self);
             }
             link.set(None);
         });
