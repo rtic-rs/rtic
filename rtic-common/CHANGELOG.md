@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+- Safe `WaitQueue::wait_until` method.
+
 ### Added
 
 ### Changed
