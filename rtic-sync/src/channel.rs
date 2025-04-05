@@ -104,15 +104,19 @@ impl<T, const N: usize> Channel<T, N> {
 
     /// Split the queue into a `Sender`/`Receiver` pair.
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
+        // NOTE(assert): queue is cleared by dropping the corresponding `Receiver`.
+        debug_assert!(self.readyq.as_mut().is_empty(),);
+
         let freeq = self.freeq.as_mut();
+
+        freeq.clear();
 
         // Fill free queue
         for idx in 0..N as u8 {
-            // NOTE(assert): `split`-ing does not put `freeq` into a known-empty
-            // state, so `debug_assert` is not good enough.
-            assert!(!freeq.is_full());
+            debug_assert!(!freeq.is_full());
 
-            // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue.
+            // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue,
+            // and the queue is cleared beforehand.
             unsafe {
                 freeq.push_back_unchecked(idx);
             }
@@ -137,7 +141,8 @@ impl<T, const N: usize> Channel<T, N> {
     /// 1. If there are any waiting `send`-ers, wake the longest-waiting one and hand it `slot`.
     /// 2. else, insert `slot` into `self.freeq`.
     ///
-    /// SAFETY: `slot` must be a `u8` that is obtained by dequeueing from [`Self::readyq`].
+    /// SAFETY: `slot` must be a `u8` that is obtained by dequeueing from [`Self::readyq`], and that `slot`
+    /// is returned at most once.
     unsafe fn return_free_slot(&self, slot: u8) {
         critical_section::with(|cs| {
             fence(Ordering::SeqCst);
@@ -152,13 +157,21 @@ impl<T, const N: usize> Channel<T, N> {
                 // SAFETY: `self.freeq` is not called recursively.
                 unsafe {
                     self.freeq(cs, |freeq| {
-                        assert!(!freeq.is_full());
+                        debug_assert!(!freeq.is_full());
                         // SAFETY: `freeq` is not full.
                         freeq.push_back_unchecked(slot);
                     });
                 }
             }
         })
+    }
+
+    /// SAFETY: the caller must guarantee that `slot` is an `u8` obtained by dequeueing from [`Self::readyq`],
+    /// and is read at most once.
+    unsafe fn read_slot(&self, slot: u8) -> T {
+        let first_element = self.slots.get_unchecked(slot as usize).get_mut();
+        let ptr = first_element.deref().as_ptr();
+        ptr::read(ptr)
     }
 }
 
@@ -324,7 +337,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
             // SAFETY: `self.0.readyq` is not called recursively.
             unsafe {
                 self.0.readyq(cs, |readyq| {
-                    assert!(!readyq.is_full());
+                    debug_assert!(!readyq.is_full());
                     // SAFETY: ready is not full.
                     readyq.push_back_unchecked(idx);
                 });
@@ -458,7 +471,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
                     // SAFETY: `self.0.freeq` is not called recursively.
                     unsafe {
                         self.0.freeq(cs, |freeq| {
-                            assert!(!freeq.is_empty());
+                            debug_assert!(!freeq.is_empty());
                             // SAFETY: `freeq` is non-empty
                             let slot = freeq.pop_back_unchecked();
                             Poll::Ready(Ok(slot))
@@ -579,14 +592,13 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
         if let Some(rs) = ready_slot {
             // Read the value from the slots, note; this memcpy is not under a critical section.
-            let r = unsafe {
-                let first_element = self.0.slots.get_unchecked(rs as usize).get_mut();
-                let ptr = first_element.deref().as_ptr();
-                ptr::read(ptr)
-            };
+            // SAFETY: `rs` is directly obtained from `self.0.readyq` and is read exactly
+            // once.
+            let r = unsafe { self.0.read_slot(rs) };
 
             // Return the index to the free queue after we've read the value.
-            // SAFETY: `rs` comes directly from `readyq`.
+            // SAFETY: `rs` comes directly from `readyq` and is only returned
+            // once.
             unsafe { self.0.return_free_slot(rs) };
 
             Ok(r)
@@ -655,6 +667,19 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
             self.0.receiver_dropped(cs, |v| *v = true);
         });
 
+        let ready_slot = || {
+            critical_section::with(|cs| unsafe {
+                // SAFETY: `self.0.readyq` is not called recursively.
+                self.0.readyq(cs, |q| q.pop_back())
+            })
+        };
+
+        while let Some(slot) = ready_slot() {
+            // SAFETY: `slot` comes from `readyq` and is
+            // read exactly once.
+            drop(unsafe { self.0.read_slot(slot) })
+        }
+
         while let Some((waker, _)) = self.0.wait_queue.pop() {
             waker.wake();
         }
@@ -664,6 +689,9 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
 #[cfg(test)]
 #[cfg(not(loom))]
 mod tests {
+    use core::sync::atomic::AtomicBool;
+    use std::sync::Arc;
+
     use cassette::Cassette;
 
     use super::*;
@@ -800,6 +828,42 @@ mod tests {
 
         // Make sure that rx & tx are alive until here for good measure.
         drop((tx, rx));
+    }
+
+    #[derive(Debug)]
+    struct SetToTrueOnDrop(Arc<AtomicBool>);
+
+    impl Drop for SetToTrueOnDrop {
+        fn drop(&mut self) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+
+    #[test]
+    fn non_popped_item_is_dropped() {
+        let mut channel: Channel<SetToTrueOnDrop, 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        let value = Arc::new(AtomicBool::new(false));
+        tx.try_send(SetToTrueOnDrop(value.clone())).unwrap();
+
+        drop((tx, rx));
+
+        assert!(value.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    pub fn splitting_empty_channel_works() {
+        let mut channel: Channel<(), 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+
+        tx.try_send(()).unwrap();
+
+        drop((tx, rx));
+
+        channel.split();
     }
 }
 
