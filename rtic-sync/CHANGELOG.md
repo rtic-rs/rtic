@@ -17,7 +17,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Changed
 
-- Actually drop items left over in `Channel` on drop of `Channel`.
+- Actually drop items left over in `Channel` on drop of `Receiver`.
 - Allow for `split()`-ing a channel more than once without immediately panicking.
 - Add `loom` support.
 - Avoid a critical section when a `send`-link is popped and when returning `free_slot`.
