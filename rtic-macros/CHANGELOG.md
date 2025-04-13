@@ -11,6 +11,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Added `waker` getter to software tasks
 
+### Fixed
+
+- Support Rust edition 2024 `unsafe(link_section)` attribute
+
 ## [v2.1.3] - 2025-06-08
 
 ### Changed 
