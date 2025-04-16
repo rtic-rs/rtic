@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["v1","v1_compat","v2","v2_compat"]};
