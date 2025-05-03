@@ -89,7 +89,7 @@ This crate is based on the [Real-Time For the Masses language][rtfm-lang]
 created by the Embedded Systems group at [Luleå University of Technology][ltu],
 led by [Prof. Per Lindgren][perl].
 
-[rtfm-lang]: http://www.rtfm-lang.org/
+[rtfm-lang]: https://web.archive.org/web/20220401050805/http://www.rtfm-lang.org/
 [ltu]: https://www.ltu.se/?l=en
 [perl]: https://www.ltu.se/staff/p/pln-1.11258?l=en
 
