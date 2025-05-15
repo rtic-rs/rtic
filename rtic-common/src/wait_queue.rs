@@ -289,6 +289,24 @@ impl<T: core::fmt::Debug + Clone> Link<T> {
     }
 }
 
+/// Test that the future returned by `wait_until` is not `Unpin`.
+/// ```compile_fail
+/// fn test_unpin(list: &rtic_common::wait_queue::DoublyLinkedList<core::task::Waker>, cx: &mut core::task::Context) {
+///     let mut wait_until_future = list.wait_until(|| None::<()>);
+///     let pinned = core::pin::Pin::new(&mut wait_until_future);
+///     core::future::Future::poll(pinned, cx);
+///  }
+/// ```
+/// This test will ensure that previous test failed because of `pin`.
+/// ```
+/// fn test_unpin(list: &rtic_common::wait_queue::DoublyLinkedList<core::task::Waker>, cx: &mut core::task::Context) {
+///     let mut wait_until_future = list.wait_until(|| None::<()>);
+///     let pinned = core::pin::pin!(wait_until_future);
+///     core::future::Future::poll(pinned, cx);
+///  }
+/// ```
+mod compile_fail_test {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
