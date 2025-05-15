@@ -17,6 +17,6 @@ pub mod interrupt {
 
     #[inline]
     pub unsafe fn enable() {
-        riscv_slic::enable();
+        unsafe { riscv_slic::enable() };
     }
 }
