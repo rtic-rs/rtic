@@ -1,5 +1,5 @@
-pub use esp32c6::{Interrupt, Peripherals};
 use esp32c6::{INTERRUPT_CORE0, PLIC_MX};
+pub use esp32c6::{Interrupt, Peripherals};
 pub use riscv::interrupt;
 pub use riscv::register::mcause;
 
@@ -11,26 +11,24 @@ pub fn run<F>(priority: u8, f: F)
 where
     F: FnOnce(),
 {
-    if priority == 1 {
-        //if priority is 1, priority thresh should be 1
-        f();
-        unsafe {
+    unsafe {
+        if priority == 1 {
+            //if priority is 1, priority thresh should be 1
+            f();
+
             (*PLIC_MX::ptr())
                 .mxint_thresh()
                 .write(|w| w.cpu_mxint_thresh().bits(1));
-        }
-    } else {
-        //read current thresh
-        let initial = unsafe {
-            (*PLIC_MX::ptr())
+        } else {
+            //read current thresh
+            let initial = (*PLIC_MX::ptr())
                 .mxint_thresh()
                 .read()
                 .cpu_mxint_thresh()
-                .bits()
-        };
-        f();
-        //write back old thresh
-        unsafe {
+                .bits();
+            f();
+            //write back old thresh
+
             (*PLIC_MX::ptr())
                 .mxint_thresh()
                 .write(|w| w.cpu_mxint_thresh().bits(initial));
@@ -56,34 +54,30 @@ where
 /// priority is current priority >= ceiling.
 #[inline(always)]
 pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) -> R {
-    if ceiling == (15) {
-        // Turn off interrupts completely, we're at max prio
-        critical_section::with(|_| f(&mut *ptr))
-    } else {
-        let current = unsafe {
-            (*PLIC_MX::ptr())
+    unsafe {
+        if ceiling == (15) {
+            // Turn off interrupts completely, we're at max prio
+            critical_section::with(|_| f(&mut *ptr))
+        } else {
+            let current = (*PLIC_MX::ptr())
                 .mxint_thresh()
                 .read()
                 .cpu_mxint_thresh()
-                .bits()
-        };
+                .bits();
 
-        // esp32c6 lets interrupts with prio equal to threshold through so we up it by one
-        unsafe {
+            // esp32c6 lets interrupts with prio equal to threshold through so we up it by one
             (*PLIC_MX::ptr())
                 .mxint_thresh()
                 .write(|w| w.cpu_mxint_thresh().bits(ceiling + 1));
-        }
 
-        let r = f(&mut *ptr);
+            let r = f(&mut *ptr);
 
-        unsafe {
             (*PLIC_MX::ptr())
                 .mxint_thresh()
                 .write(|w| w.cpu_mxint_thresh().bits(current));
-        }
 
-        r
+            r
+        }
     }
 }
 
