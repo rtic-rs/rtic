@@ -17,7 +17,7 @@ unsafe fn waker_clone(p: *const ()) -> RawWaker {
 unsafe fn waker_wake(p: *const ()) {
     // The only thing we need from a waker is the function to call to pend the async
     // dispatcher.
-    let f: fn() = mem::transmute(p);
+    let f: fn() = unsafe { mem::transmute(p) };
     f();
 }
 
@@ -81,7 +81,7 @@ macro_rules! from_ptr_n_args {
     ($name:ident, $($t:ident),*) => {
         #[inline(always)]
         pub unsafe fn $name<$($t,)* Fun: Fn($($t,)*) -> F>(_f: Fun, ptr: &AsyncTaskExecutorPtr) -> &Self {
-            &*(ptr.get() as *const _)
+            unsafe { &*(ptr.get() as *const _) }
         }
     };
 }

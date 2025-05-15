@@ -1,4 +1,4 @@
-pub use riscv_slic::{lock, pend, run, InterruptNumber};
+pub use riscv_slic::{InterruptNumber, lock, pend, run};
 
 #[cfg(all(
     feature = "riscv-slic",

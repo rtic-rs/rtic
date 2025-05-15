@@ -1,8 +1,8 @@
 pub use cortex_m::{
+    Peripherals,
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, DWT, NVIC, SCB, SYST},
-    Peripherals,
+    peripheral::{DWT, NVIC, SCB, SYST, scb::SystemHandler},
 };
 
 #[cfg(not(any(feature = "thumbv6-backend", feature = "thumbv8base-backend")))]
@@ -57,7 +57,9 @@ impl<const M: usize> Mask<M> {
         let block = bit / 32;
 
         if block as usize >= M {
-            panic!("Generating masks for thumbv6/thumbv8m.base failed! Are you compiling for thumbv6 on an thumbv7 MCU or using an unsupported thumbv8m.base MCU?");
+            panic!(
+                "Generating masks for thumbv6/thumbv8m.base failed! Are you compiling for thumbv6 on an thumbv7 MCU or using an unsupported thumbv8m.base MCU?"
+            );
         }
 
         let offset = bit - (block * 32);
