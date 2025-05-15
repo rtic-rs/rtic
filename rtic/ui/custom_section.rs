@@ -1,5 +1,7 @@
 #![no_main]
 
+compile_error!("This should be the only error in the file");
+
 #[rtic::app(device = lm3s6965)]
 mod app {
     #[shared]
