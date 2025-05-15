@@ -4,7 +4,7 @@
 mod app {
     #[shared]
     struct Shared {
-        #[link_section = ".custom_section"]
+        #[unsafe(link_section = ".custom_section")]
         foo: (),
     }
 
