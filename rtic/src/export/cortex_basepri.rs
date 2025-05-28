@@ -1,10 +1,10 @@
 use super::cortex_logical2hw;
 use cortex_m::register::{basepri, basepri_max};
 pub use cortex_m::{
+    Peripherals,
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, DWT, SCB, SYST},
-    Peripherals,
+    peripheral::{DWT, SCB, SYST, scb::SystemHandler},
 };
 
 #[cfg(not(any(feature = "thumbv7-backend", feature = "thumbv8main-backend")))]
@@ -69,13 +69,15 @@ pub unsafe fn lock<T, R>(
     nvic_prio_bits: u8,
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
-    if ceiling == (1 << nvic_prio_bits) {
-        critical_section::with(|_| f(&mut *ptr))
-    } else {
-        let current = basepri::read();
-        basepri_max::write(cortex_logical2hw(ceiling, nvic_prio_bits));
-        let r = f(&mut *ptr);
-        basepri::write(current);
-        r
+    unsafe {
+        if ceiling == (1 << nvic_prio_bits) {
+            critical_section::with(|_| f(&mut *ptr))
+        } else {
+            let current = basepri::read();
+            basepri_max::write(cortex_logical2hw(ceiling, nvic_prio_bits));
+            let r = f(&mut *ptr);
+            basepri::write(current);
+            r
+        }
     }
 }

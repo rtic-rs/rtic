@@ -8,6 +8,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ## [Unreleased]
 
 - Unstable support for ESP32-C6
+- Fix: supoort edition 2024 `unsafe(link_section)` attribute
 - Adapt `slic` backends to new version with `mecall`
 - Allow software tasks to be diverging (return `!`) and give them `'static` context.
 
