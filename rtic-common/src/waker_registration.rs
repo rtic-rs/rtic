@@ -35,8 +35,7 @@ impl CriticalSectionWakerRegistration {
                 Some(ref w2) if (w2.will_wake(new_waker)) => {}
                 _ => {
                     // clone the new waker and store it
-                    if let Some(old_waker) = core::mem::replace(self_waker, Some(new_waker.clone()))
-                    {
+                    if let Some(old_waker) = self_waker.replace(new_waker.clone()) {
                         // We had a waker registered for another task. Wake it, so the other task can
                         // reregister itself if it's still interested.
                         //
