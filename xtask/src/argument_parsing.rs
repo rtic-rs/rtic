@@ -93,7 +93,7 @@ impl Package {
 pub struct TestMetadata {}
 
 impl TestMetadata {
-    pub fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
+    pub fn match_package(package: Package, backend: Backends, loom: bool) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
                 let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
@@ -102,6 +102,7 @@ impl TestMetadata {
                     features,
                     test: Some("ui".to_owned()),
                     deny_warnings: true,
+                    loom,
                 }
             }
             Package::RticMacros => CargoCommand::Test {
@@ -109,30 +110,35 @@ impl TestMetadata {
                 features: Some(backend.to_rtic_macros_feature().to_owned()),
                 test: None,
                 deny_warnings: true,
+                loom,
             },
             Package::RticSync => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
                 deny_warnings: true,
+                loom,
             },
             Package::RticCommon => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
                 deny_warnings: true,
+                loom,
             },
             Package::RticMonotonics => CargoCommand::Test {
                 package: Some(package.name()),
                 features: None,
                 test: None,
                 deny_warnings: true,
+                loom,
             },
             Package::RticTime => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("critical-section/std".into()),
                 test: None,
                 deny_warnings: true,
+                loom,
             },
         }
     }
@@ -489,7 +495,7 @@ pub enum Commands {
     Doc(Arg),
 
     /// Run tests
-    Test(PackageOpt),
+    Test(TestOpt),
 
     /// Build books with mdbook
     Book(Arg),
@@ -511,12 +517,21 @@ pub struct FormatOpt {
 }
 
 #[derive(Args, Debug, Clone, Default)]
+pub struct TestOpt {
+    #[clap(flatten)]
+    pub package: PackageOpt,
+    /// Should tests be loom tests
+    #[clap(short, long)]
+    pub loom: bool,
+}
+
+#[derive(Args, Debug, Clone, Copy, Default)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
     /// For which package/workspace member to operate
     ///
     /// If omitted, work on all
-    package: Option<Package>,
+    pub package: Option<Package>,
 }
 
 impl PackageOpt {

@@ -3,7 +3,7 @@ mod build;
 mod cargo_command;
 mod run;
 
-use argument_parsing::{ExtraArguments, FormatOpt, PackageOpt};
+use argument_parsing::{ExtraArguments, FormatOpt, Package, PackageOpt, TestOpt};
 use clap::Parser;
 use core::fmt;
 use std::{path::Path, str};
@@ -181,6 +181,14 @@ fn main() -> anyhow::Result<()> {
     // Default set of all packages
     // CI always runs on all packages
     let package = PackageOpt::default();
+    let testopts = TestOpt::default();
+    // Currently only rtic-sync supports loom tests
+    let testoptsloom = TestOpt {
+        loom: true,
+        package: PackageOpt {
+            package: Some(Package::RticSync),
+        },
+    };
 
     let final_run_results = match &cli.command {
         Commands::AllCi(args) => {
@@ -263,7 +271,12 @@ fn main() -> anyhow::Result<()> {
                 return handle_results(globals, results)
                     .map_err(|_| anyhow::anyhow!("Commands failed"));
             }
-            results.append(&mut cargo_test(globals, &package, backend));
+            results.append(&mut cargo_test(globals, &testopts, backend));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+            results.append(&mut cargo_test(globals, &testoptsloom, backend));
             if args.failearly {
                 return handle_results(globals, results)
                     .map_err(|_| anyhow::anyhow!("Commands failed"));
