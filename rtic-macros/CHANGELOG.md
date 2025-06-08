@@ -7,11 +7,15 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+## [v2.1.3] - 2025-06-08
+
+### Changed 
+
 - Unstable support for ESP32-C6
 - Adapt `slic` backends to new version with `mecall`
 - Allow software tasks to be diverging (return `!`) and give them `'static` context.
 
-## [v2.1.1] - 2024-12-06
+## [v2.1.1 & v2.1.2] - 2024-12-06
 
 ### Changed
 
