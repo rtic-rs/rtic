@@ -163,6 +163,7 @@ pub fn cargo<'c>(
     package: &'c PackageOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Building for backend: {backend:?}");
     let runner = package
         .packages()
         .flat_map(|package| {
@@ -210,6 +211,7 @@ pub fn cargo_example<'c>(
     backend: Backends,
     examples: &'c [String],
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Checking on platform: {platform:?}, backend: {backend:?}");
     let runner = into_iter(examples).map(|example| {
         let path = format!("examples/{}", platform.name());
         let dir = Some(PathBuf::from(path));
@@ -249,6 +251,7 @@ pub fn cargo_clippy<'c>(
     package: &'c PackageOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Running clippy on backend: {backend:?}");
     let runner = package
         .packages()
         .flat_map(|package| {
@@ -299,6 +302,7 @@ pub fn cargo_doc<'c>(
     backend: Backends,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Running cargo doc on backend: {backend:?}");
     let extra_doc_features = [
         "rtic-monotonics/cortex-m-systick",
         "rtic-monotonics/rp2040",
@@ -338,6 +342,7 @@ pub fn cargo_test<'c>(
     package: &'c PackageOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Running cargo test on backend: {backend:?}");
     package
         .packages()
         .map(|p| {
@@ -352,6 +357,7 @@ pub fn cargo_book<'c>(
     globals: &Globals,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Running mdbook");
     vec![run_and_convert((
         globals,
         CargoCommand::Book {
@@ -374,6 +380,7 @@ pub fn qemu_run_examples<'c>(
     examples: &'c [String],
     overwrite: bool,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("QEMU run for platform: {platform:?}, backend: {backend:?}");
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
@@ -420,6 +427,7 @@ pub fn build_and_check_size<'c>(
     examples: &'c [String],
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Measuring for platform: {platform:?}, backend: {backend:?}");
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 

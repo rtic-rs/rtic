@@ -178,43 +178,27 @@ fn main() -> anyhow::Result<()> {
 
     let final_run_results = match &cli.command {
         Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
-        Commands::Clippy(args) => {
-            info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(globals, &cargologlevel, args, backend)
-        }
-        Commands::Check(args) => {
-            info!("Checking on backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Check, &cargologlevel, args, backend)
-        }
-        Commands::Build(args) => {
-            info!("Building for backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Build, &cargologlevel, args, backend)
-        }
-        Commands::ExampleCheck => {
-            info!("Checking on platform: {platform:?}, backend: {backend:?}");
-            cargo_example(
-                globals,
-                BuildOrCheck::Check,
-                &cargologlevel,
-                platform,
-                backend,
-                &examples_to_run,
-            )
-        }
-        Commands::ExampleBuild => {
-            info!("Building for platform: {platform:?}, backend: {backend:?}");
-            cargo_example(
-                globals,
-                BuildOrCheck::Build,
-                &cargologlevel,
-                platform,
-                backend,
-                &examples_to_run,
-            )
-        }
+        Commands::Clippy(args) => cargo_clippy(globals, &cargologlevel, args, backend),
+        Commands::Check(args) => cargo(globals, BuildOrCheck::Check, &cargologlevel, args, backend),
+        Commands::Build(args) => cargo(globals, BuildOrCheck::Build, &cargologlevel, args, backend),
+        Commands::ExampleCheck => cargo_example(
+            globals,
+            BuildOrCheck::Check,
+            &cargologlevel,
+            platform,
+            backend,
+            &examples_to_run,
+        ),
+        Commands::ExampleBuild => cargo_example(
+            globals,
+            BuildOrCheck::Build,
+            &cargologlevel,
+            platform,
+            backend,
+            &examples_to_run,
+        ),
         Commands::Size(args) => {
             // x86_64 target not valid
-            info!("Measuring for platform: {platform:?}, backend: {backend:?}");
             build_and_check_size(
                 globals,
                 &cargologlevel,
@@ -226,7 +210,6 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
-            info!("Testing for platform: {platform:?}, backend: {backend:?}");
             qemu_run_examples(
                 globals,
                 &cargologlevel,
@@ -236,18 +219,9 @@ fn main() -> anyhow::Result<()> {
                 args.overwrite_expected,
             )
         }
-        Commands::Doc(args) => {
-            info!("Running cargo doc on backend: {backend:?}");
-            cargo_doc(globals, &cargologlevel, backend, &args.arguments)
-        }
-        Commands::Test(args) => {
-            info!("Running cargo test on backend: {backend:?}");
-            cargo_test(globals, args, backend)
-        }
-        Commands::Book(args) => {
-            info!("Running mdbook");
-            cargo_book(globals, &args.arguments)
-        }
+        Commands::Doc(args) => cargo_doc(globals, &cargologlevel, backend, &args.arguments),
+        Commands::Test(args) => cargo_test(globals, args, backend),
+        Commands::Book(args) => cargo_book(globals, &args.arguments),
     };
 
     handle_results(globals, final_run_results).map_err(|_| anyhow::anyhow!("Commands failed"))
