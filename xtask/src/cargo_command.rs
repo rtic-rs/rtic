@@ -94,6 +94,7 @@ pub enum CargoCommand<'a> {
         features: Option<String>,
         test: Option<String>,
         deny_warnings: bool,
+        loom: bool,
     },
     Book {
         arguments: Option<ExtraArguments>,
@@ -117,7 +118,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             if let Some(package) = p {
                 format!("package {package}")
             } else {
-                format!("default package")
+                "default package".to_string()
             }
         }
 
@@ -125,15 +126,15 @@ impl core::fmt::Display for CargoCommand<'_> {
             if let Some(features) = f {
                 format!("\"{features}\"")
             } else {
-                format!("no features")
+                "no features".to_string()
             }
         }
 
         fn carg(f: &&Option<&str>) -> String {
             if let Some(cargoarg) = f {
-                format!("{cargoarg}")
+                cargoarg.to_string()
             } else {
-                format!("no cargo args")
+                "no cargo args".to_string()
             }
         }
 
@@ -152,25 +153,25 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let path = path.to_str().unwrap_or("<can't display>");
                 format!("in {path}")
             } else {
-                format!("")
+                "".to_string()
             };
 
             let target = if let Some(target) = target {
                 format!("{target}")
             } else {
-                format!("<no explicit target>")
+                "<no explicit target>".to_string()
             };
 
             let mode = if let Some(mode) = mode {
                 format!("{mode}")
             } else {
-                format!("debug")
+                "debug".to_string()
             };
 
             let deny_warnings = if deny_warnings {
-                format!("deny warnings, ")
+                "deny warnings, ".to_string()
             } else {
-                format!("")
+                "".to_string()
             };
 
             if cargoarg.is_some() && path.is_some() {
@@ -299,7 +300,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let carg = if cargoarg.is_some() {
                     format!("(cargo args: {carg})")
                 } else {
-                    format!("")
+                    String::new()
                 };
 
                 if *check_only {
@@ -321,9 +322,9 @@ impl core::fmt::Display for CargoCommand<'_> {
                     .map(|a| format!("{a}"))
                     .unwrap_or_else(|| "no extra arguments".into());
                 let deny_warnings = if *deny_warnings {
-                    format!("deny warnings, ")
+                    "deny warnings, ".to_string()
                 } else {
-                    format!("")
+                    String::new()
                 };
                 if cargoarg.is_some() {
                     write!(f, "Document ({deny_warnings}{feat}, {carg}, {arguments})")
@@ -336,6 +337,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 test,
                 deny_warnings,
+                loom: _,
             } => {
                 let p = p(package);
                 let test = test
@@ -371,13 +373,13 @@ impl<'a> CargoCommand<'a> {
         let env = if let Some((key, value)) = self.extra_env() {
             format!("{key}=\"{value}\" ")
         } else {
-            format!("")
+            String::new()
         };
 
         let cd = if let Some(Some(chdir)) = self.chdir().map(|p| p.to_str()) {
             format!("cd {chdir} && ")
         } else {
-            format!("")
+            String::new()
         };
 
         let executable = self.executable();
@@ -445,7 +447,7 @@ impl<'a> CargoCommand<'a> {
             args.extend_from_slice(&["--features", features]);
         }
 
-        if let Some(mode) = mode.map(|m| m.to_flag()).flatten() {
+        if let Some(mode) = mode.and_then(|m| m.to_flag()) {
             args.push(mode);
         }
 
@@ -576,15 +578,23 @@ impl<'a> CargoCommand<'a> {
                 test,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
+                loom,
             } => {
-                let extra = if let Some(test) = test {
+                let mut extra = if let Some(test) = test {
                     vec!["--test", test]
                 } else {
                     vec![]
                 };
+
+                let cargofeatures = if *loom {
+                    extra.push(" --lib");
+                    &None
+                } else {
+                    features
+                };
                 let package = p(package);
                 let extra = extra.into_iter().chain(package);
-                self.build_args(false, &None, features, None, extra)
+                self.build_args(false, &None, cargofeatures, None, extra)
             }
             CargoCommand::Book { arguments } => {
                 let mut args = vec![];
@@ -740,10 +750,29 @@ impl<'a> CargoCommand<'a> {
 
             CargoCommand::Check { deny_warnings, .. }
             | CargoCommand::ExampleCheck { deny_warnings, .. }
-            | CargoCommand::Build { deny_warnings, .. }
-            | CargoCommand::Test { deny_warnings, .. } => {
+            | CargoCommand::Build { deny_warnings, .. } => {
                 if *deny_warnings {
                     Some(("RUSTFLAGS", "-D warnings".to_string()))
+                } else {
+                    None
+                }
+            }
+            CargoCommand::Test {
+                deny_warnings,
+                loom,
+                ..
+            } => {
+                let mut combined_flags = vec![""];
+
+                if *deny_warnings {
+                    combined_flags.push("-D warnings");
+                }
+                if *loom {
+                    combined_flags.push("--cfg loom");
+                }
+                if !combined_flags.is_empty() {
+                    let rust_flags = combined_flags.join(" ").to_string();
+                    Some(("RUSTFLAGS", rust_flags))
                 } else {
                     None
                 }
@@ -753,10 +782,7 @@ impl<'a> CargoCommand<'a> {
     }
 
     pub fn print_stdout_intermediate(&self) -> bool {
-        match self {
-            Self::ExampleSize { .. } => true,
-            _ => false,
-        }
+        matches!(self, Self::ExampleSize { .. })
     }
 }
 

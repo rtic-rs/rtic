@@ -16,7 +16,8 @@ use iter::{into_iter, CoalescingRunner};
 
 use crate::{
     argument_parsing::{
-        Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, Platforms, TestMetadata,
+        Backends, BuildOrCheck, ExtraArguments, FormatOpt, Globals, PackageOpt, Platforms,
+        TestMetadata, TestOpt,
     },
     cargo_command::{BuildMode, CargoCommand},
 };
@@ -163,6 +164,7 @@ pub fn cargo<'c>(
     package: &'c PackageOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Building for backend: {backend:?}");
     let runner = package
         .packages()
         .flat_map(|package| {
@@ -172,13 +174,14 @@ pub fn cargo<'c>(
         })
         .map(move |(package, target, features)| {
             let target = target.into();
+            let mode = BuildMode::Release;
             let command = match operation {
                 BuildOrCheck::Check => CargoCommand::Check {
                     cargoarg,
                     package: Some(package.name()),
                     target,
                     features,
-                    mode: BuildMode::Release,
+                    mode,
                     dir: None,
                     deny_warnings: globals.deny_warnings,
                 },
@@ -187,7 +190,7 @@ pub fn cargo<'c>(
                     package: Some(package.name()),
                     target,
                     features,
-                    mode: BuildMode::Release,
+                    mode,
                     dir: None,
                     deny_warnings: globals.deny_warnings,
                 },
@@ -210,10 +213,12 @@ pub fn cargo_example<'c>(
     backend: Backends,
     examples: &'c [String],
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Checking on platform: {platform:?}, backend: {backend:?}");
     let runner = into_iter(examples).map(|example| {
         let path = format!("examples/{}", platform.name());
         let dir = Some(PathBuf::from(path));
         let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
+        let mode = BuildMode::Release;
 
         let command = match operation {
             BuildOrCheck::Check => CargoCommand::ExampleCheck {
@@ -222,7 +227,7 @@ pub fn cargo_example<'c>(
                 example,
                 target: Some(backend.to_target()),
                 features,
-                mode: BuildMode::Release,
+                mode,
                 dir,
                 deny_warnings: globals.deny_warnings,
             },
@@ -232,7 +237,7 @@ pub fn cargo_example<'c>(
                 example,
                 target: Some(backend.to_target()),
                 features,
-                mode: BuildMode::Release,
+                mode,
                 dir,
                 deny_warnings: globals.deny_warnings,
             },
@@ -249,6 +254,7 @@ pub fn cargo_clippy<'c>(
     package: &'c PackageOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Running clippy on backend: {backend:?}");
     let runner = package
         .packages()
         .flat_map(|package| {
@@ -275,16 +281,15 @@ pub fn cargo_clippy<'c>(
 pub fn cargo_format<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
-    package: &'c PackageOpt,
-    check_only: bool,
+    formatopts: &'c FormatOpt,
 ) -> Vec<FinalRunResult<'c>> {
-    let runner = package.packages().map(|p| {
+    let runner = formatopts.package.packages().map(|p| {
         (
             globals,
             CargoCommand::Format {
                 cargoarg,
                 package: Some(p.name()),
-                check_only,
+                check_only: formatopts.check,
             },
             false,
         )
@@ -299,6 +304,7 @@ pub fn cargo_doc<'c>(
     backend: Backends,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Running cargo doc on backend: {backend:?}");
     let extra_doc_features = [
         "rtic-monotonics/cortex-m-systick",
         "rtic-monotonics/rp2040",
@@ -335,13 +341,15 @@ pub fn cargo_doc<'c>(
 /// If no package is specified, loop through all packages
 pub fn cargo_test<'c>(
     globals: &Globals,
-    package: &'c PackageOpt,
+    testopts: &'c TestOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Running cargo test on backend: {backend:?}");
+    let TestOpt { package, loom } = testopts;
     package
         .packages()
         .map(|p| {
-            let meta = TestMetadata::match_package(p, backend);
+            let meta = TestMetadata::match_package(p, backend, *loom);
             (globals, meta, false)
         })
         .run_and_coalesce()
@@ -352,6 +360,7 @@ pub fn cargo_book<'c>(
     globals: &Globals,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Running mdbook");
     vec![run_and_convert((
         globals,
         CargoCommand::Book {
@@ -374,6 +383,7 @@ pub fn qemu_run_examples<'c>(
     examples: &'c [String],
     overwrite: bool,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("QEMU run for platform: {platform:?}, backend: {backend:?}");
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
@@ -382,6 +392,7 @@ pub fn qemu_run_examples<'c>(
             let path = format!("examples/{}", platform.name());
             let dir = Some(PathBuf::from(path));
             let target = target.into();
+            let mode = BuildMode::Release;
 
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &None,
@@ -389,7 +400,7 @@ pub fn qemu_run_examples<'c>(
                 example,
                 target,
                 features: features.clone(),
-                mode: BuildMode::Release,
+                mode,
                 dir: dir.clone(),
                 deny_warnings: globals.deny_warnings,
             };
@@ -400,7 +411,7 @@ pub fn qemu_run_examples<'c>(
                 example,
                 target,
                 features: features.clone(),
-                mode: BuildMode::Release,
+                mode,
                 dir,
                 deny_warnings: globals.deny_warnings,
             };
@@ -420,6 +431,7 @@ pub fn build_and_check_size<'c>(
     examples: &'c [String],
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
+    info!("Measuring for platform: {platform:?}, backend: {backend:?}");
     let target = backend.to_target();
     let features = Some(target.and_features(backend.to_rtic_feature()));
 
@@ -428,6 +440,7 @@ pub fn build_and_check_size<'c>(
             let path = format!("examples/{}", platform.name());
             let dir = Some(PathBuf::from(path));
             let target = target.into();
+            let mode = BuildMode::Release;
 
             // Make sure the requested example(s) are built
             let cmd_build = CargoCommand::ExampleBuild {
@@ -436,7 +449,7 @@ pub fn build_and_check_size<'c>(
                 example,
                 target,
                 features: features.clone(),
-                mode: BuildMode::Release,
+                mode,
                 dir: dir.clone(),
                 deny_warnings: globals.deny_warnings,
             };
@@ -447,7 +460,7 @@ pub fn build_and_check_size<'c>(
                 example,
                 target,
                 features: features.clone(),
-                mode: BuildMode::Release,
+                mode,
                 arguments: arguments.clone(),
                 dir,
                 deny_warnings: globals.deny_warnings,
