@@ -174,13 +174,14 @@ pub fn cargo<'c>(
         })
         .map(move |(package, target, features)| {
             let target = target.into();
+            let mode = BuildMode::Release;
             let command = match operation {
                 BuildOrCheck::Check => CargoCommand::Check {
                     cargoarg,
                     package: Some(package.name()),
                     target,
                     features,
-                    mode: BuildMode::Release,
+                    mode,
                     dir: None,
                     deny_warnings: globals.deny_warnings,
                 },
@@ -189,7 +190,7 @@ pub fn cargo<'c>(
                     package: Some(package.name()),
                     target,
                     features,
-                    mode: BuildMode::Release,
+                    mode,
                     dir: None,
                     deny_warnings: globals.deny_warnings,
                 },
@@ -217,6 +218,7 @@ pub fn cargo_example<'c>(
         let path = format!("examples/{}", platform.name());
         let dir = Some(PathBuf::from(path));
         let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
+        let mode = BuildMode::Release;
 
         let command = match operation {
             BuildOrCheck::Check => CargoCommand::ExampleCheck {
@@ -225,7 +227,7 @@ pub fn cargo_example<'c>(
                 example,
                 target: Some(backend.to_target()),
                 features,
-                mode: BuildMode::Release,
+                mode,
                 dir,
                 deny_warnings: globals.deny_warnings,
             },
@@ -235,7 +237,7 @@ pub fn cargo_example<'c>(
                 example,
                 target: Some(backend.to_target()),
                 features,
-                mode: BuildMode::Release,
+                mode,
                 dir,
                 deny_warnings: globals.deny_warnings,
             },
@@ -389,6 +391,7 @@ pub fn qemu_run_examples<'c>(
             let path = format!("examples/{}", platform.name());
             let dir = Some(PathBuf::from(path));
             let target = target.into();
+            let mode = BuildMode::Release;
 
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &None,
@@ -396,7 +399,7 @@ pub fn qemu_run_examples<'c>(
                 example,
                 target,
                 features: features.clone(),
-                mode: BuildMode::Release,
+                mode,
                 dir: dir.clone(),
                 deny_warnings: globals.deny_warnings,
             };
@@ -407,7 +410,7 @@ pub fn qemu_run_examples<'c>(
                 example,
                 target,
                 features: features.clone(),
-                mode: BuildMode::Release,
+                mode,
                 dir,
                 deny_warnings: globals.deny_warnings,
             };
@@ -436,6 +439,7 @@ pub fn build_and_check_size<'c>(
             let path = format!("examples/{}", platform.name());
             let dir = Some(PathBuf::from(path));
             let target = target.into();
+            let mode = BuildMode::Release;
 
             // Make sure the requested example(s) are built
             let cmd_build = CargoCommand::ExampleBuild {
@@ -444,7 +448,7 @@ pub fn build_and_check_size<'c>(
                 example,
                 target,
                 features: features.clone(),
-                mode: BuildMode::Release,
+                mode,
                 dir: dir.clone(),
                 deny_warnings: globals.deny_warnings,
             };
@@ -455,7 +459,7 @@ pub fn build_and_check_size<'c>(
                 example,
                 target,
                 features: features.clone(),
-                mode: BuildMode::Release,
+                mode,
                 arguments: arguments.clone(),
                 dir,
                 deny_warnings: globals.deny_warnings,
