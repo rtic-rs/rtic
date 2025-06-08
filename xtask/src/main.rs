@@ -89,11 +89,7 @@ fn main() -> anyhow::Result<()> {
     );
     log::debug!("Partial features: {}", globals.partial);
 
-    let platform = if let Some(platform) = globals.platform {
-        platform
-    } else {
-        Platforms::default()
-    };
+    let platform = globals.platform.unwrap_or_default();
 
     let backend = if let Some(backend) = globals.backend {
         backend
