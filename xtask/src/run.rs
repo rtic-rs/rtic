@@ -16,7 +16,8 @@ use iter::{into_iter, CoalescingRunner};
 
 use crate::{
     argument_parsing::{
-        Backends, BuildOrCheck, ExtraArguments, Globals, PackageOpt, Platforms, TestMetadata,
+        Backends, BuildOrCheck, ExtraArguments, FormatOpt, Globals, PackageOpt, Platforms,
+        TestMetadata,
     },
     cargo_command::{BuildMode, CargoCommand},
 };
@@ -278,16 +279,15 @@ pub fn cargo_clippy<'c>(
 pub fn cargo_format<'c>(
     globals: &Globals,
     cargoarg: &'c Option<&'c str>,
-    package: &'c PackageOpt,
-    check_only: bool,
+    formatopts: &'c FormatOpt,
 ) -> Vec<FinalRunResult<'c>> {
-    let runner = package.packages().map(|p| {
+    let runner = formatopts.package.packages().map(|p| {
         (
             globals,
             CargoCommand::Format {
                 cargoarg,
                 package: Some(p.name()),
-                check_only,
+                check_only: formatopts.check,
             },
             false,
         )
