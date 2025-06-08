@@ -433,6 +433,10 @@ pub struct Cli {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
+    /// Run everything CI would
+    #[clap(alias = "ci")]
+    AllCi,
+
     /// Format code
     #[clap(alias = "fmt")]
     Format(FormatOpt),

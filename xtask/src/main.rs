@@ -177,6 +177,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let final_run_results = match &cli.command {
+        Commands::AllCi => {}
         Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
         Commands::Clippy(args) => cargo_clippy(globals, &cargologlevel, args, backend),
         Commands::Check(args) => cargo(globals, BuildOrCheck::Check, &cargologlevel, args, backend),
