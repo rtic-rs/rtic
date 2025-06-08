@@ -543,7 +543,7 @@ pub struct QemuAndRun {
 
 #[derive(Debug, Parser, Clone)]
 pub struct Arg {
-    /// Options to pass to `cargo size`
+    /// Options to pass to `cargo <subcommand>`
     #[command(subcommand)]
     pub arguments: Option<ExtraArguments>,
 }
