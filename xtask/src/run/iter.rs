@@ -9,6 +9,7 @@ pub trait CoalescingRunner<'c> {
 }
 
 #[cfg(not(feature = "rayon"))]
+#[allow(clippy::module_inception)]
 mod iter {
     use super::*;
     use crate::{argument_parsing::Globals, cargo_command::*, run::run_and_convert};
@@ -28,6 +29,7 @@ mod iter {
 }
 
 #[cfg(feature = "rayon")]
+#[allow(clippy::module_inception)]
 mod iter {
     use super::*;
     use crate::{argument_parsing::Globals, cargo_command::*, run::run_and_convert};
