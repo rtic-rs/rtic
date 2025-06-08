@@ -10,26 +10,24 @@ pub fn run<F>(priority: u8, f: F)
 where
     F: FnOnce(),
 {
-    if priority == 1 {
-        //if priority is 1, priority thresh should be 1
-        f();
-        unsafe {
+    unsafe {
+        if priority == 1 {
+            //if priority is 1, priority thresh should be 1
+            f();
+
             (*INTERRUPT_CORE0::ptr())
                 .cpu_int_thresh()
                 .write(|w| w.cpu_int_thresh().bits(1));
-        }
-    } else {
-        //read current thresh
-        let initial = unsafe {
-            (*INTERRUPT_CORE0::ptr())
+        } else {
+            //read current thresh
+            let initial = (*INTERRUPT_CORE0::ptr())
                 .cpu_int_thresh()
                 .read()
                 .cpu_int_thresh()
-                .bits()
-        };
-        f();
-        //write back old thresh
-        unsafe {
+                .bits();
+            f();
+            //write back old thresh
+
             (*INTERRUPT_CORE0::ptr())
                 .cpu_int_thresh()
                 .write(|w| w.cpu_int_thresh().bits(initial));
@@ -55,30 +53,29 @@ where
 /// priority is current priority >= ceiling.
 #[inline(always)]
 pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) -> R {
-    if ceiling == (15) {
-        //turn off interrupts completely, were at max prio
-        critical_section::with(|_| f(&mut *ptr))
-    } else {
-        let current = unsafe {
-            (*INTERRUPT_CORE0::ptr())
+    unsafe {
+        if ceiling == (15) {
+            //turn off interrupts completely, were at max prio
+            critical_section::with(|_| f(&mut *ptr))
+        } else {
+            let current = (*INTERRUPT_CORE0::ptr())
                 .cpu_int_thresh()
                 .read()
                 .cpu_int_thresh()
-                .bits()
-        };
+                .bits();
 
-        unsafe {
             (*INTERRUPT_CORE0::ptr())
                 .cpu_int_thresh()
                 .write(|w| w.cpu_int_thresh().bits(ceiling + 1));
-        } //esp32c3 lets interrupts with prio equal to threshold through so we up it by one
-        let r = f(&mut *ptr);
-        unsafe {
+            //esp32c3 lets interrupts with prio equal to threshold through so we up it by one
+            let r = f(&mut *ptr);
+
             (*INTERRUPT_CORE0::ptr())
                 .cpu_int_thresh()
                 .write(|w| w.cpu_int_thresh().bits(current));
+
+            r
         }
-        r
     }
 }
 

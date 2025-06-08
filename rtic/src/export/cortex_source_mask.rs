@@ -1,8 +1,8 @@
 pub use cortex_m::{
+    Peripherals,
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, DWT, NVIC, SCB, SYST},
-    Peripherals,
+    peripheral::{DWT, NVIC, SCB, SYST, scb::SystemHandler},
 };
 
 #[cfg(not(any(feature = "thumbv6-backend", feature = "thumbv8base-backend")))]
@@ -57,7 +57,9 @@ impl<const M: usize> Mask<M> {
         let block = bit / 32;
 
         if block as usize >= M {
-            panic!("Generating masks for thumbv6/thumbv8m.base failed! Are you compiling for thumbv6 on an thumbv7 MCU or using an unsupported thumbv8m.base MCU?");
+            panic!(
+                "Generating masks for thumbv6/thumbv8m.base failed! Are you compiling for thumbv6 on an thumbv7 MCU or using an unsupported thumbv8m.base MCU?"
+            );
         }
 
         let offset = bit - (block * 32);
@@ -125,25 +127,27 @@ pub unsafe fn lock<T, R, const M: usize>(
     masks: &[Mask<M>; 3],
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
-    if ceiling >= 4 {
-        // safe to manipulate outside critical section
-        // execute closure under protection of raised system ceiling
+    unsafe {
+        if ceiling >= 4 {
+            // safe to manipulate outside critical section
+            // execute closure under protection of raised system ceiling
 
-        // safe to manipulate outside critical section
-        critical_section::with(|_| f(&mut *ptr))
-    } else {
-        // safe to manipulate outside critical section
-        let mask = compute_mask(0, ceiling, masks);
-        let old_mask = read_mask(mask);
-        clear_enable_mask(mask);
+            // safe to manipulate outside critical section
+            critical_section::with(|_| f(&mut *ptr))
+        } else {
+            // safe to manipulate outside critical section
+            let mask = compute_mask(0, ceiling, masks);
+            let old_mask = read_mask(mask);
+            clear_enable_mask(mask);
 
-        // execute closure under protection of raised system ceiling
-        let r = f(&mut *ptr);
+            // execute closure under protection of raised system ceiling
+            let r = f(&mut *ptr);
 
-        set_enable_mask(mask, old_mask);
+            set_enable_mask(mask, old_mask);
 
-        // safe to manipulate outside critical section
-        r
+            // safe to manipulate outside critical section
+            r
+        }
     }
 }
 
@@ -185,7 +189,7 @@ unsafe fn read_mask<const M: usize>(mask: Mask<M>) -> Mask<M> {
     for i in 0..M {
         // This check should involve compile time constants and be optimized out.
         if mask.0[i] != 0 {
-            out.0[i] = (*NVIC::PTR).iser[i].read();
+            out.0[i] = unsafe { (*NVIC::PTR).iser[i].read() };
         }
     }
 
@@ -198,7 +202,9 @@ unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>, old_mask: Mask<M>) {
     for i in 0..M {
         // This check should involve compile time constants and be optimized out.
         if mask.0[i] != 0 {
-            (*NVIC::PTR).iser[i].write(old_mask.0[i]);
+            unsafe {
+                (*NVIC::PTR).iser[i].write(old_mask.0[i]);
+            }
         }
     }
 }
@@ -209,7 +215,9 @@ unsafe fn clear_enable_mask<const M: usize>(mask: Mask<M>) {
     for i in 0..M {
         // This check should involve compile time constants and be optimized out.
         if mask.0[i] != 0 {
-            (*NVIC::PTR).icer[i].write(mask.0[i]);
+            unsafe {
+                (*NVIC::PTR).icer[i].write(mask.0[i]);
+            }
         }
     }
 }

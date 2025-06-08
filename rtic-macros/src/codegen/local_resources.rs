@@ -19,10 +19,19 @@ pub fn codegen(app: &App, _analysis: &Analysis) -> TokenStream2 {
 
         // late resources in `util::link_section_uninit`
         // unless user specifies custom link section
-        let section = if attrs
-            .iter()
-            .any(|attr| attr.path().is_ident("link_section"))
-        {
+        let section = if attrs.iter().any(|attr| {
+            let is_link_section = attr.path().is_ident("link_section");
+            let is_unsafe = attr.path().is_ident("unsafe");
+            let is_embedded_link_section = match attr.parse_args() {
+                Ok(syn::Expr::Assign(assign)) => match &*assign.left {
+                    syn::Expr::Path(path) => path.path.is_ident("link_section"),
+                    _ => false,
+                },
+                _ => false,
+            };
+
+            is_link_section || (is_unsafe && is_embedded_link_section)
+        }) {
             None
         } else {
             Some(util::link_section_uninit())
