@@ -20,6 +20,8 @@ esptool.py image_info --version 2 "$outputfilename" 1>&2
 # Run in QEMU
 $qemuexec -nographic -monitor tcp:127.0.0.1:55555,server,nowait -icount 3 -machine esp32c3 -drive file="$outputfilename",if=mtd,format=raw -serial file:"$logfile" > qemuoutput.log 2>&1 &
 
+qemupid=$!
+
 # Let it run
 sleep 3s
 
