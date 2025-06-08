@@ -17,7 +17,7 @@ use iter::{into_iter, CoalescingRunner};
 use crate::{
     argument_parsing::{
         Backends, BuildOrCheck, ExtraArguments, FormatOpt, Globals, PackageOpt, Platforms,
-        TestMetadata,
+        TestMetadata, TestOpt,
     },
     cargo_command::{BuildMode, CargoCommand},
 };
@@ -341,14 +341,15 @@ pub fn cargo_doc<'c>(
 /// If no package is specified, loop through all packages
 pub fn cargo_test<'c>(
     globals: &Globals,
-    package: &'c PackageOpt,
+    testopts: &'c TestOpt,
     backend: Backends,
 ) -> Vec<FinalRunResult<'c>> {
     info!("Running cargo test on backend: {backend:?}");
+    let TestOpt { package, loom } = testopts;
     package
         .packages()
         .map(|p| {
-            let meta = TestMetadata::match_package(p, backend);
+            let meta = TestMetadata::match_package(p, backend, *loom);
             (globals, meta, false)
         })
         .run_and_coalesce()

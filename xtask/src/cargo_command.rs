@@ -94,6 +94,7 @@ pub enum CargoCommand<'a> {
         features: Option<String>,
         test: Option<String>,
         deny_warnings: bool,
+        loom: bool,
     },
     Book {
         arguments: Option<ExtraArguments>,
@@ -336,6 +337,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 test,
                 deny_warnings,
+                loom: _,
             } => {
                 let p = p(package);
                 let test = test
@@ -576,15 +578,23 @@ impl<'a> CargoCommand<'a> {
                 test,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
+                loom,
             } => {
-                let extra = if let Some(test) = test {
+                let mut extra = if let Some(test) = test {
                     vec!["--test", test]
                 } else {
                     vec![]
                 };
+
+                let cargofeatures = if *loom {
+                    extra.push(" --lib");
+                    &None
+                } else {
+                    features
+                };
                 let package = p(package);
                 let extra = extra.into_iter().chain(package);
-                self.build_args(false, &None, features, None, extra)
+                self.build_args(false, &None, cargofeatures, None, extra)
             }
             CargoCommand::Book { arguments } => {
                 let mut args = vec![];
@@ -740,10 +750,29 @@ impl<'a> CargoCommand<'a> {
 
             CargoCommand::Check { deny_warnings, .. }
             | CargoCommand::ExampleCheck { deny_warnings, .. }
-            | CargoCommand::Build { deny_warnings, .. }
-            | CargoCommand::Test { deny_warnings, .. } => {
+            | CargoCommand::Build { deny_warnings, .. } => {
                 if *deny_warnings {
                     Some(("RUSTFLAGS", "-D warnings".to_string()))
+                } else {
+                    None
+                }
+            }
+            CargoCommand::Test {
+                deny_warnings,
+                loom,
+                ..
+            } => {
+                let mut combined_flags = vec![""];
+
+                if *deny_warnings {
+                    combined_flags.push("-D warnings");
+                }
+                if *loom {
+                    combined_flags.push("--cfg loom");
+                }
+                if !combined_flags.is_empty() {
+                    let rust_flags = combined_flags.join(" ").to_string();
+                    Some(("RUSTFLAGS", rust_flags))
                 } else {
                     None
                 }
