@@ -159,7 +159,7 @@ fn main() -> anyhow::Result<()> {
 
     init_build_dir()?;
     #[allow(clippy::if_same_then_else)]
-    let cargologlevel = if log_enabled!(Level::Trace) {
+    let cargoarg = if log_enabled!(Level::Trace) {
         Some("-v")
     } else if log_enabled!(Level::Debug) {
         None
@@ -185,18 +185,13 @@ fn main() -> anyhow::Result<()> {
     let final_run_results = match &cli.command {
         Commands::AllCi(args) => {
             // TODO: Reduce code duplication and repetition
-            let mut results = cargo_format(globals, &cargologlevel, &formatoptcheckonly);
+            let mut results = cargo_format(globals, &cargoarg, &formatoptcheckonly);
             if args.failearly {
                 return handle_results(globals, results)
                     .map_err(|_| anyhow::anyhow!("Commands failed"));
             }
 
-            results.append(&mut cargo_clippy(
-                globals,
-                &cargologlevel,
-                &package,
-                backend,
-            ));
+            results.append(&mut cargo_clippy(globals, &cargoarg, &package, backend));
 
             if args.failearly {
                 return handle_results(globals, results)
@@ -206,7 +201,7 @@ fn main() -> anyhow::Result<()> {
             results.append(&mut cargo(
                 globals,
                 BuildOrCheck::Check,
-                &cargologlevel,
+                &cargoarg,
                 &package,
                 backend,
             ));
@@ -217,7 +212,7 @@ fn main() -> anyhow::Result<()> {
             results.append(&mut cargo(
                 globals,
                 BuildOrCheck::Build,
-                &cargologlevel,
+                &cargoarg,
                 &package,
                 backend,
             ));
@@ -229,7 +224,7 @@ fn main() -> anyhow::Result<()> {
             results.append(&mut cargo_example(
                 globals,
                 BuildOrCheck::Check,
-                &cargologlevel,
+                &cargoarg,
                 platform,
                 backend,
                 &examples_to_run,
@@ -241,7 +236,7 @@ fn main() -> anyhow::Result<()> {
             results.append(&mut cargo_example(
                 globals,
                 BuildOrCheck::Build,
-                &cargologlevel,
+                &cargoarg,
                 platform,
                 backend,
                 &examples_to_run,
@@ -252,7 +247,7 @@ fn main() -> anyhow::Result<()> {
             }
             results.append(&mut qemu_run_examples(
                 globals,
-                &cargologlevel,
+                &cargoarg,
                 platform,
                 backend,
                 &examples_to_run,
@@ -263,7 +258,7 @@ fn main() -> anyhow::Result<()> {
                     .map_err(|_| anyhow::anyhow!("Commands failed"));
             }
 
-            results.append(&mut cargo_doc(globals, &cargologlevel, backend, &None));
+            results.append(&mut cargo_doc(globals, &cargoarg, backend, &None));
             if args.failearly {
                 return handle_results(globals, results)
                     .map_err(|_| anyhow::anyhow!("Commands failed"));
@@ -281,16 +276,14 @@ fn main() -> anyhow::Result<()> {
 
             results
         }
-        Commands::Format(formatopts) => cargo_format(globals, &cargologlevel, formatopts),
-        Commands::Clippy(packageopts) => {
-            cargo_clippy(globals, &cargologlevel, packageopts, backend)
-        }
-        Commands::Check(args) => cargo(globals, BuildOrCheck::Check, &cargologlevel, args, backend),
-        Commands::Build(args) => cargo(globals, BuildOrCheck::Build, &cargologlevel, args, backend),
+        Commands::Format(formatopts) => cargo_format(globals, &cargoarg, formatopts),
+        Commands::Clippy(packageopts) => cargo_clippy(globals, &cargoarg, packageopts, backend),
+        Commands::Check(args) => cargo(globals, BuildOrCheck::Check, &cargoarg, args, backend),
+        Commands::Build(args) => cargo(globals, BuildOrCheck::Build, &cargoarg, args, backend),
         Commands::ExampleCheck => cargo_example(
             globals,
             BuildOrCheck::Check,
-            &cargologlevel,
+            &cargoarg,
             platform,
             backend,
             &examples_to_run,
@@ -298,7 +291,7 @@ fn main() -> anyhow::Result<()> {
         Commands::ExampleBuild => cargo_example(
             globals,
             BuildOrCheck::Build,
-            &cargologlevel,
+            &cargoarg,
             platform,
             backend,
             &examples_to_run,
@@ -307,7 +300,7 @@ fn main() -> anyhow::Result<()> {
             // x86_64 target not valid
             build_and_check_size(
                 globals,
-                &cargologlevel,
+                &cargoarg,
                 platform,
                 backend,
                 &examples_to_run,
@@ -318,14 +311,14 @@ fn main() -> anyhow::Result<()> {
             // x86_64 target not valid
             qemu_run_examples(
                 globals,
-                &cargologlevel,
+                &cargoarg,
                 platform,
                 backend,
                 &examples_to_run,
                 args.overwrite_expected,
             )
         }
-        Commands::Doc(args) => cargo_doc(globals, &cargologlevel, backend, &args.arguments),
+        Commands::Doc(args) => cargo_doc(globals, &cargoarg, backend, &args.arguments),
         Commands::Test(args) => cargo_test(globals, args, backend),
         Commands::Book(args) => cargo_book(globals, &args.arguments),
     };
