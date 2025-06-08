@@ -16,6 +16,7 @@ bare-metal = "1.0.0"
 cortex-m-semihosting = "0.5.0"
 rtic-time = { path = "../../rtic-time" }
 rtic-sync = { path = "../../rtic-sync" }
+rtic-common = { path = "../../rtic-common" }
 rtic-monotonics = { path = "../../rtic-monotonics", features = ["cortex-m-systick"] }
 rtic = { path = "../../rtic" }
 cfg-if = "1.0"
