@@ -20,6 +20,10 @@ Example:
 
 ## [Unreleased]
 
+### Fixed
+
+- Task executors were not required to be 'static, allowing spawn to reference the stack of the spawnee.
+
 ### Changed
 
 - Updated esp32c3 dependency to v0.28.0
