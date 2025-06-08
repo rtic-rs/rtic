@@ -255,7 +255,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run cargo test
-        run: RUSTFLAGS="--cfg loom" cargo test -p rtic-sync --release --lib
+        run: cargo xtask --deny-warnings test --loom rtic-sync
 
   # Build documentation, check links
   docs:
