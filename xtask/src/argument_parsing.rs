@@ -495,7 +495,7 @@ pub enum Commands {
     Book(Arg),
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug, Clone, Default)]
 pub struct FormatOpt {
     #[clap(flatten)]
     pub package: PackageOpt,
@@ -504,7 +504,7 @@ pub struct FormatOpt {
     pub check: bool,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug, Clone, Default)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
     /// For which package/workspace member to operate
