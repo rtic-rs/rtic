@@ -435,7 +435,7 @@ pub struct Cli {
 pub enum Commands {
     /// Run everything CI would
     #[clap(alias = "ci")]
-    AllCi,
+    AllCi(CiOpt),
 
     /// Format code
     #[clap(alias = "fmt")]
@@ -493,6 +493,12 @@ pub enum Commands {
 
     /// Build books with mdbook
     Book(Arg),
+}
+
+#[derive(Args, Debug, Clone, Default)]
+pub struct CiOpt {
+    #[clap(short, long)]
+    pub failearly: bool,
 }
 
 #[derive(Args, Debug, Clone, Default)]
