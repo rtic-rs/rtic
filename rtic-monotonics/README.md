@@ -5,6 +5,8 @@
 
 > Reference implementations of the Real-Time Interrupt-driven Concurrency (RTIC) Monotonics timers
 
+Uses [`rtic-time`](https://github.com/rtic-rs/rtic/tree/master/rtic-time) defined [`Monotonic`](https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html) trait.
+
 `rtic-monotonics` is for RTIC v2.
 
 For RTIC v1 see [`rtic-monotonic`](https://github.com/rtic-rs/rtic-monotonic)
