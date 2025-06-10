@@ -779,7 +779,7 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.1.2"
+version = "2.1.3"
 dependencies = [
  "bare-metal",
  "critical-section",
@@ -806,7 +806,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.1.2"
+version = "2.1.3"
 dependencies = [
  "indexmap",
  "proc-macro-error2",
