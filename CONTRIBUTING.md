@@ -2,9 +2,7 @@
 
 ## New features
 
-New features should go through the [RFC process][rfcs] before creating a Pull Request to this repository.
-
-[rfcs]: https://github.com/rtic-rs/rfcs
+Create an issue describing the feature. For more interactive discussions join the regular weekly meeting - see README.
 
 ## Bugs
 
