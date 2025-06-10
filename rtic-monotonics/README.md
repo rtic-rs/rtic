@@ -3,7 +3,7 @@
 
 # `rtic-monotonics`
 
-> Core abstractions of the Real-Time Interrupt-driven Concurrency (RTIC) Monotonics timers
+> Reference implementations of the Real-Time Interrupt-driven Concurrency (RTIC) Monotonics timers
 
 `rtic-monotonics` is for RTIC v2.
 

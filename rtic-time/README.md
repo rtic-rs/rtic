@@ -15,9 +15,12 @@ Additionally, this crate provides tools and utilities that help with implementin
 
 ## Implementations of the `Monotonic` trait
 
-For implementations of [`Monotonic`](https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html)
+Check the HAL crate of your device: it might already contain an implementation.
+
+For reference implementations of [`Monotonic`](https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html)
 on various hardware, see [`rtic-monotonics`](https://docs.rs/rtic-monotonics/).
 
+## RTIC v1 uses [`rtic-monotonic`](https://github.com/rtic-rs/rtic-monotonic) instead
 
 ## Chat
 
