@@ -117,7 +117,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             if let Some(package) = p {
                 format!("package {package}")
             } else {
-                format!("default package")
+                "default package".to_string()
             }
         }
 
@@ -125,15 +125,15 @@ impl core::fmt::Display for CargoCommand<'_> {
             if let Some(features) = f {
                 format!("\"{features}\"")
             } else {
-                format!("no features")
+                "no features".to_string()
             }
         }
 
         fn carg(f: &&Option<&str>) -> String {
             if let Some(cargoarg) = f {
-                format!("{cargoarg}")
+                cargoarg.to_string()
             } else {
-                format!("no cargo args")
+                "no cargo args".to_string()
             }
         }
 
@@ -152,25 +152,25 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let path = path.to_str().unwrap_or("<can't display>");
                 format!("in {path}")
             } else {
-                format!("")
+                "".to_string()
             };
 
             let target = if let Some(target) = target {
                 format!("{target}")
             } else {
-                format!("<no explicit target>")
+                "<no explicit target>".to_string()
             };
 
             let mode = if let Some(mode) = mode {
                 format!("{mode}")
             } else {
-                format!("debug")
+                "debug".to_string()
             };
 
             let deny_warnings = if deny_warnings {
-                format!("deny warnings, ")
+                "deny warnings, ".to_string()
             } else {
-                format!("")
+                "".to_string()
             };
 
             if cargoarg.is_some() && path.is_some() {
@@ -299,7 +299,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let carg = if cargoarg.is_some() {
                     format!("(cargo args: {carg})")
                 } else {
-                    format!("")
+                    String::new()
                 };
 
                 if *check_only {
@@ -321,9 +321,9 @@ impl core::fmt::Display for CargoCommand<'_> {
                     .map(|a| format!("{a}"))
                     .unwrap_or_else(|| "no extra arguments".into());
                 let deny_warnings = if *deny_warnings {
-                    format!("deny warnings, ")
+                    "deny warnings, ".to_string()
                 } else {
-                    format!("")
+                    String::new()
                 };
                 if cargoarg.is_some() {
                     write!(f, "Document ({deny_warnings}{feat}, {carg}, {arguments})")
@@ -371,13 +371,13 @@ impl<'a> CargoCommand<'a> {
         let env = if let Some((key, value)) = self.extra_env() {
             format!("{key}=\"{value}\" ")
         } else {
-            format!("")
+            String::new()
         };
 
         let cd = if let Some(Some(chdir)) = self.chdir().map(|p| p.to_str()) {
             format!("cd {chdir} && ")
         } else {
-            format!("")
+            String::new()
         };
 
         let executable = self.executable();
@@ -445,7 +445,7 @@ impl<'a> CargoCommand<'a> {
             args.extend_from_slice(&["--features", features]);
         }
 
-        if let Some(mode) = mode.map(|m| m.to_flag()).flatten() {
+        if let Some(mode) = mode.and_then(|m| m.to_flag()) {
             args.push(mode);
         }
 
@@ -753,10 +753,7 @@ impl<'a> CargoCommand<'a> {
     }
 
     pub fn print_stdout_intermediate(&self) -> bool {
-        match self {
-            Self::ExampleSize { .. } => true,
-            _ => false,
-        }
+        matches!(self, Self::ExampleSize { .. })
     }
 }
 

@@ -433,6 +433,10 @@ pub struct Cli {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
+    /// Run everything CI would
+    #[clap(alias = "ci")]
+    AllCi(CiOpt),
+
     /// Format code
     #[clap(alias = "fmt")]
     Format(FormatOpt),
@@ -491,7 +495,13 @@ pub enum Commands {
     Book(Arg),
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug, Clone, Default)]
+pub struct CiOpt {
+    #[clap(short, long)]
+    pub failearly: bool,
+}
+
+#[derive(Args, Debug, Clone, Default)]
 pub struct FormatOpt {
     #[clap(flatten)]
     pub package: PackageOpt,
@@ -500,7 +510,7 @@ pub struct FormatOpt {
     pub check: bool,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug, Clone, Default)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
     /// For which package/workspace member to operate
@@ -539,7 +549,7 @@ pub struct QemuAndRun {
 
 #[derive(Debug, Parser, Clone)]
 pub struct Arg {
-    /// Options to pass to `cargo size`
+    /// Options to pass to `cargo <subcommand>`
     #[command(subcommand)]
     pub arguments: Option<ExtraArguments>,
 }
