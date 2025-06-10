@@ -12,7 +12,9 @@ Report bugs by creating an issue in this repository.
 
 Please make pull requests against the master branch.
 
-Always use rebase instead of merge when bringing in changes from master to your feature branch.
+Always use **rebase** instead of merge when bringing in changes from master to your feature branch.
+
+For non-trivial PRs add an entry in relevant `CHANGELOG` at the **top** of appropriate category: *Added*, *Changed*, *Fixed*.
 
 ## Writing documentation
 
