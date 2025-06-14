@@ -1,4 +1,5 @@
 //! [`Monotonic`](rtic_time::Monotonic) based on Cortex-M SysTick.
+//!
 //! Note: this implementation is inefficient as it
 //! ticks and generates interrupts at a constant rate.
 //!
@@ -9,11 +10,9 @@
 //! systick_monotonic!(Mono, 1_000);
 //!
 //! fn init() {
-//!     # // This is normally provided by the selected PAC
-//!     # let systick = unsafe { core::mem::transmute(()) };
-//!     #
-//!     // Start the monotonic
-//!     Mono::start(systick, 12_000_000);
+//!     let core_peripherals = cortex_m::Peripherals::take().unwrap();
+//!     // Start the monotonic using the cortex-m crate's Systick driver
+//!     Mono::start(core_peripherals.SYST, 12_000_000);
 //! }
 //!
 //! async fn usage() {
@@ -133,6 +132,15 @@ impl TimerQueueBackend for SystickBackend {
 }
 
 /// Create a Systick based monotonic and register the Systick interrupt for it.
+///
+/// This macro expands to produce a new type called `$name`, which has a `fn
+/// start()` function for you to call. The type has an implementation of the
+/// `rtic_monotonics::TimerQueueBasedMonotonic` trait, the
+/// `embedded_hal::delay::DelayNs` trait and the
+/// `embedded_hal_async::delay::DelayNs` trait.
+///
+/// This macro also produces an interrupt handler for the SysTick interrupt, by
+/// creating an `extern "C" fn SysTick() { ... }`.
 ///
 /// See [`crate::systick`] for more details.
 ///
