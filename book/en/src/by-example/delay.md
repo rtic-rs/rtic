@@ -21,7 +21,7 @@ A _software_ task can `await` the delay to expire:
 #[task]
 async fn foo(_cx: foo::Context) {
     ...
-    Systick::delay(100.millis()).await;
+    Mono::delay(100.millis()).await;
     ...
 }
 
