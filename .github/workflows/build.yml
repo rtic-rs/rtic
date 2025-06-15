@@ -161,12 +161,6 @@ jobs:
       - name: Add Rust component llvm-tools-preview
         run: rustup component add llvm-tools-preview
 
-      - name: Install lubudev espflash dependency
-        if: contains(matrix.input.platform, 'esp32')
-        run: |
-          sudo apt update
-          sudo apt install -y libudev-dev
-
       # Use precompiled binutils
       - name: Install cargo-binutils
         uses: taiki-e/install-action@v2
@@ -176,7 +170,7 @@ jobs:
       # Use precompiled if possible
       - name: Install espflash
         if: contains(matrix.input.platform, 'esp32')
-        run: cargo install espflash --version 3.1.0 --force
+        run: cargo install espflash --version 3.3.0 --force --no-default-features --features cli
 
       - name: Install esptool.py
         if: contains(matrix.input.platform, 'esp32')
