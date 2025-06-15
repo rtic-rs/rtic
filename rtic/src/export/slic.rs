@@ -1,4 +1,4 @@
-pub use riscv_slic::{lock, pend, run, InterruptNumber};
+pub use riscv_slic::{InterruptNumber, lock, pend, run};
 
 #[cfg(all(
     feature = "riscv-slic",
@@ -17,6 +17,6 @@ pub mod interrupt {
 
     #[inline]
     pub unsafe fn enable() {
-        riscv_slic::enable();
+        unsafe { riscv_slic::enable() };
     }
 }
