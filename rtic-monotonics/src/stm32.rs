@@ -8,23 +8,28 @@
 //! ```
 //! use rtic_monotonics::stm32::prelude::*;
 //!
-//! // Define the monotonic and set it to 1MHz tick rate
+//! // Create the type `Mono`. It will manage the TIM2 timer, and
+//! // run with a resolution of 1 µs (1,000,000 ticks per second).
 //! stm32_tim2_monotonic!(Mono, 1_000_000);
 //!
 //! fn init() {
 //!     // If using `embassy-stm32` HAL, timer clock can be read out like this:
 //!     let timer_clock_hz = embassy_stm32::peripherals::TIM2::frequency();
-//!     // Or define it manually if you are using other HAL or know correct frequency:
+//!     // Or define it manually if you are using another HAL or know the
+//!     // correct frequency:
 //!     let timer_clock_hz = 64_000_000;
 //!
-//!     // Start the monotonic
+//!     // Start the monotonic. The TIM2 prescaler is calculated from the
+//!     // clock frequency given here, and the resolution given to the
+//!     // `stm32_tim2_monotonic!` macro call above. No PAC object is required.
 //!     Mono::start(timer_clock_hz);
 //! }
 //!
 //! async fn usage() {
 //!     loop {
-//!          // Use the monotonic
+//!          // You can use the monotonic to get the time...
 //!          let timestamp = Mono::now();
+//!          // ...and you can use it to add a delay to this async function
 //!          Mono::delay(100.millis()).await;
 //!     }
 //! }
