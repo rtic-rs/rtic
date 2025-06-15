@@ -78,7 +78,7 @@ jobs:
             rustup-target: riscv32imac-unknown-none-elf
 
   installqemu:
-    name: Get modern QEMU and cache it
+    name: Get ESP32 QEMU and cache it
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -93,11 +93,6 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-qemu-${{ env.QEMU_VERSION }}
             ${{ runner.OS }}-qemu-
-
-      - name: Install QEMU
-        run: |
-          sudo apt update
-          sudo apt install -y qemu-system-arm qemu-system-riscv32
 
       - name: Download ESP32 QEMU
         run: wget "${{ env.QEMU_ESP_URL }}" --output-document=${{ env.QEMU_ESP}}.tar.xz
