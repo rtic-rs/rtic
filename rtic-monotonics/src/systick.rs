@@ -7,19 +7,24 @@
 //!
 //! ```
 //! use rtic_monotonics::systick::prelude::*;
+//!
+//! // Create the type `Mono`. It will manage the SysTick timer, and use it to
+//! // generate 1000 interrupts per second.
 //! systick_monotonic!(Mono, 1_000);
 //!
 //! fn init() {
 //!     let core_peripherals = cortex_m::Peripherals::take().unwrap();
-//!     // Start the monotonic using the cortex-m crate's Systick driver
+//!     // Start the monotonic using the cortex-m crate's Systick driver.
+//!     // We tell it we have a system clock of 12 MHz.
 //!     Mono::start(core_peripherals.SYST, 12_000_000);
 //! }
 //!
 //! async fn usage() {
 //!     loop {
-//!          // Use the monotonic
+//!          // You can use the monotonic to get the time...
 //!          let timestamp = Mono::now();
-//!          Systick::delay(100.millis()).await;
+//!          // ...and you can use it to add a delay to this async function
+//!          Mono::delay(100.millis()).await;
 //!     }
 //! }
 //! ```
