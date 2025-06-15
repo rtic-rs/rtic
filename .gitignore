@@ -9,4 +9,5 @@ book-target/
 
 .DS_Store
 .vscode/
-qemu.log
+*qemu.log
+*qemuoutput.log
