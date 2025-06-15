@@ -178,12 +178,13 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install QEMU to get dependencies
+      - name: Install QEMU
         run: |
           sudo apt update
           sudo apt install -y qemu-system-${{ matrix.input.qemu-system }}
 
       - name: Download built QEMU
+        if: contains(matrix.input.platform, 'esp32')
         uses: actions/download-artifact@v4
         with:
           name: qemu
