@@ -1,0 +1,80 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Read the value from a RORegister, RWRegister, UnsafeRORegister, or UnsafeRWRegister."><title>read_reg in ral_registers - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="ral_registers" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../static.files/storage-82c7156e.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../ral_registers/index.html">ral_<wbr>registers</a><span class="version">0.1.3</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">read_<wbr>reg</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#usage" title="Usage">Usage</a></li><li><a href="#safety" title="Safety">Safety</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate ral_<wbr>registers</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">ral_registers</a></div><h1>Macro <span class="macro">read_reg</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/ral_registers/lib.rs.html#544-567">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! read_reg {
+    ( $periph:path, $instance:expr, $reg:ident $([$offset:expr])*, $( $field:ident ),+ $(,)? ) =&gt; { ... };
+    ( $periph:path, $instance:expr, $reg:ident $([$offset:expr])*, $field:ident $($cmp:tt)* ) =&gt; { ... };
+    ( $periph:path, $instance:expr, $reg:ident $([$offset:expr])* ) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Read the value from a RORegister, RWRegister, UnsafeRORegister, or UnsafeRWRegister.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Safely acquire the peripheral instance (will panic if already acquired)
+</span><span class="kw">let </span>gpioa = stm32ral::gpio::GPIOA::take().unwrap();
+
+<span class="comment">// Read the whole register.
+</span><span class="kw">let </span>val = <span class="macro">read_reg!</span>(stm32ral::gpio, gpioa, IDR);
+
+<span class="comment">// Read one field from the register.
+</span><span class="kw">let </span>val = <span class="macro">read_reg!</span>(stm32ral::gpio, gpioa, IDR, IDR2);
+
+<span class="comment">// Read multiple fields from the register.
+</span><span class="kw">let </span>(val1, val2, val3) = <span class="macro">read_reg!</span>(stm32ral::gpio, gpioa, IDR, IDR0, IDR1, IDR2);
+
+<span class="comment">// Check if one field is equal to a specific value, with the field's named values in scope.
+</span><span class="kw">while </span><span class="macro">read_reg!</span>(stm32ral::gpio, gpioa, IDR, IDR2 == High) {}
+
+<span class="comment">// Unsafe access without requiring you to first `take()` the instance
+</span><span class="kw">let </span>val = <span class="kw">unsafe </span>{ <span class="macro">read_reg!</span>(stm32ral::gpio, GPIOA, IDR) };</code></pre></div>
+<p>To support register arrays, each macro form also supports one or more array indices after the
+register. For example, <code>read_reg!(stm32ral::gpio, gpioa, ODR[2]);</code> reads from the third
+register of an <code>ODR</code> register array.</p>
+<h2 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h2>
+<p>Like <code>write_reg!</code>, this macro can be used multiple ways, either reading the entire register or
+reading a one or more fields from it and potentially performing a comparison with one field.</p>
+<p>In all cases, the first arguments are:</p>
+<ul>
+<li>the path to the peripheral module: <code>stm32ral::gpio</code>,</li>
+<li>a reference to the instance of that peripheral: ‘gpioa’ (anything which dereferences to
+<code>RegisterBlock</code>, such as <code>Instance</code>, <code>&amp;Instance</code>, <code>&amp;RegisterBlock</code>, or
+<code>*const RegisterBlock</code>),</li>
+<li>the register (and offset, for arrays) you wish to access: <code>IDR</code> (a field on the
+<code>RegisterBlock</code>).</li>
+</ul>
+<p>In the whole-register usage, the macro simply returns the register’s value:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Read the entire value of GPIOA.IDR into `val`.
+</span><span class="kw">let </span>val = <span class="macro">read_reg!</span>(stm32ral::gpio, gpioa, IDR);</code></pre></div>
+<p>For reading individual fields, the macro masks and shifts appropriately:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Read just the value of the field GPIOA.IDR2 into `val`.
+</span><span class="kw">let </span>val = <span class="macro">read_reg!</span>(stm32ral::gpio, gpioa, IDR, IDR2);
+
+<span class="comment">// As above, but expanded for exposition:
+</span><span class="kw">let </span>val = ((<span class="kw-2">*</span>gpioa).IDR.read() &amp; stm32ral::gpio::IDR::IDR2::mask)
+          &gt;&gt; stm32ral::gpio::IDR::IDR2::offset;
+
+<span class="comment">// Read multiple fields
+</span><span class="kw">let </span>(val1, val2) = <span class="macro">read_reg!</span>(stm32ral::gpio, gpioa, IDR, IDR2, IDR3);
+
+<span class="comment">// As above, but expanded for exposition:
+</span><span class="kw">let </span>(val1, val2) = { <span class="kw">let </span>val = (<span class="kw-2">*</span>gpioa).IDR.read();
+    ((val &amp; stm32ral::gpio::IDR::IDR2::mask) &gt;&gt; stm32ral::gpio::IDR::IDR2::offset,
+     (val &amp; stm32ral::gpio::IDR::IDR3::mask) &gt;&gt; stm32ral::gpio::IDR::IDR3::offset,
+    )};</code></pre></div>
+<p>For comparing a single field, the macro masks and shifts and then performs the comparison:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Loop while PA2 is High.
+</span><span class="kw">while </span><span class="macro">read_reg!</span>(stm32ral::gpio, gpioa, IDR, IDR2 == High) {}
+
+<span class="comment">// Only proceed if the clock is not the HSI.
+</span><span class="kw">if </span><span class="macro">read_reg!</span>(stm32ral::rcc, rcc, CFGR, SWS != HSI) { }
+
+<span class="comment">// Equivalent expansion:
+</span><span class="kw">if </span>(((<span class="kw-2">*</span>rcc).CFGR.read() &amp; stm32ral::rcc::CFGR::SWS::mask)
+    &gt;&gt; stm32ral::rcc::CFGR::SWS::offset) != stm32ral::rcc::CFGR::SWS::R::HSI { }</code></pre></div>
+<h2 id="safety"><a class="doc-anchor" href="#safety">§</a>Safety</h2>
+<p>This macro will require an unsafe function or block when used with an UnsafeRWRegister or
+UnsafeRORegister, but not if used with RWRegister, or RORegister.</p>
+<p>When run in an unsafe context, peripheral instances are directly accessible without requiring
+having called <code>take()</code> beforehand:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>val = <span class="kw">unsafe </span>{ <span class="macro">read_reg!</span>(stm32ral::gpio, GPIOA, MODER) };</code></pre></div>
+<p>This works because <code>GPIOA</code> is a <code>*const RegisterBlock</code> in the <code>stm32ral::gpio</code> module;
+and the macro brings such constants into scope and then dereferences the provided reference.</p>
+</div></details></section></div></main></body></html>

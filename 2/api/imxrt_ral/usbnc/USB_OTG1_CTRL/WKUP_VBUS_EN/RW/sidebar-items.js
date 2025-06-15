@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["WKUP_VBUS_EN_0","WKUP_VBUS_EN_1"]};

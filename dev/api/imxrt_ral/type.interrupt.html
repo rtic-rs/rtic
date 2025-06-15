@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `interrupt` type in crate `imxrt_ral`."><title>interrupt in imxrt_ral - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="imxrt_ral" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../static.files/storage-82c7156e.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc type"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../imxrt_ral/index.html">imxrt_<wbr>ral</a><span class="version">0.5.4</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">interrupt</a></h2><h3><a href="#aliased-type">Aliased Type</a></h3><h3><a href="#variants">Variants</a></h3><ul class="block variant"><li><a href="#variant.ADC1" title="ADC1">ADC1</a></li><li><a href="#variant.ADC_ETC_ERROR_IRQ" title="ADC_ETC_ERROR_IRQ">ADC_ETC_ERROR_IRQ</a></li><li><a href="#variant.ADC_ETC_IRQ0" title="ADC_ETC_IRQ0">ADC_ETC_IRQ0</a></li><li><a href="#variant.ADC_ETC_IRQ1" title="ADC_ETC_IRQ1">ADC_ETC_IRQ1</a></li><li><a href="#variant.ADC_ETC_IRQ2" title="ADC_ETC_IRQ2">ADC_ETC_IRQ2</a></li><li><a href="#variant.ADC_ETC_IRQ3" title="ADC_ETC_IRQ3">ADC_ETC_IRQ3</a></li><li><a href="#variant.CCM_1" title="CCM_1">CCM_1</a></li><li><a href="#variant.CCM_2" title="CCM_2">CCM_2</a></li><li><a href="#variant.CSU" title="CSU">CSU</a></li><li><a href="#variant.DCDC" title="DCDC">DCDC</a></li><li><a href="#variant.DCP" title="DCP">DCP</a></li><li><a href="#variant.DCP_VMI" title="DCP_VMI">DCP_VMI</a></li><li><a href="#variant.DMA0" title="DMA0">DMA0</a></li><li><a href="#variant.DMA1" title="DMA1">DMA1</a></li><li><a href="#variant.DMA2" title="DMA2">DMA2</a></li><li><a href="#variant.DMA3" title="DMA3">DMA3</a></li><li><a href="#variant.DMA4" title="DMA4">DMA4</a></li><li><a href="#variant.DMA5" title="DMA5">DMA5</a></li><li><a href="#variant.DMA6" title="DMA6">DMA6</a></li><li><a href="#variant.DMA7" title="DMA7">DMA7</a></li><li><a href="#variant.DMA8" title="DMA8">DMA8</a></li><li><a href="#variant.DMA9" title="DMA9">DMA9</a></li><li><a href="#variant.DMA10" title="DMA10">DMA10</a></li><li><a href="#variant.DMA11" title="DMA11">DMA11</a></li><li><a href="#variant.DMA12" title="DMA12">DMA12</a></li><li><a href="#variant.DMA13" title="DMA13">DMA13</a></li><li><a href="#variant.DMA14" title="DMA14">DMA14</a></li><li><a href="#variant.DMA15" title="DMA15">DMA15</a></li><li><a href="#variant.DMA_ERROR" title="DMA_ERROR">DMA_ERROR</a></li><li><a href="#variant.EWM" title="EWM">EWM</a></li><li><a href="#variant.FLEXIO1" title="FLEXIO1">FLEXIO1</a></li><li><a href="#variant.FLEXRAM" title="FLEXRAM">FLEXRAM</a></li><li><a href="#variant.FLEXSPI" title="FLEXSPI">FLEXSPI</a></li><li><a href="#variant.GPC" title="GPC">GPC</a></li><li><a href="#variant.GPIO1_COMBINED_0_15" title="GPIO1_COMBINED_0_15">GPIO1_COMBINED_0_15</a></li><li><a href="#variant.GPIO1_COMBINED_16_31" title="GPIO1_COMBINED_16_31">GPIO1_COMBINED_16_31</a></li><li><a href="#variant.GPIO2_COMBINED_0_15" title="GPIO2_COMBINED_0_15">GPIO2_COMBINED_0_15</a></li><li><a href="#variant.GPIO5_COMBINED_0_15" title="GPIO5_COMBINED_0_15">GPIO5_COMBINED_0_15</a></li><li><a href="#variant.GPR_IRQ" title="GPR_IRQ">GPR_IRQ</a></li><li><a href="#variant.GPT1" title="GPT1">GPT1</a></li><li><a href="#variant.GPT2" title="GPT2">GPT2</a></li><li><a href="#variant.KPP" title="KPP">KPP</a></li><li><a href="#variant.LPI2C1" title="LPI2C1">LPI2C1</a></li><li><a href="#variant.LPI2C2" title="LPI2C2">LPI2C2</a></li><li><a href="#variant.LPSPI1" title="LPSPI1">LPSPI1</a></li><li><a href="#variant.LPSPI2" title="LPSPI2">LPSPI2</a></li><li><a href="#variant.LPUART1" title="LPUART1">LPUART1</a></li><li><a href="#variant.LPUART2" title="LPUART2">LPUART2</a></li><li><a href="#variant.LPUART3" title="LPUART3">LPUART3</a></li><li><a href="#variant.LPUART4" title="LPUART4">LPUART4</a></li><li><a href="#variant.PIT" title="PIT">PIT</a></li><li><a href="#variant.PMU" title="PMU">PMU</a></li><li><a href="#variant.PWM1_0" title="PWM1_0">PWM1_0</a></li><li><a href="#variant.PWM1_1" title="PWM1_1">PWM1_1</a></li><li><a href="#variant.PWM1_2" title="PWM1_2">PWM1_2</a></li><li><a href="#variant.PWM1_3" title="PWM1_3">PWM1_3</a></li><li><a href="#variant.PWM1_FAULT" title="PWM1_FAULT">PWM1_FAULT</a></li><li><a href="#variant.RTWDOG" title="RTWDOG">RTWDOG</a></li><li><a href="#variant.SAI1" title="SAI1">SAI1</a></li><li><a href="#variant.SAI3_RX" title="SAI3_RX">SAI3_RX</a></li><li><a href="#variant.SAI3_TX" title="SAI3_TX">SAI3_TX</a></li><li><a href="#variant.SNVS_HP_WRAPPER" title="SNVS_HP_WRAPPER">SNVS_HP_WRAPPER</a></li><li><a href="#variant.SNVS_HP_WRAPPER_TZ" title="SNVS_HP_WRAPPER_TZ">SNVS_HP_WRAPPER_TZ</a></li><li><a href="#variant.SNVS_LP_WRAPPER" title="SNVS_LP_WRAPPER">SNVS_LP_WRAPPER</a></li><li><a href="#variant.SPDIF" title="SPDIF">SPDIF</a></li><li><a href="#variant.SRC" title="SRC">SRC</a></li><li><a href="#variant.TEMP_LOW_HIGH" title="TEMP_LOW_HIGH">TEMP_LOW_HIGH</a></li><li><a href="#variant.TEMP_PANIC" title="TEMP_PANIC">TEMP_PANIC</a></li><li><a href="#variant.TRNG" title="TRNG">TRNG</a></li><li><a href="#variant.USB_OTG1" title="USB_OTG1">USB_OTG1</a></li><li><a href="#variant.USB_PHY" title="USB_PHY">USB_PHY</a></li><li><a href="#variant.WDOG1" title="WDOG1">WDOG1</a></li><li><a href="#variant.WDOG2" title="WDOG2">WDOG2</a></li><li><a href="#variant.XBAR1_IRQ_0_1_2_3" title="XBAR1_IRQ_0_1_2_3">XBAR1_IRQ_0_1_2_3</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate imxrt_<wbr>ral</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">imxrt_ral</a></div><h1>Type Alias <span class="type">interrupt</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/imxrt_ral/imxrt1011.rs.html#152">Source</a> </span></div><pre class="rust item-decl"><code>pub type interrupt = <a class="enum" href="enum.Interrupt.html" title="enum imxrt_ral::Interrupt">Interrupt</a>;</code></pre><h2 id="aliased-type" class="section-header">Aliased Type<a href="#aliased-type" class="anchor">§</a></h2><pre class="rust item-decl"><code>enum interrupt {
+<details class="toggle type-contents-toggle"><summary class="hideme"><span>Show 74 variants</span></summary>    DMA0 = 0,
+    DMA1 = 1,
+    DMA2 = 2,
+    DMA3 = 3,
+    DMA4 = 4,
+    DMA5 = 5,
+    DMA6 = 6,
+    DMA7 = 7,
+    DMA8 = 8,
+    DMA9 = 9,
+    DMA10 = 10,
+    DMA11 = 11,
+    DMA12 = 12,
+    DMA13 = 13,
+    DMA14 = 14,
+    DMA15 = 15,
+    DMA_ERROR = 16,
+    LPUART1 = 20,
+    LPUART2 = 21,
+    LPUART3 = 22,
+    LPUART4 = 23,
+    PIT = 24,
+    USB_OTG1 = 25,
+    FLEXSPI = 26,
+    FLEXRAM = 27,
+    LPI2C1 = 28,
+    LPI2C2 = 29,
+    GPT1 = 30,
+    GPT2 = 31,
+    LPSPI1 = 32,
+    LPSPI2 = 33,
+    PWM1_0 = 34,
+    PWM1_1 = 35,
+    PWM1_2 = 36,
+    PWM1_3 = 37,
+    PWM1_FAULT = 38,
+    KPP = 39,
+    SRC = 40,
+    GPR_IRQ = 41,
+    CCM_1 = 42,
+    CCM_2 = 43,
+    EWM = 44,
+    WDOG2 = 45,
+    SNVS_HP_WRAPPER = 46,
+    SNVS_HP_WRAPPER_TZ = 47,
+    SNVS_LP_WRAPPER = 48,
+    CSU = 49,
+    DCP = 50,
+    DCP_VMI = 51,
+    TRNG = 53,
+    SAI1 = 56,
+    RTWDOG = 57,
+    SAI3_RX = 58,
+    SAI3_TX = 59,
+    SPDIF = 60,
+    PMU = 61,
+    XBAR1_IRQ_0_1_2_3 = 62,
+    TEMP_LOW_HIGH = 63,
+    TEMP_PANIC = 64,
+    USB_PHY = 65,
+    GPC = 66,
+    ADC1 = 67,
+    FLEXIO1 = 68,
+    DCDC = 69,
+    GPIO1_COMBINED_0_15 = 70,
+    GPIO1_COMBINED_16_31 = 71,
+    GPIO2_COMBINED_0_15 = 72,
+    GPIO5_COMBINED_0_15 = 73,
+    WDOG1 = 74,
+    ADC_ETC_IRQ0 = 75,
+    ADC_ETC_IRQ1 = 76,
+    ADC_ETC_IRQ2 = 77,
+    ADC_ETC_IRQ3 = 78,
+    ADC_ETC_ERROR_IRQ = 79,
+</details>}</code></pre><h2 id="variants" class="variants section-header">Variants<a href="#variants" class="anchor">§</a></h2><div class="variants"><section id="variant.DMA0" class="variant"><a href="#variant.DMA0" class="anchor">§</a><h3 class="code-header">DMA0 = 0</h3></section><div class="docblock"><p>0 - DMA0</p>
+</div><section id="variant.DMA1" class="variant"><a href="#variant.DMA1" class="anchor">§</a><h3 class="code-header">DMA1 = 1</h3></section><div class="docblock"><p>1 - DMA1</p>
+</div><section id="variant.DMA2" class="variant"><a href="#variant.DMA2" class="anchor">§</a><h3 class="code-header">DMA2 = 2</h3></section><div class="docblock"><p>2 - DMA2</p>
+</div><section id="variant.DMA3" class="variant"><a href="#variant.DMA3" class="anchor">§</a><h3 class="code-header">DMA3 = 3</h3></section><div class="docblock"><p>3 - DMA3</p>
+</div><section id="variant.DMA4" class="variant"><a href="#variant.DMA4" class="anchor">§</a><h3 class="code-header">DMA4 = 4</h3></section><div class="docblock"><p>4 - DMA4</p>
+</div><section id="variant.DMA5" class="variant"><a href="#variant.DMA5" class="anchor">§</a><h3 class="code-header">DMA5 = 5</h3></section><div class="docblock"><p>5 - DMA5</p>
+</div><section id="variant.DMA6" class="variant"><a href="#variant.DMA6" class="anchor">§</a><h3 class="code-header">DMA6 = 6</h3></section><div class="docblock"><p>6 - DMA6</p>
+</div><section id="variant.DMA7" class="variant"><a href="#variant.DMA7" class="anchor">§</a><h3 class="code-header">DMA7 = 7</h3></section><div class="docblock"><p>7 - DMA7</p>
+</div><section id="variant.DMA8" class="variant"><a href="#variant.DMA8" class="anchor">§</a><h3 class="code-header">DMA8 = 8</h3></section><div class="docblock"><p>8 - DMA8</p>
+</div><section id="variant.DMA9" class="variant"><a href="#variant.DMA9" class="anchor">§</a><h3 class="code-header">DMA9 = 9</h3></section><div class="docblock"><p>9 - DMA9</p>
+</div><section id="variant.DMA10" class="variant"><a href="#variant.DMA10" class="anchor">§</a><h3 class="code-header">DMA10 = 10</h3></section><div class="docblock"><p>10 - DMA10</p>
+</div><section id="variant.DMA11" class="variant"><a href="#variant.DMA11" class="anchor">§</a><h3 class="code-header">DMA11 = 11</h3></section><div class="docblock"><p>11 - DMA11</p>
+</div><section id="variant.DMA12" class="variant"><a href="#variant.DMA12" class="anchor">§</a><h3 class="code-header">DMA12 = 12</h3></section><div class="docblock"><p>12 - DMA12</p>
+</div><section id="variant.DMA13" class="variant"><a href="#variant.DMA13" class="anchor">§</a><h3 class="code-header">DMA13 = 13</h3></section><div class="docblock"><p>13 - DMA13</p>
+</div><section id="variant.DMA14" class="variant"><a href="#variant.DMA14" class="anchor">§</a><h3 class="code-header">DMA14 = 14</h3></section><div class="docblock"><p>14 - DMA14</p>
+</div><section id="variant.DMA15" class="variant"><a href="#variant.DMA15" class="anchor">§</a><h3 class="code-header">DMA15 = 15</h3></section><div class="docblock"><p>15 - DMA15</p>
+</div><section id="variant.DMA_ERROR" class="variant"><a href="#variant.DMA_ERROR" class="anchor">§</a><h3 class="code-header">DMA_ERROR = 16</h3></section><div class="docblock"><p>16 - DMA_ERROR</p>
+</div><section id="variant.LPUART1" class="variant"><a href="#variant.LPUART1" class="anchor">§</a><h3 class="code-header">LPUART1 = 20</h3></section><div class="docblock"><p>20 - LPUART1</p>
+</div><section id="variant.LPUART2" class="variant"><a href="#variant.LPUART2" class="anchor">§</a><h3 class="code-header">LPUART2 = 21</h3></section><div class="docblock"><p>21 - LPUART2</p>
+</div><section id="variant.LPUART3" class="variant"><a href="#variant.LPUART3" class="anchor">§</a><h3 class="code-header">LPUART3 = 22</h3></section><div class="docblock"><p>22 - LPUART3</p>
+</div><section id="variant.LPUART4" class="variant"><a href="#variant.LPUART4" class="anchor">§</a><h3 class="code-header">LPUART4 = 23</h3></section><div class="docblock"><p>23 - LPUART4</p>
+</div><section id="variant.PIT" class="variant"><a href="#variant.PIT" class="anchor">§</a><h3 class="code-header">PIT = 24</h3></section><div class="docblock"><p>24 - PIT</p>
+</div><section id="variant.USB_OTG1" class="variant"><a href="#variant.USB_OTG1" class="anchor">§</a><h3 class="code-header">USB_OTG1 = 25</h3></section><div class="docblock"><p>25 - USB_OTG1</p>
+</div><section id="variant.FLEXSPI" class="variant"><a href="#variant.FLEXSPI" class="anchor">§</a><h3 class="code-header">FLEXSPI = 26</h3></section><div class="docblock"><p>26 - FLEXSPI</p>
+</div><section id="variant.FLEXRAM" class="variant"><a href="#variant.FLEXRAM" class="anchor">§</a><h3 class="code-header">FLEXRAM = 27</h3></section><div class="docblock"><p>27 - FLEXRAM</p>
+</div><section id="variant.LPI2C1" class="variant"><a href="#variant.LPI2C1" class="anchor">§</a><h3 class="code-header">LPI2C1 = 28</h3></section><div class="docblock"><p>28 - LPI2C1</p>
+</div><section id="variant.LPI2C2" class="variant"><a href="#variant.LPI2C2" class="anchor">§</a><h3 class="code-header">LPI2C2 = 29</h3></section><div class="docblock"><p>29 - LPI2C2</p>
+</div><section id="variant.GPT1" class="variant"><a href="#variant.GPT1" class="anchor">§</a><h3 class="code-header">GPT1 = 30</h3></section><div class="docblock"><p>30 - GPT1</p>
+</div><section id="variant.GPT2" class="variant"><a href="#variant.GPT2" class="anchor">§</a><h3 class="code-header">GPT2 = 31</h3></section><div class="docblock"><p>31 - GPT2</p>
+</div><section id="variant.LPSPI1" class="variant"><a href="#variant.LPSPI1" class="anchor">§</a><h3 class="code-header">LPSPI1 = 32</h3></section><div class="docblock"><p>32 - LPSPI1</p>
+</div><section id="variant.LPSPI2" class="variant"><a href="#variant.LPSPI2" class="anchor">§</a><h3 class="code-header">LPSPI2 = 33</h3></section><div class="docblock"><p>33 - LPSPI2</p>
+</div><section id="variant.PWM1_0" class="variant"><a href="#variant.PWM1_0" class="anchor">§</a><h3 class="code-header">PWM1_0 = 34</h3></section><div class="docblock"><p>34 - PWM1_0</p>
+</div><section id="variant.PWM1_1" class="variant"><a href="#variant.PWM1_1" class="anchor">§</a><h3 class="code-header">PWM1_1 = 35</h3></section><div class="docblock"><p>35 - PWM1_1</p>
+</div><section id="variant.PWM1_2" class="variant"><a href="#variant.PWM1_2" class="anchor">§</a><h3 class="code-header">PWM1_2 = 36</h3></section><div class="docblock"><p>36 - PWM1_2</p>
+</div><section id="variant.PWM1_3" class="variant"><a href="#variant.PWM1_3" class="anchor">§</a><h3 class="code-header">PWM1_3 = 37</h3></section><div class="docblock"><p>37 - PWM1_3</p>
+</div><section id="variant.PWM1_FAULT" class="variant"><a href="#variant.PWM1_FAULT" class="anchor">§</a><h3 class="code-header">PWM1_FAULT = 38</h3></section><div class="docblock"><p>38 - PWM1_FAULT</p>
+</div><section id="variant.KPP" class="variant"><a href="#variant.KPP" class="anchor">§</a><h3 class="code-header">KPP = 39</h3></section><div class="docblock"><p>39 - KPP</p>
+</div><section id="variant.SRC" class="variant"><a href="#variant.SRC" class="anchor">§</a><h3 class="code-header">SRC = 40</h3></section><div class="docblock"><p>40 - SRC</p>
+</div><section id="variant.GPR_IRQ" class="variant"><a href="#variant.GPR_IRQ" class="anchor">§</a><h3 class="code-header">GPR_IRQ = 41</h3></section><div class="docblock"><p>41 - GPR (aka “GPC”) interrupt request</p>
+</div><section id="variant.CCM_1" class="variant"><a href="#variant.CCM_1" class="anchor">§</a><h3 class="code-header">CCM_1 = 42</h3></section><div class="docblock"><p>42 - CCM_1</p>
+</div><section id="variant.CCM_2" class="variant"><a href="#variant.CCM_2" class="anchor">§</a><h3 class="code-header">CCM_2 = 43</h3></section><div class="docblock"><p>43 - CCM_2</p>
+</div><section id="variant.EWM" class="variant"><a href="#variant.EWM" class="anchor">§</a><h3 class="code-header">EWM = 44</h3></section><div class="docblock"><p>44 - EWM</p>
+</div><section id="variant.WDOG2" class="variant"><a href="#variant.WDOG2" class="anchor">§</a><h3 class="code-header">WDOG2 = 45</h3></section><div class="docblock"><p>45 - WDOG2</p>
+</div><section id="variant.SNVS_HP_WRAPPER" class="variant"><a href="#variant.SNVS_HP_WRAPPER" class="anchor">§</a><h3 class="code-header">SNVS_HP_WRAPPER = 46</h3></section><div class="docblock"><p>46 - SNVS_HP_WRAPPER</p>
+</div><section id="variant.SNVS_HP_WRAPPER_TZ" class="variant"><a href="#variant.SNVS_HP_WRAPPER_TZ" class="anchor">§</a><h3 class="code-header">SNVS_HP_WRAPPER_TZ = 47</h3></section><div class="docblock"><p>47 - SNVS_HP_WRAPPER_TZ</p>
+</div><section id="variant.SNVS_LP_WRAPPER" class="variant"><a href="#variant.SNVS_LP_WRAPPER" class="anchor">§</a><h3 class="code-header">SNVS_LP_WRAPPER = 48</h3></section><div class="docblock"><p>48 - SNVS_LP_WRAPPER</p>
+</div><section id="variant.CSU" class="variant"><a href="#variant.CSU" class="anchor">§</a><h3 class="code-header">CSU = 49</h3></section><div class="docblock"><p>49 - CSU</p>
+</div><section id="variant.DCP" class="variant"><a href="#variant.DCP" class="anchor">§</a><h3 class="code-header">DCP = 50</h3></section><div class="docblock"><p>50 - DCP</p>
+</div><section id="variant.DCP_VMI" class="variant"><a href="#variant.DCP_VMI" class="anchor">§</a><h3 class="code-header">DCP_VMI = 51</h3></section><div class="docblock"><p>51 - DCP_VMI</p>
+</div><section id="variant.TRNG" class="variant"><a href="#variant.TRNG" class="anchor">§</a><h3 class="code-header">TRNG = 53</h3></section><div class="docblock"><p>53 - TRNG</p>
+</div><section id="variant.SAI1" class="variant"><a href="#variant.SAI1" class="anchor">§</a><h3 class="code-header">SAI1 = 56</h3></section><div class="docblock"><p>56 - SAI1</p>
+</div><section id="variant.RTWDOG" class="variant"><a href="#variant.RTWDOG" class="anchor">§</a><h3 class="code-header">RTWDOG = 57</h3></section><div class="docblock"><p>57 - RTWDOG</p>
+</div><section id="variant.SAI3_RX" class="variant"><a href="#variant.SAI3_RX" class="anchor">§</a><h3 class="code-header">SAI3_RX = 58</h3></section><div class="docblock"><p>58 - SAI3_RX</p>
+</div><section id="variant.SAI3_TX" class="variant"><a href="#variant.SAI3_TX" class="anchor">§</a><h3 class="code-header">SAI3_TX = 59</h3></section><div class="docblock"><p>59 - SAI3_TX</p>
+</div><section id="variant.SPDIF" class="variant"><a href="#variant.SPDIF" class="anchor">§</a><h3 class="code-header">SPDIF = 60</h3></section><div class="docblock"><p>60 - SPDIF</p>
+</div><section id="variant.PMU" class="variant"><a href="#variant.PMU" class="anchor">§</a><h3 class="code-header">PMU = 61</h3></section><div class="docblock"><p>61 - PMU</p>
+</div><section id="variant.XBAR1_IRQ_0_1_2_3" class="variant"><a href="#variant.XBAR1_IRQ_0_1_2_3" class="anchor">§</a><h3 class="code-header">XBAR1_IRQ_0_1_2_3 = 62</h3></section><div class="docblock"><p>62 - XBAR1_IRQ_0_1_2_3</p>
+</div><section id="variant.TEMP_LOW_HIGH" class="variant"><a href="#variant.TEMP_LOW_HIGH" class="anchor">§</a><h3 class="code-header">TEMP_LOW_HIGH = 63</h3></section><div class="docblock"><p>63 - TEMP_LOW_HIGH</p>
+</div><section id="variant.TEMP_PANIC" class="variant"><a href="#variant.TEMP_PANIC" class="anchor">§</a><h3 class="code-header">TEMP_PANIC = 64</h3></section><div class="docblock"><p>64 - TEMP_PANIC</p>
+</div><section id="variant.USB_PHY" class="variant"><a href="#variant.USB_PHY" class="anchor">§</a><h3 class="code-header">USB_PHY = 65</h3></section><div class="docblock"><p>65 - USB_PHY</p>
+</div><section id="variant.GPC" class="variant"><a href="#variant.GPC" class="anchor">§</a><h3 class="code-header">GPC = 66</h3></section><div class="docblock"><p>66 - GPC</p>
+</div><section id="variant.ADC1" class="variant"><a href="#variant.ADC1" class="anchor">§</a><h3 class="code-header">ADC1 = 67</h3></section><div class="docblock"><p>67 - ADC1</p>
+</div><section id="variant.FLEXIO1" class="variant"><a href="#variant.FLEXIO1" class="anchor">§</a><h3 class="code-header">FLEXIO1 = 68</h3></section><div class="docblock"><p>68 - FLEXIO1</p>
+</div><section id="variant.DCDC" class="variant"><a href="#variant.DCDC" class="anchor">§</a><h3 class="code-header">DCDC = 69</h3></section><div class="docblock"><p>69 - DCDC</p>
+</div><section id="variant.GPIO1_COMBINED_0_15" class="variant"><a href="#variant.GPIO1_COMBINED_0_15" class="anchor">§</a><h3 class="code-header">GPIO1_COMBINED_0_15 = 70</h3></section><div class="docblock"><p>70 - GPIO1_COMBINED_0_15</p>
+</div><section id="variant.GPIO1_COMBINED_16_31" class="variant"><a href="#variant.GPIO1_COMBINED_16_31" class="anchor">§</a><h3 class="code-header">GPIO1_COMBINED_16_31 = 71</h3></section><div class="docblock"><p>71 - GPIO1_COMBINED_16_31</p>
+</div><section id="variant.GPIO2_COMBINED_0_15" class="variant"><a href="#variant.GPIO2_COMBINED_0_15" class="anchor">§</a><h3 class="code-header">GPIO2_COMBINED_0_15 = 72</h3></section><div class="docblock"><p>72 - GPIO2_COMBINED_0_15</p>
+</div><section id="variant.GPIO5_COMBINED_0_15" class="variant"><a href="#variant.GPIO5_COMBINED_0_15" class="anchor">§</a><h3 class="code-header">GPIO5_COMBINED_0_15 = 73</h3></section><div class="docblock"><p>73 - GPIO5_COMBINED_0_15</p>
+</div><section id="variant.WDOG1" class="variant"><a href="#variant.WDOG1" class="anchor">§</a><h3 class="code-header">WDOG1 = 74</h3></section><div class="docblock"><p>74 - WDOG1</p>
+</div><section id="variant.ADC_ETC_IRQ0" class="variant"><a href="#variant.ADC_ETC_IRQ0" class="anchor">§</a><h3 class="code-header">ADC_ETC_IRQ0 = 75</h3></section><div class="docblock"><p>75 - ADC_ETC_IRQ0</p>
+</div><section id="variant.ADC_ETC_IRQ1" class="variant"><a href="#variant.ADC_ETC_IRQ1" class="anchor">§</a><h3 class="code-header">ADC_ETC_IRQ1 = 76</h3></section><div class="docblock"><p>76 - ADC_ETC_IRQ1</p>
+</div><section id="variant.ADC_ETC_IRQ2" class="variant"><a href="#variant.ADC_ETC_IRQ2" class="anchor">§</a><h3 class="code-header">ADC_ETC_IRQ2 = 77</h3></section><div class="docblock"><p>77 - ADC_ETC_IRQ2</p>
+</div><section id="variant.ADC_ETC_IRQ3" class="variant"><a href="#variant.ADC_ETC_IRQ3" class="anchor">§</a><h3 class="code-header">ADC_ETC_IRQ3 = 78</h3></section><div class="docblock"><p>78 - ADC_ETC_IRQ3</p>
+</div><section id="variant.ADC_ETC_ERROR_IRQ" class="variant"><a href="#variant.ADC_ETC_ERROR_IRQ" class="anchor">§</a><h3 class="code-header">ADC_ETC_ERROR_IRQ = 79</h3></section><div class="docblock"><p>79 - ADC_ETC_ERROR_IRQ</p>
+</div></div><script src="../type.impl/imxrt_ral/enum.Interrupt.js" data-self-path="imxrt_ral::imxrt1011::interrupt" async></script></section></div></main></body></html>

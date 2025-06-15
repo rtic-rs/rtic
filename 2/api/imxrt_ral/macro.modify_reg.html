@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Modify a RWRegister or UnsafeRWRegister."><title>modify_reg in imxrt_ral - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="imxrt_ral" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../static.files/storage-82c7156e.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../imxrt_ral/index.html">imxrt_<wbr>ral</a><span class="version">0.5.4</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">modify_<wbr>reg</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#usage" title="Usage">Usage</a></li><li><a href="#safety" title="Safety">Safety</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate imxrt_<wbr>ral</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">imxrt_ral</a></div><h1>Macro <span class="macro">modify_reg</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/ral_registers/lib.rs.html#420">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! modify_reg {
+    ( $periph:path, $instance:expr, $reg:ident $([$offset:expr])*, $( $field:ident : $value:expr ),+ $(,)? ) =&gt; { ... };
+    ( $periph:path, $instance:expr, $reg:ident $([$offset:expr])*, $fn:expr ) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Modify a RWRegister or UnsafeRWRegister.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Safely acquire the peripheral instance (will panic if already acquired)
+</span><span class="kw">let </span>gpioa = stm32ral::gpio::GPIOA::take().unwrap();
+
+<span class="comment">// Update the register to ensure bit 3 is set.
+</span><span class="macro">modify_reg!</span>(stm32ral::gpio, gpioa, ODR, |reg| reg | (<span class="number">1</span>&lt;&lt;<span class="number">3</span>));
+
+<span class="comment">// Write values to specific fields. Unspecified fields are left unchanged.
+</span><span class="macro">modify_reg!</span>(stm32ral::gpio, gpioa, MODER, MODER3: Output, MODER4: Analog);
+
+<span class="comment">// Unsafe access without requiring you to first `take()` the instance
+</span><span class="kw">unsafe </span>{ <span class="macro">modify_reg!</span>(stm32ral::gpio, GPIOA, MODER, MODER3: Output, MODER4: Analog) };</code></pre></div>
+<p>To support register arrays, each macro form also supports one or more array indices after the
+register. For example, <code>modify_reg!(stm32ral::gpio, gpioa, ODR[2], |reg| reg | (1&lt;&lt;3));</code> sets
+a high bit in the third register of an <code>ODR</code> register array.</p>
+<h2 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h2>
+<p>Like <code>write_reg!</code>, this macro can be used in two ways, either with a modification of the entire
+register, or by specifying which fields to change and what value to change them to.</p>
+<p>In both cases, the first arguments are:</p>
+<ul>
+<li>the path to the peripheral module: <code>stm32ral::gpio</code>,</li>
+<li>a reference to the instance of that peripheral: ‘gpioa’ (anything which dereferences to
+<code>RegisterBlock</code>, such as <code>Instance</code>, <code>&amp;Instance</code>, <code>&amp;RegisterBlock</code>, or
+<code>*const RegisterBlock</code>),</li>
+<li>the register (and offset, for arrays) you wish you access: <code>MODER</code> (a field on the
+<code>RegisterBlock</code>).</li>
+</ul>
+<p>In the whole-register usage, the final argument is a closure that accepts the current value
+of the register and returns the new value to write:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Turn on PA3 without affecting anything else.
+</span><span class="macro">modify_reg!</span>(stm32ral::gpio, gpioa, ODR, |reg| reg | (<span class="number">1</span>&lt;&lt;<span class="number">3</span>));</code></pre></div>
+<p>Otherwise, the remaining arguments are <code>Field: Value</code> pairs:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Set PA3 to Output, PA4 to Analog, and leave everything else unchanged.
+</span><span class="macro">modify_reg!</span>(stm32ral::gpio, gpioa, MODER, MODER3: <span class="number">0b01</span>, MODER4: <span class="number">0b11</span>);</code></pre></div>
+<p>For fields with annotated values, you can also specify a named value:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// As above, but with named values.
+</span><span class="macro">modify_reg!</span>(stm32ral::gpio, gpioa, MODER, MODER3: Output, MODER4: Analog);</code></pre></div>
+<p>This macro expands to calling <code>(*instance).register.write(value)</code>.
+When called with a closure, <code>(*instance).register.read()</code> is called, the result
+passed in to the closure, and the return value of the closure is used for <code>value</code>.
+When called with <code>Field: Value</code> arguments, the current value is read and then masked
+according to the specified fields, and then ORd with the OR of each field value,
+each masked and shifted appropriately for the field. The named values are brought into scope
+by <code>use peripheral::register::field::*</code> for each field. The same constants could just be
+specified manually:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// As above, but being explicit about named values.
+</span><span class="macro">modify_reg!</span>(stm32ral::gpio, gpioa, MODER, MODER3: stm32ral::gpio::MODER::MODER3::RW::Output,
+                                          MODER4: stm32ral::gpio::MODER::MODER4::RW::Analog);</code></pre></div>
+<p>The fully expanded form is equivalent to:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// As above, but expanded.
+</span>(<span class="kw-2">*</span>gpioa).MODER.write(
+    (
+        <span class="comment">// First read the current value...
+        </span>(<span class="kw-2">*</span>gpioa).MODER.read()
+        <span class="comment">// Then AND it with an appropriate mask...
+        </span>&amp;
+        !( stm32ral::gpio::MODER::MODER3::mask | stm32ral::gpio::MODER::MODER4::mask )
+    )
+    <span class="comment">// Then OR with each field value.
+    </span>|
+        ((stm32ral::gpio::MODER::MODER3::RW::Output &lt;&lt; stm32ral::gpio::MODER::MODER3::offset)
+         &amp; stm32ral::gpio::MODER::MODER3::mask)
+    |
+        ((stm32ral::gpio::MODER::MODER4::RW::Analog &lt;&lt; stm32ral::gpio::MODER::MODER3::offset)
+         &amp; stm32ral::gpio::MODER::MODER3::mask)
+);</code></pre></div>
+<h2 id="safety"><a class="doc-anchor" href="#safety">§</a>Safety</h2>
+<p>This macro will require an unsafe function or block when used with an UnsafeRWRegister,
+but not if used with RWRegister.</p>
+<p>When run in an unsafe context, peripheral instances are directly accessible without requiring
+having called <code>take()</code> beforehand:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">unsafe </span>{ <span class="macro">modify_reg!</span>(stm32ral::gpio, GPIOA, MODER, MODER3: Output, MODER4: Analog) };</code></pre></div>
+<p>This works because <code>GPIOA</code> is a <code>*const RegisterBlock</code> in the <code>stm32ral::gpio</code> module;
+and the macro brings such constants into scope and then dereferences the provided reference.</p>
+</div></details></section></div></main></body></html>

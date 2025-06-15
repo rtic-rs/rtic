@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`Monotonic` implementation for RP2040’s Timer peripheral."><title>rtic_monotonics::rp2040 - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rtic_monotonics" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../static.files/storage-82c7156e.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../rtic_monotonics/index.html">rtic_<wbr>monotonics</a><span class="version">2.0.3</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module rp2040</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#modules">Module Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate rtic_<wbr>monotonics</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">rtic_monotonics</a></div><h1>Module <span>rp2040</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/rtic_monotonics/rp2040.rs.html#1-172">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><a href="../trait.Monotonic.html" title="trait rtic_monotonics::Monotonic"><code>Monotonic</code></a> implementation for RP2040’s Timer peripheral.</p>
+<p>Always runs at a fixed rate of 1 MHz.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>rtic_monotonics::rp2040::prelude::<span class="kw-2">*</span>;
+
+<span class="comment">// Create the type `Mono`. It will manage the TIMER peripheral,
+// which is a 1 MHz, 64-bit timer.
+</span><span class="macro">rp2040_timer_monotonic!</span>(Mono);
+
+<span class="kw">fn </span>init() {
+    <span class="comment">// Start the monotonic - passing ownership of an rp2040_pac object for
+    // TIMER0, and temporary access to one for the RESET peripheral.
+    </span>Mono::start(TIMER, <span class="kw-2">&amp;mut </span>RESETS);
+}
+
+<span class="kw">async fn </span>usage() {
+    <span class="kw">loop </span>{
+         <span class="comment">// You can use the monotonic to get the time...
+         </span><span class="kw">let </span>timestamp = Mono::now();
+         <span class="comment">// ...and you can use it to add a delay to this async function
+         </span>Mono::delay(<span class="number">100</span>.millis()).<span class="kw">await</span>;
+    }
+}</code></pre></div>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="prelude/index.html" title="mod rtic_monotonics::rp2040::prelude">prelude</a></dt><dd>Common definitions and traits for using the RP2040 timer monotonic</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.RESETS.html" title="struct rtic_monotonics::rp2040::RESETS">RESETS</a></dt><dd>RESETS</dd><dt><a class="struct" href="struct.TIMER.html" title="struct rtic_monotonics::rp2040::TIMER">TIMER</a></dt><dd>Controls time and alarms<br />
+time is a 64 bit value indicating the time in usec since power-on<br />
+timeh is the top 32 bits of time &amp; timel is the bottom 32 bits<br />
+to change time write to timelw before timehw<br />
+to read time read from timelr before timehr<br />
+An alarm is set by setting alarm_enable and writing to the corresponding alarm register<br />
+When an alarm is pending, the corresponding alarm_running signal will be high<br />
+An alarm can be cancelled before it has finished by clearing the alarm_enable<br />
+When an alarm fires, the corresponding alarm_irq is set and alarm_running is cleared<br />
+To clear the interrupt write a 1 to the corresponding alarm_irq</dd><dt><a class="struct" href="struct.TimerBackend.html" title="struct rtic_monotonics::rp2040::TimerBackend">Timer<wbr>Backend</a></dt><dd>Timer implementing <a href="../trait.TimerQueueBackend.html" title="trait rtic_monotonics::TimerQueueBackend"><code>TimerQueueBackend</code></a>.</dd></dl></section></div></main></body></html>
