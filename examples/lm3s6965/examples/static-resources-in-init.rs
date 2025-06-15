@@ -1,4 +1,4 @@
-//! examples/static.rs
+//! examples/static-resources-in-init.rs
 
 #![no_main]
 #![no_std]

@@ -3,12 +3,12 @@ mod build;
 mod cargo_command;
 mod run;
 
-use argument_parsing::ExtraArguments;
+use argument_parsing::{ExtraArguments, FormatOpt, Package, PackageOpt, TestOpt};
 use clap::Parser;
 use core::fmt;
 use std::{path::Path, str};
 
-use log::{error, info, log_enabled, trace, Level};
+use log::{error, log_enabled, trace, Level};
 
 use crate::{
     argument_parsing::{BuildOrCheck, Cli, Commands, Platforms},
@@ -89,11 +89,7 @@ fn main() -> anyhow::Result<()> {
     );
     log::debug!("Partial features: {}", globals.partial);
 
-    let platform = if let Some(platform) = globals.platform {
-        platform
-    } else {
-        Platforms::default()
-    };
+    let platform = globals.platform.unwrap_or_default();
 
     let backend = if let Some(backend) = globals.backend {
         backend
@@ -163,7 +159,7 @@ fn main() -> anyhow::Result<()> {
 
     init_build_dir()?;
     #[allow(clippy::if_same_then_else)]
-    let cargologlevel = if log_enabled!(Level::Trace) {
+    let cargoarg = if log_enabled!(Level::Trace) {
         Some("-v")
     } else if log_enabled!(Level::Debug) {
         None
@@ -176,48 +172,148 @@ fn main() -> anyhow::Result<()> {
         Some("--quiet")
     };
 
+    let formatoptcheckonly = FormatOpt {
+        // Only check, do not reformat
+        check: true,
+        ..Default::default()
+    };
+
+    // Default set of all packages
+    // CI always runs on all packages
+    let package = PackageOpt::default();
+    let testopts = TestOpt::default();
+    // Currently only rtic-sync supports loom tests
+    let testoptsloom = TestOpt {
+        loom: true,
+        package: PackageOpt {
+            package: Some(Package::RticSync),
+        },
+    };
+
     let final_run_results = match &cli.command {
-        Commands::Format(args) => cargo_format(globals, &cargologlevel, &args.package, args.check),
-        Commands::Clippy(args) => {
-            info!("Running clippy on backend: {backend:?}");
-            cargo_clippy(globals, &cargologlevel, args, backend)
-        }
-        Commands::Check(args) => {
-            info!("Checking on backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Check, &cargologlevel, args, backend)
-        }
-        Commands::Build(args) => {
-            info!("Building for backend: {backend:?}");
-            cargo(globals, BuildOrCheck::Build, &cargologlevel, args, backend)
-        }
-        Commands::ExampleCheck => {
-            info!("Checking on platform: {platform:?}, backend: {backend:?}");
-            cargo_example(
+        Commands::AllCi(args) => {
+            // TODO: Reduce code duplication and repetition
+            let mut results = cargo_format(globals, &cargoarg, &formatoptcheckonly);
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+
+            results.append(&mut cargo_clippy(globals, &cargoarg, &package, backend));
+
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+
+            results.append(&mut cargo(
                 globals,
                 BuildOrCheck::Check,
-                &cargologlevel,
-                platform,
+                &cargoarg,
+                &package,
                 backend,
-                &examples_to_run,
-            )
-        }
-        Commands::ExampleBuild => {
-            info!("Building for platform: {platform:?}, backend: {backend:?}");
-            cargo_example(
+            ));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+            results.append(&mut cargo(
                 globals,
                 BuildOrCheck::Build,
-                &cargologlevel,
+                &cargoarg,
+                &package,
+                backend,
+            ));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+
+            results.append(&mut cargo_example(
+                globals,
+                BuildOrCheck::Check,
+                &cargoarg,
                 platform,
                 backend,
                 &examples_to_run,
-            )
+            ));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+            results.append(&mut cargo_example(
+                globals,
+                BuildOrCheck::Build,
+                &cargoarg,
+                platform,
+                backend,
+                &examples_to_run,
+            ));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+            results.append(&mut qemu_run_examples(
+                globals,
+                &cargoarg,
+                platform,
+                backend,
+                &examples_to_run,
+                false,
+            ));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+
+            results.append(&mut cargo_doc(globals, &cargoarg, backend, &None));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+            results.append(&mut cargo_test(globals, &testopts, backend));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+            results.append(&mut cargo_test(globals, &testoptsloom, backend));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+            results.append(&mut cargo_book(globals, &None));
+            if args.failearly {
+                return handle_results(globals, results)
+                    .map_err(|_| anyhow::anyhow!("Commands failed"));
+            }
+
+            results
         }
+        Commands::Format(formatopts) => cargo_format(globals, &cargoarg, formatopts),
+        Commands::Clippy(packageopts) => cargo_clippy(globals, &cargoarg, packageopts, backend),
+        Commands::Check(args) => cargo(globals, BuildOrCheck::Check, &cargoarg, args, backend),
+        Commands::Build(args) => cargo(globals, BuildOrCheck::Build, &cargoarg, args, backend),
+        Commands::ExampleCheck => cargo_example(
+            globals,
+            BuildOrCheck::Check,
+            &cargoarg,
+            platform,
+            backend,
+            &examples_to_run,
+        ),
+        Commands::ExampleBuild => cargo_example(
+            globals,
+            BuildOrCheck::Build,
+            &cargoarg,
+            platform,
+            backend,
+            &examples_to_run,
+        ),
         Commands::Size(args) => {
             // x86_64 target not valid
-            info!("Measuring for platform: {platform:?}, backend: {backend:?}");
             build_and_check_size(
                 globals,
-                &cargologlevel,
+                &cargoarg,
                 platform,
                 backend,
                 &examples_to_run,
@@ -226,28 +322,18 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Qemu(args) | Commands::Run(args) => {
             // x86_64 target not valid
-            info!("Testing for platform: {platform:?}, backend: {backend:?}");
             qemu_run_examples(
                 globals,
-                &cargologlevel,
+                &cargoarg,
                 platform,
                 backend,
                 &examples_to_run,
                 args.overwrite_expected,
             )
         }
-        Commands::Doc(args) => {
-            info!("Running cargo doc on backend: {backend:?}");
-            cargo_doc(globals, &cargologlevel, backend, &args.arguments)
-        }
-        Commands::Test(args) => {
-            info!("Running cargo test on backend: {backend:?}");
-            cargo_test(globals, args, backend)
-        }
-        Commands::Book(args) => {
-            info!("Running mdbook");
-            cargo_book(globals, &args.arguments)
-        }
+        Commands::Doc(args) => cargo_doc(globals, &cargoarg, backend, &args.arguments),
+        Commands::Test(args) => cargo_test(globals, args, backend),
+        Commands::Book(args) => cargo_book(globals, &args.arguments),
     };
 
     handle_results(globals, final_run_results).map_err(|_| anyhow::anyhow!("Commands failed"))

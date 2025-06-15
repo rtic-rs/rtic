@@ -57,8 +57,7 @@ where
 pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) -> R {
     if ceiling == (15) {
         //turn off interrupts completely, were at max prio
-        let r = critical_section::with(|_| f(&mut *ptr));
-        r
+        critical_section::with(|_| f(&mut *ptr))
     } else {
         let current = unsafe {
             (*INTERRUPT_CORE0::ptr())

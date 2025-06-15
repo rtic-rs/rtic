@@ -16,7 +16,7 @@ name = "rtic"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
-version = "2.1.2"
+version = "2.1.3"
 
 [package.metadata.docs.rs]
 features = ["thumbv7-backend"]
@@ -25,13 +25,14 @@ features = ["thumbv7-backend"]
 name = "rtic"
 
 [dependencies]
-riscv-slic = { version = "0.1.1", optional = true }
-esp32c3 = { version = "0.26.0", optional = true }
-riscv = { version = "0.12.1", optional = true }
+riscv-slic = { version = "0.2.0", optional = true }
+esp32c3 = { version = "0.28.0", optional = true }
+esp32c6 = { version = "0.19.0", optional = true }
+riscv = { version = "0.13.0", optional = true }
 cortex-m = { version = "0.7.0", optional = true }
 bare-metal = "1.0.0"
 portable-atomic = { version = "1", default-features = false }
-rtic-macros = { path = "../rtic-macros", version = "=2.1.2" }
+rtic-macros = { path = "../rtic-macros", version = "=2.1.3" }
 rtic-core = "1"
 critical-section = "1"
 
@@ -60,10 +61,16 @@ thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]
+riscv-esp32c6-backend = ["esp32c6", "riscv", "rtic-macros/riscv-esp32c6"]
 riscv-clint-backend = [
   "riscv",
   "riscv-slic/clint-backend",
-  "rtic-macros/riscv-slic",
+  "rtic-macros/riscv-clint",
+]
+riscv-mecall-backend = [
+  "riscv",
+  "riscv-slic/mecall-backend",
+  "rtic-macros/riscv-mecall",
 ]
 
 # needed for testing

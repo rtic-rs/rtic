@@ -49,8 +49,8 @@ impl TimerBackend {
     /// Use the prelude macros instead.
     pub fn _start(timer: SYSTIMER) {
         const INTERRUPT_MAP_BASE: u32 = 0x600c2000;
-        let interrupt_number = 37 as isize;
-        let cpu_interrupt_number = 31 as isize;
+        let interrupt_number = 37isize;
+        let cpu_interrupt_number = 31isize;
         unsafe {
             let intr_map_base = INTERRUPT_MAP_BASE as *mut u32;
             intr_map_base
@@ -65,7 +65,7 @@ impl TimerBackend {
 
             intr_prio_base
                 .offset(cpu_interrupt_number)
-                .write_volatile(15 as u32);
+                .write_volatile(15);
         }
         timer.conf().write(|w| w.timer_unit0_work_en().set_bit());
         timer

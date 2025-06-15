@@ -36,7 +36,7 @@
 ---
 
 - [Under the hood](./internals.md)
-  - [Cortex-M architectures](./internals/targets.md)
+  - [Target architectures](./internals/targets.md)
   <!--- [Interrupt configuration](./internals/interrupt-configuration.md)-->
   <!--- [Non-reentrancy](./internals/non-reentrancy.md)-->
   <!--- [Access control](./internals/access.md)-->

@@ -31,18 +31,20 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             mod_app.push(constructor);
         }
 
-        if !&task.is_extern {
+        if !task.is_extern {
             let context = &task.context;
             let attrs = &task.attrs;
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
             let inputs = &task.inputs;
+            let lifetime = if task.is_bottom { quote!('static) } else { quote!('a) };
+            let generics = if task.is_bottom { quote!() } else { quote!(<'a>) };
 
             user_tasks.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                async fn #name<'a>(#context: #name::Context<'a> #(,#inputs)*) {
+                async fn #name #generics(#context: #name::Context<#lifetime> #(,#inputs)*) {
                     use rtic::Mutex as _;
                     use rtic::mutex::prelude::*;
 

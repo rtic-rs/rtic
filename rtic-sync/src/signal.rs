@@ -110,7 +110,7 @@ where
     }
 }
 
-impl<'a, T: Copy> SignalReader<'a, T> {
+impl<T: Copy> SignalReader<'_, T> {
     /// Immediately read and evict the latest value stored in the Signal.
     fn take(&mut self) -> Store<T> {
         critical_section::with(|_| {
@@ -157,21 +157,21 @@ impl<'a, T: Copy> SignalReader<'a, T> {
     }
 }
 
-/// Convenience macro for creating a Signal.
+/// Creates a split signal with `'static` lifetime.
 #[macro_export]
 macro_rules! make_signal {
     ( $T:ty ) => {{
-        static SIGNAL: Signal<$T> = Signal::new();
+        static SIGNAL: $crate::signal::Signal<$T> = $crate::signal::Signal::new();
 
         SIGNAL.split()
     }};
 }
 
 #[cfg(test)]
+#[cfg(not(loom))]
 mod tests {
-    use static_cell::StaticCell;
-
     use super::*;
+    use static_cell::StaticCell;
 
     #[test]
     fn empty() {

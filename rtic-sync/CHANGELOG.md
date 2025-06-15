@@ -7,6 +7,37 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+- Add `arbiter::{i2c, spi}::BlockingArbiterDevice` which allows sharing of `embedded_hal` (non-async) buses. This also helps during initialization of RTIC apps as you can use the arbiter while in `init`. After initialization is complete, convert an `BlockingArbiterDevice` into an `ArbiterDevice` using `BlockingArbiterDevice::into_non_blocking()`.
+
+### Fixed
+
+- Avoid a critical section when a `send`-link is popped and when returning `free_slot`.
+
+### Changed
+
+- Add `loom` support.
+- Don't force `Signal` import when using `make_signal` macro
+- Update `make_signal`'s documentation to match `make_channel`'s
+
+## v1.3.2 - 2025-03-16
+
+### Fixed
+
+- Improve handling of free slots for `send` by explicitly writing the free slot to the awoken future.
+- Fix all known instances of #780
+
+## v1.3.1 - 2025-03-12
+
+### Fixed
+
+- Fix [#780]
+
+[#780]: https://github.com/rtic-rs/rtic/issues/780
+
+## v1.3.0 - 2024-05-01
+
 ### Changed
 
 - Unstable features are now stable, the feature flag `unstable` is removed.

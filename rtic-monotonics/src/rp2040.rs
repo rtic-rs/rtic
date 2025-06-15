@@ -81,7 +81,7 @@ impl TimerQueueBackend for TimerBackend {
             let low = timer.timerawl().read().bits();
             let hi1 = timer.timerawh().read().bits();
             if hi0 == hi1 {
-                break ((u64::from(hi0) << 32) | u64::from(low));
+                break (u64::from(hi0) << 32) | u64::from(low);
             }
             hi0 = hi1;
         }

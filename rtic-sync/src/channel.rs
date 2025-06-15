@@ -1,7 +1,7 @@
 //! An async aware MPSC channel that can be used on no-alloc systems.
 
+use crate::unsafecell::UnsafeCell;
 use core::{
-    cell::UnsafeCell,
     future::poll_fn,
     mem::MaybeUninit,
     pin::Pin,
@@ -12,14 +12,16 @@ use core::{
 #[doc(hidden)]
 pub use critical_section;
 use heapless::Deque;
-use rtic_common::waker_registration::CriticalSectionWakerRegistration as WakerRegistration;
 use rtic_common::{
-    dropper::OnDrop,
-    wait_queue::{Link, WaitQueue},
+    dropper::OnDrop, wait_queue::DoublyLinkedList, wait_queue::Link,
+    waker_registration::CriticalSectionWakerRegistration as WakerRegistration,
 };
 
 #[cfg(feature = "defmt-03")]
 use crate::defmt;
+
+type WaitQueueData = (Waker, SlotPtr);
+type WaitQueue = DoublyLinkedList<WaitQueueData>;
 
 /// An MPSC channel for use in no-alloc systems. `N` sets the size of the queue.
 ///
@@ -46,11 +48,21 @@ unsafe impl<T, const N: usize> Send for Channel<T, N> {}
 
 unsafe impl<T, const N: usize> Sync for Channel<T, N> {}
 
-struct UnsafeAccess<'a, const N: usize> {
-    freeq: &'a mut Deque<u8, N>,
-    readyq: &'a mut Deque<u8, N>,
-    receiver_dropped: &'a mut bool,
-    num_senders: &'a mut usize,
+macro_rules! cs_access {
+    ($name:ident, $type:ty) => {
+        /// Access the value mutably.
+        ///
+        /// SAFETY: this function must not be called recursively within `f`.
+        unsafe fn $name<F, R>(&self, _cs: critical_section::CriticalSection, f: F) -> R
+        where
+            F: FnOnce(&mut $type) -> R,
+        {
+            let v = self.$name.get_mut();
+            // SAFETY: we have exclusive access due to the critical section.
+            let v = unsafe { v.deref() };
+            f(v)
+        }
+    };
 }
 
 impl<T, const N: usize> Default for Channel<T, N> {
@@ -63,6 +75,7 @@ impl<T, const N: usize> Channel<T, N> {
     const _CHECK: () = assert!(N < 256, "This queue support a maximum of 255 entries");
 
     /// Create a new channel.
+    #[cfg(not(loom))]
     pub const fn new() -> Self {
         Self {
             freeq: UnsafeCell::new(Deque::new()),
@@ -75,41 +88,83 @@ impl<T, const N: usize> Channel<T, N> {
         }
     }
 
+    /// Create a new channel.
+    #[cfg(loom)]
+    pub fn new() -> Self {
+        Self {
+            freeq: UnsafeCell::new(Deque::new()),
+            readyq: UnsafeCell::new(Deque::new()),
+            receiver_waker: WakerRegistration::new(),
+            slots: core::array::from_fn(|_| UnsafeCell::new(MaybeUninit::uninit())),
+            wait_queue: WaitQueue::new(),
+            receiver_dropped: UnsafeCell::new(false),
+            num_senders: UnsafeCell::new(0),
+        }
+    }
+
     /// Split the queue into a `Sender`/`Receiver` pair.
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
+        let freeq = self.freeq.as_mut();
+
         // Fill free queue
         for idx in 0..N as u8 {
-            assert!(!self.freeq.get_mut().is_full());
+            // NOTE(assert): `split`-ing does not put `freeq` into a known-empty
+            // state, so `debug_assert` is not good enough.
+            assert!(!freeq.is_full());
 
             // SAFETY: This safe as the loop goes from 0 to the capacity of the underlying queue.
             unsafe {
-                self.freeq.get_mut().push_back_unchecked(idx);
+                freeq.push_back_unchecked(idx);
             }
         }
 
-        assert!(self.freeq.get_mut().is_full());
+        debug_assert!(freeq.is_full());
 
         // There is now 1 sender
-        *self.num_senders.get_mut() = 1;
+        *self.num_senders.as_mut() = 1;
 
         (Sender(self), Receiver(self))
     }
 
-    fn access<'a>(&'a self, _cs: critical_section::CriticalSection) -> UnsafeAccess<'a, N> {
-        // SAFETY: This is safe as are in a critical section.
-        unsafe {
-            UnsafeAccess {
-                freeq: &mut *self.freeq.get(),
-                readyq: &mut *self.readyq.get(),
-                receiver_dropped: &mut *self.receiver_dropped.get(),
-                num_senders: &mut *self.num_senders.get(),
+    cs_access!(freeq, Deque<u8, N>);
+    cs_access!(readyq, Deque<u8, N>);
+    cs_access!(receiver_dropped, bool);
+    cs_access!(num_senders, usize);
+
+    /// Return free slot `slot` to the channel.
+    ///
+    /// This will do one of two things:
+    /// 1. If there are any waiting `send`-ers, wake the longest-waiting one and hand it `slot`.
+    /// 2. else, insert `slot` into `self.freeq`.
+    ///
+    /// SAFETY: `slot` must be a `u8` that is obtained by dequeueing from [`Self::readyq`].
+    unsafe fn return_free_slot(&self, slot: u8) {
+        critical_section::with(|cs| {
+            fence(Ordering::SeqCst);
+
+            // If someone is waiting in the `wait_queue`, wake the first one up & hand it the free slot.
+            if let Some((wait_head, mut freeq_slot)) = self.wait_queue.pop() {
+                // SAFETY: `freeq_slot` is valid for writes: we are in a critical
+                // section & the `SlotPtr` lives for at least the duration of the wait queue link.
+                unsafe { freeq_slot.replace(Some(slot), cs) };
+                wait_head.wake();
+            } else {
+                // SAFETY: `self.freeq` is not called recursively.
+                unsafe {
+                    self.freeq(cs, |freeq| {
+                        assert!(!freeq.is_full());
+                        // SAFETY: `freeq` is not full.
+                        freeq.push_back_unchecked(slot);
+                    });
+                }
             }
-        }
+        })
     }
 }
 
 /// Creates a split channel with `'static` lifetime.
 #[macro_export]
+#[cfg(not(loom))]
 macro_rules! make_channel {
     ($type:ty, $size:expr) => {{
         static mut CHANNEL: $crate::channel::Channel<$type, $size> =
@@ -192,11 +247,11 @@ unsafe impl<T, const N: usize> Send for Sender<'_, T, N> {}
 /// This is needed to make the async closure in `send` accept that we "share"
 /// the link possible between threads.
 #[derive(Clone)]
-struct LinkPtr(*mut Option<Link<Waker>>);
+struct LinkPtr(*mut Option<Link<WaitQueueData>>);
 
 impl LinkPtr {
     /// This will dereference the pointer stored within and give out an `&mut`.
-    unsafe fn get(&mut self) -> &mut Option<Link<Waker>> {
+    unsafe fn get(&mut self) -> &mut Option<Link<WaitQueueData>> {
         &mut *self.0
     }
 }
@@ -204,6 +259,42 @@ impl LinkPtr {
 unsafe impl Send for LinkPtr {}
 
 unsafe impl Sync for LinkPtr {}
+
+/// This is needed to make the async closure in `send` accept that we "share"
+/// the link possible between threads.
+#[derive(Clone)]
+struct SlotPtr(*mut Option<u8>);
+
+impl SlotPtr {
+    /// Replace the value of this slot with `new_value`, and return
+    /// the old value.
+    ///
+    /// SAFETY: the pointer in this `SlotPtr` must be valid for writes.
+    unsafe fn replace(
+        &mut self,
+        new_value: Option<u8>,
+        _cs: critical_section::CriticalSection,
+    ) -> Option<u8> {
+        // SAFETY: the critical section guarantees exclusive access, and the
+        // caller guarantees that the pointer is valid.
+        self.replace_exclusive(new_value)
+    }
+
+    /// Replace the value of this slot with `new_value`, and return
+    /// the old value.
+    ///
+    /// SAFETY: the pointer in this `SlotPtr` must be valid for writes, and the caller must guarantee exclusive
+    /// access to the underlying value..
+    unsafe fn replace_exclusive(&mut self, new_value: Option<u8>) -> Option<u8> {
+        // SAFETY: the caller has ensured that we have exclusive access & that
+        // the pointer is valid.
+        unsafe { core::ptr::replace(self.0, new_value) }
+    }
+}
+
+unsafe impl Send for SlotPtr {}
+
+unsafe impl Sync for SlotPtr {}
 
 impl<T, const N: usize> core::fmt::Debug for Sender<'_, T, N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -223,16 +314,21 @@ impl<T, const N: usize> Sender<'_, T, N> {
     fn send_footer(&mut self, idx: u8, val: T) {
         // Write the value to the slots, note; this memcpy is not under a critical section.
         unsafe {
-            ptr::write(
-                self.0.slots.get_unchecked(idx as usize).get() as *mut T,
-                val,
-            )
+            let first_element = self.0.slots.get_unchecked(idx as usize).get_mut();
+            let ptr = first_element.deref().as_mut_ptr();
+            ptr::write(ptr, val)
         }
 
         // Write the value into the ready queue.
         critical_section::with(|cs| {
-            assert!(!self.0.access(cs).readyq.is_full());
-            unsafe { self.0.access(cs).readyq.push_back_unchecked(idx) }
+            // SAFETY: `self.0.readyq` is not called recursively.
+            unsafe {
+                self.0.readyq(cs, |readyq| {
+                    assert!(!readyq.is_full());
+                    // SAFETY: ready is not full.
+                    readyq.push_back_unchecked(idx);
+                });
+            }
         });
 
         fence(Ordering::SeqCst);
@@ -253,12 +349,16 @@ impl<T, const N: usize> Sender<'_, T, N> {
             return Err(TrySendError::NoReceiver(val));
         }
 
-        let idx =
-            if let Some(idx) = critical_section::with(|cs| self.0.access(cs).freeq.pop_front()) {
-                idx
-            } else {
-                return Err(TrySendError::Full(val));
-            };
+        let free_slot = critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.freeq` is not called recursively.
+            self.0.freeq(cs, |q| q.pop_front())
+        });
+
+        let idx = if let Some(idx) = free_slot {
+            idx
+        } else {
+            return Err(TrySendError::Full(val));
+        };
 
         self.send_footer(idx, val);
 
@@ -268,13 +368,17 @@ impl<T, const N: usize> Sender<'_, T, N> {
     /// Send a value. If there is no place left in the queue this will wait until there is.
     /// If the receiver does not exist this will return an error.
     pub async fn send(&mut self, val: T) -> Result<(), NoReceiver<T>> {
-        let mut link_ptr: Option<Link<Waker>> = None;
+        let mut free_slot_ptr: Option<u8> = None;
+        let mut link_ptr: Option<Link<WaitQueueData>> = None;
 
         // Make this future `Drop`-safe.
         // SAFETY(link_ptr): Shadow the original definition of `link_ptr` so we can't abuse it.
-        let mut link_ptr = LinkPtr(&mut link_ptr as *mut Option<Link<Waker>>);
+        let mut link_ptr = LinkPtr(core::ptr::addr_of_mut!(link_ptr));
+        // SAFETY(freed_slot): Shadow the original definition of `free_slot_ptr` so we can't abuse it.
+        let mut free_slot_ptr = SlotPtr(core::ptr::addr_of_mut!(free_slot_ptr));
 
         let mut link_ptr2 = link_ptr.clone();
+        let mut free_slot_ptr2 = free_slot_ptr.clone();
         let dropper = OnDrop::new(|| {
             // SAFETY: We only run this closure and dereference the pointer if we have
             // exited the `poll_fn` below in the `drop(dropper)` call. The other dereference
@@ -282,56 +386,86 @@ impl<T, const N: usize> Sender<'_, T, N> {
             if let Some(link) = unsafe { link_ptr2.get() } {
                 link.remove_from_list(&self.0.wait_queue);
             }
+
+            // Return our potentially-unused free slot.
+            // Since we are certain that our link has been removed from the list (either
+            // pop-ed or removed just above), we have exclusive access to the free slot pointer.
+            if let Some(freed_slot) = unsafe { free_slot_ptr2.replace_exclusive(None) } {
+                // SAFETY: freed slot is passed to us from `return_free_slot`, which either
+                // directly (through `try_recv`), or indirectly (through another `return_free_slot`)
+                // comes from `readyq`.
+                unsafe { self.0.return_free_slot(freed_slot) };
+            }
         });
 
         let idx = poll_fn(|cx| {
-            if self.is_closed() {
-                return Poll::Ready(Err(()));
-            }
-
             //  Do all this in one critical section, else there can be race conditions
-            let queue_idx = critical_section::with(|cs| {
-                let wq_empty = self.0.wait_queue.is_empty();
-                let fq_empty = self.0.access(cs).freeq.is_empty();
-                if !wq_empty || fq_empty {
-                    // SAFETY: This pointer is only dereferenced here and on drop of the future
-                    // which happens outside this `poll_fn`'s stack frame.
-                    let link = unsafe { link_ptr.get() };
-                    if let Some(link) = link {
-                        if !link.is_popped() {
-                            return None;
-                        } else {
-                            // Fall through to dequeue
-                        }
-                    } else {
-                        // Place the link in the wait queue on first run.
-                        let link_ref = link.insert(Link::new(cx.waker().clone()));
-
-                        // SAFETY(new_unchecked): The address to the link is stable as it is defined
-                        // outside this stack frame.
-                        // SAFETY(push): `link_ref` lifetime comes from `link_ptr` that is shadowed,
-                        // and  we make sure in `dropper` that the link is removed from the queue
-                        // before dropping `link_ptr` AND `dropper` makes sure that the shadowed
-                        // `link_ptr` lives until the end of the stack frame.
-                        unsafe { self.0.wait_queue.push(Pin::new_unchecked(link_ref)) };
-
-                        return None;
-                    }
+            critical_section::with(|cs| {
+                if self.is_closed() {
+                    return Poll::Ready(Err(()));
                 }
 
-                assert!(!self.0.access(cs).freeq.is_empty());
-                // Get index as the queue is guaranteed not empty and the wait queue is empty
-                let idx = unsafe { self.0.access(cs).freeq.pop_front_unchecked() };
+                let wq_empty = self.0.wait_queue.is_empty();
+                // SAFETY: `self.0.freeq` is not called recursively.
+                let freeq_empty = unsafe { self.0.freeq(cs, |q| q.is_empty()) };
 
-                Some(idx)
-            });
+                // SAFETY: This pointer is only dereferenced here and on drop of the future
+                // which happens outside this `poll_fn`'s stack frame.
+                let link = unsafe { link_ptr.get() };
 
-            if let Some(idx) = queue_idx {
-                // Return the index
-                Poll::Ready(Ok(idx))
-            } else {
-                Poll::Pending
-            }
+                // We are already in the wait queue.
+                if let Some(queue_link) = link {
+                    if queue_link.is_popped() {
+                        // SAFETY: `free_slot_ptr` is valid for writes until the end of this future.
+                        let slot = unsafe { free_slot_ptr.replace(None, cs) };
+
+                        // Our link was popped, so it is most definitely not in the list.
+                        // We can safely & correctly `take` it to prevent ourselves from
+                        // redundantly attempting to remove it from the list a 2nd time.
+                        link.take();
+
+                        // If our link is popped, then:
+                        // 1. We were popped by `return_free_lot` and provided us with a slot.
+                        // 2. We were popped by `Receiver::drop` and it did not provide us with a slot, and the channel is closed.
+                        if let Some(slot) = slot {
+                            Poll::Ready(Ok(slot))
+                        } else {
+                            Poll::Ready(Err(()))
+                        }
+                    } else {
+                        Poll::Pending
+                    }
+                }
+                // We are not in the wait queue, but others are, or there is currently no free
+                // slot available.
+                else if !wq_empty || freeq_empty {
+                    // Place the link in the wait queue.
+                    let link_ref =
+                        link.insert(Link::new((cx.waker().clone(), free_slot_ptr.clone())));
+
+                    // SAFETY(new_unchecked): The address to the link is stable as it is defined
+                    // outside this stack frame.
+                    // SAFETY(push): `link_ref` lifetime comes from `link_ptr` and `free_slot_ptr` that
+                    // are shadowed and we make sure in `dropper` that the link is removed from the queue
+                    // before dropping `link_ptr` AND `dropper` makes sure that the shadowed
+                    // `ptr`s live until the end of the stack frame.
+                    unsafe { self.0.wait_queue.push(Pin::new_unchecked(link_ref)) };
+
+                    Poll::Pending
+                }
+                // We are not in the wait queue, no one else is waiting, and there is a free slot available.
+                else {
+                    // SAFETY: `self.0.freeq` is not called recursively.
+                    unsafe {
+                        self.0.freeq(cs, |freeq| {
+                            assert!(!freeq.is_empty());
+                            // SAFETY: `freeq` is non-empty
+                            let slot = freeq.pop_back_unchecked();
+                            Poll::Ready(Ok(slot))
+                        })
+                    }
+                }
+            })
         })
         .await;
 
@@ -349,17 +483,26 @@ impl<T, const N: usize> Sender<'_, T, N> {
 
     /// Returns true if there is no `Receiver`s.
     pub fn is_closed(&self) -> bool {
-        critical_section::with(|cs| *self.0.access(cs).receiver_dropped)
+        critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.receiver_dropped` is not called recursively.
+            self.0.receiver_dropped(cs, |v| *v)
+        })
     }
 
     /// Is the queue full.
     pub fn is_full(&self) -> bool {
-        critical_section::with(|cs| self.0.access(cs).freeq.is_empty())
+        critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.freeq` is not called recursively.
+            self.0.freeq(cs, |v| v.is_empty())
+        })
     }
 
     /// Is the queue empty.
     pub fn is_empty(&self) -> bool {
-        critical_section::with(|cs| self.0.access(cs).freeq.is_full())
+        critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.freeq` is not called recursively.
+            self.0.freeq(cs, |v| v.is_full())
+        })
     }
 }
 
@@ -367,9 +510,13 @@ impl<T, const N: usize> Drop for Sender<'_, T, N> {
     fn drop(&mut self) {
         // Count down the reference counter
         let num_senders = critical_section::with(|cs| {
-            *self.0.access(cs).num_senders -= 1;
-
-            *self.0.access(cs).num_senders
+            unsafe {
+                // SAFETY: `self.0.num_senders` is not called recursively.
+                self.0.num_senders(cs, |s| {
+                    *s -= 1;
+                    *s
+                })
+            }
         });
 
         // If there are no senders, wake the receiver to do error handling.
@@ -382,7 +529,10 @@ impl<T, const N: usize> Drop for Sender<'_, T, N> {
 impl<T, const N: usize> Clone for Sender<'_, T, N> {
     fn clone(&self) -> Self {
         // Count up the reference counter
-        critical_section::with(|cs| *self.0.access(cs).num_senders += 1);
+        critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.num_senders` is not called recursively.
+            self.0.num_senders(cs, |v| *v += 1);
+        });
 
         Self(self.0)
     }
@@ -422,24 +572,22 @@ impl<T, const N: usize> Receiver<'_, T, N> {
     /// Receives a value if there is one in the channel, non-blocking.
     pub fn try_recv(&mut self) -> Result<T, ReceiveError> {
         // Try to get a ready slot.
-        let ready_slot = critical_section::with(|cs| self.0.access(cs).readyq.pop_front());
+        let ready_slot = critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.readyq` is not called recursively.
+            self.0.readyq(cs, |q| q.pop_front())
+        });
 
         if let Some(rs) = ready_slot {
             // Read the value from the slots, note; this memcpy is not under a critical section.
-            let r = unsafe { ptr::read(self.0.slots.get_unchecked(rs as usize).get() as *const T) };
+            let r = unsafe {
+                let first_element = self.0.slots.get_unchecked(rs as usize).get_mut();
+                let ptr = first_element.deref().as_ptr();
+                ptr::read(ptr)
+            };
 
             // Return the index to the free queue after we've read the value.
-            critical_section::with(|cs| {
-                assert!(!self.0.access(cs).freeq.is_full());
-                unsafe { self.0.access(cs).freeq.push_back_unchecked(rs) }
-            });
-
-            fence(Ordering::SeqCst);
-
-            // If someone is waiting in the WaiterQueue, wake the first one up.
-            if let Some(wait_head) = self.0.wait_queue.pop() {
-                wait_head.wake();
-            }
+            // SAFETY: `rs` comes directly from `readyq`.
+            unsafe { self.0.return_free_slot(rs) };
 
             Ok(r)
         } else if self.is_closed() {
@@ -476,33 +624,48 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
     /// Returns true if there are no `Sender`s.
     pub fn is_closed(&self) -> bool {
-        critical_section::with(|cs| *self.0.access(cs).num_senders == 0)
+        critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.num_senders` is not called recursively.
+            self.0.num_senders(cs, |v| *v == 0)
+        })
     }
 
     /// Is the queue full.
     pub fn is_full(&self) -> bool {
-        critical_section::with(|cs| self.0.access(cs).readyq.is_full())
+        critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.readyq` is not called recursively.
+            self.0.readyq(cs, |v| v.is_full())
+        })
     }
 
     /// Is the queue empty.
     pub fn is_empty(&self) -> bool {
-        critical_section::with(|cs| self.0.access(cs).readyq.is_empty())
+        critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.readyq` is not called recursively.
+            self.0.readyq(cs, |v| v.is_empty())
+        })
     }
 }
 
 impl<T, const N: usize> Drop for Receiver<'_, T, N> {
     fn drop(&mut self) {
         // Mark the receiver as dropped and wake all waiters
-        critical_section::with(|cs| *self.0.access(cs).receiver_dropped = true);
+        critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.receiver_dropped` is not called recursively.
+            self.0.receiver_dropped(cs, |v| *v = true);
+        });
 
-        while let Some(waker) = self.0.wait_queue.pop() {
+        while let Some((waker, _)) = self.0.wait_queue.pop() {
             waker.wake();
         }
     }
 }
 
 #[cfg(test)]
+#[cfg(not(loom))]
 mod tests {
+    use cassette::Cassette;
+
     use super::*;
 
     #[test]
@@ -584,6 +747,65 @@ mod tests {
         assert_eq!(s.try_send(11), Err(TrySendError::NoReceiver(11)));
     }
 
+    fn make() {
+        let _ = make_channel!(u32, 10);
+    }
+
+    #[test]
+    #[should_panic]
+    fn double_make_channel() {
+        make();
+        make();
+    }
+
+    #[test]
+    fn tuple_channel() {
+        let _ = make_channel!((i32, u32), 10);
+    }
+
+    fn freeq<const N: usize, T, F, R>(channel: &Channel<T, N>, f: F) -> R
+    where
+        F: FnOnce(&mut Deque<u8, N>) -> R,
+    {
+        critical_section::with(|cs| unsafe { channel.freeq(cs, f) })
+    }
+
+    #[test]
+    fn dropping_waked_send_returns_freeq_item() {
+        let (mut tx, mut rx) = make_channel!(u8, 1);
+
+        tx.try_send(0).unwrap();
+        assert!(freeq(&rx.0, |q| q.is_empty()));
+
+        // Running this in a separate thread scope to ensure that `pinned_future` is dropped fully.
+        //
+        // Calling drop explicitly gets hairy because dropping things behind a `Pin` is not easy.
+        std::thread::scope(|scope| {
+            scope.spawn(|| {
+                let pinned_future = core::pin::pin!(tx.send(1));
+                let mut future = Cassette::new(pinned_future);
+
+                future.poll_on();
+
+                assert!(freeq(&rx.0, |q| q.is_empty()));
+                assert!(!rx.0.wait_queue.is_empty());
+
+                assert_eq!(rx.try_recv(), Ok(0));
+
+                assert!(freeq(&rx.0, |q| q.is_empty()));
+            });
+        });
+
+        assert!(!freeq(&rx.0, |q| q.is_empty()));
+
+        // Make sure that rx & tx are alive until here for good measure.
+        drop((tx, rx));
+    }
+}
+
+#[cfg(not(loom))]
+#[cfg(test)]
+mod tokio_tests {
     #[tokio::test]
     async fn stress_channel() {
         const NUM_RUNS: usize = 1_000;
@@ -612,20 +834,58 @@ mod tests {
             v.await.unwrap();
         }
     }
+}
 
-    fn make() {
-        let _ = make_channel!(u32, 10);
+#[cfg(test)]
+#[cfg(loom)]
+mod loom_test {
+    use cassette::Cassette;
+    use loom::thread;
+
+    #[macro_export]
+    #[allow(missing_docs)]
+    macro_rules! make_loom_channel {
+        ($type:ty, $size:expr) => {{
+            let channel: crate::channel::Channel<$type, $size> = super::Channel::new();
+            let boxed = Box::new(channel);
+            let boxed = Box::leak(boxed);
+
+            // SAFETY: This is safe as we hide the static mut from others to access it.
+            // Only this point is where the mutable access happens.
+            boxed.split()
+        }};
     }
 
+    // This test tests the following scenarios:
+    // 1. Receiver is dropped while concurrent senders are waiting to send.
+    // 2. Concurrent senders are competing for the same free slot.
     #[test]
-    #[should_panic]
-    fn double_make_channel() {
-        make();
-        make();
-    }
+    pub fn concurrent_send_while_full_and_drop() {
+        loom::model(|| {
+            let (mut tx, mut rx) = make_loom_channel!([u8; 20], 1);
+            let mut cloned = tx.clone();
 
-    #[test]
-    fn tuple_channel() {
-        let _ = make_channel!((i32, u32), 10);
+            tx.try_send([1; 20]).unwrap();
+
+            let handle1 = thread::spawn(move || {
+                let future = std::pin::pin!(tx.send([1; 20]));
+                let mut future = Cassette::new(future);
+                if future.poll_on().is_none() {
+                    future.poll_on();
+                }
+            });
+
+            rx.try_recv().ok();
+
+            let future = std::pin::pin!(cloned.send([1; 20]));
+            let mut future = Cassette::new(future);
+            if future.poll_on().is_none() {
+                future.poll_on();
+            }
+
+            drop(rx);
+
+            handle1.join().unwrap();
+        });
     }
 }

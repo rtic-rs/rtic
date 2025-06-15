@@ -15,6 +15,7 @@ macro_rules! with_backend {
             feature = "cortex-m-basepri",
             feature = "test-template",
             feature = "riscv-esp32c3",
+            feature = "riscv-esp32c6",
             feature = "riscv-slic",
         ))]
         $($tokens)*
@@ -88,7 +89,7 @@ with_backend! {
             //
             // If no "target" directory is found, <project_dir>/<out_dir_root> is used
             for path in out_dir.ancestors() {
-                if let Some(dir) = path.components().last() {
+                if let Some(dir) = path.components().next_back() {
                     let dir = dir.as_os_str().to_str().unwrap();
 
                     if dir.starts_with("thumbv") || dir.starts_with("riscv") {
@@ -118,6 +119,7 @@ with_backend! {
     feature = "cortex-m-basepri",
     feature = "test-template",
     feature = "riscv-esp32c3",
+    feature = "riscv-esp32c6",
     feature = "riscv-slic",
 )))]
 compile_error!("Cannot compile. No backend feature selected.");

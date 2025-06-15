@@ -63,47 +63,26 @@ impl Package {
                 vec![Some(backend.to_rtic_macros_feature().to_string())]
             }
             Package::RticMonotonics => {
-                let features = if partial {
-                    &[
-                        "cortex-m-systick",
-                        "rp2040",
-                        "nrf52840",
-                        "imxrt_gpt1,imxrt-ral/imxrt1062",
-                        "stm32_tim2,stm32h725ag",
-                    ][..]
-                } else {
-                    &[
-                        "cortex-m-systick",
-                        "cortex-m-systick,systick-64bit",
-                        "rp2040",
-                        "nrf52805",
-                        "nrf52810",
-                        "nrf52811",
-                        "nrf52832",
-                        "nrf52833",
-                        "nrf52840",
-                        "nrf5340-app",
-                        "nrf5340-net",
-                        "nrf9160",
-                        "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062",
-                        "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag",
-                    ][..]
-                };
+                let features = backend.to_rtic_monotonics_features(partial);
 
-                features
-                    .iter()
-                    .map(|&s| {
-                        if matches!(backend, Backends::Thumbv6) {
-                            format!("{s},portable-atomic/critical-section")
-                        } else {
-                            s.to_string()
-                        }
-                    })
-                    .map(Some)
-                    .chain(std::iter::once(None))
-                    .collect()
+                if let Some(features) = features {
+                    features
+                        .iter()
+                        .map(|&s| {
+                            if matches!(backend, Backends::Thumbv6) {
+                                format!("{s},portable-atomic/critical-section")
+                            } else {
+                                s.to_string()
+                            }
+                        })
+                        .map(Some)
+                        .chain(std::iter::once(None))
+                        .collect()
+                } else {
+                    vec![None]
+                }
             }
-            Package::RticSync if matches!(backend, Backends::Thumbv6) => {
+            Package::RticSync if matches!(backend, Backends::Thumbv6) || !backend.is_arm() => {
                 vec![Some("portable-atomic/critical-section".into())]
             }
             _ => vec![None],
@@ -114,7 +93,7 @@ impl Package {
 pub struct TestMetadata {}
 
 impl TestMetadata {
-    pub fn match_package(package: Package, backend: Backends) -> CargoCommand<'static> {
+    pub fn match_package(package: Package, backend: Backends, loom: bool) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
                 let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
@@ -123,6 +102,7 @@ impl TestMetadata {
                     features,
                     test: Some("ui".to_owned()),
                     deny_warnings: true,
+                    loom,
                 }
             }
             Package::RticMacros => CargoCommand::Test {
@@ -130,36 +110,41 @@ impl TestMetadata {
                 features: Some(backend.to_rtic_macros_feature().to_owned()),
                 test: None,
                 deny_warnings: true,
+                loom,
             },
             Package::RticSync => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
                 deny_warnings: true,
+                loom,
             },
             Package::RticCommon => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("testing".to_owned()),
                 test: None,
                 deny_warnings: true,
+                loom,
             },
             Package::RticMonotonics => CargoCommand::Test {
                 package: Some(package.name()),
                 features: None,
                 test: None,
                 deny_warnings: true,
+                loom,
             },
             Package::RticTime => CargoCommand::Test {
                 package: Some(package.name()),
                 features: Some("critical-section/std".into()),
                 test: None,
                 deny_warnings: true,
+                loom,
             },
         }
     }
 }
 
-#[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
+#[derive(clap::ValueEnum, Copy, Clone, Default, Debug, PartialEq)]
 pub enum Backends {
     Thumbv6,
     #[default]
@@ -167,8 +152,11 @@ pub enum Backends {
     Thumbv8Base,
     Thumbv8Main,
     RiscvEsp32C3,
-    Riscv32ImcClint, // not working yet (issues with portable-atomic features...)
+    RiscvEsp32C6,
+    Riscv32ImcClint,
+    Riscv32ImcMecall,
     Riscv32ImacClint,
+    Riscv32ImacMecall,
 }
 
 impl Backends {
@@ -179,8 +167,12 @@ impl Backends {
             Backends::Thumbv7 => ARMV7M,
             Backends::Thumbv8Base => ARMV8MBASE,
             Backends::Thumbv8Main => ARMV8MMAIN,
-            Backends::Riscv32ImcClint | Backends::RiscvEsp32C3 => RISCV32IMC,
-            Backends::Riscv32ImacClint => RISCV32IMAC,
+            Backends::Riscv32ImcClint | Backends::Riscv32ImcMecall | Backends::RiscvEsp32C3 => {
+                RISCV32IMC
+            }
+            Backends::Riscv32ImacClint | Backends::Riscv32ImacMecall | Backends::RiscvEsp32C6 => {
+                RISCV32IMAC
+            }
         }
     }
 
@@ -192,17 +184,63 @@ impl Backends {
             Backends::Thumbv8Base => "thumbv8base-backend",
             Backends::Thumbv8Main => "thumbv8main-backend",
             Backends::RiscvEsp32C3 => "riscv-esp32c3-backend",
+            Backends::RiscvEsp32C6 => "riscv-esp32c6-backend",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint-backend",
+            Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall-backend",
         }
     }
+
     #[allow(clippy::wrong_self_convention)]
     pub fn to_rtic_macros_feature(&self) -> &'static str {
         match self {
             Backends::Thumbv6 | Backends::Thumbv8Base => "cortex-m-source-masking",
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
             Backends::RiscvEsp32C3 => "riscv-esp32c3",
+            Backends::RiscvEsp32C6 => "riscv-esp32c6",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
+            Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall",
         }
+    }
+
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_rtic_monotonics_features(&self, partial: bool) -> Option<&[&str]> {
+        if self == &Self::RiscvEsp32C3 {
+            Some(&["esp32c3-systimer"])
+        } else if !self.is_arm() {
+            None
+        } else if partial {
+            Some(&[
+                "cortex-m-systick",
+                "rp2040",
+                "nrf52840",
+                "imxrt_gpt1,imxrt-ral/imxrt1062",
+                "stm32_tim2,stm32h725ag",
+            ])
+        } else {
+            Some(&[
+                "cortex-m-systick",
+                "cortex-m-systick,systick-64bit",
+                "rp2040",
+                "nrf52805",
+                "nrf52810",
+                "nrf52811",
+                "nrf52832",
+                "nrf52833",
+                "nrf52840",
+                "nrf5340-app",
+                "nrf5340-net",
+                "nrf9160",
+                "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062",
+                "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag",
+            ])
+        }
+    }
+
+    pub fn is_arm(&self) -> bool {
+        matches!(
+            self,
+            Self::Thumbv6 | Self::Thumbv7 | Self::Thumbv8Base | Self::Thumbv8Main
+        )
     }
 }
 
@@ -216,6 +254,7 @@ pub enum BuildOrCheck {
 #[derive(clap::ValueEnum, Copy, Clone, Default, Debug)]
 pub enum Platforms {
     Esp32C3,
+    Esp32C6,
     Hifive1,
     #[default]
     Lm3s6965,
@@ -230,6 +269,7 @@ impl Platforms {
     pub fn name(&self) -> String {
         let name = match self {
             Platforms::Esp32C3 => "esp32c3",
+            Platforms::Esp32C6 => "esp32c6",
             Platforms::Hifive1 => "hifive1",
             Platforms::Lm3s6965 => "lm3s6965",
             Platforms::Nrf52840 => "nrf52840",
@@ -245,7 +285,7 @@ impl Platforms {
     pub fn rust_flags(&self) -> Vec<String> {
         let c = "-C".to_string();
         match self {
-            Platforms::Esp32C3 => vec![c, "link-arg=-Tlinkall.x".to_string()],
+            Platforms::Esp32C3 | Platforms::Esp32C6 => vec![c, "link-arg=-Tlinkall.x".to_string()],
             Platforms::Hifive1 => vec![c, "link-arg=-Thifive1-link.x".to_string()],
             Platforms::Lm3s6965 => vec![c, "link-arg=-Tlink.x".to_string()],
             Platforms::Nrf52840 => vec![
@@ -284,6 +324,7 @@ impl Platforms {
     pub fn default_backend(&self) -> Backends {
         match self {
             Platforms::Esp32C3 => Backends::RiscvEsp32C3,
+            Platforms::Esp32C6 => Backends::RiscvEsp32C6,
             Platforms::Hifive1 => Backends::Riscv32ImcClint,
             Platforms::Lm3s6965 => Backends::Thumbv7,
             Platforms::Nrf52840 => unimplemented!(),
@@ -303,8 +344,12 @@ impl Platforms {
                 RISCV32IMC => Ok(None),
                 _ => Err(()),
             },
+            Platforms::Esp32C6 => match backend.to_target() {
+                RISCV32IMAC => Ok(None),
+                _ => Err(()),
+            },
             Platforms::Hifive1 => match backend.to_target() {
-                RISCV32IMC | RISCV32IMAC => Ok(None),
+                RISCV32IMC => Ok(None),
                 _ => Err(()),
             },
             Platforms::Lm3s6965 => match backend.to_target() {
@@ -394,6 +439,10 @@ pub struct Cli {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
+    /// Run everything CI would
+    #[clap(alias = "ci")]
+    AllCi(CiOpt),
+
     /// Format code
     #[clap(alias = "fmt")]
     Format(FormatOpt),
@@ -446,13 +495,19 @@ pub enum Commands {
     Doc(Arg),
 
     /// Run tests
-    Test(PackageOpt),
+    Test(TestOpt),
 
     /// Build books with mdbook
     Book(Arg),
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug, Clone, Default)]
+pub struct CiOpt {
+    #[clap(short, long)]
+    pub failearly: bool,
+}
+
+#[derive(Args, Debug, Clone, Default)]
 pub struct FormatOpt {
     #[clap(flatten)]
     pub package: PackageOpt,
@@ -461,13 +516,22 @@ pub struct FormatOpt {
     pub check: bool,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug, Clone, Default)]
+pub struct TestOpt {
+    #[clap(flatten)]
+    pub package: PackageOpt,
+    /// Should tests be loom tests
+    #[clap(short, long)]
+    pub loom: bool,
+}
+
+#[derive(Args, Debug, Clone, Copy, Default)]
 /// Restrict to package, or run on whole workspace
 pub struct PackageOpt {
     /// For which package/workspace member to operate
     ///
     /// If omitted, work on all
-    package: Option<Package>,
+    pub package: Option<Package>,
 }
 
 impl PackageOpt {
@@ -500,7 +564,7 @@ pub struct QemuAndRun {
 
 #[derive(Debug, Parser, Clone)]
 pub struct Arg {
-    /// Options to pass to `cargo size`
+    /// Options to pass to `cargo <subcommand>`
     #[command(subcommand)]
     pub arguments: Option<ExtraArguments>,
 }

@@ -22,7 +22,7 @@ name = "rtic-macros"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
-version = "2.1.2"
+version = "2.1.3"
 
 [package.metadata.docs.rs]
 features = ["test-template"]
@@ -37,9 +37,12 @@ default = []
 cortex-m-source-masking = []
 cortex-m-basepri = []
 riscv-esp32c3 = []
+riscv-esp32c6 = []
 # riscv-clic = []
 # riscv-ch32 = []
 riscv-slic = []
+riscv-clint = ["riscv-slic"]
+riscv-mecall= ["riscv-slic"]
 
 # backend API test
 test-template = []

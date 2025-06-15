@@ -13,7 +13,7 @@ use syn::{parse, Attribute, Ident};
 /// Utility function to get the SLIC interrupt module.
 pub fn interrupt_ident() -> Ident {
     let span = Span::call_site();
-    Ident::new("Interrupt", span)
+    Ident::new("SoftwareInterrupt", span)
 }
 
 pub fn interrupt_mod(_app: &App) -> TokenStream2 {
@@ -108,10 +108,6 @@ pub fn pre_init_checks(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream
 pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     let mut stmts = vec![];
 
-    // First, we reset and disable all the interrupt controllers
-    stmts.push(quote!(rtic::export::clear_interrupts();));
-
-    // Then, we set the corresponding priorities
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
     for (&p, name) in interrupt_ids.chain(
         app.hardware_tasks
@@ -119,11 +115,10 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
             .map(|task| (&task.args.priority, &task.args.binds)),
     ) {
         stmts.push(quote!(
-            rtic::export::set_priority(slic::Interrupt::#name, #p);
+            rtic::export::set_priority(slic::SoftwareInterrupt::#name, #p);
         ));
     }
-    // Finally, we activate the interrupts
-    stmts.push(quote!(rtic::export::set_interrupts();));
+
     stmts
 }
 
@@ -153,11 +148,11 @@ pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> 
 
         return Err(parse::Error::new(first.unwrap().span(), s));
     }
-
+    #[cfg(feature = "riscv-clint")]
     if app.args.backend.is_none() {
         return Err(parse::Error::new(
             Span::call_site(),
-            "SLIC requires backend-specific configuration",
+            "CLINT requires backend-specific configuration",
         ));
     }
 
@@ -247,9 +242,19 @@ pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2>
     stmts.push(quote!(
         use rtic::export::riscv_slic;
     ));
-    let hart_id = &app.args.backend.as_ref().unwrap().hart_id;
+    let slic = quote! {rtic::export::riscv_slic};
 
-    stmts.push(quote!(rtic::export::codegen!(pac = #device, swi = [#(#swi_slice,)*], backend = [hart_id = #hart_id]);));
+    match () {
+        #[cfg(feature = "riscv-clint")]
+        () => {
+            let hart_id = &app.args.backend.as_ref().unwrap().hart_id;
+            stmts.push(quote!(rtic::export::codegen!(slic = #slic, pac = #device, swi = [#(#swi_slice,)*], backend = [hart_id = #hart_id]);));
+        }
+        #[cfg(feature = "riscv-mecall")]
+        () => {
+            stmts.push(quote!(rtic::export::codegen!(slic = #slic, pac = #device, swi = [#(#swi_slice,)*]);));
+        }
+    }
 
     stmts
 }

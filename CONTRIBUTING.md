@@ -27,6 +27,14 @@ Continuous Integration (CI) tests are run against all pull requests.
 
 Please make sure that tests passes locally before submitting.
 
+### Most tests locally
+
+Might complain about missing QEMU if not available.
+
+```shell
+> cargo xtask ci
+```
+
 ### Cargo format
 
 ```shell

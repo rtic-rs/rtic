@@ -140,7 +140,7 @@ impl TimerQueueBackend for SystickBackend {
 ///
 /// * `name` - The name that the monotonic type will have.
 /// * `tick_rate_hz` - The tick rate of the timer peripheral.
-///                    Can be omitted; defaults to 1kHz.
+///   Can be omitted; defaults to 1kHz.
 #[macro_export]
 macro_rules! systick_monotonic {
     ($name:ident) => {

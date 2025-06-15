@@ -103,8 +103,8 @@ macro_rules! __internal_create_imxrt_timer_struct {
 ///
 /// * `name` - The name that the monotonic type will have.
 /// * `tick_rate_hz` - The tick rate of the timer peripheral. It's the user's responsibility
-///                    to configure the peripheral to the given frequency before starting the
-///                    monotonic.
+///   to configure the peripheral to the given frequency before starting the
+///   monotonic.
 #[cfg(feature = "imxrt_gpt1")]
 #[macro_export]
 macro_rules! imxrt_gpt1_monotonic {
@@ -121,8 +121,8 @@ macro_rules! imxrt_gpt1_monotonic {
 ///
 /// * `name` - The name that the monotonic type will have.
 /// * `tick_rate_hz` - The tick rate of the timer peripheral. It's the user's responsibility
-///                    to configure the peripheral to the given frequency before starting the
-///                    monotonic.
+///   to configure the peripheral to the given frequency before starting the
+///   monotonic.
 #[cfg(feature = "imxrt_gpt2")]
 #[macro_export]
 macro_rules! imxrt_gpt2_monotonic {

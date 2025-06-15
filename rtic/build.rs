@@ -27,7 +27,10 @@ fn main() {
         "riscv-esp32c3-backend" => {
             println!("cargo:rustc-cfg=feature=\"riscv-esp32c3\"");
         }
-        "riscv-clint-backend" => {
+        "riscv-esp32c6-backend" => {
+            println!("cargo:rustc-cfg=feature=\"riscv-esp32c6\"");
+        }
+        "riscv-clint-backend" | "riscv-mecall-backend" => {
             println!("cargo:rustc-cfg=feature=\"riscv-slic\"");
         }
         _ => {

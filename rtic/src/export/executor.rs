@@ -42,7 +42,7 @@ impl AsyncTaskExecutorPtr {
     }
 
     #[inline(always)]
-    pub fn set_in_main<F: Future>(&self, executor: &ManuallyDrop<AsyncTaskExecutor<F>>) {
+    pub fn set_in_main<F: Future + 'static>(&self, executor: &ManuallyDrop<AsyncTaskExecutor<F>>) {
         self.ptr.store(executor as *const _ as _, Ordering::Relaxed);
     }
 
@@ -59,14 +59,14 @@ impl Default for AsyncTaskExecutorPtr {
 }
 
 /// Executor for an async task.
-pub struct AsyncTaskExecutor<F: Future> {
+pub struct AsyncTaskExecutor<F: Future + 'static> {
     // `task` is protected by the `running` flag.
     task: UnsafeCell<MaybeUninit<F>>,
     running: AtomicBool,
     pending: AtomicBool,
 }
 
-unsafe impl<F: Future> Sync for AsyncTaskExecutor<F> {}
+unsafe impl<F: Future + 'static> Sync for AsyncTaskExecutor<F> {}
 
 macro_rules! new_n_args {
     ($name:ident, $($t:ident),*) => {
@@ -86,13 +86,13 @@ macro_rules! from_ptr_n_args {
     };
 }
 
-impl<F: Future> Default for AsyncTaskExecutor<F> {
+impl<F: Future + 'static> Default for AsyncTaskExecutor<F> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<F: Future> AsyncTaskExecutor<F> {
+impl<F: Future + 'static> AsyncTaskExecutor<F> {
     /// Create a new executor.
     #[inline(always)]
     pub const fn new() -> Self {

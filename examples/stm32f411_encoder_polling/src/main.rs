@@ -43,7 +43,7 @@ mod app {
     }
 
     // Set the I2C address of the PCF8574 located on the back of the HD44780.
-    // Check the the jumpers A0, A1 and A2 and datasheet
+    // Check the jumpers A0, A1 and A2 and the datasheet.
     const LCD_I2C_ADDRESS: u8 = 0x27;
 
     // Resources shared between tasks
