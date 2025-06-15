@@ -75,13 +75,26 @@ New features and big changes should go through the RFC process in the
 
 ## Running tests locally
 
-To check all `Run-pass tests` locally on your `thumbv6m-none-eabi` or `thumbv7m-none-eabi` target device, run
+To check all `tests` locally, make sure you got QEMU (and ESP32 QEMU if so desired)
+then:
 
 ```console
-$ cargo xtask --target <your target>
-#                       ˆˆˆˆˆˆˆˆˆˆˆˆ
-#                   e.g. thumbv7m-none-eabi
+$ cargo xtask ci
 ```
+
+To only format code before PR (included in `ci` above):
+
+```console
+$ cargo xtask fmt
+```
+
+Clippy lints:
+
+```console
+$ cargo xtask clippy
+```
+and so on. See `cargo xtask --help` for all options.
+
 
 ## Acknowledgments
 
