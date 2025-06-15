@@ -170,7 +170,9 @@ jobs:
       # Use precompiled if possible
       - name: Install espflash
         if: contains(matrix.input.platform, 'esp32')
-        run: cargo install espflash --version 3.3.0 --force --no-default-features --features cli
+        uses: taiki-e/install-action@v2
+        with:
+          tool: espflash
 
       - name: Install esptool.py
         if: contains(matrix.input.platform, 'esp32')
