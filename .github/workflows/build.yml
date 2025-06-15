@@ -95,9 +95,11 @@ jobs:
             ${{ runner.OS }}-qemu-
 
       - name: Download ESP32 QEMU
+        if: steps.installqemu.outputs.cache-hit != 'true'
         run: wget "${{ env.QEMU_ESP_URL }}" --output-document=${{ env.QEMU_ESP}}.tar.xz
 
       - name: Extract ESP32 QEMU
+        if: steps.installqemu.outputs.cache-hit != 'true'
         run: |
           mkdir -p qemu-${{ env.QEMU_VERSION }}/build/esp32
           tar --strip-components=1 -xvJf ${{ env.QEMU_ESP }}.tar.xz -C qemu-${{ env.QEMU_VERSION }}/build/esp32 qemu
