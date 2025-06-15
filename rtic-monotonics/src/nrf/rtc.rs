@@ -4,19 +4,24 @@
 //!
 //! ```
 //! use rtic_monotonics::nrf::rtc::prelude::*;
+//!
+//! // Create the type `Mono`. It will manage the RTC timer, and
+//! // run with a resolution of 30.517 µs (32,768 ticks per second).
 //! nrf_rtc0_monotonic!(Mono);
 //!
 //! fn init() {
 //!     # // This is normally provided by the selected PAC
-//!     # let rtc = unsafe { core::mem::transmute(()) };
-//!     // Start the monotonic
-//!     Mono::start(rtc);
+//!     # let RTC0 = unsafe { core::mem::transmute(()) };
+//!     // Start the monotonic, passing ownership of the appropriate RTC object
+//!     // relevant nRF52x PAC.
+//!     Mono::start(RTC0);
 //! }
 //!
 //! async fn usage() {
 //!     loop {
-//!          // Use the monotonic
+//!          // You can use the monotonic to get the time...
 //!          let timestamp = Mono::now();
+//!          // ...and you can use it to add a delay to this async function
 //!          Mono::delay(100.millis()).await;
 //!     }
 //! }

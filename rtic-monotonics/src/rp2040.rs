@@ -7,21 +7,25 @@
 //! ```
 //! use rtic_monotonics::rp2040::prelude::*;
 //!
+//! // Create the type `Mono`. It will manage the TIMER peripheral,
+//! // which is a 1 MHz, 64-bit timer.
 //! rp2040_timer_monotonic!(Mono);
 //!
 //! fn init() {
 //!     # // This is normally provided by the selected PAC
-//!     # let timer = unsafe { core::mem::transmute(()) };
-//!     # let mut resets = unsafe { core::mem::transmute(()) };
+//!     # let TIMER = unsafe { core::mem::transmute(()) };
+//!     # let mut RESETS = unsafe { core::mem::transmute(()) };
 //!     #
-//!     // Start the monotonic
-//!     Mono::start(timer, &mut resets);
+//!     // Start the monotonic - passing ownership of an rp2040_pac object for
+//!     // TIMER0, and temporary access to one for the RESET peripheral.
+//!     Mono::start(TIMER, &mut RESETS);
 //! }
 //!
 //! async fn usage() {
 //!     loop {
-//!          // Use the monotonic
+//!          // You can use the monotonic to get the time...
 //!          let timestamp = Mono::now();
+//!          // ...and you can use it to add a delay to this async function
 //!          Mono::delay(100.millis()).await;
 //!     }
 //! }

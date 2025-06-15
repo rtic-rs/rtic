@@ -7,19 +7,24 @@
 //!
 //! ```
 //! use rtic_monotonics::nrf::timer::prelude::*;
-//! nrf_timer0_monotonic!(Mono);
+//!
+//! // Create the type `Mono`. It will manage the TIMER0 timer, and
+//! // run with a resolution of 1 µs (1,000,000 ticks per second).
+//! nrf_timer0_monotonic!(Mono, 1_000_000);
 //!
 //! fn init() {
 //!     # // This is normally provided by the selected PAC
-//!     # let timer = unsafe { core::mem::transmute(()) };
-//!     // Start the monotonic
-//!     Mono::start(timer);
+//!     # let TIMER0 = unsafe { core::mem::transmute(()) };
+//!     // Start the monotonic, passing ownership of a TIMER0 object from the
+//!     // relevant nRF52x PAC.
+//!     Mono::start(TIMER0);
 //! }
 //!
 //! async fn usage() {
 //!     loop {
-//!          // Use the monotonic
+//!          // You can use the monotonic to get the time...
 //!          let timestamp = Mono::now();
+//!          // ...and you can use it to add a delay to this async function
 //!          Mono::delay(100.millis()).await;
 //!     }
 //! }

@@ -4,6 +4,9 @@
 //!
 //! ```
 //! use rtic_monotonics::imxrt::prelude::*;
+//!
+//! // Create the type `Mono`. It will manage the GPT1 timer, and
+//! // run with a resolution of 1 µs (1,000,000 ticks per second).
 //! imxrt_gpt1_monotonic!(Mono, 1_000_000);
 //!
 //! fn init() {
@@ -19,8 +22,9 @@
 //!
 //! async fn usage() {
 //!     loop {
-//!          // Use the monotonic
+//!          // You can use the monotonic to get the time...
 //!          let timestamp = Mono::now();
+//!          // ...and you can use it to add a delay to this async function
 //!          Mono::delay(100.millis()).await;
 //!     }
 //! }
