@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="v1 compatibility wrappers"><title>embedded_hal::digital::v1_compat - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="embedded_hal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../../static.files/storage-82c7156e.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../embedded_hal/index.html">embedded_<wbr>hal</a><span class="version">0.2.7</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module v1_<wbr>compat</a></h2><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In embedded_<wbr>hal::<wbr>digital</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">embedded_hal</a>::<wbr><a href="../index.html">digital</a></div><h1>Module <span>v1_compat</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/embedded_hal/digital/v1_compat.rs.html#1-298">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>v1 compatibility wrappers</p>
+<p>This module provides wrappers to support use of v2 implementations with
+v1 consumers. v2 traits must be explicitly cast to the v1 version using
+<code>.into()</code>, and will panic on internal errors</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>embedded_hal;
+<span class="kw">use </span>embedded_hal::digital::{v1, v2, v1_compat::OldOutputPin};
+
+<span class="kw">struct </span>NewOutputPinImpl {}
+
+<span class="kw">impl </span>v2::OutputPin <span class="kw">for </span>NewOutputPinImpl {
+    <span class="kw">type </span>Error = ();
+    <span class="kw">fn </span>set_low(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; { <span class="prelude-val">Ok</span>(()) }
+    <span class="kw">fn </span>set_high(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt;{ <span class="prelude-val">Ok</span>(()) }
+}
+
+<span class="kw">struct </span>OldOutputPinConsumer&lt;T: v1::OutputPin&gt; {
+    _pin: T,
+}
+
+<span class="kw">impl </span>&lt;T&gt;OldOutputPinConsumer&lt;T&gt;
+<span class="kw">where </span>T: v1::OutputPin {
+    <span class="kw">pub fn </span>new(pin: T) -&gt; OldOutputPinConsumer&lt;T&gt; {
+        OldOutputPinConsumer{ _pin: pin }
+    }
+}
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>pin = NewOutputPinImpl{};
+    <span class="kw">let </span>_consumer: OldOutputPinConsumer&lt;OldOutputPin&lt;<span class="kw">_</span>&gt;&gt; = OldOutputPinConsumer::new(pin.into());
+}</code></pre></div>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.OldOutputPin.html" title="struct embedded_hal::digital::v1_compat::OldOutputPin">OldOutput<wbr>Pin</a></dt><dd>Wrapper to allow fallible <code>v2::OutputPin</code> traits to be converted to <code>v1::OutputPin</code> traits</dd></dl></section></div></main></body></html>

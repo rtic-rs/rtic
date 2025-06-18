@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LPUART1","LPUART2","LPUART3","LPUART4"],"fn":["number"],"mod":["BAUD","CTRL","DATA","FIFO","GLOBAL","MATCH","MODIR","PARAM","PINCFG","STAT","VERID","WATER"],"struct":["RegisterBlock"],"type":["Instance","LPUART1","LPUART2","LPUART3","LPUART4"]};

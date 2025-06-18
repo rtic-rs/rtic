@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Utility to implement a race condition free half-period based monotonic."><title>rtic_time::half_period_counter - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rtic_time" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../static.files/storage-82c7156e.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../rtic_time/index.html">rtic_<wbr>time</a><span class="version">2.0.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module half_<wbr>period_<wbr>counter</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#background" title="Background">Background</a></li><li><a href="#solution" title="Solution">Solution</a></li><li><a href="#why-does-this-work" title="Why does this work?">Why does this work?</a></li><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#traits">Module Items</a></h3><ul class="block"><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate rtic_<wbr>time</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">rtic_time</a></div><h1>Module <span>half_period_counter</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/rtic_time/half_period_counter.rs.html#1-239">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Utility to implement a race condition free half-period based monotonic.</p>
+<h2 id="background"><a class="doc-anchor" href="#background">§</a>Background</h2>
+<p>Monotonics are continuous and never wrap (in a reasonable amount of time), while
+the underlying hardware usually wraps frequently and has interrupts to indicate that
+a wrap happened.</p>
+<p>The biggest problem when implementing a monotonic from such hardware is that there exists
+a non-trivial race condition while reading data from the timer. Let’s assume we increment
+a period counter every time an overflow interrupt happens.
+Which should we then read first when computing the current time? The period counter or
+the timer value?</p>
+<ul>
+<li>When reading the timer value first, an overflow interrupt could happen before we read
+the period counter, causing the calculated time to be much too high</li>
+<li>When reading the period counter first, the timer value could overflow before we
+read it, causing the calculated time to be much too low</li>
+</ul>
+<p>The reason this is non-trivil to solve is because even critical sections do not help
+much - the inherent problem here is that the timer value continues to change, and there
+is no way to read it together with the period counter in an atomic way.</p>
+<h2 id="solution"><a class="doc-anchor" href="#solution">§</a>Solution</h2>
+<p>This module provides utilities to solve this problem in a reliable, race-condition free way.
+A second interrupt must be added at the half-period mark, which effectively converts the period counter
+to a half-period counter. This creates one bit of overlap between the
+timer value and the period counter, which makes it mathematically possible to solve the
+race condition.</p>
+<p>The following steps have to be fulfilled to make this reliable:</p>
+<ul>
+<li>The period counter gets incremented twice per period; once when the timer overflow happens and once
+at the half-period mark. For example, a 16-bit timer would require the period counter to be
+incremented at the values <code>0x0000</code> and <code>0x8000</code>.</li>
+<li>The timer value and the period counter must be in sync. After the overflow interrupt
+was processed, the period counter must be even, and after the half-way interrupt was
+processed, the period counter must be odd.</li>
+<li>Both the overflow interrupt and the half-way interrupt must be processed within half a
+timer period. This means those interrupts should be the highest priority in the
+system - disabling them for more than half a period will cause the monotonic to misbehave.</li>
+</ul>
+<p>If those conditions are fulfilled, the <a href="fn.calculate_now.html" title="fn rtic_time::half_period_counter::calculate_now"><code>calculate_now</code></a> function will reliably
+return the correct time value.</p>
+<h2 id="why-does-this-work"><a class="doc-anchor" href="#why-does-this-work">§</a>Why does this work?</h2>
+<p>It’s complicated. In essence, this one bit of overlap gets used to make
+it irrelevant whether the period counter was already incremented or not.
+For example, during the second part of the timer period, it is irrelevant if the
+period counter is <code>2</code> (before the interrupt) or <code>3</code> (after the interrupt) - <a href="fn.calculate_now.html" title="fn rtic_time::half_period_counter::calculate_now"><code>calculate_now</code></a>
+will yield the same result. Then half a period later, in the first part of the next timer period,
+it is irrelevant if the period counter is <code>3</code> or <code>4</code> - they again will yield the same result.</p>
+<p>This means that as long as we read the period counter <strong>before</strong> the timer value, we will
+always get the correct result, given that the interrupts are not delayed by more than half a period.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>This example takes a 16-bit timer and uses a 32-bit period counter
+to extend the timer to 47-bit. Note that one bit gets lost because
+this method requires the period counter to be increased twice per period.</p>
+<p>The resulting time value is returned as a <code>u64</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>core::sync::atomic::{AtomicU32, Ordering};
+
+<span class="kw">static </span>HALF_PERIOD_COUNTER: AtomicU32 = AtomicU32::new(<span class="number">0</span>);
+
+<span class="kw">struct </span>MyMonotonic;
+
+<span class="kw">impl </span>MyMonotonic {
+    <span class="kw">fn </span>init() {
+        timer_stop();
+        timer_reset();
+        HALF_PERIOD_COUNTER.store(<span class="number">0</span>, Ordering::SeqCst);
+        timer_enable_overflow_interrupt();
+        timer_enable_compare_interrupt(<span class="number">0x8000</span>);
+        <span class="comment">// Both the period counter and the timer are reset
+        // to zero and the interrupts are enabled.
+        // This means the period counter and the timer value
+        // are in sync, so we can now enable the timer.
+        </span>timer_start();
+    }
+
+    <span class="kw">fn </span>on_interrupt() {
+        <span class="kw">if </span>overflow_interrupt_happened() {
+            clear_overflow_interrupt();
+            <span class="kw">let </span>prev = HALF_PERIOD_COUNTER.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+            <span class="macro">assert!</span>(prev % <span class="number">2 </span>== <span class="number">1</span>, <span class="string">"Monotonic must have skipped an interrupt!"</span>);
+        }
+        <span class="kw">if </span>compare_interrupt_happened() {
+            clear_compare_interrupt();
+            <span class="kw">let </span>prev = HALF_PERIOD_COUNTER.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+            <span class="macro">assert!</span>(prev % <span class="number">2 </span>== <span class="number">0</span>, <span class="string">"Monotonic must have skipped an interrupt!"</span>);
+        }
+    }
+
+    <span class="kw">fn </span>now() -&gt; u64 {
+        rtic_time::half_period_counter::calculate_now(
+            || HALF_PERIOD_COUNTER.load(Ordering::Relaxed),
+            || timer_get_value(),
+        )
+    }
+}</code></pre></div>
+</div></details><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.TimerOps.html" title="trait rtic_time::half_period_counter::TimerOps">Timer<wbr>Ops</a></dt><dd>Operations a type has to support
+in order to be used as the return value
+of <a href="fn.calculate_now.html" title="fn rtic_time::half_period_counter::calculate_now"><code>calculate_now</code></a>.</dd><dt><a class="trait" href="trait.TimerValue.html" title="trait rtic_time::half_period_counter::TimerValue">Timer<wbr>Value</a></dt><dd>The value of the timer’s count register.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.calculate_now.html" title="fn rtic_time::half_period_counter::calculate_now">calculate_<wbr>now</a></dt><dd>Calculates the current time from the half period counter and the timer value.</dd></dl></section></div></main></body></html>

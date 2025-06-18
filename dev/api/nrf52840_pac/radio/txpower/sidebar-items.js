@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TXPOWER_A"],"struct":["R","TXPOWER_SPEC","W"],"type":["TXPOWER_R","TXPOWER_W"]};

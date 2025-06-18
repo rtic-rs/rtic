@@ -1,0 +1,388 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nrf52840-pac-0.12.2/src/usbd.rs`."><title>usbd.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="nrf52840_pac" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../static.files/storage-82c7156e.js"></script><script defer src="../../static.files/src-script-63605ae7.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">nrf52840_pac/</div>usbd.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[doc = <span class="string">r"Register block"</span>]
+<a href=#2 id=2 data-nosnippet>2</a>#[repr(C)]
+<a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">pub struct </span>RegisterBlock {
+<a href=#4 id=4 data-nosnippet>4</a>    _reserved0: [u8; <span class="number">0x04</span>],
+<a href=#5 id=5 data-nosnippet>5</a>    <span class="attr">#[doc = <span class="string">"0x04..0x24 - Description collection\\[n\\]: Captures the EPIN\\[n\\].PTR and EPIN\\[n\\].MAXCNT registers values, and enables endpoint IN n to respond to traffic from host"</span>]
+<a href=#6 id=6 data-nosnippet>6</a>    </span><span class="kw">pub </span>tasks_startepin: [TASKS_STARTEPIN; <span class="number">8</span>],
+<a href=#7 id=7 data-nosnippet>7</a>    <span class="attr">#[doc = <span class="string">"0x24 - Captures the ISOIN.PTR and ISOIN.MAXCNT registers values, and enables sending data on ISO endpoint"</span>]
+<a href=#8 id=8 data-nosnippet>8</a>    </span><span class="kw">pub </span>tasks_startisoin: TASKS_STARTISOIN,
+<a href=#9 id=9 data-nosnippet>9</a>    <span class="attr">#[doc = <span class="string">"0x28..0x48 - Description collection\\[n\\]: Captures the EPOUT\\[n\\].PTR and EPOUT\\[n\\].MAXCNT registers values, and enables endpoint n to respond to traffic from host"</span>]
+<a href=#10 id=10 data-nosnippet>10</a>    </span><span class="kw">pub </span>tasks_startepout: [TASKS_STARTEPOUT; <span class="number">8</span>],
+<a href=#11 id=11 data-nosnippet>11</a>    <span class="attr">#[doc = <span class="string">"0x48 - Captures the ISOOUT.PTR and ISOOUT.MAXCNT registers values, and enables receiving of data on ISO endpoint"</span>]
+<a href=#12 id=12 data-nosnippet>12</a>    </span><span class="kw">pub </span>tasks_startisoout: TASKS_STARTISOOUT,
+<a href=#13 id=13 data-nosnippet>13</a>    <span class="attr">#[doc = <span class="string">"0x4c - Allows OUT data stage on control endpoint 0"</span>]
+<a href=#14 id=14 data-nosnippet>14</a>    </span><span class="kw">pub </span>tasks_ep0rcvout: TASKS_EP0RCVOUT,
+<a href=#15 id=15 data-nosnippet>15</a>    <span class="attr">#[doc = <span class="string">"0x50 - Allows status stage on control endpoint 0"</span>]
+<a href=#16 id=16 data-nosnippet>16</a>    </span><span class="kw">pub </span>tasks_ep0status: TASKS_EP0STATUS,
+<a href=#17 id=17 data-nosnippet>17</a>    <span class="attr">#[doc = <span class="string">"0x54 - Stalls data and status stage on control endpoint 0"</span>]
+<a href=#18 id=18 data-nosnippet>18</a>    </span><span class="kw">pub </span>tasks_ep0stall: TASKS_EP0STALL,
+<a href=#19 id=19 data-nosnippet>19</a>    <span class="attr">#[doc = <span class="string">"0x58 - Forces D+ and D- lines into the state defined in the DPDMVALUE register"</span>]
+<a href=#20 id=20 data-nosnippet>20</a>    </span><span class="kw">pub </span>tasks_dpdmdrive: TASKS_DPDMDRIVE,
+<a href=#21 id=21 data-nosnippet>21</a>    <span class="attr">#[doc = <span class="string">"0x5c - Stops forcing D+ and D- lines into any state (USB engine takes control)"</span>]
+<a href=#22 id=22 data-nosnippet>22</a>    </span><span class="kw">pub </span>tasks_dpdmnodrive: TASKS_DPDMNODRIVE,
+<a href=#23 id=23 data-nosnippet>23</a>    _reserved9: [u8; <span class="number">0xa0</span>],
+<a href=#24 id=24 data-nosnippet>24</a>    <span class="attr">#[doc = <span class="string">"0x100 - Signals that a USB reset condition has been detected on USB lines"</span>]
+<a href=#25 id=25 data-nosnippet>25</a>    </span><span class="kw">pub </span>events_usbreset: EVENTS_USBRESET,
+<a href=#26 id=26 data-nosnippet>26</a>    <span class="attr">#[doc = <span class="string">"0x104 - Confirms that the EPIN\\[n\\].PTR and EPIN\\[n\\].MAXCNT, or EPOUT\\[n\\].PTR and EPOUT\\[n\\].MAXCNT registers have been captured on all endpoints reported in the EPSTATUS register"</span>]
+<a href=#27 id=27 data-nosnippet>27</a>    </span><span class="kw">pub </span>events_started: EVENTS_STARTED,
+<a href=#28 id=28 data-nosnippet>28</a>    <span class="attr">#[doc = <span class="string">"0x108..0x128 - Description collection\\[n\\]: The whole EPIN\\[n\\]
+<a href=#29 id=29 data-nosnippet>29</a>buffer has been consumed. The RAM buffer can be accessed safely by software."</span>]
+<a href=#30 id=30 data-nosnippet>30</a>    </span><span class="kw">pub </span>events_endepin: [EVENTS_ENDEPIN; <span class="number">8</span>],
+<a href=#31 id=31 data-nosnippet>31</a>    <span class="attr">#[doc = <span class="string">"0x128 - An acknowledged data transfer has taken place on the control endpoint"</span>]
+<a href=#32 id=32 data-nosnippet>32</a>    </span><span class="kw">pub </span>events_ep0datadone: EVENTS_EP0DATADONE,
+<a href=#33 id=33 data-nosnippet>33</a>    <span class="attr">#[doc = <span class="string">"0x12c - The whole ISOIN buffer has been consumed. The RAM buffer can be accessed safely by software."</span>]
+<a href=#34 id=34 data-nosnippet>34</a>    </span><span class="kw">pub </span>events_endisoin: EVENTS_ENDISOIN,
+<a href=#35 id=35 data-nosnippet>35</a>    <span class="attr">#[doc = <span class="string">"0x130..0x150 - Description collection\\[n\\]: The whole EPOUT\\[n\\]
+<a href=#36 id=36 data-nosnippet>36</a>buffer has been consumed. The RAM buffer can be accessed safely by software."</span>]
+<a href=#37 id=37 data-nosnippet>37</a>    </span><span class="kw">pub </span>events_endepout: [EVENTS_ENDEPOUT; <span class="number">8</span>],
+<a href=#38 id=38 data-nosnippet>38</a>    <span class="attr">#[doc = <span class="string">"0x150 - The whole ISOOUT buffer has been consumed. The RAM buffer can be accessed safely by software."</span>]
+<a href=#39 id=39 data-nosnippet>39</a>    </span><span class="kw">pub </span>events_endisoout: EVENTS_ENDISOOUT,
+<a href=#40 id=40 data-nosnippet>40</a>    <span class="attr">#[doc = <span class="string">"0x154 - Signals that a SOF (start of frame) condition has been detected on USB lines"</span>]
+<a href=#41 id=41 data-nosnippet>41</a>    </span><span class="kw">pub </span>events_sof: EVENTS_SOF,
+<a href=#42 id=42 data-nosnippet>42</a>    <span class="attr">#[doc = <span class="string">"0x158 - An event or an error not covered by specific events has occurred. Check EVENTCAUSE register to find the cause."</span>]
+<a href=#43 id=43 data-nosnippet>43</a>    </span><span class="kw">pub </span>events_usbevent: EVENTS_USBEVENT,
+<a href=#44 id=44 data-nosnippet>44</a>    <span class="attr">#[doc = <span class="string">"0x15c - A valid SETUP token has been received (and acknowledged) on the control endpoint"</span>]
+<a href=#45 id=45 data-nosnippet>45</a>    </span><span class="kw">pub </span>events_ep0setup: EVENTS_EP0SETUP,
+<a href=#46 id=46 data-nosnippet>46</a>    <span class="attr">#[doc = <span class="string">"0x160 - A data transfer has occurred on a data endpoint, indicated by the EPDATASTATUS register"</span>]
+<a href=#47 id=47 data-nosnippet>47</a>    </span><span class="kw">pub </span>events_epdata: EVENTS_EPDATA,
+<a href=#48 id=48 data-nosnippet>48</a>    _reserved20: [u8; <span class="number">0x9c</span>],
+<a href=#49 id=49 data-nosnippet>49</a>    <span class="attr">#[doc = <span class="string">"0x200 - Shortcut register"</span>]
+<a href=#50 id=50 data-nosnippet>50</a>    </span><span class="kw">pub </span>shorts: SHORTS,
+<a href=#51 id=51 data-nosnippet>51</a>    _reserved21: [u8; <span class="number">0xfc</span>],
+<a href=#52 id=52 data-nosnippet>52</a>    <span class="attr">#[doc = <span class="string">"0x300 - Enable or disable interrupt"</span>]
+<a href=#53 id=53 data-nosnippet>53</a>    </span><span class="kw">pub </span>inten: INTEN,
+<a href=#54 id=54 data-nosnippet>54</a>    <span class="attr">#[doc = <span class="string">"0x304 - Enable interrupt"</span>]
+<a href=#55 id=55 data-nosnippet>55</a>    </span><span class="kw">pub </span>intenset: INTENSET,
+<a href=#56 id=56 data-nosnippet>56</a>    <span class="attr">#[doc = <span class="string">"0x308 - Disable interrupt"</span>]
+<a href=#57 id=57 data-nosnippet>57</a>    </span><span class="kw">pub </span>intenclr: INTENCLR,
+<a href=#58 id=58 data-nosnippet>58</a>    _reserved24: [u8; <span class="number">0xf4</span>],
+<a href=#59 id=59 data-nosnippet>59</a>    <span class="attr">#[doc = <span class="string">"0x400 - Details on what caused the USBEVENT event"</span>]
+<a href=#60 id=60 data-nosnippet>60</a>    </span><span class="kw">pub </span>eventcause: EVENTCAUSE,
+<a href=#61 id=61 data-nosnippet>61</a>    _reserved25: [u8; <span class="number">0x1c</span>],
+<a href=#62 id=62 data-nosnippet>62</a>    <span class="attr">#[doc = <span class="string">"0x420..0x464 - Unspecified"</span>]
+<a href=#63 id=63 data-nosnippet>63</a>    </span><span class="kw">pub </span>halted: HALTED,
+<a href=#64 id=64 data-nosnippet>64</a>    _reserved26: [u8; <span class="number">0x04</span>],
+<a href=#65 id=65 data-nosnippet>65</a>    <span class="attr">#[doc = <span class="string">"0x468 - Provides information on which endpoint's EasyDMA registers have been captured"</span>]
+<a href=#66 id=66 data-nosnippet>66</a>    </span><span class="kw">pub </span>epstatus: EPSTATUS,
+<a href=#67 id=67 data-nosnippet>67</a>    <span class="attr">#[doc = <span class="string">"0x46c - Provides information on which endpoint(s) an acknowledged data transfer has occurred (EPDATA event)"</span>]
+<a href=#68 id=68 data-nosnippet>68</a>    </span><span class="kw">pub </span>epdatastatus: EPDATASTATUS,
+<a href=#69 id=69 data-nosnippet>69</a>    <span class="attr">#[doc = <span class="string">"0x470 - Device USB address"</span>]
+<a href=#70 id=70 data-nosnippet>70</a>    </span><span class="kw">pub </span>usbaddr: USBADDR,
+<a href=#71 id=71 data-nosnippet>71</a>    _reserved29: [u8; <span class="number">0x0c</span>],
+<a href=#72 id=72 data-nosnippet>72</a>    <span class="attr">#[doc = <span class="string">"0x480 - SETUP data, byte 0, bmRequestType"</span>]
+<a href=#73 id=73 data-nosnippet>73</a>    </span><span class="kw">pub </span>bmrequesttype: BMREQUESTTYPE,
+<a href=#74 id=74 data-nosnippet>74</a>    <span class="attr">#[doc = <span class="string">"0x484 - SETUP data, byte 1, bRequest"</span>]
+<a href=#75 id=75 data-nosnippet>75</a>    </span><span class="kw">pub </span>brequest: BREQUEST,
+<a href=#76 id=76 data-nosnippet>76</a>    <span class="attr">#[doc = <span class="string">"0x488 - SETUP data, byte 2, LSB of wValue"</span>]
+<a href=#77 id=77 data-nosnippet>77</a>    </span><span class="kw">pub </span>wvaluel: WVALUEL,
+<a href=#78 id=78 data-nosnippet>78</a>    <span class="attr">#[doc = <span class="string">"0x48c - SETUP data, byte 3, MSB of wValue"</span>]
+<a href=#79 id=79 data-nosnippet>79</a>    </span><span class="kw">pub </span>wvalueh: WVALUEH,
+<a href=#80 id=80 data-nosnippet>80</a>    <span class="attr">#[doc = <span class="string">"0x490 - SETUP data, byte 4, LSB of wIndex"</span>]
+<a href=#81 id=81 data-nosnippet>81</a>    </span><span class="kw">pub </span>windexl: WINDEXL,
+<a href=#82 id=82 data-nosnippet>82</a>    <span class="attr">#[doc = <span class="string">"0x494 - SETUP data, byte 5, MSB of wIndex"</span>]
+<a href=#83 id=83 data-nosnippet>83</a>    </span><span class="kw">pub </span>windexh: WINDEXH,
+<a href=#84 id=84 data-nosnippet>84</a>    <span class="attr">#[doc = <span class="string">"0x498 - SETUP data, byte 6, LSB of wLength"</span>]
+<a href=#85 id=85 data-nosnippet>85</a>    </span><span class="kw">pub </span>wlengthl: WLENGTHL,
+<a href=#86 id=86 data-nosnippet>86</a>    <span class="attr">#[doc = <span class="string">"0x49c - SETUP data, byte 7, MSB of wLength"</span>]
+<a href=#87 id=87 data-nosnippet>87</a>    </span><span class="kw">pub </span>wlengthh: WLENGTHH,
+<a href=#88 id=88 data-nosnippet>88</a>    <span class="attr">#[doc = <span class="string">"0x4a0..0x4c4 - Unspecified"</span>]
+<a href=#89 id=89 data-nosnippet>89</a>    </span><span class="kw">pub </span>size: SIZE,
+<a href=#90 id=90 data-nosnippet>90</a>    _reserved38: [u8; <span class="number">0x3c</span>],
+<a href=#91 id=91 data-nosnippet>91</a>    <span class="attr">#[doc = <span class="string">"0x500 - Enable USB"</span>]
+<a href=#92 id=92 data-nosnippet>92</a>    </span><span class="kw">pub </span>enable: ENABLE,
+<a href=#93 id=93 data-nosnippet>93</a>    <span class="attr">#[doc = <span class="string">"0x504 - Control of the USB pull-up"</span>]
+<a href=#94 id=94 data-nosnippet>94</a>    </span><span class="kw">pub </span>usbpullup: USBPULLUP,
+<a href=#95 id=95 data-nosnippet>95</a>    <span class="attr">#[doc = <span class="string">"0x508 - State D+ and D- lines will be forced into by the DPDMDRIVE task. The DPDMNODRIVE task reverts the control of the lines to MAC IP (no forcing)."</span>]
+<a href=#96 id=96 data-nosnippet>96</a>    </span><span class="kw">pub </span>dpdmvalue: DPDMVALUE,
+<a href=#97 id=97 data-nosnippet>97</a>    <span class="attr">#[doc = <span class="string">"0x50c - Data toggle control and status"</span>]
+<a href=#98 id=98 data-nosnippet>98</a>    </span><span class="kw">pub </span>dtoggle: DTOGGLE,
+<a href=#99 id=99 data-nosnippet>99</a>    <span class="attr">#[doc = <span class="string">"0x510 - Endpoint IN enable"</span>]
+<a href=#100 id=100 data-nosnippet>100</a>    </span><span class="kw">pub </span>epinen: EPINEN,
+<a href=#101 id=101 data-nosnippet>101</a>    <span class="attr">#[doc = <span class="string">"0x514 - Endpoint OUT enable"</span>]
+<a href=#102 id=102 data-nosnippet>102</a>    </span><span class="kw">pub </span>epouten: EPOUTEN,
+<a href=#103 id=103 data-nosnippet>103</a>    <span class="attr">#[doc = <span class="string">"0x518 - STALL endpoints"</span>]
+<a href=#104 id=104 data-nosnippet>104</a>    </span><span class="kw">pub </span>epstall: EPSTALL,
+<a href=#105 id=105 data-nosnippet>105</a>    <span class="attr">#[doc = <span class="string">"0x51c - Controls the split of ISO buffers"</span>]
+<a href=#106 id=106 data-nosnippet>106</a>    </span><span class="kw">pub </span>isosplit: ISOSPLIT,
+<a href=#107 id=107 data-nosnippet>107</a>    <span class="attr">#[doc = <span class="string">"0x520 - Returns the current value of the start of frame counter"</span>]
+<a href=#108 id=108 data-nosnippet>108</a>    </span><span class="kw">pub </span>framecntr: FRAMECNTR,
+<a href=#109 id=109 data-nosnippet>109</a>    _reserved47: [u8; <span class="number">0x08</span>],
+<a href=#110 id=110 data-nosnippet>110</a>    <span class="attr">#[doc = <span class="string">"0x52c - Controls USBD peripheral low power mode during USB suspend"</span>]
+<a href=#111 id=111 data-nosnippet>111</a>    </span><span class="kw">pub </span>lowpower: LOWPOWER,
+<a href=#112 id=112 data-nosnippet>112</a>    <span class="attr">#[doc = <span class="string">"0x530 - Controls the response of the ISO IN endpoint to an IN token when no data is ready to be sent"</span>]
+<a href=#113 id=113 data-nosnippet>113</a>    </span><span class="kw">pub </span>isoinconfig: ISOINCONFIG,
+<a href=#114 id=114 data-nosnippet>114</a>    _reserved49: [u8; <span class="number">0xcc</span>],
+<a href=#115 id=115 data-nosnippet>115</a>    <span class="attr">#[doc = <span class="string">"0x600..0x60c - Unspecified"</span>]
+<a href=#116 id=116 data-nosnippet>116</a>    </span><span class="kw">pub </span>epin0: EPIN,
+<a href=#117 id=117 data-nosnippet>117</a>    _reserved50: [u8; <span class="number">0x08</span>],
+<a href=#118 id=118 data-nosnippet>118</a>    <span class="attr">#[doc = <span class="string">"0x614..0x620 - Unspecified"</span>]
+<a href=#119 id=119 data-nosnippet>119</a>    </span><span class="kw">pub </span>epin1: EPIN,
+<a href=#120 id=120 data-nosnippet>120</a>    _reserved51: [u8; <span class="number">0x08</span>],
+<a href=#121 id=121 data-nosnippet>121</a>    <span class="attr">#[doc = <span class="string">"0x628..0x634 - Unspecified"</span>]
+<a href=#122 id=122 data-nosnippet>122</a>    </span><span class="kw">pub </span>epin2: EPIN,
+<a href=#123 id=123 data-nosnippet>123</a>    _reserved52: [u8; <span class="number">0x08</span>],
+<a href=#124 id=124 data-nosnippet>124</a>    <span class="attr">#[doc = <span class="string">"0x63c..0x648 - Unspecified"</span>]
+<a href=#125 id=125 data-nosnippet>125</a>    </span><span class="kw">pub </span>epin3: EPIN,
+<a href=#126 id=126 data-nosnippet>126</a>    _reserved53: [u8; <span class="number">0x08</span>],
+<a href=#127 id=127 data-nosnippet>127</a>    <span class="attr">#[doc = <span class="string">"0x650..0x65c - Unspecified"</span>]
+<a href=#128 id=128 data-nosnippet>128</a>    </span><span class="kw">pub </span>epin4: EPIN,
+<a href=#129 id=129 data-nosnippet>129</a>    _reserved54: [u8; <span class="number">0x08</span>],
+<a href=#130 id=130 data-nosnippet>130</a>    <span class="attr">#[doc = <span class="string">"0x664..0x670 - Unspecified"</span>]
+<a href=#131 id=131 data-nosnippet>131</a>    </span><span class="kw">pub </span>epin5: EPIN,
+<a href=#132 id=132 data-nosnippet>132</a>    _reserved55: [u8; <span class="number">0x08</span>],
+<a href=#133 id=133 data-nosnippet>133</a>    <span class="attr">#[doc = <span class="string">"0x678..0x684 - Unspecified"</span>]
+<a href=#134 id=134 data-nosnippet>134</a>    </span><span class="kw">pub </span>epin6: EPIN,
+<a href=#135 id=135 data-nosnippet>135</a>    _reserved56: [u8; <span class="number">0x08</span>],
+<a href=#136 id=136 data-nosnippet>136</a>    <span class="attr">#[doc = <span class="string">"0x68c..0x698 - Unspecified"</span>]
+<a href=#137 id=137 data-nosnippet>137</a>    </span><span class="kw">pub </span>epin7: EPIN,
+<a href=#138 id=138 data-nosnippet>138</a>    _reserved57: [u8; <span class="number">0x08</span>],
+<a href=#139 id=139 data-nosnippet>139</a>    <span class="attr">#[doc = <span class="string">"0x6a0..0x6ac - Unspecified"</span>]
+<a href=#140 id=140 data-nosnippet>140</a>    </span><span class="kw">pub </span>isoin: ISOIN,
+<a href=#141 id=141 data-nosnippet>141</a>    _reserved58: [u8; <span class="number">0x54</span>],
+<a href=#142 id=142 data-nosnippet>142</a>    <span class="attr">#[doc = <span class="string">"0x700..0x70c - Unspecified"</span>]
+<a href=#143 id=143 data-nosnippet>143</a>    </span><span class="kw">pub </span>epout0: EPOUT,
+<a href=#144 id=144 data-nosnippet>144</a>    _reserved59: [u8; <span class="number">0x08</span>],
+<a href=#145 id=145 data-nosnippet>145</a>    <span class="attr">#[doc = <span class="string">"0x714..0x720 - Unspecified"</span>]
+<a href=#146 id=146 data-nosnippet>146</a>    </span><span class="kw">pub </span>epout1: EPOUT,
+<a href=#147 id=147 data-nosnippet>147</a>    _reserved60: [u8; <span class="number">0x08</span>],
+<a href=#148 id=148 data-nosnippet>148</a>    <span class="attr">#[doc = <span class="string">"0x728..0x734 - Unspecified"</span>]
+<a href=#149 id=149 data-nosnippet>149</a>    </span><span class="kw">pub </span>epout2: EPOUT,
+<a href=#150 id=150 data-nosnippet>150</a>    _reserved61: [u8; <span class="number">0x08</span>],
+<a href=#151 id=151 data-nosnippet>151</a>    <span class="attr">#[doc = <span class="string">"0x73c..0x748 - Unspecified"</span>]
+<a href=#152 id=152 data-nosnippet>152</a>    </span><span class="kw">pub </span>epout3: EPOUT,
+<a href=#153 id=153 data-nosnippet>153</a>    _reserved62: [u8; <span class="number">0x08</span>],
+<a href=#154 id=154 data-nosnippet>154</a>    <span class="attr">#[doc = <span class="string">"0x750..0x75c - Unspecified"</span>]
+<a href=#155 id=155 data-nosnippet>155</a>    </span><span class="kw">pub </span>epout4: EPOUT,
+<a href=#156 id=156 data-nosnippet>156</a>    _reserved63: [u8; <span class="number">0x08</span>],
+<a href=#157 id=157 data-nosnippet>157</a>    <span class="attr">#[doc = <span class="string">"0x764..0x770 - Unspecified"</span>]
+<a href=#158 id=158 data-nosnippet>158</a>    </span><span class="kw">pub </span>epout5: EPOUT,
+<a href=#159 id=159 data-nosnippet>159</a>    _reserved64: [u8; <span class="number">0x08</span>],
+<a href=#160 id=160 data-nosnippet>160</a>    <span class="attr">#[doc = <span class="string">"0x778..0x784 - Unspecified"</span>]
+<a href=#161 id=161 data-nosnippet>161</a>    </span><span class="kw">pub </span>epout6: EPOUT,
+<a href=#162 id=162 data-nosnippet>162</a>    _reserved65: [u8; <span class="number">0x08</span>],
+<a href=#163 id=163 data-nosnippet>163</a>    <span class="attr">#[doc = <span class="string">"0x78c..0x798 - Unspecified"</span>]
+<a href=#164 id=164 data-nosnippet>164</a>    </span><span class="kw">pub </span>epout7: EPOUT,
+<a href=#165 id=165 data-nosnippet>165</a>    _reserved66: [u8; <span class="number">0x08</span>],
+<a href=#166 id=166 data-nosnippet>166</a>    <span class="attr">#[doc = <span class="string">"0x7a0..0x7ac - Unspecified"</span>]
+<a href=#167 id=167 data-nosnippet>167</a>    </span><span class="kw">pub </span>isoout: ISOOUT,
+<a href=#168 id=168 data-nosnippet>168</a>}
+<a href=#169 id=169 data-nosnippet>169</a><span class="attr">#[doc = <span class="string">"TASKS_STARTEPIN (w) register accessor: an alias for `Reg&lt;TASKS_STARTEPIN_SPEC&gt;`"</span>]
+<a href=#170 id=170 data-nosnippet>170</a></span><span class="kw">pub type </span>TASKS_STARTEPIN = <span class="kw">crate</span>::Reg&lt;tasks_startepin::TASKS_STARTEPIN_SPEC&gt;;
+<a href=#171 id=171 data-nosnippet>171</a><span class="attr">#[doc = <span class="string">"Description collection\\[n\\]: Captures the EPIN\\[n\\].PTR and EPIN\\[n\\].MAXCNT registers values, and enables endpoint IN n to respond to traffic from host"</span>]
+<a href=#172 id=172 data-nosnippet>172</a></span><span class="kw">pub mod </span>tasks_startepin;
+<a href=#173 id=173 data-nosnippet>173</a><span class="attr">#[doc = <span class="string">"TASKS_STARTISOIN (w) register accessor: an alias for `Reg&lt;TASKS_STARTISOIN_SPEC&gt;`"</span>]
+<a href=#174 id=174 data-nosnippet>174</a></span><span class="kw">pub type </span>TASKS_STARTISOIN = <span class="kw">crate</span>::Reg&lt;tasks_startisoin::TASKS_STARTISOIN_SPEC&gt;;
+<a href=#175 id=175 data-nosnippet>175</a><span class="attr">#[doc = <span class="string">"Captures the ISOIN.PTR and ISOIN.MAXCNT registers values, and enables sending data on ISO endpoint"</span>]
+<a href=#176 id=176 data-nosnippet>176</a></span><span class="kw">pub mod </span>tasks_startisoin;
+<a href=#177 id=177 data-nosnippet>177</a><span class="attr">#[doc = <span class="string">"TASKS_STARTEPOUT (w) register accessor: an alias for `Reg&lt;TASKS_STARTEPOUT_SPEC&gt;`"</span>]
+<a href=#178 id=178 data-nosnippet>178</a></span><span class="kw">pub type </span>TASKS_STARTEPOUT = <span class="kw">crate</span>::Reg&lt;tasks_startepout::TASKS_STARTEPOUT_SPEC&gt;;
+<a href=#179 id=179 data-nosnippet>179</a><span class="attr">#[doc = <span class="string">"Description collection\\[n\\]: Captures the EPOUT\\[n\\].PTR and EPOUT\\[n\\].MAXCNT registers values, and enables endpoint n to respond to traffic from host"</span>]
+<a href=#180 id=180 data-nosnippet>180</a></span><span class="kw">pub mod </span>tasks_startepout;
+<a href=#181 id=181 data-nosnippet>181</a><span class="attr">#[doc = <span class="string">"TASKS_STARTISOOUT (w) register accessor: an alias for `Reg&lt;TASKS_STARTISOOUT_SPEC&gt;`"</span>]
+<a href=#182 id=182 data-nosnippet>182</a></span><span class="kw">pub type </span>TASKS_STARTISOOUT = <span class="kw">crate</span>::Reg&lt;tasks_startisoout::TASKS_STARTISOOUT_SPEC&gt;;
+<a href=#183 id=183 data-nosnippet>183</a><span class="attr">#[doc = <span class="string">"Captures the ISOOUT.PTR and ISOOUT.MAXCNT registers values, and enables receiving of data on ISO endpoint"</span>]
+<a href=#184 id=184 data-nosnippet>184</a></span><span class="kw">pub mod </span>tasks_startisoout;
+<a href=#185 id=185 data-nosnippet>185</a><span class="attr">#[doc = <span class="string">"TASKS_EP0RCVOUT (w) register accessor: an alias for `Reg&lt;TASKS_EP0RCVOUT_SPEC&gt;`"</span>]
+<a href=#186 id=186 data-nosnippet>186</a></span><span class="kw">pub type </span>TASKS_EP0RCVOUT = <span class="kw">crate</span>::Reg&lt;tasks_ep0rcvout::TASKS_EP0RCVOUT_SPEC&gt;;
+<a href=#187 id=187 data-nosnippet>187</a><span class="attr">#[doc = <span class="string">"Allows OUT data stage on control endpoint 0"</span>]
+<a href=#188 id=188 data-nosnippet>188</a></span><span class="kw">pub mod </span>tasks_ep0rcvout;
+<a href=#189 id=189 data-nosnippet>189</a><span class="attr">#[doc = <span class="string">"TASKS_EP0STATUS (w) register accessor: an alias for `Reg&lt;TASKS_EP0STATUS_SPEC&gt;`"</span>]
+<a href=#190 id=190 data-nosnippet>190</a></span><span class="kw">pub type </span>TASKS_EP0STATUS = <span class="kw">crate</span>::Reg&lt;tasks_ep0status::TASKS_EP0STATUS_SPEC&gt;;
+<a href=#191 id=191 data-nosnippet>191</a><span class="attr">#[doc = <span class="string">"Allows status stage on control endpoint 0"</span>]
+<a href=#192 id=192 data-nosnippet>192</a></span><span class="kw">pub mod </span>tasks_ep0status;
+<a href=#193 id=193 data-nosnippet>193</a><span class="attr">#[doc = <span class="string">"TASKS_EP0STALL (w) register accessor: an alias for `Reg&lt;TASKS_EP0STALL_SPEC&gt;`"</span>]
+<a href=#194 id=194 data-nosnippet>194</a></span><span class="kw">pub type </span>TASKS_EP0STALL = <span class="kw">crate</span>::Reg&lt;tasks_ep0stall::TASKS_EP0STALL_SPEC&gt;;
+<a href=#195 id=195 data-nosnippet>195</a><span class="attr">#[doc = <span class="string">"Stalls data and status stage on control endpoint 0"</span>]
+<a href=#196 id=196 data-nosnippet>196</a></span><span class="kw">pub mod </span>tasks_ep0stall;
+<a href=#197 id=197 data-nosnippet>197</a><span class="attr">#[doc = <span class="string">"TASKS_DPDMDRIVE (w) register accessor: an alias for `Reg&lt;TASKS_DPDMDRIVE_SPEC&gt;`"</span>]
+<a href=#198 id=198 data-nosnippet>198</a></span><span class="kw">pub type </span>TASKS_DPDMDRIVE = <span class="kw">crate</span>::Reg&lt;tasks_dpdmdrive::TASKS_DPDMDRIVE_SPEC&gt;;
+<a href=#199 id=199 data-nosnippet>199</a><span class="attr">#[doc = <span class="string">"Forces D+ and D- lines into the state defined in the DPDMVALUE register"</span>]
+<a href=#200 id=200 data-nosnippet>200</a></span><span class="kw">pub mod </span>tasks_dpdmdrive;
+<a href=#201 id=201 data-nosnippet>201</a><span class="attr">#[doc = <span class="string">"TASKS_DPDMNODRIVE (w) register accessor: an alias for `Reg&lt;TASKS_DPDMNODRIVE_SPEC&gt;`"</span>]
+<a href=#202 id=202 data-nosnippet>202</a></span><span class="kw">pub type </span>TASKS_DPDMNODRIVE = <span class="kw">crate</span>::Reg&lt;tasks_dpdmnodrive::TASKS_DPDMNODRIVE_SPEC&gt;;
+<a href=#203 id=203 data-nosnippet>203</a><span class="attr">#[doc = <span class="string">"Stops forcing D+ and D- lines into any state (USB engine takes control)"</span>]
+<a href=#204 id=204 data-nosnippet>204</a></span><span class="kw">pub mod </span>tasks_dpdmnodrive;
+<a href=#205 id=205 data-nosnippet>205</a><span class="attr">#[doc = <span class="string">"EVENTS_USBRESET (rw) register accessor: an alias for `Reg&lt;EVENTS_USBRESET_SPEC&gt;`"</span>]
+<a href=#206 id=206 data-nosnippet>206</a></span><span class="kw">pub type </span>EVENTS_USBRESET = <span class="kw">crate</span>::Reg&lt;events_usbreset::EVENTS_USBRESET_SPEC&gt;;
+<a href=#207 id=207 data-nosnippet>207</a><span class="attr">#[doc = <span class="string">"Signals that a USB reset condition has been detected on USB lines"</span>]
+<a href=#208 id=208 data-nosnippet>208</a></span><span class="kw">pub mod </span>events_usbreset;
+<a href=#209 id=209 data-nosnippet>209</a><span class="attr">#[doc = <span class="string">"EVENTS_STARTED (rw) register accessor: an alias for `Reg&lt;EVENTS_STARTED_SPEC&gt;`"</span>]
+<a href=#210 id=210 data-nosnippet>210</a></span><span class="kw">pub type </span>EVENTS_STARTED = <span class="kw">crate</span>::Reg&lt;events_started::EVENTS_STARTED_SPEC&gt;;
+<a href=#211 id=211 data-nosnippet>211</a><span class="attr">#[doc = <span class="string">"Confirms that the EPIN\\[n\\].PTR and EPIN\\[n\\].MAXCNT, or EPOUT\\[n\\].PTR and EPOUT\\[n\\].MAXCNT registers have been captured on all endpoints reported in the EPSTATUS register"</span>]
+<a href=#212 id=212 data-nosnippet>212</a></span><span class="kw">pub mod </span>events_started;
+<a href=#213 id=213 data-nosnippet>213</a><span class="attr">#[doc = <span class="string">"EVENTS_ENDEPIN (rw) register accessor: an alias for `Reg&lt;EVENTS_ENDEPIN_SPEC&gt;`"</span>]
+<a href=#214 id=214 data-nosnippet>214</a></span><span class="kw">pub type </span>EVENTS_ENDEPIN = <span class="kw">crate</span>::Reg&lt;events_endepin::EVENTS_ENDEPIN_SPEC&gt;;
+<a href=#215 id=215 data-nosnippet>215</a><span class="attr">#[doc = <span class="string">"Description collection\\[n\\]: The whole EPIN\\[n\\]
+<a href=#216 id=216 data-nosnippet>216</a>buffer has been consumed. The RAM buffer can be accessed safely by software."</span>]
+<a href=#217 id=217 data-nosnippet>217</a></span><span class="kw">pub mod </span>events_endepin;
+<a href=#218 id=218 data-nosnippet>218</a><span class="attr">#[doc = <span class="string">"EVENTS_EP0DATADONE (rw) register accessor: an alias for `Reg&lt;EVENTS_EP0DATADONE_SPEC&gt;`"</span>]
+<a href=#219 id=219 data-nosnippet>219</a></span><span class="kw">pub type </span>EVENTS_EP0DATADONE = <span class="kw">crate</span>::Reg&lt;events_ep0datadone::EVENTS_EP0DATADONE_SPEC&gt;;
+<a href=#220 id=220 data-nosnippet>220</a><span class="attr">#[doc = <span class="string">"An acknowledged data transfer has taken place on the control endpoint"</span>]
+<a href=#221 id=221 data-nosnippet>221</a></span><span class="kw">pub mod </span>events_ep0datadone;
+<a href=#222 id=222 data-nosnippet>222</a><span class="attr">#[doc = <span class="string">"EVENTS_ENDISOIN (rw) register accessor: an alias for `Reg&lt;EVENTS_ENDISOIN_SPEC&gt;`"</span>]
+<a href=#223 id=223 data-nosnippet>223</a></span><span class="kw">pub type </span>EVENTS_ENDISOIN = <span class="kw">crate</span>::Reg&lt;events_endisoin::EVENTS_ENDISOIN_SPEC&gt;;
+<a href=#224 id=224 data-nosnippet>224</a><span class="attr">#[doc = <span class="string">"The whole ISOIN buffer has been consumed. The RAM buffer can be accessed safely by software."</span>]
+<a href=#225 id=225 data-nosnippet>225</a></span><span class="kw">pub mod </span>events_endisoin;
+<a href=#226 id=226 data-nosnippet>226</a><span class="attr">#[doc = <span class="string">"EVENTS_ENDEPOUT (rw) register accessor: an alias for `Reg&lt;EVENTS_ENDEPOUT_SPEC&gt;`"</span>]
+<a href=#227 id=227 data-nosnippet>227</a></span><span class="kw">pub type </span>EVENTS_ENDEPOUT = <span class="kw">crate</span>::Reg&lt;events_endepout::EVENTS_ENDEPOUT_SPEC&gt;;
+<a href=#228 id=228 data-nosnippet>228</a><span class="attr">#[doc = <span class="string">"Description collection\\[n\\]: The whole EPOUT\\[n\\]
+<a href=#229 id=229 data-nosnippet>229</a>buffer has been consumed. The RAM buffer can be accessed safely by software."</span>]
+<a href=#230 id=230 data-nosnippet>230</a></span><span class="kw">pub mod </span>events_endepout;
+<a href=#231 id=231 data-nosnippet>231</a><span class="attr">#[doc = <span class="string">"EVENTS_ENDISOOUT (rw) register accessor: an alias for `Reg&lt;EVENTS_ENDISOOUT_SPEC&gt;`"</span>]
+<a href=#232 id=232 data-nosnippet>232</a></span><span class="kw">pub type </span>EVENTS_ENDISOOUT = <span class="kw">crate</span>::Reg&lt;events_endisoout::EVENTS_ENDISOOUT_SPEC&gt;;
+<a href=#233 id=233 data-nosnippet>233</a><span class="attr">#[doc = <span class="string">"The whole ISOOUT buffer has been consumed. The RAM buffer can be accessed safely by software."</span>]
+<a href=#234 id=234 data-nosnippet>234</a></span><span class="kw">pub mod </span>events_endisoout;
+<a href=#235 id=235 data-nosnippet>235</a><span class="attr">#[doc = <span class="string">"EVENTS_SOF (rw) register accessor: an alias for `Reg&lt;EVENTS_SOF_SPEC&gt;`"</span>]
+<a href=#236 id=236 data-nosnippet>236</a></span><span class="kw">pub type </span>EVENTS_SOF = <span class="kw">crate</span>::Reg&lt;events_sof::EVENTS_SOF_SPEC&gt;;
+<a href=#237 id=237 data-nosnippet>237</a><span class="attr">#[doc = <span class="string">"Signals that a SOF (start of frame) condition has been detected on USB lines"</span>]
+<a href=#238 id=238 data-nosnippet>238</a></span><span class="kw">pub mod </span>events_sof;
+<a href=#239 id=239 data-nosnippet>239</a><span class="attr">#[doc = <span class="string">"EVENTS_USBEVENT (rw) register accessor: an alias for `Reg&lt;EVENTS_USBEVENT_SPEC&gt;`"</span>]
+<a href=#240 id=240 data-nosnippet>240</a></span><span class="kw">pub type </span>EVENTS_USBEVENT = <span class="kw">crate</span>::Reg&lt;events_usbevent::EVENTS_USBEVENT_SPEC&gt;;
+<a href=#241 id=241 data-nosnippet>241</a><span class="attr">#[doc = <span class="string">"An event or an error not covered by specific events has occurred. Check EVENTCAUSE register to find the cause."</span>]
+<a href=#242 id=242 data-nosnippet>242</a></span><span class="kw">pub mod </span>events_usbevent;
+<a href=#243 id=243 data-nosnippet>243</a><span class="attr">#[doc = <span class="string">"EVENTS_EP0SETUP (rw) register accessor: an alias for `Reg&lt;EVENTS_EP0SETUP_SPEC&gt;`"</span>]
+<a href=#244 id=244 data-nosnippet>244</a></span><span class="kw">pub type </span>EVENTS_EP0SETUP = <span class="kw">crate</span>::Reg&lt;events_ep0setup::EVENTS_EP0SETUP_SPEC&gt;;
+<a href=#245 id=245 data-nosnippet>245</a><span class="attr">#[doc = <span class="string">"A valid SETUP token has been received (and acknowledged) on the control endpoint"</span>]
+<a href=#246 id=246 data-nosnippet>246</a></span><span class="kw">pub mod </span>events_ep0setup;
+<a href=#247 id=247 data-nosnippet>247</a><span class="attr">#[doc = <span class="string">"EVENTS_EPDATA (rw) register accessor: an alias for `Reg&lt;EVENTS_EPDATA_SPEC&gt;`"</span>]
+<a href=#248 id=248 data-nosnippet>248</a></span><span class="kw">pub type </span>EVENTS_EPDATA = <span class="kw">crate</span>::Reg&lt;events_epdata::EVENTS_EPDATA_SPEC&gt;;
+<a href=#249 id=249 data-nosnippet>249</a><span class="attr">#[doc = <span class="string">"A data transfer has occurred on a data endpoint, indicated by the EPDATASTATUS register"</span>]
+<a href=#250 id=250 data-nosnippet>250</a></span><span class="kw">pub mod </span>events_epdata;
+<a href=#251 id=251 data-nosnippet>251</a><span class="attr">#[doc = <span class="string">"SHORTS (rw) register accessor: an alias for `Reg&lt;SHORTS_SPEC&gt;`"</span>]
+<a href=#252 id=252 data-nosnippet>252</a></span><span class="kw">pub type </span>SHORTS = <span class="kw">crate</span>::Reg&lt;shorts::SHORTS_SPEC&gt;;
+<a href=#253 id=253 data-nosnippet>253</a><span class="attr">#[doc = <span class="string">"Shortcut register"</span>]
+<a href=#254 id=254 data-nosnippet>254</a></span><span class="kw">pub mod </span>shorts;
+<a href=#255 id=255 data-nosnippet>255</a><span class="attr">#[doc = <span class="string">"INTEN (rw) register accessor: an alias for `Reg&lt;INTEN_SPEC&gt;`"</span>]
+<a href=#256 id=256 data-nosnippet>256</a></span><span class="kw">pub type </span>INTEN = <span class="kw">crate</span>::Reg&lt;inten::INTEN_SPEC&gt;;
+<a href=#257 id=257 data-nosnippet>257</a><span class="attr">#[doc = <span class="string">"Enable or disable interrupt"</span>]
+<a href=#258 id=258 data-nosnippet>258</a></span><span class="kw">pub mod </span>inten;
+<a href=#259 id=259 data-nosnippet>259</a><span class="attr">#[doc = <span class="string">"INTENSET (rw) register accessor: an alias for `Reg&lt;INTENSET_SPEC&gt;`"</span>]
+<a href=#260 id=260 data-nosnippet>260</a></span><span class="kw">pub type </span>INTENSET = <span class="kw">crate</span>::Reg&lt;intenset::INTENSET_SPEC&gt;;
+<a href=#261 id=261 data-nosnippet>261</a><span class="attr">#[doc = <span class="string">"Enable interrupt"</span>]
+<a href=#262 id=262 data-nosnippet>262</a></span><span class="kw">pub mod </span>intenset;
+<a href=#263 id=263 data-nosnippet>263</a><span class="attr">#[doc = <span class="string">"INTENCLR (rw) register accessor: an alias for `Reg&lt;INTENCLR_SPEC&gt;`"</span>]
+<a href=#264 id=264 data-nosnippet>264</a></span><span class="kw">pub type </span>INTENCLR = <span class="kw">crate</span>::Reg&lt;intenclr::INTENCLR_SPEC&gt;;
+<a href=#265 id=265 data-nosnippet>265</a><span class="attr">#[doc = <span class="string">"Disable interrupt"</span>]
+<a href=#266 id=266 data-nosnippet>266</a></span><span class="kw">pub mod </span>intenclr;
+<a href=#267 id=267 data-nosnippet>267</a><span class="attr">#[doc = <span class="string">"EVENTCAUSE (rw) register accessor: an alias for `Reg&lt;EVENTCAUSE_SPEC&gt;`"</span>]
+<a href=#268 id=268 data-nosnippet>268</a></span><span class="kw">pub type </span>EVENTCAUSE = <span class="kw">crate</span>::Reg&lt;eventcause::EVENTCAUSE_SPEC&gt;;
+<a href=#269 id=269 data-nosnippet>269</a><span class="attr">#[doc = <span class="string">"Details on what caused the USBEVENT event"</span>]
+<a href=#270 id=270 data-nosnippet>270</a></span><span class="kw">pub mod </span>eventcause;
+<a href=#271 id=271 data-nosnippet>271</a><span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+<a href=#272 id=272 data-nosnippet>272</a></span><span class="kw">pub use </span>halted::HALTED;
+<a href=#273 id=273 data-nosnippet>273</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#274 id=274 data-nosnippet>274</a>#[doc = <span class="string">"Unspecified"</span>]
+<a href=#275 id=275 data-nosnippet>275</a></span><span class="kw">pub mod </span>halted;
+<a href=#276 id=276 data-nosnippet>276</a><span class="attr">#[doc = <span class="string">"EPSTATUS (rw) register accessor: an alias for `Reg&lt;EPSTATUS_SPEC&gt;`"</span>]
+<a href=#277 id=277 data-nosnippet>277</a></span><span class="kw">pub type </span>EPSTATUS = <span class="kw">crate</span>::Reg&lt;epstatus::EPSTATUS_SPEC&gt;;
+<a href=#278 id=278 data-nosnippet>278</a><span class="attr">#[doc = <span class="string">"Provides information on which endpoint's EasyDMA registers have been captured"</span>]
+<a href=#279 id=279 data-nosnippet>279</a></span><span class="kw">pub mod </span>epstatus;
+<a href=#280 id=280 data-nosnippet>280</a><span class="attr">#[doc = <span class="string">"EPDATASTATUS (rw) register accessor: an alias for `Reg&lt;EPDATASTATUS_SPEC&gt;`"</span>]
+<a href=#281 id=281 data-nosnippet>281</a></span><span class="kw">pub type </span>EPDATASTATUS = <span class="kw">crate</span>::Reg&lt;epdatastatus::EPDATASTATUS_SPEC&gt;;
+<a href=#282 id=282 data-nosnippet>282</a><span class="attr">#[doc = <span class="string">"Provides information on which endpoint(s) an acknowledged data transfer has occurred (EPDATA event)"</span>]
+<a href=#283 id=283 data-nosnippet>283</a></span><span class="kw">pub mod </span>epdatastatus;
+<a href=#284 id=284 data-nosnippet>284</a><span class="attr">#[doc = <span class="string">"USBADDR (r) register accessor: an alias for `Reg&lt;USBADDR_SPEC&gt;`"</span>]
+<a href=#285 id=285 data-nosnippet>285</a></span><span class="kw">pub type </span>USBADDR = <span class="kw">crate</span>::Reg&lt;usbaddr::USBADDR_SPEC&gt;;
+<a href=#286 id=286 data-nosnippet>286</a><span class="attr">#[doc = <span class="string">"Device USB address"</span>]
+<a href=#287 id=287 data-nosnippet>287</a></span><span class="kw">pub mod </span>usbaddr;
+<a href=#288 id=288 data-nosnippet>288</a><span class="attr">#[doc = <span class="string">"BMREQUESTTYPE (r) register accessor: an alias for `Reg&lt;BMREQUESTTYPE_SPEC&gt;`"</span>]
+<a href=#289 id=289 data-nosnippet>289</a></span><span class="kw">pub type </span>BMREQUESTTYPE = <span class="kw">crate</span>::Reg&lt;bmrequesttype::BMREQUESTTYPE_SPEC&gt;;
+<a href=#290 id=290 data-nosnippet>290</a><span class="attr">#[doc = <span class="string">"SETUP data, byte 0, bmRequestType"</span>]
+<a href=#291 id=291 data-nosnippet>291</a></span><span class="kw">pub mod </span>bmrequesttype;
+<a href=#292 id=292 data-nosnippet>292</a><span class="attr">#[doc = <span class="string">"BREQUEST (r) register accessor: an alias for `Reg&lt;BREQUEST_SPEC&gt;`"</span>]
+<a href=#293 id=293 data-nosnippet>293</a></span><span class="kw">pub type </span>BREQUEST = <span class="kw">crate</span>::Reg&lt;brequest::BREQUEST_SPEC&gt;;
+<a href=#294 id=294 data-nosnippet>294</a><span class="attr">#[doc = <span class="string">"SETUP data, byte 1, bRequest"</span>]
+<a href=#295 id=295 data-nosnippet>295</a></span><span class="kw">pub mod </span>brequest;
+<a href=#296 id=296 data-nosnippet>296</a><span class="attr">#[doc = <span class="string">"WVALUEL (r) register accessor: an alias for `Reg&lt;WVALUEL_SPEC&gt;`"</span>]
+<a href=#297 id=297 data-nosnippet>297</a></span><span class="kw">pub type </span>WVALUEL = <span class="kw">crate</span>::Reg&lt;wvaluel::WVALUEL_SPEC&gt;;
+<a href=#298 id=298 data-nosnippet>298</a><span class="attr">#[doc = <span class="string">"SETUP data, byte 2, LSB of wValue"</span>]
+<a href=#299 id=299 data-nosnippet>299</a></span><span class="kw">pub mod </span>wvaluel;
+<a href=#300 id=300 data-nosnippet>300</a><span class="attr">#[doc = <span class="string">"WVALUEH (r) register accessor: an alias for `Reg&lt;WVALUEH_SPEC&gt;`"</span>]
+<a href=#301 id=301 data-nosnippet>301</a></span><span class="kw">pub type </span>WVALUEH = <span class="kw">crate</span>::Reg&lt;wvalueh::WVALUEH_SPEC&gt;;
+<a href=#302 id=302 data-nosnippet>302</a><span class="attr">#[doc = <span class="string">"SETUP data, byte 3, MSB of wValue"</span>]
+<a href=#303 id=303 data-nosnippet>303</a></span><span class="kw">pub mod </span>wvalueh;
+<a href=#304 id=304 data-nosnippet>304</a><span class="attr">#[doc = <span class="string">"WINDEXL (r) register accessor: an alias for `Reg&lt;WINDEXL_SPEC&gt;`"</span>]
+<a href=#305 id=305 data-nosnippet>305</a></span><span class="kw">pub type </span>WINDEXL = <span class="kw">crate</span>::Reg&lt;windexl::WINDEXL_SPEC&gt;;
+<a href=#306 id=306 data-nosnippet>306</a><span class="attr">#[doc = <span class="string">"SETUP data, byte 4, LSB of wIndex"</span>]
+<a href=#307 id=307 data-nosnippet>307</a></span><span class="kw">pub mod </span>windexl;
+<a href=#308 id=308 data-nosnippet>308</a><span class="attr">#[doc = <span class="string">"WINDEXH (r) register accessor: an alias for `Reg&lt;WINDEXH_SPEC&gt;`"</span>]
+<a href=#309 id=309 data-nosnippet>309</a></span><span class="kw">pub type </span>WINDEXH = <span class="kw">crate</span>::Reg&lt;windexh::WINDEXH_SPEC&gt;;
+<a href=#310 id=310 data-nosnippet>310</a><span class="attr">#[doc = <span class="string">"SETUP data, byte 5, MSB of wIndex"</span>]
+<a href=#311 id=311 data-nosnippet>311</a></span><span class="kw">pub mod </span>windexh;
+<a href=#312 id=312 data-nosnippet>312</a><span class="attr">#[doc = <span class="string">"WLENGTHL (r) register accessor: an alias for `Reg&lt;WLENGTHL_SPEC&gt;`"</span>]
+<a href=#313 id=313 data-nosnippet>313</a></span><span class="kw">pub type </span>WLENGTHL = <span class="kw">crate</span>::Reg&lt;wlengthl::WLENGTHL_SPEC&gt;;
+<a href=#314 id=314 data-nosnippet>314</a><span class="attr">#[doc = <span class="string">"SETUP data, byte 6, LSB of wLength"</span>]
+<a href=#315 id=315 data-nosnippet>315</a></span><span class="kw">pub mod </span>wlengthl;
+<a href=#316 id=316 data-nosnippet>316</a><span class="attr">#[doc = <span class="string">"WLENGTHH (r) register accessor: an alias for `Reg&lt;WLENGTHH_SPEC&gt;`"</span>]
+<a href=#317 id=317 data-nosnippet>317</a></span><span class="kw">pub type </span>WLENGTHH = <span class="kw">crate</span>::Reg&lt;wlengthh::WLENGTHH_SPEC&gt;;
+<a href=#318 id=318 data-nosnippet>318</a><span class="attr">#[doc = <span class="string">"SETUP data, byte 7, MSB of wLength"</span>]
+<a href=#319 id=319 data-nosnippet>319</a></span><span class="kw">pub mod </span>wlengthh;
+<a href=#320 id=320 data-nosnippet>320</a><span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+<a href=#321 id=321 data-nosnippet>321</a></span><span class="kw">pub use </span>size::SIZE;
+<a href=#322 id=322 data-nosnippet>322</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#323 id=323 data-nosnippet>323</a>#[doc = <span class="string">"Unspecified"</span>]
+<a href=#324 id=324 data-nosnippet>324</a></span><span class="kw">pub mod </span>size;
+<a href=#325 id=325 data-nosnippet>325</a><span class="attr">#[doc = <span class="string">"ENABLE (rw) register accessor: an alias for `Reg&lt;ENABLE_SPEC&gt;`"</span>]
+<a href=#326 id=326 data-nosnippet>326</a></span><span class="kw">pub type </span>ENABLE = <span class="kw">crate</span>::Reg&lt;enable::ENABLE_SPEC&gt;;
+<a href=#327 id=327 data-nosnippet>327</a><span class="attr">#[doc = <span class="string">"Enable USB"</span>]
+<a href=#328 id=328 data-nosnippet>328</a></span><span class="kw">pub mod </span>enable;
+<a href=#329 id=329 data-nosnippet>329</a><span class="attr">#[doc = <span class="string">"USBPULLUP (rw) register accessor: an alias for `Reg&lt;USBPULLUP_SPEC&gt;`"</span>]
+<a href=#330 id=330 data-nosnippet>330</a></span><span class="kw">pub type </span>USBPULLUP = <span class="kw">crate</span>::Reg&lt;usbpullup::USBPULLUP_SPEC&gt;;
+<a href=#331 id=331 data-nosnippet>331</a><span class="attr">#[doc = <span class="string">"Control of the USB pull-up"</span>]
+<a href=#332 id=332 data-nosnippet>332</a></span><span class="kw">pub mod </span>usbpullup;
+<a href=#333 id=333 data-nosnippet>333</a><span class="attr">#[doc = <span class="string">"DPDMVALUE (rw) register accessor: an alias for `Reg&lt;DPDMVALUE_SPEC&gt;`"</span>]
+<a href=#334 id=334 data-nosnippet>334</a></span><span class="kw">pub type </span>DPDMVALUE = <span class="kw">crate</span>::Reg&lt;dpdmvalue::DPDMVALUE_SPEC&gt;;
+<a href=#335 id=335 data-nosnippet>335</a><span class="attr">#[doc = <span class="string">"State D+ and D- lines will be forced into by the DPDMDRIVE task. The DPDMNODRIVE task reverts the control of the lines to MAC IP (no forcing)."</span>]
+<a href=#336 id=336 data-nosnippet>336</a></span><span class="kw">pub mod </span>dpdmvalue;
+<a href=#337 id=337 data-nosnippet>337</a><span class="attr">#[doc = <span class="string">"DTOGGLE (rw) register accessor: an alias for `Reg&lt;DTOGGLE_SPEC&gt;`"</span>]
+<a href=#338 id=338 data-nosnippet>338</a></span><span class="kw">pub type </span>DTOGGLE = <span class="kw">crate</span>::Reg&lt;dtoggle::DTOGGLE_SPEC&gt;;
+<a href=#339 id=339 data-nosnippet>339</a><span class="attr">#[doc = <span class="string">"Data toggle control and status"</span>]
+<a href=#340 id=340 data-nosnippet>340</a></span><span class="kw">pub mod </span>dtoggle;
+<a href=#341 id=341 data-nosnippet>341</a><span class="attr">#[doc = <span class="string">"EPINEN (rw) register accessor: an alias for `Reg&lt;EPINEN_SPEC&gt;`"</span>]
+<a href=#342 id=342 data-nosnippet>342</a></span><span class="kw">pub type </span>EPINEN = <span class="kw">crate</span>::Reg&lt;epinen::EPINEN_SPEC&gt;;
+<a href=#343 id=343 data-nosnippet>343</a><span class="attr">#[doc = <span class="string">"Endpoint IN enable"</span>]
+<a href=#344 id=344 data-nosnippet>344</a></span><span class="kw">pub mod </span>epinen;
+<a href=#345 id=345 data-nosnippet>345</a><span class="attr">#[doc = <span class="string">"EPOUTEN (rw) register accessor: an alias for `Reg&lt;EPOUTEN_SPEC&gt;`"</span>]
+<a href=#346 id=346 data-nosnippet>346</a></span><span class="kw">pub type </span>EPOUTEN = <span class="kw">crate</span>::Reg&lt;epouten::EPOUTEN_SPEC&gt;;
+<a href=#347 id=347 data-nosnippet>347</a><span class="attr">#[doc = <span class="string">"Endpoint OUT enable"</span>]
+<a href=#348 id=348 data-nosnippet>348</a></span><span class="kw">pub mod </span>epouten;
+<a href=#349 id=349 data-nosnippet>349</a><span class="attr">#[doc = <span class="string">"EPSTALL (w) register accessor: an alias for `Reg&lt;EPSTALL_SPEC&gt;`"</span>]
+<a href=#350 id=350 data-nosnippet>350</a></span><span class="kw">pub type </span>EPSTALL = <span class="kw">crate</span>::Reg&lt;epstall::EPSTALL_SPEC&gt;;
+<a href=#351 id=351 data-nosnippet>351</a><span class="attr">#[doc = <span class="string">"STALL endpoints"</span>]
+<a href=#352 id=352 data-nosnippet>352</a></span><span class="kw">pub mod </span>epstall;
+<a href=#353 id=353 data-nosnippet>353</a><span class="attr">#[doc = <span class="string">"ISOSPLIT (rw) register accessor: an alias for `Reg&lt;ISOSPLIT_SPEC&gt;`"</span>]
+<a href=#354 id=354 data-nosnippet>354</a></span><span class="kw">pub type </span>ISOSPLIT = <span class="kw">crate</span>::Reg&lt;isosplit::ISOSPLIT_SPEC&gt;;
+<a href=#355 id=355 data-nosnippet>355</a><span class="attr">#[doc = <span class="string">"Controls the split of ISO buffers"</span>]
+<a href=#356 id=356 data-nosnippet>356</a></span><span class="kw">pub mod </span>isosplit;
+<a href=#357 id=357 data-nosnippet>357</a><span class="attr">#[doc = <span class="string">"FRAMECNTR (r) register accessor: an alias for `Reg&lt;FRAMECNTR_SPEC&gt;`"</span>]
+<a href=#358 id=358 data-nosnippet>358</a></span><span class="kw">pub type </span>FRAMECNTR = <span class="kw">crate</span>::Reg&lt;framecntr::FRAMECNTR_SPEC&gt;;
+<a href=#359 id=359 data-nosnippet>359</a><span class="attr">#[doc = <span class="string">"Returns the current value of the start of frame counter"</span>]
+<a href=#360 id=360 data-nosnippet>360</a></span><span class="kw">pub mod </span>framecntr;
+<a href=#361 id=361 data-nosnippet>361</a><span class="attr">#[doc = <span class="string">"LOWPOWER (rw) register accessor: an alias for `Reg&lt;LOWPOWER_SPEC&gt;`"</span>]
+<a href=#362 id=362 data-nosnippet>362</a></span><span class="kw">pub type </span>LOWPOWER = <span class="kw">crate</span>::Reg&lt;lowpower::LOWPOWER_SPEC&gt;;
+<a href=#363 id=363 data-nosnippet>363</a><span class="attr">#[doc = <span class="string">"Controls USBD peripheral low power mode during USB suspend"</span>]
+<a href=#364 id=364 data-nosnippet>364</a></span><span class="kw">pub mod </span>lowpower;
+<a href=#365 id=365 data-nosnippet>365</a><span class="attr">#[doc = <span class="string">"ISOINCONFIG (rw) register accessor: an alias for `Reg&lt;ISOINCONFIG_SPEC&gt;`"</span>]
+<a href=#366 id=366 data-nosnippet>366</a></span><span class="kw">pub type </span>ISOINCONFIG = <span class="kw">crate</span>::Reg&lt;isoinconfig::ISOINCONFIG_SPEC&gt;;
+<a href=#367 id=367 data-nosnippet>367</a><span class="attr">#[doc = <span class="string">"Controls the response of the ISO IN endpoint to an IN token when no data is ready to be sent"</span>]
+<a href=#368 id=368 data-nosnippet>368</a></span><span class="kw">pub mod </span>isoinconfig;
+<a href=#369 id=369 data-nosnippet>369</a><span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+<a href=#370 id=370 data-nosnippet>370</a></span><span class="kw">pub use </span>epin::EPIN;
+<a href=#371 id=371 data-nosnippet>371</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#372 id=372 data-nosnippet>372</a>#[doc = <span class="string">"Unspecified"</span>]
+<a href=#373 id=373 data-nosnippet>373</a></span><span class="kw">pub mod </span>epin;
+<a href=#374 id=374 data-nosnippet>374</a><span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+<a href=#375 id=375 data-nosnippet>375</a></span><span class="kw">pub use </span>isoin::ISOIN;
+<a href=#376 id=376 data-nosnippet>376</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#377 id=377 data-nosnippet>377</a>#[doc = <span class="string">"Unspecified"</span>]
+<a href=#378 id=378 data-nosnippet>378</a></span><span class="kw">pub mod </span>isoin;
+<a href=#379 id=379 data-nosnippet>379</a><span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+<a href=#380 id=380 data-nosnippet>380</a></span><span class="kw">pub use </span>epout::EPOUT;
+<a href=#381 id=381 data-nosnippet>381</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#382 id=382 data-nosnippet>382</a>#[doc = <span class="string">"Unspecified"</span>]
+<a href=#383 id=383 data-nosnippet>383</a></span><span class="kw">pub mod </span>epout;
+<a href=#384 id=384 data-nosnippet>384</a><span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+<a href=#385 id=385 data-nosnippet>385</a></span><span class="kw">pub use </span>isoout::ISOOUT;
+<a href=#386 id=386 data-nosnippet>386</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#387 id=387 data-nosnippet>387</a>#[doc = <span class="string">"Unspecified"</span>]
+<a href=#388 id=388 data-nosnippet>388</a></span><span class="kw">pub mod </span>isoout;</code></pre></div></section></main></body></html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Reset a RWRegister, UnsafeRWRegister, WORegister, or UnsafeWORegister to its reset value."><title>reset_reg in ral_registers - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="ral_registers" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../static.files/storage-82c7156e.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../ral_registers/index.html">ral_<wbr>registers</a><span class="version">0.1.3</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">reset_<wbr>reg</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#usage" title="Usage">Usage</a></li><li><a href="#safety" title="Safety">Safety</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate ral_<wbr>registers</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">ral_registers</a></div><h1>Macro <span class="macro">reset_reg</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/ral_registers/lib.rs.html#646-663">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! reset_reg {
+    ( $periph:path, $instance:expr, $instancemod:path, $reg:ident $([$offset:expr])*, $( $field:ident ),+ $(,)? ) =&gt; { ... };
+    ( $periph:path, $instance:expr, $instancemod:path, $reg:ident $([$offset:expr])*) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Reset a RWRegister, UnsafeRWRegister, WORegister, or UnsafeWORegister to its reset value.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Safely acquire the peripheral instance (will panic if already acquired)
+</span><span class="kw">let </span>gpioa = stm32ral::gpio::GPIOA::take().unwrap();
+
+<span class="comment">// Reset PA14 and PA15 to their reset state
+</span><span class="macro">reset_reg!</span>(stm32ral::gpio, gpioa, GPIOA, MODER, MODER14, MODER15);
+
+<span class="comment">// Reset the entire GPIOA.MODER to its reset state
+</span><span class="macro">reset_reg!</span>(stm32ral::gpio, gpioa, GPIOA, MODER);</code></pre></div>
+<p>To support register arrays, each macro form also supports one or more array indices after
+the register. For example, <code>reset_reg!(stm32ral::gpio, gpioa, GPIOA, ODR[2]);</code> resets the
+third register in an <code>ODR</code> register array.</p>
+<h2 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h2>
+<p>Like <code>write_reg!</code>, this macro can be used in two ways, either resetting the entire register
+or just resetting specific fields within in. The register or fields are written with their
+reset values.</p>
+<p>In both cases, the first arguments are:</p>
+<ul>
+<li>the path to the peripheral module: <code>stm32ral::gpio</code>,</li>
+<li>a reference to the instance of that peripheral: ‘gpioa’ (anything which dereferences to
+<code>RegisterBlock</code>, such as <code>Instance</code>, <code>&amp;Instance</code>, <code>&amp;RegisterBlock</code>, or
+<code>*const RegisterBlock</code>),</li>
+<li>the module for the instance of that peripheral: <code>GPIOA</code>,</li>
+<li>the register (and offset, for arrays) you wish to access: <code>MODER</code> (a field on the
+<code>RegisterBlock</code>).</li>
+</ul>
+<p>In the whole-register usage, that’s it:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Reset the entire GPIOA.MODER
+</span><span class="macro">reset_reg!</span>(stm32ral::gpio, gpioa, GPIOA, MODER);</code></pre></div>
+<p>Otherwise, the remaining arguments are each field names:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Reset the JTAG pins
+</span><span class="macro">reset_reg!</span>(stm32ral::gpio, gpioa, GPIOA, MODER, MODER13, MODER14, MODER15);
+<span class="macro">reset_reg!</span>(stm32ral::gpio, gpioa, GPIOB, MODER, MODER3, MODER4);</code></pre></div>
+<p>The second form is only available to RWRegister and UnsafeRWRegister, since <code>.read()</code> is
+not available for WORegister and UnsafeWORegister.</p>
+<p>This macro expands to calling <code>(*$instance).$register.write(value)</code>, where
+<code>value</code> is either the register’s reset value, or the current read value of the register
+masked appropriately and combined with the reset value for each field.</p>
+<h2 id="safety"><a class="doc-anchor" href="#safety">§</a>Safety</h2>
+<p>This macro will require an unsafe function or block when used with an UnsafeRWRegister or
+UnsafeRORegister, but not if used with RWRegister or RORegister.</p>
+<p>When run in an unsafe context, peripheral instances are directly accessible without requiring
+having called <code>take()</code> beforehand:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">unsafe </span>{ <span class="macro">reset_reg!</span>(stm32ral::gpio, GPIOA, GPIOA, MODER) };</code></pre></div>
+<p>This works because <code>GPIOA</code> is a <code>*const RegisterBlock</code> in the <code>stm32ral::gpio</code> module;
+and the macro brings such constants into scope and then dereferences the provided reference.</p>
+<p>Note that the second argument is a <code>*const</code> and the third is a path; despite both being written
+<code>GPIOA</code> they are not the same thing.</p>
+</div></details></section></div></main></body></html>
