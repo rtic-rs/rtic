@@ -367,7 +367,7 @@ dependencies = [
  "esp-hal-procmacros",
  "esp-metadata",
  "esp-riscv-rt",
- "esp32c3",
+ "esp32c3 0.28.0",
  "fugit",
  "instability",
  "nb 1.1.0",
@@ -441,7 +441,7 @@ dependencies = [
  "esp-backtrace",
  "esp-hal",
  "esp-println",
- "esp32c3",
+ "esp32c3 0.29.0",
  "rtic",
  "rtic-monotonics",
 ]
@@ -451,6 +451,16 @@ name = "esp32c3"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df1bbcfa3ab2979171263db80804dabc38bdd45450c7eb775ee3f81d552cf0ba"
+dependencies = [
+ "critical-section",
+ "vcell",
+]
+
+[[package]]
+name = "esp32c3"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24c0b2a8e8efa1755a28ca3ef54c85436f76531ba93dc79b55d5330349d067d7"
 dependencies = [
  "critical-section",
  "vcell",
@@ -779,11 +789,11 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.1.2"
+version = "2.1.3"
 dependencies = [
  "bare-metal",
  "critical-section",
- "esp32c3",
+ "esp32c3 0.29.0",
  "portable-atomic",
  "riscv 0.13.0",
  "rtic-core",
@@ -806,7 +816,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.1.2"
+version = "2.1.3"
 dependencies = [
  "indexmap",
  "proc-macro-error2",
@@ -820,7 +830,7 @@ name = "rtic-monotonics"
 version = "2.0.3"
 dependencies = [
  "cfg-if",
- "esp32c3",
+ "esp32c3 0.29.0",
  "fugit",
  "portable-atomic",
  "riscv 0.13.0",
