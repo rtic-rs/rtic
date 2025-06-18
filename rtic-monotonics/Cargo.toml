@@ -62,7 +62,7 @@ nrf5340-net-pac = { version = "0.12.2", optional = true }
 nrf9160-pac = { version = "0.12.2", optional = true }
 
 # STM32
-stm32-metapac = { version = "15.0.0", optional = true }
+stm32-metapac = { version = "16.0.0", optional = true }
 
 # i.MX RT
 imxrt-ral = { version = "0.6.1", optional = true }
@@ -74,7 +74,7 @@ riscv = {version = "0.14.0", optional = true }
 [build-dependencies]
 proc-macro2 = { version = "1.0.36", optional = true }
 quote = { version = "1.0.15", optional = true }
-stm32-metapac = { version = "15.0.0", default-features = false, features = [
+stm32-metapac = { version = "16.0.0", default-features = false, features = [
     "metadata",
 ], optional = true }
 
