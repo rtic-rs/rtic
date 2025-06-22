@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_READCLRACC_SPEC","W"],"type":["TASKS_READCLRACC_W"]};

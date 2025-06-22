@@ -1,0 +1,140 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nrf52840-pac-0.12.2/src/saadc.rs`."><title>saadc.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="nrf52840_pac" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../static.files/storage-82c7156e.js"></script><script defer src="../../static.files/src-script-63605ae7.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">nrf52840_pac/</div>saadc.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[doc = <span class="string">r"Register block"</span>]
+<a href=#2 id=2 data-nosnippet>2</a>#[repr(C)]
+<a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">pub struct </span>RegisterBlock {
+<a href=#4 id=4 data-nosnippet>4</a>    <span class="attr">#[doc = <span class="string">"0x00 - Starts the SAADC and prepares the result buffer in RAM"</span>]
+<a href=#5 id=5 data-nosnippet>5</a>    </span><span class="kw">pub </span>tasks_start: TASKS_START,
+<a href=#6 id=6 data-nosnippet>6</a>    <span class="attr">#[doc = <span class="string">"0x04 - Takes one SAADC sample"</span>]
+<a href=#7 id=7 data-nosnippet>7</a>    </span><span class="kw">pub </span>tasks_sample: TASKS_SAMPLE,
+<a href=#8 id=8 data-nosnippet>8</a>    <span class="attr">#[doc = <span class="string">"0x08 - Stops the SAADC and terminates all on-going conversions"</span>]
+<a href=#9 id=9 data-nosnippet>9</a>    </span><span class="kw">pub </span>tasks_stop: TASKS_STOP,
+<a href=#10 id=10 data-nosnippet>10</a>    <span class="attr">#[doc = <span class="string">"0x0c - Starts offset auto-calibration"</span>]
+<a href=#11 id=11 data-nosnippet>11</a>    </span><span class="kw">pub </span>tasks_calibrateoffset: TASKS_CALIBRATEOFFSET,
+<a href=#12 id=12 data-nosnippet>12</a>    _reserved4: [u8; <span class="number">0xf0</span>],
+<a href=#13 id=13 data-nosnippet>13</a>    <span class="attr">#[doc = <span class="string">"0x100 - The SAADC has started"</span>]
+<a href=#14 id=14 data-nosnippet>14</a>    </span><span class="kw">pub </span>events_started: EVENTS_STARTED,
+<a href=#15 id=15 data-nosnippet>15</a>    <span class="attr">#[doc = <span class="string">"0x104 - The SAADC has filled up the result buffer"</span>]
+<a href=#16 id=16 data-nosnippet>16</a>    </span><span class="kw">pub </span>events_end: EVENTS_END,
+<a href=#17 id=17 data-nosnippet>17</a>    <span class="attr">#[doc = <span class="string">"0x108 - A conversion task has been completed. Depending on the configuration, multiple conversions might be needed for a result to be transferred to RAM."</span>]
+<a href=#18 id=18 data-nosnippet>18</a>    </span><span class="kw">pub </span>events_done: EVENTS_DONE,
+<a href=#19 id=19 data-nosnippet>19</a>    <span class="attr">#[doc = <span class="string">"0x10c - Result ready for transfer to RAM"</span>]
+<a href=#20 id=20 data-nosnippet>20</a>    </span><span class="kw">pub </span>events_resultdone: EVENTS_RESULTDONE,
+<a href=#21 id=21 data-nosnippet>21</a>    <span class="attr">#[doc = <span class="string">"0x110 - Calibration is complete"</span>]
+<a href=#22 id=22 data-nosnippet>22</a>    </span><span class="kw">pub </span>events_calibratedone: EVENTS_CALIBRATEDONE,
+<a href=#23 id=23 data-nosnippet>23</a>    <span class="attr">#[doc = <span class="string">"0x114 - The SAADC has stopped"</span>]
+<a href=#24 id=24 data-nosnippet>24</a>    </span><span class="kw">pub </span>events_stopped: EVENTS_STOPPED,
+<a href=#25 id=25 data-nosnippet>25</a>    <span class="attr">#[doc = <span class="string">"0x118..0x158 - Unspecified"</span>]
+<a href=#26 id=26 data-nosnippet>26</a>    </span><span class="kw">pub </span>events_ch: [EVENTS_CH; <span class="number">8</span>],
+<a href=#27 id=27 data-nosnippet>27</a>    _reserved11: [u8; <span class="number">0x01a8</span>],
+<a href=#28 id=28 data-nosnippet>28</a>    <span class="attr">#[doc = <span class="string">"0x300 - Enable or disable interrupt"</span>]
+<a href=#29 id=29 data-nosnippet>29</a>    </span><span class="kw">pub </span>inten: INTEN,
+<a href=#30 id=30 data-nosnippet>30</a>    <span class="attr">#[doc = <span class="string">"0x304 - Enable interrupt"</span>]
+<a href=#31 id=31 data-nosnippet>31</a>    </span><span class="kw">pub </span>intenset: INTENSET,
+<a href=#32 id=32 data-nosnippet>32</a>    <span class="attr">#[doc = <span class="string">"0x308 - Disable interrupt"</span>]
+<a href=#33 id=33 data-nosnippet>33</a>    </span><span class="kw">pub </span>intenclr: INTENCLR,
+<a href=#34 id=34 data-nosnippet>34</a>    _reserved14: [u8; <span class="number">0xf4</span>],
+<a href=#35 id=35 data-nosnippet>35</a>    <span class="attr">#[doc = <span class="string">"0x400 - Status"</span>]
+<a href=#36 id=36 data-nosnippet>36</a>    </span><span class="kw">pub </span>status: STATUS,
+<a href=#37 id=37 data-nosnippet>37</a>    _reserved15: [u8; <span class="number">0xfc</span>],
+<a href=#38 id=38 data-nosnippet>38</a>    <span class="attr">#[doc = <span class="string">"0x500 - Enable or disable SAADC"</span>]
+<a href=#39 id=39 data-nosnippet>39</a>    </span><span class="kw">pub </span>enable: ENABLE,
+<a href=#40 id=40 data-nosnippet>40</a>    _reserved16: [u8; <span class="number">0x0c</span>],
+<a href=#41 id=41 data-nosnippet>41</a>    <span class="attr">#[doc = <span class="string">"0x510..0x590 - Unspecified"</span>]
+<a href=#42 id=42 data-nosnippet>42</a>    </span><span class="kw">pub </span>ch: [CH; <span class="number">8</span>],
+<a href=#43 id=43 data-nosnippet>43</a>    _reserved17: [u8; <span class="number">0x60</span>],
+<a href=#44 id=44 data-nosnippet>44</a>    <span class="attr">#[doc = <span class="string">"0x5f0 - Resolution configuration"</span>]
+<a href=#45 id=45 data-nosnippet>45</a>    </span><span class="kw">pub </span>resolution: RESOLUTION,
+<a href=#46 id=46 data-nosnippet>46</a>    <span class="attr">#[doc = <span class="string">"0x5f4 - Oversampling configuration. The RESOLUTION is applied before averaging, thus for high OVERSAMPLE a higher RESOLUTION should be used."</span>]
+<a href=#47 id=47 data-nosnippet>47</a>    </span><span class="kw">pub </span>oversample: OVERSAMPLE,
+<a href=#48 id=48 data-nosnippet>48</a>    <span class="attr">#[doc = <span class="string">"0x5f8 - Controls normal or continuous sample rate"</span>]
+<a href=#49 id=49 data-nosnippet>49</a>    </span><span class="kw">pub </span>samplerate: SAMPLERATE,
+<a href=#50 id=50 data-nosnippet>50</a>    _reserved20: [u8; <span class="number">0x30</span>],
+<a href=#51 id=51 data-nosnippet>51</a>    <span class="attr">#[doc = <span class="string">"0x62c..0x638 - RESULT EasyDMA channel"</span>]
+<a href=#52 id=52 data-nosnippet>52</a>    </span><span class="kw">pub </span>result: RESULT,
+<a href=#53 id=53 data-nosnippet>53</a>}
+<a href=#54 id=54 data-nosnippet>54</a><span class="attr">#[doc = <span class="string">"TASKS_START (w) register accessor: an alias for `Reg&lt;TASKS_START_SPEC&gt;`"</span>]
+<a href=#55 id=55 data-nosnippet>55</a></span><span class="kw">pub type </span>TASKS_START = <span class="kw">crate</span>::Reg&lt;tasks_start::TASKS_START_SPEC&gt;;
+<a href=#56 id=56 data-nosnippet>56</a><span class="attr">#[doc = <span class="string">"Starts the SAADC and prepares the result buffer in RAM"</span>]
+<a href=#57 id=57 data-nosnippet>57</a></span><span class="kw">pub mod </span>tasks_start;
+<a href=#58 id=58 data-nosnippet>58</a><span class="attr">#[doc = <span class="string">"TASKS_SAMPLE (w) register accessor: an alias for `Reg&lt;TASKS_SAMPLE_SPEC&gt;`"</span>]
+<a href=#59 id=59 data-nosnippet>59</a></span><span class="kw">pub type </span>TASKS_SAMPLE = <span class="kw">crate</span>::Reg&lt;tasks_sample::TASKS_SAMPLE_SPEC&gt;;
+<a href=#60 id=60 data-nosnippet>60</a><span class="attr">#[doc = <span class="string">"Takes one SAADC sample"</span>]
+<a href=#61 id=61 data-nosnippet>61</a></span><span class="kw">pub mod </span>tasks_sample;
+<a href=#62 id=62 data-nosnippet>62</a><span class="attr">#[doc = <span class="string">"TASKS_STOP (w) register accessor: an alias for `Reg&lt;TASKS_STOP_SPEC&gt;`"</span>]
+<a href=#63 id=63 data-nosnippet>63</a></span><span class="kw">pub type </span>TASKS_STOP = <span class="kw">crate</span>::Reg&lt;tasks_stop::TASKS_STOP_SPEC&gt;;
+<a href=#64 id=64 data-nosnippet>64</a><span class="attr">#[doc = <span class="string">"Stops the SAADC and terminates all on-going conversions"</span>]
+<a href=#65 id=65 data-nosnippet>65</a></span><span class="kw">pub mod </span>tasks_stop;
+<a href=#66 id=66 data-nosnippet>66</a><span class="attr">#[doc = <span class="string">"TASKS_CALIBRATEOFFSET (w) register accessor: an alias for `Reg&lt;TASKS_CALIBRATEOFFSET_SPEC&gt;`"</span>]
+<a href=#67 id=67 data-nosnippet>67</a></span><span class="kw">pub type </span>TASKS_CALIBRATEOFFSET = <span class="kw">crate</span>::Reg&lt;tasks_calibrateoffset::TASKS_CALIBRATEOFFSET_SPEC&gt;;
+<a href=#68 id=68 data-nosnippet>68</a><span class="attr">#[doc = <span class="string">"Starts offset auto-calibration"</span>]
+<a href=#69 id=69 data-nosnippet>69</a></span><span class="kw">pub mod </span>tasks_calibrateoffset;
+<a href=#70 id=70 data-nosnippet>70</a><span class="attr">#[doc = <span class="string">"EVENTS_STARTED (rw) register accessor: an alias for `Reg&lt;EVENTS_STARTED_SPEC&gt;`"</span>]
+<a href=#71 id=71 data-nosnippet>71</a></span><span class="kw">pub type </span>EVENTS_STARTED = <span class="kw">crate</span>::Reg&lt;events_started::EVENTS_STARTED_SPEC&gt;;
+<a href=#72 id=72 data-nosnippet>72</a><span class="attr">#[doc = <span class="string">"The SAADC has started"</span>]
+<a href=#73 id=73 data-nosnippet>73</a></span><span class="kw">pub mod </span>events_started;
+<a href=#74 id=74 data-nosnippet>74</a><span class="attr">#[doc = <span class="string">"EVENTS_END (rw) register accessor: an alias for `Reg&lt;EVENTS_END_SPEC&gt;`"</span>]
+<a href=#75 id=75 data-nosnippet>75</a></span><span class="kw">pub type </span>EVENTS_END = <span class="kw">crate</span>::Reg&lt;events_end::EVENTS_END_SPEC&gt;;
+<a href=#76 id=76 data-nosnippet>76</a><span class="attr">#[doc = <span class="string">"The SAADC has filled up the result buffer"</span>]
+<a href=#77 id=77 data-nosnippet>77</a></span><span class="kw">pub mod </span>events_end;
+<a href=#78 id=78 data-nosnippet>78</a><span class="attr">#[doc = <span class="string">"EVENTS_DONE (rw) register accessor: an alias for `Reg&lt;EVENTS_DONE_SPEC&gt;`"</span>]
+<a href=#79 id=79 data-nosnippet>79</a></span><span class="kw">pub type </span>EVENTS_DONE = <span class="kw">crate</span>::Reg&lt;events_done::EVENTS_DONE_SPEC&gt;;
+<a href=#80 id=80 data-nosnippet>80</a><span class="attr">#[doc = <span class="string">"A conversion task has been completed. Depending on the configuration, multiple conversions might be needed for a result to be transferred to RAM."</span>]
+<a href=#81 id=81 data-nosnippet>81</a></span><span class="kw">pub mod </span>events_done;
+<a href=#82 id=82 data-nosnippet>82</a><span class="attr">#[doc = <span class="string">"EVENTS_RESULTDONE (rw) register accessor: an alias for `Reg&lt;EVENTS_RESULTDONE_SPEC&gt;`"</span>]
+<a href=#83 id=83 data-nosnippet>83</a></span><span class="kw">pub type </span>EVENTS_RESULTDONE = <span class="kw">crate</span>::Reg&lt;events_resultdone::EVENTS_RESULTDONE_SPEC&gt;;
+<a href=#84 id=84 data-nosnippet>84</a><span class="attr">#[doc = <span class="string">"Result ready for transfer to RAM"</span>]
+<a href=#85 id=85 data-nosnippet>85</a></span><span class="kw">pub mod </span>events_resultdone;
+<a href=#86 id=86 data-nosnippet>86</a><span class="attr">#[doc = <span class="string">"EVENTS_CALIBRATEDONE (rw) register accessor: an alias for `Reg&lt;EVENTS_CALIBRATEDONE_SPEC&gt;`"</span>]
+<a href=#87 id=87 data-nosnippet>87</a></span><span class="kw">pub type </span>EVENTS_CALIBRATEDONE = <span class="kw">crate</span>::Reg&lt;events_calibratedone::EVENTS_CALIBRATEDONE_SPEC&gt;;
+<a href=#88 id=88 data-nosnippet>88</a><span class="attr">#[doc = <span class="string">"Calibration is complete"</span>]
+<a href=#89 id=89 data-nosnippet>89</a></span><span class="kw">pub mod </span>events_calibratedone;
+<a href=#90 id=90 data-nosnippet>90</a><span class="attr">#[doc = <span class="string">"EVENTS_STOPPED (rw) register accessor: an alias for `Reg&lt;EVENTS_STOPPED_SPEC&gt;`"</span>]
+<a href=#91 id=91 data-nosnippet>91</a></span><span class="kw">pub type </span>EVENTS_STOPPED = <span class="kw">crate</span>::Reg&lt;events_stopped::EVENTS_STOPPED_SPEC&gt;;
+<a href=#92 id=92 data-nosnippet>92</a><span class="attr">#[doc = <span class="string">"The SAADC has stopped"</span>]
+<a href=#93 id=93 data-nosnippet>93</a></span><span class="kw">pub mod </span>events_stopped;
+<a href=#94 id=94 data-nosnippet>94</a><span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+<a href=#95 id=95 data-nosnippet>95</a></span><span class="kw">pub use </span>events_ch::EVENTS_CH;
+<a href=#96 id=96 data-nosnippet>96</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#97 id=97 data-nosnippet>97</a>#[doc = <span class="string">"Unspecified"</span>]
+<a href=#98 id=98 data-nosnippet>98</a></span><span class="kw">pub mod </span>events_ch;
+<a href=#99 id=99 data-nosnippet>99</a><span class="attr">#[doc = <span class="string">"INTEN (rw) register accessor: an alias for `Reg&lt;INTEN_SPEC&gt;`"</span>]
+<a href=#100 id=100 data-nosnippet>100</a></span><span class="kw">pub type </span>INTEN = <span class="kw">crate</span>::Reg&lt;inten::INTEN_SPEC&gt;;
+<a href=#101 id=101 data-nosnippet>101</a><span class="attr">#[doc = <span class="string">"Enable or disable interrupt"</span>]
+<a href=#102 id=102 data-nosnippet>102</a></span><span class="kw">pub mod </span>inten;
+<a href=#103 id=103 data-nosnippet>103</a><span class="attr">#[doc = <span class="string">"INTENSET (rw) register accessor: an alias for `Reg&lt;INTENSET_SPEC&gt;`"</span>]
+<a href=#104 id=104 data-nosnippet>104</a></span><span class="kw">pub type </span>INTENSET = <span class="kw">crate</span>::Reg&lt;intenset::INTENSET_SPEC&gt;;
+<a href=#105 id=105 data-nosnippet>105</a><span class="attr">#[doc = <span class="string">"Enable interrupt"</span>]
+<a href=#106 id=106 data-nosnippet>106</a></span><span class="kw">pub mod </span>intenset;
+<a href=#107 id=107 data-nosnippet>107</a><span class="attr">#[doc = <span class="string">"INTENCLR (rw) register accessor: an alias for `Reg&lt;INTENCLR_SPEC&gt;`"</span>]
+<a href=#108 id=108 data-nosnippet>108</a></span><span class="kw">pub type </span>INTENCLR = <span class="kw">crate</span>::Reg&lt;intenclr::INTENCLR_SPEC&gt;;
+<a href=#109 id=109 data-nosnippet>109</a><span class="attr">#[doc = <span class="string">"Disable interrupt"</span>]
+<a href=#110 id=110 data-nosnippet>110</a></span><span class="kw">pub mod </span>intenclr;
+<a href=#111 id=111 data-nosnippet>111</a><span class="attr">#[doc = <span class="string">"STATUS (r) register accessor: an alias for `Reg&lt;STATUS_SPEC&gt;`"</span>]
+<a href=#112 id=112 data-nosnippet>112</a></span><span class="kw">pub type </span>STATUS = <span class="kw">crate</span>::Reg&lt;status::STATUS_SPEC&gt;;
+<a href=#113 id=113 data-nosnippet>113</a><span class="attr">#[doc = <span class="string">"Status"</span>]
+<a href=#114 id=114 data-nosnippet>114</a></span><span class="kw">pub mod </span>status;
+<a href=#115 id=115 data-nosnippet>115</a><span class="attr">#[doc = <span class="string">"ENABLE (rw) register accessor: an alias for `Reg&lt;ENABLE_SPEC&gt;`"</span>]
+<a href=#116 id=116 data-nosnippet>116</a></span><span class="kw">pub type </span>ENABLE = <span class="kw">crate</span>::Reg&lt;enable::ENABLE_SPEC&gt;;
+<a href=#117 id=117 data-nosnippet>117</a><span class="attr">#[doc = <span class="string">"Enable or disable SAADC"</span>]
+<a href=#118 id=118 data-nosnippet>118</a></span><span class="kw">pub mod </span>enable;
+<a href=#119 id=119 data-nosnippet>119</a><span class="attr">#[doc = <span class="string">"Unspecified"</span>]
+<a href=#120 id=120 data-nosnippet>120</a></span><span class="kw">pub use </span>ch::CH;
+<a href=#121 id=121 data-nosnippet>121</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#122 id=122 data-nosnippet>122</a>#[doc = <span class="string">"Unspecified"</span>]
+<a href=#123 id=123 data-nosnippet>123</a></span><span class="kw">pub mod </span>ch;
+<a href=#124 id=124 data-nosnippet>124</a><span class="attr">#[doc = <span class="string">"RESOLUTION (rw) register accessor: an alias for `Reg&lt;RESOLUTION_SPEC&gt;`"</span>]
+<a href=#125 id=125 data-nosnippet>125</a></span><span class="kw">pub type </span>RESOLUTION = <span class="kw">crate</span>::Reg&lt;resolution::RESOLUTION_SPEC&gt;;
+<a href=#126 id=126 data-nosnippet>126</a><span class="attr">#[doc = <span class="string">"Resolution configuration"</span>]
+<a href=#127 id=127 data-nosnippet>127</a></span><span class="kw">pub mod </span>resolution;
+<a href=#128 id=128 data-nosnippet>128</a><span class="attr">#[doc = <span class="string">"OVERSAMPLE (rw) register accessor: an alias for `Reg&lt;OVERSAMPLE_SPEC&gt;`"</span>]
+<a href=#129 id=129 data-nosnippet>129</a></span><span class="kw">pub type </span>OVERSAMPLE = <span class="kw">crate</span>::Reg&lt;oversample::OVERSAMPLE_SPEC&gt;;
+<a href=#130 id=130 data-nosnippet>130</a><span class="attr">#[doc = <span class="string">"Oversampling configuration. The RESOLUTION is applied before averaging, thus for high OVERSAMPLE a higher RESOLUTION should be used."</span>]
+<a href=#131 id=131 data-nosnippet>131</a></span><span class="kw">pub mod </span>oversample;
+<a href=#132 id=132 data-nosnippet>132</a><span class="attr">#[doc = <span class="string">"SAMPLERATE (rw) register accessor: an alias for `Reg&lt;SAMPLERATE_SPEC&gt;`"</span>]
+<a href=#133 id=133 data-nosnippet>133</a></span><span class="kw">pub type </span>SAMPLERATE = <span class="kw">crate</span>::Reg&lt;samplerate::SAMPLERATE_SPEC&gt;;
+<a href=#134 id=134 data-nosnippet>134</a><span class="attr">#[doc = <span class="string">"Controls normal or continuous sample rate"</span>]
+<a href=#135 id=135 data-nosnippet>135</a></span><span class="kw">pub mod </span>samplerate;
+<a href=#136 id=136 data-nosnippet>136</a><span class="attr">#[doc = <span class="string">"RESULT EasyDMA channel"</span>]
+<a href=#137 id=137 data-nosnippet>137</a></span><span class="kw">pub use </span>result::RESULT;
+<a href=#138 id=138 data-nosnippet>138</a><span class="attr">#[doc = <span class="string">r"Cluster"</span>]
+<a href=#139 id=139 data-nosnippet>139</a>#[doc = <span class="string">"RESULT EasyDMA channel"</span>]
+<a href=#140 id=140 data-nosnippet>140</a></span><span class="kw">pub mod </span>result;</code></pre></div></section></main></body></html>

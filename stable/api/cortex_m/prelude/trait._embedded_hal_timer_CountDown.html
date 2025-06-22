@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A count down timer"><title>_embedded_hal_timer_CountDown in cortex_m::prelude - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="cortex_m" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../static.files/storage-82c7156e.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../cortex_m/index.html">cortex_<wbr>m</a><span class="version">0.7.7</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">_embedded_<wbr>hal_<wbr>timer_<wbr>Count<wbr>Down</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#contract" title="Contract">Contract</a></li><li><a href="#examples" title="Examples">Examples</a></li></ul><h3><a href="#required-associated-types">Required Associated Types</a></h3><ul class="block"><li><a href="#associatedtype.Time" title="Time">Time</a></li></ul><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.start" title="start">start</a></li><li><a href="#tymethod.wait" title="wait">wait</a></li></ul><h3><a href="#dyn-compatibility">Dyn Compatibility</a></h3><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In cortex_<wbr>m::<wbr>prelude</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">cortex_m</a>::<wbr><a href="index.html">prelude</a></div><h1>Trait <span class="trait">_embedded_hal_timer_CountDown</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"></span></div><pre class="rust item-decl"><code>pub trait _embedded_hal_timer_CountDown {
+    type <a href="#associatedtype.Time" class="associatedtype">Time</a>;
+
+    // Required methods
+    fn <a href="#tymethod.start" class="fn">start</a>&lt;T&gt;(&amp;mut self, count: T)
+       <span class="where">where T: <a class="trait" href="https://doc.rust-lang.org/1.87.0/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;Self::<a class="associatedtype" href="trait._embedded_hal_timer_CountDown.html#associatedtype.Time" title="type cortex_m::prelude::_embedded_hal_timer_CountDown::Time">Time</a>&gt;</span>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.wait" class="fn">wait</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.87.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.87.0/core/primitive.unit.html">()</a>, Error&lt;Void&gt;&gt;;
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A count down timer</p>
+<h2 id="contract"><a class="doc-anchor" href="#contract">§</a>Contract</h2>
+<ul>
+<li><code>self.start(count); block!(self.wait());</code> MUST block for AT LEAST the time specified by
+<code>count</code>.</li>
+</ul>
+<p><em>Note</em> that the implementer doesn’t necessarily have to be a <em>downcounting</em> timer; it could also
+be an <em>upcounting</em> timer as long as the above contract is upheld.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>You can use this timer to create delays</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>embedded_hal <span class="kw">as </span>hal;
+<span class="attr">#[macro_use(block)]
+</span><span class="kw">extern crate </span>nb;
+
+<span class="kw">use </span>hal::prelude::<span class="kw-2">*</span>;
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span><span class="kw-2">mut </span>led: Led = {
+        <span class="comment">// ..
+    </span>};
+    <span class="kw">let </span><span class="kw-2">mut </span>timer: Timer6 = {
+        <span class="comment">// ..
+    </span>};
+
+    Led.on();
+    timer.start(<span class="number">1</span>.s());
+    <span class="macro">block!</span>(timer.wait()); <span class="comment">// blocks for 1 second
+    </span>Led.off();
+}
+</code></pre></div>
+</div></details><h2 id="required-associated-types" class="section-header">Required Associated Types<a href="#required-associated-types" class="anchor">§</a></h2><div class="methods"><details class="toggle" open><summary><section id="associatedtype.Time" class="method"><h4 class="code-header">type <a href="#associatedtype.Time" class="associatedtype">Time</a></h4></section></summary><div class="docblock"><p>The unit of time used by this timer</p>
+</div></details></div><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.start" class="method"><h4 class="code-header">fn <a href="#tymethod.start" class="fn">start</a>&lt;T&gt;(&amp;mut self, count: T)<div class="where">where
+    T: <a class="trait" href="https://doc.rust-lang.org/1.87.0/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;Self::<a class="associatedtype" href="trait._embedded_hal_timer_CountDown.html#associatedtype.Time" title="type cortex_m::prelude::_embedded_hal_timer_CountDown::Time">Time</a>&gt;,</div></h4></section></summary><div class="docblock"><p>Starts a new count down</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.wait" class="method"><h4 class="code-header">fn <a href="#tymethod.wait" class="fn">wait</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.87.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.87.0/core/primitive.unit.html">()</a>, Error&lt;Void&gt;&gt;</h4></section></summary><div class="docblock"><p>Non-blockingly “waits” until the count down finishes</p>
+<h5 id="contract-1"><a class="doc-anchor" href="#contract-1">§</a>Contract</h5>
+<ul>
+<li>If <code>Self: Periodic</code>, the timer will start a new count down right after the last one
+finishes.</li>
+<li>Otherwise the behavior of calling <code>wait</code> after the last call returned <code>Ok</code> is UNSPECIFIED.
+Implementers are suggested to panic on this scenario to signal a programmer error.</li>
+</ul>
+</div></details></div><h2 id="dyn-compatibility" class="section-header">Dyn Compatibility<a href="#dyn-compatibility" class="anchor">§</a></h2><div class="dyn-compatibility-info"><p>This trait is <b>not</b> <a href="https://doc.rust-lang.org/1.87.0/reference/items/traits.html#dyn-compatibility">dyn compatible</a>.</p><p><i>In older versions of Rust, dyn compatibility was called "object safety", so this trait is not object safe.</i></p></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"></div><script src="../../trait.impl/embedded_hal/timer/trait.CountDown.js" async></script></section></div></main></body></html>

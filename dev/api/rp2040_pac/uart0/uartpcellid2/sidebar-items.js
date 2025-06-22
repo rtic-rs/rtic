@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UARTPCELLID2_SPEC"],"type":["R","UARTPCELLID2_R"]};
