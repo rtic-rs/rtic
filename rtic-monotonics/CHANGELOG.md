@@ -7,12 +7,15 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+## v2.1.0 - 2025-06-22
+
 ### Changed
 
 - Updated esp32c3 dependency to v0.28.0
 - Updated esp32c3 dependency to v0.27.0
 
 ### Added
+
 - `SYSTIMER` based monotonic for the ESP32-C6
 
 ## v2.0.3 - 2024-10-23
