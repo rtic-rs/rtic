@@ -7,6 +7,8 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+## v1.4.0 - 2025-06-22
+
 ### Added
 
 - Add `arbiter::{i2c, spi}::BlockingArbiterDevice` which allows sharing of `embedded_hal` (non-async) buses. This also helps during initialization of RTIC apps as you can use the arbiter while in `init`. After initialization is complete, convert an `BlockingArbiterDevice` into an `ArbiterDevice` using `BlockingArbiterDevice::into_non_blocking()`.

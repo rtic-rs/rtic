@@ -7,6 +7,14 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Fixed
+
+## v1.1.0 - 2025-06-22
+
 - Fix minor unsoundnes in `Link::remove_from_list`.
 
 ### Added

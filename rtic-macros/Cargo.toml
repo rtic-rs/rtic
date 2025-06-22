@@ -22,7 +22,7 @@ name = "rtic-macros"
 readme = "../README.md"
 repository = "https://github.com/rtic-rs/rtic"
 
-version = "2.1.3"
+version = "2.2.0"
 
 [package.metadata.docs.rs]
 features = ["test-template"]
