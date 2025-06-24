@@ -7,6 +7,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Changed
+- Panic if STM32 prescaler value would overflow
+
 ## v2.1.0 - 2025-06-22
 
 ### Changed
