@@ -238,8 +238,10 @@ macro_rules! make_timer {
                 $timer.cr1().modify(|r| r.set_cen(false));
 
                 assert!((tim_clock_hz % timer_hz) == 0, "Unable to find suitable timer prescaler value!");
-                let psc = tim_clock_hz / timer_hz - 1;
-                $timer.psc().write(|r| r.set_psc(psc as u16));
+                let Ok(psc) = u16::try_from(tim_clock_hz / timer_hz - 1) else {
+                    panic!("Clock prescaler overflowed!");
+                };
+                $timer.psc().write(|r| r.set_psc(psc));
 
                 // Enable full-period interrupt.
                 $timer.dier().modify(|r| r.set_uie(true));
