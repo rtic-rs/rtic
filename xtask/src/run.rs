@@ -68,6 +68,9 @@ fn command_parser(
         CargoCommand::Qemu {
             platform, example, ..
         }
+        | CargoCommand::ExampleSize {
+            platform, example, ..
+        }
         | CargoCommand::Run {
             platform, example, ..
         } => {
@@ -108,7 +111,12 @@ fn command_parser(
             }
 
             let platform_name = platform.name();
-            let run_file = format!("{example}.run");
+            let run_file = if let CargoCommand::ExampleSize { .. } = *command {
+                format!("{example}.size")
+            } else {
+                format!("{example}.run")
+            };
+
             let expected_output_file = ["ci", "expected", &platform_name, &run_file]
                 .iter()
                 .collect::<PathBuf>()
@@ -148,8 +156,7 @@ fn command_parser(
         | CargoCommand::Clippy { .. }
         | CargoCommand::Doc { .. }
         | CargoCommand::Test { .. }
-        | CargoCommand::Book { .. }
-        | CargoCommand::ExampleSize { .. } => {
+        | CargoCommand::Book { .. } => {
             let cargo_result = run_command(command, output_mode, true)?;
             Ok(cargo_result)
         }
@@ -429,6 +436,7 @@ pub fn build_and_check_size<'c>(
     platform: Platforms,
     backend: Backends,
     examples: &'c [String],
+    overwrite: bool,
     arguments: &'c Option<ExtraArguments>,
 ) -> Vec<FinalRunResult<'c>> {
     info!("Measuring for platform: {platform:?}, backend: {backend:?}");
@@ -468,7 +476,7 @@ pub fn build_and_check_size<'c>(
 
             [cmd_build, cmd_size]
         })
-        .map(|cmd| (globals, cmd, false));
+        .map(|cmd| (globals, cmd, overwrite));
 
     runner.run_and_coalesce()
 }
