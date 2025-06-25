@@ -468,7 +468,7 @@ pub enum Commands {
     /// arguments will be passed on
     ///
     /// Example: `cargo xtask size -- -A`
-    Size(Arg),
+    Size(ArgsAndOverwrite),
 
     /// Run examples in QEMU and compare against expected output
     ///
@@ -560,6 +560,19 @@ pub struct QemuAndRun {
     /// This overwrites only missing or mismatching
     #[arg(long)]
     pub overwrite_expected: bool,
+}
+
+#[derive(Debug, Parser, Clone)]
+pub struct ArgsAndOverwrite {
+    /// If expected output is missing or mismatching, recreate the file
+    ///
+    /// This overwrites only missing or mismatching
+    #[arg(long)]
+    pub overwrite_expected: bool,
+
+    /// Options to pass to `cargo <subcommand>`
+    #[command(subcommand)]
+    pub arguments: Option<ExtraArguments>,
 }
 
 #[derive(Debug, Parser, Clone)]
