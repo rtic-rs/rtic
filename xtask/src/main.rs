@@ -317,6 +317,7 @@ fn main() -> anyhow::Result<()> {
                 platform,
                 backend,
                 &examples_to_run,
+                args.overwrite_expected,
                 &args.arguments,
             )
         }
