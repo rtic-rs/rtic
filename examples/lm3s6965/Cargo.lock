@@ -491,7 +491,7 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "rtic"
-version = "2.1.3"
+version = "2.2.0"
 dependencies = [
  "bare-metal 1.0.0",
  "cortex-m",
@@ -503,7 +503,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-common"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "critical-section",
  "portable-atomic",
@@ -517,7 +517,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.1.3"
+version = "2.2.0"
 dependencies = [
  "indexmap",
  "proc-macro-error2",
@@ -528,7 +528,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-monotonics"
-version = "2.0.3"
+version = "2.1.0"
 dependencies = [
  "cfg-if",
  "cortex-m",
@@ -539,7 +539,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-sync"
-version = "1.3.2"
+version = "1.4.0"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
@@ -553,7 +553,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-time"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
