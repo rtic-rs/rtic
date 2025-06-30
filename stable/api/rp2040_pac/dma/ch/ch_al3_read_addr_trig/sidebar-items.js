@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CH_AL3_READ_ADDR_TRIG_SPEC"],"type":["R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["modify_reg","read_reg","reset_reg","write_reg"],"struct":["RORegister","RWRegister","UnsafeRORegister","UnsafeRWRegister","UnsafeWORegister","WORegister"]};

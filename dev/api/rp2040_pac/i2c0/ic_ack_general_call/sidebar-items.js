@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ACK_GEN_CALL_A"],"struct":["IC_ACK_GENERAL_CALL_SPEC"],"type":["ACK_GEN_CALL_R","ACK_GEN_CALL_W","R","W"]};
