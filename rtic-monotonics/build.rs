@@ -57,7 +57,7 @@ fn stm32() {
                     println!("{}", p.name);
                     let port_letter = p.name.strip_prefix("GPIO").unwrap();
                     for pin_num in 0..16 {
-                        singletons.push(format!("P{}{}", port_letter, pin_num));
+                        singletons.push(format!("P{port_letter}{pin_num}"));
                     }
                 }
 
