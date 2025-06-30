@@ -81,7 +81,7 @@ pub fn pre_init_preprocessing(app: &mut App, _analysis: &SyntaxAnalysis) -> pars
         .collect::<HashSet<_>>();
 
     for i in 0..soft_priorities.len() {
-        let dispatcher_ident = Ident::new(&format!("__RTICDispatcher{}", i), Span::call_site());
+        let dispatcher_ident = Ident::new(&format!("__RTICDispatcher{i}"), Span::call_site());
         app.args
             .dispatchers
             .insert(dispatcher_ident, Dispatcher { attrs: vec![] });

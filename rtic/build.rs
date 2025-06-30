@@ -13,7 +13,7 @@ fn main() {
         })
         .collect();
     if backends.len() > 1 {
-        panic!("More than one backend feature selected: {:?}", backends);
+        panic!("More than one backend feature selected: {backends:?}");
     }
     let backend = backends.pop().expect("No backend feature selected.");
 
@@ -34,7 +34,7 @@ fn main() {
             println!("cargo:rustc-cfg=feature=\"riscv-slic\"");
         }
         _ => {
-            panic!("Unknown backend feature: {:?}", backend);
+            panic!("Unknown backend feature: {backend:?}");
         }
     }
 
