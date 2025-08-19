@@ -2,17 +2,17 @@
 
 ## Cortex-M Devices
 
-While RTIC can currently target all Cortex-m devices there are some key architecture differences that 
+While RTIC can currently target all Cortex-M devices there are some key architecture differences that 
 users should be aware of. Namely, the absence of Base Priority Mask Register (`BASEPRI`) which lends
 itself exceptionally well to the hardware priority ceiling support used in RTIC, in the ARMv6-M and
 ARMv8-M-base architectures, which forces RTIC to use source masking instead. For each implementation
-of lock and a detailed commentary of pros and cons, see the implementation of
-[lock in src/export.rs][src_export].
+of lock and a detailed commentary of pros and cons, see the implementations of
+[lock under rtic/src/export][src_export].
 
-[src_export]: https://github.com/rtic-rs/rtic/blob/master/src/export.rs
+[src_export]: https://github.com/rtic-rs/rtic/tree/master/rtic/src/export
 
 These differences influence how critical sections are realized, but functionality should be the same
-except that ARMv6-M/ARMv8-M-base cannot have tasks with shared resources bound to exception
+except that ARMv6-M/ARMv8-M-base will fall back to a global critical section for tasks with shared resources bound to exception
 handlers, as these cannot be masked in hardware.
 
 Table 1 below shows a list of Cortex-m processors and which type of critical section they employ.
@@ -67,7 +67,7 @@ priority than task B, it immediately preempts task B and is free to use the shar
 risk of data race conditions. At time *t4*, task A completes and returns the execution context to B.
 
 Since source masking relies on use of the NVIC, core exception sources such as HardFault, SVCall,
-PendSV, and SysTick cannot share data with other tasks.
+PendSV, and SysTick will fall back to a global critical section for locking when sharing data with other tasks.
 
 ## RISC-V Devices
 
