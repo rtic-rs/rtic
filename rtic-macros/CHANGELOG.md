@@ -7,6 +7,11 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed race condition when using shared resources in exception handlers on ARMv6-M and ARMv8-M-base.  
+  Note that on ARMv6-M and ARMv8-M-base accessing resources shared with exception handlers now uses a global critical section.
+
 ## [v2.2.0] - 2025-06-22
 
 ### Added
