@@ -75,17 +75,19 @@ mod source_masking {
         app: &App,
         analysis: &CodegenAnalysis,
         cfgs: &[Attribute],
-        resources_prefix: bool,
         name: &Ident,
+        path: &TokenStream2,
         ty: &TokenStream2,
-        ceiling: u8,
+        mut ceiling: u8,
         ptr: &TokenStream2,
     ) -> TokenStream2 {
-        let path = if resources_prefix {
-            quote!(shared_resources::#name)
-        } else {
-            quote!(#name)
-        };
+        // If resource is shared with an exception handler then boost ceiling to `u8::MAX`
+        // This forces usage of global critical section in `rtic::export::lock(..)`
+        if app.hardware_tasks.values().any(|task| {
+            is_exception(&task.args.binds) && task.args.shared_resources.contains_key(name)
+        }) {
+            ceiling = u8::MAX;
+        }
 
         // Computing mapping of used interrupts to masks
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
@@ -164,18 +166,12 @@ mod basepri {
         app: &App,
         _analysis: &CodegenAnalysis,
         cfgs: &[Attribute],
-        resources_prefix: bool,
-        name: &Ident,
+        _name: &Ident,
+        path: &TokenStream2,
         ty: &TokenStream2,
         ceiling: u8,
         ptr: &TokenStream2,
     ) -> TokenStream2 {
-        let path = if resources_prefix {
-            quote!(shared_resources::#name)
-        } else {
-            quote!(#name)
-        };
-
         let device = &app.args.device;
         quote!(
             #(#cfgs)*

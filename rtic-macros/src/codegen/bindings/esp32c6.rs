@@ -24,17 +24,12 @@ mod esp32c6 {
         _app: &App,
         _analysis: &CodegenAnalysis,
         cfgs: &[Attribute],
-        resources_prefix: bool,
-        name: &Ident,
+        _name: &Ident,
+        path: &TokenStream2,
         ty: &TokenStream2,
         ceiling: u8,
         ptr: &TokenStream2,
     ) -> TokenStream2 {
-        let path = if resources_prefix {
-            quote!(shared_resources::#name)
-        } else {
-            quote!(#name)
-        };
         quote!(
             #(#cfgs)*
             impl<'a> rtic::Mutex for #path<'a> {

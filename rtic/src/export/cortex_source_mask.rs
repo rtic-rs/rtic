@@ -100,7 +100,7 @@ where
 /// (Sub)-zero as:
 /// - Either zero OH (lock optimized out), or
 /// - Amounting to an optimal assembly implementation
-///   - if ceiling == (1 << nvic_prio_bits)
+///   - if ceiling >= 4
 ///     - we execute the closure in a global critical section (interrupt free)
 ///     - CS entry cost, single write to core register
 ///     - CS exit cost, single write to core register
@@ -112,11 +112,10 @@ where
 /// - On par or better than any hand written implementation of SRP
 ///
 /// Limitations:
-/// Current implementation does not allow for tasks with shared resources
-/// to be bound to exception handlers, as these cannot be masked in HW.
+/// Current implementation always uses a global critical section when
+/// one of the tasks is bound to an exception handler (this is indicated by `ceiling == u8::MAX`).
 ///
 /// Possible solutions:
-/// - Mask exceptions by global critical sections (interrupt::free)
 /// - Temporary lower exception priority
 ///
 /// These possible solutions are set goals for future work
@@ -129,10 +128,10 @@ pub unsafe fn lock<T, R, const M: usize>(
 ) -> R {
     unsafe {
         if ceiling >= 4 {
-            // safe to manipulate outside critical section
-            // execute closure under protection of raised system ceiling
+            // note: `ceiling == u8::MAX` is used to indicate that one of the tasks is bound to an exception handler
+            // exception handlers can't be masked with NVIC, so we need to use a global critical section
 
-            // safe to manipulate outside critical section
+            // execute closure under protection of global critical section
             critical_section::with(|_| f(&mut *ptr))
         } else {
             // safe to manipulate outside critical section
