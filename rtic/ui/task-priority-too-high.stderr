@@ -1,5 +1,5 @@
-error[E0080]: evaluation of constant value failed
+error[E0080]: evaluation panicked: Maximum priority used by interrupt vector 'I2C0' is more than supported by hardware
  --> ui/task-priority-too-high.rs:3:1
   |
 3 | #[rtic::app(device = lm3s6965)]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation panicked: Maximum priority used by interrupt vector 'I2C0' is more than supported by hardware
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `app::main::_` failed here
