@@ -11,7 +11,7 @@ use syn::{
     braced,
     parse::{self, Parse, ParseStream, Parser},
     token::Brace,
-    Ident, Item, LitInt, Token,
+    Attribute, Ident, Item, LitInt, Meta, Token,
 };
 
 use crate::syntax::{
@@ -28,6 +28,7 @@ pub fn app(args: TokenStream2, input: TokenStream2) -> parse::Result<App> {
 }
 
 pub(crate) struct Input {
+    pub attribute_metas: Vec<Meta>,
     _mod_token: Token![mod],
     pub ident: Ident,
     _brace_token: Brace,
@@ -48,12 +49,18 @@ impl Parse for Input {
 
         let content;
 
+        let mut attributes = input.call(Attribute::parse_outer)?;
         let _mod_token = input.parse()?;
         let ident = input.parse()?;
         let _brace_token = braced!(content in input);
+        let inner_attributes = content.call(Attribute::parse_inner)?;
         let items = content.call(parse_items)?;
 
+        attributes.extend(inner_attributes);
+        let attribute_metas = attributes.into_iter().map(|a| a.meta).collect();
+
         Ok(Input {
+            attribute_metas,
             _mod_token,
             ident,
             _brace_token,

@@ -531,6 +531,7 @@ impl App {
         }
 
         Ok(App {
+            attribute_metas: input.attribute_metas,
             args,
             name: input.ident,
             init,

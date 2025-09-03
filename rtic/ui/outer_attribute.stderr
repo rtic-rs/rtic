@@ -1,0 +1,11 @@
+error: this lint expectation is unfulfilled
+ --> ui/outer_attribute.rs:5:10
+  |
+5 | #[expect(while_true)]
+  |          ^^^^^^^^^^
+  |
+note: the lint level is defined here
+ --> ui/outer_attribute.rs:2:9
+  |
+2 | #![deny(unfulfilled_lint_expectations)]
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
