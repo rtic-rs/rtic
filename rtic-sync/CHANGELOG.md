@@ -7,6 +7,10 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+### Changed
+
+- Un-hide lifetimes of output type in `Signal::split` to resolve a new warning.
+
 ## v1.4.0 - 2025-06-22
 
 ### Added
