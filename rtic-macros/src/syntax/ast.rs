@@ -1,6 +1,6 @@
 //! Abstract Syntax Tree
 
-use syn::{Attribute, Expr, Ident, Item, ItemUse, Pat, PatType, Path, Stmt, Type};
+use syn::{Attribute, Expr, Ident, Item, ItemUse, Meta, Pat, PatType, Path, Stmt, Type};
 
 use crate::syntax::{backend::BackendArgs, Map};
 
@@ -10,6 +10,9 @@ use crate::syntax::{backend::BackendArgs, Map};
 pub struct App {
     /// The arguments to the `#[app]` attribute
     pub args: AppArgs,
+
+    /// All attributes applied to the `#[app]` module (meta only)
+    pub attribute_metas: Vec<Meta>,
 
     /// The name of the `const` item on which the `#[app]` attribute has been placed
     pub name: Ident,

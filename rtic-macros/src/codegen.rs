@@ -44,12 +44,14 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
     let user_code = &app.user_code;
     let name = &app.name;
     let device = &app.args.device;
+    let attribute_metas = &app.attribute_metas;
 
     let rt_err = util::rt_err_ident();
     let async_limit = bindings::async_prio_limit(app, analysis);
 
     quote!(
         /// The RTIC application module
+        #(#[#attribute_metas])*
         pub mod #name {
             /// Always include the device crate which contains the vector table
             use #device as #rt_err;
