@@ -2,11 +2,13 @@ name: Security audit
 on:
   schedule:
     - cron: '0 0 * * *'
+  workflow_dispatch:
 jobs:
   security_audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - run: cargo generate-lockfile # create Cargo.lock
       - uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
