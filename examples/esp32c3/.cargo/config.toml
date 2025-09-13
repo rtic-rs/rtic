@@ -1,16 +1,20 @@
 [target.riscv32imc-unknown-none-elf]
 # Real hardware
-# runner = "espflash flash --monitor"
+# runner = "espflash flash --monitor --chip esp32c3"
 
 # QEMU emulator
 runner = "./runner.sh"
 
 [build]
 rustflags = [
-  "-C", "link-arg=-Tlinkall.x",
   # Required to obtain backtraces (e.g. when using the "esp-backtrace" crate.)
   # NOTE: May negatively impact performance of produced code
   "-C", "force-frame-pointers",
+  # This should be last.
+  "-C", "link-arg=-Tlinkall.x",
 ]
 
 target = "riscv32imc-unknown-none-elf"
+
+[unstable]
+build-std = ["alloc", "core"]

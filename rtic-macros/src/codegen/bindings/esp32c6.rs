@@ -15,8 +15,8 @@ mod esp32c6 {
     use syn::{parse, Attribute, Ident};
 
     // esp-hal reserves interrupts 1-19:
-    // https://github.com/esp-rs/esp-hal/blob/esp-hal-v1.0.0-beta.0/esp-hal/src/interrupt/riscv.rs#L200
-    // https://github.com/esp-rs/esp-hal/blob/esp-hal-v1.0.0-beta.0/esp-hal/src/interrupt/riscv.rs#L725
+    // https://github.com/esp-rs/esp-hal/blob/esp-hal-v1.0.0-rc.0/esp-hal/src/interrupt/riscv.rs#L209
+    // https://github.com/esp-rs/esp-hal/blob/esp-hal-v1.0.0-rc.0/esp-hal/src/interrupt/riscv.rs#L597
     const EXTERNAL_INTERRUPTS: [u8; 12] = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
 
     #[allow(clippy::too_many_arguments)]
