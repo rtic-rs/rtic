@@ -1,24 +1,25 @@
 [package]
 name = "esp32-c3"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [workspace]
 
+[features]
+test-critical-section = []
+riscv-esp32c3-backend = ["rtic/riscv-esp32c3-backend", "rtic-monotonics/esp32c3-systimer"]
+
 [dependencies]
-rtic = { path = "../../rtic/" }
-rtic-monotonics = {path = "../../rtic-monotonics/"}
-esp-hal = { version = "1.0.0-beta.0", features = ["esp32c3", "unstable"] }
-esp-backtrace = { version = "0.15.0", features = [
+esp-backtrace = { version = "0.17.0", features = [
     "esp32c3",
     "panic-handler",
     "exception-handler",
     "println",
 ] }
-esp32c3 = {version = "0.29.0", features = ["critical-section"]}
-esp-println = { version = "0.13.0", features = ["esp32c3"] }
-
-[features]
-test-critical-section = []
-riscv-esp32c3-backend = ["rtic/riscv-esp32c3-backend", "rtic-monotonics/esp32c3-systimer"]
+esp-bootloader-esp-idf = { version = "0.2.0", features = ["esp32c3"] }
+esp-hal = { version = "=1.0.0-rc.0", features = ["esp32c3", "unstable"] }
+esp-println = { version = "0.15.0", features = ["esp32c3"] }
+esp32c3 = { version = "0.30.0", features = ["critical-section"] }
+rtic = { path = "../../rtic/" }
+rtic-monotonics = { path = "../../rtic-monotonics/" }

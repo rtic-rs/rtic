@@ -1,5 +1,12 @@
+#![deny(
+    clippy::mem_forget,
+    reason = "mem::forget is generally not safe to do with esp_hal types, especially those \
+    holding buffers for the duration of a data transfer."
+)]
 #![no_main]
 #![no_std]
+
+esp_bootloader_esp_idf::esp_app_desc!();
 
 #[rtic::app(device = esp32c6, dispatchers=[FROM_CPU_INTR0, FROM_CPU_INTR1])]
 mod app {

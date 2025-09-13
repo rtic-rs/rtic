@@ -1,9 +1,10 @@
-### ESP32-C3 RTIC template
+# ESP32-C3 RTIC template
+
 This crate showcases a simple RTIC application for the ESP32-C3.
 
 ## Prerequisites
 
-# Espressif toolchain
+### Espressif toolchain
 
 This crate uses the most convenient option in ``cargo-espflash`` and ``espflash``
 ```cargo install cargo-espflash espflash```
@@ -26,7 +27,8 @@ Now, running
 
 in the root of this crate should do the trick.
 
-# Expected behavior
+## Expected behavior
+
 The example ``sw_and_hw``
 - Prints ``init``
 - Enters a high prio task
