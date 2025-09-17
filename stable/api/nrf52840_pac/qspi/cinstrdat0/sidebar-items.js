@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CINSTRDAT0_SPEC","R","W"],"type":["BYTE0_R","BYTE0_W","BYTE1_R","BYTE1_W","BYTE2_R","BYTE2_W","BYTE3_R","BYTE3_W"]};

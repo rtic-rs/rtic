@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A `heapless::IndexMap` using the default FNV hasher"><title>FnvIndexMap in heapless - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc type"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../heapless/index.html">heapless</a><span class="version">0.7.17</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">FnvIndex<wbr>Map</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li></ul><h3><a href="#aliased-type">Aliased Type</a></h3></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate heapless</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">heapless</a></div><h1>Type Alias <span class="type">FnvIndexMap</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/heapless/indexmap.rs.html#48">Source</a> </span></div><pre class="rust item-decl"><code>pub type FnvIndexMap&lt;K, V, const N: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/core/primitive.usize.html">usize</a>&gt; = <a class="struct" href="struct.IndexMap.html" title="struct heapless::IndexMap">IndexMap</a>&lt;K, V, <a class="struct" href="../hash32/struct.BuildHasherDefault.html" title="struct hash32::BuildHasherDefault">BuildHasherDefault</a>&lt;<a class="struct" href="../hash32/fnv/struct.Hasher.html" title="struct hash32::fnv::Hasher">FnvHasher</a>&gt;, N&gt;;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A <a href="./struct.IndexMap.html"><code>heapless::IndexMap</code></a> using the default FNV hasher</p>
+<p>A list of all Methods and Traits available for <code>FnvIndexMap</code> can be found in
+the <a href="./struct.IndexMap.html"><code>heapless::IndexMap</code></a> documentation.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>heapless::FnvIndexMap;
+
+<span class="comment">// A hash map with a capacity of 16 key-value pairs allocated on the stack
+</span><span class="kw">let </span><span class="kw-2">mut </span>book_reviews = FnvIndexMap::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="number">16</span>&gt;::new();
+
+<span class="comment">// review some books.
+</span>book_reviews.insert(<span class="string">"Adventures of Huckleberry Finn"</span>,    <span class="string">"My favorite book."</span>).unwrap();
+book_reviews.insert(<span class="string">"Grimms' Fairy Tales"</span>,               <span class="string">"Masterpiece."</span>).unwrap();
+book_reviews.insert(<span class="string">"Pride and Prejudice"</span>,               <span class="string">"Very enjoyable."</span>).unwrap();
+book_reviews.insert(<span class="string">"The Adventures of Sherlock Holmes"</span>, <span class="string">"Eye lyked it alot."</span>).unwrap();
+
+<span class="comment">// check for a specific one.
+</span><span class="kw">if </span>!book_reviews.contains_key(<span class="string">"Les Misérables"</span>) {
+    <span class="macro">println!</span>(<span class="string">"We've got {} reviews, but Les Misérables ain't one."</span>,
+             book_reviews.len());
+}
+
+<span class="comment">// oops, this review has a lot of spelling mistakes, let's delete it.
+</span>book_reviews.remove(<span class="string">"The Adventures of Sherlock Holmes"</span>);
+
+<span class="comment">// look up the values associated with some keys.
+</span><span class="kw">let </span>to_find = [<span class="string">"Pride and Prejudice"</span>, <span class="string">"Alice's Adventure in Wonderland"</span>];
+<span class="kw">for </span>book <span class="kw">in </span><span class="kw-2">&amp;</span>to_find {
+    <span class="kw">match </span>book_reviews.get(book) {
+        <span class="prelude-val">Some</span>(review) =&gt; <span class="macro">println!</span>(<span class="string">"{}: {}"</span>, book, review),
+        <span class="prelude-val">None </span>=&gt; <span class="macro">println!</span>(<span class="string">"{} is unreviewed."</span>, book)
+    }
+}
+
+<span class="comment">// iterate over everything.
+</span><span class="kw">for </span>(book, review) <span class="kw">in </span><span class="kw-2">&amp;</span>book_reviews {
+    <span class="macro">println!</span>(<span class="string">"{}: \"{}\""</span>, book, review);
+}</code></pre></div>
+</div></details><h2 id="aliased-type" class="section-header">Aliased Type<a href="#aliased-type" class="anchor">§</a></h2><pre class="rust item-decl"><code>pub struct FnvIndexMap&lt;K, V, const N: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/core/primitive.usize.html">usize</a>&gt; { <span class="comment">/* private fields */</span> }</code></pre><script src="../type.impl/heapless/struct.IndexMap.js" data-self-path="heapless::indexmap::FnvIndexMap" async></script></section></div></main></body></html>

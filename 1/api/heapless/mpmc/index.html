@@ -1,0 +1,80 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A fixed capacity Multiple-Producer Multiple-Consumer (MPMC) lock-free queue"><title>heapless::mpmc - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../heapless/index.html">heapless</a><span class="version">0.7.17</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module mpmc</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li><li><a href="#benchmark" title="Benchmark">Benchmark</a></li><li><a href="#portability" title="Portability">Portability</a></li><li><a href="#references" title="References">References</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate heapless</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">heapless</a></div><h1>Module <span>mpmc</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/heapless/mpmc.rs.html#1-329">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A fixed capacity Multiple-Producer Multiple-Consumer (MPMC) lock-free queue</p>
+<p>NOTE: This module is not available on targets that do <em>not</em> support CAS operations and are not
+emulated by the <a href="https://crates.io/crates/atomic-polyfill"><code>atomic_polyfill</code></a> crate (e.g.,
+MSP430).</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>This queue can be constructed in “const context”. Placing it in a <code>static</code> variable lets <em>all</em>
+contexts (interrupts / threads / <code>main</code>) safely enqueue and dequeue items from it.</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#![no_main]
+#![no_std]
+
+</span><span class="kw">use </span>panic_semihosting <span class="kw">as _</span>;
+
+<span class="kw">use </span>cortex_m::{asm, peripheral::syst::SystClkSource};
+<span class="kw">use </span>cortex_m_rt::{entry, exception};
+<span class="kw">use </span>cortex_m_semihosting::hprintln;
+<span class="kw">use </span>heapless::mpmc::Q2;
+
+<span class="kw">static </span>Q: Q2&lt;u8&gt; = Q2::new();
+
+<span class="attr">#[entry]
+</span><span class="kw">fn </span>main() -&gt; ! {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = cortex_m::Peripherals::take() {
+        <span class="kw">let </span><span class="kw-2">mut </span>syst = p.SYST;
+
+        <span class="comment">// configures the system timer to trigger a SysTick exception every second
+        </span>syst.set_clock_source(SystClkSource::Core);
+        syst.set_reload(<span class="number">12_000_000</span>);
+        syst.enable_counter();
+        syst.enable_interrupt();
+    }
+
+    <span class="kw">loop </span>{
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = Q.dequeue() {
+            <span class="macro">hprintln!</span>(<span class="string">"{}"</span>, x).ok();
+        } <span class="kw">else </span>{
+            asm::wfi();
+        }
+    }
+}
+
+<span class="attr">#[exception]
+</span><span class="kw">fn </span>SysTick() {
+    <span class="kw">static </span><span class="kw-2">mut </span>COUNT: u8 = <span class="number">0</span>;
+
+    Q.enqueue(<span class="kw-2">*</span>COUNT).ok();
+    <span class="kw-2">*</span>COUNT += <span class="number">1</span>;
+}</code></pre></div>
+<h2 id="benchmark"><a class="doc-anchor" href="#benchmark">§</a>Benchmark</h2>
+<p>Measured on a ARM Cortex-M3 core running at 8 MHz and with zero Flash wait cycles</p>
+<div><table><thead><tr><th>N</th><th><code>Q8::&lt;u8&gt;::enqueue().ok()</code> (<code>z</code>)</th><th><code>Q8::&lt;u8&gt;::dequeue()</code> (<code>z</code>)</th></tr></thead><tbody>
+<tr><td>0</td><td>34</td><td>35</td></tr>
+<tr><td>1</td><td>52</td><td>53</td></tr>
+<tr><td>2</td><td>69</td><td>71</td></tr>
+</tbody></table>
+</div>
+<ul>
+<li><code>N</code> denotes the number of <em>interruptions</em>. On Cortex-M, an interruption consists of an
+interrupt handler preempting the would-be atomic section of the <code>enqueue</code> / <code>dequeue</code>
+operation. Note that it does <em>not</em> matter if the higher priority handler uses the queue or
+not.</li>
+<li>All execution times are in clock cycles. 1 clock cycle = 125 ns.</li>
+<li>Execution time is <em>dependent</em> of <code>mem::size_of::&lt;T&gt;()</code>. Both operations include one
+<code>memcpy(T)</code> in their successful path.</li>
+<li>The optimization level is indicated in parentheses.</li>
+<li>The numbers reported correspond to the successful path (i.e. <code>Some</code> is returned by <code>dequeue</code>
+and <code>Ok</code> is returned by <code>enqueue</code>).</li>
+</ul>
+<h2 id="portability"><a class="doc-anchor" href="#portability">§</a>Portability</h2>
+<p>This module requires CAS atomic instructions which are not available on all architectures
+(e.g.  ARMv6-M (<code>thumbv6m-none-eabi</code>) and MSP430 (<code>msp430-none-elf</code>)). These atomics can be
+emulated however with <a href="https://crates.io/crates/atomic-polyfill"><code>atomic_polyfill</code></a>, which is
+enabled with the <code>cas</code> feature and is enabled by default for <code>thumbv6m-none-eabi</code> and <code>riscv32</code>
+targets. MSP430 is currently not supported by
+<a href="https://crates.io/crates/atomic-polyfill"><code>atomic_polyfill</code></a>.</p>
+<h2 id="references"><a class="doc-anchor" href="#references">§</a>References</h2>
+<p>This is an implementation of Dmitry Vyukov’s <a href="http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue">“Bounded MPMC queue”</a> minus the cache padding.</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.MpMcQueue.html" title="struct heapless::mpmc::MpMcQueue">MpMc<wbr>Queue</a></dt><dd>MPMC queue with a capacity for N elements
+N must be a power of 2
+The max value of N is u8::MAX - 1 if <code>mpmc_large</code> feature is not enabled.</dd></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.Q2.html" title="type heapless::mpmc::Q2">Q2</a></dt><dd>MPMC queue with a capability for 2 elements.</dd><dt><a class="type" href="type.Q4.html" title="type heapless::mpmc::Q4">Q4</a></dt><dd>MPMC queue with a capability for 4 elements.</dd><dt><a class="type" href="type.Q8.html" title="type heapless::mpmc::Q8">Q8</a></dt><dd>MPMC queue with a capability for 8 elements.</dd><dt><a class="type" href="type.Q16.html" title="type heapless::mpmc::Q16">Q16</a></dt><dd>MPMC queue with a capability for 16 elements.</dd><dt><a class="type" href="type.Q32.html" title="type heapless::mpmc::Q32">Q32</a></dt><dd>MPMC queue with a capability for 32 elements.</dd><dt><a class="type" href="type.Q64.html" title="type heapless::mpmc::Q64">Q64</a></dt><dd>MPMC queue with a capability for 64 elements.</dd></dl></section></div></main></body></html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="32-bit hashing machinery"><title>hash32 - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="hash32" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../hash32/index.html">hash32</a><span class="version">0.2.1</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#why" title="Why?">Why?</a></li><li><a href="#relationship-to-corehash" title="Relationship to `core::hash`">Relationship to <code>core::hash</code></a></li><li><a href="#derivehash32" title="`#[derive(Hash32)]`"><code>#[derive(Hash32)]</code></a></li><li><a href="#hashers" title="Hashers">Hashers</a></li><li><a href="#msrv" title="MSRV">MSRV</a></li><li><a href="#future" title="Future">Future</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>hash32</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/hash32/lib.rs.html#1-363">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>32-bit hashing machinery</p>
+<h2 id="why"><a class="doc-anchor" href="#why">§</a>Why?</h2>
+<p>Because 32-bit architectures are a thing (e.g. ARM Cortex-M) and you don’t want your hashing
+function to pull in a bunch of slow 64-bit compiler intrinsics (software implementations of
+64-bit operations).</p>
+<h2 id="relationship-to-corehash"><a class="doc-anchor" href="#relationship-to-corehash">§</a>Relationship to <code>core::hash</code></h2>
+<p>This crate exposes the same interfaces you’ll find in <a href="https://doc.rust-lang.org/std/hash/index.html"><code>core::hash</code></a>: <code>Hash</code>, <code>Hasher</code>,
+<code>BuildHasher</code> and <code>BuildHasherDefault</code>. The main difference is that <code>hash32::Hasher::finish</code>
+returns a <code>u32</code> instead of <code>u64</code>, and the contract of <code>hash32::Hasher</code> forbids the implementer
+from performing 64-bit (or 128-bit) operations while computing the hash.</p>
+<h2 id="derivehash32"><a class="doc-anchor" href="#derivehash32">§</a><code>#[derive(Hash32)]</code></h2>
+<p>The easiest way to implement <code>hash32::Hash</code> for a <code>struct</code> is to use the <code>#[derive(Hash32)]</code>.</p>
+<p>Note that you need to <em>explicitly</em> depend on both <code>hash32</code> <em>and</em> <code>hash32_derive</code>; both crates
+must appear in your <code>Cargo.toml</code>.</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>hash32_derive::Hash32;
+
+<span class="attr">#[derive(Hash32)]
+</span><span class="kw">struct </span>Ipv4Addr([u8; <span class="number">4</span>]);
+
+</code></pre></div>
+<h2 id="hashers"><a class="doc-anchor" href="#hashers">§</a>Hashers</h2>
+<p>This crate provides implementations of the following 32-bit hashing algorithms:</p>
+<ul>
+<li><a href="struct.FnvHasher.html">Fowler-Noll-Vo</a></li>
+<li><a href="struct.Murmur3Hasher.html">MurmurHash3</a></li>
+</ul>
+<h2 id="msrv"><a class="doc-anchor" href="#msrv">§</a>MSRV</h2>
+<p>This crate is guaranteed to compile on latest stable Rust. It <em>might</em> compile on older
+versions but that may change in any new patch release.</p>
+<h2 id="future"><a class="doc-anchor" href="#future">§</a>Future</h2>
+<p>In the future we’d like to deprecate this crate in favor of making <code>core::hash::Hasher</code> generic
+over the size of the computed hash. Below is shown the planned change (but it doesn’t work due
+to limitations in the <code>associated_type_defaults</code> feature):</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#![feature(associated_type_defaults)]
+
+</span><span class="kw">trait </span>Hasher {
+    <span class="kw">type </span>Hash = u64; <span class="comment">// default type for backwards compatibility
+
+    </span><span class="kw">fn </span>finish(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::Hash; <span class="comment">// changed
+    </span><span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bytes: <span class="kw-2">&amp;</span>[u8]);
+}</code></pre></div>
+<p>With this change a single <code>#[derive(Hash)]</code> would enough to make a type hashable with 32-bit and
+64-bit hashers.</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.BuildHasherDefault.html" title="struct hash32::BuildHasherDefault">Build<wbr>Hasher<wbr>Default</a></dt><dd>See <a href="https://doc.rust-lang.org/core/hash/struct.BuildHasherDefault.html"><code>core::hash::BuildHasherDefault</code></a> for details</dd><dt><a class="struct" href="struct.FnvHasher.html" title="struct hash32::FnvHasher">FnvHasher</a></dt><dd>32-bit Fowler-Noll-Vo hasher</dd><dt><a class="struct" href="struct.Murmur3Hasher.html" title="struct hash32::Murmur3Hasher">Murmur3<wbr>Hasher</a></dt><dd>32-bit MurmurHash3 hasher</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.BuildHasher.html" title="trait hash32::BuildHasher">Build<wbr>Hasher</a></dt><dd>See <a href="https://doc.rust-lang.org/core/hash/trait.BuildHasher.html"><code>core::hash::BuildHasher</code></a> for details</dd><dt><a class="trait" href="trait.Hash.html" title="trait hash32::Hash">Hash</a></dt><dd>See <a href="https://doc.rust-lang.org/core/hash/trait.Hash.html"><code>core::hash::Hash</code></a> for details</dd><dt><a class="trait" href="trait.Hasher.html" title="trait hash32::Hasher">Hasher</a></dt><dd>See <a href="https://doc.rust-lang.org/core/hash/trait.Hasher.html"><code>core::hash::Hasher</code></a> for details</dd></dl></section></div></main></body></html>

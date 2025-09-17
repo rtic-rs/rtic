@@ -1,0 +1,211 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A heap-less, interrupt-safe, lock-free memory pool (*)"><title>heapless::pool - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../heapless/index.html">heapless</a><span class="version">0.7.17</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module pool</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#portability" title="Portability">Portability</a></li><li><a href="#soundness" title="Soundness">Soundness</a></li><li><a href="#x86_64-support--limitations" title="x86_64 support / limitations">x86_64 support / limitations</a><ul><li><a href="#x86_64-limitations" title="x86_64 Limitations">x86_64 Limitations</a></li></ul></li><li><a href="#references" title="References">References</a></li></ul><h3><a href="#modules">Module Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate heapless</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">heapless</a></div><h1>Module <span>pool</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/heapless/pool/mod.rs.html#1-693">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A heap-less, interrupt-safe, lock-free memory pool (*)</p>
+<p>NOTE: This module is not available on targets that do <em>not</em> support CAS operations and are not
+emulated by the <a href="https://crates.io/crates/atomic-polyfill"><code>atomic_polyfill</code></a> crate (e.g.,
+MSP430).</p>
+<p>(*) Currently, the implementation is only lock-free <em>and</em> <code>Sync</code> on ARMv6, ARMv7-{A,R,M} &amp; ARMv8-M
+devices</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>The most common way of using this pool is as a global singleton; the singleton mode gives you
+automatic deallocation of memory blocks on <code>drop</code>.</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#![no_main]
+#![no_std]
+
+</span><span class="kw">use </span>cortex_m_rt::{entry, exception};
+<span class="kw">use </span>heapless::{
+    pool,
+    pool::singleton::{Box, Pool},
+};
+
+<span class="comment">// instantiate a memory pool of `[u8; 128]` blocks as a global singleton
+</span><span class="macro">pool!</span>(
+    <span class="comment">// attributes can be used here
+    // #[link_section = ".ccram.A"]
+    </span>A: [u8; <span class="number">128</span>]
+);
+
+<span class="attr">#[entry]
+</span><span class="kw">fn </span>main() -&gt; ! {
+    <span class="kw">static </span><span class="kw-2">mut </span>MEMORY: [u8; <span class="number">1024</span>] = [<span class="number">0</span>; <span class="number">1024</span>];
+
+    <span class="comment">// increase the capacity of the pool by ~8 blocks
+    </span>A::grow(MEMORY);
+
+    <span class="comment">// claim a block of memory
+    // note that the type is `Box&lt;A&gt;`, and not `Box&lt;[u8; 128]&gt;`
+    // `A` is the "name" of the pool
+    </span><span class="kw">let </span>x: Box&lt;A, <span class="kw">_</span>&gt; = A::alloc().unwrap();
+    <span class="kw">loop </span>{
+        <span class="comment">// .. do stuff with `x` ..
+    </span>}
+}
+
+<span class="attr">#[exception]
+</span><span class="kw">fn </span>SysTick() {
+    <span class="comment">// claim a block of memory
+    </span><span class="kw">let </span>y = A::alloc().unwrap();
+
+    <span class="comment">// .. do stuff with `y` ..
+
+    // return the memory block to the pool
+    </span>drop(y);
+}</code></pre></div>
+<h2 id="portability"><a class="doc-anchor" href="#portability">§</a>Portability</h2>
+<p>This pool internally uses a Treiber stack which is known to be susceptible to the ABA problem.
+The only counter measure against the ABA problem that this implementation currently takes is
+relying on LL/SC (Link-local / Store-conditional) instructions being used to implement CAS loops
+on the target architecture (see section on <a href="#soundness">‘Soundness’</a> for more information). For
+this reason, <code>Pool</code> only implements <code>Sync</code> when compiling for some ARM cores.</p>
+<p>This module requires CAS atomic instructions which are not available on all architectures (e.g.
+ARMv6-M (<code>thumbv6m-none-eabi</code>) and MSP430 (<code>msp430-none-elf</code>)). These atomics can be emulated
+however with <a href="https://crates.io/crates/atomic-polyfill"><code>atomic_polyfill</code></a>, which is enabled
+with the <code>cas</code> feature and is enabled by default for <code>thumbv6m-none-eabi</code> and <code>riscv32</code> targets.
+MSP430 is currently not supported by
+<a href="https://crates.io/crates/atomic-polyfill"><code>atomic_polyfill</code></a>.</p>
+<h2 id="soundness"><a class="doc-anchor" href="#soundness">§</a>Soundness</h2>
+<p>This pool uses a Treiber stack to keep a list of free memory blocks (nodes). Each of these
+nodes has a pointer to the next node. To claim a memory block we simply pop a node from the
+top of the stack and use it as a memory block. The pop operation consists of swapping the
+current head (top) node with the node below it. The Rust code for the <code>pop</code> operation is shown
+below:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>pop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;NonNull&lt;Node&lt;T&gt;&gt;&gt; {
+    <span class="kw">let </span>fetch_order = ..;
+    <span class="kw">let </span>set_order = ..;
+
+    <span class="comment">// `self.head` has type `AtomicPtr&lt;Node&lt;T&gt;&gt;`
+    // where `struct Node&lt;T&gt; { next: AtomicPtr&lt;Node&lt;T&gt;&gt;, data: UnsafeCell&lt;T&gt; }`
+    </span><span class="kw">let </span><span class="kw-2">mut </span>head = <span class="self">self</span>.head.load(fetch_order);
+    <span class="kw">loop </span>{
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(nn_head) = NonNull::new(head) {
+            <span class="kw">let </span>next = <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>head).next.load(Ordering::Relaxed) };
+
+            <span class="comment">// &lt;~ preempted
+
+            </span><span class="kw">match </span><span class="self">self
+                </span>.head
+                .compare_exchange_weak(head, next, set_order, fetch_order)
+            {
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">break </span><span class="prelude-val">Some</span>(nn_head),
+                <span class="comment">// head was changed by some interrupt handler / thread
+                </span><span class="prelude-val">Err</span>(new_head) =&gt; head = new_head,
+            }
+        } <span class="kw">else </span>{
+            <span class="comment">// stack is observed as empty
+            </span><span class="kw">break </span><span class="prelude-val">None</span>;
+        }
+    }
+}</code></pre></div>
+<p>In general, the <code>pop</code> operation is susceptible to the ABA problem. If this operation gets
+preempted by some interrupt handler somewhere between the <code>head.load</code> and the
+<code>compare_and_exchange_weak</code>, and that handler modifies the stack in such a way that the head
+(top) of the stack remains unchanged then resuming the <code>pop</code> operation will corrupt the stack.</p>
+<p>An example: imagine we are doing on <code>pop</code> on stack that contains these nodes: <code>A -&gt; B -&gt; C</code>,
+<code>A</code> is the head (top), <code>B</code> is next to <code>A</code> and <code>C</code> is next to <code>B</code>. The <code>pop</code> operation will do a
+<code>CAS(&amp;self.head, A, B)</code> operation to atomically change the head to <code>B</code> iff it currently is <code>A</code>.
+Now, let’s say a handler preempts the <code>pop</code> operation before the <code>CAS</code> operation starts and it
+<code>pop</code>s the stack twice and then <code>push</code>es back the <code>A</code> node; now the state of the stack is <code>A -&gt; C</code>. When the original <code>pop</code> operation is resumed it will succeed in doing the <code>CAS</code> operation
+setting <code>B</code> as the head of the stack. However, <code>B</code> was used by the handler as a memory block and
+no longer is a valid free node. As a result the stack, and thus the allocator, is in a invalid
+state.</p>
+<p>However, not all is lost because ARM devices use LL/SC (Link-local / Store-conditional)
+operations to implement CAS loops. Let’s look at the actual disassembly of <code>pop</code> for the ARM
+Cortex-M.</p>
+<div class="example-wrap"><pre class="language-text"><code>08000130 &lt;&lt;heapless::pool::Pool&lt;T&gt;&gt;::pop&gt;:
+ 8000130:       6802            ldr     r2, [r0, #0]
+ 8000132:       e00c            b.n     800014e &lt;&lt;heapless::pool::Pool&lt;T&gt;&gt;::pop+0x1e&gt;
+ 8000134:       4611            mov     r1, r2
+ 8000136:       f8d2 c000       ldr.w   ip, [r2]
+ 800013a:       e850 2f00       ldrex   r2, [r0]
+ 800013e:       428a            cmp     r2, r1
+ 8000140:       d103            bne.n   800014a &lt;&lt;heapless::pool::Pool&lt;T&gt;&gt;::pop+0x1a&gt;
+ 8000142:       e840 c300       strex   r3, ip, [r0]
+ 8000146:       b913            cbnz    r3, 800014e &lt;&lt;heapless::pool::Pool&lt;T&gt;&gt;::pop+0x1e&gt;
+ 8000148:       e004            b.n     8000154 &lt;&lt;heapless::pool::Pool&lt;T&gt;&gt;::pop+0x24&gt;
+ 800014a:       f3bf 8f2f       clrex
+ 800014e:       2a00            cmp     r2, #0
+ 8000150:       d1f0            bne.n   8000134 &lt;&lt;heapless::pool::Pool&lt;T&gt;&gt;::pop+0x4&gt;
+ 8000152:       2100            movs    r1, #0
+ 8000154:       4608            mov     r0, r1
+ 8000156:       4770            bx      lr</code></pre></div>
+<p>LDREX (“load exclusive”) is the LL instruction, and STREX (“store exclusive”) is the SC
+instruction (see <a href="#references">1</a>). On the Cortex-M, STREX will always fail if the processor
+takes an exception between it and its corresponding LDREX operation (see <a href="#references">2</a>). If
+STREX fails then the CAS loop is retried (see instruction @ <code>0x8000146</code>). On single core
+systems, preemption is required to run into the ABA problem and on Cortex-M devices preemption
+always involves taking an exception. Thus the underlying LL/SC operations prevent the ABA
+problem on Cortex-M.</p>
+<p>In the case of multi-core systems if any other core successfully does a STREX op on the head
+while the current core is somewhere between LDREX and STREX then the current core will fail its
+STREX operation.</p>
+<h2 id="x86_64-support--limitations"><a class="doc-anchor" href="#x86_64-support--limitations">§</a>x86_64 support / limitations</h2>
+<p><em>NOTE</em> <code>Pool</code> is only <code>Sync</code> on <code>x86_64</code> and <code>x86</code> (<code>i686</code>) if the Cargo feature “x86-sync-pool”
+is enabled</p>
+<p>x86_64 support is a gamble. Yes, a gamble. Do you feel lucky enough to use <code>Pool</code> on x86_64?</p>
+<p>As it’s not possible to implement <em>ideal</em> LL/SC semantics (*) on x86_64 the architecture is
+susceptible to the ABA problem described above. To <em>reduce the chances</em> of ABA occurring in
+practice we use version tags (keyword: IBM ABA-prevention tags). Again, this approach does
+<em>not</em> fix / prevent / avoid the ABA problem; it only reduces the chance of it occurring in
+practice but the chances of it occurring are not reduced to zero.</p>
+<p>How we have implemented version tags: instead of using an <code>AtomicPtr</code> to link the stack <code>Node</code>s
+we use an <code>AtomicUsize</code> where the 64-bit <code>usize</code> is always comprised of a monotonically
+increasing 32-bit tag (higher bits) and a 32-bit signed address offset. The address of a node is
+computed by adding the 32-bit offset to an “anchor” address (the address of a static variable
+that lives somewhere in the <code>.bss</code> linker section). The tag is increased every time a node is
+popped (removed) from the stack.</p>
+<p>To see how version tags can prevent ABA consider the example from the previous section. Let’s
+start with a stack in this state: <code>(~A, 0) -&gt; (~B, 1) -&gt; (~C, 2)</code>, where <code>~A</code> represents the
+address of node A as a 32-bit offset from the “anchor” and the second tuple element (e.g. <code>0</code>)
+indicates the version of the node. For simplicity, assume a single core system: thread T1 is
+performing <code>pop</code> and before <code>CAS(&amp;self.head, (~A, 0), (~B, 1))</code> is executed a context switch
+occurs and the core resumes T2. T2 pops the stack twice and pushes A back into the stack;
+because the <code>pop</code> operation increases the version the stack ends in the following state: `(~A,</p>
+<ol>
+<li>-&gt; (~C, 2)<code>. Now if T1 is resumed the CAS operation will fail because </code>self.head<code>is</code>(~A,
+1)<code>and not</code>(~A, 0)`.</li>
+</ol>
+<p>When can version tags fail to prevent ABA? Using the previous example: if T2 performs a <code>push</code>
+followed by a <code>pop</code> <code>(1 &lt;&lt; 32) - 1</code> times before doing its original <code>pop</code> - <code>pop</code> - <code>push</code>
+operation then ABA will occur because the version tag of node <code>A</code> will wraparound to its
+original value of <code>0</code> and the CAS operation in T1 will succeed and corrupt the stack.</p>
+<p>It does seem unlikely that (1) a thread will perform the above operation and (2) that the above
+operation will complete within one time slice, assuming time sliced threads. If you have thread
+priorities then the above operation could occur during the lifetime of many high priorities
+threads if T1 is running at low priority.</p>
+<p>Other implementations of version tags use more than 32 bits in their tags (e.g. “Scalable
+Lock-Free Dynamic Memory Allocation” uses 42-bit tags in its super blocks). In theory, one could
+use double-word CAS on x86_64 to pack a 64-bit tag and a 64-bit pointer in a double-word but
+this CAS operation is not exposed in the standard library (and I think it’s not available on
+older x86_64 processors?)</p>
+<p>(*) Apparently one can emulate proper LL/SC semantics on x86_64 using hazard pointers (?) –
+the technique appears to be documented in “ABA Prevention Using Single-Word Instructions”, which
+is not public AFAICT – but hazard pointers require Thread Local Storage (TLS), which is a
+non-starter for a <code>no_std</code> library like <code>heapless</code>.</p>
+<h3 id="x86_64-limitations"><a class="doc-anchor" href="#x86_64-limitations">§</a>x86_64 Limitations</h3>
+<p><em>NOTE</em> this limitation does not apply to <code>x86</code> (32-bit address space). If you run into this
+issue, on an x86_64 processor try running your code compiled for <code>x86</code>, e.g. <code>cargo run --target i686-unknown-linux-musl</code></p>
+<p>Because stack nodes must be located within +- 2 GB of the hidden <code>ANCHOR</code> variable, which
+lives in the <code>.bss</code> section, <code>Pool</code> may not be able to manage static references created using
+<code>Box::leak</code> – these heap allocated chunks of memory may live in a very different address space.
+When the <code>Pool</code> is unable to manage a node because of its address it will simply discard it:
+<code>Pool::grow*</code> methods return the number of new memory blocks added to the pool; if these methods
+return <code>0</code> it means the <code>Pool</code> is unable to manage the memory given to them.</p>
+<h2 id="references"><a class="doc-anchor" href="#references">§</a>References</h2>
+<ol>
+<li><a href="http://infocenter.arm.com/help/topic/com.arm.doc.dui0552a/DUI0552A_cortex_m3_dgug.pdf">Cortex-M3 Devices Generic User Guide (DUI 0552A)</a>, Section 2.2.7 “Synchronization
+primitives”</li>
+</ol>
+<ol start="2">
+<li><a href="https://static.docs.arm.com/ddi0403/eb/DDI0403E_B_armv7m_arm.pdf">ARMv7-M Architecture Reference Manual (DDI 0403E.b)</a>, Section A3.4 “Synchronization and
+semaphores”</li>
+</ol>
+<ol start="3">
+<li>
+<p>“Scalable Lock-Free Dynamic Memory Allocation” Michael, Maged M.</p>
+</li>
+<li>
+<p>“Hazard pointers: Safe memory reclamation for lock-free objects.” Michael, Maged M.</p>
+</li>
+</ol>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="singleton/index.html" title="mod heapless::pool::singleton">singleton</a></dt><dd><code>Pool</code> as a global singleton</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Box.html" title="struct heapless::pool::Box">Box</a></dt><dd>A memory block</dd><dt><a class="struct" href="struct.Node.html" title="struct heapless::pool::Node">Node</a></dt><dd>Unfortunate implementation detail required to use the
+<a href="struct.Pool.html#method.grow_exact"><code>Pool.grow_exact</code></a> method</dd><dt><a class="struct" href="struct.Pool.html" title="struct heapless::pool::Pool">Pool</a></dt><dd>A lock-free memory pool</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Init.html" title="enum heapless::pool::Init">Init</a></dt><dd>Initialized type state</dd><dt><a class="enum" href="enum.Uninit.html" title="enum heapless::pool::Uninit">Uninit</a></dt><dd>Uninitialized type state</dd></dl></section></div></main></body></html>

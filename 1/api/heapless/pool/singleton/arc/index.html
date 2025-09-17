@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Like `std::sync::Arc` but backed by a memory `Pool` rather than `#[global_allocator]`"><title>heapless::pool::singleton::arc - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-4e99c027.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../../heapless/index.html">heapless</a><span class="version">0.7.17</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module arc</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In heapless::<wbr>pool::<wbr>singleton</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../../index.html">heapless</a>::<wbr><a href="../../index.html">pool</a>::<wbr><a href="../index.html">singleton</a></div><h1>Module <span>arc</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../../src/heapless/pool/singleton/arc.rs.html#1-392">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Like <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>std::sync::Arc</code></a> but backed by a
+memory <a href="trait.Pool.html"><code>Pool</code></a> rather than <code>#[global_allocator]</code></p>
+<p>Note that the same limitations that apply to <a href="../../index.html">“Box” pool</a> also apply to the “Arc” pool.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>heapless::{arc_pool, Arc};
+
+<span class="kw">pub struct </span>BigStruct { <span class="comment">// &lt;- does NOT implement Clone
+    </span>data: [u8; <span class="number">128</span>],
+    <span class="comment">// ..
+</span>}
+
+<span class="comment">// declare a memory pool
+</span><span class="macro">arc_pool!</span>(P: BigStruct);
+
+
+<span class="attr">#[cortex_m_rt::entry]
+</span><span class="kw">fn </span>main() -&gt; ! {
+    <span class="kw">static </span><span class="kw-2">mut </span>MEMORY: [u8; <span class="number">1024</span>] = [<span class="number">0</span>; <span class="number">1024</span>];
+
+    <span class="comment">// give some static memory to the pool
+    </span>P::grow(MEMORY);
+
+    <span class="kw">let </span>x: Arc&lt;P&gt; = P::alloc(BigStruct::new()).ok().expect(<span class="string">"OOM"</span>);
+    <span class="comment">//         ^ NOTE: this is the Pool type, not the data type
+
+    // cloning is cheap; it increases the refcount
+    </span><span class="kw">let </span>y = x.clone();
+
+    <span class="comment">// same data address
+    </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;*</span>x <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>, <span class="kw-2">&amp;*</span>y <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>);
+
+    <span class="comment">// auto-deref
+    </span><span class="kw">let </span>data: <span class="kw-2">&amp;</span>[u8] = <span class="kw-2">&amp;</span>x.data;
+
+    <span class="comment">// decrease refcount
+    </span>drop(x);
+
+    <span class="comment">// refcount decreased to 0; memory is returned to the pool
+    </span>drop(y);
+
+    <span class="comment">// ..
+</span>}</code></pre></div>
+<p>The <code>grow_exact</code> API is also available on the “Arc pool”. It requires using
+<code>Node&lt;ArcInner&lt;Type&gt;&gt;</code> as the array element type. Example below:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>heapless::pool::{singleton::arc::ArcInner, Node};
+
+<span class="kw">pub struct </span>BigStruct { <span class="comment">/* .. */ </span>}
+
+<span class="macro">arc_pool!</span>(P: BigStruct);
+
+<span class="attr">#[cortex_m_rt::entry]
+</span><span class="kw">fn </span>main() -&gt; ! {
+    <span class="kw">static </span><span class="kw-2">mut </span>MEMORY: MaybeUninit&lt;[Node&lt;ArcInner&lt;BigStruct&gt;&gt;; <span class="number">2</span>]&gt; = MaybeUninit::uninit();
+
+    P::grow_exact(MEMORY);
+
+    <span class="comment">// 2 allocations are guaranteed to work
+    </span><span class="kw">let </span>x = P::alloc(BigStruct::new()).ok().expect(<span class="string">"OOM"</span>);
+    <span class="kw">let </span>y = P::alloc(BigStruct::new()).ok().expect(<span class="string">"OOM"</span>);
+
+    <span class="comment">// ..
+</span>}</code></pre></div>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Arc.html" title="struct heapless::pool::singleton::arc::Arc">Arc</a></dt><dd><code>std::sync::Arc</code> but backed by a memory <a href="trait.Pool.html"><code>Pool</code></a> rather than <code>#[global_allocator]</code></dd><dt><a class="struct" href="struct.ArcInner.html" title="struct heapless::pool::singleton::arc::ArcInner">ArcInner</a></dt><dd>Unfortunate implementation detail required to use the <code>grow_exact</code> API</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Pool.html" title="trait heapless::pool::singleton::arc::Pool">Pool</a></dt><dd>Pool of Arc pointers</dd></dl></section></div></main></body></html>
