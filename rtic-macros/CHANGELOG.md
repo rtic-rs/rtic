@@ -21,7 +21,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Support Rust edition 2024 `unsafe(link_section)` attribute
 
-## [v2.1.3] - 2025-06-08
+## [v2.1.3](https://github.com/rtic-rs/rtic/commit/95616b3c59e0d57afc8fb569458a33973beeaf54) - 2025-06-08
 
 ### Changed 
 
@@ -42,7 +42,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 - Fix interrupt handlers when targeting esp32c3 and using latest version of esp-hal
 - Do not limit async priority with `NVIC_PRIO_BITS` when targeting esp32c3
 
-## [v2.1.0] - 2024-02-27
+## [v2.1.0](https://github.com/rtic-rs/rtic/commit/0b365f03eb77302663b751305aac7641b2721eb3) - 2024-02-27
 
 ### Added
 
@@ -54,7 +54,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Upgraded from syn 1.x to syn 2.x
 
-## [v2.0.1] - 2023-07-25
+## [v2.0.1](https://github.com/rtic-rs/rtic/commit/0228350ef4758c45623e325c41116720bbc2b30a) - 2023-07-25
 
 ### Added
 
@@ -64,6 +64,6 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Support new TAIT syntax requirement.
 
-## [v2.0.0] - 2023-05-31
+## [v2.0.0](https://github.com/rtic-rs/rtic/commit/c3884e212c36d2a9cf260b1d9ae37c92b91ea73d) - 2023-05-31
 
 - Initial v2 release
