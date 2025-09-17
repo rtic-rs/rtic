@@ -24,6 +24,11 @@ Example:
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
 
+### Changed
+
+- Updated esp32c3 dependency to v0.30.0
+- Updated esp32c6 dependency to v0.21.0
+
 ## [v2.2.0] - 2025-06-22
 
 ### Added
