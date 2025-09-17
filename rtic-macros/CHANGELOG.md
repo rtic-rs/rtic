@@ -5,7 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
-## [Unreleased]
+## Unreleased
+
+## [v2.3.0] - 2025-09-17
 
 ### Added
 
@@ -23,7 +25,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [v2.1.3] - 2025-06-08
 
-### Changed 
+### Changed
 
 - Unstable support for ESP32-C6
 - Adapt `slic` backends to new version with `mecall`
