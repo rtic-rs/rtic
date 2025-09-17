@@ -171,7 +171,7 @@ jobs:
         with:
           tool: espflash
 
-      - name: Install esptool.py
+      - name: Install esptool
         if: contains(matrix.input.platform, 'esp32')
         run: pip install esptool
 
