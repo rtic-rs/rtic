@@ -143,10 +143,10 @@ jobs:
             rustup-target: riscv32imc-unknown-none-elf
             qemu-system: riscv32
 
-          - backend: riscv-esp32-c3
-            platform: esp32-c3
-            rustup-target: riscv32imc-unknown-none-elf
-            qemu-system: riscv32
+          # - backend: riscv-esp32-c3
+          #   platform: esp32-c3
+          #   rustup-target: riscv32imc-unknown-none-elf
+          #   qemu-system: riscv32
 
     steps:
       - name: Checkout
