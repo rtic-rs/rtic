@@ -30,7 +30,7 @@ Example:
 
 - Added public `waker` constructor to the executor.
 
-## [v2.1.3] - 2025-06-08
+## [v2.1.3](https://github.com/rtic-rs/rtic/commit/95616b3c59e0d57afc8fb569458a33973beeaf54) - 2025-06-08
 
 ### Fixed
 
@@ -49,7 +49,7 @@ Example:
 - Unstable support for ESP32-C6
 - Support for RISC-V targets compatible with `riscv-slic` using machine-level environment call exceptions.
 
-## [v2.1.2] - 2024-12-06
+## [v2.1.2](https://github.com/rtic-rs/rtic/commit/b41a10e794261e1539cd571aab00fca40568ba87) - 2024-12-06
 
 ### Changed
 
@@ -60,13 +60,13 @@ Example:
 - Use `riscv-slic` from `crates.io`
 - Remove unused dependency `rtic-monotonics`
 
-## [v2.1.1] - 2024-03-13
+## [v2.1.1](https://github.com/rtic-rs/rtic/commit/82cf534f5db00a2b00565172800f84a434edcb37) - 2024-03-13
 
 ### Fixed
 
 - **Soundness fix:** `thumbv6` was subject to race in source mask.
 
-## [v2.1.0] - 2024-02-27
+## [v2.1.0](https://github.com/rtic-rs/rtic/commit/0b365f03eb77302663b751305aac7641b2721eb3) - 2024-02-27
 
 ### Added
 
@@ -83,7 +83,7 @@ Example:
 
 - RTIC v2 now works on stable.
 
-## [v2.0.1] - 2023-07-25
+## [v2.0.1](https://github.com/rtic-rs/rtic/commit/0228350ef4758c45623e325c41116720bbc2b30a) - 2023-07-25
 
 ### Added
 
@@ -99,7 +99,7 @@ Example:
 - Moved `cortex-m`-related utilities from `rtic/lib.rs` to `rtic/export.rs`
 - Make async task priorities start at 0, instead of 1, to always start at the lowest priority
 
-## [v2.0.0] - 2023-05-31
+## [v2.0.0](https://github.com/rtic-rs/rtic/commit/c3884e212c36d2a9cf260b1d9ae37c92b91ea73d) - 2023-05-31
 
 - v2 is a massive change, refer to the book for more details
 
