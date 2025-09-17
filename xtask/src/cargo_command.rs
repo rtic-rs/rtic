@@ -700,7 +700,7 @@ impl<'a> CargoCommand<'a> {
         }
     }
 
-    fn target(&self) -> Option<&Target> {
+    fn target(&'_ self) -> Option<&'_ Target<'_>> {
         match self {
             CargoCommand::Run { target, .. }
             | CargoCommand::Qemu { target, .. }
