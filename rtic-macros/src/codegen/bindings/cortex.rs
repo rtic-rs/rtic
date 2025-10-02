@@ -319,13 +319,13 @@ pub fn architecture_specific_analysis(app: &App, _: &SyntaxAnalysis) -> parse::R
         .filter(|prio| *prio > 0)
         .collect::<HashSet<_>>();
 
-    let need = priorities.len();
+    let need_software = priorities.len();
     let given = app.args.dispatchers.len();
-    if need > given {
+    if need_software > given {
         let s = {
             format!(
                 "not enough interrupts to dispatch \
-                    all software tasks (need: {need}; given: {given})"
+                    all software tasks (need: {need_software}; given: {given})"
             )
         };
 

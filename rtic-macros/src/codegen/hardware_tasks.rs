@@ -24,26 +24,62 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         let exit_stmts = interrupt_exit(app, analysis);
         let config = handler_config(app, analysis, symbol.clone());
 
-        mod_app.push(quote!(
-            #[allow(non_snake_case)]
-            #[no_mangle]
-            #(#attrs)*
-            #(#cfgs)*
-            #(#config)*
-            unsafe fn #symbol() {
-                #(#entry_stmts)*
+        if let Some(trampoline) = &task.args.trampoline {
+            let trampoline_symbol = trampoline.clone();
+            mod_app.push(quote!(
 
-                const PRIORITY: u8 = #priority;
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                #(#attrs)*
+                #(#cfgs)*
+                #(#config)*
+                unsafe fn #symbol() {
+                    rtic::export::pend(rtic::export::Interrupt::#trampoline_symbol);
+                }
 
-                rtic::export::run(PRIORITY, || {
-                    #name(
-                        #name::Context::new()
-                    )
-                });
-
-                #(#exit_stmts)*
-            }
-        ));
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                #(#attrs)*
+                #(#cfgs)*
+                #(#config)*
+                unsafe fn #trampoline_symbol() {
+                    #(#entry_stmts)*
+    
+                    const PRIORITY: u8 = #priority;
+    
+                    rtic::export::run(PRIORITY, || {
+                        #name(
+                            #name::Context::new()
+                        )
+                    });
+                    
+    
+                    #(#exit_stmts)*
+                }
+            ));
+            
+        } else {
+            mod_app.push(quote!(
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                #(#attrs)*
+                #(#cfgs)*
+                #(#config)*
+                unsafe fn #symbol() {
+                    #(#entry_stmts)*
+    
+                    const PRIORITY: u8 = #priority;
+    
+                    rtic::export::run(PRIORITY, || {
+                        #name(
+                            #name::Context::new()
+                        )
+                    });
+    
+                    #(#exit_stmts)*
+                }
+            ));
+        }
 
         // `${task}Locals`
         if !task.args.local_resources.is_empty() {
@@ -51,7 +87,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 local_resources_struct::codegen(Context::HardwareTask(name), app);
 
             root.push(item);
-
             mod_app.push(constructor);
         }
 
@@ -61,7 +96,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 shared_resources_struct::codegen(Context::HardwareTask(name), app);
 
             root.push(item);
-
             mod_app.push(constructor);
         }
 
