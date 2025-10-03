@@ -241,7 +241,19 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
         } else {
             Some((&task.args.priority, &task.args.binds))
         }
-    })) {
+    })).chain(app.hardware_tasks.values().filter_map(|task| {
+        if let Some(trampoline) = &task.args.trampoline {
+            if is_exception(trampoline) {
+                // We do exceptions in another pass
+                return None;
+            } else {
+                // If there's a trampoline, we need to unmask and set priority for it too
+                Some((&task.args.priority, trampoline))
+            }
+        } else {
+            None
+        }
+    })){
         let es = format!(
             "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
         );
