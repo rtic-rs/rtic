@@ -1,0 +1,6 @@
+gpioa lock
+gpioa unlock
+SysTick start
+idle
+SysTick start
+idle end

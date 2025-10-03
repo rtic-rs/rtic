@@ -38,10 +38,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 #(#cfgs)*
                 #(#config)*
                 unsafe fn #symbol() {
-                    info!("Pend trampoline");
                     use #rt_err::Interrupt;
                     rtic::pend(Interrupt::#trampoline_symbol);
-                    info!("Exit trampoline handler");
                 }
 
                 #[allow(non_snake_case)]

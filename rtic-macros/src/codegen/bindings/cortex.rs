@@ -102,7 +102,20 @@ mod source_masking {
             } else {
                 None
             }
-        })) {
+        })
+        // Add trampoline tasks if present and not exceptions
+        .chain(app.hardware_tasks.values().filter_map(|task| {
+            if let Some(trampoline) = &task.args.trampoline {
+                if !is_exception(trampoline) {
+                    Some((&task.args.priority, trampoline))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        }))
+    ) {
             let v: &mut Vec<_> = prio_to_masks.entry(priority - 1).or_default();
             v.push(quote!(#device::Interrupt::#name as u32));
             mask_ids.push(quote!(#device::Interrupt::#name as u32));
@@ -245,7 +258,7 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
         if let Some(trampoline) = &task.args.trampoline {
             if is_exception(trampoline) {
                 // We do exceptions in another pass
-                return None;
+                None
             } else {
                 // If there's a trampoline, we need to unmask and set priority for it too
                 Some((&task.args.priority, trampoline))
@@ -359,6 +372,27 @@ pub fn architecture_specific_analysis(app: &App, _: &SyntaxAnalysis) -> parse::R
             }
 
             _ => {}
+        }
+    }
+
+    // Check that a exception is not used with shared resources
+    // TODO provide warning when a exception is used with source masking since it then ignores locks in priority ceilings
+    #[cfg(feature = "cortex-m-source-masking")]
+    for (name, task) in &app.hardware_tasks {
+        if is_exception(name) && !app.shared_resources.is_empty(){
+            if let Some(trampoline) = task.args.trampoline.as_ref() {
+                if is_exception(trampoline) {
+                    return Err(parse::Error::new(
+                        trampoline.span(),
+                        "cannot use exceptions as trampoline tasks when using source masking",
+                    ));
+                }
+            } else {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "cannot use exceptions with shared resources as hardware tasks when using source masking, consider adding the trampoline attribute",
+                ));
+            }
         }
     }
 
