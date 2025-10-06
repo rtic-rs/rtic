@@ -8,10 +8,7 @@ mod util;
 
 use proc_macro2::TokenStream as TokenStream2;
 use syn::{
-    braced,
-    parse::{self, Parse, ParseStream, Parser},
-    token::Brace,
-    Attribute, Ident, Item, LitInt, Meta, Token,
+    braced, parse::{self, Parse, ParseStream, Parser}, token::Brace, Attribute, Ident, Item, LitBool, LitInt, Meta, Token
 };
 
 use crate::syntax::{
@@ -197,6 +194,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
         let mut shared_resources = None;
         let mut local_resources = None;
         let mut prio_span = None;
+        let mut is_local_task = None;
 
         loop {
             if input.is_empty() {
@@ -277,6 +275,19 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                     local_resources = Some(util::parse_local_resources(input)?);
                 }
 
+                "is_local_task" => {
+                    if is_local_task.is_some() {
+                        return Err(parse::Error::new(
+                            ident.span(),
+                            "argument appears more than once",
+                        ));
+                    }
+
+                    let lit: LitBool = input.parse()?;
+
+                    is_local_task = Some(lit.value);
+                }
+
                 _ => {
                     return Err(parse::Error::new(ident.span(), "unexpected argument"));
                 }
@@ -291,6 +302,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
         }
         let shared_resources = shared_resources.unwrap_or_default();
         let local_resources = local_resources.unwrap_or_default();
+        let is_local_task = is_local_task.unwrap_or(false);
 
         Ok(if let Some(binds) = binds {
             // Hardware tasks can't run at anything lower than 1
@@ -317,6 +329,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                 priority,
                 shared_resources,
                 local_resources,
+                is_local_task,
             })
         })
     })
