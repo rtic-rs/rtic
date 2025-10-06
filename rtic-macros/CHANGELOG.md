@@ -14,6 +14,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
+- Add attribute `local_task` for tasks that may take args that are !Send/!Sync and can only be spawned from same executor
 
 ## [v2.2.0] - 2025-06-22
 

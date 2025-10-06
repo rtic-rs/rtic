@@ -11,7 +11,7 @@ use syn::{
     braced,
     parse::{self, Parse, ParseStream, Parser},
     token::Brace,
-    Attribute, Ident, Item, LitInt, Meta, Token,
+    Attribute, Ident, Item, LitBool, LitInt, Meta, Token,
 };
 
 use crate::syntax::{
@@ -197,6 +197,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
         let mut shared_resources = None;
         let mut local_resources = None;
         let mut prio_span = None;
+        let mut local_task = None;
 
         loop {
             if input.is_empty() {
@@ -208,7 +209,27 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
             let ident_s = ident.to_string();
 
             // Handle equal sign
-            let _: Token![=] = input.parse()?;
+            let eq = input.parse::<Token![=]>();
+
+            // Only local_task supports omitting the value
+            if &*ident_s == "local_task" {
+                if local_task.is_some() {
+                    return Err(parse::Error::new(
+                        ident.span(),
+                        "argument appears more than once",
+                    ));
+                }
+
+                if eq.is_ok() {
+                    let lit: LitBool = input.parse()?;
+                    local_task = Some(lit.value);
+                } else {
+                    local_task = Some(true); // Default to true
+                }
+                break;
+            } else if let Err(e) = eq {
+                return Err(e);
+            };
 
             match &*ident_s {
                 "binds" => {
@@ -291,6 +312,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
         }
         let shared_resources = shared_resources.unwrap_or_default();
         let local_resources = local_resources.unwrap_or_default();
+        let local_task = local_task.unwrap_or(false);
 
         Ok(if let Some(binds) = binds {
             // Hardware tasks can't run at anything lower than 1
@@ -317,6 +339,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                 priority,
                 shared_resources,
                 local_resources,
+                local_task,
             })
         })
     })
