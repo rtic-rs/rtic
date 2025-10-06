@@ -5,10 +5,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
-## Unreleased
+## [Unreleased]
 
 ### Changed
+
+- changed (sysclk % timer_hz) == 0 to sysclk.is_multiple_of(timer_hz) to make clippy happy as required to CI.
+  It is unclear why this was not already implemented since the current version does not pass CI.
+
+### Changed
+
 - Panic if STM32 prescaler value would overflow
+- Changed modulo to ``is_multiple_of()``, to make clippy happy
 
 ## v2.1.0 - 2025-06-22
 

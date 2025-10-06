@@ -376,7 +376,10 @@ pub fn architecture_specific_analysis(app: &App, _: &SyntaxAnalysis) -> parse::R
     }
 
     // Check that a exception is not used with shared resources
-    // TODO provide warning when a exception is used with source masking since it then ignores locks in priority ceilings
+    // TODO This does not stop priority inversion in source masking if the
+    // exception does not use shared resources. We do currently allow this,
+    // since it does not corrupt data, but it may be worth reconsidering this
+    // decision.
     #[cfg(feature = "cortex-m-source-masking")]
     for (name, task) in &app.hardware_tasks {
         if is_exception(name) && !app.shared_resources.is_empty(){
@@ -390,7 +393,8 @@ pub fn architecture_specific_analysis(app: &App, _: &SyntaxAnalysis) -> parse::R
             } else {
                 return Err(parse::Error::new(
                     name.span(),
-                    "cannot use exceptions with shared resources as hardware tasks when using source masking, consider adding the trampoline attribute",
+                    "cannot use exceptions with shared resources as hardware tasks when using \
+                    source masking, consider adding the trampoline attribute",
                 ));
             }
         }
