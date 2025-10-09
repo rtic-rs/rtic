@@ -125,7 +125,7 @@ For the running example, a snapshot of the ARM Cortex M [Nested Vectored Interru
 A claim (lock(r)) will change the current system ceiling (𝜫) and can be implemented as a *named* critical section: 
   - old_ceiling = 𝜫, 𝜫 = 𝝅(r)  
   - execute code within critical section
-  - old_ceiling = 𝜫
+  - 𝜫 = old_ceiling
 
 This amounts to a resource protection mechanism, requiring only two machine instructions on enter and one on exit the critical section, for managing the `BASEPRI` register. For architectures lacking `BASEPRI`, we can implement the system ceiling through a set of machine instructions for disabling/enabling interrupts on entry/exit for the named critical section. The number of machine instructions vary depending on the number of mask registers that needs to be updated (a single machine operation can operate on up to 32 interrupts, so for the M0/M0+ architecture a single instruction suffice). RTIC will determine the ceiling values and masking constants at compile time, thus all operations is in Rust terms zero-cost.
 
