@@ -20,6 +20,6 @@ esp-backtrace = { version = "0.17.0", features = [
 esp-bootloader-esp-idf = { version = "0.2.0", features = ["esp32c3"] }
 esp-hal = { version = "=1.0.0-rc.0", features = ["esp32c3", "unstable"] }
 esp-println = { version = "0.15.0", features = ["esp32c3"] }
-esp32c3 = { version = "0.30.0", features = ["critical-section"] }
+esp32c3 = { version = "0.31.0", features = ["critical-section"] }
 rtic = { path = "../../rtic/" }
 rtic-monotonics = { path = "../../rtic-monotonics/" }
