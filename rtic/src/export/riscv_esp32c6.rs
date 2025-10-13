@@ -89,20 +89,20 @@ pub fn pend(int: Interrupt) {
         match int {
             Interrupt::FROM_CPU_INTR0 => peripherals
                 .INTPRI
-                .cpu_intr_from_cpu_0()
-                .write(|w| w.cpu_intr_from_cpu_0().bit(true)),
+                .cpu_intr_from_cpu(0)
+                .write(|w| w.cpu_intr().set_bit()),
             Interrupt::FROM_CPU_INTR1 => peripherals
                 .INTPRI
-                .cpu_intr_from_cpu_1()
-                .write(|w| w.cpu_intr_from_cpu_1().bit(true)),
+                .cpu_intr_from_cpu(1)
+                .write(|w| w.cpu_intr().set_bit()),
             Interrupt::FROM_CPU_INTR2 => peripherals
                 .INTPRI
-                .cpu_intr_from_cpu_2()
-                .write(|w| w.cpu_intr_from_cpu_2().bit(true)),
+                .cpu_intr_from_cpu(2)
+                .write(|w| w.cpu_intr().set_bit()),
             Interrupt::FROM_CPU_INTR3 => peripherals
                 .INTPRI
-                .cpu_intr_from_cpu_3()
-                .write(|w| w.cpu_intr_from_cpu_3().bit(true)),
+                .cpu_intr_from_cpu(3)
+                .write(|w| w.cpu_intr().set_bit()),
             _ => panic!("Unsupported software interrupt"), //should never happen, checked at compile time
         };
     }
@@ -115,20 +115,20 @@ pub fn unpend(int: Interrupt) {
         match int {
             Interrupt::FROM_CPU_INTR0 => peripherals
                 .INTPRI
-                .cpu_intr_from_cpu_0()
-                .write(|w| w.cpu_intr_from_cpu_0().bit(false)),
+                .cpu_intr_from_cpu(0)
+                .write(|w| w.cpu_intr().clear_bit()),
             Interrupt::FROM_CPU_INTR1 => peripherals
                 .INTPRI
-                .cpu_intr_from_cpu_1()
-                .write(|w| w.cpu_intr_from_cpu_1().bit(false)),
+                .cpu_intr_from_cpu(1)
+                .write(|w| w.cpu_intr().clear_bit()),
             Interrupt::FROM_CPU_INTR2 => peripherals
                 .INTPRI
-                .cpu_intr_from_cpu_2()
-                .write(|w| w.cpu_intr_from_cpu_2().bit(false)),
+                .cpu_intr_from_cpu(2)
+                .write(|w| w.cpu_intr().clear_bit()),
             Interrupt::FROM_CPU_INTR3 => peripherals
                 .INTPRI
-                .cpu_intr_from_cpu_3()
-                .write(|w| w.cpu_intr_from_cpu_3().bit(false)),
+                .cpu_intr_from_cpu(3)
+                .write(|w| w.cpu_intr().clear_bit()),
             _ => panic!("Unsupported software interrupt"),
         };
     }
