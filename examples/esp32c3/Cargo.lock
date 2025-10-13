@@ -15,12 +15,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
-name = "bare-metal"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
-
-[[package]]
 name = "basic-toml"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -451,7 +445,7 @@ dependencies = [
  "esp-rom-sys",
  "esp32",
  "esp32c2",
- "esp32c3",
+ "esp32c3 0.30.0",
  "esp32c6",
  "esp32h2",
  "esp32s2",
@@ -563,7 +557,7 @@ dependencies = [
  "esp-bootloader-esp-idf",
  "esp-hal",
  "esp-println",
- "esp32c3",
+ "esp32c3 0.31.0",
  "rtic",
  "rtic-monotonics",
 ]
@@ -583,6 +577,16 @@ name = "esp32c3"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce2c5a33d4377f974cbe8cadf8307f04f2c39755704cb09e81852c63ee4ac7b8"
+dependencies = [
+ "critical-section",
+ "vcell",
+]
+
+[[package]]
+name = "esp32c3"
+version = "0.31.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "356af3771d0d6536c735bf71136594f4d1cbb506abf6e0c51a6639e9bf4e7988"
 dependencies = [
  "critical-section",
  "vcell",
@@ -952,15 +956,15 @@ dependencies = [
 
 [[package]]
 name = "riscv"
-version = "0.14.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f1671c79a01a149fe000af2429ce9ccc8e58cdecda72672355d50e5536b363c"
+checksum = "9251433e48c39d2133cbaff3ae7809ce6a1ecbc8225ca7da33d96d10cf360582"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
  "paste",
- "riscv-macros 0.2.0",
- "riscv-pac",
+ "riscv-macros 0.4.0",
+ "riscv-types",
 ]
 
 [[package]]
@@ -976,9 +980,9 @@ dependencies = [
 
 [[package]]
 name = "riscv-macros"
-version = "0.2.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8c4aa1ea1af6dcc83a61be12e8189f9b293c3ba5a487778a4cd89fb060fdbbc"
+checksum = "d47d1fb716349455b8e5e3ebbf1eff95344dbdf9f782a4e1359d2f16f51e3dce"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1003,14 +1007,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "riscv-types"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3f2ad9f15a07f4a0e1677124f9120ce7e83ab7e1ca7186af0ca9da529b62e80"
+
+[[package]]
 name = "rtic"
 version = "2.2.0"
 dependencies = [
- "bare-metal",
  "critical-section",
- "esp32c3",
+ "esp32c3 0.31.0",
  "portable-atomic",
- "riscv 0.14.0",
+ "riscv 0.16.0",
  "rtic-core",
  "rtic-macros",
 ]
@@ -1045,10 +1054,10 @@ name = "rtic-monotonics"
 version = "2.1.0"
 dependencies = [
  "cfg-if",
- "esp32c3",
+ "esp32c3 0.31.0",
  "fugit",
  "portable-atomic",
- "riscv 0.14.0",
+ "riscv 0.16.0",
  "rtic-time",
 ]
 
