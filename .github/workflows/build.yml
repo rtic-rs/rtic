@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - master
+  schedule:
+    - cron: '0 18 * * TUE'  # Run every Tuesday before the meeting
 
 env:
   CARGO_TERM_COLOR: always
