@@ -1,0 +1,7 @@
+error[E0609]: no field `local_spawner` on type `__rtic_internal_bar_Context<'_>`
+  --> ui/spawn-local-different-exec.rs:21:12
+   |
+21 |         cx.local_spawner.foo().ok();
+   |            ^^^^^^^^^^^^^ unknown field
+   |
+   = note: available field is: `__rtic_internal_p`
