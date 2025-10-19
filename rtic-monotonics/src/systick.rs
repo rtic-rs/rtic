@@ -74,7 +74,7 @@ impl SystickBackend {
     /// Use the prelude macros instead.
     pub fn _start(mut systick: SYST, sysclk: u32, timer_hz: u32) {
         assert!(
-            (sysclk % timer_hz) == 0,
+            sysclk.is_multiple_of(timer_hz),
             "timer_hz cannot evenly divide sysclk! Please adjust the timer or sysclk frequency."
         );
         let reload = sysclk / timer_hz - 1;
