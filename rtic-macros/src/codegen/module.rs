@@ -134,8 +134,8 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         let (input_args, input_tupled, input_untupled, input_ty) =
             util::regroup_inputs(&spawnee.inputs);
 
-        let is_local_task = app.software_tasks[t].args.is_local_task;
-        let unsafety = if is_local_task {
+        let local_task = app.software_tasks[t].args.local_task;
+        let unsafety = if local_task {
             // local tasks are only safe to call from the same executor
             quote! { unsafe }
         } else {
@@ -183,7 +183,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             }
         ));
 
-        if !is_local_task {
+        if !local_task {
             module_items.push(quote!(
                 #(#cfgs)*
                 #[doc(inline)]
@@ -194,7 +194,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         let local_tasks_on_same_executor: Vec<_> = app
             .software_tasks
             .iter()
-            .filter(|(_, t)| t.args.is_local_task && t.args.priority == priority)
+            .filter(|(_, t)| t.args.local_task && t.args.priority == priority)
             .collect();
 
         if !local_tasks_on_same_executor.is_empty() {
@@ -204,7 +204,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                 ///
                 /// This is useful for tasks that take args which are !Send/!Sync.
                 ///
-                /// NOTE: This only works with tasks marked `is_local_task = true`
+                /// NOTE: This only works with tasks marked `local_task = true`
                 /// and which have the same priority and thus will run on the
                 /// same executor.
                 pub local_spawner: #local_spawner

@@ -289,7 +289,7 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
         let channel = channels.entry(spawnee_prio).or_default();
         channel.tasks.insert(name.clone());
 
-        if !spawnee.args.is_local_task {
+        if !spawnee.args.local_task {
             // All inputs are send as we do not know from where they may be spawned.
             spawnee.inputs.iter().for_each(|input| {
                 send_types.insert(input.ty.clone());

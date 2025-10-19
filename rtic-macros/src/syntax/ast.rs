@@ -261,7 +261,7 @@ pub struct SoftwareTaskArgs {
     /// 
     /// Local tasks can only be spawned from the same executor.
     /// However they do not require Send and Sync
-    pub is_local_task: bool,
+    pub local_task: bool,
 }
 
 impl Default for SoftwareTaskArgs {
@@ -270,7 +270,7 @@ impl Default for SoftwareTaskArgs {
             priority: 0,
             local_resources: LocalResources::new(),
             shared_resources: SharedResources::new(),
-            is_local_task: false,
+            local_task: false,
         }
     }
 }
