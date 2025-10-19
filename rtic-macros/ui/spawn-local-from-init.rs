@@ -16,6 +16,6 @@ mod app {
         (Shared {}, Local {})
     }
 
-    #[task(priority = 1, is_local_task = true)]
+    #[task(priority = 1, local_task)]
     async fn foo(_cx: foo::Context) {}
 }
