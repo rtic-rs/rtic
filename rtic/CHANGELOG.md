@@ -23,6 +23,7 @@ Example:
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
+- Add attribute `local_task` for tasks that may take args that are !Send/!Sync and can only be spawned from same executor
 
 ### Changed
 
