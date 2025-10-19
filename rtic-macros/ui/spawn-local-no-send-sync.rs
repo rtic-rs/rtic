@@ -1,5 +1,7 @@
 #![no_main]
 
+use std::marker::PhantomData;
+
 #[rtic_macros::mock_app(device = mock, dispatchers = [EXTI0])]
 mod app {
     use super::*;
