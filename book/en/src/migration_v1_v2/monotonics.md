@@ -4,7 +4,7 @@ In previous versions of `rtic`, monotonics were an integral, tightly coupled par
 
 The `#[monotonic]` attribute is no longer used. Instead, you use a `create_X_token` from [`rtic-monotonics`]. An invocation of this macro returns an interrupt registration token, which can be used to construct an instance of your desired monotonic.
 
-`spawn_after` and `spawn_at` are no longer available. Instead, you use the async functions `delay` and `delay_until` provided by ipmlementations of the `rtic_time::Monotonic` trait, available through [`rtic-monotonics`].
+`spawn_after` and `spawn_at` are no longer available. Instead, you use the async functions `delay` and `delay_until` provided by implementations of the `rtic_time::Monotonic` trait, available through [`rtic-monotonics`].
 
 Check out the [code example](./complete_example.md) for an overview of the required changes.
 
