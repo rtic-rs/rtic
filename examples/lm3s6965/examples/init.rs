@@ -31,7 +31,7 @@ mod app {
 
         // Access to the critical section token,
         // to indicate that this is a critical section
-        let _cs_token: bare_metal::CriticalSection = cx.cs;
+        let _cs_token: rtic::export::CriticalSection = cx.cs;
 
         hprintln!("init");
 

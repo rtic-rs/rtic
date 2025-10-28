@@ -30,7 +30,6 @@ esp32c3 = { version = "0.30.0", optional = true }
 esp32c6 = { version = "0.21.0", optional = true }
 riscv = { version = "0.15.0", optional = true }
 cortex-m = { version = "0.7.0", optional = true }
-bare-metal = "1.0.0"
 portable-atomic = { version = "1", default-features = false }
 rtic-macros = { path = "../rtic-macros", version = "=2.2.0" }
 rtic-core = "1"

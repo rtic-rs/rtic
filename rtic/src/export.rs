@@ -1,4 +1,4 @@
-pub use bare_metal::CriticalSection;
+pub use critical_section::CriticalSection;
 pub use portable_atomic as atomic;
 
 pub mod executor;
