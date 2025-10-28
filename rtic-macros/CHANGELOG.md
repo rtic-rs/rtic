@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Fixed
+
+- Generated mutexes for shared resourses no longer implement `Send`. They are meant to be used inside a task locally.
+
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
