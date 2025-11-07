@@ -28,6 +28,26 @@
 //!     }
 //! }
 //! ```
+//!
+//! By default, SysTick uses [`SystClkSource::Core`] as the clock source.
+//! To set the SysTick clock source, use `start_with_clock_source`:
+//!
+//! ```
+//! # use rtic_monotonics::systick::prelude::*;
+//! # systick_monotonic!(Mono, 1_000);
+//! use rtic_monotonics::systick::SystClkSource;
+//!
+//! fn init() {
+//!     let core_peripherals = cortex_m::Peripherals::take().unwrap();
+//!     // Start the monotonic using the cortex-m crate's Systick driver.
+//!     // We tell it we have a 12MHz external clock source.
+//!     Mono::start_with_clock_source(
+//!         core_peripherals.SYST,
+//!         12_000_000,
+//!         SystClkSource::External,
+//!     );
+//! }
+//! ```
 
 /// Common definitions and traits for using the systick monotonic
 pub mod prelude {
@@ -44,7 +64,7 @@ pub mod prelude {
     }
 }
 
-pub use cortex_m::peripheral::SYST;
+pub use cortex_m::peripheral::{syst::SystClkSource, SYST};
 
 use portable_atomic::Ordering;
 use rtic_time::timer_queue::TimerQueue;
@@ -72,7 +92,7 @@ impl SystickBackend {
     /// **Do not use this function directly.**
     ///
     /// Use the prelude macros instead.
-    pub fn _start(mut systick: SYST, sysclk: u32, timer_hz: u32) {
+    pub fn _start(mut systick: SYST, sysclk: u32, timer_hz: u32, clk_source: SystClkSource) {
         assert!(
             sysclk.is_multiple_of(timer_hz),
             "timer_hz cannot evenly divide sysclk! Please adjust the timer or sysclk frequency."
@@ -83,7 +103,7 @@ impl SystickBackend {
         assert!(reload > 0);
 
         systick.disable_counter();
-        systick.set_clock_source(cortex_m::peripheral::syst::SystClkSource::Core);
+        systick.set_clock_source(clk_source);
         systick.set_reload(reload);
         systick.enable_interrupt();
         systick.enable_counter();
@@ -172,8 +192,25 @@ macro_rules! systick_monotonic {
             /// Panics if it is impossible to achieve the desired monotonic tick rate based
             /// on the given `sysclk` parameter. If that happens, adjust the desired monotonic tick rate.
             ///
-            /// This method must be called only once.
+            /// This method, or `start_with_clock_source`, must be called only once.
             pub fn start(systick: $crate::systick::SYST, sysclk: u32) {
+                Self::start_with_clock_source(systick, sysclk, $crate::systick::SystClkSource::Core)
+            }
+
+            /// Starts the `Monotonic` with your preferred SYST clock source.
+            ///
+            /// The `sysclk` parameter is the speed at which SysTick runs at. This value should come from
+            /// the clock generation function of the used HAL, depending on your `clk_source`.
+            ///
+            /// Panics if it is impossible to achieve the desired monotonic tick rate based
+            /// on the given `sysclk` parameter. If that happens, adjust the desired monotonic tick rate.
+            ///
+            /// This method, or `start`, must be called only once.
+            pub fn start_with_clock_source(
+                systick: $crate::systick::SYST,
+                sysclk: u32,
+                clk_source: $crate::systick::SystClkSource,
+            ) {
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe extern "C" fn SysTick() {
@@ -181,7 +218,7 @@ macro_rules! systick_monotonic {
                     $crate::systick::SystickBackend::timer_queue().on_monotonic_interrupt();
                 }
 
-                $crate::systick::SystickBackend::_start(systick, sysclk, $tick_rate_hz);
+                $crate::systick::SystickBackend::_start(systick, sysclk, $tick_rate_hz, clk_source);
             }
         }
 
