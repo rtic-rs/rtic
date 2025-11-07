@@ -10,6 +10,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Changed
 - Panic if STM32 prescaler value would overflow
 
+### Added
+
+- Cortex-M `systick` can be configured with its external clock source
+
 ## v2.1.0 - 2025-06-22
 
 ### Changed
