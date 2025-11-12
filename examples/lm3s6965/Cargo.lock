@@ -21,12 +21,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bare-metal"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
-
-[[package]]
 name = "bitfield"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -59,7 +53,7 @@ version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ec610d8f49840a5b376c69663b6369e71f4b34484b9b2eb29fb918d92516cb9"
 dependencies = [
- "bare-metal 0.2.5",
+ "bare-metal",
  "bitfield",
  "critical-section",
  "embedded-hal 0.2.7",
@@ -271,6 +265,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "heapless"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1edcd5a338e64688fbdcb7531a846cfd3476a54784dcb918a0844682bc7ada5"
+dependencies = [
+ "hash32",
+ "stable_deref_trait",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -459,7 +463,6 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 name = "rtic"
 version = "2.2.0"
 dependencies = [
- "bare-metal 1.0.0",
  "cortex-m",
  "critical-section",
  "portable-atomic",
@@ -511,7 +514,7 @@ dependencies = [
  "embedded-hal 1.0.0",
  "embedded-hal-async",
  "embedded-hal-bus",
- "heapless",
+ "heapless 0.9.1",
  "loom",
  "portable-atomic",
  "rtic-common",
@@ -533,12 +536,11 @@ dependencies = [
 name = "rtic_lm3s6965"
 version = "0.1.0"
 dependencies = [
- "bare-metal 1.0.0",
  "cfg-if",
  "cortex-m",
  "cortex-m-semihosting",
  "futures",
- "heapless",
+ "heapless 0.8.0",
  "lm3s6965",
  "panic-semihosting",
  "rtic",

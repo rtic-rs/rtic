@@ -12,7 +12,6 @@ edition = "2021"
 heapless = "0.8"
 lm3s6965 = "0.2"
 cortex-m = "0.7.0"
-bare-metal = "1.0.0"
 cortex-m-semihosting = "0.5.0"
 rtic-time = { path = "../../rtic-time" }
 rtic-sync = { path = "../../rtic-sync" }

@@ -5,7 +5,7 @@ signature `fn(init::Context) -> (Shared, Local)`, where `Shared` and `Local` are
 
 The `init` task executes after system reset, [after an optionally defined `pre-init` code section][^pre-init] and an always occurring internal RTIC initialization.
 
-The `init` and optional `pre-init` tasks runs _with interrupts disabled_ and have exclusive access to Cortex-M (the `bare_metal::CriticalSection` token is available as `cs`).
+The `init` and optional `pre-init` tasks runs _with interrupts disabled_ and have exclusive access to Cortex-M (the `critical_section::CriticalSection` token is available as `cs`).
 
 Device specific peripherals are available through the `core` and `device` fields of `init::Context`.
 
