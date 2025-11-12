@@ -62,8 +62,13 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 #[allow(non_camel_case_types)]
                 #(#cfgs)*
                 pub struct #shared_name<'a> {
-                    __rtic_internal_p: ::core::marker::PhantomData<&'a ()>,
+                    __rtic_internal_p: ::core::marker::PhantomData<(&'a (), *const u8)>,
                 }
+
+                // Opt out from `Send`.
+                // `#shared_name` is trivially `Sync` because there are no `&self` methods.
+                // See https://doc.rust-lang.org/std/sync/struct.Exclusive.html .
+                unsafe impl<'a> Sync for #shared_name<'a> {}
 
                 #(#cfgs)*
                 impl<'a> #shared_name<'a> {
