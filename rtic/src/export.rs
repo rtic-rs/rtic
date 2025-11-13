@@ -1,6 +1,7 @@
 pub use critical_section::CriticalSection;
 pub use portable_atomic as atomic;
 
+pub mod dummy;
 pub mod executor;
 
 // Cortex-M target (any)

@@ -10,6 +10,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
+- Local spawner for spawning tasks with !Send/!Sync args on the same executor
 
 ## [v2.2.0] - 2025-06-22
 
