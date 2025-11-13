@@ -28,8 +28,8 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         Mono::start(cx.core.SYST, 12_000_000);
 
-        incrementer::spawn(cx.local.wait_queue).ok().unwrap();
-        waiter::spawn(cx.local.wait_queue).ok().unwrap();
+        incrementer::spawn(&*cx.local.wait_queue).ok().unwrap();
+        waiter::spawn(&*cx.local.wait_queue).ok().unwrap();
 
         let count = 0;
 
