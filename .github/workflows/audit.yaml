@@ -12,3 +12,6 @@ jobs:
       - uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          # RUSTSEC-2024-0436: Paste (which is mature/stable) only pulled in by examples/
+          # dependencies such as esp-hal, riscv, rp2040-hal, stm32f3xx-hal etc.
+          ignore: ["RUSTSEC-2024-0436"]
