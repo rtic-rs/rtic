@@ -27,6 +27,8 @@ type WaitQueue = DoublyLinkedList<WaitQueueData>;
 ///
 /// This channel uses critical sections, however there are extremely small and all `memcpy`
 /// operations of `T` are done without critical sections.
+///
+/// Right now, the size of the queue `N` is limited to 255 elements.
 pub struct Channel<T, const N: usize> {
     // Here are all indexes that are not used in `slots` and ready to be allocated.
     freeq: UnsafeCell<Deque<u8, N>>,
