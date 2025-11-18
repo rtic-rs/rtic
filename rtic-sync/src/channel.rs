@@ -72,11 +72,17 @@ impl<T, const N: usize> Default for Channel<T, N> {
 }
 
 impl<T, const N: usize> Channel<T, N> {
-    const _CHECK: () = assert!(N < 256, "This queue support a maximum of 255 entries");
+    // Size check.
+    const fn size_check() {
+        // This limit comes from the the internal `Deque` structures used to track free and ready
+        // slots which have a type of [u8]
+        assert!(N < 256, "This queue support a maximum of 255 entries");
+    }
 
     /// Create a new channel.
     #[cfg(not(loom))]
     pub const fn new() -> Self {
+        Self::size_check();
         Self {
             freeq: UnsafeCell::new(Deque::new()),
             readyq: UnsafeCell::new(Deque::new()),
@@ -91,6 +97,7 @@ impl<T, const N: usize> Channel<T, N> {
     /// Create a new channel.
     #[cfg(loom)]
     pub fn new() -> Self {
+        Self::size_check();
         Self {
             freeq: UnsafeCell::new(Deque::new()),
             readyq: UnsafeCell::new(Deque::new()),
