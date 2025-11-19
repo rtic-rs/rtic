@@ -113,6 +113,17 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
     let internal_context_name = util::internal_task_ident(name, "Context");
     let exec_name = util::internal_task_ident(name, "EXEC");
 
+    if let Context::SoftwareTask(t) = ctxt {
+        let local_spawner = util::internal_task_ident(t, "LocalSpawner");
+        fields.push(quote! {
+            /// Used to spawn tasks on the same executor
+            ///
+            /// This is useful for tasks that take args which are !Send/!Sync.
+            pub local_spawner: #local_spawner
+        });
+        values.push(quote!(local_spawner: #local_spawner { _p: core::marker::PhantomData }));
+    }
+
     items.push(quote!(
         #(#cfgs)*
         /// Execution context
@@ -228,51 +239,43 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             .filter(|(_, t)| t.args.priority == priority)
             .collect();
 
-        if !tasks_on_same_executor.is_empty() {
-            let local_spawner = util::internal_task_ident(t, "LocalSpawner");
-            fields.push(quote! {
-                /// Used to spawn tasks on the same executor
-                ///
-                /// This is useful for tasks that take args which are !Send/!Sync.
-                pub local_spawner: #local_spawner
-            });
-            let tasks = tasks_on_same_executor
-                .iter()
-                .map(|(ident, task)| {
-                    // Copied mostly from software_tasks.rs
-                    let internal_spawn_ident = util::internal_task_ident(ident, "spawn_helper");
-                    let attrs = &task.attrs;
-                    let cfgs = &task.cfgs;
-                    let generics = if task.is_bottom {
-                        quote!()
-                    } else {
-                        quote!(<'a>)
-                    };
 
-                    let (_generic_input_args, input_args, _input_tupled, input_untupled, input_ty) = util::regroup_inputs(&task.inputs);
-                    quote! {
-                        #(#attrs)*
-                        #(#cfgs)*
-                        #[allow(non_snake_case)]
-                        pub(super) fn #ident #generics(&self #(,#input_args)*) -> ::core::result::Result<(), #input_ty> {
-                            // SAFETY: This is safe to call since this can only be called
-                            // from the same executor
-                            unsafe { #internal_spawn_ident(#(#input_untupled,)*) }
-                        }
+        let local_spawner = util::internal_task_ident(t, "LocalSpawner");
+        let tasks = tasks_on_same_executor
+            .iter()
+            .map(|(ident, task)| {
+                // Copied mostly from software_tasks.rs
+                let internal_spawn_ident = util::internal_task_ident(ident, "spawn_helper");
+                let attrs = &task.attrs;
+                let cfgs = &task.cfgs;
+                let generics = if task.is_bottom {
+                    quote!()
+                } else {
+                    quote!(<'a>)
+                };
+
+                let (_generic_input_args, input_args, _input_tupled, input_untupled, input_ty) = util::regroup_inputs(&task.inputs);
+                quote! {
+                    #(#attrs)*
+                    #(#cfgs)*
+                    #[allow(non_snake_case)]
+                    pub(super) fn #ident #generics(&self #(,#input_args)*) -> ::core::result::Result<(), #input_ty> {
+                        // SAFETY: This is safe to call since this can only be called
+                        // from the same executor
+                        unsafe { #internal_spawn_ident(#(#input_untupled,)*) }
                     }
-                })
-                .collect::<Vec<_>>();
-            values.push(quote!(local_spawner: #local_spawner { _p: core::marker::PhantomData }));
-            items.push(quote! {
-                struct #local_spawner {
-                    _p: core::marker::PhantomData<*mut ()>,
                 }
+            })
+            .collect::<Vec<_>>();
+        items.push(quote! {
+            struct #local_spawner {
+                _p: core::marker::PhantomData<*mut ()>,
+            }
 
-                impl #local_spawner {
-                    #(#tasks)*
-                }
-            });
-        }
+            impl #local_spawner {
+                #(#tasks)*
+            }
+        });
 
         module_items.push(quote!(
             #(#cfgs)*
