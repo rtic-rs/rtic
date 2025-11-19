@@ -35,6 +35,8 @@ pub fn link_section_uninit() -> TokenStream2 {
 pub fn regroup_inputs(
     inputs: &[PatType],
 ) -> (
+    // Generic args e.g. &[`_0: impl TaskArg<T=i32>`, `_1: impl TaskArg<T=i64>`]
+    Vec<TokenStream2>,
     // args e.g. &[`_0`],  &[`_0: i32`, `_1: i64`]
     Vec<TokenStream2>,
     // tupled e.g. `_0`, `(_0, _1)`
@@ -48,12 +50,14 @@ pub fn regroup_inputs(
         let ty = &inputs[0].ty;
 
         (
+            vec![quote!(_0: impl rtic::export::task_arg::TaskArg<T=#ty> + Send + Sync)],
             vec![quote!(_0: #ty)],
             quote!(_0),
             vec![quote!(_0)],
             quote!(#ty),
         )
     } else {
+        let mut generic_args = vec![];
         let mut args = vec![];
         let mut pats = vec![];
         let mut tys = vec![];
@@ -61,6 +65,8 @@ pub fn regroup_inputs(
         for (i, input) in inputs.iter().enumerate() {
             let i = Ident::new(&format!("_{i}"), Span::call_site());
             let ty = &input.ty;
+
+            generic_args.push(quote!(#i: impl rtic::export::task_arg::TaskArg<T=#ty> + Send + Sync));
 
             args.push(quote!(#i: #ty));
 
@@ -74,7 +80,7 @@ pub fn regroup_inputs(
             quote!((#(#pats,)*))
         };
         let ty = quote!((#(#tys,)*));
-        (args, tupled, pats, ty)
+        (generic_args, args, tupled, pats, ty)
     }
 }
 
