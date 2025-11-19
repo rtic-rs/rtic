@@ -1,8 +1,8 @@
 pub use critical_section::CriticalSection;
 pub use portable_atomic as atomic;
 
-pub mod dummy;
 pub mod executor;
+pub mod task_arg;
 
 // Cortex-M target (any)
 #[cfg(feature = "cortex-m")]
