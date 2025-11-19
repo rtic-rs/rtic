@@ -113,6 +113,36 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
     let internal_context_name = util::internal_task_ident(name, "Context");
     let exec_name = util::internal_task_ident(name, "EXEC");
 
+    items.push(quote!(
+        #(#cfgs)*
+        /// Execution context
+        #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
+        pub struct #internal_context_name<'a> {
+            #[doc(hidden)]
+            __rtic_internal_p: ::core::marker::PhantomData<&'a ()>,
+            #(#fields,)*
+        }
+
+        #(#cfgs)*
+        impl<'a> #internal_context_name<'a> {
+            #[inline(always)]
+            #[allow(missing_docs)]
+            pub unsafe fn new(#core) -> Self {
+                #internal_context_name {
+                    __rtic_internal_p: ::core::marker::PhantomData,
+                    #(#values,)*
+                }
+            }
+        }
+    ));
+
+    module_items.push(quote!(
+        #(#cfgs)*
+        #[doc(inline)]
+        pub use super::#internal_context_name as Context;
+    ));
+
     if let Context::SoftwareTask(t) = ctxt {
         let spawnee = &app.software_tasks[name];
         let priority = spawnee.args.priority;
@@ -250,36 +280,6 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             pub use super::#internal_waker_ident as waker;
         ));
     }
-
-    items.push(quote!(
-        #(#cfgs)*
-        /// Execution context
-        #[allow(non_snake_case)]
-        #[allow(non_camel_case_types)]
-        pub struct #internal_context_name<'a> {
-            #[doc(hidden)]
-            __rtic_internal_p: ::core::marker::PhantomData<&'a ()>,
-            #(#fields,)*
-        }
-
-        #(#cfgs)*
-        impl<'a> #internal_context_name<'a> {
-            #[inline(always)]
-            #[allow(missing_docs)]
-            pub unsafe fn new(#core) -> Self {
-                #internal_context_name {
-                    __rtic_internal_p: ::core::marker::PhantomData,
-                    #(#values,)*
-                }
-            }
-        }
-    ));
-
-    module_items.push(quote!(
-        #(#cfgs)*
-        #[doc(inline)]
-        pub use super::#internal_context_name as Context;
-    ));
 
     if items.is_empty() {
         quote!()
