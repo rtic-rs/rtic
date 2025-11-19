@@ -227,18 +227,17 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             }
         ));
 
-        module_items.push(quote!{
+        module_items.push(quote!(
             #(#cfgs)*
             #[doc(inline)]
             pub use super::#internal_spawn_ident as spawn;
-        });
+        ));
 
         let tasks_on_same_executor: Vec<_> = app
             .software_tasks
             .iter()
             .filter(|(_, t)| t.args.priority == priority)
             .collect();
-
 
         let local_spawner = util::internal_task_ident(t, "LocalSpawner");
         let tasks = tasks_on_same_executor
