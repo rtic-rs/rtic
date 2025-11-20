@@ -285,13 +285,16 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
     for (name, spawnee) in &app.software_tasks {
         let spawnee_prio = spawnee.args.priority;
 
+        // TODO: What is this?
         let channel = channels.entry(spawnee_prio).or_default();
         channel.tasks.insert(name.clone());
 
-        // All inputs are send as we do not know from where they may be spawned.
-        spawnee.inputs.iter().for_each(|input| {
-            send_types.insert(input.ty.clone());
-        });
+        if !spawnee.args.local_task {
+            // All inputs are send as we do not know from where they may be spawned.
+            spawnee.inputs.iter().for_each(|input| {
+                send_types.insert(input.ty.clone());
+            });
+        }
     }
 
     // No channel should ever be empty
