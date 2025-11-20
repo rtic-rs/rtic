@@ -365,7 +365,7 @@ make_timer!(Tim3Backend, TIM3, u16, TIMER3_OVERFLOWS, TIMER3_TQ);
 make_timer!(Tim4Backend, TIM4, u16, TIMER4_OVERFLOWS, TIMER4_TQ);
 
 #[cfg(feature = "stm32_tim5")]
-make_timer!(Tim5Backend, TIM5, u16, TIMER5_OVERFLOWS, TIMER5_TQ);
+make_timer!(Tim5Backend, TIM5, u32, TIMER5_OVERFLOWS, TIMER5_TQ);
 
 #[cfg(feature = "stm32_tim15")]
 make_timer!(Tim15Backend, TIM15, u16, TIMER15_OVERFLOWS, TIMER15_TQ);
