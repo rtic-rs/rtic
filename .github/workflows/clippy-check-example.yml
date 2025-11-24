@@ -29,7 +29,7 @@ jobs:
     name: Validate platform ${{ inputs.platform }}, backend ${{ inputs.backend }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configure Rust target ${{ inputs.rustup-target }}
         run: rustup target add ${{ inputs.rustup-target }}
@@ -44,7 +44,7 @@ jobs:
     name: Check examples
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configure Rust target ${{ inputs.rustup-target }}
         run: rustup target add ${{ inputs.rustup-target }}
@@ -60,7 +60,7 @@ jobs:
     name: Run clippy
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Configure Rust target ${{ inputs.rustup-target }}
       run:  rustup target add ${{ inputs.rustup-target }}
