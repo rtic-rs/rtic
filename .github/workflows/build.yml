@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache QEMU
         id: cache-qemu
@@ -152,7 +152,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configure Rust target ${{ matrix.input.rustup-target }}
         run: rustup target add ${{ matrix.input.rustup-target }}
@@ -228,7 +228,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
@@ -248,7 +248,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run cargo test
         run: cargo xtask --deny-warnings test --loom rtic-sync
@@ -259,7 +259,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install lychee
         uses: taiki-e/install-action@v2
@@ -310,7 +310,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install lychee
         uses: taiki-e/install-action@v2
@@ -365,7 +365,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install mdbook
         uses: taiki-e/install-action@v2
@@ -443,7 +443,7 @@ jobs:
       versionmajor: ${{ steps.parseversion.outputs.versionmajor }}
       version: ${{ steps.parseversion.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get crate version and print output branch release/vX
         id: parseversion
@@ -480,7 +480,7 @@ jobs:
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Push to stable release branch if master contains stable version
         if: ${{ env.versionmajor == env.STABLE_VERSION }}
@@ -510,7 +510,7 @@ jobs:
     # Only run this when pushing to master branch
     if: github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install lychee
         uses: taiki-e/install-action@v2

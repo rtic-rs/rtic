@@ -7,7 +7,7 @@ jobs:
   security_audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: cargo generate-lockfile # create Cargo.lock
       - uses: rustsec/audit-check@v2.0.0
         with:
