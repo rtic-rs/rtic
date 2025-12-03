@@ -68,6 +68,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 // Opt out from `Send`.
                 // `#shared_name` is trivially `Sync` because there are no `&self` methods.
                 // See https://doc.rust-lang.org/std/sync/struct.Exclusive.html .
+                #(#cfgs)*
                 unsafe impl<'a> Sync for #shared_name<'a> {}
 
                 #(#cfgs)*
