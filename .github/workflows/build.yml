@@ -88,7 +88,7 @@ jobs:
 
       - name: Cache QEMU
         id: cache-qemu
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: qemu-${{ env.QEMU_VERSION }}/build
           key: ${{ runner.OS }}-qemu-${{ env.QEMU_VERSION }}
