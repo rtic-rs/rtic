@@ -76,7 +76,7 @@ pub use nrf5340_net_pac::{
 #[doc(hidden)]
 pub use nrf9160_pac::{self as pac, TIMER0_NS as TIMER0, TIMER1_NS as TIMER1, TIMER2_NS as TIMER2};
 
-use portable_atomic::{AtomicU32, Ordering};
+use crate::atomic::{AtomicU32, Ordering};
 use rtic_time::{
     half_period_counter::calculate_now,
     timer_queue::{TimerQueue, TimerQueueBackend},

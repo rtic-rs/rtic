@@ -39,10 +39,9 @@ rustdoc-flags = ["--cfg", "docsrs"]
 [dependencies]
 rtic-time = { version = "2.0.0", path = "../rtic-time" }
 fugit = { version = "0.3.6" }
-portable-atomic = { version = "1" }
 cfg-if = "1.0.0"
 cortex-m = { version = "0.7.6", optional = true }
-critical-section = { version = "1", optional = true }
+critical-section = { version = "1" }
 
 # RP2040
 rp2040-pac = { version = "0.6", optional = true }
@@ -94,15 +93,15 @@ rp2040 = ["dep:cortex-m", "dep:rp2040-pac"]
 rp235x = ["dep:cortex-m", "dep:rp235x-pac"]
 
 # nRF Timers and RTC
-nrf52805 = ["dep:cortex-m", "dep:nrf52805-pac", "dep:critical-section"]
-nrf52810 = ["dep:cortex-m", "dep:nrf52810-pac", "dep:critical-section"]
-nrf52811 = ["dep:cortex-m", "dep:nrf52811-pac", "dep:critical-section"]
-nrf52832 = ["dep:cortex-m", "dep:nrf52832-pac", "dep:critical-section"]
-nrf52833 = ["dep:cortex-m", "dep:nrf52833-pac", "dep:critical-section"]
-nrf52840 = ["dep:cortex-m", "dep:nrf52840-pac", "dep:critical-section"]
-nrf5340-app = ["dep:cortex-m", "dep:nrf5340-app-pac", "dep:critical-section"]
-nrf5340-net = ["dep:cortex-m", "dep:nrf5340-net-pac", "dep:critical-section"]
-nrf9160 = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
+nrf52805 = ["dep:cortex-m", "dep:nrf52805-pac"]
+nrf52810 = ["dep:cortex-m", "dep:nrf52810-pac"]
+nrf52811 = ["dep:cortex-m", "dep:nrf52811-pac"]
+nrf52832 = ["dep:cortex-m", "dep:nrf52832-pac"]
+nrf52833 = ["dep:cortex-m", "dep:nrf52833-pac"]
+nrf52840 = ["dep:cortex-m", "dep:nrf52840-pac"]
+nrf5340-app = ["dep:cortex-m", "dep:nrf5340-app-pac"]
+nrf5340-net = ["dep:cortex-m", "dep:nrf5340-net-pac"]
+nrf9160 = ["dep:cortex-m", "dep:nrf9160-pac"]
 
 # i.MX RT Timers
 # Use as `features = ["imxrt_gpt1"]`

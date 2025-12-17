@@ -1,11 +1,6 @@
 //! In-tree implementations of the [`rtic_time::Monotonic`] (reexported) trait for
 //! timers & clocks found on commonly used microcontrollers.
 //!
-//! If you are using a microcontroller where CAS operations are not available natively, you might
-//! have to enable the `critical-section` or `unsafe-assume-single-core` feature of the
-//! [`portable-atomic`](https://docs.rs/portable-atomic/latest/portable_atomic/) dependency
-//! yourself for this dependency to compile.
-//!
 //! To enable the implementations, you must enable a feature for the specific MCU you're targeting.
 //!
 //! # Cortex-M Systick
@@ -134,4 +129,114 @@ pub(crate) unsafe fn set_monotonic_prio(
     let mut nvic: cortex_m::peripheral::NVIC = core::mem::transmute(());
 
     nvic.set_priority(interrupt, hw_prio);
+}
+
+mod atomic {
+    //! Use a critical section for atomics in case the HW does not support atomics of specific
+    //! sizes.
+
+    #![allow(unused)]
+
+    pub use core::sync::atomic::Ordering;
+
+    #[cfg(target_has_atomic = "32")]
+    pub use core::sync::atomic::AtomicU32;
+    #[cfg(not(target_has_atomic = "32"))]
+    pub struct AtomicU32(core::cell::UnsafeCell<u32>);
+
+    #[cfg(not(target_has_atomic = "32"))]
+    impl AtomicU32 {
+        /// Create a new atomic.
+        #[inline]
+        pub const fn new(val: u32) -> Self {
+            Self(core::cell::UnsafeCell::new(val))
+        }
+
+        /// Store the value.
+        #[inline]
+        pub fn store(&self, val: u32, _ordering: Ordering) {
+            critical_section::with(|_| unsafe {
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                self.0.get().write(val);
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+            });
+        }
+
+        /// Read the value.
+        #[inline]
+        pub fn load(&self, _ordering: Ordering) -> u32 {
+            critical_section::with(|_| unsafe {
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                let r = self.0.get().read();
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                r
+            })
+        }
+
+        /// Read the value.
+        #[inline]
+        pub fn fetch_add(&self, val: u32, _ordering: Ordering) -> u32 {
+            critical_section::with(|_| {
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                let curr = unsafe { self.0.get().read() };
+                unsafe { self.0.get().write(curr.wrapping_add(val)) };
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                curr
+            })
+        }
+    }
+
+    #[cfg(not(target_has_atomic = "32"))]
+    unsafe impl Sync for AtomicU32 {}
+
+    #[cfg(target_has_atomic = "64")]
+    pub use core::sync::atomic::AtomicU64;
+
+    #[cfg(not(target_has_atomic = "64"))]
+    pub struct AtomicU64(core::cell::UnsafeCell<u64>);
+
+    #[cfg(not(target_has_atomic = "64"))]
+    impl AtomicU64 {
+        /// Create a new atomic.
+        #[inline]
+        pub const fn new(val: u64) -> Self {
+            Self(core::cell::UnsafeCell::new(val))
+        }
+
+        /// Store the value.
+        #[inline]
+        pub fn store(&self, val: u64, _ordering: Ordering) {
+            critical_section::with(|_| unsafe {
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                self.0.get().write(val);
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+            });
+        }
+
+        /// Read the value.
+        #[inline]
+        pub fn load(&self, _ordering: Ordering) -> u64 {
+            critical_section::with(|_| unsafe {
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                let r = self.0.get().read();
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                r
+            })
+        }
+
+        /// Read the value.
+        #[inline]
+        pub fn fetch_add(&self, val: u64, _ordering: Ordering) -> u64 {
+            critical_section::with(|_| {
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                let curr = unsafe { self.0.get().read() };
+                unsafe { self.0.get().write(curr.wrapping_add(val)) };
+                core::sync::atomic::compiler_fence(Ordering::SeqCst);
+                curr
+            })
+        }
+    }
+
+    #[cfg(not(target_has_atomic = "64"))]
+    unsafe impl Sync for AtomicU64 {}
 }

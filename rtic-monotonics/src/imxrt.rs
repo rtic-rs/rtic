@@ -30,7 +30,7 @@
 //! }
 //! ```
 
-use portable_atomic::{AtomicU32, Ordering};
+use crate::atomic::{AtomicU32, Ordering};
 use rtic_time::{
     half_period_counter::calculate_now,
     timer_queue::{TimerQueue, TimerQueueBackend},

@@ -8,7 +8,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ## Unreleased
 
 ### Changed
+
 - Panic if STM32 prescaler value would overflow
+- Moved away from `portable-atomic` due to it's spinlock design
 
 ### Added
 
