@@ -1,5 +1,6 @@
 use crate::syntax::{ast::App, Context};
 use crate::{analyze::Analysis, codegen::bindings::interrupt_mod, codegen::util};
+
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
@@ -112,6 +113,17 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
     let internal_context_name = util::internal_task_ident(name, "Context");
     let exec_name = util::internal_task_ident(name, "EXEC");
 
+    if let Context::SoftwareTask(t) = ctxt {
+        let local_spawner = util::internal_task_ident(t, "LocalSpawner");
+        fields.push(quote! {
+            /// Used to spawn tasks on the same executor
+            ///
+            /// This is useful for tasks that take args which are !Send/!Sync.
+            pub local_spawner: #local_spawner
+        });
+        values.push(quote!(local_spawner: #local_spawner { _p: core::marker::PhantomData }));
+    }
+
     items.push(quote!(
         #(#cfgs)*
         /// Execution context
@@ -142,7 +154,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         pub use super::#internal_context_name as Context;
     ));
 
-    if let Context::SoftwareTask(..) = ctxt {
+    if let Context::SoftwareTask(t) = ctxt {
         let spawnee = &app.software_tasks[name];
         let priority = spawnee.args.priority;
         let cfgs = &spawnee.cfgs;
@@ -158,18 +170,21 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         };
 
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");
+        let internal_spawn_helper_ident = util::internal_task_ident(name, "spawn_helper");
         let internal_waker_ident = util::internal_task_ident(name, "waker");
         let from_ptr_n_args = util::from_ptr_n_args_ident(spawnee.inputs.len());
-        let (input_args, input_tupled, input_untupled, input_ty) =
+        let (generic_input_args, input_args, input_tupled, input_untupled, input_ty) =
             util::regroup_inputs(&spawnee.inputs);
 
         // Spawn caller
         items.push(quote!(
             #(#cfgs)*
-            /// Spawns the task directly
+            /// Spawns the task without checking if the spawner and spawnee are the same priority
+            /// 
+            /// SAFETY: The caller needs to check that the spawner and spawnee are the same priority
             #[allow(non_snake_case)]
             #[doc(hidden)]
-            pub fn #internal_spawn_ident(#(#input_args,)*) -> ::core::result::Result<(), #input_ty> {
+            pub unsafe fn #internal_spawn_helper_ident(#(#input_args,)*) -> ::core::result::Result<(), #input_ty> {
                 // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
                 unsafe {
                     let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
@@ -182,6 +197,14 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                         Err(#input_tupled)
                     }
                 }
+            }
+            
+            /// Spawns the task directly
+            #[allow(non_snake_case)]
+            #[doc(hidden)]
+            pub fn #internal_spawn_ident(#(#generic_input_args,)*) -> ::core::result::Result<(), #input_ty> {
+                // SAFETY: The generic args require Send + Sync
+                unsafe { #internal_spawn_helper_ident(#(#input_untupled.to()),*) }
             }
         ));
 
@@ -209,6 +232,49 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             #[doc(inline)]
             pub use super::#internal_spawn_ident as spawn;
         ));
+
+        let tasks_on_same_executor: Vec<_> = app
+            .software_tasks
+            .iter()
+            .filter(|(_, t)| t.args.priority == priority)
+            .collect();
+
+        let local_spawner = util::internal_task_ident(t, "LocalSpawner");
+        let tasks = tasks_on_same_executor
+            .iter()
+            .map(|(ident, task)| {
+                // Copied mostly from software_tasks.rs
+                let internal_spawn_ident = util::internal_task_ident(ident, "spawn_helper");
+                let attrs = &task.attrs;
+                let cfgs = &task.cfgs;
+                let generics = if task.is_bottom {
+                    quote!()
+                } else {
+                    quote!(<'a>)
+                };
+
+                let (_generic_input_args, input_args, _input_tupled, input_untupled, input_ty) = util::regroup_inputs(&task.inputs);
+                quote! {
+                    #(#attrs)*
+                    #(#cfgs)*
+                    #[allow(non_snake_case)]
+                    pub(super) fn #ident #generics(&self #(,#input_args)*) -> ::core::result::Result<(), #input_ty> {
+                        // SAFETY: This is safe to call since this can only be called
+                        // from the same executor
+                        unsafe { #internal_spawn_ident(#(#input_untupled,)*) }
+                    }
+                }
+            })
+            .collect::<Vec<_>>();
+        items.push(quote! {
+            struct #local_spawner {
+                _p: core::marker::PhantomData<*mut ()>,
+            }
+
+            impl #local_spawner {
+                #(#tasks)*
+            }
+        });
 
         module_items.push(quote!(
             #(#cfgs)*
