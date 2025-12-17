@@ -14,6 +14,9 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
+- Added the trampoline argument to hardware tasks which lets the given trampoline execute the code, and the bind only pends the trampoline.
+-Cortex-m source masking returns an error if a non maskable interrupt is used as a bind without a trampoline. 
+- removed leading space ``task-reference-in-spawner.stderr`` as to make ci pass.
 
 ## [v2.2.0] - 2025-06-22
 

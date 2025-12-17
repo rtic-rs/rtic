@@ -1,3 +1,4 @@
+use crate::codegen::util;
 use crate::syntax::{ast::App, Context};
 use crate::{
     analyze::Analysis,
@@ -23,27 +24,67 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         let entry_stmts = interrupt_entry(app, analysis);
         let exit_stmts = interrupt_exit(app, analysis);
         let config = handler_config(app, analysis, symbol.clone());
+        
+        if let Some(trampoline) = &task.args.trampoline {
+            let trampoline_symbol = trampoline.clone();
+            let trampoline_config = handler_config(app, analysis, trampoline_symbol.clone());
+            let rt_err = util::rt_err_ident();
 
-        mod_app.push(quote!(
-            #[allow(non_snake_case)]
-            #[no_mangle]
-            #(#attrs)*
-            #(#cfgs)*
-            #(#config)*
-            unsafe fn #symbol() {
-                #(#entry_stmts)*
+            mod_app.push(quote!(
 
-                const PRIORITY: u8 = #priority;
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                #(#attrs)*
+                #(#cfgs)*
+                #(#config)*
+                unsafe fn #symbol() {
+                    use #rt_err::Interrupt;
+                    rtic::pend(Interrupt::#trampoline_symbol);
+                }
 
-                rtic::export::run(PRIORITY, || {
-                    #name(
-                        #name::Context::new()
-                    )
-                });
-
-                #(#exit_stmts)*
-            }
-        ));
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                #(#attrs)*
+                #(#cfgs)*
+                #(#trampoline_config)*
+                unsafe fn #trampoline_symbol() {
+                    #(#entry_stmts)*
+    
+                    const PRIORITY: u8 = #priority;
+    
+                    rtic::export::run(PRIORITY, || {
+                        #name(
+                            #name::Context::new()
+                        )
+                    });
+                    
+    
+                    #(#exit_stmts)*
+                }
+            ));
+            
+        } else {
+            mod_app.push(quote!(
+                #[allow(non_snake_case)]
+                #[no_mangle]
+                #(#attrs)*
+                #(#cfgs)*
+                #(#config)*
+                unsafe fn #symbol() {
+                    #(#entry_stmts)*
+    
+                    const PRIORITY: u8 = #priority;
+    
+                    rtic::export::run(PRIORITY, || {
+                        #name(
+                            #name::Context::new()
+                        )
+                    });
+    
+                    #(#exit_stmts)*
+                }
+            ));
+        }
 
         // `${task}Locals`
         if !task.args.local_resources.is_empty() {
@@ -51,7 +92,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 local_resources_struct::codegen(Context::HardwareTask(name), app);
 
             root.push(item);
-
             mod_app.push(constructor);
         }
 
@@ -61,7 +101,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 shared_resources_struct::codegen(Context::HardwareTask(name), app);
 
             root.push(item);
-
             mod_app.push(constructor);
         }
 

@@ -298,6 +298,9 @@ pub struct HardwareTaskArgs {
     /// The interrupt or exception that this task is bound to
     pub binds: Ident,
 
+    /// if set the bind would trampoline with the given interrupt handler
+    pub trampoline: Option<Ident>,
+
     /// The priority of this task
     pub priority: u8,
 
