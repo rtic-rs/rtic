@@ -274,22 +274,22 @@ jobs:
           td=$(mktemp -d)
           cp -r target/doc $td/api
           echo rtic
-          lychee --offline --format detailed $td/api/rtic/
+          lychee --offline --format detailed --exclude '.*/\d{1}' --root-dir $td $td/api/rtic/
 
           echo rtic_common
-          lychee --offline --format detailed $td/api/rtic_common/
+          lychee --offline --format detailed --exclude '.*/\d{1}' --root-dir $td $td/api/rtic_common/
 
           echo rtic_macros
-          lychee --offline --format detailed $td/api/rtic_macros/
+          lychee --offline --format detailed --exclude '.*/\d{1}' --root-dir $td $td/api/rtic_macros/
 
           echo rtic_monotonics
-          lychee --offline --format detailed $td/api/rtic_monotonics/
+          lychee --offline --format detailed --exclude '.*/\d{1}' --root-dir $td $td/api/rtic_monotonics/
 
           echo rtic_sync
-          lychee --offline --format detailed $td/api/rtic_sync/
+          lychee --offline --format detailed --exclude '.*/\d{1}' --root-dir $td $td/api/rtic_sync/
 
           echo rtic_time
-          lychee --offline --format detailed $td/api/rtic_time/
+          lychee --offline --format detailed --exclude '.*/\d{1}' --root-dir $td $td/api/rtic_time/
 
 
       - name: Archive the API docs
@@ -346,7 +346,7 @@ jobs:
           cp LICENSE-* $td/book/en
           cp -r apidocs/ $td/api
 
-          lychee --offline --format detailed $td/book/en/
+          lychee --offline --format detailed --exclude '.*/\d{1}' --root-dir $td $td/book/en/
           mv $td bookroot
 
       - name: Archive the book + API docs
