@@ -10,6 +10,7 @@ pub mod arbiter;
 pub mod channel;
 pub use portable_atomic;
 pub mod signal;
+pub mod watch;
 
 mod unsafecell;
 

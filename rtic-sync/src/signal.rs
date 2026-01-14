@@ -6,15 +6,15 @@ use rtic_common::waker_registration::CriticalSectionWakerRegistration;
 /// Basically an Option but for indicating
 /// whether the store has been set or not
 #[derive(Clone, Copy)]
-enum Store<T> {
+pub(crate) enum Store<T> {
     Set(T),
     Unset,
 }
 
 /// A "latest only" value store with unlimited writers and async waiting.
 pub struct Signal<T: Copy> {
-    waker: CriticalSectionWakerRegistration,
-    store: UnsafeCell<Store<T>>,
+    pub(crate) waker: CriticalSectionWakerRegistration,
+    pub(crate) store: UnsafeCell<Store<T>>,
 }
 
 impl<T> core::fmt::Debug for Signal<T>
@@ -56,7 +56,7 @@ impl<T: Copy> Signal<T> {
 /// Facilitates the writing of values to a Signal.
 #[derive(Clone)]
 pub struct SignalWriter<'a, T: Copy> {
-    parent: &'a Signal<T>,
+    pub(crate) parent: &'a Signal<T>,
 }
 
 impl<T> core::fmt::Debug for SignalWriter<'_, T>
@@ -73,7 +73,7 @@ where
 
 impl<T: Copy> SignalWriter<'_, T> {
     /// Write a raw Store value to the Signal.
-    fn write_inner(&mut self, value: Store<T>) {
+    pub(crate) fn write_inner(&mut self, value: Store<T>) {
         critical_section::with(|_| {
             // SAFETY: in a cs: exclusive access
             unsafe { self.parent.store.get().replace(value) };
