@@ -9,7 +9,7 @@ ARMv8-M-base architectures, which forces RTIC to use source masking instead. For
 of lock and a detailed commentary of pros and cons, see the implementation of
 [lock in src/export.rs][src_export].
 
-[src_export]: https://github.com/rtic-rs/rtic/blob/master/src/export.rs
+[src_export]: https://github.com/rtic-rs/rtic/blob/master/rtic/src/export.rs
 
 These differences influence how critical sections are realized, but functionality should be the same
 except that ARMv6-M/ARMv8-M-base cannot have tasks with shared resources bound to exception
