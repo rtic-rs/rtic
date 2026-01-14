@@ -29,7 +29,7 @@ Contributing new implementations of `Monotonic` can be done in multiple ways:
 [`rtic-time`]: https://docs.rs/rtic-time/latest/rtic_time
 [`rtic-time::Monotonic`]: https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html
 [`Monotonic`]: https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html
-[`TimerQueue`]: https://docs.rs/rtic-time/latest/rtic_time/struct.TimerQueue.html
+[`TimerQueue`]: https://docs.rs/rtic-time/latest/rtic_time/timer_queue/struct.TimerQueue.html
 
 ## The timer queue
 
