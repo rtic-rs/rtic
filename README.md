@@ -8,7 +8,7 @@ A concurrency framework for building real-time systems.
 [![docs.rs](https://docs.rs/rtic/badge.svg)](https://docs.rs/rtic)
 [![book](https://img.shields.io/badge/web-rtic.rs-red.svg?style=flat&label=book&colorB=d33847)](https://rtic.rs/)
 [![matrix](https://img.shields.io/matrix/rtic:matrix.org)](https://matrix.to/#/#rtic:matrix.org)
-[![Meeting notes](https://hackmd.io/badge.svg)](https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH)
+[![Meeting notes](https://hackmd.io/badge.svg)](https://rtic.rs/meeting)
 
 ## Features
 
