@@ -7,6 +7,10 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+- Add `Watch`. Similar to `Signal` but always returns latest value once initialized. Value never evicted.
+
 ### Fixed
 
 - Const check for `channel::Channel` size smaller than 256 is now properly evaluated.
