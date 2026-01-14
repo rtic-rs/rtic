@@ -67,7 +67,7 @@
 Записи еженедельных собраний можно найти в [HackMD][hackmd]
 
 [matrix-room]: https://matrix.to/#/#rtic:matrix.org
-[hackmd]: https://hackmd.io/@xmis9JvZT8Gvo9lOEKyZ4Q/SkBJKsjuH
+[hackmd]: https://rtic.rs/meeting
 
 ## Внести вклад
 
