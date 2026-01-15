@@ -69,7 +69,7 @@ imxrt-ral = { version = "0.6.1", optional = true }
 
 esp32c3 = {version = "0.30.0", optional = true }
 esp32c6 = {version = "0.21.0", optional = true }
-riscv = {version = "0.15.0", optional = true }
+riscv = {version = "0.16.0", optional = true }
 
 [build-dependencies]
 proc-macro2 = { version = "1.0.36", optional = true }
