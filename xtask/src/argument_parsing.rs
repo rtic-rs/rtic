@@ -68,13 +68,7 @@ impl Package {
                 if let Some(features) = features {
                     features
                         .iter()
-                        .map(|&s| {
-                            if matches!(backend, Backends::Thumbv6) {
-                                format!("{s},portable-atomic/critical-section")
-                            } else {
-                                s.to_string()
-                            }
-                        })
+                        .map(|&s| s.to_string())
                         .map(Some)
                         .chain(std::iter::once(None))
                         .collect()
