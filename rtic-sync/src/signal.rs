@@ -1,7 +1,10 @@
 //! A "latest only" value store with unlimited writers and async waiting.
 
 use core::{cell::UnsafeCell, future::poll_fn, task::Poll};
-use portable_atomic::{AtomicBool, Ordering::Release};
+use portable_atomic::{
+    AtomicBool,
+    Ordering::{AcqRel, Release},
+};
 use rtic_common::waker_registration::CriticalSectionWakerRegistration;
 
 /// Basically an Option but for indicating
@@ -17,6 +20,7 @@ pub struct Signal<T: Copy> {
     pub(crate) waker: CriticalSectionWakerRegistration,
     pub(crate) store: UnsafeCell<Store<T>>,
     pub(crate) seen: AtomicBool,
+    pub(crate) already_split: AtomicBool,
 }
 
 impl<T> core::fmt::Debug for Signal<T>
@@ -47,11 +51,15 @@ impl<T: Copy> Signal<T> {
             waker: CriticalSectionWakerRegistration::new(),
             store: UnsafeCell::new(Store::Unset),
             seen: AtomicBool::new(false),
+            already_split: AtomicBool::new(false),
         }
     }
 
     /// Split the signal into a writer and reader.
     pub fn split(&self) -> (SignalWriter<'_, T>, SignalReader<'_, T>) {
+        if self.already_split.swap(true, AcqRel) {
+            panic!("`Signal` cannot be split twice");
+        }
         (SignalWriter { parent: self }, SignalReader { parent: self })
     }
 }
@@ -210,6 +218,16 @@ mod tests {
         writer.write(0xaa);
         assert!(reader.try_read().is_some_and(|value| value == 0xaa));
         assert!(reader.try_read().is_none());
+    }
+
+    #[test]
+    #[should_panic]
+    fn no_multi_split() {
+        fn scary_helper<'a>() -> (SignalWriter<'a, u32>, SignalReader<'a, u32>) {
+            make_signal!(u32)
+        }
+        let (mut _writer1, mut _reader1) = scary_helper();
+        let (mut _writer2, mut _reader2) = scary_helper();
     }
 
     #[tokio::test]
