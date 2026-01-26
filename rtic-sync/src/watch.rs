@@ -2,7 +2,7 @@
 
 use crate::signal::{Signal, SignalWriter, Store};
 use core::{future::poll_fn, task::Poll};
-use portable_atomic::Ordering::{Acquire, Release};
+use portable_atomic::Ordering::{AcqRel, Acquire, Release};
 
 /// A "latest only" value store with unlimited writers and async waiting. Value is always available once initialized.
 pub struct Watch<T: Copy>(Signal<T>);
@@ -36,6 +36,9 @@ impl<T: Copy> Watch<T> {
 
     /// Split the watch into a writer and watch reader.
     pub fn split(&self) -> (WatchWriter<'_, T>, WatchReader<'_, T>) {
+        if self.0.already_split.swap(true, AcqRel) {
+            panic!("`Watch` cannot be split twice");
+        }
         (
             WatchWriter(SignalWriter { parent: &self.0 }),
             WatchReader { parent: &self.0 },
@@ -187,6 +190,16 @@ mod tests {
         writer.write(0xaa);
         assert!(reader.try_get().is_some_and(|value| value == 0xaa));
         assert!(reader.try_get().is_some_and(|value| value == 0xaa));
+    }
+
+    #[test]
+    #[should_panic]
+    fn no_multi_split() {
+        fn scary_helper<'a>() -> (WatchWriter<'a, u32>, WatchReader<'a, u32>) {
+            make_watch!(u32)
+        }
+        let (mut _writer1, mut _reader1) = scary_helper();
+        let (mut _writer2, mut _reader2) = scary_helper();
     }
 
     #[tokio::test]
