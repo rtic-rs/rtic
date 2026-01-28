@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Drain","IntoIter","VecInner"],"trait":["VecStorage"],"type":["OwnedVecStorage","Vec","VecView","ViewVecStorage"]};
