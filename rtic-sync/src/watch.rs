@@ -1,6 +1,8 @@
 //! A "latest only" value store with unlimited writers and async waiting. Value is always available once initialized.
 
 use crate::signal::{Signal, SignalWriter, Store};
+use core::{future::poll_fn, task::Poll};
+use portable_atomic::Ordering::{Acquire, Release};
 
 /// A "latest only" value store with unlimited writers and async waiting. Value is always available once initialized.
 pub struct Watch<T: Copy>(Signal<T>);
@@ -100,18 +102,58 @@ impl<T: Copy> WatchReader<'_, T> {
         })
     }
 
+    /// Immediately get the seen attribute stored in the Signal.
+    fn get_seen(&mut self) -> bool {
+        self.parent.seen.load(Acquire)
+    }
+
+    /// Mark value as seen.
+    fn mark_seen(&mut self) {
+        self.parent.seen.store(true, Release);
+    }
+
     /// Returns the latest value, or None if uninitialized.
     pub fn try_get(&mut self) -> Option<T> {
         match self.get_inner() {
             Store::Unset => None,
-            Store::Set(value) => Some(value),
+            Store::Set(value) => {
+                self.mark_seen();
+                Some(value)
+            }
         }
+    }
+
+    /// Wait for an unseen value.
+    ///
+    /// If the current value is unseen it will be returned immediately.
+    ///
+    /// If current value is already seen, it will wait for a new value to be written and then read it.
+    pub async fn changed(&mut self) -> T {
+        poll_fn(|ctx| {
+            self.parent.waker.register(ctx.waker());
+
+            if self.get_seen() {
+                return Poll::Pending;
+            }
+
+            match self.get_inner() {
+                Store::Unset => Poll::Pending,
+                Store::Set(value) => {
+                    self.mark_seen();
+                    Poll::Ready(value)
+                }
+            }
+        })
+        .await
     }
 }
 
 #[cfg(test)]
 #[cfg(not(loom))]
 mod tests {
+    use super::*;
+    use static_cell::StaticCell;
+
     #[test]
     fn empty() {
         let (_writer, mut reader) = make_watch!(u32);
@@ -145,5 +187,47 @@ mod tests {
         writer.write(0xaa);
         assert!(reader.try_get().is_some_and(|value| value == 0xaa));
         assert!(reader.try_get().is_some_and(|value| value == 0xaa));
+    }
+
+    #[tokio::test]
+    async fn pending() {
+        let (mut writer, mut reader) = make_watch!(u32);
+
+        writer.write(0xaa);
+
+        assert_eq!(reader.changed().await, 0xaa);
+    }
+
+    #[tokio::test]
+    async fn changed() {
+        static READER: StaticCell<WatchReader<u32>> = StaticCell::new();
+        let (mut writer, mut reader) = make_watch!(u32);
+
+        writer.write(0xaa);
+        assert_eq!(reader.changed().await, 0xaa);
+
+        let reader = READER.init(reader);
+        let handle = tokio::spawn(reader.changed());
+
+        tokio::task::yield_now().await; // encourage tokio executor to poll reader future
+        assert!(!handle.is_finished()); // verify reader future did not resolve after poll
+
+        writer.write(0xab);
+        assert!(handle.await.is_ok_and(|value| value == 0xab));
+    }
+
+    #[tokio::test]
+    async fn try_get_marks_seen() {
+        static READER: StaticCell<WatchReader<u32>> = StaticCell::new();
+        let (mut writer, mut reader) = make_watch!(u32);
+
+        writer.write(0xaa);
+        assert!(reader.try_get().is_some_and(|value| value == 0xaa));
+
+        let reader = READER.init(reader);
+        let handle = tokio::spawn(reader.changed());
+
+        tokio::task::yield_now().await; // encourage tokio executor to poll reader future
+        assert!(!handle.is_finished()); // verify reader future did not resolve after poll
     }
 }

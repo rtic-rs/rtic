@@ -1,6 +1,7 @@
 //! A "latest only" value store with unlimited writers and async waiting.
 
 use core::{cell::UnsafeCell, future::poll_fn, task::Poll};
+use portable_atomic::{AtomicBool, Ordering::Release};
 use rtic_common::waker_registration::CriticalSectionWakerRegistration;
 
 /// Basically an Option but for indicating
@@ -15,6 +16,7 @@ pub(crate) enum Store<T> {
 pub struct Signal<T: Copy> {
     pub(crate) waker: CriticalSectionWakerRegistration,
     pub(crate) store: UnsafeCell<Store<T>>,
+    pub(crate) seen: AtomicBool,
 }
 
 impl<T> core::fmt::Debug for Signal<T>
@@ -44,6 +46,7 @@ impl<T: Copy> Signal<T> {
         Self {
             waker: CriticalSectionWakerRegistration::new(),
             store: UnsafeCell::new(Store::Unset),
+            seen: AtomicBool::new(false),
         }
     }
 
@@ -78,6 +81,7 @@ impl<T: Copy> SignalWriter<'_, T> {
             // SAFETY: in a cs: exclusive access
             unsafe { self.parent.store.get().replace(value) };
         });
+        self.parent.seen.store(false, Release);
 
         self.parent.waker.wake();
     }
