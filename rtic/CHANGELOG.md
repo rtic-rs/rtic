@@ -23,6 +23,7 @@ Example:
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
+- Added trampoline functionality
 
 ### Changed
 

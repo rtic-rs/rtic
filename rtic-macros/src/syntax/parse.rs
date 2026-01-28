@@ -193,6 +193,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
         }
 
         let mut binds = None;
+        let mut trampoline = None;
         let mut priority = None;
         let mut shared_resources = None;
         let mut local_resources = None;
@@ -223,7 +224,21 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                     let ident = input.parse()?;
 
                     binds = Some(ident);
-                }
+                },
+
+                "trampoline" => {
+                    if trampoline.is_some() {
+                        return Err(parse::Error::new(
+                            ident.span(),
+                            "argument appears more than once",
+                        ));
+                    }
+
+                    // Parse identifier name
+                    let ident: Ident = input.parse()?;
+
+                    trampoline = Some(ident);
+                },
 
                 "priority" => {
                     if priority.is_some() {
@@ -277,8 +292,8 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                     local_resources = Some(util::parse_local_resources(input)?);
                 }
 
-                _ => {
-                    return Err(parse::Error::new(ident.span(), "unexpected argument"));
+                a => {
+                    return Err(parse::Error::new(ident.span(), format!("unexpected argument {}", a)));
                 }
             }
 
@@ -308,6 +323,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                 priority,
                 shared_resources,
                 local_resources,
+                trampoline,
             })
         } else {
             // Software tasks start at idle priority
