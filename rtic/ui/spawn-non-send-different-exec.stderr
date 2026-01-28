@@ -1,0 +1,8 @@
+error[E0599]: no method named `foo` found for struct `__rtic_internal_bar_LocalSpawner` in the current scope
+  --> ui/spawn-non-send-different-exec.rs:23:26
+   |
+ 3 | #[rtic::app(device = lm3s6965, dispatchers = [SSI0, GPIOA])]
+   | ------------------------------------------------------------ method `foo` not found for this struct
+...
+23 |         cx.local_spawner.foo(Default::default()).ok();
+   |                          ^^^ method not found in `__rtic_internal_bar_LocalSpawner`

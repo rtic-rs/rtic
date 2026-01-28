@@ -14,6 +14,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
+- Allow tasks with !Send/!Sync to be spawned from the same priority level task using local spawner
 
 ## [v2.2.0] - 2025-06-22
 
