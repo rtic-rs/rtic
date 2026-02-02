@@ -13,6 +13,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Fixed
 
+- The `panic` in `make_channel` can no longer be shadowed.
 - Const check for `channel::Channel` size smaller than 256 is now properly evaluated.
 
 ### Changed

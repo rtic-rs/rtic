@@ -256,12 +256,12 @@ macro_rules! make_rtc {
                 if rtc.events_ovrflw.read().bits() == 1 {
                     rtc.events_ovrflw.write(|w| unsafe { w.bits(0) });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
+                    ::core::assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
                 }
                 if rtc.events_compare[1].read().bits() == 1 {
                     rtc.events_compare[1].write(|w| unsafe { w.bits(0) });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
+                    ::core::assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
                 }
             }
 

@@ -120,7 +120,7 @@ macro_rules! __internal_create_nrf_timer_struct {
                     125_000 => 7,
                     62_500 => 8,
                     31_250 => 9,
-                    _ => panic!("Timer cannot run at desired tick rate!"),
+                    _ => ::core::panic!("Timer cannot run at desired tick rate!"),
                 };
 
                 $crate::nrf::timer::$mono_backend::_start(timer, PRESCALER);
@@ -298,14 +298,14 @@ macro_rules! make_timer {
                 if timer.events_compare[1].read().bits() & 1 != 0 {
                     timer.events_compare[1].write(|w| w);
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
+                    ::core::assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
                 }
 
                 // If there is a compare match on channel 2, it is a half-period overflow
                 if timer.events_compare[2].read().bits() & 1 != 0 {
                     timer.events_compare[2].write(|w| w);
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
+                    ::core::assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
                 }
             }
 

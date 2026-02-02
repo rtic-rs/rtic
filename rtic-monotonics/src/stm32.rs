@@ -237,9 +237,9 @@ macro_rules! make_timer {
 
                 $timer.cr1().modify(|r| r.set_cen(false));
 
-                assert!((tim_clock_hz % timer_hz) == 0, "Unable to find suitable timer prescaler value!");
+                ::core::assert!((tim_clock_hz % timer_hz) == 0, "Unable to find suitable timer prescaler value!");
                 let Ok(psc) = u16::try_from(tim_clock_hz / timer_hz - 1) else {
-                    panic!("Clock prescaler overflowed!");
+                    ::core::panic!("Clock prescaler overflowed!");
                 };
                 $timer.psc().write(|r| *r = psc);
 
@@ -335,7 +335,7 @@ macro_rules! make_timer {
                         r.set_uif(false);
                     });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
+                    ::core::assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
                 }
                 // Half period
                 if $timer.sr().read().ccif(0) {
@@ -344,7 +344,7 @@ macro_rules! make_timer {
                         r.set_ccif(0, false);
                     });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
+                    ::core::assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
                 }
             }
 
@@ -381,9 +381,9 @@ macro_rules! make_timer2 {
 
                 $timer.cr1().modify(|r| r.set_cen(false));
 
-                assert!((tim_clock_hz % timer_hz) == 0, "Unable to find suitable timer prescaler value!");
+                ::core::assert!((tim_clock_hz % timer_hz) == 0, "Unable to find suitable timer prescaler value!");
                 let Ok(psc) = u16::try_from(tim_clock_hz / timer_hz - 1) else {
-                    panic!("Clock prescaler overflowed!");
+                    ::core::panic!("Clock prescaler overflowed!");
                 };
                 $timer.psc().write(|r| *r = psc);
 
@@ -479,7 +479,7 @@ macro_rules! make_timer2 {
                         r.set_uif(false);
                     });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
+                    ::core::assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
                 }
                 // Half period
                 if $timer.sr().read().ccif(0) {
@@ -488,7 +488,7 @@ macro_rules! make_timer2 {
                         r.set_ccif(0, false);
                     });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
+                    ::core::assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
                 }
             }
 
