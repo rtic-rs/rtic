@@ -196,7 +196,7 @@ macro_rules! make_channel {
 
         $crate::channel::critical_section::with(|_| {
             if CHECK.load(::core::sync::atomic::Ordering::Relaxed) != 0 {
-                panic!("call to the same `make_channel` instance twice");
+                ::core::panic!("call to the same `make_channel` instance twice");
             }
 
             CHECK.store(1, ::core::sync::atomic::Ordering::Relaxed);

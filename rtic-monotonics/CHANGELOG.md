@@ -14,6 +14,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Cortex-M `systick` can be configured with its external clock source
 
+### Fixed
+
+- `assert`s in macro expansions can no longer be shadowed.
+
 ## v2.1.0 - 2025-06-22
 
 ### Changed

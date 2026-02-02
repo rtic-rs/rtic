@@ -58,7 +58,7 @@ pub fn check_stack_overflow_before_init(
         if stack_start > ebss {
             // No flip-link usage, check the MSP for overflow.
             if rtic::export::msp::read() <= ebss {
-                panic!("Stack overflow after allocating executors");
+                ::core::panic!("Stack overflow after allocating executors");
             }
         }
     )]

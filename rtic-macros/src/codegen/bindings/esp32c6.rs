@@ -196,7 +196,7 @@ mod esp32c6 {
             if stack_start > ebss {
                 // No flip-link usage, check the SP for overflow.
                 if rtic::export::read_sp() <= ebss {
-                    panic!("Stack overflow after allocating executors");
+                    ::core::panic!("Stack overflow after allocating executors");
                 }
             }
         )]
