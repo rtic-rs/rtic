@@ -54,7 +54,7 @@ impl TimerBackend {
     /// **Do not use this function directly.**
     ///
     /// Use the prelude macros instead.
-    pub fn _start(timer: TIMER, resets: &RESETS) {
+    pub fn _start(timer: TIMER, resets: &mut RESETS) {
         resets.reset().modify(|_, w| w.timer().clear_bit());
         while resets.reset_done().read().timer().bit_is_clear() {}
         timer.inte().modify(|_, w| w.alarm_0().bit(true));
