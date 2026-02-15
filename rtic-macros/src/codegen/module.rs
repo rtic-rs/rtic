@@ -238,7 +238,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                 .collect::<Vec<_>>();
             values.push(quote!(local_spawner: #local_spawner { _p: core::marker::PhantomData }));
             items.push(quote! {
-                struct #local_spawner {
+                pub struct #local_spawner {
                     _p: core::marker::PhantomData<*mut ()>,
                 }
 
