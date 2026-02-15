@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["codepagesize","codesize","deviceaddr","deviceaddrtype","deviceid","er","info","ir","nfc","prodtest","temp","trng90b"],"struct":["RegisterBlock"],"type":["CODEPAGESIZE","CODESIZE","DEVICEADDR","DEVICEADDRTYPE","DEVICEID","ER","IR","PRODTEST"]};

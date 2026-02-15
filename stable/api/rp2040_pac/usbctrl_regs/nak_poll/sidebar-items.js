@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["NAK_POLL_SPEC"],"type":["DELAY_FS_R","DELAY_FS_W","DELAY_LS_R","DELAY_LS_W","R","W"]};

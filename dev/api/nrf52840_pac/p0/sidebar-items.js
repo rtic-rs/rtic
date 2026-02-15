@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["detectmode","dir","dirclr","dirset","in_","latch","out","outclr","outset","pin_cnf"],"struct":["RegisterBlock"],"type":["DETECTMODE","DIR","DIRCLR","DIRSET","IN","LATCH","OUT","OUTCLR","OUTSET","PIN_CNF"]};

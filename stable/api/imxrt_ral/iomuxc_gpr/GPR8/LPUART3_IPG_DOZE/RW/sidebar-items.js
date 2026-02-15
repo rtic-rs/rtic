@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LPUART3_IPG_DOZE_0","LPUART3_IPG_DOZE_1"]};

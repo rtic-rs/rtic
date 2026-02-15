@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FILTDZ_0","FILTDZ_1"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Cfg1","Cfg2","Cr1","Cr2","Crcpoly","I2scfgr","Ier","Ifcr","Rxcrc","Sr","Txcrc","Udrdr"]};

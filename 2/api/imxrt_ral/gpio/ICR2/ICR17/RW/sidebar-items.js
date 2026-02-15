@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FALLING_EDGE","HIGH_LEVEL","LOW_LEVEL","RISING_EDGE"]};

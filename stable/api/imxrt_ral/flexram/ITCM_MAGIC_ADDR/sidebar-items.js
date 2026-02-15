@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ITCM_MAGIC_ADDR","ITCM_WR_RD_SEL"]};

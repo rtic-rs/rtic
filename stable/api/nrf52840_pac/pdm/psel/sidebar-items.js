@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["clk","din"],"struct":["PSEL"],"type":["CLK","DIN"]};

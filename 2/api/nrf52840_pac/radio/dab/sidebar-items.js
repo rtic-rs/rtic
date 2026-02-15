@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DAB_SPEC","R","W"],"type":["DAB_R","DAB_W"]};

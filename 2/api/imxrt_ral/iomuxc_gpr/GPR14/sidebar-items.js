@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["CM7_CFGDTCMSZ","CM7_CFGITCMSZ"]};

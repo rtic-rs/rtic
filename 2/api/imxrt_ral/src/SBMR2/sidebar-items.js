@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["BMOD","BT_FUSE_SEL","DIR_BT_DIS","SEC_CONFIG"]};

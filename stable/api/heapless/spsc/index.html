@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A fixed capacity single-producer, single-consumer (SPSC) lock-free queue."><title>heapless::spsc - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module spsc</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../heapless/index.html">heapless</a><span class="version">0.9.2</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module spsc</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#benchmarks" title="Benchmarks">Benchmarks</a></li><li><a href="#references" title="References">References</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate heapless</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">heapless</a></div><h1>Module <span>spsc</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/heapless/spsc.rs.html#1-1241">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A fixed capacity single-producer, single-consumer (SPSC) lock-free queue.</p>
+<p><em>Note:</em> This module requires atomic load and store instructions. On
+targets where they’re not natively available, they are emulated by the
+<a href="https://crates.io/crates/portable-atomic"><code>portable-atomic</code></a> crate.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p><a href="type.Queue.html" title="type heapless::spsc::Queue"><code>Queue</code></a> can be used as a plain queue:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>heapless::spsc::Queue;
+
+<span class="kw">let </span><span class="kw-2">mut </span>queue: Queue&lt;u8, <span class="number">4</span>&gt; = Queue::new();
+
+<span class="macro">assert_eq!</span>(queue.enqueue(<span class="number">0</span>), <span class="prelude-val">Ok</span>(()));
+<span class="macro">assert_eq!</span>(queue.enqueue(<span class="number">1</span>), <span class="prelude-val">Ok</span>(()));
+<span class="macro">assert_eq!</span>(queue.enqueue(<span class="number">2</span>), <span class="prelude-val">Ok</span>(()));
+<span class="macro">assert_eq!</span>(queue.enqueue(<span class="number">3</span>), <span class="prelude-val">Err</span>(<span class="number">3</span>)); <span class="comment">// Queue is full.
+
+</span><span class="macro">assert_eq!</span>(queue.dequeue(), <span class="prelude-val">Some</span>(<span class="number">0</span>));</code></pre></div>
+<p><a href="struct.QueueInner.html#method.split" title="method heapless::spsc::QueueInner::split"><code>Queue::split</code></a> can be used to split the queue into a <a href="struct.Producer.html" title="struct heapless::spsc::Producer"><code>Producer</code></a>/<a href="struct.Consumer.html" title="struct heapless::spsc::Consumer"><code>Consumer</code></a> pair.</p>
+<p>After splitting a <code>&amp;'static mut Queue</code>, the resulting <a href="struct.Producer.html" title="struct heapless::spsc::Producer"><code>Producer</code></a> and <a href="struct.Consumer.html" title="struct heapless::spsc::Consumer"><code>Consumer</code></a>
+can be moved into different execution contexts, e.g. threads, interrupt handlers, etc.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>heapless::spsc::{Producer, Queue};
+
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">enum </span>Event {
+    A,
+    B,
+}
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>queue: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">mut </span>Queue&lt;Event, <span class="number">4</span>&gt; = {
+        <span class="kw">static </span><span class="kw-2">mut </span>Q: Queue&lt;Event, <span class="number">4</span>&gt; = Queue::new();
+        <span class="comment">// SAFETY: `Q` is only accessible in this scope
+        // and `main` is only called once.
+        </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut </span>Q }
+    };
+
+    <span class="kw">let </span>(producer, <span class="kw-2">mut </span>consumer) = queue.split();
+
+    <span class="comment">// `producer` can be moved into `interrupt_handler` using a static mutex or the mechanism
+    // provided by the concurrency framework you are using, e.g. a resource in RTIC.
+
+    </span><span class="kw">loop </span>{
+        <span class="kw">match </span>consumer.dequeue() {
+            <span class="prelude-val">Some</span>(Event::A) =&gt; { <span class="comment">/* .. */ </span>}
+            <span class="prelude-val">Some</span>(Event::B) =&gt; { <span class="comment">/* .. */ </span>}
+            <span class="prelude-val">None </span>=&gt; { <span class="comment">/* Sleep. */ </span>}
+        }
+    }
+}
+
+<span class="comment">// This is a different execution context that can preempt `main`.
+</span><span class="kw">fn </span>interrupt_handler(producer: <span class="kw-2">&amp;mut </span>Producer&lt;<span class="lifetime">'static</span>, Event&gt;) {
+
+    <span class="comment">// ..
+
+    </span><span class="kw">if </span>condition {
+        producer.enqueue(Event::A).unwrap();
+    } <span class="kw">else </span>{
+        producer.enqueue(Event::B).unwrap();
+    }
+
+    <span class="comment">// ..
+</span>}</code></pre></div><h2 id="benchmarks"><a class="doc-anchor" href="#benchmarks">§</a>Benchmarks</h2>
+<p>Measured on an ARM Cortex-M3 core running at 8 MHz and with zero flash wait cycles, compiled
+with <code>-C opt-level=3</code>:</p>
+<div><table><thead><tr><th style="text-align: left">Method</th><th style="text-align: right">Time</th></tr></thead><tbody>
+<tr><td style="text-align: left"><code>Producer::&lt;u8, _&gt;::enqueue()</code></td><td style="text-align: right">16</td></tr>
+<tr><td style="text-align: left"><code>Queue::&lt;u8, _&gt;::enqueue()</code></td><td style="text-align: right">14</td></tr>
+<tr><td style="text-align: left"><code>Consumer::&lt;u8, _&gt;::dequeue()</code></td><td style="text-align: right">15</td></tr>
+<tr><td style="text-align: left"><code>Queue::&lt;u8, _&gt;::dequeue()</code></td><td style="text-align: right">12</td></tr>
+</tbody></table>
+</div>
+<ul>
+<li>All execution times are in clock cycles (1 clock cycle = 125 ns).</li>
+<li>Execution time is <em>dependent</em> on <code>mem::size_of::&lt;T&gt;()</code>, as both operations include
+<code>ptr::read::&lt;T&gt;()</code> or <code>ptr::write::&lt;T&gt;()</code> in their successful path.</li>
+<li>The numbers reported correspond to the successful path, i.e. <code>dequeue</code> returning <code>Some</code> and
+<code>enqueue</code> returning <code>Ok</code>.</li>
+</ul>
+<h2 id="references"><a class="doc-anchor" href="#references">§</a>References</h2>
+<p>This is an implementation based on <a href="https://web.archive.org/web/20250117082625/https://www.codeproject.com/Articles/43510/Lock-Free-Single-Producer-Single-Consumer-Circular">https://www.codeproject.com/Articles/43510/Lock-Free-Single-Producer-Single-Consumer-Circular</a>.</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Consumer.html" title="struct heapless::spsc::Consumer">Consumer</a></dt><dd>A consumer; it can dequeue items from the queue.</dd><dt><a class="struct" href="struct.Iter.html" title="struct heapless::spsc::Iter">Iter</a></dt><dd>An iterator over the items of a queue.</dd><dt><a class="struct" href="struct.IterMut.html" title="struct heapless::spsc::IterMut">IterMut</a></dt><dd>An iterator over the items of a queue.</dd><dt><a class="struct" href="struct.Producer.html" title="struct heapless::spsc::Producer">Producer</a></dt><dd>A producer; it can enqueue items into the queue.</dd><dt><a class="struct" href="struct.QueueInner.html" title="struct heapless::spsc::QueueInner">Queue<wbr>Inner</a></dt><dd>Base struct for <a href="type.Queue.html" title="type heapless::spsc::Queue"><code>Queue</code></a> and <a href="type.QueueView.html" title="type heapless::spsc::QueueView"><code>QueueView</code></a>, generic over the <a href="../storage/trait.Storage.html" title="trait heapless::storage::Storage"><code>Storage</code></a>.</dd></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.Queue.html" title="type heapless::spsc::Queue">Queue</a></dt><dd>A statically allocated single-producer, single-consumer queue with a capacity of <code>N - 1</code>
+elements.</dd><dt><a class="type" href="type.QueueView.html" title="type heapless::spsc::QueueView">Queue<wbr>View</a></dt><dd>A <a href="type.Queue.html" title="type heapless::spsc::Queue"><code>Queue</code></a> with dynamic capacity.</dd></dl></section></div></main></body></html>

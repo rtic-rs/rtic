@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CCM"],"fn":["number"],"mod":["CBCDR","CBCMR","CCGR0","CCGR1","CCGR2","CCGR3","CCGR4","CCGR5","CCGR6","CCOSR","CCR","CCSR","CDCDR","CDHIPR","CGPR","CIMR","CISR","CLPCR","CMEOR","CS1CDR","CSCDR1","CSCDR2","CSCMR1","CSCMR2","CSR"],"struct":["RegisterBlock"],"type":["CCM","Instance"]};

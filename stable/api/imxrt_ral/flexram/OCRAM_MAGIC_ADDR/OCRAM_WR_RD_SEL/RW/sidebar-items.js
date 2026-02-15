@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["OCRAM_WR_RD_SEL_0","OCRAM_WR_RD_SEL_1"]};

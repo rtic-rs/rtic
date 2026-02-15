@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["DATA2","DATA3"]};

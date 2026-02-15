@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PERFCTR1_SPEC"],"type":["PERFCTR1_R","PERFCTR1_W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["maxcnt"],"struct":["RXTXD"],"type":["MAXCNT"]};

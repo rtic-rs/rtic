@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_STOPTX_SPEC","W"],"type":["TASKS_STOPTX_W"]};

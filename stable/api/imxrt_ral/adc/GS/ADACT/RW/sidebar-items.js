@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ADACT_0","ADACT_1"]};

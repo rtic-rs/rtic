@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TXDIR_0","TXDIR_1"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["USB_OTG1_VBUS","USB_OTG2_VBUS"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["amount","maxcnt","ptr"],"struct":["TXD"],"type":["AMOUNT","MAXCNT","PTR"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EVENTS_LASTTX_SPEC","R","W"],"type":["EVENTS_LASTTX_R","EVENTS_LASTTX_W"]};

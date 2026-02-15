@@ -1,0 +1,75 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A fixed capacity multiple-producer, multiple-consumer (MPMC) lock-free queue."><title>heapless::mpmc - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module mpmc</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../heapless/index.html">heapless</a><span class="version">0.9.2</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module mpmc</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#deprecation" title="Deprecation">Deprecation</a><ul><li><a href="#when-can-this-queue-be-used" title="When can this queue be used?">When can this queue be used?</a></li></ul></li><li><a href="#example" title="Example">Example</a></li><li><a href="#benchmark" title="Benchmark">Benchmark</a></li><li><a href="#references" title="References">References</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate heapless</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">heapless</a></div><h1>Module <span>mpmc</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/heapless/mpmc.rs.html#1-493">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A fixed capacity multiple-producer, multiple-consumer (MPMC) lock-free queue.</p>
+<h2 id="deprecation"><a class="doc-anchor" href="#deprecation">§</a>Deprecation</h2><div class="warning">
+The current implementation of `mpmc` is marked as deprecated due to not being truly lock-free
+</div>
+<p>If a thread is parked, or pre-empted for a long time by an higher-priority task
+during an <code>enqueue</code> or <code>dequeue</code> operation, it is possible that the queue ends-up
+in a state were no other task can successfully enqueue or dequeue items from it
+until the pre-empted task can finish its operation.</p>
+<p>In that case, <a href="struct.QueueInner.html#method.dequeue" title="method heapless::mpmc::QueueInner::dequeue"><code>enqueue</code></a> and <a href="struct.QueueInner.html#method.enqueue" title="method heapless::mpmc::QueueInner::enqueue"><code>dequeue</code></a>
+will return an error, but will not panic or reach undefined behaviour</p>
+<p>This makes <code>mpmc</code> unsuitable for some use cases such as using it as a pool of objects.</p>
+<h3 id="when-can-this-queue-be-used"><a class="doc-anchor" href="#when-can-this-queue-be-used">§</a>When can this queue be used?</h3>
+<p>This queue should be used for cross-task communication only when items sent over the queue
+can be dropped in case of concurrent operations, or when it is possible to retry
+the dequeue/enqueue operation after other tasks have had the opportunity to make progress.</p>
+<p>In that case you can safely ignore the warnings using <code>#[expect(deprecated)]</code>
+when <code>new</code> is called</p>
+<p>For more information, and possible alternative, please see
+<a href="https://github.com/rust-embedded/heapless/issues/583">https://github.com/rust-embedded/heapless/issues/583</a></p>
+<p><strong>Note:</strong> This module requires atomic compare-and-swap (CAS) instructions. On
+targets where they’re not natively available, they are emulated by the
+<a href="https://crates.io/crates/portable-atomic"><code>portable-atomic</code></a> crate.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>This queue can be constructed in <code>const</code> context. Placing it in a <code>static</code> variable lets <em>all</em>
+contexts (interrupts/threads/<code>main</code>) safely enqueue and dequeue items.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>core::sync::atomic::{AtomicU8, Ordering};
+
+<span class="kw">use </span>heapless::mpmc::Queue;
+
+<span class="kw">static </span>Q: Queue&lt;u8, <span class="number">2</span>&gt; = Queue::new();
+
+<span class="kw">fn </span>main() {
+    <span class="comment">// Configure systick interrupt.
+
+    </span><span class="kw">loop </span>{
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = Q.dequeue() {
+            <span class="macro">println!</span>(<span class="string">"{}"</span>, x);
+        } <span class="kw">else </span>{
+            <span class="comment">// Wait for interrupt.
+        </span>}
+    }
+}
+
+<span class="kw">fn </span>systick() {
+    <span class="kw">static </span>COUNT: AtomicU8 = AtomicU8::new(<span class="number">0</span>);
+    <span class="kw">let </span>count = COUNT.fetch_add(<span class="number">1</span>, Ordering::SeqCst);
+
+    Q.enqueue(count);
+}</code></pre></div><h2 id="benchmark"><a class="doc-anchor" href="#benchmark">§</a>Benchmark</h2>
+<p>Measured on an ARM Cortex-M3 core running at 8 MHz and with zero flash wait cycles, compiled
+with <code>-C opt-level=z</code>:</p>
+<div><table><thead><tr><th style="text-align: left">Method</th><th style="text-align: right">Time</th><th style="text-align: right">N</th></tr></thead><tbody>
+<tr><td style="text-align: left"><code>Queue::&lt;u8, 8&gt;::enqueue()</code></td><td style="text-align: right">34</td><td style="text-align: right">0</td></tr>
+<tr><td style="text-align: left"><code>Queue::&lt;u8, 8&gt;::enqueue()</code></td><td style="text-align: right">52</td><td style="text-align: right">1</td></tr>
+<tr><td style="text-align: left"><code>Queue::&lt;u8, 8&gt;::enqueue()</code></td><td style="text-align: right">69</td><td style="text-align: right">2</td></tr>
+<tr><td style="text-align: left"><code>Queue::&lt;u8, 8&gt;::dequeue()</code></td><td style="text-align: right">35</td><td style="text-align: right">0</td></tr>
+<tr><td style="text-align: left"><code>Queue::&lt;u8, 8&gt;::dequeue()</code></td><td style="text-align: right">53</td><td style="text-align: right">1</td></tr>
+<tr><td style="text-align: left"><code>Queue::&lt;u8, 8&gt;::dequeue()</code></td><td style="text-align: right">71</td><td style="text-align: right">2</td></tr>
+</tbody></table>
+</div>
+<ul>
+<li>N denotes the number of interruptions. On Cortex-M, an interruption consists of an interrupt
+handler preempting the would-be atomic section of the <code>enqueue</code>/<code>dequeue</code> operation. Note that
+it does <em>not</em> matter if the higher priority handler uses the queue or not.</li>
+<li>All execution times are in clock cycles (1 clock cycle = 125 ns).</li>
+<li>Execution time is <em>dependent</em> on <code>mem::size_of::&lt;T&gt;()</code>, as both operations include
+<code>ptr::read::&lt;T&gt;()</code> or <code>ptr::write::&lt;T&gt;()</code> in their successful path.</li>
+<li>The numbers reported correspond to the successful path, i.e. <code>dequeue</code> returning <code>Some</code> and
+<code>enqueue</code> returning <code>Ok</code>.</li>
+</ul>
+<h2 id="references"><a class="doc-anchor" href="#references">§</a>References</h2>
+<p>This is an implementation of Dmitry Vyukov’s <a href="http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue">bounded MPMC queue</a>, minus the
+cache padding.</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.QueueInner.html" title="struct heapless::mpmc::QueueInner">Queue<wbr>Inner</a></dt><dd>Base struct for <a href="type.Queue.html" title="type heapless::mpmc::Queue"><code>Queue</code></a> and <a href="type.QueueView.html" title="type heapless::mpmc::QueueView"><code>QueueView</code></a>, generic over the <a href="../storage/trait.Storage.html" title="trait heapless::storage::Storage"><code>Storage</code></a>.</dd></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.Queue.html" title="type heapless::mpmc::Queue">Queue</a></dt><dd>A statically allocated multi-producer, multi-consumer queue with a capacity of <code>N</code> elements.</dd><dt><a class="type" href="type.QueueView.html" title="type heapless::mpmc::QueueView">Queue<wbr>View</a></dt><dd>A <a href="type.Queue.html" title="type heapless::mpmc::Queue"><code>Queue</code></a> with dynamic capacity.</dd></dl></section></div></main></body></html>

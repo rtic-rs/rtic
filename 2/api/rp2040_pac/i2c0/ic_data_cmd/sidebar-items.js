@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CMD_A","FIRST_DATA_BYTE_A","RESTART_A","STOP_A"],"struct":["IC_DATA_CMD_SPEC"],"type":["CMD_R","CMD_W","DAT_R","DAT_W","FIRST_DATA_BYTE_R","R","RESTART_R","RESTART_W","STOP_R","STOP_W","W"]};

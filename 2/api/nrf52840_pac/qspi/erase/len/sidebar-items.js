@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LEN_A"],"struct":["LEN_SPEC","R","W"],"type":["LEN_R","LEN_W"]};

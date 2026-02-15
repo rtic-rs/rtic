@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RESPONSE_A"],"struct":["ISOINCONFIG_SPEC","R","W"],"type":["RESPONSE_R","RESPONSE_W"]};

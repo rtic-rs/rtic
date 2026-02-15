@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["STATE_A"],"struct":["DPDMVALUE_SPEC","R","W"],"type":["STATE_R","STATE_W"]};

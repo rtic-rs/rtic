@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["MAXLEN_SPEC","R","W"],"type":["MAXLEN_R","MAXLEN_W"]};

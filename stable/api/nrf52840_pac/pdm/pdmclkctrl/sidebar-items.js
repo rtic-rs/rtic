@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FREQ_A"],"struct":["PDMCLKCTRL_SPEC","R","W"],"type":["FREQ_R","FREQ_W"]};

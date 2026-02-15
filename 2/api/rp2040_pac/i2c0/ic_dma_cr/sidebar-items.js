@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RDMAE_A","TDMAE_A"],"struct":["IC_DMA_CR_SPEC"],"type":["R","RDMAE_R","RDMAE_W","TDMAE_R","TDMAE_W","W"]};

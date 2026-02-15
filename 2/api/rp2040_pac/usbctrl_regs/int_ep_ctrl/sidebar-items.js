@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["INT_EP_CTRL_SPEC"],"type":["INT_EP_ACTIVE_R","INT_EP_ACTIVE_W","R","W"]};

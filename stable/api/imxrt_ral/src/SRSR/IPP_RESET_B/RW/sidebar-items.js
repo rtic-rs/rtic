@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["IPP_RESET_B_0","IPP_RESET_B_1"]};

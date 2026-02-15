@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PGC"],"fn":["number"],"mod":["CPU_CTRL","CPU_PDNSCR","CPU_PUPSCR","CPU_SR","MEGA_CTRL","MEGA_PDNSCR","MEGA_PUPSCR","MEGA_SR"],"struct":["RegisterBlock"],"type":["Instance","PGC"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CHARGER_NOT_PRESENT","CHARGER_PRESENT"]};

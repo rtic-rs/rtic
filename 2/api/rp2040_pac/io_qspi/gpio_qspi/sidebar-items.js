@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["gpio_ctrl","gpio_status"],"struct":["GPIO_QSPI"],"type":["GPIO_CTRL","GPIO_STATUS"]};

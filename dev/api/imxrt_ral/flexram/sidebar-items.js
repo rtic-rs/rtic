@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FLEXRAM"],"fn":["number"],"mod":["DTCM_MAGIC_ADDR","INT_SIG_EN","INT_STATUS","INT_STAT_EN","ITCM_MAGIC_ADDR","OCRAM_MAGIC_ADDR","TCM_CTRL"],"struct":["RegisterBlock"],"type":["FLEXRAM","Instance"]};

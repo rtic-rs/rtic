@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ADLPC_0","ADLPC_1"]};

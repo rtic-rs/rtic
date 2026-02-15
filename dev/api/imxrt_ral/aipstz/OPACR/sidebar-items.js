@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["OPAC0","OPAC1","OPAC2","OPAC3","OPAC4","OPAC5","OPAC6","OPAC7"]};

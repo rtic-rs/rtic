@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TXEN_A"],"struct":["R","TXEN_SPEC","W"],"type":["TXEN_R","TXEN_W"]};

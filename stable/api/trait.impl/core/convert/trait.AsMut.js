@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["heapless",[["impl&lt;T, LenT: <a class=\"trait\" href=\"heapless/trait.LenType.html\" title=\"trait heapless::LenType\">LenType</a>, S: <a class=\"trait\" href=\"heapless/vec/trait.VecStorage.html\" title=\"trait heapless::vec::VecStorage\">VecStorage</a>&lt;T&gt; + ?<a class=\"trait\" href=\"https://doc.rust-lang.org/1.93.1/core/marker/trait.Sized.html\" title=\"trait core::marker::Sized\">Sized</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.93.1/core/convert/trait.AsMut.html\" title=\"trait core::convert::AsMut\">AsMut</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.93.1/core/primitive.slice.html\">[T]</a>&gt; for <a class=\"struct\" href=\"heapless/vec/struct.VecInner.html\" title=\"struct heapless::vec::VecInner\">VecInner</a>&lt;T, LenT, S&gt;"],["impl&lt;T, LenT: <a class=\"trait\" href=\"heapless/trait.LenType.html\" title=\"trait heapless::LenType\">LenType</a>, S: <a class=\"trait\" href=\"heapless/vec/trait.VecStorage.html\" title=\"trait heapless::vec::VecStorage\">VecStorage</a>&lt;T&gt; + ?<a class=\"trait\" href=\"https://doc.rust-lang.org/1.93.1/core/marker/trait.Sized.html\" title=\"trait core::marker::Sized\">Sized</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.93.1/core/convert/trait.AsMut.html\" title=\"trait core::convert::AsMut\">AsMut</a>&lt;<a class=\"struct\" href=\"heapless/vec/struct.VecInner.html\" title=\"struct heapless::vec::VecInner\">VecInner</a>&lt;T, LenT, S&gt;&gt; for <a class=\"struct\" href=\"heapless/vec/struct.VecInner.html\" title=\"struct heapless::vec::VecInner\">VecInner</a>&lt;T, LenT, S&gt;"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1614]}

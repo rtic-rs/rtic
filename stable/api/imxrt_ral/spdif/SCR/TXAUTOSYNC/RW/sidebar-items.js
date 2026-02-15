@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TXAUTOSYNC_0","TXAUTOSYNC_1"]};

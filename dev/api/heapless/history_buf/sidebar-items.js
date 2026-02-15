@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["HistoryBufInner","OldestOrdered"],"trait":["HistoryBufStorage"],"type":["HistoryBuf","HistoryBufView","OwnedHistoryBufStorage","ViewHistoryBufStorage"]};

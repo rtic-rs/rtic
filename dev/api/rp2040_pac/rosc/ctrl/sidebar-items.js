@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ENABLE_A","FREQ_RANGE_A"],"struct":["CTRL_SPEC"],"type":["ENABLE_R","ENABLE_W","FREQ_RANGE_R","FREQ_RANGE_W","R","W"]};

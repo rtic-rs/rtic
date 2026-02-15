@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FRZ_0","FRZ_1"]};

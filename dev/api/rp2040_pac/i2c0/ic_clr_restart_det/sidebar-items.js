@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IC_CLR_RESTART_DET_SPEC"],"type":["CLR_RESTART_DET_R","R"]};

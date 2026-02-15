@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SYSTEMOFF_AW"],"struct":["SYSTEMOFF_SPEC","W"],"type":["SYSTEMOFF_W"]};

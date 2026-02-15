@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["COUNTERTOP_SPEC","R","W"],"type":["COUNTERTOP_R","COUNTERTOP_W"]};
