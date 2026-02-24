@@ -55,6 +55,7 @@ pub enum CargoCommand<'a> {
     },
     Build {
         cargoarg: &'a Option<&'a str>,
+        manifest: Option<String>,
         package: Option<String>,
         target: Option<Target<'a>>,
         features: Option<String>,
@@ -64,6 +65,7 @@ pub enum CargoCommand<'a> {
     },
     Check {
         cargoarg: &'a Option<&'a str>,
+        manifest: Option<String>,
         package: Option<String>,
         target: Option<Target<'a>>,
         features: Option<String>,
@@ -73,6 +75,7 @@ pub enum CargoCommand<'a> {
     },
     Clippy {
         cargoarg: &'a Option<&'a str>,
+        manifest: Option<String>,
         package: Option<String>,
         target: Option<Target<'a>>,
         features: Option<String>,
@@ -80,6 +83,7 @@ pub enum CargoCommand<'a> {
     },
     Format {
         cargoarg: &'a Option<&'a str>,
+        manifest: Option<String>,
         package: Option<String>,
         check_only: bool,
     },
@@ -90,6 +94,7 @@ pub enum CargoCommand<'a> {
         deny_warnings: bool,
     },
     Test {
+        manifest: Option<String>,
         package: Option<String>,
         features: Option<String>,
         test: Option<String>,
@@ -245,6 +250,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
             CargoCommand::Build {
                 cargoarg,
+                manifest: _,
                 package,
                 target,
                 features,
@@ -263,6 +269,7 @@ impl core::fmt::Display for CargoCommand<'_> {
 
             CargoCommand::Check {
                 cargoarg,
+                manifest: _,
                 package,
                 target,
                 features,
@@ -280,6 +287,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
             CargoCommand::Clippy {
                 cargoarg,
+                manifest: _,
                 package,
                 target,
                 features,
@@ -291,6 +299,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
             CargoCommand::Format {
                 cargoarg,
+                manifest: _,
                 package,
                 check_only,
             } => {
@@ -475,9 +484,18 @@ impl<'a> CargoCommand<'a> {
     }
 
     pub fn args(&self) -> Vec<&str> {
-        fn p(package: &Option<String>) -> impl Iterator<Item = &str> {
-            if let Some(package) = package {
-                vec!["--package", &package].into_iter()
+        fn p<'a>(
+            package: &'a Option<String>,
+            manifest: &'a Option<String>,
+        ) -> impl Iterator<Item = &'a str> {
+            if let Some(path) = manifest {
+                // If the path contains a slash, it is not part of the workspace member packages
+                // refer to its manifest path instead
+                if path.contains("/") {
+                    vec!["--manifest-path", &path].into_iter()
+                } else {
+                    vec!["--package", &package.as_ref().unwrap()].into_iter()
+                }
             } else {
                 vec![].into_iter()
             }
@@ -523,6 +541,7 @@ impl<'a> CargoCommand<'a> {
             ),
             CargoCommand::Build {
                 cargoarg,
+                manifest,
                 package,
                 features,
                 mode,
@@ -532,9 +551,10 @@ impl<'a> CargoCommand<'a> {
                 dir: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(false, cargoarg, features, Some(mode), p(package)),
+            } => self.build_args(false, cargoarg, features, Some(mode), p(package, manifest)),
             CargoCommand::Check {
                 cargoarg,
+                manifest,
                 package,
                 features,
                 mode,
@@ -544,9 +564,10 @@ impl<'a> CargoCommand<'a> {
                 target: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(false, cargoarg, features, Some(mode), p(package)),
+            } => self.build_args(false, cargoarg, features, Some(mode), p(package, manifest)),
             CargoCommand::Clippy {
                 cargoarg,
+                manifest,
                 package,
                 features,
                 // Target is added by build_args
@@ -559,7 +580,7 @@ impl<'a> CargoCommand<'a> {
                     vec![]
                 };
 
-                let extra = p(package).chain(deny_warnings);
+                let extra = p(package, manifest).chain(deny_warnings);
                 self.build_args(false, cargoarg, features, None, extra)
             }
             CargoCommand::Doc {
@@ -592,7 +613,7 @@ impl<'a> CargoCommand<'a> {
                 } else {
                     features
                 };
-                let package = p(package);
+                let package = p(package, manifest);
                 let extra = extra.into_iter().chain(package);
                 self.build_args(false, &None, cargofeatures, None, extra)
             }
@@ -614,10 +635,11 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Format {
                 cargoarg,
                 package,
+                manifest,
                 check_only,
             } => {
                 let extra = if *check_only { Some("--check") } else { None };
-                let package = p(package);
+                let package = p(package, manifest);
                 self.build_args(
                     false,
                     cargoarg,

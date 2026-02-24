@@ -1,6 +1,6 @@
 use crate::{
     cargo_command::CargoCommand, Target, ARMV6M, ARMV7M, ARMV8MBASE, ARMV8MMAIN, RISCV32IMAC,
-    RISCV32IMC,
+    RISCV32IMC, X86_64,
 };
 use clap::{Args, Parser, Subcommand};
 use core::fmt;
@@ -13,6 +13,22 @@ pub enum Package {
     RticMonotonics,
     RticSync,
     RticTime,
+    Xtask,
+    EmbassyStm32g4,
+    Esp32c3,
+    Esp32c6,
+    Hifive1,
+    Lm3s6965,
+    Nrf52840Blinky,
+    Rp2040LocalI2cInit,
+    Stm32f1BluepillBlinky,
+    Stm32f3Blinky,
+    Stm32f411Adc,
+    Stm32f411AdcAndMpscChannel,
+    Stm32f411EncoderPolling,
+    Stm32f411RtcInterrupt,
+    Stm32g030f6PeriodicPrints,
+    Teensy4Blinky,
 }
 
 impl fmt::Display for Package {
@@ -30,9 +46,31 @@ impl Package {
             Package::RticMonotonics => "rtic-monotonics",
             Package::RticSync => "rtic-sync",
             Package::RticTime => "rtic-time",
+            Package::Xtask => "xtask",
+            Package::EmbassyStm32g4 => "examples/embassy-stm32g4",
+            Package::Esp32c3 => "examples/esp32c3",
+            Package::Esp32c6 => "examples/esp32c6",
+            Package::Hifive1 => "examples/hifive1",
+            Package::Lm3s6965 => "examples/lm3s6965",
+            Package::Nrf52840Blinky => "examples/nrf52840_blinky",
+            Package::Rp2040LocalI2cInit => "examples/rp2040_local_i2c_init",
+            Package::Stm32f1BluepillBlinky => "examples/stm32f1_bluepill_blinky",
+            Package::Stm32f3Blinky => "examples/stm32f3_blinky",
+            Package::Stm32f411Adc => "examples/stm32f411_adc",
+            Package::Stm32f411AdcAndMpscChannel => "examples/stm32f411_adc_and_mpsc_channel",
+            Package::Stm32f411EncoderPolling => "examples/stm32f411_encoder_polling",
+            Package::Stm32f411RtcInterrupt => "examples/stm32f411_rtc_interrupt",
+            Package::Stm32g030f6PeriodicPrints => "examples/stm32g030f6_periodic_prints",
+            Package::Teensy4Blinky => "examples/teensy4_blinky",
         };
 
         name.to_string()
+    }
+
+    pub fn manifest_path(&self) -> String {
+        let mut path = self.name();
+        path.push_str("/Cargo.toml");
+        path
     }
 
     pub fn all() -> Vec<Self> {
@@ -43,6 +81,22 @@ impl Package {
             Self::RticMonotonics,
             Self::RticSync,
             Self::RticTime,
+            Self::Xtask,
+            Self::EmbassyStm32g4,
+            Self::Esp32c3,
+            Self::Esp32c6,
+            Self::Hifive1,
+            Self::Lm3s6965,
+            Self::Nrf52840Blinky,
+            Self::Rp2040LocalI2cInit,
+            Self::Stm32f1BluepillBlinky,
+            Self::Stm32f3Blinky,
+            Self::Stm32f411Adc,
+            Self::Stm32f411AdcAndMpscChannel,
+            Self::Stm32f411EncoderPolling,
+            Self::Stm32f411RtcInterrupt,
+            Self::Stm32g030f6PeriodicPrints,
+            Self::Teensy4Blinky,
         ]
     }
 
@@ -85,6 +139,12 @@ impl Package {
             Package::RticSync if matches!(backend, Backends::Thumbv6) || !backend.is_arm() => {
                 vec![Some("portable-atomic/critical-section".into())]
             }
+            Package::Teensy4Blinky => {
+                vec![Some("imxrt_gpt1,imxrt-ral/imxrt1011".into())]
+            }
+            Package::Stm32g030f6PeriodicPrints => {
+                vec![Some("portable-atomic/unsafe-assume-single-core,panic-probe/printf-defmt,cortex-m/critical-section-single-core".into())]
+            }
             _ => vec![None],
         }
     }
@@ -107,6 +167,7 @@ impl TestMetadata {
             }
             Package::RticMacros => CargoCommand::Test {
                 package: Some(package.name()),
+                manifest: Some(package.manifest_path()),
                 features: Some(backend.to_rtic_macros_feature().to_owned()),
                 test: None,
                 deny_warnings: true,
@@ -140,12 +201,66 @@ impl TestMetadata {
                 deny_warnings: true,
                 loom,
             },
+            Package::Xtask => CargoCommand::Test {
+                package: Some(package.name()),
+                manifest: Some(package.manifest_path()),
+                features: None,
+                test: None,
+                deny_warnings: true,
+                loom,
+            },
+            Package::EmbassyStm32g4 => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Esp32c3 => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Esp32c6 => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Hifive1 => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Lm3s6965 => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Nrf52840Blinky => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Rp2040LocalI2cInit => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Stm32f1BluepillBlinky => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Stm32f3Blinky => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Stm32f411Adc => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Stm32f411AdcAndMpscChannel => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Stm32f411EncoderPolling => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Stm32f411RtcInterrupt => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Stm32g030f6PeriodicPrints => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
+            Package::Teensy4Blinky => CargoCommand::Noop {
+                package: Some(package.name()),
+            },
         }
     }
 }
 
 #[derive(clap::ValueEnum, Copy, Clone, Default, Debug, PartialEq)]
 pub enum Backends {
+    Std,
     Thumbv6,
     #[default]
     Thumbv7,
@@ -173,6 +288,7 @@ impl Backends {
             Backends::Riscv32ImacClint | Backends::Riscv32ImacMecall | Backends::RiscvEsp32C6 => {
                 RISCV32IMAC
             }
+            Backends::Std => X86_64,
         }
     }
 
@@ -187,6 +303,7 @@ impl Backends {
             Backends::RiscvEsp32C6 => "riscv-esp32c6-backend",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint-backend",
             Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall-backend",
+            Backends::Std => unimplemented!(),
         }
     }
 
@@ -199,6 +316,7 @@ impl Backends {
             Backends::RiscvEsp32C6 => "riscv-esp32c6",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
             Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall",
+            Backends::Std => unimplemented!(),
         }
     }
 
@@ -263,6 +381,7 @@ pub enum Platforms {
     Stm32f3,
     Stm32f411,
     Teensy4,
+    X86_64,
 }
 
 impl Platforms {
@@ -277,6 +396,7 @@ impl Platforms {
             Platforms::Stm32f3 => "stm32f3",
             Platforms::Stm32f411 => "stm32f411",
             Platforms::Teensy4 => "teensy4",
+            Platforms::X86_64 => "x86_64",
         };
         name.to_string()
     }
@@ -317,6 +437,7 @@ impl Platforms {
                 "link-arg=-Tdefmt.x".to_string(),
             ],
             Platforms::Teensy4 => vec![c, "link-arg=-Tt4link.x".to_string()],
+            Platforms::X86_64 => vec![],
         }
     }
 
@@ -332,6 +453,7 @@ impl Platforms {
             Platforms::Stm32f3 => unimplemented!(),
             Platforms::Stm32f411 => unimplemented!(),
             Platforms::Teensy4 => unimplemented!(),
+            Platforms::X86_64 => Backends::Std,
         }
     }
 
@@ -364,6 +486,10 @@ impl Platforms {
             Platforms::Stm32f3 => unimplemented!(),
             Platforms::Stm32f411 => unimplemented!(),
             Platforms::Teensy4 => unimplemented!(),
+            Platforms::X86_64 => match backend.to_target() {
+                X86_64 => Ok(None),
+                _ => Err(()),
+            },
         }
     }
 }

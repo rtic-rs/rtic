@@ -185,6 +185,7 @@ pub fn cargo<'c>(
             let command = match operation {
                 BuildOrCheck::Check => CargoCommand::Check {
                     cargoarg,
+                    manifest: Some(package.manifest_path()),
                     package: Some(package.name()),
                     target,
                     features,
@@ -194,6 +195,7 @@ pub fn cargo<'c>(
                 },
                 BuildOrCheck::Build => CargoCommand::Build {
                     cargoarg,
+                    manifest: Some(package.manifest_path()),
                     package: Some(package.name()),
                     target,
                     features,
@@ -272,6 +274,7 @@ pub fn cargo_clippy<'c>(
         .map(move |(package, target, features)| {
             let command = CargoCommand::Clippy {
                 cargoarg,
+                manifest: Some(package.manifest_path()),
                 package: Some(package.name()),
                 target: target.into(),
                 features,
@@ -295,6 +298,7 @@ pub fn cargo_format<'c>(
             globals,
             CargoCommand::Format {
                 cargoarg,
+                manifest: Some(p.manifest_path()),
                 package: Some(p.name()),
                 check_only: formatopts.check,
             },
