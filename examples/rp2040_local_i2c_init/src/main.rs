@@ -82,14 +82,10 @@ mod app {
         led.set_low().unwrap();
 
         // Init I2C pins
-        let sda_pin: gpio::Pin<_, gpio::FunctionI2C, _> = gpioa
-            .gpio2
-            .into_pull_up_disabled()
-            .reconfigure();
-        let scl_pin: gpio::Pin<_, gpio::FunctionI2C, _> = gpioa
-            .gpio3
-            .into_pull_up_disabled()
-            .reconfigure();
+        let sda_pin: gpio::Pin<_, gpio::FunctionI2C, _> =
+            gpioa.gpio2.into_pull_up_disabled().reconfigure();
+        let scl_pin: gpio::Pin<_, gpio::FunctionI2C, _> =
+            gpioa.gpio3.into_pull_up_disabled().reconfigure();
 
         // Init I2C itself, using MaybeUninit to overwrite the previously
         // uninitialized i2c_ctx variable without dropping its value
