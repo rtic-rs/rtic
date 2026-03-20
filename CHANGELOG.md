@@ -13,6 +13,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Bump lm3s6965 to 0.2.0
+
 ## [v1.1.4] - 2023-02-26
 
 ### Added
