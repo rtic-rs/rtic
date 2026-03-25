@@ -127,21 +127,17 @@ pub fn codegen(
             // If any resource to the exception uses non-lock-free or non-local resources this is
             // not allwed on thumbv6.
             uses_exceptions_with_resources = uses_exceptions_with_resources
-                || task
-                    .args
-                    .shared_resources
-                    .iter()
-                    .any(|(ident, access)| {
-                        if access.is_exclusive() {
-                            if let Some(r) = app.shared_resources.get(ident) {
-                                !r.properties.lock_free
-                            } else {
-                                false
-                            }
+                || task.args.shared_resources.iter().any(|(ident, access)| {
+                    if access.is_exclusive() {
+                        if let Some(r) = app.shared_resources.get(ident) {
+                            !r.properties.lock_free
                         } else {
                             false
                         }
-                    });
+                    } else {
+                        false
+                    }
+                });
 
             None
         }
