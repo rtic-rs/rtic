@@ -80,7 +80,7 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         //
         // If no "target" directory is found, <project_dir>/<out_dir_root> is used
         for path in out_dir.ancestors() {
-            if let Some(dir) = path.components().last() {
+            if let Some(dir) = path.components().next_back() {
                 if dir
                     .as_os_str()
                     .to_str()
