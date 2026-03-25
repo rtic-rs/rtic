@@ -131,7 +131,7 @@ pub fn codegen(
                     .args
                     .shared_resources
                     .iter()
-                    .map(|(ident, access)| {
+                    .any(|(ident, access)| {
                         if access.is_exclusive() {
                             if let Some(r) = app.shared_resources.get(ident) {
                                 !r.properties.lock_free
@@ -141,8 +141,7 @@ pub fn codegen(
                         } else {
                             false
                         }
-                    })
-                    .any(|v| v);
+                    });
 
             None
         }
