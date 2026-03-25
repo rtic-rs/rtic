@@ -9,6 +9,8 @@ fn main() {
 
     // Add `have_basepri` to the list of expected configs.
     println!("cargo::rustc-check-cfg=cfg(have_basepri)");
+    println!("cargo::rustc-check-cfg=cfg(never)");
+    println!("cargo::rustc-check-cfg=cfg(feature, values(\"killmono\", \"feature_x\"))");
 
     // These targets all have know support for the BASEPRI register.
     if target.starts_with("thumbv7m")
