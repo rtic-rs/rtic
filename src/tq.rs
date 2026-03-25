@@ -34,7 +34,7 @@ where
         // Check if the top contains a non-empty element and if that element is
         // greater than nr
         let if_heap_max_greater_than_nr =
-            self.0.peek().map_or(true, |head| nr.instant < head.instant);
+            self.0.peek().is_none_or(|head| nr.instant < head.instant);
 
         if if_heap_max_greater_than_nr {
             if Mono::DISABLE_INTERRUPT_ON_EMPTY_QUEUE && self.0.is_empty() {
