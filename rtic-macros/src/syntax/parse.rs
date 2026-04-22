@@ -227,8 +227,8 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                     local_task = Some(true); // Default to true
                 }
                 break;
-            } else if let Err(e) = eq {
-                return Err(e);
+            } else {
+                eq?
             };
 
             match &*ident_s {
