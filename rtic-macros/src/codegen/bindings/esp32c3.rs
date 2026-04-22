@@ -84,16 +84,18 @@ mod esp32c3 {
 
     pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
         let mut stmts = vec![];
-        let mut curr_cpu_id: u8 = 16; // cpu interrupt ids 0-15 are reserved
+        let curr_cpu_id: u8 = 16; // cpu interrupt ids 0-15 are reserved
         let rt_err = util::rt_err_ident();
         let max_prio: usize = 15; //unfortunately this is not part of pac, but we know that max prio is 15.
         let min_prio: usize = 1;
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
         // Unmask interrupts and set their priorities
-        for (&priority, name) in interrupt_ids.chain(
-            app.hardware_tasks
-                .values()
-                .map(|task| (&task.args.priority, &task.args.binds)),
+        for (curr_cpu_id, (&priority, name)) in (curr_cpu_id..).zip(
+            interrupt_ids.chain(
+                app.hardware_tasks
+                    .values()
+                    .map(|task| (&task.args.priority, &task.args.binds)),
+            ),
         ) {
             let es = format!(
                 "Maximum priority used by interrupt vector '{name}' is more than supported by hardware"
@@ -111,7 +113,6 @@ mod esp32c3 {
                     #curr_cpu_id,
                 );
             ));
-            curr_cpu_id += 1;
         }
         stmts
     }
@@ -228,18 +229,19 @@ mod esp32c3 {
         dispatcher_name: Ident,
     ) -> Vec<TokenStream2> {
         let mut stmts = vec![];
-        let mut curr_cpu_id = 16; // cpu interrupt ids 0-15 are reserved
+        let curr_cpu_id = 16; // cpu interrupt ids 0-15 are reserved
         let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
-        for (_, name) in interrupt_ids.chain(
-            app.hardware_tasks
-                .values()
-                .map(|task| (&task.args.priority, &task.args.binds)),
+        for (curr_cpu_id, (_, name)) in (curr_cpu_id..).zip(
+            interrupt_ids.chain(
+                app.hardware_tasks
+                    .values()
+                    .map(|task| (&task.args.priority, &task.args.binds)),
+            ),
         ) {
             if *name == dispatcher_name {
                 let ret = &("interrupt".to_owned() + &curr_cpu_id.to_string());
                 stmts.push(quote!(#[export_name = #ret]));
             }
-            curr_cpu_id += 1;
         }
 
         stmts
