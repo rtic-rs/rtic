@@ -14,6 +14,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- A lot of STM32 chip feature flags
 - Cortex-M `systick` can be configured with its external clock source
 
 ### Fixed
