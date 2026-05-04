@@ -24,7 +24,7 @@ mod app {
 
         // Set the ARM SLEEPONEXIT bit to go to sleep after handling interrupts
         // See https://developer.arm.com/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
-        cx.core.SCB.set_sleepdeep();
+        cx.core.SCB.set_sleeponexit();
 
         (Shared {}, Local {})
     }
