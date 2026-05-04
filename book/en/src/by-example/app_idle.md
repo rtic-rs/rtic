@@ -34,7 +34,7 @@ A common useful optimization is to enable the [SLEEPONEXIT] and allow the MCU to
 The following example shows how to enable sleep by setting the
 [`SLEEPONEXIT`][SLEEPONEXIT] and providing a custom `idle` task replacing the default [`nop()`][NOP] with [`wfi()`][WFI].
 
-[SLEEPONEXIT]: https://developer.arm.com/docs/100737/0100/power-management/sleep-mode/sleep-on-exit-bit
+[SLEEPONEXIT]: https://developer.arm.com/documentation/100737/0100/Power-management/Sleep-mode/Sleep-on-exit-bit
 [WFI]: https://developer.arm.com/documentation/dui0662/b/The-Cortex-M0--Instruction-Set/Miscellaneous-instructions/WFI
 [NOP]: https://developer.arm.com/documentation/dui0662/b/The-Cortex-M0--Instruction-Set/Miscellaneous-instructions/NOP
 
