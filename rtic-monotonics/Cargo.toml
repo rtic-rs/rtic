@@ -15,6 +15,7 @@ categories = ["concurrency", "embedded", "no-std", "asynchronous"]
 description = "A library that provides implementations of the Monotonic trait from rtic-time"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rtic-rs/rtic"
+exclude = ["scripts/**"]
 
 [package.metadata.docs.rs]
 features = [
