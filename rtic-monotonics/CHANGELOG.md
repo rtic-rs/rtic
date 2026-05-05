@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- STM32's monotonics now derive the timer counter size from the pac register definition
 - Updated rp235x-pac dependency to v0.2.0
 - Panic if STM32 prescaler value would overflow
 
@@ -20,7 +21,6 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Fixed
 
 - `assert`s in macro expansions can no longer be shadowed.
-- Incorrect bit width of stm32's timer2 based peripherals
 
 ## v2.1.0 - 2025-06-22
 
