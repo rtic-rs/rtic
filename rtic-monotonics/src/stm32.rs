@@ -211,8 +211,61 @@ macro_rules! stm32_tim15_monotonic {
     };
 }
 
+trait TimerWord: TryFrom<u64> {
+    const HALF_PERIOD_VALUE: Self;
+    fn trunc_from_u64(val: u64) -> Self;
+}
+
+impl TimerWord for u8 {
+    const HALF_PERIOD_VALUE: Self = 0x80;
+    fn trunc_from_u64(val: u64) -> Self {
+        val as Self
+    }
+}
+impl TimerWord for u16 {
+    const HALF_PERIOD_VALUE: u16 = 0x8000;
+    fn trunc_from_u64(val: u64) -> Self {
+        val as Self
+    }
+}
+impl TimerWord for u32 {
+    const HALF_PERIOD_VALUE: u32 = 0x8000_0000;
+    fn trunc_from_u64(val: u64) -> Self {
+        val as Self
+    }
+}
+impl TimerWord for u64 {
+    const HALF_PERIOD_VALUE: u64 = 0x8000_0000_0000_0000;
+    fn trunc_from_u64(val: u64) -> Self {
+        val as Self
+    }
+}
+
+fn half_period_value<T: TimerWord>(
+    _: impl FnOnce() -> T, /* as a sanity check that the CCR width is identical to the CNT width */
+) -> T {
+    T::HALF_PERIOD_VALUE
+}
+
+fn compute_compare_value<T: TimerWord>(
+    instant: u64,
+    now: u64,
+    _: impl FnOnce() -> T, /* as a sanity check that the CCR width is identical to the CNT width */
+) -> T {
+    // Since the timer may or may not overflow based on the requested compare val, we check how many ticks are left.
+    // `wrapping_sub` takes care of the u64 integer overflow special case.
+    let val = if T::try_from(instant.wrapping_sub(now)).is_ok() {
+        instant
+    } else {
+        // In the past or will overflow
+        0
+    };
+
+    T::trunc_from_u64(val)
+}
+
 macro_rules! make_timer {
-    ($backend_name:ident, $timer:ident, $bits:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
+    ($backend_name:ident, $timer:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer backend implementation.
         $(
             #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
@@ -247,7 +300,7 @@ macro_rules! make_timer {
                 $timer.dier().modify(|r| r.set_uie(true));
 
                 // Configure and enable half-period interrupt
-                $timer.ccr(0).write(|r| *r = ($bits::MAX - ($bits::MAX >> 1)).into());
+                $timer.ccr(0).write(|r| *r = half_period_value(|| $timer.cnt().read()));
                 $timer.dier().modify(|r| r.set_ccie(0, true));
 
                 // Trigger an update event to load the prescaler value to the clock.
@@ -287,7 +340,7 @@ macro_rules! make_timer {
             type Ticks = u64;
 
             fn now() -> Self::Ticks {
-                calculate_now::<_, $bits, _, _, _>(
+                calculate_now(
                     || $overflow.load(Ordering::Relaxed),
                     || $timer.cnt().read()
                 )
@@ -296,16 +349,9 @@ macro_rules! make_timer {
             fn set_compare(instant: Self::Ticks) {
                 let now = Self::now();
 
-                // Since the timer may or may not overflow based on the requested compare val, we check how many ticks are left.
-                // `wrapping_sub` takes care of the u64 integer overflow special case.
-                let val = if instant.wrapping_sub(now) <= ($bits::MAX as u64) {
-                    instant as $bits
-                } else {
-                    // In the past or will overflow
-                    0
-                };
-
-                $timer.ccr(1).write(|r| *r = val.into());
+                $timer.ccr(1).write(|r| {
+                    *r = compute_compare_value(instant, now, || $timer.cnt().read());
+                });
             }
 
             fn clear_compare_flag() {
@@ -356,7 +402,7 @@ macro_rules! make_timer {
 }
 
 macro_rules! make_timer2 {
-    ($backend_name:ident, $timer:ident, $bits:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
+    ($backend_name:ident, $timer:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer backend implementation.
         $(
             #[cfg_attr(docsrs, doc(cfg($($doc)*)))]
@@ -391,14 +437,14 @@ macro_rules! make_timer2 {
                 $timer.dier().modify(|r| r.set_uie(true));
 
                 // Configure and enable half-period interrupt
-                $timer.ccr(0).write(|r| r.0 = ($bits::MAX - ($bits::MAX >> 1)).into());
+                $timer.ccr(0).write(|r| r.set_ccr(half_period_value(|| $timer.cnt().read().cnt())));
                 $timer.dier().modify(|r| r.set_ccie(0, true));
 
                 // Trigger an update event to load the prescaler value to the clock.
                 $timer.egr().write(|r| r.set_ug(true));
 
                 // Clear timer value so it is known that we are at the first half period
-                $timer.cnt().write(|r| r.0 = 1);
+                $timer.cnt().write(|r| r.set_cnt(1));
 
                 // Triggering the update event might have raised overflow interrupts.
                 // Clear them to return to a known state.
@@ -431,7 +477,7 @@ macro_rules! make_timer2 {
             type Ticks = u64;
 
             fn now() -> Self::Ticks {
-                calculate_now::<_, $bits, _, _, _>(
+                calculate_now(
                     || $overflow.load(Ordering::Relaxed),
                     || $timer.cnt().read().cnt()
                 )
@@ -440,16 +486,9 @@ macro_rules! make_timer2 {
             fn set_compare(instant: Self::Ticks) {
                 let now = Self::now();
 
-                // Since the timer may or may not overflow based on the requested compare val, we check how many ticks are left.
-                // `wrapping_sub` takes care of the u64 integer overflow special case.
-                let val = if instant.wrapping_sub(now) <= ($bits::MAX as u64) {
-                    instant as $bits
-                } else {
-                    // In the past or will overflow
-                    0
-                };
-
-                $timer.ccr(1).write(|r| r.0 = val.into());
+                $timer.ccr(1).write(|r| {
+                    r.set_ccr(compute_compare_value(instant, now, || $timer.cnt().read().cnt()));
+                });
             }
 
             fn clear_compare_flag() {
@@ -500,16 +539,16 @@ macro_rules! make_timer2 {
 }
 
 #[cfg(feature = "stm32_tim2")]
-make_timer!(Tim2Backend, TIM2, u32, TIMER2_OVERFLOWS, TIMER2_TQ);
+make_timer!(Tim2Backend, TIM2, TIMER2_OVERFLOWS, TIMER2_TQ);
 
 #[cfg(feature = "stm32_tim3")]
-make_timer2!(Tim3Backend, TIM3, u16, TIMER3_OVERFLOWS, TIMER3_TQ);
+make_timer2!(Tim3Backend, TIM3, TIMER3_OVERFLOWS, TIMER3_TQ);
 
 #[cfg(feature = "stm32_tim4")]
-make_timer2!(Tim4Backend, TIM4, u16, TIMER4_OVERFLOWS, TIMER4_TQ);
+make_timer2!(Tim4Backend, TIM4, TIMER4_OVERFLOWS, TIMER4_TQ);
 
 #[cfg(feature = "stm32_tim5")]
-make_timer!(Tim5Backend, TIM5, u16, TIMER5_OVERFLOWS, TIMER5_TQ);
+make_timer!(Tim5Backend, TIM5, TIMER5_OVERFLOWS, TIMER5_TQ);
 
 #[cfg(feature = "stm32_tim15")]
-make_timer2!(Tim15Backend, TIM15, u16, TIMER15_OVERFLOWS, TIMER15_TQ);
+make_timer2!(Tim15Backend, TIM15, TIMER15_OVERFLOWS, TIMER15_TQ);
