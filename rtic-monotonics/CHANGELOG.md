@@ -20,6 +20,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 ### Fixed
 
 - `assert`s in macro expansions can no longer be shadowed.
+- Incorrect bit width of stm32's timer2 based peripherals
 
 ## v2.1.0 - 2025-06-22
 

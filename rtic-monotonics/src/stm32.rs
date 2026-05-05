@@ -287,7 +287,7 @@ macro_rules! make_timer {
             type Ticks = u64;
 
             fn now() -> Self::Ticks {
-                calculate_now(
+                calculate_now::<_, $bits, _, _, _>(
                     || $overflow.load(Ordering::Relaxed),
                     || $timer.cnt().read()
                 )
@@ -431,9 +431,9 @@ macro_rules! make_timer2 {
             type Ticks = u64;
 
             fn now() -> Self::Ticks {
-                calculate_now(
+                calculate_now::<_, $bits, _, _, _>(
                     || $overflow.load(Ordering::Relaxed),
-                    || $timer.cnt().read().0
+                    || $timer.cnt().read().cnt()
                 )
             }
 
