@@ -83,9 +83,7 @@ mod app {
         // channel and comparing the result with the value stored at the factory.
         adc.calibrate();
 
-        let pot_instance = Potentiometer {
-            analog_input,
-        };
+        let pot_instance = Potentiometer { analog_input };
 
         // Configure Button Pin for Interrupts
         // 7) Promote SYSCFG structure to HAL to be able to configure interrupts
