@@ -159,6 +159,7 @@ impl TestMetadata {
                 let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
                 CargoCommand::Test {
                     package: Some(package.name()),
+                    manifest: Some(package.manifest_path()),
                     features,
                     test: Some("ui".to_owned()),
                     deny_warnings: true,
@@ -175,6 +176,7 @@ impl TestMetadata {
             },
             Package::RticSync => CargoCommand::Test {
                 package: Some(package.name()),
+                manifest: Some(package.manifest_path()),
                 features: Some("testing".to_owned()),
                 test: None,
                 deny_warnings: true,
@@ -182,6 +184,7 @@ impl TestMetadata {
             },
             Package::RticCommon => CargoCommand::Test {
                 package: Some(package.name()),
+                manifest: Some(package.manifest_path()),
                 features: Some("testing".to_owned()),
                 test: None,
                 deny_warnings: true,
@@ -189,6 +192,7 @@ impl TestMetadata {
             },
             Package::RticMonotonics => CargoCommand::Test {
                 package: Some(package.name()),
+                manifest: Some(package.manifest_path()),
                 features: None,
                 test: None,
                 deny_warnings: true,
@@ -196,6 +200,7 @@ impl TestMetadata {
             },
             Package::RticTime => CargoCommand::Test {
                 package: Some(package.name()),
+                manifest: Some(package.manifest_path()),
                 features: Some("critical-section/std".into()),
                 test: None,
                 deny_warnings: true,

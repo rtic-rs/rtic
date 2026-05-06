@@ -345,6 +345,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
             CargoCommand::Test {
                 package,
+                manifest: _,
                 features,
                 test,
                 deny_warnings,
@@ -602,6 +603,7 @@ impl<'a> CargoCommand<'a> {
             }
             CargoCommand::Test {
                 package,
+                manifest,
                 features,
                 test,
                 // deny_warnings is exposed through `extra_env`
