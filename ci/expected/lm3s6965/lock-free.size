@@ -1,2 +1,2 @@
    text	   data	    bss	    dec	    hex	filename
-   6392	      0	     20	   6412	   190c	lock-free
+   6240	      0	     20	   6260	   1874	lock-free

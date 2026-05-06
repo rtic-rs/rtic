@@ -1,2 +1,2 @@
    text	   data	    bss	    dec	    hex	filename
-   7668	      0	   2064	   9732	   2604	big-struct-opt
+   7532	      0	   2064	   9596	   257c	big-struct-opt

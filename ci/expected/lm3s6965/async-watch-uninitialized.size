@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+   7196	     20	     16	   7232	   1c40	async-watch-uninitialized
