@@ -143,7 +143,7 @@ impl Package {
                 vec![Some("imxrt_gpt1,imxrt-ral/imxrt1011".into())]
             }
             Package::Stm32g030f6PeriodicPrints => {
-                vec![Some("portable-atomic/unsafe-assume-single-core,panic-probe/printf-defmt,cortex-m/critical-section-single-core".into())]
+                vec![Some("portable-atomic/unsafe-assume-single-core,cortex-m/critical-section-single-core".into())]
             }
             _ => vec![None],
         }
