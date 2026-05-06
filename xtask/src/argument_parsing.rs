@@ -96,7 +96,7 @@ impl Package {
             Self::Stm32f411EncoderPolling,
             Self::Stm32f411RtcInterrupt,
             Self::Stm32g030f6PeriodicPrints,
-            Self::Teensy4Blinky,
+            // Self::Teensy4Blinky,
         ]
     }
 
