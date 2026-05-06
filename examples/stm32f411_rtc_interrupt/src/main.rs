@@ -123,7 +123,7 @@ mod app {
     fn gpio_interrupt_handler(mut ctx: gpio_interrupt_handler::Context) {
 
         ctx.shared.delayval.lock(|del| {
-            *del = *del - 100_u32;
+            *del -= 100_u32;
             if *del < 200_u32 {
                 *del = 2000_u32;
             }
