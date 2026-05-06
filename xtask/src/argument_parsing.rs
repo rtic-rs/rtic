@@ -140,7 +140,7 @@ impl Package {
                 vec![Some("portable-atomic/critical-section".into())]
             }
             Package::Teensy4Blinky => {
-                vec![Some("imxrt_gpt1,imxrt-ral/imxrt1011".into())]
+                vec![Some("rtic-monotonics/imxrt_gpt1".into())]
             }
             Package::Stm32g030f6PeriodicPrints => {
                 vec![Some("portable-atomic/unsafe-assume-single-core,cortex-m/critical-section-single-core".into())]
