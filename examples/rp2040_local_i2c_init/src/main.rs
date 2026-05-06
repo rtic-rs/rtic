@@ -53,7 +53,7 @@ mod app {
     ])]
     fn init(mut ctx: init::Context) -> (Shared, Local) {
         // Configure the clocks, watchdog - The default is to generate a 125 MHz system clock
-        Mono::start(ctx.device.TIMER, &mut ctx.device.RESETS); // default rp2040 clock-rate is 125MHz
+        Mono::start(ctx.device.TIMER, &ctx.device.RESETS); // default rp2040 clock-rate is 125MHz
         let mut watchdog = Watchdog::new(ctx.device.WATCHDOG);
         let clocks = clocks::init_clocks_and_plls(
             XOSC_CRYSTAL_FREQ,
