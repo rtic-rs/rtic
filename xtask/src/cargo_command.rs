@@ -115,6 +115,9 @@ pub enum CargoCommand<'a> {
         dir: Option<PathBuf>,
         deny_warnings: bool,
     },
+    Noop {
+        package: Option<String>,
+    },
 }
 
 impl core::fmt::Display for CargoCommand<'_> {
@@ -266,7 +269,6 @@ impl core::fmt::Display for CargoCommand<'_> {
                     details(warns, target, Some(mode), features, cargoarg, dir.as_ref())
                 )
             }
-
             CargoCommand::Check {
                 cargoarg,
                 manifest: _,
@@ -373,6 +375,10 @@ impl core::fmt::Display for CargoCommand<'_> {
                 let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
                 write!(f, "Compute size of example {example} {details}")
             }
+            CargoCommand::Noop { package } => {
+                let package = p(package);
+                write!(f, "Skipping {package}")
+            }
         }
     }
 }
@@ -407,6 +413,7 @@ impl<'a> CargoCommand<'a> {
             CargoCommand::Doc { .. } => "doc",
             CargoCommand::Book { .. } => "build",
             CargoCommand::Test { .. } => "test",
+            CargoCommand::Noop { .. } => "",
         }
     }
     pub fn executable(&self) -> &'static str {
@@ -423,6 +430,7 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::Test { .. }
             | CargoCommand::Doc { .. } => "cargo",
             CargoCommand::Book { .. } => "mdbook",
+            CargoCommand::Noop { .. } => "true",
         }
     }
 
@@ -502,7 +510,6 @@ impl<'a> CargoCommand<'a> {
         }
 
         match self {
-            // For future embedded-ci, for now the same as Qemu
             CargoCommand::Run {
                 cargoarg,
                 platform: _,
@@ -705,6 +712,7 @@ impl<'a> CargoCommand<'a> {
 
                 self.build_args(false, cargoarg, features, Some(mode), extra)
             }
+            CargoCommand::Noop { package: _ } => Vec::new(),
         }
     }
 

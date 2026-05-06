@@ -156,6 +156,7 @@ fn command_parser(
         | CargoCommand::Clippy { .. }
         | CargoCommand::Doc { .. }
         | CargoCommand::Test { .. }
+        | CargoCommand::Noop { .. }
         | CargoCommand::Book { .. } => {
             let cargo_result = run_command(command, output_mode, true)?;
             Ok(cargo_result)
