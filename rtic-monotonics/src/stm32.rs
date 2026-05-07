@@ -241,12 +241,41 @@ impl TimerWord for u64 {
     }
 }
 
+/// Returns the half-period value for a timer.
+///
+/// The closure argument is never invoked; it forces the CNT and CCR word
+/// types to be inferred as the same `T`, causing a width mismatch between
+/// the two registers to fail type-checking.
+///
+/// # Example
+///
+/// ```ignore
+/// timer.ccr(0).write(|r| *r = half_period_value(|| timer.cnt().read()));
+/// ```
 fn half_period_value<T: TimerWord>(
     _: impl FnOnce() -> T, /* as a sanity check that the CCR width is identical to the CNT width */
 ) -> T {
     T::HALF_PERIOD_VALUE
 }
 
+/// Computes the CCR compare value for a target `instant`, given the current
+/// counter value `now`.
+///
+/// If the target is in the past or would overflow the timer's range before
+/// being reached, returns `0` so the compare match fires on the next
+/// wrap-around rather than at a stale value.
+///
+/// The closure argument is never invoked; it forces the CNT and CCR word
+/// types to be inferred as the same `T`, causing a width mismatch between
+/// the two registers to fail type-checking.
+///
+/// # Example
+///
+/// ```ignore
+/// timer.ccr(1).write(|r| {
+///     *r = compute_compare_value(instant, now, || timer.cnt().read());
+/// });
+/// ```
 fn compute_compare_value<T: TimerWord>(
     instant: u64,
     now: u64,
