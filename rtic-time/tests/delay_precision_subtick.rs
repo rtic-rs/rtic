@@ -24,7 +24,7 @@ use rtic_time::{
     Monotonic,
 };
 
-const SUBTICKS_PER_TICK: u32 = 10;
+const SUBTICKS_PER_TICK: u64 = 10;
 struct SubtickTestTimer;
 struct SubtickTestTimerBackend;
 static TIMER_QUEUE: TimerQueue<SubtickTestTimerBackend> = TimerQueue::new();
@@ -44,8 +44,8 @@ impl SubtickTestTimerBackend {
 
     pub fn tick() -> u64 {
         let now = NOW_SUBTICKS.fetch_add(1, Ordering::Relaxed) + 1;
-        let ticks = now / u64::from(SUBTICKS_PER_TICK);
-        let subticks = now % u64::from(SUBTICKS_PER_TICK);
+        let ticks = now / SUBTICKS_PER_TICK;
+        let subticks = now % SUBTICKS_PER_TICK;
 
         let compare = COMPARE_TICKS.lock();
 
@@ -63,7 +63,7 @@ impl SubtickTestTimerBackend {
     }
 
     pub fn forward_to_subtick(subtick: u64) {
-        assert!(subtick < u64::from(SUBTICKS_PER_TICK));
+        assert!(subtick < SUBTICKS_PER_TICK);
         while Self::tick() != subtick {}
     }
 
@@ -76,7 +76,7 @@ impl TimerQueueBackend for SubtickTestTimerBackend {
     type Ticks = u64;
 
     fn now() -> Self::Ticks {
-        NOW_SUBTICKS.load(Ordering::Relaxed) / u64::from(SUBTICKS_PER_TICK)
+        NOW_SUBTICKS.load(Ordering::Relaxed) / SUBTICKS_PER_TICK
     }
 
     fn set_compare(instant: Self::Ticks) {
