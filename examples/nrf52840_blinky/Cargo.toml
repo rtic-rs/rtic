@@ -17,7 +17,7 @@ defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 cortex-m-semihosting = "0.5.0"
 nrf52840-hal = "0.16.0"
-fugit = { version = "0.3.7", features = ["defmt"] }
+fugit = { version = "0.4.0", features = ["defmt"] }
 
 [dependencies.rtic]
 path = "../../rtic"

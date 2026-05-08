@@ -8,7 +8,7 @@ macro_rules! impl_embedded_hal_delay_fugit {
             fn delay_ns(&mut self, ns: u32) {
                 let now = <Self as $crate::Monotonic>::now();
                 let mut done =
-                    now + <Self as $crate::Monotonic>::Duration::nanos_at_least(ns.into());
+                    now + <Self as $crate::Monotonic>::Duration::from_nanos_at_least(ns.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
                     done += <Self as $crate::Monotonic>::Duration::from_ticks(1);
@@ -20,7 +20,7 @@ macro_rules! impl_embedded_hal_delay_fugit {
             fn delay_us(&mut self, us: u32) {
                 let now = <Self as $crate::Monotonic>::now();
                 let mut done =
-                    now + <Self as $crate::Monotonic>::Duration::micros_at_least(us.into());
+                    now + <Self as $crate::Monotonic>::Duration::from_micros_at_least(us.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
                     done += <Self as $crate::Monotonic>::Duration::from_ticks(1);
@@ -32,7 +32,7 @@ macro_rules! impl_embedded_hal_delay_fugit {
             fn delay_ms(&mut self, ms: u32) {
                 let now = <Self as $crate::Monotonic>::now();
                 let mut done =
-                    now + <Self as $crate::Monotonic>::Duration::millis_at_least(ms.into());
+                    now + <Self as $crate::Monotonic>::Duration::from_millis_at_least(ms.into());
                 if now != done {
                     // Compensate for sub-tick uncertainty
                     done += <Self as $crate::Monotonic>::Duration::from_ticks(1);
@@ -52,7 +52,7 @@ macro_rules! impl_embedded_hal_async_delay_fugit {
             #[inline]
             async fn delay_ns(&mut self, ns: u32) {
                 <Self as $crate::Monotonic>::delay(
-                    <Self as $crate::Monotonic>::Duration::nanos_at_least(ns.into()),
+                    <Self as $crate::Monotonic>::Duration::from_nanos_at_least(ns.into()),
                 )
                 .await;
             }
@@ -60,7 +60,7 @@ macro_rules! impl_embedded_hal_async_delay_fugit {
             #[inline]
             async fn delay_us(&mut self, us: u32) {
                 <Self as $crate::Monotonic>::delay(
-                    <Self as $crate::Monotonic>::Duration::micros_at_least(us.into()),
+                    <Self as $crate::Monotonic>::Duration::from_micros_at_least(us.into()),
                 )
                 .await;
             }
@@ -68,7 +68,7 @@ macro_rules! impl_embedded_hal_async_delay_fugit {
             #[inline]
             async fn delay_ms(&mut self, ms: u32) {
                 <Self as $crate::Monotonic>::delay(
-                    <Self as $crate::Monotonic>::Duration::millis_at_least(ms.into()),
+                    <Self as $crate::Monotonic>::Duration::from_millis_at_least(ms.into()),
                 )
                 .await;
             }
