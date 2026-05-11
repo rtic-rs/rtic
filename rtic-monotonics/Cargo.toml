@@ -39,7 +39,7 @@ rustdoc-flags = ["--cfg", "docsrs"]
 
 [dependencies]
 rtic-time = { version = "2.0.0", path = "../rtic-time" }
-fugit = { version = "0.3.6" }
+fugit = { version = "0.4.0" }
 portable-atomic = { version = "1" }
 cfg-if = "1.0.0"
 cortex-m = { version = "0.7.6", optional = true }
