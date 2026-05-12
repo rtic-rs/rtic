@@ -148,6 +148,16 @@ impl Package {
             _ => vec![None],
         }
     }
+
+    /// Override target required for a specific package
+    ///
+    /// If not overridden, default to backend target
+    pub fn override_target(&self, backend: Backends) -> Target<'static> {
+        match self {
+            Package::Xtask => X86_64,
+            _ => backend.to_target(),
+        }
+    }
 }
 
 pub struct TestMetadata {}

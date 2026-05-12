@@ -176,7 +176,7 @@ pub fn cargo<'c>(
     let runner = package
         .packages()
         .flat_map(|package| {
-            let target = backend.to_target();
+            let target = package.override_target(backend);
             let features = package.features(target, backend, globals.partial);
             into_iter(features).map(move |f| (package, target, f))
         })
@@ -268,7 +268,7 @@ pub fn cargo_clippy<'c>(
     let runner = package
         .packages()
         .flat_map(|package| {
-            let target = backend.to_target();
+            let target = package.override_target(backend);
             let features = package.features(target, backend, globals.partial);
             into_iter(features).map(move |f| (package, target, f))
         })
