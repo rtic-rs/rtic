@@ -29,7 +29,8 @@ riscv-slic = { version = "0.2.0", optional = true }
 esp32c3 = {version = "0.31.0", optional = true }
 esp32c6 = {version = "0.22.0", optional = true }
 riscv = { version = "0.16.0", optional = true }
-cortex-m = { version = "0.7.0", optional = true }
+cortex-m-types = { version = "0.1", optional = true }
+cortex-m = { version = "0.7", optional = true }
 portable-atomic = { version = "1", default-features = false }
 rtic-macros = { path = "../rtic-macros", version = "=2.2.0" }
 rtic-core = "1"
@@ -53,10 +54,10 @@ trybuild = "1"
 
 [features]
 default = []
-thumbv6-backend = ["cortex-m", "rtic-macros/cortex-m-source-masking"]
-thumbv7-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
-thumbv8base-backend = ["cortex-m", "rtic-macros/cortex-m-source-masking"]
-thumbv8main-backend = ["cortex-m", "rtic-macros/cortex-m-basepri"]
+thumbv6-backend = ["cortex-m-types", "cortex-m", "rtic-macros/cortex-m-source-masking"]
+thumbv7-backend = ["cortex-m-types", "cortex-m", "rtic-macros/cortex-m-basepri"]
+thumbv8base-backend = ["cortex-m-types", "cortex-m", "rtic-macros/cortex-m-source-masking"]
+thumbv8main-backend = ["cortex-m-types", "cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
 riscv-esp32c3-backend = ["esp32c3", "riscv", "rtic-macros/riscv-esp32c3"]

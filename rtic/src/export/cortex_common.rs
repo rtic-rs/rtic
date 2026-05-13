@@ -1,4 +1,5 @@
-pub use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC, register::msp};
+pub use cortex_m::{peripheral::NVIC, register::msp};
+pub use cortex_m_types::InterruptNumber;
 
 #[inline]
 #[must_use]
