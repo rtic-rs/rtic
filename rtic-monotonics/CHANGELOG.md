@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Updated fugit dependency to v0.4.0
 - STM32's monotonics now derive the timer counter size from the pac register definition
 - Updated rp235x-pac dependency to v0.2.0
 - Panic if STM32 prescaler value would overflow
