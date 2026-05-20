@@ -20,6 +20,8 @@ Example:
 
 ## [Unreleased]
 
+## [v2.3.0] - 2025-09-17
+
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
