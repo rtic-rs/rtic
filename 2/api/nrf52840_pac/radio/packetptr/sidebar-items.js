@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PACKETPTR_SPEC","R","W"],"type":["PACKETPTR_R","PACKETPTR_W"]};

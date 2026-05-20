@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["AHB_PODF","IPG_PODF","PERIPH_CLK_SEL"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FC0_MIN_KHZ_SPEC"],"type":["FC0_MIN_KHZ_R","FC0_MIN_KHZ_W","R","W"]};

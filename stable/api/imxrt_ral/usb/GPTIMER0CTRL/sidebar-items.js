@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["GPTCNT","GPTMODE","GPTRST","GPTRUN"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GPIO_HI_IN_SPEC"],"type":["GPIO_HI_IN_R","R"]};

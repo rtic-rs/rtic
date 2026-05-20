@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["REG1_BO_STATUS_1"]};

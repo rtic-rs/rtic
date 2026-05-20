@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BAUDRATE_A"],"struct":["BAUDRATE_SPEC","R","W"],"type":["BAUDRATE_R","BAUDRATE_W"]};

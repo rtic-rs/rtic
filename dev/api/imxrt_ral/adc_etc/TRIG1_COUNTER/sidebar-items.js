@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["INIT_DELAY","SAMPLE_INTERVAL"]};

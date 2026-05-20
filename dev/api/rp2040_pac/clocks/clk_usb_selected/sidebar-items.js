@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CLK_USB_SELECTED_SPEC"],"type":["R"]};

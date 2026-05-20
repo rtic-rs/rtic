@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ACCREAD_SPEC","R"],"type":["ACCREAD_R"]};

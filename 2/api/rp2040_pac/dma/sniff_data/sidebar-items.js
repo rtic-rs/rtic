@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SNIFF_DATA_SPEC"],"type":["R","W"]};

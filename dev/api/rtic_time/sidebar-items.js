@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["impl_embedded_hal_async_delay_fugit","impl_embedded_hal_delay_fugit"],"mod":["half_period_counter","monotonic","timer_queue"],"struct":["TimeoutError"],"trait":["Monotonic"]};

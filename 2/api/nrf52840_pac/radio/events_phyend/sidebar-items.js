@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EVENTS_PHYEND_SPEC","R","W"],"type":["EVENTS_PHYEND_R","EVENTS_PHYEND_W"]};

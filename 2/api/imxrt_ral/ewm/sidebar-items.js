@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EWM"],"fn":["number"],"mod":["CLKCTRL","CLKPRESCALER","CMPH","CMPL","CTRL","SERV"],"struct":["RegisterBlock"],"type":["EWM","Instance"]};

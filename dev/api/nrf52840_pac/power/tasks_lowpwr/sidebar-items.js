@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_LOWPWR_SPEC","W"],"type":["TASKS_LOWPWR_W"]};

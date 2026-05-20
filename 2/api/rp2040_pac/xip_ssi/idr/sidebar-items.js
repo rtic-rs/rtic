@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IDR_SPEC"],"type":["IDCODE_R","R"]};

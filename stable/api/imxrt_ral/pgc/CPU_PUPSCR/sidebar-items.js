@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["SW","SW2ISO"]};

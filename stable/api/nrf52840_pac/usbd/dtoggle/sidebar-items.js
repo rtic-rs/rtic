@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IO_A","VALUE_A"],"struct":["DTOGGLE_SPEC","R","W"],"type":["EP_R","EP_W","IO_R","IO_W","VALUE_R","VALUE_W"]};

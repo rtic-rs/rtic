@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SETUP_PACKET_HIGH_SPEC"],"type":["R","W","WINDEX_R","WINDEX_W","WLENGTH_R","WLENGTH_W"]};

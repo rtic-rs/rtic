@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UARTILPR_SPEC"],"type":["ILPDVSR_R","ILPDVSR_W","R","W"]};

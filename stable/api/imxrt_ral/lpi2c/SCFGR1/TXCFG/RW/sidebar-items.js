@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TXCFG_0","TXCFG_1"]};

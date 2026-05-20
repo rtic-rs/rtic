@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SCKFREERUNEN_0","SCKFREERUNEN_1"]};
