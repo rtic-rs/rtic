@@ -156,6 +156,7 @@ fn command_parser(
         | CargoCommand::Clippy { .. }
         | CargoCommand::Doc { .. }
         | CargoCommand::Test { .. }
+        | CargoCommand::Noop { .. }
         | CargoCommand::Book { .. } => {
             let cargo_result = run_command(command, output_mode, true)?;
             Ok(cargo_result)
@@ -175,7 +176,7 @@ pub fn cargo<'c>(
     let runner = package
         .packages()
         .flat_map(|package| {
-            let target = backend.to_target();
+            let target = package.override_target(backend);
             let features = package.features(target, backend, globals.partial);
             into_iter(features).map(move |f| (package, target, f))
         })
@@ -185,6 +186,7 @@ pub fn cargo<'c>(
             let command = match operation {
                 BuildOrCheck::Check => CargoCommand::Check {
                     cargoarg,
+                    manifest: Some(package.manifest_path()),
                     package: Some(package.name()),
                     target,
                     features,
@@ -194,6 +196,7 @@ pub fn cargo<'c>(
                 },
                 BuildOrCheck::Build => CargoCommand::Build {
                     cargoarg,
+                    manifest: Some(package.manifest_path()),
                     package: Some(package.name()),
                     target,
                     features,
@@ -265,13 +268,14 @@ pub fn cargo_clippy<'c>(
     let runner = package
         .packages()
         .flat_map(|package| {
-            let target = backend.to_target();
+            let target = package.override_target(backend);
             let features = package.features(target, backend, globals.partial);
             into_iter(features).map(move |f| (package, target, f))
         })
         .map(move |(package, target, features)| {
             let command = CargoCommand::Clippy {
                 cargoarg,
+                manifest: Some(package.manifest_path()),
                 package: Some(package.name()),
                 target: target.into(),
                 features,
@@ -295,6 +299,7 @@ pub fn cargo_format<'c>(
             globals,
             CargoCommand::Format {
                 cargoarg,
+                manifest: Some(p.manifest_path()),
                 package: Some(p.name()),
                 check_only: formatopts.check,
             },

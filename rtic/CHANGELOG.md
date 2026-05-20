@@ -5,7 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 -------------------
 
-For each category, *Added*, *Changed*, *Fixed* add **new entries at the top**!
+For each category, *Added*, *Changed*, *Fixed*:
+
+**add new entries at the top**!
 
 Example:
 

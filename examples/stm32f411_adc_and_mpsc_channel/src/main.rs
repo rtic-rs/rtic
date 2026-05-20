@@ -96,9 +96,7 @@ mod app {
         // channel and comparing the result with the value stored at the factory.
         adc.calibrate();
 
-        let pot_instance = Potentiometer {
-            analog_input: analog_input,
-        };
+        let pot_instance = Potentiometer { analog_input };
 
         // Configure Button Pin for Interrupts
         // 10) Promote SYSCFG structure to HAL to be able to configure interrupts
@@ -158,7 +156,7 @@ mod app {
     #[task(binds = EXTI0, local = [sender_from_exti0, button, pot_instance], shared=[delayval, adc_module])]
     fn gpio_interrupt_handler(mut ctx: gpio_interrupt_handler::Context) {
         ctx.shared.delayval.lock(|del| {
-            *del = *del - 100_u32;
+            *del -= 100_u32;
             if *del < 200_u32 {
                 *del = 2000_u32;
             }

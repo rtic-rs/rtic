@@ -49,7 +49,7 @@ impl core::fmt::Display for Target<'_> {
 }
 
 // x86_64-unknown-linux-gnu
-const _X86_64: Target = Target::new("x86_64-unknown-linux-gnu", true);
+const X86_64: Target = Target::new("x86_64-unknown-linux-gnu", true);
 const ARMV6M: Target = Target::new("thumbv6m-none-eabi", false);
 const ARMV7M: Target = Target::new("thumbv7m-none-eabi", false);
 const ARMV8MBASE: Target = Target::new("thumbv8m.base-none-eabi", false);

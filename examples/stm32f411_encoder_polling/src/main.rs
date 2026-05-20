@@ -2,7 +2,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
-
+#![allow(clippy::empty_loop)]
 use panic_halt as _;
 
 #[rtic::app(device = stm32f4xx_hal::pac, peripherals = true)]
@@ -36,7 +36,7 @@ mod app {
             rotary_encoder: RotaryEncoder<StandardMode, gpio::PB12<Input>, gpio::PB13<Input>>,
         ) -> Knob {
             Knob {
-                rotary_encoder: rotary_encoder,
+                rotary_encoder,
                 value: 0_u8,
             }
         }
