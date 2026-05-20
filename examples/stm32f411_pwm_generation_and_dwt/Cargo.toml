@@ -10,12 +10,12 @@ version = "0.1.0"
 [dependencies]
 cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
 cortex-m-rt = "0.7.1"
-rtic = {version = "2.1.1", features=["thumbv7-backend", "rtic-monotonics"]}
+rtic = {path = "../../rtic", features=["thumbv7-backend"]}
 panic-halt = "1.0.0"
 embedded-hal = "1.0.0"
 defmt = "1.0.1"
 defmt-rtt = { version = "1.1.0"}
-rtic-sync = "1.0.2"
+rtic-sync = { path = "../../rtic-sync" }
 
 [dependencies.stm32f4xx-hal]
 version = "0.21.0"
