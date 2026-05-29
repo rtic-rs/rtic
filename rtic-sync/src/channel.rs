@@ -186,7 +186,7 @@ impl<T, const N: usize> Channel<T, N> {
     }
 
     /// Split the queue into a `Sender`/`Receiver` pair.
-    pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
+    pub fn split(&mut self) -> (Sender<'_, T>, Receiver<'_, T>) {
         // NOTE(assert): queue is cleared by dropping the corresponding `Receiver`.
         debug_assert!(self.readyq.as_mut().is_empty(),);
 
@@ -302,9 +302,9 @@ where
 }
 
 /// A `Sender` can send to the channel and can be cloned.
-pub struct Sender<'a, T, const N: usize>(ChannelView<'a, T>);
+pub struct Sender<'a, T>(ChannelView<'a, T>);
 
-unsafe impl<T, const N: usize> Send for Sender<'_, T, N> {}
+unsafe impl<T> Send for Sender<'_, T> {}
 
 /// This is needed to make the async closure in `send` accept that we "share"
 /// the link possible between threads.
@@ -358,20 +358,20 @@ unsafe impl Send for SlotPtr {}
 
 unsafe impl Sync for SlotPtr {}
 
-impl<T, const N: usize> core::fmt::Debug for Sender<'_, T, N> {
+impl<T> core::fmt::Debug for Sender<'_, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Sender")
     }
 }
 
 #[cfg(feature = "defmt-03")]
-impl<T, const N: usize> defmt::Format for Sender<'_, T, N> {
+impl<T> defmt::Format for Sender<'_, T> {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(f, "Sender",)
     }
 }
 
-impl<T, const N: usize> Sender<'_, T, N> {
+impl<T> Sender<'_, T> {
     #[inline(always)]
     fn send_footer(&mut self, idx: u8, val: T) {
         // Write the value to the slots, note; this memcpy is not under a critical section.
@@ -568,7 +568,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
     }
 }
 
-impl<T, const N: usize> Drop for Sender<'_, T, N> {
+impl<T> Drop for Sender<'_, T> {
     fn drop(&mut self) {
         // Count down the reference counter
         let num_senders = critical_section::with(|cs| {
@@ -588,7 +588,7 @@ impl<T, const N: usize> Drop for Sender<'_, T, N> {
     }
 }
 
-impl<T, const N: usize> Clone for Sender<'_, T, N> {
+impl<T> Clone for Sender<'_, T> {
     fn clone(&self) -> Self {
         // Count up the reference counter
         critical_section::with(|cs| unsafe {
@@ -603,11 +603,11 @@ impl<T, const N: usize> Clone for Sender<'_, T, N> {
 // -------- Receiver
 
 /// A receiver of the channel. There can only be one receiver at any time.
-pub struct Receiver<'a, T, const N: usize>(ChannelView<'a, T>);
+pub struct Receiver<'a, T>(ChannelView<'a, T>);
 
-unsafe impl<T, const N: usize> Send for Receiver<'_, T, N> {}
+unsafe impl<T> Send for Receiver<'_, T> {}
 
-impl<T, const N: usize> core::fmt::Debug for Receiver<'_, T, N> {
+impl<T> core::fmt::Debug for Receiver<'_, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Receiver")
     }
@@ -630,7 +630,7 @@ pub enum ReceiveError {
     Empty,
 }
 
-impl<T, const N: usize> Receiver<'_, T, N> {
+impl<T> Receiver<'_, T> {
     /// Receives a value if there is one in the channel, non-blocking.
     pub fn try_recv(&mut self) -> Result<T, ReceiveError> {
         // Try to get a ready slot.
@@ -708,7 +708,7 @@ impl<T, const N: usize> Receiver<'_, T, N> {
     }
 }
 
-impl<T, const N: usize> Drop for Receiver<'_, T, N> {
+impl<T> Drop for Receiver<'_, T> {
     fn drop(&mut self) {
         // Mark the receiver as dropped and wake all waiters
         critical_section::with(|cs| unsafe {
