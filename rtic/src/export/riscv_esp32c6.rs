@@ -1,5 +1,5 @@
-use esp32c6::{INTERRUPT_CORE0, PLIC_MX};
-pub use esp32c6::{Interrupt, Peripherals};
+pub use esp32c6::Interrupt;
+use esp32c6::{INTERRUPT_CORE0, INTPRI, PLIC_MX};
 pub use riscv::interrupt;
 pub use riscv::register::mcause;
 
@@ -85,22 +85,17 @@ pub unsafe fn lock<T, R>(ptr: *mut T, ceiling: u8, f: impl FnOnce(&mut T) -> R) 
 #[inline(always)]
 pub fn pend(int: Interrupt) {
     unsafe {
-        let peripherals = Peripherals::steal();
         match int {
-            Interrupt::FROM_CPU_INTR0 => peripherals
-                .INTPRI
+            Interrupt::FROM_CPU_INTR0 => INTPRI::steal()
                 .cpu_intr_from_cpu(0)
                 .write(|w| w.cpu_intr().set_bit()),
-            Interrupt::FROM_CPU_INTR1 => peripherals
-                .INTPRI
+            Interrupt::FROM_CPU_INTR1 => INTPRI::steal()
                 .cpu_intr_from_cpu(1)
                 .write(|w| w.cpu_intr().set_bit()),
-            Interrupt::FROM_CPU_INTR2 => peripherals
-                .INTPRI
+            Interrupt::FROM_CPU_INTR2 => INTPRI::steal()
                 .cpu_intr_from_cpu(2)
                 .write(|w| w.cpu_intr().set_bit()),
-            Interrupt::FROM_CPU_INTR3 => peripherals
-                .INTPRI
+            Interrupt::FROM_CPU_INTR3 => INTPRI::steal()
                 .cpu_intr_from_cpu(3)
                 .write(|w| w.cpu_intr().set_bit()),
             _ => panic!("Unsupported software interrupt"), //should never happen, checked at compile time
@@ -111,22 +106,17 @@ pub fn pend(int: Interrupt) {
 // Sets the given software interrupt as not pending
 pub fn unpend(int: Interrupt) {
     unsafe {
-        let peripherals = Peripherals::steal();
         match int {
-            Interrupt::FROM_CPU_INTR0 => peripherals
-                .INTPRI
+            Interrupt::FROM_CPU_INTR0 => INTPRI::steal()
                 .cpu_intr_from_cpu(0)
                 .write(|w| w.cpu_intr().clear_bit()),
-            Interrupt::FROM_CPU_INTR1 => peripherals
-                .INTPRI
+            Interrupt::FROM_CPU_INTR1 => INTPRI::steal()
                 .cpu_intr_from_cpu(1)
                 .write(|w| w.cpu_intr().clear_bit()),
-            Interrupt::FROM_CPU_INTR2 => peripherals
-                .INTPRI
+            Interrupt::FROM_CPU_INTR2 => INTPRI::steal()
                 .cpu_intr_from_cpu(2)
                 .write(|w| w.cpu_intr().clear_bit()),
-            Interrupt::FROM_CPU_INTR3 => peripherals
-                .INTPRI
+            Interrupt::FROM_CPU_INTR3 => INTPRI::steal()
                 .cpu_intr_from_cpu(3)
                 .write(|w| w.cpu_intr().clear_bit()),
             _ => panic!("Unsupported software interrupt"),

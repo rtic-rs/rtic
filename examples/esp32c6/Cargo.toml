@@ -6,9 +6,6 @@ license = "MIT OR Apache-2.0"
 
 [workspace]
 
-[features]
-test-critical-section = []
-riscv-esp32c6-backend = ["rtic/riscv-esp32c6-backend", "rtic-monotonics/esp32c6-systimer"]
 
 [dependencies]
 esp-backtrace = { version = "0.17.0", features = [
@@ -17,9 +14,10 @@ esp-backtrace = { version = "0.17.0", features = [
     "exception-handler",
     "println",
 ] }
+esp-alloc = "0.10.0"
 esp-bootloader-esp-idf = { version = "0.2.0", features = ["esp32c6"] }
-esp-hal = { version = "=1.0.0-rc.0", features = ["esp32c6", "unstable"] }
-esp-println = { version = "0.15.0", features = ["esp32c6", "auto"] }
-esp32c6 = { version = "0.22.0", features = ["critical-section"] }
-rtic = { path = "../../rtic/" }
+esp-hal = { version = "~1.1.0", features = ["esp32c6", "unstable"] }
+esp-println = { version = "0.15.0", features = ["esp32c6"] }
+esp32c6 = { version = "0.23.2", features = ["critical-section"] }
+rtic = { path = "../../rtic/", features = ["riscv-esp32c6-backend"] }
 rtic-monotonics = { path = "../../rtic-monotonics/" }

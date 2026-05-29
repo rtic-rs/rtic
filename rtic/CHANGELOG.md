@@ -30,6 +30,7 @@ Example:
 - Removed `bare_metal` in favour of `critical_section`.
 - Updated esp32c3 dependency to v0.30.0
 - Updated esp32c6 dependency to v0.21.0
+- Updated esp32c6 dependency to v0.23.2
 
 ## [v2.2.0] - 2025-06-22
 

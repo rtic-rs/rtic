@@ -1,14 +1,9 @@
-#![deny(
-    clippy::mem_forget,
-    reason = "mem::forget is generally not safe to do with esp_hal types, especially those \
-    holding buffers for the duration of a data transfer."
-)]
 #![no_main]
 #![no_std]
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
-#[rtic::app(device = esp32c6, dispatchers=[FROM_CPU_INTR0, FROM_CPU_INTR1])]
+#[rtic::app(device = esp32c6, dispatchers=[FROM_CPU_INTR0, FROM_CPU_INTR1], peripherals = false)]
 mod app {
     use esp_backtrace as _;
     use esp_hal::gpio::{Event, Input, InputConfig, Pull};
@@ -28,6 +23,7 @@ mod app {
         println!("init");
         let peripherals = esp_hal::init(esp_hal::Config::default());
         let config = InputConfig::default().with_pull(Pull::Up);
+        esp_alloc::heap_allocator!(#[ram(reclaimed)] size: 1024 * 60);
         let mut button = Input::new(peripherals.GPIO9, config);
         button.listen(Event::FallingEdge);
         foo::spawn().unwrap();
