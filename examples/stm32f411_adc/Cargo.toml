@@ -15,7 +15,7 @@ panic-halt = "0.2.0"
 embedded-hal = "1.0.0"
 defmt = "0.3.5"
 defmt-rtt = { version = "0.4.0"}
-rtic-sync = "1.0.2"
+rtic-sync = "1.4.0"
 
 [dependencies.stm32f4xx-hal]
 version = "0.21.0"
