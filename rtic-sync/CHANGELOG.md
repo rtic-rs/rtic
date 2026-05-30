@@ -49,7 +49,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 - Improve handling of free slots for `send` by explicitly writing the free slot to the awoken future.
 - Fix all known instances of #780
 
-## v1.3.1 - 2025-03-12
+## v1.3.1 - 2025-03-12 - yanked
 
 ### Fixed
 
@@ -57,7 +57,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 [#780]: https://github.com/rtic-rs/rtic/issues/780
 
-## v1.3.0 - 2024-05-01
+## v1.3.0 - 2024-05-01 - yanked
 
 ### Changed
 
@@ -69,7 +69,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 - `defmt v0.3` derives added and forwarded to `embedded-hal(-x)` crates.
 - signal structure
 
-## v1.2.0 - 2024-01-10
+## v1.2.0 - 2024-01-10 - yanked
 
 ### Changed
 
@@ -79,30 +79,30 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 - `make_channel` now accepts `Type` expressions instead of only `TypePath` expressions.
 
-## v1.1.1 - 2023-12-04
+## v1.1.1 - 2023-12-04 - yanked
 
 ### Fixed
 
 - Fix features for `docs.rs`
 
-## v1.1.0 - 2023-12-04
+## v1.1.0 - 2023-12-04 - yanked
 
 ### Added
 
 - `arbiter::spi::ArbiterDevice` for sharing SPI buses using `embedded-hal-async` traits.
 - `arbiter::i2c::ArbiterDevice` for sharing I2C buses using `embedded-hal-async` traits.
 
-## v1.0.3
+## v1.0.3 - yanked
 
 - `portable-atomic` used as a drop in replacement for `core::sync::atomic` in code and macros. `portable-atomic` imported with `default-features = false`, as we do not require CAS.
 
-## v1.0.2 - 2023-08-29
+## v1.0.2 - 2023-08-29 - yanked
 
 ### Fixed
 
 - `make_channel` no longer requires the user crate to have `critical_section` in scope
 
-## v1.0.1 - 2023-06-14
+## v1.0.1 - 2023-06-14 - yanked
 
 ### Fixed
 
