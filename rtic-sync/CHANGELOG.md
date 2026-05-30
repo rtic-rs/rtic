@@ -5,7 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
-## [Unreleased]
+## Unreleased
+
+## v1.5.0 - 2026-05-30
 
 ### Added
 
@@ -13,6 +15,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Fixed
 
+- Fix a correctness bug that allowed a `Signal` to be split more than once.
 - The `panic` in `make_channel` can no longer be shadowed.
 - Const check for `channel::Channel` size smaller than 256 is now properly evaluated.
 
