@@ -1,0 +1,17 @@
+[target.thumbv8m.main-none-eabihf]
+# Chip is taken from PROBE_RS_CHIP (see [env] below); override it per board.
+runner = "probe-rs run"
+rustflags = [
+  "-C", "link-arg=-Tlink.x",   # cortex-m-rt
+  "-C", "link-arg=-Tdevice.x", # silabs-metapac (rt feature): interrupt vectors
+  "-C", "link-arg=-Tdefmt.x",
+  "-C", "link-arg=--nmagic",
+]
+
+[build]
+target = "thumbv8m.main-none-eabihf"
+
+[env]
+# Default board (mg26). A shell-set PROBE_RS_CHIP overrides this.
+PROBE_RS_CHIP = "EFR32MG26B420F3200IM68"
+DEFMT_LOG = "info"
