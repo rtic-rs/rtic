@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+- Added Silabs `TIMER0`-`TIMER9` monotonics
+
 ## v2.2.0 - 2026-07-08
 
 ### Changed
