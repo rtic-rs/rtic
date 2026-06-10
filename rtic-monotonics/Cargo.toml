@@ -134,6 +134,20 @@ silabs-efr32fg25 = []
 silabs-efr32mg22 = []
 silabs-efr32mg24 = []
 silabs-efr32mg26 = []
+
+# Per-instance TIMER selection for the `silabs::timer` monotonic (MG24/FG25/MG26).
+# TIMER0/1 (and MG26's TIMER8/9) are 32-bit; TIMER2..7 are 16-bit. Enable only
+# instances your chip actually has.
+silabs_timer0 = []
+silabs_timer1 = []
+silabs_timer2 = []
+silabs_timer3 = []
+silabs_timer4 = []
+silabs_timer5 = []
+silabs_timer6 = []
+silabs_timer7 = []
+silabs_timer8 = []
+silabs_timer9 = []
 efr32fg25a021f256im56 = ["silabs", "silabs-efr32fg25", "silabs-metapac/efr32fg25a021f256im56"]
 efr32fg25a021f512im56 = ["silabs", "silabs-efr32fg25", "silabs-metapac/efr32fg25a021f512im56"]
 efr32fg25a111f1152im56 = ["silabs", "silabs-efr32fg25", "silabs-metapac/efr32fg25a111f1152im56"]
