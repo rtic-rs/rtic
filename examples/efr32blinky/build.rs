@@ -7,10 +7,10 @@ use std::path::PathBuf;
 
 fn main() {
     // Sizes follow the board feature selected in Cargo.toml.
-    let (flash_k, ram_k) = if env::var_os("CARGO_FEATURE_MG24").is_some() {
+    let (flash_k, ram_k) = if env::var_os("CARGO_FEATURE_XIAO_MG24").is_some() {
         (1536, 256) // EFR32MG24B220F1536IM48 (Seeed XIAO MG24)
     } else {
-        (3200, 512) // EFR32MG26B420F3200IM68 (brd2713a)
+        (3200, 512) // EFR32MG26B420F3200IM68 (MGM260P Explorer Kit)
     };
 
     let memory_x = format!(
@@ -23,6 +23,6 @@ fn main() {
     println!("cargo:rustc-link-search={}", out.display());
 
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-env-changed=CARGO_FEATURE_MG24");
-    println!("cargo:rerun-if-env-changed=CARGO_FEATURE_MG26");
+    println!("cargo:rerun-if-env-changed=CARGO_FEATURE_XIAO_MG24");
+    println!("cargo:rerun-if-env-changed=CARGO_FEATURE_MGM260P");
 }

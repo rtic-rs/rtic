@@ -8,16 +8,32 @@ publish = false
 [workspace]
 
 [features]
-default = ["mg26"]
-# Select exactly one board.
-mg26 = [
+default = ["mgm260p", "timer0"]
+
+# Board — select exactly one.
+# UG613 MGM260P Module Explorer Kit (EFR32MG26B420F3200IM68).
+mgm260p = [
     "silabs-metapac/efr32mg26b420f3200im68",
     "rtic-monotonics/efr32mg26b420f3200im68",
 ]
-mg24 = [
+# Seeed Studio XIAO MG24 (EFR32MG24B220F1536IM48).
+xiao-mg24 = [
     "silabs-metapac/efr32mg24b220f1536im48",
     "rtic-monotonics/efr32mg24b220f1536im48",
 ]
+
+# TIMER instance for the `blinky` binary — select exactly one.
+# Both boards have TIMER0..4; the MGM260P additionally has TIMER5..9.
+timer0 = ["rtic-monotonics/silabs_timer0"]
+timer1 = ["rtic-monotonics/silabs_timer1"]
+timer2 = ["rtic-monotonics/silabs_timer2"]
+timer3 = ["rtic-monotonics/silabs_timer3"]
+timer4 = ["rtic-monotonics/silabs_timer4"]
+timer5 = ["rtic-monotonics/silabs_timer5"]
+timer6 = ["rtic-monotonics/silabs_timer6"]
+timer7 = ["rtic-monotonics/silabs_timer7"]
+timer8 = ["rtic-monotonics/silabs_timer8"]
+timer9 = ["rtic-monotonics/silabs_timer9"]
 
 [dependencies]
 cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }

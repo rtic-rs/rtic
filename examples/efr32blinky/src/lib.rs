@@ -1,26 +1,28 @@
 //! Shared helpers for the EFR32 blinky examples (HAL-free, raw
 //! `silabs-metapac`). Board specifics — LED pin, register-block version, LF
-//! clock source — are feature-gated; enable one of `mg26` or `mg24`.
+//! clock source — are feature-gated; enable one of `mgm260p` or `xiao-mg24`.
 #![no_std]
 
-#[cfg(all(feature = "mg26", feature = "mg24"))]
-compile_error!("enable exactly one board feature: `mg26` or `mg24`, not both");
-#[cfg(not(any(feature = "mg26", feature = "mg24")))]
-compile_error!("enable one board feature: `mg26` (brd2713a) or `mg24` (XIAO MG24)");
+#[cfg(all(feature = "mgm260p", feature = "xiao-mg24"))]
+compile_error!("enable exactly one board feature: `mgm260p` or `xiao-mg24`, not both");
+#[cfg(not(any(feature = "mgm260p", feature = "xiao-mg24")))]
+compile_error!(
+    "enable one board feature: `mgm260p` (MGM260P Explorer Kit) or `xiao-mg24` (XIAO MG24)"
+);
 
 use silabs_metapac as pac;
 
-#[cfg(feature = "mg24")]
+#[cfg(feature = "xiao-mg24")]
 use pac::{cmu_v3 as cmu, gpio_v3 as gpio};
-#[cfg(feature = "mg26")]
+#[cfg(feature = "mgm260p")]
 use pac::{cmu_v7 as cmu, gpio_v7 as gpio};
 
 /// EM01GRPACLK frequency feeding TIMER0 (reset-default ~19 MHz HFRCODPLL)
 pub const TIMER0_CLOCK_HZ: u32 = 19_000_000;
 
-#[cfg(feature = "mg26")]
-const LED_PIN: u32 = 9; // PA09 (brd2713a)
-#[cfg(feature = "mg24")]
+#[cfg(feature = "mgm260p")]
+const LED_PIN: u32 = 9; // PA09 (MGM260P Explorer Kit)
+#[cfg(feature = "xiao-mg24")]
 const LED_PIN: u32 = 7; // PA07 (XIAO MG24)
 
 pub struct Led;
@@ -75,8 +77,8 @@ impl Default for Led {
 
 /// Bring up the LETIMER's 32.768 kHz low-frequency clock source.
 ///
-/// brd2713a: route EM23GRPACLK to the LFRCO.
-#[cfg(feature = "mg26")]
+/// MGM260P: route EM23GRPACLK to the LFRCO.
+#[cfg(feature = "mgm260p")]
 pub fn init_lf_clock() {
     pac::CMU
         .em23grpaclkctrl()
@@ -85,7 +87,7 @@ pub fn init_lf_clock() {
 
 /// XIAO MG24: the LFRCO is locked by the stock firmware, so use the on-board
 /// 32.768 kHz LFXO crystal.
-#[cfg(feature = "mg24")]
+#[cfg(feature = "xiao-mg24")]
 pub fn init_lf_clock() {
     use pac::lfxo_v1::vals as lfxo_vals;
     let lfxo = pac::LFXO;
