@@ -3,12 +3,6 @@
 version = 4
 
 [[package]]
-name = "bare-metal"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
-
-[[package]]
 name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -27,7 +21,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0edf103c72b301d8a96d1ff0ff252f8def1bd405ab3443e8382615c9b3268c1"
 dependencies = [
  "critical-section",
- "riscv",
+ "riscv 0.12.1",
  "riscv-peripheral",
  "riscv-rt",
  "vcell",
@@ -45,7 +39,7 @@ dependencies = [
  "embedded-io",
  "nb",
  "portable-atomic",
- "riscv",
+ "riscv 0.12.1",
 ]
 
 [[package]]
@@ -72,9 +66,9 @@ checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
 name = "equivalent"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
+checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "hash32"
@@ -87,9 +81,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.14.3"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
+checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 
 [[package]]
 name = "heapless"
@@ -111,14 +105,14 @@ dependencies = [
  "critical-section",
  "e310x-hal",
  "nb",
- "riscv",
+ "riscv 0.12.1",
 ]
 
 [[package]]
 name = "indexmap"
-version = "2.2.3"
+version = "2.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "233cf39063f058ea2caae4091bf4a3ef70a653afbc026f5c4a4135d114e3c177"
+checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
 dependencies = [
  "equivalent",
  "hashbrown",
@@ -137,47 +131,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
+name = "pastey"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
+
+[[package]]
 name = "portable-atomic"
-version = "1.9.0"
+version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc9c68a3f6da06753e9335d63e27f6b9754dd1920d941135b7ea8224f141adb2"
-
-[[package]]
-name = "proc-macro-error-attr2"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96de42df36bb9bba5542fe9f1a054b8cc87e172759a1868aa05c1f3acc89dfc5"
-dependencies = [
- "proc-macro2",
- "quote",
-]
-
-[[package]]
-name = "proc-macro-error2"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11ec05c52be0a07b08061f7dd003e7d7092e0472bc731b4af7bb1ef876109802"
-dependencies = [
- "proc-macro-error-attr2",
- "proc-macro2",
- "quote",
- "syn",
-]
+checksum = "c33a9471896f1c69cecef8d20cbe2f7accd12527ce60845ff44c153bb2a21b49"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.78"
+version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2422ad645d89c99f8f3e6b88a9fdeca7fabeac836b1002371c4367c8f984aae"
+checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.35"
+version = "1.0.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "291ec9ab5efd934aaf503a6466c5d5251535d108ee747472c3977cc5acc868ef"
+checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
 dependencies = [
  "proc-macro2",
 ]
@@ -191,8 +169,34 @@ dependencies = [
  "critical-section",
  "embedded-hal",
  "paste",
- "riscv-macros",
+ "riscv-macros 0.1.0",
  "riscv-pac",
+]
+
+[[package]]
+name = "riscv"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afa3cdbeccae4359f6839a00e8b77e5736caa200ba216caf38d24e4c16e2b586"
+dependencies = [
+ "critical-section",
+ "embedded-hal",
+ "paste",
+ "riscv-macros 0.2.0",
+ "riscv-pac",
+]
+
+[[package]]
+name = "riscv"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e42cdafa0aa3f0f956b7993cace26de5dafff7bb4f2c5b1dcb2c3723f4267a4f"
+dependencies = [
+ "critical-section",
+ "embedded-hal",
+ "pastey",
+ "riscv-macros 0.4.1",
+ "riscv-types",
 ]
 
 [[package]]
@@ -207,6 +211,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "riscv-macros"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8c4aa1ea1af6dcc83a61be12e8189f9b293c3ba5a487778a4cd89fb060fdbbc"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "riscv-macros"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ad9f6dda08d90d091bc0743967cab369b8fe39ea74b26783ba2ca5c0ce39e86"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "riscv-pac"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -214,12 +240,12 @@ checksum = "8188909339ccc0c68cfb5a04648313f09621e8b87dc03095454f1a11f6c5d436"
 
 [[package]]
 name = "riscv-peripheral"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62858721c9afcfff0fe501db36f543c6498b64d3630446166b270625f09c3eec"
+checksum = "955a98c085e0657c1735d4baf5450092f03c2484d165c00d0166f3dc48b77651"
 dependencies = [
  "embedded-hal",
- "riscv",
+ "riscv 0.13.0",
  "riscv-pac",
 ]
 
@@ -229,7 +255,7 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "753f1bd7eb4e0003cec5e2fb60ea8e253a71d0b041bc7d1ba0fffe22e3c0294d"
 dependencies = [
- "riscv",
+ "riscv 0.12.1",
  "riscv-pac",
  "riscv-rt-macros",
 ]
@@ -253,7 +279,7 @@ checksum = "3cab62a2a0c21946a4be5ba289b68da75bf9ec899fbfb211fc400e5d21b1f94a"
 dependencies = [
  "critical-section",
  "heapless",
- "riscv",
+ "riscv 0.12.1",
  "riscv-slic-macros",
 ]
 
@@ -269,13 +295,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "riscv-types"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3f2ad9f15a07f4a0e1677124f9120ce7e83ab7e1ca7186af0ca9da529b62e80"
+
+[[package]]
 name = "rtic"
-version = "2.1.2"
+version = "2.2.0"
 dependencies = [
- "bare-metal",
  "critical-section",
  "portable-atomic",
- "riscv",
+ "riscv 0.16.1",
  "riscv-slic",
  "rtic-core",
  "rtic-macros",
@@ -289,10 +320,9 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.1.2"
+version = "2.2.0"
 dependencies = [
  "indexmap",
- "proc-macro-error2",
  "proc-macro2",
  "quote",
  "syn",
@@ -305,7 +335,7 @@ dependencies = [
  "heapless",
  "hifive1",
  "portable-atomic",
- "riscv",
+ "riscv 0.12.1",
  "riscv-rt",
  "rtic",
  "semihosting",
@@ -313,21 +343,21 @@ dependencies = [
 
 [[package]]
 name = "semihosting"
-version = "0.1.5"
+version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bab7a0be8d9e9893dfb5ce313aa0324396936d8bf788f5ef493c9f122ad84fd8"
+checksum = "f8e4abf97879f4e80db69a9fba7bd64998e9bdad25f58ef045a778e191172fd4"
 
 [[package]]
 name = "stable_deref_trait"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "syn"
-version = "2.0.49"
+version = "2.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "915aea9e586f80826ee59f8453c1101f9d1c4b3964cd2460185ee8e299ada496"
+checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -336,9 +366,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.12"
+version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
+checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 
 [[package]]
 name = "vcell"
