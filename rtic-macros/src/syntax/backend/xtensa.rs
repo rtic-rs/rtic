@@ -1,16 +1,10 @@
-use syn::{
-    parse::{Parse, ParseStream},
-    Error, Result,
-};
+use syn::parse::{Parse, ParseStream};
 
 #[derive(Debug)]
-pub struct BackendArgs();
+pub struct BackendArgs;
 
 impl Parse for BackendArgs {
-    fn parse(input: ParseStream) -> Result<Self> {
-        Err(Error::new(
-            input.span(),
-            "xtensa backend does not accept any arguments",
-        ))
+    fn parse(_input: ParseStream) -> syn::Result<Self> {
+        Ok(BackendArgs)
     }
 }

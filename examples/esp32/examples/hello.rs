@@ -6,12 +6,7 @@ esp_bootloader_esp_idf::esp_app_desc!();
 use esp_backtrace as _;
 use esp_println::println;
 
-mod device {
-    pub use esp32::Interrupt;
-    pub use esp_hal::peripherals::Peripherals;
-}
-
-#[rtic::app(device = crate::device, dispatchers = [FROM_CPU_INTR0])]
+#[rtic::app(device = esp32, dispatchers = [FROM_CPU_INTR0])]
 mod app {
     use esp_println::println;
 

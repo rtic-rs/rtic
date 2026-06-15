@@ -48,8 +48,11 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     let rt_err = util::rt_err_ident();
     let async_limit = bindings::async_prio_limit(app, analysis);
+    let extra_top_level = bindings::extra_top_level(app, analysis);
 
     quote!(
+        #(#extra_top_level)*
+
         /// The RTIC application module
         #(#[#attribute_metas])*
         pub mod #name {
