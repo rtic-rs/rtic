@@ -32,6 +32,8 @@
 )]
 #![allow(clippy::inline_always)]
 #![allow(unexpected_cfgs)]
+// esp32 xtensa assembly works but not raw xtensa...
+#![cfg_attr(feature = "xtensa-esp32", feature(asm_experimental_arch))]
 
 pub use rtic_core::{Exclusive, Mutex, prelude as mutex_prelude};
 pub use rtic_macros::app;

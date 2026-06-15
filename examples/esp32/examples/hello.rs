@@ -4,7 +4,6 @@
 esp_bootloader_esp_idf::esp_app_desc!();
 
 use esp_backtrace as _;
-use esp_println::println;
 
 #[rtic::app(device = esp32, dispatchers = [FROM_CPU_INTR0])]
 mod app {

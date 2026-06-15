@@ -5,7 +5,7 @@ use crate::{
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use std::cell::RefCell;
-use syn::{parse, parse_str, Attribute, Ident, Path};
+use syn::{parse, parse_str, Attribute, Ident, LitStr, Path};
 
 thread_local! {
     static PAC_PATH: RefCell<Option<String>> = RefCell::new(None);
@@ -58,8 +58,21 @@ pub fn pre_init_checks(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStrea
     vec![]
 }
 
-pub fn pre_init_enable_interrupts(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
-    vec![]
+pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    //TODO: need to get some sort of sw layer, since priority 2 corresponds to
+    //dport (peripherals) interrupts, fix later?
+    analysis
+        .interrupts
+        .iter()
+        .map(|(priority, _)| {
+            let cpu_int = match priority {
+                1 => quote!(esp_hal::interrupt::CpuInterrupt::Interrupt7SoftwarePriority1),
+                3 => quote!(esp_hal::interrupt::CpuInterrupt::Interrupt29SoftwarePriority3),
+                p => panic!("xtensa-esp32 backend: unsupported RTIC priority {p} (supported: 1, 3)"),
+            };
+            quote!(#cpu_int.enable();)
+        })
+        .collect()
 }
 
 pub fn architecture_specific_analysis(_app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
@@ -86,6 +99,7 @@ pub fn async_entry(
     _analysis: &CodegenAnalysis,
     _dispatcher_name: Ident,
 ) -> Vec<TokenStream2> {
+    //sw interrupts are automatically cleared
     vec![]
 }
 
@@ -95,10 +109,26 @@ pub fn async_prio_limit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStr
 
 pub fn handler_config(
     _app: &App,
-    _analysis: &CodegenAnalysis,
-    _dispatcher_name: Ident,
+    analysis: &CodegenAnalysis,
+    dispatcher_name: Ident,
 ) -> Vec<TokenStream2> {
-    vec![]
+    let export_name: &str = analysis
+        .interrupts
+        .iter()
+        .find(|(_, (name, _))| name == &dispatcher_name)
+        .map(|(priority, _)| match priority {
+            1 => "Software0",
+            3 => "Software1",
+            p => panic!("xtensa-esp32 backend: unsupported RTIC priority {p} (supported: 1, 3)"),
+        })
+        .unwrap_or("");
+
+    if export_name.is_empty() {
+        return vec![];
+    }
+
+    let lit = LitStr::new(export_name, Span::call_site());
+    vec![quote!(#[export_name = #lit])]
 }
 
 pub fn extra_modules(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {

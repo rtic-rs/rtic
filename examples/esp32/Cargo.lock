@@ -989,6 +989,7 @@ name = "rtic"
 version = "2.2.0"
 dependencies = [
  "critical-section",
+ "esp32 0.40.2",
  "portable-atomic",
  "rtic-core",
  "rtic-macros",
