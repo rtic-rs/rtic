@@ -49,7 +49,7 @@ pub fn pre_init_preprocessing(app: &mut App, _analysis: &SyntaxAnalysis) -> pars
     let pac_str = quote!(#device).to_string();
     PAC_PATH.with(|p| *p.borrow_mut() = Some(pac_str));
 
-    app.args.device = parse_str("crate :: __rtic_xtensa_device")
+    app.args.device = parse_str("crate :: __rtic_esp32_device")
         .expect("hardcoded path is valid");
     Ok(())
 }
@@ -110,7 +110,7 @@ pub fn extra_top_level(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStrea
         if let Some(s) = p.borrow().as_ref() {
             let pac: Path = parse_str(s).expect("stored pac path is valid");
             vec![quote!(
-                mod __rtic_xtensa_device {
+                mod __rtic_esp32_device {
                     pub use #pac::Interrupt;
                     pub type Peripherals = esp_hal::peripherals::Peripherals;
                 }
