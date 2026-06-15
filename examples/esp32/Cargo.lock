@@ -546,19 +546,9 @@ dependencies = [
  "esp-bootloader-esp-idf",
  "esp-hal",
  "esp-println",
- "esp32 0.35.0",
+ "esp32 0.40.2",
  "rtic",
  "xtensa-lx-rt",
-]
-
-[[package]]
-name = "esp32"
-version = "0.35.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19d3bff1d268a4b8d34b494c0e88466cd59a827bb330189773db299ff525ea13"
-dependencies = [
- "critical-section",
- "vcell",
 ]
 
 [[package]]

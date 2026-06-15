@@ -6,7 +6,12 @@ esp_bootloader_esp_idf::esp_app_desc!();
 use esp_backtrace as _;
 use esp_println::println;
 
-#[rtic::app(device = esp32, dispatchers = [FROM_CPU_INTR0])]
+mod device {
+    pub use esp32::Interrupt;
+    pub use esp_hal::peripherals::Peripherals;
+}
+
+#[rtic::app(device = crate::device, dispatchers = [FROM_CPU_INTR0])]
 mod app {
     use esp_println::println;
 
@@ -17,8 +22,8 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(_: init::Context) -> (Shared, Local) {
-        let _ = esp_hal::init(esp_hal::Config::default());
+    fn init(cx: init::Context) -> (Shared, Local) {
+        let _p = cx.device;
         hello::spawn().ok();
         println!("init");
         (Shared {}, Local {})
@@ -26,6 +31,6 @@ mod app {
 
     #[task(priority = 1)]
     async fn hello(_: hello::Context) {
-        println!("hello"); //won't show until i unstub stuff
+        println!("hello");
     }
 }
