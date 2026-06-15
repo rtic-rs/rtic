@@ -11,3 +11,5 @@ book-target/
 .vscode/
 *qemu.log
 *qemuoutput.log
+
+.idea/

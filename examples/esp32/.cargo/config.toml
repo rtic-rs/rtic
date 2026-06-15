@@ -1,0 +1,12 @@
+[target.xtensa-esp32-none-elf]
+runner = "./runner.sh"
+rustflags = [
+  "-C", "force-frame-pointers",
+  "-C", "link-arg=-Tlinkall.x",
+]
+
+[build]
+target = "xtensa-esp32-none-elf"
+
+[unstable]
+build-std = ["core"]
