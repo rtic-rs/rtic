@@ -71,6 +71,7 @@ riscv-mecall-backend = [
   "riscv-slic/mecall-backend",
   "rtic-macros/riscv-mecall",
 ]
+xtensa-esp32-backend = ["rtic-macros/xtensa"]
 
 # needed for testing
 test-critical-section = ["portable-atomic/critical-section"]

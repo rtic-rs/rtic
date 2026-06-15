@@ -45,6 +45,11 @@ mod slic;
 #[cfg(feature = "riscv-slic")]
 pub use slic::*;
 
+#[cfg(feature = "xtensa")]
+mod xtensa;
+#[cfg(feature = "xtensa")]
+pub use xtensa::*;
+
 #[inline(always)]
 pub fn assert_send<T: Send>() {}
 

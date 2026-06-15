@@ -43,6 +43,7 @@ riscv-esp32c6 = []
 riscv-slic = []
 riscv-clint = ["riscv-slic"]
 riscv-mecall= ["riscv-slic"]
+xtensa = []
 
 # backend API test
 test-template = []

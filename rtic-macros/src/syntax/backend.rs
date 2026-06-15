@@ -5,6 +5,7 @@
     feature = "riscv-esp32c3",
     feature = "riscv-esp32c6",
     feature = "riscv-slic",
+    feature = "xtensa",
 )))]
 compile_error!("No backend selected");
 
@@ -23,6 +24,9 @@ pub use esp32c6::*;
 #[cfg(feature = "riscv-slic")]
 pub use riscv_slic::*;
 
+#[cfg(feature = "xtensa")]
+pub use xtensa::*;
+
 #[cfg(any(feature = "cortex-m-source-masking", feature = "cortex-m-basepri"))]
 mod cortex;
 
@@ -37,3 +41,6 @@ mod esp32c6;
 
 #[cfg(feature = "riscv-slic")]
 mod riscv_slic;
+
+#[cfg(feature = "xtensa")]
+mod xtensa;
