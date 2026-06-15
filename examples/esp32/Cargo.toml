@@ -15,7 +15,7 @@ esp-backtrace = { version = "0.19.0", features = [
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32"] }
 esp-hal = { version = "1.1.0-rc.0", features = ["esp32", "unstable"] }
 esp-println = { version = "0.17.0", features = ["esp32"] }
-esp32 = { version = "0.40.0", features = ["critical-section"] }
+esp32 = { version = "0.35.0", features = ["critical-section"] }
 xtensa-lx-rt = "0.22.0"
 rtic = { path = "../../rtic", features = ["xtensa-esp32-backend"] }
 
