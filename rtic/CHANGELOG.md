@@ -22,7 +22,7 @@ Example:
 
 ### Added
 
-- Unstable support for Xtensa ESP32 targets (`xtensa-esp32-backend` feature). Supports software tasks at priorities 1 and 3 (via `FROM_CPU_INTR0`/`FROM_CPU_INTR1`), hardware interrupt tasks, shared resource locking via PS.INTLEVEL ceiling, and other basic bindings. Single-core only; QEMU emulation does not work correctly due to interrupt register mapping issues.
+- Unstable support for Xtensa ESP32 targets (`xtensa-esp32-backend` feature). Supports software tasks at priorities 1 and 3 (via `FROM_CPU_INTR0`/`FROM_CPU_INTR1`), and hardware interrupt tasks. Single-core only; QEMU emulation does not work correctly due to interrupt register mapping issues.
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
 - Add attribute `local_task` for tasks that may take args that are !Send/!Sync and can only be spawned from same executor
 

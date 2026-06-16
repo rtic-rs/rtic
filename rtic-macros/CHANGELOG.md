@@ -14,6 +14,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- Unstable support for Xtensa ESP32 targets (`xtensa-esp32` backend binding). Implements `impl_mutex` (PS.INTLEVEL ceiling locking), `architecture_specific_analysis` (validates dispatchers and software task priorities), `pre_init_enable_interrupts`, `handler_config`, `async_prio_limit`, and `check_stack_overflow_before_init`.
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
 - Add attribute `local_task` for tasks that may take args that are !Send/!Sync and can only be spawned from same executor
 
