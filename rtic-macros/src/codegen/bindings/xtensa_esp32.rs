@@ -4,7 +4,7 @@ use crate::{
 };
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashSet};
 use syn::{parse, parse_str, Attribute, Ident, LitStr, Path};
 
 thread_local! {
@@ -122,7 +122,53 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
     stmts
 }
 
-pub fn architecture_specific_analysis(_app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+pub fn architecture_specific_analysis(app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
+    for name in app.args.dispatchers.keys() {
+        match name.to_string().as_str() {
+            "FROM_CPU_INTR0" | "FROM_CPU_INTR1" => {}
+            _ => {
+                return Err(parse::Error::new(
+                    name.span(),
+                    "xtensa-esp32: only FROM_CPU_INTR0 and FROM_CPU_INTR1 are supported as \
+                     software-task dispatchers (they map to CPU Software0 / Software1 interrupts)",
+                ));
+            }
+        }
+    }
+    for (name, task) in &app.software_tasks {
+        let p = task.args.priority;
+        if p != 1 && p != 3 {
+            return Err(parse::Error::new(
+                name.span(),
+                format!(
+                    "xtensa-esp32: software task priority {p} is not supported; \
+                     only priorities 1 (FROM_CPU_INTR0 / Software0) and \
+                     3 (FROM_CPU_INTR1 / Software1) have dedicated CPU software interrupts"
+                ),
+            ));
+        }
+    }
+
+    let priorities: HashSet<u8> = app
+        .software_tasks
+        .values()
+        .map(|t| t.args.priority)
+        .filter(|&p| p > 0)
+        .collect();
+
+    let need = priorities.len();
+    let given = app.args.dispatchers.len();
+    if need > given {
+        let first = app.software_tasks.keys().next().unwrap();
+        return Err(parse::Error::new(
+            first.span(),
+            format!(
+                "xtensa-esp32: not enough dispatchers for software tasks \
+                 (need {need}, given {given})"
+            ),
+        ));
+    }
+
     Ok(())
 }
 
