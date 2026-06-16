@@ -21,10 +21,8 @@ mod app {
     }
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local) {
-        let _ = esp_hal::init(esp_hal::Config::default());
-        // TODO: really need to find a better/more ergonomic peripherals impl...
-        let peripherals = cx.device;
+    fn init(_cx: init::Context) -> (Shared, Local) {
+        let peripherals = esp_hal::init(esp_hal::Config::default());
 
         let config = Config::default().with_rx(
             RxConfig::default().with_fifo_full_threshold(1)

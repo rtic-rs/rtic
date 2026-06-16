@@ -17,7 +17,7 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
-        let _p = cx.device;
+        let _ = esp_hal::init(esp_hal::Config::default());
         hello::spawn().ok();
         println!("init");
         (Shared {}, Local {})
