@@ -548,6 +548,7 @@ dependencies = [
  "esp-println",
  "esp32 0.40.2",
  "rtic",
+ "rtic-monotonics",
  "xtensa-lx-rt",
 ]
 
@@ -996,6 +997,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rtic-common"
+version = "1.1.0"
+dependencies = [
+ "critical-section",
+ "portable-atomic",
+]
+
+[[package]]
 name = "rtic-core"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1010,6 +1019,31 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "rtic-monotonics"
+version = "2.1.0"
+dependencies = [
+ "cfg-if",
+ "critical-section",
+ "esp-hal",
+ "esp32 0.40.2",
+ "fugit",
+ "portable-atomic",
+ "rtic-time",
+]
+
+[[package]]
+name = "rtic-time"
+version = "2.0.1"
+dependencies = [
+ "critical-section",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "fugit",
+ "futures-util",
+ "rtic-common",
 ]
 
 [[package]]

@@ -67,6 +67,9 @@ pub mod esp32c3;
 #[cfg(feature = "esp32c6-systimer")]
 pub mod esp32c6;
 
+#[cfg(feature = "esp32-timg0")]
+pub mod esp32;
+
 #[cfg(feature = "cortex-m-systick")]
 pub mod systick;
 

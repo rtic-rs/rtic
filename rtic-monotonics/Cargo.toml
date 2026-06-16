@@ -70,7 +70,9 @@ imxrt-ral = { version = "0.6.1", optional = true }
 
 esp32c3 = { version = "0.31.0", optional = true }
 esp32c6 = { version = "0.22.0", optional = true }
+esp32 = { version = "0.40", optional = true }
 riscv = { version = "0.16.0", optional = true }
+esp-hal = { version = "=1.1.1", optional = true }
 
 [build-dependencies]
 proc-macro2 = { version = "1.0.36", optional = true }
@@ -114,6 +116,7 @@ imxrt_gpt2 = ["imxrt"]
 # ESP32 Timers
 esp32c3-systimer = ["dep:esp32c3", "dep:riscv"]
 esp32c6-systimer = ["dep:esp32c6", "dep:riscv"]
+esp32-timg0 = ["dep:esp32", "dep:esp-hal", "dep:critical-section"]
 
 # STM32 timers
 # Use as `features = ["stm32g081kb", "stm32_tim15"]`
