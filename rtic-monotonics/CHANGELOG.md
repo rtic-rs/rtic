@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- `TIMG0` Timer 0 based monotonic for the ESP32 (`esp32-timg0` feature). Runs at APB/2 (40 MHz with the default esp-hal clock config), giving 25 ns resolution.
+
 ### Changed
 
 - STM32's monotonics now derive the timer counter size from the pac register definition
