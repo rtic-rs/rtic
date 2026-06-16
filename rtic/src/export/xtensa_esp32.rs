@@ -90,3 +90,10 @@ pub fn pend(int: esp32::Interrupt) {
 
 #[inline(always)]
 pub fn unpend(_int: esp32::Interrupt) {}
+
+#[inline(always)]
+pub fn read_sp() -> u32 {
+    let sp: u32;
+    unsafe { asm!("mov {0}, a1", out(reg) sp, options(nostack, nomem)) };
+    sp
+}

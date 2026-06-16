@@ -184,7 +184,15 @@ pub fn check_stack_overflow_before_init(
     _app: &App,
     _analysis: &CodegenAnalysis,
 ) -> Vec<TokenStream2> {
-    vec![]
+    vec![quote!(
+        //stack grows down from _stack_start
+        extern "C" {
+            static _stack_end: u32;
+        }
+        if rtic::export::read_sp() <= &_stack_end as *const _ as u32 {
+            ::core::panic!("Stack overflow");
+        }
+    )]
 }
 
 pub fn async_entry(
