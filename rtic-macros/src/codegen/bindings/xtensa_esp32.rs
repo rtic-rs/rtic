@@ -150,8 +150,17 @@ pub fn async_entry(
     vec![]
 }
 
-pub fn async_prio_limit(_app: &App, _analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
-    vec![]
+pub fn async_prio_limit(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    let max = if let Some(max) = analysis.max_async_prio {
+        quote!(#max)
+    } else {
+        quote!(u8::MAX)
+    };
+
+    vec![quote!(
+        #[no_mangle]
+        static RTIC_ASYNC_MAX_LOGICAL_PRIO: u8 = #max;
+    )]
 }
 
 pub fn handler_config(
