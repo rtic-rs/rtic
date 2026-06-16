@@ -30,14 +30,33 @@ pub fn interrupt_mod(_app: &App) -> TokenStream2 {
 pub fn impl_mutex(
     _app: &App,
     _analysis: &CodegenAnalysis,
-    _cfgs: &[Attribute],
-    _resources_prefix: bool,
-    _name: &Ident,
-    _ty: &TokenStream2,
-    _ceiling: u8,
-    _ptr: &TokenStream2,
+    cfgs: &[Attribute],
+    resources_prefix: bool,
+    name: &Ident,
+    ty: &TokenStream2,
+    ceiling: u8,
+    ptr: &TokenStream2,
 ) -> TokenStream2 {
-    quote!()
+    let path = if resources_prefix {
+        quote!(shared_resources::#name)
+    } else {
+        quote!(#name)
+    };
+
+    quote!(
+        #(#cfgs)*
+        impl<'a> rtic::Mutex for #path<'a> {
+            type T = #ty;
+
+            #[inline(always)]
+            fn lock<RTIC_INTERNAL_R>(&mut self, f: impl FnOnce(&mut #ty) -> RTIC_INTERNAL_R) -> RTIC_INTERNAL_R {
+                const CEILING: u8 = #ceiling;
+                unsafe {
+                    rtic::export::lock(#ptr, CEILING, f)
+                }
+            }
+        }
+    )
 }
 
 pub fn extra_assertions(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {

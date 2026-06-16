@@ -7,13 +7,13 @@ use esp_backtrace as _;
 
 #[rtic::app(device = esp32, dispatchers = [FROM_CPU_INTR0])]
 mod app {
-    use esp_hal::{
-        uart::{Config, RxConfig, Uart, UartInterrupt},
-    };
+    use esp_hal::uart::{Config, RxConfig, Uart, UartInterrupt};
     use esp_println::println;
 
     #[shared]
-    struct Shared {}
+    struct Shared {
+        byte_count: u32,
+    }
 
     #[local]
     struct Local {
@@ -35,26 +35,34 @@ mod app {
         uart.listen(UartInterrupt::RxFifoFull | UartInterrupt::RxTimeout);
 
         println!("init");
-        (Shared {}, Local { uart })
+        (Shared { byte_count: 0 }, Local { uart })
     }
 
-    #[task(binds = UART0, local = [uart], priority = 1)]
-    fn uart0(cx: uart0::Context) {
+    #[task(binds = UART0, local = [uart], shared = [byte_count], priority = 1)]
+    fn uart0(mut cx: uart0::Context) {
         let uart = cx.local.uart;
 
         let mut buf = [0u8; 64];
         if let Ok(n) = uart.read_buffered(&mut buf) {
             if n > 0 {
                 let s = core::str::from_utf8(&buf[..n]).unwrap_or("<non-utf8>");
-                println!("uart rx ({} bytes): {:?}", n, s);
+                println!("rx: {:?}", s);
+                cx.shared.byte_count.lock(|c| *c += n as u32);
             }
         }
 
         uart.clear_interrupts(UartInterrupt::RxFifoFull | UartInterrupt::RxTimeout);
     }
 
-    #[idle]
-    fn idle(_cx: idle::Context) -> ! {
-        loop {}
+    #[idle(shared = [byte_count])]
+    fn idle(mut cx: idle::Context) -> ! {
+        let mut last = 0u32;
+        loop {
+            let current = cx.shared.byte_count.lock(|c| *c);
+            if current != last {
+                println!("total bytes received: {}", current);
+                last = current;
+            }
+        }
     }
 }
