@@ -59,8 +59,6 @@ pub fn pre_init_checks(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStrea
 }
 
 pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
-    //TODO: need to get some sort of sw layer, since priority 2 corresponds to
-    //dport (peripherals) interrupts, fix later?
     let mut stmts: Vec<TokenStream2> = analysis
         .interrupts
         .iter()
@@ -68,7 +66,15 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
             let cpu_int = match priority {
                 1 => quote!(esp_hal::interrupt::CpuInterrupt::Interrupt7SoftwarePriority1),
                 3 => quote!(esp_hal::interrupt::CpuInterrupt::Interrupt29SoftwarePriority3),
-                p => panic!("xtensa-esp32 backend: unsupported RTIC priority {p} (supported: 1, 3)"),
+                p => { // lol i got gemini to generate this nice msg for me !!
+                    let msg = format!(
+                        "xtensa-esp32: software task dispatcher priority {p} is not supported. \
+                         Only priorities 1 and 3 have dedicated CPU software interrupts \
+                         (CPU int 7 / Software0 and CPU int 29 / Software1). \
+                         Use a hardware task (#[task(binds = ...)]) for priority 2."
+                    );
+                    return quote!(compile_error!(#msg););
+                }
             };
             quote!(#cpu_int.enable();)
         })
