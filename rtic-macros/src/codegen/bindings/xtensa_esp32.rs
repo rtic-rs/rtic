@@ -85,7 +85,7 @@ pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<
             let cpu_int = match priority {
                 1 => quote!(esp_hal::interrupt::CpuInterrupt::Interrupt7SoftwarePriority1),
                 3 => quote!(esp_hal::interrupt::CpuInterrupt::Interrupt29SoftwarePriority3),
-                p => { // lol i got gemini to generate this nice msg for me !!
+                p => {
                     let msg = format!(
                         "xtensa-esp32: software task dispatcher priority {p} is not supported. \
                          Only priorities 1 and 3 have dedicated CPU software interrupts \
