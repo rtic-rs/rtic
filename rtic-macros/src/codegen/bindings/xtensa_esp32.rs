@@ -58,10 +58,10 @@ pub fn pre_init_checks(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStrea
     vec![]
 }
 
-pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+pub fn pre_init_enable_interrupts(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
     //TODO: need to get some sort of sw layer, since priority 2 corresponds to
     //dport (peripherals) interrupts, fix later?
-    analysis
+    let mut stmts: Vec<TokenStream2> = analysis
         .interrupts
         .iter()
         .map(|(priority, _)| {
@@ -72,7 +72,29 @@ pub fn pre_init_enable_interrupts(_app: &App, analysis: &CodegenAnalysis) -> Vec
             };
             quote!(#cpu_int.enable();)
         })
-        .collect()
+        .collect();
+
+    let pac = PAC_PATH.with(|p| {
+        p.borrow()
+            .as_ref()
+            .map(|s| syn::parse_str::<syn::Path>(s).expect("stored pac path is valid"))
+    });
+    if let Some(pac) = pac {
+        for task in app.hardware_tasks.values() {
+            let interrupt = &task.args.binds;
+            let prio = match task.args.priority {
+                1 => quote!(esp_hal::interrupt::Priority::Priority1),
+                2 => quote!(esp_hal::interrupt::Priority::Priority2),
+                3 => quote!(esp_hal::interrupt::Priority::Priority3),
+                p => panic!("xtensa-esp32 backend: unsupported hardware task priority {p} (supported: 1, 2, 3)"),
+            };
+            stmts.push(quote!(
+                esp_hal::interrupt::enable(#pac::Interrupt::#interrupt, #prio);
+            ));
+        }
+    }
+
+    stmts
 }
 
 pub fn architecture_specific_analysis(_app: &App, _analysis: &SyntaxAnalysis) -> parse::Result<()> {
