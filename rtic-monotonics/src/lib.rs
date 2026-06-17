@@ -88,7 +88,12 @@ pub mod imxrt;
     feature = "nrf52840",
     feature = "nrf5340-app",
     feature = "nrf5340-net",
-    feature = "nrf9160",
+    feature = "nrf9160-ns",
+    feature = "nrf9160-s",
+    feature = "nrf9151-ns",
+    feature = "nrf9151-s",
+    feature = "nrf9161-ns",
+    feature = "nrf9161-s",
 ))]
 pub mod nrf;
 
@@ -112,7 +117,12 @@ pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     feature = "nrf52840",
     feature = "nrf5340-app",
     feature = "nrf5340-net",
-    feature = "nrf9160",
+    feature = "nrf9160-ns",
+    feature = "nrf9160-s",
+    feature = "nrf9151-ns",
+    feature = "nrf9151-s",
+    feature = "nrf9161-ns",
+    feature = "nrf9161-s",
     feature = "imxrt",
     stm32,
 ))]

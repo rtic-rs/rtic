@@ -72,9 +72,24 @@ pub use nrf5340_app_pac::{
 pub use nrf5340_net_pac::{
     self as pac, TIMER0_NS as TIMER0, TIMER1_NS as TIMER1, TIMER2_NS as TIMER2,
 };
-#[cfg(feature = "nrf9160")]
+// The secure (`-s`) arms yield to the non-secure (`-ns`) ones when both are
+// enabled, so the only diagnostic in that misconfiguration is the clear
+// `compile_error!` in `crate::nrf`, not a pile of duplicate-import errors.
+#[cfg(any(feature = "nrf9151-ns", feature = "nrf9161-ns"))]
+#[doc(hidden)]
+pub use nrf9120_pac::{self as pac, TIMER0_NS as TIMER0, TIMER1_NS as TIMER1, TIMER2_NS as TIMER2};
+#[cfg(all(
+    any(feature = "nrf9151-s", feature = "nrf9161-s"),
+    not(any(feature = "nrf9151-ns", feature = "nrf9161-ns"))
+))]
+#[doc(hidden)]
+pub use nrf9120_pac::{self as pac, TIMER0_S as TIMER0, TIMER1_S as TIMER1, TIMER2_S as TIMER2};
+#[cfg(feature = "nrf9160-ns")]
 #[doc(hidden)]
 pub use nrf9160_pac::{self as pac, TIMER0_NS as TIMER0, TIMER1_NS as TIMER1, TIMER2_NS as TIMER2};
+#[cfg(all(feature = "nrf9160-s", not(feature = "nrf9160-ns")))]
+#[doc(hidden)]
+pub use nrf9160_pac::{self as pac, TIMER0_S as TIMER0, TIMER1_S as TIMER1, TIMER2_S as TIMER2};
 
 use portable_atomic::{AtomicU32, Ordering};
 use rtic_time::{

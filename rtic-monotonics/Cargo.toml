@@ -61,6 +61,8 @@ nrf52840-pac = { version = "0.12.2", optional = true }
 nrf5340-app-pac = { version = "0.12.2", optional = true }
 nrf5340-net-pac = { version = "0.12.2", optional = true }
 nrf9160-pac = { version = "0.12.2", optional = true }
+# nrf9120-pac backs both the nRF9151 and nRF9161 (both built on the nRF9120 SoC)
+nrf9120-pac = { version = "0.12.2", optional = true }
 
 # STM32
 stm32-metapac = { version = "21.0.0", optional = true }
@@ -103,7 +105,16 @@ nrf52833 = ["dep:cortex-m", "dep:nrf52833-pac", "dep:critical-section"]
 nrf52840 = ["dep:cortex-m", "dep:nrf52840-pac", "dep:critical-section"]
 nrf5340-app = ["dep:cortex-m", "dep:nrf5340-app-pac", "dep:critical-section"]
 nrf5340-net = ["dep:cortex-m", "dep:nrf5340-net-pac", "dep:critical-section"]
-nrf9160 = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
+# nRF91 chips expose their peripherals through a TrustZone secure (`-s`) and a
+# non-secure (`-ns`) address alias. Pick the variant matching the security domain
+# your firmware runs in. Enabling both variants of a chip is a compile error.
+nrf9160 = ["nrf9160-ns"] # Deprecated alias kept for backwards compatibility, equals `nrf9160-ns`.
+nrf9160-ns = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
+nrf9160-s = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
+nrf9151-ns = ["dep:cortex-m", "dep:nrf9120-pac", "dep:critical-section"]
+nrf9151-s = ["dep:cortex-m", "dep:nrf9120-pac", "dep:critical-section"]
+nrf9161-ns = ["dep:cortex-m", "dep:nrf9120-pac", "dep:critical-section"]
+nrf9161-s = ["dep:cortex-m", "dep:nrf9120-pac", "dep:critical-section"]
 
 # i.MX RT Timers
 # Use as `features = ["imxrt_gpt1"]`
