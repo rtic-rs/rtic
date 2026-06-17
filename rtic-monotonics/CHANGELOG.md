@@ -12,9 +12,12 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 - STM32's monotonics now derive the timer counter size from the pac register definition
 - Updated rp235x-pac dependency to v0.2.0
 - Panic if STM32 prescaler value would overflow
+- nRF91 monotonics now select a TrustZone security domain explicitly via `-s`/`-ns` features. The `nrf9160` feature is now a deprecated alias for `nrf9160-ns` (same non-secure behavior as before)
 
 ### Added
 
+- nRF9151 and nRF9161 support (RTC and TIMER monotonics), backed by `nrf9120-pac`
+- Secure and non-secure variants for all nRF91 chips: `nrf9160-s`/`nrf9160-ns`, `nrf9151-s`/`nrf9151-ns`, `nrf9161-s`/`nrf9161-ns`
 - A lot of STM32 chip feature flags
 - Cortex-M `systick` can be configured with its external clock source
 

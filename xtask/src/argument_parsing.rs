@@ -229,7 +229,12 @@ impl Backends {
                 "nrf52840",
                 "nrf5340-app",
                 "nrf5340-net",
-                "nrf9160",
+                "nrf9160-ns",
+                "nrf9160-s",
+                "nrf9151-ns",
+                "nrf9151-s",
+                "nrf9161-ns",
+                "nrf9161-s",
                 "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062",
                 "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag",
             ])
