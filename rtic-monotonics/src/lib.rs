@@ -29,6 +29,10 @@
 //! tag, describing what parts _do_ support that monotonic. Monotonics without an
 //! `Available on crate features X only` tag are available on any `nrf52*` feature.
 //!
+//! # Silicon Labs (EFM, EFR)
+//! EFR monotonics require to enable the `efr32mg22` feature to be enabled. Monotonic implementations
+//! are available for the low-resolution LETIMER and RTCC peripherals.
+//!
 //! # ESP32C3 and ESP32C6
 //! Enable either the `esp32c3-systimer` or `esp32c6-systimer` feature, as appropriate.
 //!
@@ -101,12 +105,16 @@ pub mod nrf;
 #[cfg(stm32)]
 pub mod stm32;
 
+#[cfg(feature = "silabs")]
+pub mod silabs;
+
 #[allow(dead_code)]
 pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
 }
 
 #[cfg(any(
+    feature = "silabs",
     feature = "rp235x",
     feature = "rp2040",
     feature = "nrf52805",
