@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+- Added Silabs (EFR32, EFM32) support using the inbuilt RTCC / LETIMER peripherals
+
 ### Changed
 
 - STM32's monotonics now derive the timer counter size from the pac register definition
