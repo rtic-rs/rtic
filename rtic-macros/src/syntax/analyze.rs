@@ -242,9 +242,18 @@ pub(crate) fn app(app: &App) -> Result<Analysis, syn::Error> {
     // Create the list of used local resource Idents
     let mut used_local_resource = IndexSet::new();
 
-    for (_, _, locals, _) in task_resources_list {
-        for (local, _) in locals {
+    for (_, _, locals, priority) in task_resources_list {
+        for (local, kind) in locals {
             used_local_resource.insert(local.clone());
+
+            // Declared task-local resources have implicitly
+            // owned ownership. If we included them in this
+            // collection, we would need to exclude them when
+            // performing the "is it Send?" analysis later in
+            // this routine.
+            if matches!(kind, TaskLocal::External) {
+                ownerships.insert(local.clone(), Ownership::Owned { priority });
+            }
         }
     }
 

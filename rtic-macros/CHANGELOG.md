@@ -11,6 +11,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Generated `panic`s can no longer be shadowed. Previously, they were inconsistently shadowed.
 - Generated mutexes for shared resourses no longer implement `Send`. They are meant to be used inside a task locally.
+- Consider task-local external resources when identifying which resources must be `Send`.
 
 ### Added
 
