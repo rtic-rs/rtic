@@ -1,0 +1,18 @@
+error[E0277]: `&'static RefCell<u32>` cannot be sent between threads safely
+  --> ui/locals-not-send.rs:12:12
+   |
+12 |         x: &'static RefCell<u32>,
+   |            ^^^^^^^^^^^^^^^^^^^^^ `&'static RefCell<u32>` cannot be sent between threads safely
+   |
+   = help: the trait `Sync` is not implemented for `RefCell<u32>`
+   = note: required for `&'static RefCell<u32>` to implement `Send`
+note: required by a bound in `rtic::export::assert_send`
+  --> src/export.rs
+   |
+   | pub fn assert_send<T: Send>() {}
+   |                       ^^^^ required by this bound in `assert_send`
+help: consider removing the leading `&`-reference
+   |
+12 -         x: &'static RefCell<u32>,
+12 +         x: RefCell<u32>,
+   |

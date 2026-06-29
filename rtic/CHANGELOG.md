@@ -20,6 +20,10 @@ Example:
 
 ## [Unreleased]
 
+### Fixed
+
+- **Soundness fix:**: Assert that `Local` resources initialized by `init` are `Send`.
+
 ### Added
 
 - Outer attributes applied to RTIC app module are now forwarded to the generated code.
