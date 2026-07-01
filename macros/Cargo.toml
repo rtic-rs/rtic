@@ -22,7 +22,7 @@ proc-macro2 = "1"
 proc-macro-error = "1"
 quote = "1"
 syn = "2"
-rtic-syntax = "1.0.3"
+rtic-syntax = { git = "https://github.com/rtic-rs/rtic-syntax" }
 
 [features]
 debugprint = []
