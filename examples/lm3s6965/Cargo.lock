@@ -508,7 +508,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-sync"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
