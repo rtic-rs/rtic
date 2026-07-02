@@ -61,7 +61,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
         #[doc(hidden)]
         mod rtic_ext {
             use super::*;
-            #[no_mangle]
+            #[unsafe(no_mangle)]
             unsafe extern "C" fn #main() -> ! {
                 #(#assertion_stmts)*
 

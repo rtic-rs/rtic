@@ -137,7 +137,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
             };
 
             items.push(quote!(
-                #[no_mangle]
+                #[unsafe(no_mangle)]
                 #[allow(non_snake_case)]
                 #(#cfgs)*
                 unsafe fn #bound_interrupt() {

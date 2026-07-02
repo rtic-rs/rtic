@@ -37,7 +37,7 @@ pub fn codegen(
 
         mod_app.push(quote!(
             #[allow(non_snake_case)]
-            #[no_mangle]
+            #[unsafe(no_mangle)]
             #[doc = #user_hardware_task_isr_doc]
             #(#attrs)*
             #(#cfgs)*

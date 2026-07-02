@@ -123,7 +123,7 @@ fn link_section_index() -> usize {
 pub fn link_section_uninit() -> TokenStream2 {
     let section = format!(".uninit.rtic{}", link_section_index());
 
-    quote!(#[link_section = #section])
+    quote!(#[unsafe(link_section = #section)])
 }
 
 // Regroups the inputs of a task
