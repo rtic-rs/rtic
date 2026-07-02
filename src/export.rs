@@ -7,15 +7,15 @@ use core::{
 pub use crate::tq::{NotReady, TimerQueue};
 pub use bare_metal::CriticalSection;
 pub use cortex_m::{
+    Peripherals,
     asm::nop,
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, DWT, NVIC, SCB, SYST},
-    Peripherals,
+    peripheral::{DWT, NVIC, SCB, SYST, scb::SystemHandler},
 };
+pub use heapless::BinaryHeap;
 pub use heapless::sorted_linked_list::SortedLinkedList;
 pub use heapless::spsc::Queue;
-pub use heapless::BinaryHeap;
 pub use rtic_monotonic as monotonic;
 
 pub type SCFQ<const N: usize> = Queue<u8, N>;
@@ -45,7 +45,9 @@ impl<const M: usize> Mask<M> {
         let block = bit / 32;
 
         if block as usize >= M {
-            panic!("Generating masks for thumbv6/thumbv8m.base failed! Are you compiling for thumbv6 on an thumbv7 MCU or using an unsupported thumbv8m.base MCU?");
+            panic!(
+                "Generating masks for thumbv6/thumbv8m.base failed! Are you compiling for thumbv6 on an thumbv7 MCU or using an unsupported thumbv8m.base MCU?"
+            );
         }
 
         let offset = bit - (block * 32);
@@ -420,5 +422,7 @@ pub const fn no_basepri_panic() {
 
 #[cfg(not(have_basepri))]
 pub const fn no_basepri_panic() {
-    panic!("Exceptions with shared resources are not allowed when compiling for thumbv6 or thumbv8m.base. Use local resources or `#[lock_free]` shared resources");
+    panic!(
+        "Exceptions with shared resources are not allowed when compiling for thumbv6 or thumbv8m.base. Use local resources or `#[lock_free]` shared resources"
+    );
 }

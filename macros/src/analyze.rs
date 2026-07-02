@@ -2,9 +2,9 @@ use core::ops;
 use std::collections::{BTreeMap, BTreeSet};
 
 use rtic_syntax::{
+    P,
     analyze::{self, Priority},
     ast::{App, ExternInterrupt},
-    P,
 };
 use syn::Ident;
 

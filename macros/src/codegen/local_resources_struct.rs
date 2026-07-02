@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use rtic_syntax::{
-    ast::{App, TaskLocal},
     Context,
+    ast::{App, TaskLocal},
 };
 
 use crate::codegen::util;
