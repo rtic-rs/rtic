@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
+use rtic_syntax::{Context, ast::App};
 
 use crate::{
     analyze::Analysis,
@@ -37,7 +37,7 @@ pub fn codegen(
 
         mod_app.push(quote!(
             #[allow(non_snake_case)]
-            #[no_mangle]
+            #[unsafe(no_mangle)]
             #[doc = #user_hardware_task_isr_doc]
             #(#attrs)*
             #(#cfgs)*

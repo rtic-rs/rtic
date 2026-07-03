@@ -2,7 +2,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
+use rtic_syntax::{Context, ast::App};
 use syn::{Attribute, Ident, LitInt, PatType};
 
 use crate::check::Extra;
@@ -123,7 +123,7 @@ fn link_section_index() -> usize {
 pub fn link_section_uninit() -> TokenStream2 {
     let section = format!(".uninit.rtic{}", link_section_index());
 
-    quote!(#[link_section = #section])
+    quote!(#[unsafe(link_section = #section)])
 }
 
 // Regroups the inputs of a task

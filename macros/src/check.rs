@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use proc_macro2::Span;
 use rtic_syntax::{analyze::Analysis, ast::App};
-use syn::{parse, Path};
+use syn::{Path, parse};
 
 pub struct Extra {
     pub device: Path,

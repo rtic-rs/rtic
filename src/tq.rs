@@ -47,7 +47,9 @@ where
             pend_handler();
         }
 
-        self.0.push_unchecked(nr);
+        unsafe {
+            self.0.push_unchecked(nr);
+        }
     }
 
     /// Check if the timer queue is empty.

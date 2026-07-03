@@ -1,7 +1,7 @@
 use crate::{analyze::Analysis, check::Extra, codegen::util};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rtic_syntax::{ast::App, Context};
+use rtic_syntax::{Context, ast::App};
 
 #[allow(clippy::too_many_lines)]
 pub fn codegen(
