@@ -80,23 +80,22 @@ pub fn app(args: TokenStream, input: TokenStream) -> TokenStream {
         //
         // If no "target" directory is found, <project_dir>/<out_dir_root> is used
         for path in out_dir.ancestors() {
-            if let Some(dir) = path.components().next_back() {
-                if dir
+            if let Some(dir) = path.components().next_back()
+                && dir
                     .as_os_str()
                     .to_str()
                     .unwrap()
                     .starts_with(target_triple_prefix)
-                {
-                    if let Some(out) = path.parent() {
-                        out_dir = out;
-                        #[cfg(feature = "debugprint")]
-                        println!("{:#?}\n", out_dir);
-                        break;
-                    }
-                    // If no parent, just use it
-                    out_dir = path;
+            {
+                if let Some(out) = path.parent() {
+                    out_dir = out;
+                    #[cfg(feature = "debugprint")]
+                    println!("{:#?}\n", out_dir);
                     break;
                 }
+                // If no parent, just use it
+                out_dir = path;
+                break;
             }
         }
     }
