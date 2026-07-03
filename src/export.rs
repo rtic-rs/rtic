@@ -225,22 +225,24 @@ pub unsafe fn lock<T, R, const M: usize>(
 ) -> R {
     let current = priority.get();
 
-    if current < ceiling {
-        if ceiling == (1 << nvic_prio_bits) {
-            priority.set(u8::max_value());
-            let r = interrupt::free(|_| f(&mut *ptr));
-            priority.set(current);
-            r
+    unsafe {
+        if current < ceiling {
+            if ceiling == (1 << nvic_prio_bits) {
+                priority.set(u8::max_value());
+                let r = interrupt::free(|_| f(&mut *ptr));
+                priority.set(current);
+                r
+            } else {
+                priority.set(ceiling);
+                basepri::write(logical2hw(ceiling, nvic_prio_bits));
+                let r = f(&mut *ptr);
+                basepri::write(logical2hw(current, nvic_prio_bits));
+                priority.set(current);
+                r
+            }
         } else {
-            priority.set(ceiling);
-            basepri::write(logical2hw(ceiling, nvic_prio_bits));
-            let r = f(&mut *ptr);
-            basepri::write(logical2hw(current, nvic_prio_bits));
-            priority.set(current);
-            r
+            f(&mut *ptr)
         }
-    } else {
-        f(&mut *ptr)
     }
 }
 
@@ -301,33 +303,35 @@ pub unsafe fn lock<T, R, const M: usize>(
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
     let current = priority.get();
-    if current < ceiling {
-        if ceiling >= 4 {
-            // safe to manipulate outside critical section
-            priority.set(ceiling);
-            // execute closure under protection of raised system ceiling
-            let r = interrupt::free(|_| f(&mut *ptr));
-            // safe to manipulate outside critical section
-            priority.set(current);
-            r
+    unsafe {
+        if current < ceiling {
+            if ceiling >= 4 {
+                // safe to manipulate outside critical section
+                priority.set(ceiling);
+                // execute closure under protection of raised system ceiling
+                let r = interrupt::free(|_| f(&mut *ptr));
+                // safe to manipulate outside critical section
+                priority.set(current);
+                r
+            } else {
+                // safe to manipulate outside critical section
+                priority.set(ceiling);
+                let mask = compute_mask(current, ceiling, masks);
+                clear_enable_mask(mask);
+
+                // execute closure under protection of raised system ceiling
+                let r = f(&mut *ptr);
+
+                set_enable_mask(mask);
+
+                // safe to manipulate outside critical section
+                priority.set(current);
+                r
+            }
         } else {
-            // safe to manipulate outside critical section
-            priority.set(ceiling);
-            let mask = compute_mask(current, ceiling, masks);
-            clear_enable_mask(mask);
-
-            // execute closure under protection of raised system ceiling
-            let r = f(&mut *ptr);
-
-            set_enable_mask(mask);
-
-            // safe to manipulate outside critical section
-            priority.set(current);
-            r
+            // execute closure without raising system ceiling
+            f(&mut *ptr)
         }
-    } else {
-        // execute closure without raising system ceiling
-        f(&mut *ptr)
     }
 }
 
@@ -348,7 +352,9 @@ unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>) {
     for i in 0..M {
         // This check should involve compile time constants and be optimized out.
         if mask.0[i] != 0 {
-            (*NVIC::PTR).iser[i].write(mask.0[i]);
+            unsafe {
+                (*NVIC::PTR).iser[i].write(mask.0[i]);
+            }
         }
     }
 }
@@ -360,7 +366,9 @@ unsafe fn clear_enable_mask<const M: usize>(mask: Mask<M>) {
     for i in 0..M {
         // This check should involve compile time constants and be optimized out.
         if mask.0[i] != 0 {
-            (*NVIC::PTR).icer[i].write(mask.0[i]);
+            unsafe {
+                (*NVIC::PTR).icer[i].write(mask.0[i]);
+            }
         }
     }
 }
