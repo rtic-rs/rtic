@@ -11,7 +11,7 @@ use panic_semihosting as _;
     device = lm3s6965,
     dispatchers = [
         UART0,
-        #[link_section = ".data.UART1"]
+        #[unsafe(link_section = ".data.UART1")]
         UART1
     ])
 ]
@@ -41,7 +41,7 @@ mod app {
 
     // run this task from RAM
     #[inline(never)]
-    #[link_section = ".data.bar"]
+    #[unsafe(link_section = ".data.bar")]
     #[task(priority = 2)]
     fn bar(_: bar::Context) {
         foo::spawn().unwrap();
