@@ -53,7 +53,7 @@ mod app {
     ])]
     fn init(mut ctx: init::Context) -> (Shared, Local) {
         // Configure the clocks, watchdog - The default is to generate a 125 MHz system clock
-        Mono::start(ctx.device.TIMER, &mut ctx.device.RESETS); // default rp2040 clock-rate is 125MHz
+        Mono::start(ctx.device.TIMER, &ctx.device.RESETS); // default rp2040 clock-rate is 125MHz
         let mut watchdog = Watchdog::new(ctx.device.WATCHDOG);
         let clocks = clocks::init_clocks_and_plls(
             XOSC_CRYSTAL_FREQ,
@@ -82,14 +82,10 @@ mod app {
         led.set_low().unwrap();
 
         // Init I2C pins
-        let sda_pin: gpio::Pin<_, gpio::FunctionI2C, _> = gpioa
-            .gpio2
-            .into_pull_up_disabled()
-            .reconfigure();
-        let scl_pin: gpio::Pin<_, gpio::FunctionI2C, _> = gpioa
-            .gpio3
-            .into_pull_up_disabled()
-            .reconfigure();
+        let sda_pin: gpio::Pin<_, gpio::FunctionI2C, _> =
+            gpioa.gpio2.into_pull_up_disabled().reconfigure();
+        let scl_pin: gpio::Pin<_, gpio::FunctionI2C, _> =
+            gpioa.gpio3.into_pull_up_disabled().reconfigure();
 
         // Init I2C itself, using MaybeUninit to overwrite the previously
         // uninitialized i2c_ctx variable without dropping its value

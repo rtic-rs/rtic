@@ -12,7 +12,7 @@ mod app {
         gpio::{self, Edge, Input, Output, PushPull},
         pac::TIM1,
         prelude::*,
-        rtc::{Rtc, Event},
+        rtc::{Event, Rtc},
         timer,
     };
 
@@ -33,10 +33,8 @@ mod app {
         delay: timer::DelayMs<TIM1>,
     }
 
-    
     #[init]
     fn init(ctx: init::Context) -> (Shared, Local) {
-
         let mut dp = ctx.device;
 
         // Configure and obtain handle for delay abstraction
@@ -46,7 +44,7 @@ mod app {
         // 2) Configure the system clocks
         // 25 MHz must be used for HSE on the Blackpill-STM32F411CE board according to manual
         let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
-        
+
         //Configure RTC
         let mut rtc = Rtc::new(dp.RTC, &mut dp.PWR);
 
@@ -61,7 +59,6 @@ mod app {
         //Start listening to WAKE UP INTERRUPTS
         rtc.enable_wakeup(10.secs());
         rtc.listen(&mut dp.EXTI, Event::Wakeup);
-        
 
         // 3) Create delay handle
         let delay = dp.TIM1.delay_ms(&clocks);
@@ -81,7 +78,6 @@ mod app {
         // 2) Configure Pin and Obtain Handle
         let mut button = gpioa.pa0.into_pull_up_input();
 
-
         // Configure Button Pin for Interrupts
         // 1) Promote SYSCFG structure to HAL to be able to configure interrupts
         let mut syscfg = dp.SYSCFG.constrain();
@@ -92,14 +88,15 @@ mod app {
         // 4) Enable gpio interrupt for button
         button.enable_interrupt(&mut dp.EXTI);
 
-
         (
             // Initialization of shared resources
-            Shared { delayval: 2000_u32, rtc},
+            Shared {
+                delayval: 2000_u32,
+                rtc,
+            },
             // Initialization of task local resources
-            Local { button, led, delay},
+            Local { button, led, delay },
         )
-        
     }
 
     // Background task, runs whenever no other tasks are running
@@ -121,34 +118,32 @@ mod app {
 
     #[task(binds = EXTI0, local = [button], shared=[delayval, rtc])]
     fn gpio_interrupt_handler(mut ctx: gpio_interrupt_handler::Context) {
-
         ctx.shared.delayval.lock(|del| {
-            *del = *del - 100_u32;
+            *del -= 100_u32;
             if *del < 200_u32 {
                 *del = 2000_u32;
             }
             *del
         });
 
-        ctx.shared.rtc.lock(|rtc|{
+        ctx.shared.rtc.lock(|rtc| {
             let current_time = rtc.get_datetime();
-            
+
             defmt::info!("CURRENT TIME {:?}", current_time.as_hms());
             rtc.disable_wakeup();
         });
-        
-        ctx.local.button.clear_interrupt_pending_bit();
 
+        ctx.local.button.clear_interrupt_pending_bit();
     }
 
     #[task(binds = RTC_WKUP, shared = [rtc])]
     fn rtc_wakeup(mut ctx: rtc_wakeup::Context) {
         defmt::warn!("RTC INTERRUPT!!!!");
-        ctx.shared.rtc.lock(|rtc|{
+        ctx.shared.rtc.lock(|rtc| {
             let current_time = rtc.get_datetime();
             rtc.clear_interrupt(Event::Wakeup);
-            defmt::info!("Current time {:?}", current_time.as_hms() );
+            defmt::info!("Current time {:?}", current_time.as_hms());
         });
-        // Your RTC wakeup interrupt handling code here        
+        // Your RTC wakeup interrupt handling code here
     }
 }

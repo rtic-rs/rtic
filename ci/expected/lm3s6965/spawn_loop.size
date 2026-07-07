@@ -1,2 +1,2 @@
    text	   data	    bss	    dec	    hex	filename
-   5484	      0	     16	   5500	   157c	spawn_loop
+   5280	      0	     16	   5296	   14b0	spawn_loop
