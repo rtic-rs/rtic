@@ -258,3 +258,7 @@ pub fn extra_modules(app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2>
 
     stmts
 }
+
+pub fn extra_top_level(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
+    vec![]
+}

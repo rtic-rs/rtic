@@ -1,0 +1,32 @@
+[package]
+name = "esp32"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace]
+
+[dependencies]
+esp-backtrace = { version = "0.19.0", features = [
+    "esp32",
+    "panic-handler",
+    "println",
+] }
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32"] }
+esp-hal = { version = "1.1.0-rc.0", features = ["esp32", "unstable"] }
+esp-println = { version = "0.17.0", features = ["esp32"] }
+esp32 = { version = "0.40.0", features = ["critical-section"] }
+xtensa-lx-rt = "0.22.0"
+rtic = { path = "../../rtic", features = ["xtensa-esp32-backend"] }
+rtic-monotonics = { path = "../../rtic-monotonics", features = ["esp32-timg0"] }
+
+[profile.dev]
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1
+debug = 2
+debug-assertions = false
+incremental = false
+opt-level = "s"
+overflow-checks = false

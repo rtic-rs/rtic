@@ -32,6 +32,9 @@
 )]
 #![allow(clippy::inline_always)]
 #![allow(unexpected_cfgs)]
+// Error:(35, 39) `#![feature]` cannot be used on the stable release channel [E0554]
+//consider that esp-hal does this exact same thing...
+#![cfg_attr(feature = "xtensa-esp32", feature(asm_experimental_arch))]
 
 pub use rtic_core::{Exclusive, Mutex, prelude as mutex_prelude};
 pub use rtic_macros::app;

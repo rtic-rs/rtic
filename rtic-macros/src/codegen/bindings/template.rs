@@ -85,6 +85,10 @@ pub fn handler_config(
     vec![]
 }
 
-pub fn extra_modules(app: &App, analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
+pub fn extra_modules(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
+    vec![]
+}
+
+pub fn extra_top_level(_app: &App, _analysis: &SyntaxAnalysis) -> Vec<TokenStream2> {
     vec![]
 }

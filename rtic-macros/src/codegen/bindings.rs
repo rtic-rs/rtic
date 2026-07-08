@@ -5,6 +5,7 @@
     feature = "riscv-esp32c3",
     feature = "riscv-esp32c6",
     feature = "riscv-slic",
+    feature = "xtensa-esp32",
 )))]
 compile_error!("No backend selected");
 
@@ -37,3 +38,9 @@ pub use riscv_slic::*;
 
 #[cfg(feature = "riscv-slic")]
 mod riscv_slic;
+
+#[cfg(feature = "xtensa-esp32")]
+mod xtensa_esp32;
+
+#[cfg(feature = "xtensa-esp32")]
+pub use xtensa_esp32::*;

@@ -17,6 +17,7 @@ macro_rules! with_backend {
             feature = "riscv-esp32c3",
             feature = "riscv-esp32c6",
             feature = "riscv-slic",
+            feature = "xtensa-esp32",
         ))]
         $($tokens)*
     };
@@ -92,7 +93,7 @@ with_backend! {
                 if let Some(dir) = path.components().next_back() {
                     let dir = dir.as_os_str().to_str().unwrap();
 
-                    if dir.starts_with("thumbv") || dir.starts_with("riscv") {
+                    if dir.starts_with("thumbv") || dir.starts_with("riscv") || dir.starts_with("xtensa") {
                         if let Some(out) = path.parent() {
                             out_dir = out;
                             break;
@@ -121,5 +122,6 @@ with_backend! {
     feature = "riscv-esp32c3",
     feature = "riscv-esp32c6",
     feature = "riscv-slic",
+    feature = "xtensa-esp32",
 )))]
 compile_error!("Cannot compile. No backend feature selected.");

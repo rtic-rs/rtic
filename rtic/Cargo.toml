@@ -28,6 +28,7 @@ name = "rtic"
 riscv-slic = { version = "0.2.0", optional = true }
 esp32c3 = {version = "0.31.0", optional = true }
 esp32c6 = {version = "0.22.0", optional = true }
+esp32 = { version = "0.40", optional = true }
 riscv = { version = "0.16.0", optional = true }
 cortex-m = { version = "0.7.0", optional = true }
 portable-atomic = { version = "1", default-features = false }
@@ -71,6 +72,7 @@ riscv-mecall-backend = [
   "riscv-slic/mecall-backend",
   "rtic-macros/riscv-mecall",
 ]
+xtensa-esp32-backend = ["dep:esp32", "rtic-macros/xtensa-esp32"]
 
 # needed for testing
 test-critical-section = ["portable-atomic/critical-section"]
