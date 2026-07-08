@@ -20,9 +20,7 @@ Example:
 
 ## [Unreleased]
 
-### Fixed
-
-- **Soundness fix:**: Assert that `Local` resources initialized by `init` are `Send`.
+## [v2.3.0] - 2026-07-08
 
 ### Added
 
@@ -32,11 +30,12 @@ Example:
 ### Changed
 
 - Removed `bare_metal` in favour of `critical_section`.
-- Updated esp32c3 dependency to v0.30.0
-- Updated esp32c6 dependency to v0.21.0
- 
+- Updated esp32c3 dependency to v0.31.0
+- Updated esp32c6 dependency to v0.22.0
+
 ### Fixed
 
+- **Soundness fix:** Assert that `Local` resources initialized by `init` are `Send`.
 - Fixed `#[cfg]` tags on hardware and software tasks.
 
 ## [v2.2.0] - 2025-06-22
