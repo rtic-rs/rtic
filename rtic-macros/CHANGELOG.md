@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+## [v2.3.0] - 2026-07-08
+
 ### Fixed
 
 - Remove unused `proc-macro-error2`, now also unmaintained
