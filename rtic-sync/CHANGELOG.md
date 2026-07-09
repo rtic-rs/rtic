@@ -7,6 +7,10 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## Unreleased
 
+### Fixed
+
+- An `Arbiter<T>` is safely `Send` and `Sync` when `T: Send`.
+
 ## v1.5.0 - 2026-05-30
 
 ### Added

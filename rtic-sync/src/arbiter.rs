@@ -57,8 +57,8 @@ pub struct Arbiter<T> {
     taken: AtomicBool,
 }
 
-unsafe impl<T> Send for Arbiter<T> {}
-unsafe impl<T> Sync for Arbiter<T> {}
+unsafe impl<T: Send> Send for Arbiter<T> {}
+unsafe impl<T: Send> Sync for Arbiter<T> {}
 
 impl<T> Arbiter<T> {
     /// Create a new arbiter.

@@ -1,0 +1,14 @@
+error[E0277]: `Rc<u32>` cannot be sent between threads safely
+  --> ui/arbiter-not-sync.rs:14:15
+   |
+14 |     static A: Arbiter<Option<Rc<u32>>> = Arbiter::new(None);
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^ `Rc<u32>` cannot be sent between threads safely
+   |
+   = help: within `Option<Rc<u32>>`, the trait `Send` is not implemented for `Rc<u32>`
+note: required because it appears within the type `Option<Rc<u32>>`
+  --> $RUST/core/src/option.rs
+   |
+   | pub enum Option<T> {
+   |          ^^^^^^
+   = note: required for `Arbiter<Option<Rc<u32>>>` to implement `Sync`
+   = note: shared static variables must have a type that implements `Sync`
