@@ -41,8 +41,8 @@ impl<T: Copy> Default for Signal<T> {
     }
 }
 
-unsafe impl<T: Copy> Send for Signal<T> {}
-unsafe impl<T: Copy> Sync for Signal<T> {}
+unsafe impl<T: Copy + Send> Send for Signal<T> {}
+unsafe impl<T: Copy + Send> Sync for Signal<T> {}
 
 impl<T: Copy> Signal<T> {
     /// Create a new signal.

@@ -25,9 +25,6 @@ impl<T: Copy> Default for Watch<T> {
     }
 }
 
-unsafe impl<T: Copy> Send for Watch<T> {}
-unsafe impl<T: Copy> Sync for Watch<T> {}
-
 impl<T: Copy> Watch<T> {
     /// Create a new watch.
     pub const fn new() -> Self {
