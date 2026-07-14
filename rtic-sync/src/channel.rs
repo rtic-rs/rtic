@@ -46,9 +46,9 @@ pub struct Channel<T, const N: usize> {
     num_senders: UnsafeCell<usize>,
 }
 
-unsafe impl<T, const N: usize> Send for Channel<T, N> {}
+unsafe impl<T: Send, const N: usize> Send for Channel<T, N> {}
 
-unsafe impl<T, const N: usize> Sync for Channel<T, N> {}
+unsafe impl<T: Send, const N: usize> Sync for Channel<T, N> {}
 
 macro_rules! cs_access {
     ($name:ident, $type:ty) => {
@@ -263,8 +263,6 @@ where
 
 /// A `Sender` can send to the channel and can be cloned.
 pub struct Sender<'a, T, const N: usize>(&'a Channel<T, N>);
-
-unsafe impl<T, const N: usize> Send for Sender<'_, T, N> {}
 
 /// This is needed to make the async closure in `send` accept that we "share"
 /// the link possible between threads.
@@ -564,8 +562,6 @@ impl<T, const N: usize> Clone for Sender<'_, T, N> {
 
 /// A receiver of the channel. There can only be one receiver at any time.
 pub struct Receiver<'a, T, const N: usize>(&'a Channel<T, N>);
-
-unsafe impl<T, const N: usize> Send for Receiver<'_, T, N> {}
 
 impl<T, const N: usize> core::fmt::Debug for Receiver<'_, T, N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {

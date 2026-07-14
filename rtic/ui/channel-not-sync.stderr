@@ -1,0 +1,22 @@
+error[E0277]: `RefCell<u32>` cannot be shared between threads safely
+  --> ui/channel-not-sync.rs:13:12
+   |
+13 |         r: Receiver<'static, NotSend, 1>,
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `RefCell<u32>` cannot be shared between threads safely
+   |
+   = help: the trait `Sync` is not implemented for `RefCell<u32>`
+   = note: if you want to do aliasing and mutation between multiple threads, use `std::sync::RwLock` instead
+   = note: required for `&'static RefCell<u32>` to implement `Send`
+   = note: required for `Channel<&'static RefCell<u32>, 1>` to implement `Sync`
+   = note: 1 redundant requirement hidden
+   = note: required for `&'static Channel<&'static RefCell<u32>, 1>` to implement `Send`
+note: required because it appears within the type `rtic_sync::channel::Receiver<'static, &'static RefCell<u32>, 1>`
+  --> $WORKSPACE/rtic-sync/src/channel.rs
+   |
+   | pub struct Receiver<'a, T, const N: usize>(&'a Channel<T, N>);
+   |            ^^^^^^^^
+note: required by a bound in `rtic::export::assert_send`
+  --> src/export.rs
+   |
+   | pub fn assert_send<T: Send>() {}
+   |                       ^^^^ required by this bound in `assert_send`
