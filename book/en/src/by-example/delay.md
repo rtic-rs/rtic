@@ -2,12 +2,17 @@
 
 A convenient way to express miniminal timing requirements is by delaying progression.
 
-This can be achieved by instantiating a monotonic timer (for implementations, see [`rtic-monotonics`]):
+This can be achieved by instantiating a monotonic timer (for implementations, see [`rtic-monotonics`]).
+Monotonics can be thought of like timekeepers, they measure the amount of time elapsed since the start of the monotonic (usually the start of the application). In RTIC, monotonics can be used for delaying the execution of code and for time measurement.
+
+All monotonic implementations in RTIC are guaranteed to remain stable longer than the lifetime of the hardware, i.e. you can theoretically delay a task for multiple years and it should execute successfully (presuming there's no hardware failure). The resolution of the monotonic (i.e. the smallest possible delay that you can sleep) depends on the implementation. Many monotonic implementations also allow you to control the resolution by setting a prescaler for the hardware timer. This is documented in the [crate docs of the individual `rtic-monotonics`](https://docs.rs/rtic-monotonics/latest/rtic_monotonics/#modules).
 
 [`rtic-monotonics`]: https://github.com/rtic-rs/rtic/tree/master/rtic-monotonics
 [`rtic-time`]: https://github.com/rtic-rs/rtic/tree/master/rtic-time
 [`Monotonic`]: https://docs.rs/rtic-time/latest/rtic_time/trait.Monotonic.html
 [Implementing a `Monotonic`]: ../monotonic_impl.md
+
+## Delay
 
 ```rust,noplayground
 ...
