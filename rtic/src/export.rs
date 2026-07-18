@@ -4,10 +4,16 @@ pub use portable_atomic as atomic;
 pub mod executor;
 
 // Cortex-M target (any)
-#[cfg(feature = "cortex-m")]
+#[cfg(any(
+    implementation = "cortex-m-basepri",
+    implementation = "cortex-m-source-masking"
+))]
 pub use cortex_common::*;
 
-#[cfg(feature = "cortex-m")]
+#[cfg(any(
+    implementation = "cortex-m-basepri",
+    implementation = "cortex-m-source-masking"
+))]
 mod cortex_common;
 
 // Cortex-M target with basepri support
@@ -24,10 +30,18 @@ mod cortex_source_mask;
 #[cfg(implementation = "cortex-m-source-masking")]
 pub use cortex_source_mask::*;
 
-#[cfg(feature = "riscv")]
+#[cfg(any(
+    implementation = "riscv-esp32c3",
+    implementation = "riscv-esp32c6",
+    implementation = "riscv-slic"
+))]
 pub mod riscv_common;
 
-#[cfg(feature = "riscv")]
+#[cfg(any(
+    implementation = "riscv-esp32c3",
+    implementation = "riscv-esp32c6",
+    implementation = "riscv-slic"
+))]
 pub use riscv_common::*;
 
 #[cfg(implementation = "riscv-esp32c3")]

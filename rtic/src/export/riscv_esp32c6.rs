@@ -3,9 +3,6 @@ pub use esp32c6::{Interrupt, Peripherals};
 pub use riscv::interrupt;
 pub use riscv::register::mcause;
 
-#[cfg(all(feature = "riscv-esp32c6", not(feature = "riscv-esp32c6-backend")))]
-compile_error!("Building for the esp32c6, but 'riscv-esp32c6-backend not selected'");
-
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
 where
