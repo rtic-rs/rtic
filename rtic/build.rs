@@ -23,7 +23,7 @@ fn main() {
         return;
     };
 
-    let features = [
+    let impls = [
         ("thumbv6-backend", "cortex-m-source-masking"),
         ("thumbv8base-backend", "cortex-m-source-masking"),
         ("thumbv7-backend", "cortex-m-basepri"),
@@ -34,19 +34,22 @@ fn main() {
         ("riscv-mecall-backend", "riscv-slic"),
     ];
 
-    let cfg_values: Vec<_> = features
+    let cfg_values: Vec<_> = impls
         .iter()
         .map(|(_feature, cfg)| format!("\"{cfg}\""))
         .collect();
 
     let values = cfg_values.join(",");
-    println!("cargo::rustc-check-cfg=cfg(feature, values({}))", values);
+    println!(
+        "cargo::rustc-check-cfg=cfg(implementation, values({}))",
+        values
+    );
 
-    if let Some(feature) = features
+    if let Some(feature) = impls
         .iter()
-        .find_map(|(in_feature, out_feature)| (in_feature == &backend).then_some(out_feature))
+        .find_map(|(feature, implementation)| (feature == &backend).then_some(implementation))
     {
-        println!("cargo::rustc-cfg=feature=\"{feature}\"");
+        println!("cargo::rustc-cfg=implementation=\"{feature}\"");
     } else {
         println!("cargo::error=Unknown backend: {backend}");
         return;
