@@ -2,9 +2,6 @@ use esp32c3::INTERRUPT_CORE0;
 pub use esp32c3::{Interrupt, Peripherals};
 pub use riscv::{interrupt, register::mcause};
 
-#[cfg(all(feature = "riscv-esp32c3", not(feature = "riscv-esp32c3-backend")))]
-compile_error!("Building for the esp32c3, but 'riscv-esp32c3-backend not selected'");
-
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
 where
