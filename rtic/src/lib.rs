@@ -31,7 +31,6 @@
     html_favicon_url = "https://raw.githubusercontent.com/rtic-rs/rtic/master/book/en/src/RTIC.svg"
 )]
 #![allow(clippy::inline_always)]
-#![allow(unexpected_cfgs)]
 
 pub use rtic_core::{Exclusive, Mutex, prelude as mutex_prelude};
 pub use rtic_macros::app;
