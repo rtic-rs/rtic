@@ -11,17 +11,17 @@ pub use cortex_common::*;
 mod cortex_common;
 
 // Cortex-M target with basepri support
-#[cfg(feature = "cortex-m-basepri")]
+#[cfg(implementation = "cortex-m-basepri")]
 mod cortex_basepri;
 
-#[cfg(feature = "cortex-m-basepri")]
+#[cfg(implementation = "cortex-m-basepri")]
 pub use cortex_basepri::*;
 
 // Cortex-M target with source mask support
-#[cfg(feature = "cortex-m-source-masking")]
+#[cfg(implementation = "cortex-m-source-masking")]
 mod cortex_source_mask;
 
-#[cfg(feature = "cortex-m-source-masking")]
+#[cfg(implementation = "cortex-m-source-masking")]
 pub use cortex_source_mask::*;
 
 #[cfg(feature = "riscv")]
@@ -30,19 +30,19 @@ pub mod riscv_common;
 #[cfg(feature = "riscv")]
 pub use riscv_common::*;
 
-#[cfg(feature = "riscv-esp32c3")]
+#[cfg(implementation = "riscv-esp32c3")]
 mod riscv_esp32c3;
-#[cfg(feature = "riscv-esp32c3")]
+#[cfg(implementation = "riscv-esp32c3")]
 pub use riscv_esp32c3::*;
 
-#[cfg(feature = "riscv-esp32c6")]
+#[cfg(implementation = "riscv-esp32c6")]
 mod riscv_esp32c6;
-#[cfg(feature = "riscv-esp32c6")]
+#[cfg(implementation = "riscv-esp32c6")]
 pub use riscv_esp32c6::*;
 
-#[cfg(feature = "riscv-slic")]
+#[cfg(implementation = "riscv-slic")]
 mod slic;
-#[cfg(feature = "riscv-slic")]
+#[cfg(implementation = "riscv-slic")]
 pub use slic::*;
 
 #[inline(always)]
