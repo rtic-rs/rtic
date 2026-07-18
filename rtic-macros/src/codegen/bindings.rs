@@ -1,13 +1,3 @@
-#[cfg(not(any(
-    feature = "cortex-m-source-masking",
-    feature = "cortex-m-basepri",
-    feature = "test-template",
-    feature = "riscv-esp32c3",
-    feature = "riscv-esp32c6",
-    feature = "riscv-slic",
-)))]
-compile_error!("No backend selected");
-
 #[cfg(any(feature = "cortex-m-source-masking", feature = "cortex-m-basepri"))]
 pub use cortex::*;
 
