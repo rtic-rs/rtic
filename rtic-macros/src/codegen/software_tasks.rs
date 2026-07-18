@@ -37,8 +37,16 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             let cfgs = &task.cfgs;
             let stmts = &task.stmts;
             let inputs = &task.inputs;
-            let lifetime = if task.is_bottom { quote!('static) } else { quote!('a) };
-            let generics = if task.is_bottom { quote!() } else { quote!(<'a>) };
+            let lifetime = if task.is_bottom {
+                quote!('static)
+            } else {
+                quote!('a)
+            };
+            let generics = if task.is_bottom {
+                quote!()
+            } else {
+                quote!(<'a>)
+            };
 
             user_tasks.push(quote!(
                 #(#attrs)*

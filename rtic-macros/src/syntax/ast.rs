@@ -258,7 +258,7 @@ pub struct SoftwareTaskArgs {
     pub shared_resources: SharedResources,
 
     /// Local tasks
-    /// 
+    ///
     /// Local tasks can only be spawned from the same executor.
     /// However they do not require Send and Sync
     pub local_task: bool,
