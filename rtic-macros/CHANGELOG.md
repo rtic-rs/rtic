@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+- `#[pre_rtic_hook]` attribute that allows running code before RTIC initialization.
+
 ## [v2.3.0] - 2026-07-08
 
 ### Fixed
