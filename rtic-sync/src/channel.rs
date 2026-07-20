@@ -11,7 +11,7 @@ use core::{
 };
 #[doc(hidden)]
 pub use critical_section;
-use heapless::Deque;
+use heapless::{deque::DequeView, Deque};
 use rtic_common::{
     dropper::OnDrop, wait_queue::DoublyLinkedList, wait_queue::Link,
     waker_registration::CriticalSectionWakerRegistration as WakerRegistration,
@@ -30,25 +30,53 @@ type WaitQueue = DoublyLinkedList<WaitQueueData>;
 ///
 /// Right now, the size of the queue `N` is limited to 255 elements.
 pub struct Channel<T, const N: usize> {
-    // Here are all indexes that are not used in `slots` and ready to be allocated.
     freeq: UnsafeCell<Deque<u8, N>>,
-    // Here are wakers and indexes to slots that are ready to be dequeued by the receiver.
     readyq: UnsafeCell<Deque<u8, N>>,
-    // Waker for the receiver.
     receiver_waker: WakerRegistration,
-    // Storage for N `T`s, so we don't memcpy around a lot of `T`s.
     slots: [UnsafeCell<MaybeUninit<T>>; N],
-    // If there is no room in the queue a `Sender`s can wait for there to be place in the queue.
     wait_queue: WaitQueue,
-    // Keep track of the receiver.
     receiver_dropped: UnsafeCell<bool>,
-    // Keep track of the number of senders.
     num_senders: UnsafeCell<usize>,
 }
 
 unsafe impl<T, const N: usize> Send for Channel<T, N> {}
 
 unsafe impl<T, const N: usize> Sync for Channel<T, N> {}
+
+struct ChannelView<'a, T> {
+    // Here are all indexes that are not used in `slots` and ready to be allocated.
+    freeq: &'a UnsafeCell<DequeView<u8>>,
+    // Here are wakers and indexes to slots that are ready to be dequeued by the receiver.
+    readyq: &'a UnsafeCell<DequeView<u8>>,
+    // Waker for the receiver.
+    receiver_waker: &'a WakerRegistration,
+    // Storage for N `T`s, so we don't memcpy around a lot of `T`s.
+    slots: &'a [UnsafeCell<MaybeUninit<T>>],
+    // If there is no room in the queue a `Sender`s can wait for there to be place in the queue.
+    wait_queue: &'a WaitQueue,
+    // Keep track of the receiver.
+    receiver_dropped: &'a UnsafeCell<bool>,
+    // Keep track of the number of senders.
+    num_senders: &'a UnsafeCell<usize>,
+}
+
+impl<T> Clone for ChannelView<'_, T> {
+    fn clone(&self) -> Self {
+        Self {
+            freeq: self.freeq,
+            readyq: self.readyq,
+            receiver_waker: self.receiver_waker,
+            slots: self.slots,
+            wait_queue: self.wait_queue,
+            receiver_dropped: self.receiver_dropped,
+            num_senders: self.num_senders,
+        }
+    }
+}
+
+unsafe impl<T> Send for ChannelView<'_, T> {}
+
+unsafe impl<T> Sync for ChannelView<'_, T> {}
 
 macro_rules! cs_access {
     ($name:ident, $type:ty) => {
@@ -65,6 +93,52 @@ macro_rules! cs_access {
             f(v)
         }
     };
+}
+
+impl<T> ChannelView<'_, T> {
+    cs_access!(freeq, DequeView<u8>);
+    cs_access!(readyq, DequeView<u8>);
+    cs_access!(receiver_dropped, bool);
+    cs_access!(num_senders, usize);
+
+    /// Return free slot `slot` to the channel.
+    ///
+    /// This will do one of two things:
+    /// 1. If there are any waiting `send`-ers, wake the longest-waiting one and hand it `slot`.
+    /// 2. else, insert `slot` into `self.freeq`.
+    ///
+    /// SAFETY: `slot` must be a `u8` that is obtained by dequeueing from [`Self::readyq`], and that `slot`
+    /// is returned at most once.
+    unsafe fn return_free_slot(&self, slot: u8) {
+        critical_section::with(|cs| {
+            fence(Ordering::SeqCst);
+
+            // If someone is waiting in the `wait_queue`, wake the first one up & hand it the free slot.
+            if let Some((wait_head, mut freeq_slot)) = self.wait_queue.pop() {
+                // SAFETY: `freeq_slot` is valid for writes: we are in a critical
+                // section & the `SlotPtr` lives for at least the duration of the wait queue link.
+                unsafe { freeq_slot.replace(Some(slot), cs) };
+                wait_head.wake();
+            } else {
+                // SAFETY: `self.freeq` is not called recursively.
+                unsafe {
+                    self.freeq(cs, |freeq| {
+                        debug_assert!(!freeq.is_full());
+                        // SAFETY: `freeq` is not full.
+                        freeq.push_back_unchecked(slot);
+                    });
+                }
+            }
+        })
+    }
+
+    /// SAFETY: the caller must guarantee that `slot` is an `u8` obtained by dequeueing from [`Self::readyq`],
+    /// and is read at most once.
+    unsafe fn read_slot(&self, slot: u8) -> T {
+        let first_element = self.slots.get_unchecked(slot as usize).get_mut();
+        let ptr = first_element.deref().as_ptr();
+        ptr::read(ptr)
+    }
 }
 
 impl<T, const N: usize> Default for Channel<T, N> {
@@ -112,7 +186,7 @@ impl<T, const N: usize> Channel<T, N> {
     }
 
     /// Split the queue into a `Sender`/`Receiver` pair.
-    pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
+    pub fn split(&mut self) -> (Sender<'_, T>, Receiver<'_, T>) {
         // NOTE(assert): queue is cleared by dropping the corresponding `Receiver`.
         debug_assert!(self.readyq.as_mut().is_empty(),);
 
@@ -136,51 +210,17 @@ impl<T, const N: usize> Channel<T, N> {
         // There is now 1 sender
         *self.num_senders.as_mut() = 1;
 
-        (Sender(self), Receiver(self))
-    }
+        let view = ChannelView {
+            freeq: &self.freeq,
+            readyq: &self.readyq,
+            receiver_waker: &self.receiver_waker,
+            receiver_dropped: &self.receiver_dropped,
+            num_senders: &self.num_senders,
+            slots: &self.slots,
+            wait_queue: &self.wait_queue,
+        };
 
-    cs_access!(freeq, Deque<u8, N>);
-    cs_access!(readyq, Deque<u8, N>);
-    cs_access!(receiver_dropped, bool);
-    cs_access!(num_senders, usize);
-
-    /// Return free slot `slot` to the channel.
-    ///
-    /// This will do one of two things:
-    /// 1. If there are any waiting `send`-ers, wake the longest-waiting one and hand it `slot`.
-    /// 2. else, insert `slot` into `self.freeq`.
-    ///
-    /// SAFETY: `slot` must be a `u8` that is obtained by dequeueing from [`Self::readyq`], and that `slot`
-    /// is returned at most once.
-    unsafe fn return_free_slot(&self, slot: u8) {
-        critical_section::with(|cs| {
-            fence(Ordering::SeqCst);
-
-            // If someone is waiting in the `wait_queue`, wake the first one up & hand it the free slot.
-            if let Some((wait_head, mut freeq_slot)) = self.wait_queue.pop() {
-                // SAFETY: `freeq_slot` is valid for writes: we are in a critical
-                // section & the `SlotPtr` lives for at least the duration of the wait queue link.
-                unsafe { freeq_slot.replace(Some(slot), cs) };
-                wait_head.wake();
-            } else {
-                // SAFETY: `self.freeq` is not called recursively.
-                unsafe {
-                    self.freeq(cs, |freeq| {
-                        debug_assert!(!freeq.is_full());
-                        // SAFETY: `freeq` is not full.
-                        freeq.push_back_unchecked(slot);
-                    });
-                }
-            }
-        })
-    }
-
-    /// SAFETY: the caller must guarantee that `slot` is an `u8` obtained by dequeueing from [`Self::readyq`],
-    /// and is read at most once.
-    unsafe fn read_slot(&self, slot: u8) -> T {
-        let first_element = self.slots.get_unchecked(slot as usize).get_mut();
-        let ptr = first_element.deref().as_ptr();
-        ptr::read(ptr)
+        (Sender(view.clone()), Receiver(view))
     }
 }
 
@@ -262,9 +302,9 @@ where
 }
 
 /// A `Sender` can send to the channel and can be cloned.
-pub struct Sender<'a, T, const N: usize>(&'a Channel<T, N>);
+pub struct Sender<'a, T>(ChannelView<'a, T>);
 
-unsafe impl<T, const N: usize> Send for Sender<'_, T, N> {}
+unsafe impl<T> Send for Sender<'_, T> {}
 
 /// This is needed to make the async closure in `send` accept that we "share"
 /// the link possible between threads.
@@ -318,20 +358,20 @@ unsafe impl Send for SlotPtr {}
 
 unsafe impl Sync for SlotPtr {}
 
-impl<T, const N: usize> core::fmt::Debug for Sender<'_, T, N> {
+impl<T> core::fmt::Debug for Sender<'_, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Sender")
     }
 }
 
 #[cfg(feature = "defmt-03")]
-impl<T, const N: usize> defmt::Format for Sender<'_, T, N> {
+impl<T> defmt::Format for Sender<'_, T> {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(f, "Sender",)
     }
 }
 
-impl<T, const N: usize> Sender<'_, T, N> {
+impl<T> Sender<'_, T> {
     #[inline(always)]
     fn send_footer(&mut self, idx: u8, val: T) {
         // Write the value to the slots, note; this memcpy is not under a critical section.
@@ -406,7 +446,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
             // exited the `poll_fn` below in the `drop(dropper)` call. The other dereference
             // of this pointer is in the `poll_fn`.
             if let Some(link) = unsafe { link_ptr2.get() } {
-                link.remove_from_list(&self.0.wait_queue);
+                link.remove_from_list(self.0.wait_queue);
             }
 
             // Return our potentially-unused free slot.
@@ -528,7 +568,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
     }
 }
 
-impl<T, const N: usize> Drop for Sender<'_, T, N> {
+impl<T> Drop for Sender<'_, T> {
     fn drop(&mut self) {
         // Count down the reference counter
         let num_senders = critical_section::with(|cs| {
@@ -548,7 +588,7 @@ impl<T, const N: usize> Drop for Sender<'_, T, N> {
     }
 }
 
-impl<T, const N: usize> Clone for Sender<'_, T, N> {
+impl<T> Clone for Sender<'_, T> {
     fn clone(&self) -> Self {
         // Count up the reference counter
         critical_section::with(|cs| unsafe {
@@ -556,25 +596,25 @@ impl<T, const N: usize> Clone for Sender<'_, T, N> {
             self.0.num_senders(cs, |v| *v += 1);
         });
 
-        Self(self.0)
+        Self(self.0.clone())
     }
 }
 
 // -------- Receiver
 
 /// A receiver of the channel. There can only be one receiver at any time.
-pub struct Receiver<'a, T, const N: usize>(&'a Channel<T, N>);
+pub struct Receiver<'a, T>(ChannelView<'a, T>);
 
-unsafe impl<T, const N: usize> Send for Receiver<'_, T, N> {}
+unsafe impl<T> Send for Receiver<'_, T> {}
 
-impl<T, const N: usize> core::fmt::Debug for Receiver<'_, T, N> {
+impl<T> core::fmt::Debug for Receiver<'_, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Receiver")
     }
 }
 
 #[cfg(feature = "defmt-03")]
-impl<T, const N: usize> defmt::Format for Receiver<'_, T, N> {
+impl<T> defmt::Format for Receiver<'_, T> {
     fn format(&self, f: defmt::Formatter) {
         defmt::write!(f, "Receiver",)
     }
@@ -590,7 +630,7 @@ pub enum ReceiveError {
     Empty,
 }
 
-impl<T, const N: usize> Receiver<'_, T, N> {
+impl<T> Receiver<'_, T> {
     /// Receives a value if there is one in the channel, non-blocking.
     pub fn try_recv(&mut self) -> Result<T, ReceiveError> {
         // Try to get a ready slot.
@@ -668,7 +708,7 @@ impl<T, const N: usize> Receiver<'_, T, N> {
     }
 }
 
-impl<T, const N: usize> Drop for Receiver<'_, T, N> {
+impl<T> Drop for Receiver<'_, T> {
     fn drop(&mut self) {
         // Mark the receiver as dropped and wake all waiters
         critical_section::with(|cs| unsafe {
@@ -800,9 +840,9 @@ mod tests {
         let _ = make_channel!((i32, u32), 10);
     }
 
-    fn freeq<const N: usize, T, F, R>(channel: &Channel<T, N>, f: F) -> R
+    fn freeq<T, F, R>(channel: &ChannelView<T>, f: F) -> R
     where
-        F: FnOnce(&mut Deque<u8, N>) -> R,
+        F: FnOnce(&mut DequeView<u8>) -> R,
     {
         critical_section::with(|cs| unsafe { channel.freeq(cs, f) })
     }

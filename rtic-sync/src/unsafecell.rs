@@ -12,7 +12,7 @@ use core::cell::UnsafeCell as InnerUnsafeCell;
 /// An [`core::cell::UnsafeCell`] wrapper that provides compatibility with
 /// loom's UnsafeCell.
 #[derive(Debug)]
-pub struct UnsafeCell<T>(InnerUnsafeCell<T>);
+pub struct UnsafeCell<T: ?Sized>(InnerUnsafeCell<T>);
 
 impl<T> UnsafeCell<T> {
     /// Create a new `UnsafeCell`.
@@ -25,7 +25,9 @@ impl<T> UnsafeCell<T> {
     pub fn new(data: T) -> UnsafeCell<T> {
         UnsafeCell(InnerUnsafeCell::new(data))
     }
+}
 
+impl<T: ?Sized> UnsafeCell<T> {
     /// Access the contents of the `UnsafeCell` through a tracked mut pointer.
     pub fn get_mut(&self) -> MutPtr<T> {
         #[cfg(loom)]
@@ -54,10 +56,10 @@ impl<T> UnsafeCell<T> {
 }
 
 #[cfg(not(loom))]
-pub struct MutPtr<T>(*mut T);
+pub struct MutPtr<T: ?Sized>(*mut T);
 
 #[cfg(not(loom))]
-impl<T> MutPtr<T> {
+impl<T: ?Sized> MutPtr<T> {
     #[allow(clippy::mut_from_ref)]
     /// SAFETY: the caller must guarantee that the contained `*mut T` is not
     /// null, and must uphold the same safety requirements as for

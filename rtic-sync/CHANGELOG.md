@@ -22,6 +22,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 ### Changed
 
 - Un-hide lifetimes of output type in `Signal::split` to resolve a new warning.
+- Remove size const-generic from `channel::Sender` and `channel::Receiver`.
 
 ## v1.4.0 - 2025-06-22
 
