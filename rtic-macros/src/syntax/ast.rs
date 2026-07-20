@@ -44,6 +44,9 @@ pub struct App {
 
     /// Async software tasks: `#[task]`
     pub software_tasks: Map<SoftwareTask>,
+
+    /// The `#[pre_rtic_hook]` function
+    pub pre_rtic_hook: Option<PreRticHook>,
 }
 
 /// Interrupts used to dispatch software tasks
@@ -369,3 +372,21 @@ pub type SharedResources = Map<Access>;
 
 /// Local resource access/declaration list in task attribute
 pub type LocalResources = Map<TaskLocal>;
+
+/// The `#[pre_rtic_hook]` function
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct PreRticHook {
+    /// Attributes that will apply to this `#[pre_rtic_hook]` function
+    pub attrs: Vec<Attribute>,
+
+    /// The name of the `#[pre_rtic_hook]` function
+    pub name: Ident,
+
+    /// The statements that make up this `#[pre_rtic_hook]` function
+    pub stmts: Vec<Stmt>,
+
+    /// The `#[pre_rtic_hook]` function is declared externally
+    pub is_extern: bool,
+}
+

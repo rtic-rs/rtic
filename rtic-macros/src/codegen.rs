@@ -10,6 +10,7 @@ mod assertions;
 mod async_dispatchers;
 mod extra_mods;
 mod hardware_tasks;
+mod pre_rtic_hook;
 mod idle;
 mod init;
 mod local_resources;
@@ -34,6 +35,7 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
     let main = main::codegen(app, analysis);
     let init_codegen = init::codegen(app, analysis);
     let idle_codegen = idle::codegen(app, analysis);
+    let pre_rtic_hook_codegen = pre_rtic_hook::codegen(app, analysis);
     let shared_resources_codegen = shared_resources::codegen(app, analysis);
     let local_resources_codegen = local_resources::codegen(app, analysis);
     let hardware_tasks_codegen = hardware_tasks::codegen(app, analysis);
@@ -66,6 +68,8 @@ pub fn app(app: &App, analysis: &Analysis) -> TokenStream2 {
             #init_codegen
 
             #idle_codegen
+
+            #pre_rtic_hook_codegen
 
             #hardware_tasks_codegen
 

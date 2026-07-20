@@ -2,6 +2,7 @@ mod app;
 mod hardware_task;
 mod idle;
 mod init;
+mod pre_rtic_hook;
 mod resource;
 mod software_task;
 mod util;

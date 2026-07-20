@@ -11,7 +11,7 @@ use syn::{
 use crate::syntax::{
     ast::{
         App, AppArgs, Dispatcher, Dispatchers, HardwareTask, Idle, IdleArgs, Init, InitArgs,
-        LocalResource, SharedResource, SoftwareTask,
+        LocalResource, PreRticHook, SharedResource, SoftwareTask,
     },
     backend::BackendArgs,
     parse::{self as syntax_parse, util},
@@ -191,6 +191,8 @@ impl App {
         let mut seen_idents = HashSet::<Ident>::new();
         let mut bindings = HashSet::<Ident>::new();
 
+        let mut pre_rtic_hook = None;
+
         let mut check_binding = |ident: &Ident| {
             if bindings.contains(ident) {
                 return Err(parse::Error::new(
@@ -297,6 +299,24 @@ impl App {
                                 );
                             }
                         }
+                    } else if let Some(pos) = item
+                        .attrs
+                        .iter()
+                        .position(|attr| util::attr_eq(attr, "pre_rtic_hook"))
+                    {
+                        let _ = item.attrs.remove(pos);
+
+                        // If an pre_rtic_hook function already exists, error
+                        if pre_rtic_hook.is_some() {
+                            return Err(parse::Error::new(
+                                span,
+                                "`#[pre_rtic_hook]` function must appear at most once",
+                            ));
+                        }
+
+                        check_ident(&item.sig.ident)?;
+
+                        pre_rtic_hook = Some(PreRticHook::parse(item)?);
                     } else {
                         // Forward normal functions
                         user_code.push(Item::Fn(item.clone()));
@@ -480,11 +500,29 @@ impl App {
                                         );
                                     }
                                 }
+                            } else if let Some(pos) = item
+                                .attrs
+                                .iter()
+                                .position(|attr| util::attr_eq(attr, "pre_rtic_hook"))
+                            {
+                                let _ = item.attrs.remove(pos);
+
+                                // If an idle function already exists, error
+                                if pre_rtic_hook.is_some() {
+                                    return Err(parse::Error::new(
+                                        span,
+                                        "`#[pre_rtic_hook]` function must appear at most once",
+                                    ));
+                                }
+
+                                check_ident(&item.sig.ident)?;
+
+                                pre_rtic_hook = Some(PreRticHook::parse_foreign(item)?);
                             } else {
                                 return Err(parse::Error::new(
                                     span,
-                                    "`extern` task, init or idle must have either `#[task(..)]`,
-                                    `#[init(..)]` or `#[idle(..)]` attribute",
+                                    "`extern` task, init, pre_rtic_hook or idle must have either `#[task(..)]`,
+                                    `#[init(..)]`, `#[pre_rtic_hook]` or `#[idle(..)]` attribute",
                                 ));
                             }
                         } else {
@@ -544,6 +582,7 @@ impl App {
             user_code,
             hardware_tasks,
             software_tasks,
+            pre_rtic_hook,
         })
     }
 }

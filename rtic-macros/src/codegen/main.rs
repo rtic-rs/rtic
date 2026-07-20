@@ -48,6 +48,14 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     let main = util::suffixed("main");
     let init_name = &app.init.name;
+    let call_pre_rtic_hook = if let Some(pre_rtic_hook) = &app.pre_rtic_hook {
+        let name = &pre_rtic_hook.name;
+        quote!(
+            let _: () = #name();
+        )
+    } else {
+        quote!()
+    };
 
     let init_args = if app.args.core {
         quote!(core.into(), executors_size)
@@ -63,6 +71,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         #[doc(hidden)]
         #[no_mangle]
         unsafe extern "C" fn #main() -> ! {
+            #call_pre_rtic_hook
+
             #(#assertion_stmts)*
 
             #(#pre_init_stmts)*
