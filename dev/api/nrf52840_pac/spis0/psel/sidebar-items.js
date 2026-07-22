@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["csn","miso","mosi","sck"],"struct":["PSEL"],"type":["CSN","MISO","MOSI","SCK"]};

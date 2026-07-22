@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_NEXTSTEP_SPEC","W"],"type":["TASKS_NEXTSTEP_W"]};

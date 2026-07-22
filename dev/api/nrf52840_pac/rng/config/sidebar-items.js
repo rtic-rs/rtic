@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DERCEN_A"],"struct":["CONFIG_SPEC","R","W"],"type":["DERCEN_R","DERCEN_W"]};

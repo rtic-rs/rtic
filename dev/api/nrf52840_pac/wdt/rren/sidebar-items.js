@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RR0_A","RR1_A","RR2_A","RR3_A","RR4_A","RR5_A","RR6_A","RR7_A"],"struct":["R","RREN_SPEC","W"],"type":["RR0_R","RR0_W","RR1_R","RR1_W","RR2_R","RR2_W","RR3_R","RR3_W","RR4_R","RR4_W","RR5_R","RR5_W","RR6_R","RR6_W","RR7_R","RR7_W"]};

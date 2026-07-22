@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PT1_DC_0","PT1_DC_1","PT1_DC_2","PT1_DC_3"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EVENTS_ERRORECB_SPEC","R","W"],"type":["EVENTS_ERRORECB_R","EVENTS_ERRORECB_W"]};

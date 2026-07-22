@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["NVIC_ICPR_SPEC"],"type":["CLRPEND_R","CLRPEND_W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["lrck","mck","sck","sdin","sdout"],"struct":["PSEL"],"type":["LRCK","MCK","SCK","SDIN","SDOUT"]};

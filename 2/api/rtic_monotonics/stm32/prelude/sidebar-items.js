@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":[["stm32_tim15_monotonic",1],["stm32_tim2_monotonic",1],["stm32_tim3_monotonic",1],["stm32_tim4_monotonic",1],["stm32_tim5_monotonic",1]],"trait":["ExtU64","ExtU64Ceil","Monotonic"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["NVIC_ISPR_SPEC"],"type":["R","SETPEND_R","SETPEND_W","W"]};

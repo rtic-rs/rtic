@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":[["rp2040_timer_monotonic",1]],"trait":["ExtU64","ExtU64Ceil","Monotonic"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PWR_POL_0","PWR_POL_1"]};

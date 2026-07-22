@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["PERFSEL1_A"],"struct":["PERFSEL1_SPEC"],"type":["PERFSEL1_R","PERFSEL1_W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["RRAM_0","RRAM_1"]};

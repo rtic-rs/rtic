@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DPMDUR_SPEC","R","W"],"type":["ENTER_R","ENTER_W","EXIT_R","EXIT_W"]};

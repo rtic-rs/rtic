@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CONTROL","OTPKEY0","OTPKEY1","OTPKEY2","OTPKEY3"]};

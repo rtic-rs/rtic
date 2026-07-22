@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ctrl","dbg_cfginfo","dbg_padoe","dbg_padout","fdebug","flevel","fstat","input_sync_bypass","instr_mem","intr","irq","irq_force","rxf","sm","sm_irq","txf"],"struct":["RegisterBlock"],"type":["CTRL","DBG_CFGINFO","DBG_PADOE","DBG_PADOUT","FDEBUG","FLEVEL","FSTAT","INPUT_SYNC_BYPASS","INSTR_MEM","INTR","IRQ","IRQ_FORCE","RXF","TXF"]};

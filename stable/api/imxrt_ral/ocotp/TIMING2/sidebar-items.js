@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["RELAX1","RELAX_PROG","RELAX_READ"]};

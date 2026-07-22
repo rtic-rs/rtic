@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DAP_SPEC","R","W"],"type":["DAP_R","DAP_W"]};

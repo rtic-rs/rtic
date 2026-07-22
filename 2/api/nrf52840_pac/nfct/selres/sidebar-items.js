@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["R","SELRES_SPEC","W"],"type":["CASCADE_R","CASCADE_W","PROTOCOL_R","PROTOCOL_W","RFU10_R","RFU10_W","RFU43_R","RFU43_W","RFU7_R","RFU7_W"]};

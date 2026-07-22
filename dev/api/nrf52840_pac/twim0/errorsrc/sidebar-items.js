@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ANACK_A","DNACK_A","OVERRUN_A"],"struct":["ERRORSRC_SPEC","R","W"],"type":["ANACK_R","ANACK_W","DNACK_R","DNACK_W","OVERRUN_R","OVERRUN_W"]};

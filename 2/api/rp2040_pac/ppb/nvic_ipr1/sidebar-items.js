@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["NVIC_IPR1_SPEC"],"type":["IP_4_R","IP_4_W","IP_5_R","IP_5_W","IP_6_R","IP_6_W","IP_7_R","IP_7_W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EVENTS_DEVMISS_SPEC","R","W"],"type":["EVENTS_DEVMISS_R","EVENTS_DEVMISS_W"]};

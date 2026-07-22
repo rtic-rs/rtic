@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DETECTMODE_A"],"struct":["DETECTMODE_SPEC","R","W"],"type":["DETECTMODE_R","DETECTMODE_W"]};

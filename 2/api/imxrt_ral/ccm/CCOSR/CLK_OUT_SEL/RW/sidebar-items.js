@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLK_OUT_SEL_0","CLK_OUT_SEL_1"]};

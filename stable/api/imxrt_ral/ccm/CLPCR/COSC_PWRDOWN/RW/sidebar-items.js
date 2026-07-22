@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["COSC_PWRDOWN_0","COSC_PWRDOWN_1"]};
