@@ -7,9 +7,18 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
-- Added Silabs `TIMER0`-`TIMER9` monotonics
+### Changed
 
-## v2.2.0 - 2026-07-08
+- [breaking] STM32 and Silabs chips are now selected via the chip feature on your own
+  `stm32-metapac`/`silabs-metapac` dependency; the per-chip features are removed (see README)
+- [breaking] Silabs monotonics are selected with `silabs_letimer0`, `silabs_rtcc` and
+  `silabs_timer0`-`silabs_timer9`; the per-family features are removed
+- [breaking] Silabs LETIMER `Mono::start()` no longer takes the timer and CMU objects
+- STM32 monotonics no longer use a build script
+- `stm32-metapac` (`>=16`), `imxrt-ral` (`>=0.5.4`) and `silabs-metapac` (`>=0.4`) accept any
+  newer release, so the dependency can unify with your HAL's copy
+
+## v2.2.0 - 2026-07-23
 
 ### Changed
 
@@ -20,10 +29,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- Silabs `TIMER0`-`TIMER9` monotonics
 - Silabs (EFR32, EFM32) support using the inbuilt RTCC / LETIMER peripherals
 - nRF9151 and nRF9161 support (RTC and TIMER monotonics), backed by `nrf9120-pac`
 - Secure and non-secure variants for all nRF91 chips: `nrf9160-s`/`nrf9160-ns`, `nrf9151-s`/`nrf9151-ns`, `nrf9161-s`/`nrf9161-ns`
-- A lot of STM32 chip feature flags
 - Cortex-M `systick` can be configured with its external clock source
 
 ### Fixed

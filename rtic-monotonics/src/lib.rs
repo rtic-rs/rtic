@@ -30,15 +30,17 @@
 //! `Available on crate features X only` tag are available on any `nrf52*` feature.
 //!
 //! # Silicon Labs (EFM, EFR)
-//! EFR monotonics require to enable the `efr32mg22` feature to be enabled. Monotonic implementations
-//! are available for the low-resolution LETIMER and RTCC peripherals.
+//! Enable a peripheral selector feature (e.g. `silabs_letimer0`, `silabs_rtcc`, `silabs_timer0`)
+//! plus the chip feature on your own `silabs-metapac` dependency
+//! (e.g. `silabs-metapac/efr32mg22c224f512im40`).
 //!
 //! # ESP32C3 and ESP32C6
 //! Enable either the `esp32c3-systimer` or `esp32c6-systimer` feature, as appropriate.
 //!
 //! # STM32
-//! Enable one of the `stm32*` features, as appropriate. Implementations are available for
-//! a selection of STM32 timers.
+//! Enable one of the `stm32_tim*` features, plus the chip feature on your own `stm32-metapac`
+//! dependency (e.g. `stm32-metapac/stm32g081kb`). Implementations are available for a
+//! selection of STM32 timers.
 //!
 //! # ATSAMD
 //! Monotonics for the ATSAMD family of parts using the real time clock (RTC) are provided in the
@@ -52,7 +54,7 @@
 //! system.
 
 // To build these docs correctly:
-// RUSTFLAGS="--cfg docsrs" cargo +nightly doc --features thumbv7-backend,cortex-m-systick,rp2040,nrf52840,imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1011,stm32h725ag,stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15
+// RUSTFLAGS="--cfg docsrs" cargo +nightly doc --features thumbv7-backend,cortex-m-systick,rp2040,nrf52840,imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1011,stm32-metapac/stm32h725ag,stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15
 
 #![no_std]
 #![deny(missing_docs)]
@@ -101,8 +103,7 @@ pub mod imxrt;
 ))]
 pub mod nrf;
 
-// Notice that `stm32` is not a feature, it is a compilation flag set in build.rs.
-#[cfg(stm32)]
+#[cfg(feature = "stm32-metapac")]
 pub mod stm32;
 
 #[cfg(feature = "silabs")]
@@ -132,7 +133,7 @@ pub(crate) const fn cortex_logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
     feature = "nrf9161-ns",
     feature = "nrf9161-s",
     feature = "imxrt",
-    stm32,
+    feature = "stm32-metapac",
 ))]
 pub(crate) unsafe fn set_monotonic_prio(
     prio_bits: u8,
