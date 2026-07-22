@@ -12,15 +12,9 @@ default = ["mgm260p", "timer0"]
 
 # Board — select exactly one.
 # UG613 MGM260P Module Explorer Kit (EFR32MG26B420F3200IM68).
-mgm260p = [
-    "silabs-metapac/efr32mg26b420f3200im68",
-    "rtic-monotonics/efr32mg26b420f3200im68",
-]
+mgm260p = ["silabs-metapac/efr32mg26b420f3200im68"]
 # Seeed Studio XIAO MG24 (EFR32MG24B220F1536IM48).
-xiao-mg24 = [
-    "silabs-metapac/efr32mg24b220f1536im48",
-    "rtic-monotonics/efr32mg24b220f1536im48",
-]
+xiao-mg24 = ["silabs-metapac/efr32mg24b220f1536im48"]
 
 # TIMER instance for the `blinky` binary — select exactly one.
 # Both boards have TIMER0..4; the MGM260P additionally has TIMER5..9.
@@ -53,6 +47,7 @@ features = ["thumbv8main-backend"]
 
 [dependencies.rtic-monotonics]
 path = "../../rtic-monotonics"
+features = ["silabs_letimer0"]
 
 [profile.release]
 debug = 2

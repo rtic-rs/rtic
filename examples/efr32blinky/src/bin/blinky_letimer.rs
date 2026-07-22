@@ -28,7 +28,7 @@ mod app {
         // Board-specific LF clock bring-up (LFRCO on brd2713a, LFXO on XIAO).
         efr32blinky::init_lf_clock();
 
-        Mono::start(silabs_metapac::LETIMER0, &silabs_metapac::CMU);
+        Mono::start();
         let led = Led::new();
 
         blink::spawn().ok();

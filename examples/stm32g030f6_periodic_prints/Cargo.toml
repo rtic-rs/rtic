@@ -14,8 +14,12 @@ features = ["thumbv6-backend"]
 
 [dependencies.rtic-monotonics]
 path = "../../rtic-monotonics"
-version = "2.0.1"
-features = ["stm32g030f6", "stm32_tim3"]
+version = "3.0.0"
+features = ["stm32_tim3"]
+
+[dependencies.stm32-metapac]
+version = "21.0.0"
+features = ["stm32g030f6"]
 
 
 [dependencies]

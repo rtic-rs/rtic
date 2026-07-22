@@ -1,7 +1,17 @@
 //! [`Monotonic`](rtic_time::Monotonic) implementations for STM32 chips.
 //!
-//! Not all timers are available on all parts. Ensure that only available
-//! timers are exposed by having the correct `stm32*` feature enabled for `rtic-monotonics`.
+//! The target chip is selected by enabling its chip feature on the
+//! `stm32-metapac` dependency in your own `Cargo.toml`, next to the timer
+//! feature on `rtic-monotonics`:
+//!
+//! ```toml
+//! rtic-monotonics = { version = "3", features = ["stm32_tim2"] }
+//! stm32-metapac = { version = "21", features = ["stm32g081kb"] }
+//! ```
+//!
+//! The `stm32-metapac` version requirement is wide so it unifies with your
+//! HAL's copy. Not all timers are available on all parts; enabling a timer
+//! the chip does not have fails to compile.
 //!
 //! # Example
 //!
@@ -63,13 +73,7 @@ use rtic_time::{
 };
 use stm32_metapac as pac;
 
-mod _generated {
-    #![allow(dead_code)]
-    #![allow(unused_imports)]
-    #![allow(non_snake_case)]
-
-    include!(concat!(env!("OUT_DIR"), "/_generated.rs"));
-}
+mod meta;
 
 #[doc(hidden)]
 #[macro_export]
@@ -293,6 +297,7 @@ fn compute_compare_value<T: TimerWord>(
     T::trunc_from_u64(val)
 }
 
+#[cfg(any(feature = "stm32_tim2", feature = "stm32_tim5"))]
 macro_rules! make_timer {
     ($backend_name:ident, $timer:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer backend implementation.
@@ -314,8 +319,9 @@ macro_rules! make_timer {
             ///
             /// Use the prelude macros instead.
             pub fn _start(tim_clock_hz: u32, timer_hz: u32) {
-                _generated::$timer::enable();
-                _generated::$timer::reset();
+                const TIMER_RCC: meta::TimerRcc = meta::TimerRcc::lookup(::core::stringify!($timer));
+                TIMER_RCC.enable();
+                TIMER_RCC.reset();
 
                 $timer.cr1().modify(|r| r.set_cen(false));
 
@@ -359,7 +365,7 @@ macro_rules! make_timer {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(_generated::NVIC_PRIO_BITS, pac::Interrupt::$timer);
+                    crate::set_monotonic_prio(meta::NVIC_PRIO_BITS, pac::Interrupt::$timer);
                     cortex_m::peripheral::NVIC::unmask(pac::Interrupt::$timer);
                 }
             }
@@ -410,7 +416,7 @@ macro_rules! make_timer {
                         r.set_uif(false);
                     });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    ::core::assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
+                    ::core::assert!(!prev.is_multiple_of(2), "Monotonic must have missed an interrupt!");
                 }
                 // Half period
                 if $timer.sr().read().ccif(0) {
@@ -419,7 +425,7 @@ macro_rules! make_timer {
                         r.set_ccif(0, false);
                     });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    ::core::assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
+                    ::core::assert!(prev.is_multiple_of(2), "Monotonic must have missed an interrupt!");
                 }
             }
 
@@ -430,6 +436,11 @@ macro_rules! make_timer {
     };
 }
 
+#[cfg(any(
+    feature = "stm32_tim3",
+    feature = "stm32_tim4",
+    feature = "stm32_tim15"
+))]
 macro_rules! make_timer2 {
     ($backend_name:ident, $timer:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Monotonic timer backend implementation.
@@ -451,8 +462,9 @@ macro_rules! make_timer2 {
             ///
             /// Use the prelude macros instead.
             pub fn _start(tim_clock_hz: u32, timer_hz: u32) {
-                _generated::$timer::enable();
-                _generated::$timer::reset();
+                const TIMER_RCC: meta::TimerRcc = meta::TimerRcc::lookup(::core::stringify!($timer));
+                TIMER_RCC.enable();
+                TIMER_RCC.reset();
 
                 $timer.cr1().modify(|r| r.set_cen(false));
 
@@ -496,7 +508,7 @@ macro_rules! make_timer2 {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(_generated::NVIC_PRIO_BITS, pac::Interrupt::$timer);
+                    crate::set_monotonic_prio(meta::NVIC_PRIO_BITS, pac::Interrupt::$timer);
                     cortex_m::peripheral::NVIC::unmask(pac::Interrupt::$timer);
                 }
             }
@@ -547,7 +559,7 @@ macro_rules! make_timer2 {
                         r.set_uif(false);
                     });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    ::core::assert!(prev % 2 == 1, "Monotonic must have missed an interrupt!");
+                    ::core::assert!(!prev.is_multiple_of(2), "Monotonic must have missed an interrupt!");
                 }
                 // Half period
                 if $timer.sr().read().ccif(0) {
@@ -556,7 +568,7 @@ macro_rules! make_timer2 {
                         r.set_ccif(0, false);
                     });
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    ::core::assert!(prev % 2 == 0, "Monotonic must have missed an interrupt!");
+                    ::core::assert!(prev.is_multiple_of(2), "Monotonic must have missed an interrupt!");
                 }
             }
 
