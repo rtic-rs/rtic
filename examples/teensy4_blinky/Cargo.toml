@@ -14,7 +14,7 @@ features = ["thumbv7-backend"]
 
 [dependencies.rtic-monotonics]
 path = "../../rtic-monotonics"
-version = "2.0.0"
+version = "3.0.0"
 features = ["imxrt_gpt1"]
 
 [dependencies]

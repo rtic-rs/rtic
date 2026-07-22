@@ -318,7 +318,11 @@ macro_rules! make_silabs_timer {
                 use $vals::{Cc0CfgMode, Cc1CfgMode, Presc};
                 let t = silabs_metapac::$timer;
 
-                silabs_metapac::CMU.$clken().modify(|w| w.$set_timer(true));
+                // `$clken` gates other peripherals too, so the read-modify-write must
+                // not race with a HAL enabling one of them
+                critical_section::with(|_| {
+                    silabs_metapac::CMU.$clken().modify(|w| w.$set_timer(true))
+                });
 
                 // CFG / CCx_CFG are writable only while EN = 0; the rest needs EN = 1.
                 t.en().write(|w| w.set_en(false));
@@ -411,13 +415,19 @@ macro_rules! make_silabs_timer {
                 if flags.of() {
                     t.if_clr().write(|w| w.set_of(true));
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
+                    assert!(
+                        !prev.is_multiple_of(2),
+                        "Monotonic must have skipped an interrupt!"
+                    );
                 }
                 // Half period (CC0).
                 if flags.cc0() {
                     t.if_clr().write(|w| w.set_cc0(true));
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
+                    assert!(
+                        prev.is_multiple_of(2),
+                        "Monotonic must have skipped an interrupt!"
+                    );
                 }
             }
 

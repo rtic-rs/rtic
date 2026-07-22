@@ -214,7 +214,7 @@ impl Backends {
                 "rp2040",
                 "nrf52840",
                 "imxrt_gpt1,imxrt-ral/imxrt1062",
-                "stm32_tim2,stm32h725ag",
+                "stm32_tim2,stm32-metapac/stm32h725ag",
             ])
         } else {
             Some(&[
@@ -236,7 +236,7 @@ impl Backends {
                 "nrf9161-ns",
                 "nrf9161-s",
                 "imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1062",
-                "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32h725ag",
+                "stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15,stm32-metapac/stm32h725ag",
             ])
         }
     }
