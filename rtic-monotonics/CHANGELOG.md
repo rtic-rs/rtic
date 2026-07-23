@@ -5,11 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
-## Unreleased
-
-- Added Silabs `TIMER0`-`TIMER9` monotonics
-
-## v2.2.0 - 2026-07-08
+## v2.2.0 - 2026-07-23
 
 ### Changed
 
@@ -20,6 +16,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Added
 
+- Silabs `TIMER0`-`TIMER9` monotonics
 - Silabs (EFR32, EFM32) support using the inbuilt RTCC / LETIMER peripherals
 - nRF9151 and nRF9161 support (RTC and TIMER monotonics), backed by `nrf9120-pac`
 - Secure and non-secure variants for all nRF91 chips: `nrf9160-s`/`nrf9160-ns`, `nrf9151-s`/`nrf9151-ns`, `nrf9161-s`/`nrf9161-ns`
@@ -28,6 +25,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Silabs LETIMER half-period counter did not persist, wrapping time every timer period
 - `assert`s in macro expansions can no longer be shadowed.
 
 ## v2.1.0 - 2025-06-22

@@ -139,7 +139,7 @@ static TIMER_QUEUE: TimerQueue<TimerBackend> = TimerQueue::new();
 
 // used to widen letimer from 24 to 64 bits
 // maximum value is (64 - 24) bit * 2 (due to half period) = 41bit
-const LETIMER_HALF_PERIOD_COUNTER: AtomicU32 = AtomicU32::new(0);
+static LETIMER_HALF_PERIOD_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 impl TimerQueueBackend for TimerBackend {
     type Ticks = u64;
