@@ -20,7 +20,8 @@ exclude = ["scripts/**"]
 [package.metadata.docs.rs]
 features = [
     "cortex-m-systick",
-    "silabs",
+    "silabs_timer0",
+    "efr32fg25a021f256im56",
     "rp2040",
     "rp235x",
     "nrf52840",
