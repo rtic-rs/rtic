@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
+## v2.2.1 - 2026-07-23
+
+### Fixed
+
+- Fix `docs.rs` build by adding additional silabs features to the set used for `docs.rs` runs.
+
 ## v2.2.0 - 2026-07-23
 
 ### Changed
