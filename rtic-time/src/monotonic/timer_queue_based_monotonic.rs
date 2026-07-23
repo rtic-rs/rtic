@@ -74,40 +74,40 @@ pub trait TimerQueueBasedDuration: Copy {
     fn ticks(self) -> Self::Ticks;
 }
 
-impl<const NOM: u32, const DENOM: u32> TimerQueueBasedInstant for fugit::Instant<u64, NOM, DENOM> {
+impl<const NOM: u64, const DENOM: u64> TimerQueueBasedInstant for fugit::Instant<u64, NOM, DENOM> {
     type Ticks = u64;
     fn from_ticks(ticks: Self::Ticks) -> Self {
         Self::from_ticks(ticks)
     }
     fn ticks(self) -> Self::Ticks {
-        Self::ticks(&self)
+        Self::as_ticks(&self)
     }
 }
 
-impl<const NOM: u32, const DENOM: u32> TimerQueueBasedInstant for fugit::Instant<u32, NOM, DENOM> {
+impl<const NOM: u64, const DENOM: u64> TimerQueueBasedInstant for fugit::Instant<u32, NOM, DENOM> {
     type Ticks = u32;
     fn from_ticks(ticks: Self::Ticks) -> Self {
         Self::from_ticks(ticks)
     }
     fn ticks(self) -> Self::Ticks {
-        Self::ticks(&self)
+        Self::as_ticks(&self)
     }
 }
 
-impl<const NOM: u32, const DENOM: u32> TimerQueueBasedDuration
+impl<const NOM: u64, const DENOM: u64> TimerQueueBasedDuration
     for fugit::Duration<u64, NOM, DENOM>
 {
     type Ticks = u64;
     fn ticks(self) -> Self::Ticks {
-        Self::ticks(&self)
+        Self::as_ticks(&self)
     }
 }
 
-impl<const NOM: u32, const DENOM: u32> TimerQueueBasedDuration
+impl<const NOM: u64, const DENOM: u64> TimerQueueBasedDuration
     for fugit::Duration<u32, NOM, DENOM>
 {
     type Ticks = u32;
     fn ticks(self) -> Self::Ticks {
-        Self::ticks(&self)
+        Self::as_ticks(&self)
     }
 }
