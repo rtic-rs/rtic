@@ -1,6 +1,6 @@
 [package]
 name = "rtic-monotonics"
-version = "2.2.0"
+version = "2.2.1"
 
 edition = "2021"
 authors = [
@@ -20,7 +20,8 @@ exclude = ["scripts/**"]
 [package.metadata.docs.rs]
 features = [
     "cortex-m-systick",
-    "silabs",
+    "efr32mg24b220f1536im48",
+    "silabs_timer0",
     "rp2040",
     "rp235x",
     "nrf52840",
