@@ -1,5 +1,8 @@
+//! examples/spawn_local.rs
+
 #![no_main]
 #![no_std]
+#![deny(missing_docs)]
 
 use panic_semihosting as _;
 
@@ -34,5 +37,6 @@ mod app {
     }
 }
 
+/// A type that cannot cross thread boundaries.
 #[derive(Default, Debug)]
 struct NotSendNotSync(core::marker::PhantomData<*mut u8>);

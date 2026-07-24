@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Add missing docs to `LocalSpawner` struct
 - Removed explicit `riscv-slic` feature (this was only used to activate functionality shared between `riscv-clint` and `riscv-mecall`).
 - Selecting no or more than one implementation now fails in the build script instead of during compilation.
 
