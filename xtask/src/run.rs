@@ -319,7 +319,7 @@ pub fn cargo_doc<'c>(
         "imxrt-ral/imxrt1011",
         "rtic-monotonics/imxrt_gpt1",
         "rtic-monotonics/imxrt_gpt2",
-        "rtic-monotonics/stm32h725ag",
+        "stm32-metapac/stm32h725ag",
         "rtic-monotonics/stm32_tim2",
         "rtic-monotonics/stm32_tim3",
         "rtic-monotonics/stm32_tim4",

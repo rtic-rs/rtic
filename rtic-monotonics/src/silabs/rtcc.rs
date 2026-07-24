@@ -13,12 +13,9 @@
 //! silabs_rtcc_monotonic!(Mono);
 //!
 //! fn init() {
-//!     # // This is normally provided by the selected PAC
-//!     # let peripherals = unsafe { core::mem::transmute(()) };
-//!     #
-//!     // Start the monotonic - passing ownership of an silabs_metapac object for
-//!     // RTCC, and temporary access of the clock management unit.
-//!     Mono::start(peripherals.rtcc_ns);
+//!     // Start the monotonic - passing the RTCC peripheral object, and
+//!     // temporary access to the clock management unit.
+//!     Mono::start(silabs_metapac::RTCC, &silabs_metapac::CMU);
 //! }
 //!
 //! async fn usage() {
@@ -92,10 +89,6 @@ impl TimerBackend {
             NVIC::unmask(Interrupt::RTCC);
         }
     }
-
-    fn rtcc() -> &'static Rtcc {
-        &RTCC
-    }
 }
 
 static TIMER_QUEUE: TimerQueue<TimerBackend> = TimerQueue::new();
@@ -108,7 +101,7 @@ impl TimerQueueBackend for TimerBackend {
     type Ticks = u64;
 
     fn now() -> Self::Ticks {
-        let timer = Self::rtcc();
+        let timer = RTCC;
 
         calculate_now(
             || RTCC_HALF_PERIOD_COUNTER.load(Ordering::Relaxed),
@@ -119,8 +112,7 @@ impl TimerQueueBackend for TimerBackend {
     fn set_compare(instant: Self::Ticks) {
         const RTCC_MAX: u64 = 0xFFFF_FFFF;
 
-        Self::rtcc()
-            .cc0_ctrl()
+        RTCC.cc0_ctrl()
             .write(|w| w.set_mode(Cc0CtrlMode::Outputcompare));
 
         let now = Self::now();
@@ -134,38 +126,40 @@ impl TimerQueueBackend for TimerBackend {
             0
         };
 
-        Self::rtcc()
-            .cc0_ocvalue()
-            .write(|w| w.set_oc(compare_value));
+        RTCC.cc0_ocvalue().write(|w| w.set_oc(compare_value));
     }
 
     fn clear_compare_flag() {
         // clear interrupt flag
-        Self::rtcc().if_clr().write(|w| w.set_cc0(true));
+        RTCC.if_clr().write(|w| w.set_cc0(true));
 
         // disable compare
-        Self::rtcc()
-            .cc0_ctrl()
-            .write(|w| w.set_mode(Cc0CtrlMode::Off));
+        RTCC.cc0_ctrl().write(|w| w.set_mode(Cc0CtrlMode::Off));
     }
 
     fn on_interrupt() {
-        let interrupt_flag = Self::rtcc().if_().read();
+        let interrupt_flag = RTCC.if_().read();
 
         // half period interrupt
         if interrupt_flag.cc1() {
-            Self::rtcc().if_clr().write(|w| w.set_cc1(true));
+            RTCC.if_clr().write(|w| w.set_cc1(true));
 
             let prev = RTCC_HALF_PERIOD_COUNTER.fetch_add(1, Ordering::Relaxed);
-            ::core::assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
+            ::core::assert!(
+                prev.is_multiple_of(2),
+                "Monotonic must have skipped an interrupt!"
+            );
         }
 
         // overflow interrupt
         if interrupt_flag.of() {
-            Self::rtcc().if_clr().write(|w| w.set_of(true));
+            RTCC.if_clr().write(|w| w.set_of(true));
 
             let prev = RTCC_HALF_PERIOD_COUNTER.fetch_add(1, Ordering::Relaxed);
-            ::core::assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
+            ::core::assert!(
+                !prev.is_multiple_of(2),
+                "Monotonic must have skipped an interrupt!"
+            );
         }
     }
 

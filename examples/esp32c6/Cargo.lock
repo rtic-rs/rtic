@@ -1062,7 +1062,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-monotonics"
-version = "2.2.0"
+version = "3.0.0"
 dependencies = [
  "cfg-if",
  "esp32c6 0.22.0",

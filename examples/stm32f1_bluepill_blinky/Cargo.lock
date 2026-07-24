@@ -261,7 +261,7 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.2.0"
+version = "2.3.0"
 dependencies = [
  "cortex-m",
  "critical-section",
@@ -286,7 +286,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.2.0"
+version = "2.3.0"
 dependencies = [
  "indexmap",
  "proc-macro2",
@@ -296,7 +296,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-monotonics"
-version = "2.1.0"
+version = "3.0.0"
 dependencies = [
  "cfg-if",
  "cortex-m",

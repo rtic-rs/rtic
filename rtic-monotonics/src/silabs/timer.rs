@@ -411,13 +411,19 @@ macro_rules! make_silabs_timer {
                 if flags.of() {
                     t.if_clr().write(|w| w.set_of(true));
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
+                    assert!(
+                        !prev.is_multiple_of(2),
+                        "Monotonic must have skipped an interrupt!"
+                    );
                 }
                 // Half period (CC0).
                 if flags.cc0() {
                     t.if_clr().write(|w| w.set_cc0(true));
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
+                    assert!(
+                        prev.is_multiple_of(2),
+                        "Monotonic must have skipped an interrupt!"
+                    );
                 }
             }
 

@@ -247,13 +247,13 @@ macro_rules! make_timer {
                 if rollover != 0 {
                     let prev = $period.fetch_add(1, Ordering::Relaxed);
                     ral::write_reg!(ral::gpt, gpt, SR, ROV: 1);
-                    ::core::assert!(prev % 2 == 1, "Monotonic must have skipped an interrupt!");
+                    ::core::assert!(!prev.is_multiple_of(2), "Monotonic must have skipped an interrupt!");
                 }
 
                 if half_rollover != 0 {
                     let prev = $period.fetch_add(1, Ordering::Relaxed);
                     ral::write_reg!(ral::gpt, gpt, SR, OF1: 1);
-                    ::core::assert!(prev % 2 == 0, "Monotonic must have skipped an interrupt!");
+                    ::core::assert!(prev.is_multiple_of(2), "Monotonic must have skipped an interrupt!");
                 }
             }
 
