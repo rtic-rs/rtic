@@ -201,12 +201,6 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             let local_spawner = util::internal_task_ident(t, "LocalSpawner");
             fields.push(quote! {
                 /// Used to spawn tasks on the same executor
-                ///
-                /// This is useful for tasks that take args which are !Send/!Sync.
-                ///
-                /// NOTE: This only works with tasks marked `local_task = true`
-                /// and which have the same priority and thus will run on the
-                /// same executor.
                 pub local_spawner: #local_spawner
             });
             let tasks = local_tasks_on_same_executor
@@ -238,6 +232,13 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                 .collect::<Vec<_>>();
             values.push(quote!(local_spawner: #local_spawner { _p: core::marker::PhantomData }));
             items.push(quote! {
+                /// Used to spawn tasks on the same executor
+                ///
+                /// This is useful for tasks that take args which are !Send/!Sync.
+                ///
+                /// NOTE: This only works with tasks marked `local_task = true`
+                /// and which have the same priority and thus will run on the
+                /// same executor.
                 pub struct #local_spawner {
                     _p: core::marker::PhantomData<*mut ()>,
                 }
