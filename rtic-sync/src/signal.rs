@@ -24,7 +24,7 @@ pub struct Signal<T: Copy> {
     pub(crate) waker: CriticalSectionWakerRegistration,
     pub(crate) store: UnsafeCell<Store<T>>,
     pub(crate) seen: AtomicBool,
-    pub(crate) already_split: AtomicBool,
+    pub(crate) reader_alive: AtomicBool,
 }
 
 impl<T> core::fmt::Debug for Signal<T>
@@ -56,7 +56,7 @@ impl<T: Copy> Signal<T> {
             waker: CriticalSectionWakerRegistration::new(),
             store: UnsafeCell::new(Store::Unset),
             seen: AtomicBool::new(false),
-            already_split: AtomicBool::new(false),
+            reader_alive: AtomicBool::new(false),
         }
     }
 
@@ -67,16 +67,53 @@ impl<T: Copy> Signal<T> {
             waker: CriticalSectionWakerRegistration::new(),
             store: UnsafeCell::new(Store::Unset),
             seen: AtomicBool::new(false),
-            already_split: AtomicBool::new(false),
+            reader_alive: AtomicBool::new(false),
         }
     }
 
     /// Split the signal into a writer and reader.
+    ///
+    /// # Panics
+    /// This function calls [`Self::take_reader`] and has the same
+    /// panicking behaviour.
     pub fn split(&self) -> (SignalWriter<'_, T>, SignalReader<'_, T>) {
-        if self.already_split.swap(true, AcqRel) {
-            panic!("`Signal` cannot be split twice");
+        let reader = self.take_reader();
+        let writer = self.writer();
+        (writer, reader)
+    }
+
+    /// Create a writer for this signal.
+    ///
+    /// Many writers may exist for a [`Signal`]. However, for concurrent
+    /// writes, a [`SignalReader`] is only guaranteed to observe _at least_
+    /// one of the written values, not _all_ writes.
+    pub const fn writer(&self) -> SignalWriter<'_, T> {
+        SignalWriter { parent: self }
+    }
+
+    /// Try to take the reader for this signal.
+    ///
+    /// If another, non-dropped [`SignalReader`] exists for this [`Signal`],
+    /// `None` is returned.
+    pub fn try_take_reader(&self) -> Option<SignalReader<'_, T>> {
+        if self.reader_alive.swap(true, AcqRel) {
+            return None;
         }
-        (SignalWriter { parent: self }, SignalReader { parent: self })
+
+        Some(SignalReader { parent: self })
+    }
+
+    /// Take the reader for this signal.
+    ///
+    /// # Panics
+    /// This function panics if another [`SignalReader`] associated
+    /// with this `self` is alive (i.e. non-dropped).
+    pub fn take_reader(&self) -> SignalReader<'_, T> {
+        let Some(reader) = self.try_take_reader() else {
+            panic!("Cannot create duplicate reader for `Signal`");
+        };
+
+        reader
     }
 }
 
@@ -126,6 +163,12 @@ impl<T: Copy> SignalWriter<'_, T> {
 /// Facilitates the async reading of values from the Signal.
 pub struct SignalReader<'a, T: Copy> {
     parent: &'a Signal<T>,
+}
+
+impl<T: Copy> Drop for SignalReader<'_, T> {
+    fn drop(&mut self) {
+        self.parent.reader_alive.store(false, Release);
+    }
 }
 
 impl<T> core::fmt::Debug for SignalReader<'_, T>
@@ -241,12 +284,41 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn no_multi_split() {
+    fn no_simultaneous_multi_split() {
         fn scary_helper<'a>() -> (SignalWriter<'a, u32>, SignalReader<'a, u32>) {
             make_signal!(u32)
         }
         let (mut _writer1, mut _reader1) = scary_helper();
         let (mut _writer2, mut _reader2) = scary_helper();
+    }
+
+    #[test]
+    fn allow_non_simultaneous_multi_split() {
+        fn scary_helper<'a>() -> (SignalWriter<'a, u32>, SignalReader<'a, u32>) {
+            make_signal!(u32)
+        }
+
+        let (writer1, reader1) = scary_helper();
+        drop((writer1, reader1));
+
+        let (mut _writer2, mut _reader2) = scary_helper();
+    }
+
+    #[test]
+    fn disallow_simultaneous_multi_read() {
+        let signal = Signal::<()>::new();
+
+        let _reader1 = signal.try_take_reader();
+        assert!(signal.try_take_reader().is_none());
+    }
+
+    #[test]
+    fn allow_non_simultaneous_multi_read() {
+        let signal = Signal::<()>::new();
+
+        let reader1 = signal.try_take_reader().unwrap();
+        drop(reader1);
+        assert!(signal.try_take_reader().is_some());
     }
 
     #[tokio::test]

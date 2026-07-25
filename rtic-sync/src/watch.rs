@@ -38,15 +38,49 @@ impl<T: Copy> Watch<T> {
         Self(Signal::new())
     }
 
-    /// Split the watch into a writer and watch reader.
+    /// Split the watch into a writer and reader.
+    ///
+    /// # Panics
+    /// This function calls [`Self::take_reader`] and has the same
+    /// panicking behaviour.
     pub fn split(&self) -> (WatchWriter<'_, T>, WatchReader<'_, T>) {
-        if self.0.already_split.swap(true, AcqRel) {
-            panic!("`Watch` cannot be split twice");
+        let reader = self.take_reader();
+        let writer = self.writer();
+        (writer, reader)
+    }
+
+    /// Create a writer for this watch.
+    ///
+    /// Many writers may exist for a [`Watch`]. However, for concurrent
+    /// writes, a [`WatchReader`] is only guaranteed to observe _at least_
+    /// one of the writes, not _all_ writes.
+    pub const fn writer(&self) -> WatchWriter<'_, T> {
+        WatchWriter(self.0.writer())
+    }
+
+    /// Try to take the reader for this watch.
+    ///
+    /// If another, non-dropped [`WatchReader`] exists for this [`Watch`],
+    /// `None` is returned.
+    pub fn try_take_reader(&self) -> Option<WatchReader<'_, T>> {
+        if self.0.reader_alive.swap(true, AcqRel) {
+            return None;
         }
-        (
-            WatchWriter(SignalWriter { parent: &self.0 }),
-            WatchReader { parent: &self.0 },
-        )
+
+        Some(WatchReader { parent: &self.0 })
+    }
+
+    /// Take the reader for this watch.
+    ///
+    /// # Panics
+    /// This function panics if another [`WatchReader`] associated
+    /// with this `self` is alive (i.e. non-dropped).
+    pub fn take_reader(&self) -> WatchReader<'_, T> {
+        let Some(reader) = self.try_take_reader() else {
+            panic!("Cannot create duplicate reader for `Watch`");
+        };
+
+        reader
     }
 }
 
@@ -86,6 +120,12 @@ impl<T: Copy> WatchWriter<'_, T> {
 /// Facilitates the async reading of values from the Watch.
 pub struct WatchReader<'a, T: Copy> {
     parent: &'a Signal<T>,
+}
+
+impl<T: Copy> Drop for WatchReader<'_, T> {
+    fn drop(&mut self) {
+        self.parent.reader_alive.store(false, Release);
+    }
 }
 
 impl<T> core::fmt::Debug for WatchReader<'_, T>
@@ -278,12 +318,41 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn no_multi_split() {
+    fn no_simultaneous_multi_split() {
         fn scary_helper<'a>() -> (WatchWriter<'a, u32>, WatchReader<'a, u32>) {
             make_watch!(u32)
         }
         let (mut _writer1, mut _reader1) = scary_helper();
         let (mut _writer2, mut _reader2) = scary_helper();
+    }
+
+    #[test]
+    fn allow_non_simultaneous_multi_split() {
+        fn scary_helper<'a>() -> (WatchWriter<'a, u32>, WatchReader<'a, u32>) {
+            make_watch!(u32)
+        }
+
+        let (writer1, reader1) = scary_helper();
+        drop((writer1, reader1));
+
+        let (mut _writer2, mut _reader2) = scary_helper();
+    }
+
+    #[test]
+    fn disallow_simultaneous_multi_read() {
+        let watch = Watch::<()>::new();
+
+        let _reader1 = watch.try_take_reader();
+        assert!(watch.try_take_reader().is_none());
+    }
+
+    #[test]
+    fn allow_non_simultaneous_multi_read() {
+        let watch = Watch::<()>::new();
+
+        let reader1 = watch.try_take_reader().unwrap();
+        drop(reader1);
+        assert!(watch.try_take_reader().is_some());
     }
 
     #[tokio::test]
