@@ -157,6 +157,85 @@ impl<T: Copy> WatchReader<'_, T> {
 }
 
 #[cfg(test)]
+#[cfg(loom)]
+mod loom_tests {
+    use std::future::Future;
+
+    use super::*;
+
+    #[test]
+    fn always_seen() {
+        loom::model(|| {
+            let watch = Box::leak(Box::new(Watch::new()));
+            let (mut writer, mut reader) = watch.split();
+
+            let handle = loom::thread::spawn(move || {
+                let pre_seen = reader.get_seen();
+                let value = reader.try_get();
+                let post_seen = reader.get_seen();
+
+                if let Some(value) = value {
+                    // If we get a value from a single write, we
+                    // 1. Expect it to be correct
+                    assert_eq!(value, 0x1337_1337);
+                    // 2. Expect not to have seen any value beforehand
+                    assert!(!pre_seen);
+                    // 3. Expect to have seen the value afterwards
+                    assert!(post_seen);
+                } else {
+                    // If we don't get a value from a single write, we
+                    // 1. Expect not to have seen any value beforehand
+                    assert!(!pre_seen);
+                    // 2. And expecct not to have seen any value afterwards
+                    assert!(!post_seen);
+                }
+            });
+
+            writer.write(0x1337_1337);
+
+            handle.join().unwrap();
+        });
+    }
+
+    #[test]
+    fn changed_always_seen() {
+        loom::model(|| {
+            let watch = Box::leak(Box::new(Watch::new()));
+            let (mut writer, mut reader) = watch.split();
+
+            let handle = loom::thread::spawn(move || {
+                let waker = core::task::Waker::noop();
+                let mut cx = core::task::Context::from_waker(waker);
+
+                let pre_seen = reader.get_seen();
+                let value = { core::pin::pin!(reader.changed()).as_mut().poll(&mut cx) };
+                let post_seen = reader.get_seen();
+
+                if let Poll::Ready(value) = value {
+                    // If we get a value from a single write, we
+                    // 1. Expect it to be correct
+                    assert_eq!(value, 0x1337_1337);
+                    // 2. Expect not to have seen any value beforehand
+                    assert!(!pre_seen);
+                    // 3. Expect to have seen the value afterwards
+                    assert!(post_seen);
+                } else {
+                    // If we don't get a value from a single write, we
+                    // 1. Expect not to have seen any value beforehand
+                    assert!(!pre_seen);
+                    // 2. And expecct not to have seen any value afterwards
+                    assert!(!post_seen);
+                }
+            });
+
+            writer.write(0x1337_1337);
+
+            handle.join().unwrap();
+        });
+    }
+}
+
+#[cfg(test)]
 #[cfg(not(loom))]
 mod tests {
     use super::*;
