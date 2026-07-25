@@ -1,11 +1,15 @@
 //! A "latest only" value store with unlimited writers and async waiting.
 
-use core::{cell::UnsafeCell, future::poll_fn, task::Poll};
-use portable_atomic::{
-    AtomicBool,
-    Ordering::{AcqRel, Release},
-};
+use crate::unsafecell::UnsafeCell;
+use core::sync::atomic::Ordering::{AcqRel, Release};
+use core::{future::poll_fn, task::Poll};
 use rtic_common::waker_registration::CriticalSectionWakerRegistration;
+
+#[cfg(loom)]
+use loom::sync::atomic::AtomicBool;
+
+#[cfg(not(loom))]
+use portable_atomic::AtomicBool;
 
 /// Basically an Option but for indicating
 /// whether the store has been set or not
@@ -46,7 +50,19 @@ unsafe impl<T: Copy + Send> Sync for Signal<T> {}
 
 impl<T: Copy> Signal<T> {
     /// Create a new signal.
+    #[cfg(not(loom))]
     pub const fn new() -> Self {
+        Self {
+            waker: CriticalSectionWakerRegistration::new(),
+            store: UnsafeCell::new(Store::Unset),
+            seen: AtomicBool::new(false),
+            already_split: AtomicBool::new(false),
+        }
+    }
+
+    /// Create a new signal.
+    #[cfg(loom)]
+    pub fn new() -> Self {
         Self {
             waker: CriticalSectionWakerRegistration::new(),
             store: UnsafeCell::new(Store::Unset),
@@ -86,8 +102,9 @@ impl<T: Copy> SignalWriter<'_, T> {
     /// Write a raw Store value to the Signal.
     pub(crate) fn write_inner(&mut self, value: Store<T>) {
         critical_section::with(|_| {
+            let mut_ptr = self.parent.store.get_mut();
             // SAFETY: in a cs: exclusive access
-            unsafe { self.parent.store.get().replace(value) };
+            let _ = core::mem::replace(unsafe { mut_ptr.deref() }, value);
         });
         self.parent.seen.store(false, Release);
 
@@ -126,8 +143,9 @@ impl<T: Copy> SignalReader<'_, T> {
     /// Immediately read and evict the latest value stored in the Signal.
     fn take(&mut self) -> Store<T> {
         critical_section::with(|_| {
+            let mut_ptr = self.parent.store.get_mut();
             // SAFETY: in a cs: exclusive access
-            unsafe { self.parent.store.get().replace(Store::Unset) }
+            core::mem::replace(unsafe { mut_ptr.deref() }, Store::Unset)
         })
     }
 

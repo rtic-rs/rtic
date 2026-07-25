@@ -1,6 +1,6 @@
 //! Synchronization primitives for asynchronous contexts.
 
-#![cfg_attr(not(loom), no_std)]
+#![cfg_attr(not(any(loom, test)), no_std)]
 #![deny(missing_docs)]
 
 #[cfg(feature = "defmt-03")]
