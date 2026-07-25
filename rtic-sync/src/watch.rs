@@ -48,6 +48,28 @@ impl<T: Copy> Watch<T> {
             WatchReader { parent: &self.0 },
         )
     }
+
+    /// Get the reader half for this [`Watch`].
+    ///
+    /// # Safety
+    /// For any given `self`, at most one [`WatchReader`] associated with
+    /// that `self` may be alive at any point in time during the execution
+    /// of the program. Breaking this invariant is not unsound, but the behaviour
+    /// of those readers will be unpredictable.
+    pub const unsafe fn reader(&self) -> WatchReader<'_, T> {
+        WatchReader { parent: &self.0 }
+    }
+
+    /// Get the writer half for this [`Watch`].
+    ///
+    /// # Safety
+    /// For any given `self`, at most one [`WatchWriter`] associated with
+    /// that `self` may be alive at any point in time during the execution
+    /// of the program. Breaking this invariant is not unsound, but the behaviour
+    /// of those writers and the associated reader will be unpredictable.
+    pub const unsafe fn writer(&self) -> WatchWriter<'_, T> {
+        WatchWriter(SignalWriter { parent: &self.0 })
+    }
 }
 
 /// Creates a split watch with `'static` lifetime.
