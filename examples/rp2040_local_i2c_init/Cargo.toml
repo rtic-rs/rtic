@@ -21,7 +21,7 @@ features = ["rp2040"]
 [dependencies]
 cortex-m = "0.7"
 embedded-hal = { version = "0.2.7", features = ["unproven"] }
-fugit = "0.3"
+fugit = "0.4.0"
 rp-pico = "0.9.0"
 panic-probe = "0.3"
 portable-atomic = { version = "1", features = ["critical-section"] }
