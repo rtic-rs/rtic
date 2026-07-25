@@ -295,7 +295,7 @@ impl Platforms {
         match self {
             Platforms::Esp32C3 | Platforms::Esp32C6 => Vec::new(),
             Platforms::Hifive1 => Vec::new(),
-            Platforms::Lm3s6965 => vec![c, "link-arg=-Tlink.x".to_string()],
+            Platforms::Lm3s6965 => Vec::new(),
             Platforms::Nrf52840 => vec![
                 c.clone(),
                 "linker=flip-link".to_string(),
