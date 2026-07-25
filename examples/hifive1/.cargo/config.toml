@@ -2,7 +2,6 @@
 runner = "qemu-system-riscv32 -machine sifive_e,revb=true -nographic -semihosting-config enable=on,target=native -kernel"
 # runner = "riscv64-unknown-elf-gdb -q -x gdb_init"
 rustflags = [
-  "-C", "link-arg=-Thifive1-link.x",
   "--cfg", "portable_atomic_target_feature=\"zaamo\"",
 ]
 

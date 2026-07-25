@@ -294,7 +294,7 @@ impl Platforms {
         let c = "-C".to_string();
         match self {
             Platforms::Esp32C3 | Platforms::Esp32C6 => Vec::new(),
-            Platforms::Hifive1 => vec![c, "link-arg=-Thifive1-link.x".to_string()],
+            Platforms::Hifive1 => Vec::new(),
             Platforms::Lm3s6965 => vec![c, "link-arg=-Tlink.x".to_string()],
             Platforms::Nrf52840 => vec![
                 c.clone(),
