@@ -1,8 +1,8 @@
 //! A "latest only" value store with unlimited writers and async waiting. Value is always available once initialized.
 
 use crate::signal::{Signal, SignalWriter, Store};
+use core::sync::atomic::Ordering::{AcqRel, Acquire, Release};
 use core::{future::poll_fn, task::Poll};
-use portable_atomic::Ordering::{AcqRel, Acquire, Release};
 
 /// A "latest only" value store with unlimited writers and async waiting. Value is always available once initialized.
 pub struct Watch<T: Copy>(Signal<T>);
@@ -27,7 +27,14 @@ impl<T: Copy> Default for Watch<T> {
 
 impl<T: Copy> Watch<T> {
     /// Create a new watch.
+    #[cfg(not(loom))]
     pub const fn new() -> Self {
+        Self(Signal::new())
+    }
+
+    /// Create a new watch.
+    #[cfg(loom)]
+    pub fn new() -> Self {
         Self(Signal::new())
     }
 
@@ -97,8 +104,9 @@ impl<T: Copy> WatchReader<'_, T> {
     /// Immediately get the latest value stored in the Signal.
     fn get_inner(&mut self) -> Store<T> {
         critical_section::with(|_| {
+            let mut_ptr = self.parent.store.get_mut();
             // SAFETY: in a cs: exclusive access
-            unsafe { self.parent.store.get().read() }
+            unsafe { *mut_ptr.deref() }
         })
     }
 
