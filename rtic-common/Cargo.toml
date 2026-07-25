@@ -21,6 +21,8 @@ repository = "https://github.com/rtic-rs/rtic"
 critical-section = "1"
 portable-atomic = { version = "1", default-features = false }
 
+[dev-dependencies]
+critical-section = { version = "1", features = [ "std" ] }
+
 [features]
 default = []
-testing = ["critical-section/std"]

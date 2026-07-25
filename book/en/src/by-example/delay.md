@@ -40,7 +40,7 @@ async fn foo(_cx: foo::Context) {
 ```
 
 ```console
-$ cargo xtask qemu --verbose --example async-delay --features test-critical-section
+$ cargo xtask qemu --verbose --example async-delay
 ```
 
 ```console
@@ -96,7 +96,7 @@ For the first iteration of the loop, with `n == 0`, the `hal_get` will take 350m
 ```
 
 ```console
-$ cargo xtask qemu --verbose --example async-timeout --features test-critical-section
+$ cargo xtask qemu --verbose --example async-timeout
 ```
 
 ```console

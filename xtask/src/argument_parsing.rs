@@ -51,14 +51,9 @@ impl Package {
     /// Without package specified the features for RTIC are required
     /// With only a single package which is not RTIC, no special
     /// features are needed
-    pub fn features(
-        &self,
-        target: Target,
-        backend: Backends,
-        partial: bool,
-    ) -> Vec<Option<String>> {
+    pub fn features(&self, backend: Backends, partial: bool) -> Vec<Option<String>> {
         match self {
-            Package::Rtic => vec![Some(target.and_features(backend.to_rtic_feature()))],
+            Package::Rtic => vec![Some(backend.to_rtic_features().to_string())],
             Package::RticMacros => {
                 vec![Some(backend.to_rtic_macros_feature().to_string())]
             }
@@ -96,7 +91,7 @@ impl TestMetadata {
     pub fn match_package(package: Package, backend: Backends, loom: bool) -> CargoCommand<'static> {
         match package {
             Package::Rtic => {
-                let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
+                let features = Some(backend.to_rtic_features().to_string());
                 CargoCommand::Test {
                     package: Some(package.name()),
                     features,
@@ -114,14 +109,14 @@ impl TestMetadata {
             },
             Package::RticSync => CargoCommand::Test {
                 package: Some(package.name()),
-                features: Some("testing".to_owned()),
+                features: None,
                 test: None,
                 deny_warnings: true,
                 loom,
             },
             Package::RticCommon => CargoCommand::Test {
                 package: Some(package.name()),
-                features: Some("testing".to_owned()),
+                features: None,
                 test: None,
                 deny_warnings: true,
                 loom,
@@ -177,16 +172,24 @@ impl Backends {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_rtic_feature(&self) -> &'static str {
+    /// Get the RTIC features required to build `rtic` for
+    /// this backend.
+    pub fn to_rtic_features(&self) -> &'static str {
         match self {
-            Backends::Thumbv6 => "thumbv6-backend",
+            Backends::Thumbv6 => "thumbv6-backend,portable-atomic/critical-section",
             Backends::Thumbv7 => "thumbv7-backend",
             Backends::Thumbv8Base => "thumbv8base-backend",
             Backends::Thumbv8Main => "thumbv8main-backend",
-            Backends::RiscvEsp32C3 => "riscv-esp32c3-backend",
+            Backends::RiscvEsp32C3 => {
+                "riscv-esp32c3-backend,portable-atomic/unsafe-assume-single-core"
+            }
             Backends::RiscvEsp32C6 => "riscv-esp32c6-backend",
-            Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint-backend",
-            Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall-backend",
+            Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => {
+                "riscv-clint-backend,portable-atomic/unsafe-assume-single-core"
+            }
+            Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => {
+                "riscv-mecall-backend,portable-atomic/unsafe-assume-single-core"
+            }
         }
     }
 

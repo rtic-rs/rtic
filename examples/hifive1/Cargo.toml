@@ -20,4 +20,3 @@ portable-atomic = { version = "1", features = ["unsafe-assume-single-core", "for
 [features]
 riscv-clint-backend = ["rtic/riscv-clint-backend"]
 riscv-mecall-backend = ["rtic/riscv-mecall-backend"]
-test-critical-section = []

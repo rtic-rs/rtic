@@ -11,7 +11,7 @@ edition = "2021"
 [dependencies]
 heapless = "0.8"
 lm3s6965 = "0.2"
-cortex-m = "0.7.0"
+cortex-m = { version = "0.7.0", features = ["critical-section-single-core"] }
 cortex-m-semihosting = "0.5.0"
 rtic-time = { path = "../../rtic-time" }
 rtic-sync = { path = "../../rtic-sync" }
@@ -19,6 +19,7 @@ rtic-common = { path = "../../rtic-common" }
 rtic-monotonics = { path = "../../rtic-monotonics", features = ["cortex-m-systick"] }
 rtic = { path = "../../rtic" }
 cfg-if = "1.0"
+portable-atomic = "1.13"
 
 [dependencies.futures]
 version = "0.3.26"
@@ -30,11 +31,7 @@ features = ["exit"]
 version = "0.6.0"
 
 [features]
-test-critical-section = [
-  "rtic/test-critical-section",
-  "cortex-m/critical-section-single-core",
-]
-thumbv6-backend = ["rtic/thumbv6-backend"]
+thumbv6-backend = ["rtic/thumbv6-backend", "portable-atomic/critical-section"]
 thumbv7-backend = ["rtic/thumbv7-backend"]
 thumbv8base-backend = ["rtic/thumbv8base-backend"]
 thumbv8main-backend = ["rtic/thumbv8main-backend"]

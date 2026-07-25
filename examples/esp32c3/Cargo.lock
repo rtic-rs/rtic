@@ -564,6 +564,7 @@ dependencies = [
  "esp-hal",
  "esp-println",
  "esp32c3 0.31.0",
+ "portable-atomic",
  "rtic",
  "rtic-monotonics",
 ]

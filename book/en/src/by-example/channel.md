@@ -44,7 +44,7 @@ async fn receiver(_c: receiver::Context, mut receiver: Receiver<'static, u32, CA
 }
 ```
 
-Channels are implemented using a small (global) _Critical Section_ (CS) for protection against race-conditions. The user must provide an CS implementation. Compiling the examples given the `--features test-critical-section` gives one possible implementation.
+Channels are implemented using a small (global) _Critical Section_ (CS) for protection against race-conditions. The user must provide an CS implementation. For the examples a CS implementation is provided by a platform crate, for example `cortex-m/critical-section-single-core` or `esp32c3/critical-section`.
 
 For a complete example:
 
@@ -53,7 +53,7 @@ For a complete example:
 ```
 
 ```console
-$ cargo xtask qemu --verbose --example async-channel --features test-critical-section
+$ cargo xtask qemu --verbose --example async-channel
 ```
 
 ```console
@@ -73,7 +73,7 @@ Looking at the output, we find that `Sender 2` will wait until the data sent by 
 > **NOTICE** _Software_ tasks at the same priority are executed asynchronously to each other, thus **NO** strict order can be assumed. (The presented order here applies only to the current implementation, and may change between RTIC framework releases.)
 
 ```console
-$ cargo xtask qemu --verbose --example async-channel-done --features test-critical-section
+$ cargo xtask qemu --verbose --example async-channel-done
 {{#include ../../../../ci/expected/lm3s6965/async-channel-done.run}}
 ```
 
@@ -86,7 +86,7 @@ In case all senders have been dropped `await`-ing on an empty receiver channel r
 ```
 
 ```console
-$ cargo xtask qemu --verbose --example async-channel-no-sender --features test-critical-section
+$ cargo xtask qemu --verbose --example async-channel-no-sender
 ```
 
 ```console
@@ -102,7 +102,7 @@ The resulting error returns the data back to the sender, allowing the sender to 
 ```
 
 ```console
-$ cargo xtask qemu --verbose --example async-channel-no-receiver --features test-critical-section
+$ cargo xtask qemu --verbose --example async-channel-no-receiver
 ```
 
 ```console
@@ -120,7 +120,7 @@ This API is exposed through `Receiver::try_recv` and `Sender::try_send`.
 ```
 
 ```console
-$ cargo xtask qemu --verbose --example async-channel-try --features test-critical-section
+$ cargo xtask qemu --verbose --example async-channel-try
 ```
 
 ```console

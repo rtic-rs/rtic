@@ -74,6 +74,3 @@ riscv-mecall-backend = [
   "riscv-slic/mecall-backend",
   "rtic-macros/riscv-mecall",
 ]
-
-# needed for testing
-test-critical-section = ["portable-atomic/critical-section"]
