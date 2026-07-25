@@ -33,10 +33,10 @@ static_cell = "2.1.0"
 
 [target.'cfg(not(loom))'.dev-dependencies]
 tokio = { version = "1", features = ["rt", "macros", "time"], default-features = false }
+critical-section = { version = "1", features = [ "std" ] }
 
 [features]
 default = []
-testing = ["critical-section/std", "rtic-common/testing"]
 defmt-03 = ["dep:defmt-03", "embedded-hal/defmt-03", "embedded-hal-async/defmt-03", "embedded-hal-bus/defmt-03"]
 
 [lints.rust]

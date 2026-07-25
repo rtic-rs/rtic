@@ -39,4 +39,4 @@ Contributing new implementations of `Monotonic` can be done in multiple ways:
 
 The timer queue is implemented as a list based priority queue, where list-nodes are statically allocated as part of the `Future` created when `await`-ing a Future created when waiting for the monotonic. Thus, the timer queue is infallible at run-time (its size and allocation are determined at compile time).
 
-Similarly the channels implementation, the timer-queue implementation relies on a global *Critical Section* (CS) for race protection. For the examples a CS implementation is provided by adding `--features test-critical-section` to the build options.
+Similarly the channels implementation, the timer-queue implementation relies on a global *Critical Section* (CS) for race protection. For the examples a CS implementation is provided by a platform crate, for example `cortex-m/critical-section-single-core` or `esp32c3/critical-section`.

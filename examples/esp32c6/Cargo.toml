@@ -7,7 +7,6 @@ license = "MIT OR Apache-2.0"
 [workspace]
 
 [features]
-test-critical-section = []
 riscv-esp32c6-backend = ["rtic/riscv-esp32c6-backend", "rtic-monotonics/esp32c6-systimer"]
 
 [dependencies]

@@ -38,13 +38,13 @@ Yields this output:
 ```console
    Finished dev [unoptimized + debuginfo] target(s) in 0.07s
     Running `target/debug/xtask qemu --example locals`
-INFO  xtask > Testing for platform: Lm3s6965, backend: Thumbv7
-INFO  xtask::run > 👟 Build example locals (thumbv7m-none-eabi, release, "test-critical-section,thumbv7-backend", in examples/lm3s6965)
+INFO  xtask::run > QEMU run for platform: Lm3s6965, backend: Thumbv7
+INFO  xtask::run > 👟 Build example locals (thumbv7m-none-eabi, release, "thumbv7-backend", in examples/lm3s6965)
 INFO  xtask::run > ✅ Success.
-INFO  xtask::run > 👟 Run example locals in QEMU (thumbv7m-none-eabi, release, "test-critical-section,thumbv7-backend", in examples/lm3s6965)
+INFO  xtask::run > 👟 Run example locals in QEMU (thumbv7m-none-eabi, release, "thumbv7-backend", in examples/lm3s6965)
 INFO  xtask::run > ✅ Success.
-INFO  xtask::results > ✅ Success: Build example locals (thumbv7m-none-eabi, release, "test-critical-section,thumbv7-backend", in examples/lm3s6965)
-INFO  xtask::results > ✅ Success: Run example locals in QEMU (thumbv7m-none-eabi, release, "test-critical-section,thumbv7-backend", in examples/lm3s6965)
+INFO  xtask::results > ✅ Success: Build example locals (thumbv7m-none-eabi, release, "thumbv7-backend", in examples/lm3s6965)
+INFO  xtask::results > ✅ Success: Run example locals in QEMU (thumbv7m-none-eabi, release, "thumbv7-backend", in examples/lm3s6965)
 INFO  xtask::results > 🚀🚀🚀 All tasks succeeded 🚀🚀🚀
 ```
 
@@ -52,32 +52,32 @@ It is great that examples are passing and this is part of the RTIC CI setup too,
 
 ```console
 ❯ cargo xtask qemu --verbose --example locals
-    Finished dev [unoptimized + debuginfo] target(s) in 0.03s
-     Running `target/debug/xtask qemu --example locals --verbose`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running `target/debug/xtask qemu --verbose --example locals`
  DEBUG xtask > Stderr of child processes is inherited: false
  DEBUG xtask > Partial features: false
- INFO  xtask > Testing for platform: Lm3s6965, backend: Thumbv7
- INFO  xtask::run > 👟 Build example locals (thumbv7m-none-eabi, release, "test-critical-section,thumbv7-backend", in examples/lm3s6965)
+ INFO  xtask::run > QEMU run for platform: Lm3s6965, backend: Thumbv7
+ INFO  xtask::run > 👟 Build example locals (thumbv7m-none-eabi, release, "thumbv7-backend", in examples/lm3s6965)
  INFO  xtask::run > ✅ Success.
- INFO  xtask::run > 👟 Run example locals in QEMU (thumbv7m-none-eabi, release, "test-critical-section,thumbv7-backend", in examples/lm3s6965)
+ INFO  xtask::run > 👟 Run example locals in QEMU (thumbv7m-none-eabi, release, "thumbv7-backend", in examples/lm3s6965)
  INFO  xtask::run > ✅ Success.
- INFO  xtask::results > ✅ Success: Build example locals (thumbv7m-none-eabi, release, "test-critical-section,thumbv7-backend", in examples/lm3s6965)
-    cd examples/lm3s6965 && cargo build --target thumbv7m-none-eabi --features test-critical-section,thumbv7-backend --release --example locals
+ INFO  xtask::results > ✅ Success: Build example locals (thumbv7m-none-eabi, release, "thumbv7-backend", in examples/lm3s6965)
+    cd examples/lm3s6965 && cargo build --target thumbv7m-none-eabi --features thumbv7-backend --release --example locals
  DEBUG xtask::results >
-cd examples/lm3s6965 && cargo build --target thumbv7m-none-eabi --features test-critical-section,thumbv7-backend --release --example locals
+cd examples/lm3s6965 && cargo build --target thumbv7m-none-eabi --features thumbv7-backend --release --example locals
 Stderr:
-    Finished release [optimized] target(s) in 0.02s
- INFO  xtask::results > ✅ Success: Run example locals in QEMU (thumbv7m-none-eabi, release, "test-critical-section,thumbv7-backend", in examples/lm3s6965)
-    cd examples/lm3s6965 && cargo run --target thumbv7m-none-eabi --features test-critical-section,thumbv7-backend --release --example locals
+    Finished `release` profile [optimized] target(s) in 0.03s
+ INFO  xtask::results > ✅ Success: Run example locals in QEMU (thumbv7m-none-eabi, release, "thumbv7-backend", in examples/lm3s6965)
+    cd examples/lm3s6965 && cargo run --target thumbv7m-none-eabi --features thumbv7-backend --release --example locals
  DEBUG xtask::results >
-cd examples/lm3s6965 && cargo run --target thumbv7m-none-eabi --features test-critical-section,thumbv7-backend --release --example locals
+cd examples/lm3s6965 && cargo run --target thumbv7m-none-eabi --features thumbv7-backend --release --example locals
 Stdout:
 bar: local_to_bar = 1
 foo: local_to_foo = 1
 idle: local_to_idle = 1
 
 Stderr:
-    Finished release [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.03s
      Running `qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -kernel target/thumbv7m-none-eabi/release/examples/locals`
 Timer with period zero, disabling
 

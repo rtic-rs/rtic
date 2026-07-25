@@ -176,7 +176,7 @@ pub fn cargo<'c>(
         .packages()
         .flat_map(|package| {
             let target = backend.to_target();
-            let features = package.features(target, backend, globals.partial);
+            let features = package.features(backend, globals.partial);
             into_iter(features).map(move |f| (package, target, f))
         })
         .map(move |(package, target, features)| {
@@ -224,7 +224,7 @@ pub fn cargo_example<'c>(
     let runner = into_iter(examples).map(|example| {
         let path = format!("examples/{}", platform.name());
         let dir = Some(PathBuf::from(path));
-        let features = Some(backend.to_target().and_features(backend.to_rtic_feature()));
+        let features = Some(backend.to_rtic_features().to_string());
         let mode = BuildMode::Release;
 
         let command = match operation {
@@ -266,7 +266,7 @@ pub fn cargo_clippy<'c>(
         .packages()
         .flat_map(|package| {
             let target = backend.to_target();
-            let features = package.features(target, backend, globals.partial);
+            let features = package.features(backend, globals.partial);
             into_iter(features).map(move |f| (package, target, f))
         })
         .map(move |(package, target, features)| {
@@ -329,7 +329,7 @@ pub fn cargo_doc<'c>(
 
     let features = Some(format!(
         "{},{}",
-        backend.to_target().and_features(backend.to_rtic_feature()),
+        backend.to_rtic_features(),
         extra_doc_features.join(",")
     ));
 
@@ -392,7 +392,7 @@ pub fn qemu_run_examples<'c>(
 ) -> Vec<FinalRunResult<'c>> {
     info!("QEMU run for platform: {platform:?}, backend: {backend:?}");
     let target = backend.to_target();
-    let features = Some(target.and_features(backend.to_rtic_feature()));
+    let features = Some(backend.to_rtic_features().to_string());
 
     into_iter(examples)
         .flat_map(|example| {
@@ -441,7 +441,7 @@ pub fn build_and_check_size<'c>(
 ) -> Vec<FinalRunResult<'c>> {
     info!("Measuring for platform: {platform:?}, backend: {backend:?}");
     let target = backend.to_target();
-    let features = Some(target.and_features(backend.to_rtic_feature()));
+    let features = Some(backend.to_rtic_features().to_string());
 
     let runner = into_iter(examples)
         .flat_map(|example| {
