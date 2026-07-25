@@ -14,6 +14,10 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 - `Signal<T>` and `Watch<T>` are safely `Send` and `Sync` when `T: Send`.
 - Fixed a bug where, in an unlikely edge-case, `WatchReader::changed` could return twice for a single `WatchWriter::write`.
 
+### Added
+
+- One can now obtain `Reader`s and `Writer`s for a `Watch` and `Signal` individually (i.e. without calling `split()`), and if a `Reader` is dropped it may be recreated.
+
 ## v1.5.0 - 2026-05-30
 
 ### Added
