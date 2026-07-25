@@ -105,8 +105,9 @@ impl<T: Copy> SignalWriter<'_, T> {
             let mut_ptr = self.parent.store.get_mut();
             // SAFETY: in a cs: exclusive access
             let _ = core::mem::replace(unsafe { mut_ptr.deref() }, value);
+
+            self.parent.seen.store(false, Release);
         });
-        self.parent.seen.store(false, Release);
 
         self.parent.waker.wake();
     }
