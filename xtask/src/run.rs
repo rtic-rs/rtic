@@ -240,7 +240,6 @@ pub fn cargo_example<'c>(
             },
             BuildOrCheck::Build => CargoCommand::ExampleBuild {
                 cargoarg,
-                platform,
                 example,
                 target: Some(backend.to_target()),
                 features,
@@ -403,7 +402,6 @@ pub fn qemu_run_examples<'c>(
 
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &None,
-                platform,
                 example,
                 target,
                 features: features.clone(),
@@ -453,7 +451,6 @@ pub fn build_and_check_size<'c>(
             // Make sure the requested example(s) are built
             let cmd_build = CargoCommand::ExampleBuild {
                 cargoarg: &Some("--quiet"),
-                platform,
                 example,
                 target,
                 features: features.clone(),

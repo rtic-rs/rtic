@@ -289,45 +289,6 @@ impl Platforms {
         name.to_string()
     }
 
-    /// Rust flags needed for the platform when building
-    pub fn rust_flags(&self) -> Vec<String> {
-        let c = "-C".to_string();
-        match self {
-            Platforms::Esp32C3 | Platforms::Esp32C6 => Vec::new(),
-            Platforms::Hifive1 => Vec::new(),
-            Platforms::Lm3s6965 => Vec::new(),
-            Platforms::Nrf52840 => vec![
-                c.clone(),
-                "linker=flip-link".to_string(),
-                c.clone(),
-                "link-arg=-Tlink.x".to_string(),
-                c.clone(),
-                "link-arg=-Tdefmt.x".to_string(),
-                c,
-                "link-arg=--nmagic".to_string(),
-            ],
-            Platforms::Rp2040 => vec![
-                c.clone(),
-                "link-arg=--nmagic".to_string(),
-                c,
-                "link-arg=-Tlink.x".to_string(),
-            ],
-            Platforms::Stm32f3 => vec![
-                c.clone(),
-                "link-arg=--nmagic".to_string(),
-                c,
-                "link-arg=-Tlink.x".to_string(),
-            ],
-            Platforms::Stm32f411 => vec![
-                c.clone(),
-                "link-arg=-Tlink.x".to_string(),
-                c,
-                "link-arg=-Tdefmt.x".to_string(),
-            ],
-            Platforms::Teensy4 => vec![c, "link-arg=-Tt4link.x".to_string()],
-        }
-    }
-
     /// Get the default backend for the platform
     pub fn default_backend(&self) -> Backends {
         match self {
