@@ -12,6 +12,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 - A `Channel<T>` is safely `Send` and `Sync` when `T: Send`.
 - An `Arbiter<T>` is safely `Send` and `Sync` when `T: Send`.
 - `Signal<T>` and `Watch<T>` are safely `Send` and `Sync` when `T: Send`.
+- Fixed a bug where, in an unlikely edge-case, `WatchReader::changed` could return twice for a single `WatchWriter::write`.
 
 ## v1.5.0 - 2026-05-30
 
