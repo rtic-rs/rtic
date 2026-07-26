@@ -18,6 +18,10 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 - One can now obtain `Reader`s and `Writer`s for a `Watch` and `Signal` individually (i.e. without calling `split()`), and if a `Reader` is dropped it may be recreated.
 
+### Changed
+
+- Removed `testing` feature
+
 ## v1.5.0 - 2026-05-30
 
 ### Added
