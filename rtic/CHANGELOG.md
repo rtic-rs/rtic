@@ -23,6 +23,7 @@ Example:
 ### Changed
 
 - Removed `cortex-m`, `esp32c3`, `esp32c6`, `riscv`, and `riscv-slic` features. These were all implicit features from dependencies that should only be activated by selecting a backend.
+- Removed `test-critical-section` feature
 
 ## [v2.3.0] - 2026-07-08
 
