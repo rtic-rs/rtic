@@ -113,3 +113,15 @@ $ cargo xtask qemu --verbose --example zero-prio-task
 ---
 
 Application side safety: Technically, the RTIC framework ensures that `poll` is never executed on any _software_ task with _completed_ future, thus adhering to the soundness rules of async Rust.
+
+## Local tasks
+
+Another method of spawning tasks that require non-`Send` arguments are local tasks.
+
+Local tasks are annotated with the attribute argument `local_task = true`, and they can only be spawned by a software task at the same priority.
+
+However, *local tasks* are spawned differently compared to regular *software tasks*. Any attempts to use the static `spawn` method will be rejected.
+
+```rust,noplayground
+{{#include ../../../../examples/lm3s6965/examples/spawn_local.rs}}
+```
