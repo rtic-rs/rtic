@@ -208,10 +208,6 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
             let ident: Ident = input.parse()?;
             let ident_s = ident.to_string();
 
-            // Handle equal sign
-            let eq = input.parse::<Token![=]>();
-
-            // Only local_task supports omitting the value
             if &*ident_s == "local_task" {
                 if local_task.is_some() {
                     return Err(parse::Error::new(
@@ -220,88 +216,89 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
                     ));
                 }
 
-                if eq.is_ok() {
+                // The equal sign and value after it is optional.
+                if input.parse::<Token![=]>().is_ok() {
                     let lit: LitBool = input.parse()?;
                     local_task = Some(lit.value);
                 } else {
                     local_task = Some(true); // Default to true
                 }
-                break;
             } else {
-                eq?
+                // The equal sign is mandatory.
+                input.parse::<Token![=]>()?;
+
+                match &*ident_s {
+                    "binds" => {
+                        if binds.is_some() {
+                            return Err(parse::Error::new(
+                                ident.span(),
+                                "argument appears more than once",
+                            ));
+                        }
+
+                        // Parse identifier name
+                        let ident = input.parse()?;
+
+                        binds = Some(ident);
+                    }
+
+                    "priority" => {
+                        if priority.is_some() {
+                            return Err(parse::Error::new(
+                                ident.span(),
+                                "argument appears more than once",
+                            ));
+                        }
+
+                        // #lit
+                        let lit: LitInt = input.parse()?;
+
+                        if !lit.suffix().is_empty() {
+                            return Err(parse::Error::new(
+                                lit.span(),
+                                "this literal must be unsuffixed",
+                            ));
+                        }
+
+                        let value = lit.base10_parse::<u8>().ok();
+                        if value.is_none() {
+                            return Err(parse::Error::new(
+                                lit.span(),
+                                "this literal must be in the range 0...255",
+                            ));
+                        }
+
+                        prio_span = Some(lit.span());
+                        priority = Some(value.unwrap());
+                    }
+
+                    "shared" => {
+                        if shared_resources.is_some() {
+                            return Err(parse::Error::new(
+                                ident.span(),
+                                "argument appears more than once",
+                            ));
+                        }
+
+                        shared_resources = Some(util::parse_shared_resources(input)?);
+                    }
+
+                    "local" => {
+                        if local_resources.is_some() {
+                            return Err(parse::Error::new(
+                                ident.span(),
+                                "argument appears more than once",
+                            ));
+                        }
+
+                        local_resources = Some(util::parse_local_resources(input)?);
+                    }
+
+                    _ => {
+                        return Err(parse::Error::new(ident.span(), "unexpected argument"));
+                    }
+                }
             };
-
-            match &*ident_s {
-                "binds" => {
-                    if binds.is_some() {
-                        return Err(parse::Error::new(
-                            ident.span(),
-                            "argument appears more than once",
-                        ));
-                    }
-
-                    // Parse identifier name
-                    let ident = input.parse()?;
-
-                    binds = Some(ident);
-                }
-
-                "priority" => {
-                    if priority.is_some() {
-                        return Err(parse::Error::new(
-                            ident.span(),
-                            "argument appears more than once",
-                        ));
-                    }
-
-                    // #lit
-                    let lit: LitInt = input.parse()?;
-
-                    if !lit.suffix().is_empty() {
-                        return Err(parse::Error::new(
-                            lit.span(),
-                            "this literal must be unsuffixed",
-                        ));
-                    }
-
-                    let value = lit.base10_parse::<u8>().ok();
-                    if value.is_none() {
-                        return Err(parse::Error::new(
-                            lit.span(),
-                            "this literal must be in the range 0...255",
-                        ));
-                    }
-
-                    prio_span = Some(lit.span());
-                    priority = Some(value.unwrap());
-                }
-
-                "shared" => {
-                    if shared_resources.is_some() {
-                        return Err(parse::Error::new(
-                            ident.span(),
-                            "argument appears more than once",
-                        ));
-                    }
-
-                    shared_resources = Some(util::parse_shared_resources(input)?);
-                }
-
-                "local" => {
-                    if local_resources.is_some() {
-                        return Err(parse::Error::new(
-                            ident.span(),
-                            "argument appears more than once",
-                        ));
-                    }
-
-                    local_resources = Some(util::parse_local_resources(input)?);
-                }
-
-                _ => {
-                    return Err(parse::Error::new(ident.span(), "unexpected argument"));
-                }
-            }
 
             if input.is_empty() {
                 break;
@@ -310,6 +307,7 @@ fn task_args(tokens: TokenStream2) -> parse::Result<Either<HardwareTaskArgs, Sof
             // Handle comma: ,
             let _: Token![,] = input.parse()?;
         }
+
         let shared_resources = shared_resources.unwrap_or_default();
         let local_resources = local_resources.unwrap_or_default();
         let local_task = local_task.unwrap_or(false);

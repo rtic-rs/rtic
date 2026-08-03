@@ -30,7 +30,7 @@ mod app {
         cx.local_spawner.task2(Default::default()).unwrap();
     }
 
-    #[task(priority = 1, local_task = true)]
+    #[task(local_task = true, priority = 1)]
     async fn task2(_cx: task2::Context, _nsns: NotSendNotSync) {
         hprintln!("Hello from task2!");
         debug::exit(debug::EXIT_SUCCESS); // Exit QEMU simulator
