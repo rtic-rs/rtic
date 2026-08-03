@@ -216,16 +216,15 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
                     } else {
                         quote!(<'a>)
                     };
-                    let input_vals = inputs.iter().map(|i| &i.pat).collect::<Vec<_>>();
-                    let (_input_args, _input_tupled, _input_untupled, input_ty) = util::regroup_inputs(&task.inputs);
+                    let (input_args, _input_tupled, input_untupled, input_ty) = util::regroup_inputs(inputs);
                     quote! {
                         #(#attrs)*
                         #(#cfgs)*
                         #[allow(non_snake_case)]
-                        pub(super) fn #ident #generics(&self #(,#inputs)*) -> ::core::result::Result<(), #input_ty> {
+                        pub(super) fn #ident #generics(&self #(,#input_args)*) -> ::core::result::Result<(), #input_ty> {
                             // SAFETY: This is safe to call since this can only be called
                             // from the same executor
-                            unsafe { #internal_spawn_ident(#(#input_vals,)*) }
+                            unsafe { #internal_spawn_ident(#(#input_untupled,)*) }
                         }
                     }
                 })
