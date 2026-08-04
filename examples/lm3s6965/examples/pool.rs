@@ -13,7 +13,7 @@ use rtic::app;
 // being different for different backends
 // https://docs.rs/heapless/0.8.0/heapless/pool/index.html#target-support
 cfg_if::cfg_if! {
-    if #[cfg(feature = "thumbv6-backend")] {
+    if #[cfg(not(target_has_atomic = "32"))] {
         // Copy of the smallest.rs example
         #[app(device = lm3s6965)]
         mod app {
