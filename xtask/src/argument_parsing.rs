@@ -346,7 +346,7 @@ impl PlatformSelector {
             }
             PlatformSelector::Lm3s6965 { backend } => {
                 return if backend.is_empty() {
-                    Platform::all_hifive1().collect()
+                    Platform::all_lm3s6965().collect()
                 } else {
                     backend
                         .iter()
