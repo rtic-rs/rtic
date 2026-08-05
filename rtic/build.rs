@@ -13,6 +13,16 @@ fn main() {
     // Get the backend feature selected by the user
     let mut backends: Vec<_> = backends().collect();
 
+    // Temporary workaround for https://github.com/rust-embedded/cortex-m/issues/680
+    let target = env::var("TARGET").unwrap();
+    let host_triple = env::var("HOST").unwrap();
+
+    println!("cargo::rustc-check-cfg=cfg(native)");
+
+    if host_triple == target {
+        println!("cargo:rustc-cfg=native");
+    }
+
     if backends.len() > 1 {
         println!("cargo::error=More than one backend selected: {backends:?}");
         return;
