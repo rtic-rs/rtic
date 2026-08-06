@@ -145,8 +145,18 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
 
         let lifetime = Lifetime::new("'non_static", name.span());
 
-        let spawn = if app.software_tasks[t].is_bottom || !app.software_tasks[t].is_extern {
-            quote! { exec.spawn(#name(unsafe { #name::Context::new() } #(,#input_untupled)*)); }
+        let task = &app.software_tasks[t];
+        let spawn = if !task.is_extern {
+            quote! {
+                let future = #name(unsafe { #name::Context::new() } #(,#input_untupled)*);
+                exec.spawn(future);
+            }
+        } else if task.is_bottom {
+            quote! {
+                let future = #name(unsafe { #name::Context::new() } #(,#input_untupled)*);
+                let future = rtic::export::executor::assert_task_diverges(future);
+                exec.spawn(future);
+            }
         } else {
             quote! {
                 // First, create a context with a bound lifetime (i.e. non-`'static`) to
