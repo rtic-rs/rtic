@@ -1,6 +1,6 @@
 use syn::{parse, ForeignItemFn, ItemFn, Stmt};
 
-use crate::syntax::parse::util::FilterAttrs;
+use crate::syntax::parse::util::{FilterAttrs, TaskType};
 use crate::syntax::{
     ast::{SoftwareTask, SoftwareTaskArgs},
     parse::util,
@@ -18,7 +18,9 @@ impl SoftwareTask {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(inputs))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(inputs))) =
+                util::parse_inputs(item.sig.inputs, &name, TaskType::Other)
+            {
                 let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
 
                 return Ok(SoftwareTask {
@@ -48,6 +50,12 @@ impl SoftwareTask {
     ) -> parse::Result<Self> {
         let is_bottom = util::type_is_bottom(&item.sig.output);
 
+        let task_type = if !is_bottom {
+            TaskType::SoftwareExternNotBottom
+        } else {
+            TaskType::Other
+        };
+
         let valid_signature = util::check_foreign_fn_signature(&item, true)
             && (util::type_is_unit(&item.sig.output) || is_bottom)
             && item.sig.asyncness.is_some();
@@ -57,7 +65,9 @@ impl SoftwareTask {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(inputs))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(inputs))) =
+                util::parse_inputs(item.sig.inputs, &name, task_type)
+            {
                 let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
 
                 return Ok(SoftwareTask {
@@ -75,7 +85,7 @@ impl SoftwareTask {
 
         Err(parse::Error::new(
             span,
-            format!("this task handler must have type signature `async fn({name}::Context, ..)` or `async fn({name}::Context, ..) -> !`"),
+            format!("this task handler must have type signature `async fn({name}::Context<'_>, ..)` or `async fn({name}::Context<'static>, ..) -> !`"),
         ))
     }
 }

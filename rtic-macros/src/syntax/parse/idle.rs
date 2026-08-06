@@ -3,7 +3,7 @@ use syn::{parse, ForeignItemFn, ItemFn, Stmt};
 
 use crate::syntax::{
     ast::{Idle, IdleArgs},
-    parse::util,
+    parse::util::{self, TaskType},
 };
 
 impl IdleArgs {
@@ -21,7 +21,9 @@ impl Idle {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(rest))) =
+                util::parse_inputs(item.sig.inputs, &name, TaskType::Other)
+            {
                 if rest.is_empty() {
                     return Ok(Idle {
                         args,
@@ -49,7 +51,9 @@ impl Idle {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(rest))) =
+                util::parse_inputs(item.sig.inputs, &name, TaskType::Other)
+            {
                 if rest.is_empty() {
                     return Ok(Idle {
                         args,
