@@ -1,6 +1,6 @@
 use syn::{parse, ForeignItemFn, ItemFn, Stmt};
 
-use crate::syntax::parse::util::FilterAttrs;
+use crate::syntax::parse::util::{FilterAttrs, TaskType};
 use crate::syntax::{
     ast::{HardwareTask, HardwareTaskArgs},
     parse::util,
@@ -16,7 +16,9 @@ impl HardwareTask {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(rest))) =
+                util::parse_inputs(item.sig.inputs, &name, TaskType::Other)
+            {
                 if rest.is_empty() {
                     let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
 
@@ -52,7 +54,9 @@ impl HardwareTask {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(rest))) =
+                util::parse_inputs(item.sig.inputs, &name, TaskType::Other)
+            {
                 if rest.is_empty() {
                     let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
 

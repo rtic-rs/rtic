@@ -1,4 +1,4 @@
-use crate::syntax::TokenStream2;
+use crate::syntax::{parse::util::TaskType, TokenStream2};
 use syn::{parse, ForeignItemFn, ItemFn, Stmt};
 
 use crate::syntax::{
@@ -24,7 +24,9 @@ impl Init {
             if let Ok((user_shared_struct, user_local_struct)) =
                 util::type_is_init_return(&item.sig.output)
             {
-                if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+                if let Some((context, Ok(rest))) =
+                    util::parse_inputs(item.sig.inputs, &name, TaskType::Other)
+                {
                     if rest.is_empty() {
                         return Ok(Init {
                             args,
@@ -61,7 +63,9 @@ impl Init {
             if let Ok((user_shared_struct, user_local_struct)) =
                 util::type_is_init_return(&item.sig.output)
             {
-                if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+                if let Some((context, Ok(rest))) =
+                    util::parse_inputs(item.sig.inputs, &name, TaskType::Other)
+                {
                     if rest.is_empty() {
                         return Ok(Init {
                             args,
