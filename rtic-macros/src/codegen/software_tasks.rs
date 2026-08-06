@@ -48,11 +48,17 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
                 quote!(<'a>)
             };
 
+            let output = if task.is_bottom {
+                quote!(-> !)
+            } else {
+                quote!()
+            };
+
             user_tasks.push(quote!(
                 #(#attrs)*
                 #(#cfgs)*
                 #[allow(non_snake_case)]
-                async fn #name #generics(#context: #name::Context<#lifetime> #(,#inputs)*) {
+                async fn #name #generics(#context: #name::Context<#lifetime> #(,#inputs)*) #output {
                     use rtic::Mutex as _;
                     use rtic::mutex::prelude::*;
 
