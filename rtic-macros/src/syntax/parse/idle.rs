@@ -21,7 +21,7 @@ impl Idle {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name, false) {
                 if rest.is_empty() {
                     return Ok(Idle {
                         args,
@@ -49,7 +49,7 @@ impl Idle {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name, false) {
                 if rest.is_empty() {
                     return Ok(Idle {
                         args,

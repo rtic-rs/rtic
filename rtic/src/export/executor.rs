@@ -1,6 +1,7 @@
 use super::atomic::{AtomicBool, AtomicPtr, Ordering};
 use core::{
     cell::UnsafeCell,
+    convert::Infallible,
     future::Future,
     mem::{self, ManuallyDrop, MaybeUninit},
     pin::Pin,
@@ -213,4 +214,17 @@ impl<F: Future + 'static> AsyncTaskExecutor<F> {
             }
         }
     }
+}
+
+/// This function is used to assert that tasks that
+/// return `!` are backed by functions that return `!`.
+///
+/// The only type that implements `Into<Infallible>` is
+/// `!`.
+pub fn assert_future_diverges<F, I>(f: F) -> F
+where
+    I: Into<Infallible>,
+    F: Future<Output = I>,
+{
+    f
 }

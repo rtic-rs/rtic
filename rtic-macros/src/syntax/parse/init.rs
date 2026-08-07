@@ -24,7 +24,8 @@ impl Init {
             if let Ok((user_shared_struct, user_local_struct)) =
                 util::type_is_init_return(&item.sig.output)
             {
-                if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+                if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name, false)
+                {
                     if rest.is_empty() {
                         return Ok(Init {
                             args,
@@ -61,7 +62,8 @@ impl Init {
             if let Ok((user_shared_struct, user_local_struct)) =
                 util::type_is_init_return(&item.sig.output)
             {
-                if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name) {
+                if let Some((context, Ok(rest))) = util::parse_inputs(item.sig.inputs, &name, false)
+                {
                     if rest.is_empty() {
                         return Ok(Init {
                             args,

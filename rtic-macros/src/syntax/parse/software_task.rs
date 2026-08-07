@@ -18,7 +18,9 @@ impl SoftwareTask {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(inputs))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(inputs))) =
+                util::parse_inputs(item.sig.inputs, &name, false /* not extern */)
+            {
                 let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
 
                 return Ok(SoftwareTask {
@@ -57,7 +59,9 @@ impl SoftwareTask {
         let name = item.sig.ident.to_string();
 
         if valid_signature {
-            if let Some((context, Ok(inputs))) = util::parse_inputs(item.sig.inputs, &name) {
+            if let Some((context, Ok(inputs))) =
+                util::parse_inputs(item.sig.inputs, &name, !is_bottom)
+            {
                 let FilterAttrs { cfgs, attrs, .. } = util::filter_attributes(item.attrs);
 
                 return Ok(SoftwareTask {
@@ -75,7 +79,7 @@ impl SoftwareTask {
 
         Err(parse::Error::new(
             span,
-            format!("this task handler must have type signature `async fn({name}::Context, ..)` or `async fn({name}::Context, ..) -> !`"),
+            format!("this task handler must have type signature `async fn({name}::Context<'_>, ..)` or `async fn({name}::Context<'static>, ..) -> !`"),
         ))
     }
 }

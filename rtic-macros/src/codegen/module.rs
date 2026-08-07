@@ -3,6 +3,7 @@ use crate::{analyze::Analysis, codegen::bindings::interrupt_mod, codegen::util};
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use syn::Lifetime;
 
 #[allow(clippy::too_many_lines)]
 pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
@@ -142,18 +143,49 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             quote! {}
         };
 
+        let lifetime = Lifetime::new("'non_static", name.span());
+
+        let task = &app.software_tasks[t];
+        let spawn = if !task.is_extern {
+            quote! {
+                let future = #name(unsafe { #name::Context::new() } #(,#input_untupled)*);
+                exec.spawn(future);
+            }
+        } else if task.is_bottom {
+            quote! {
+                let future = #name(unsafe { #name::Context::new() } #(,#input_untupled)*);
+                let future = rtic::export::executor::assert_future_diverges(future);
+                exec.spawn(future);
+            }
+        } else {
+            quote! {
+                // First, create a context with a bound lifetime (i.e. non-`'static`) to
+                // pass to the non-diverging task.
+                let ctx = unsafe { #name::Context::<#lifetime>::new() };
+                let future = #name(ctx #(,#input_untupled)*);
+                // The executor requires a future that is `'static`, but really
+                // just one that is valid for the duration of the context's validity,
+                // which is until the `Future` returns `Poll::Done`. Since the `future`
+                // we created cannot have a lifetime longer than the `Context`, we can
+                // `transmute` the future into a `'static` future.
+                let future = unsafe { core::mem::transmute(future) };
+                exec.spawn(future);
+            }
+        };
+
         // Spawn caller
         items.push(quote!(
             #(#cfgs)*
             /// Spawns the task directly
             #[allow(non_snake_case)]
             #[doc(hidden)]
-            pub #unsafety fn #internal_spawn_ident(#(#input_args,)*) -> ::core::result::Result<(), #input_ty> {
+            #[allow(clippy::extra_unused_lifetimes)]
+            pub #unsafety fn #internal_spawn_ident<#lifetime>(#(#input_args,)*) -> ::core::result::Result<(), #input_ty> {
                 // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
                 unsafe {
                     let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
                     if exec.try_allocate() {
-                        exec.spawn(#name(unsafe { #name::Context::new() } #(,#input_untupled)*));
+                        #spawn
                         #pend_interrupt
 
                         Ok(())

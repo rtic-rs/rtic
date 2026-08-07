@@ -4,7 +4,7 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     Abi, AttrStyle, Attribute, Expr, ExprPath, FnArg, ForeignItemFn, Ident, ItemFn, Pat, PatType,
-    Path, PathArguments, ReturnType, Token, Type, Visibility,
+    Path, PathArguments, PathSegment, ReturnType, Token, Type, Visibility,
 };
 
 use crate::syntax::{
@@ -282,12 +282,16 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
 
 type ParseInputResult = Option<(Box<Pat>, Result<Vec<PatType>, FnArg>)>;
 
-pub fn parse_inputs(inputs: Punctuated<FnArg, Token![,]>, name: &str) -> ParseInputResult {
+pub fn parse_inputs(
+    inputs: Punctuated<FnArg, Token![,]>,
+    name: &str,
+    extern_and_not_bottom: bool,
+) -> ParseInputResult {
     let mut inputs = inputs.into_iter();
 
     match inputs.next() {
         Some(FnArg::Typed(first)) => {
-            if type_is_path(&first.ty, &[name, "Context"]) {
+            if is_valid_context(&first.ty, &[name, "Context"], extern_and_not_bottom) {
                 let rest = inputs
                     .map(|arg| match arg {
                         FnArg::Typed(arg) => Ok(arg),
@@ -358,18 +362,47 @@ pub fn type_is_init_return(ty: &ReturnType) -> Result<(Ident, Ident), ()> {
     }
 }
 
-pub fn type_is_path(ty: &Type, segments: &[&str]) -> bool {
+pub fn is_valid_context(ty: &Type, segments: &[&str], extern_and_not_bottom: bool) -> bool {
     match ty {
         Type::Path(tpath) if tpath.qself.is_none() => {
-            tpath.path.segments.len() == segments.len()
+            let is_valid_path = tpath.path.segments.len() == segments.len()
                 && tpath
                     .path
                     .segments
                     .iter()
                     .zip(segments)
-                    .all(|(lhs, rhs)| lhs.ident == **rhs)
-        }
+                    .all(|(lhs, rhs)| lhs.ident == **rhs);
 
+            // If not extern or bottom, allow any lifetime. If extern and
+            // not bottom, restrict the lifetime.
+            let allowed_lifetime = !extern_and_not_bottom
+                || match &tpath.path.segments.last() {
+                    Some(PathSegment {
+                        arguments: PathArguments::AngleBracketed(args),
+                        ..
+                    }) => {
+                        if args.args.is_empty() {
+                            true
+                        } else if args.args.len() != 1 {
+                            false
+                        } else {
+                            match args.args.last() {
+                                Some(syn::GenericArgument::Lifetime(lifetime)) => {
+                                    lifetime.ident != "static"
+                                }
+                                _ => false,
+                            }
+                        }
+                    }
+                    Some(PathSegment {
+                        arguments: PathArguments::None,
+                        ..
+                    }) => true,
+                    _ => false,
+                };
+
+            is_valid_path && allowed_lifetime
+        }
         _ => false,
     }
 }

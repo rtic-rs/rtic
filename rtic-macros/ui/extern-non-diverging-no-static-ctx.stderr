@@ -1,0 +1,5 @@
+error: this task handler must have type signature `async fn(foo::Context<'_>, ..)` or `async fn(foo::Context<'static>, ..) -> !`
+  --> ui/extern-non-diverging-no-static-ctx.rs:18:18
+   |
+18 |         async fn foo(_: foo::Context<'static>);
+   |                  ^^^

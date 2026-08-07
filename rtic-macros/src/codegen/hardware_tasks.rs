@@ -8,6 +8,7 @@ use crate::{
 };
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use syn::Lifetime;
 
 /// Generate support code for hardware tasks (`#[exception]`s and `#[interrupt]`s)
 pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
@@ -24,6 +25,8 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         let exit_stmts = interrupt_exit(app, analysis);
         let config = handler_config(app, analysis, symbol.clone());
 
+        let lifetime = Lifetime::new("'non_static", name.span());
+
         mod_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
@@ -35,11 +38,12 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
                 const PRIORITY: u8 = #priority;
 
-                rtic::export::run(PRIORITY, || {
-                    #name(
-                        #name::Context::new()
-                    )
-                });
+                fn exec<#lifetime>() {
+                    let ctx = unsafe { #name::Context::<#lifetime>::new() };
+                    #name(ctx)
+                }
+
+                rtic::export::run(PRIORITY, exec);
 
                 #(#exit_stmts)*
             }
