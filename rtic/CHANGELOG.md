@@ -25,6 +25,10 @@ Example:
 - Removed `cortex-m`, `esp32c3`, `esp32c6`, `riscv`, and `riscv-slic` features. These were all implicit features from dependencies that should only be activated by selecting a backend.
 - Removed `test-critical-section` feature
 
+### Fixed
+
+- Previously, non-diverging `extern "Rust"` tasks could have a `Context` with a `<'static>` lifetime. This is no longer allowed.
+
 ## [v2.3.0] - 2026-07-08
 
 ### Added
