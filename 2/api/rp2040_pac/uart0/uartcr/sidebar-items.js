@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UARTCR_SPEC"],"type":["CTSEN_R","CTSEN_W","DTR_R","DTR_W","LBE_R","LBE_W","OUT1_R","OUT1_W","OUT2_R","OUT2_W","R","RTSEN_R","RTSEN_W","RTS_R","RTS_W","RXE_R","RXE_W","SIREN_R","SIREN_W","SIRLP_R","SIRLP_W","TXE_R","TXE_W","UARTEN_R","UARTEN_W","W"]};

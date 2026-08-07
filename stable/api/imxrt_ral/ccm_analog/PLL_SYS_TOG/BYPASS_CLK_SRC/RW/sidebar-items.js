@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["REF_CLK_24M"]};

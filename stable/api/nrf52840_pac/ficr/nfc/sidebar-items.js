@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["tagheader0","tagheader1","tagheader2","tagheader3"],"struct":["NFC"],"type":["TAGHEADER0","TAGHEADER1","TAGHEADER2","TAGHEADER3"]};

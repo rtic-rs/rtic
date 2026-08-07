@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["BUFSZ","MSTRID","PREFETCHEN","PRIORITY"]};

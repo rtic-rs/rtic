@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GPC"],"fn":["number"],"mod":["CNTR","IMR1","IMR2","IMR3","IMR4","IMR5","ISR1","ISR2","ISR3","ISR4","ISR5"],"struct":["RegisterBlock"],"type":["GPC","Instance"]};

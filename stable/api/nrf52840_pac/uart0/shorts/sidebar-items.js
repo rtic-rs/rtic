@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CTS_STARTRX_A","NCTS_STOPRX_A"],"struct":["R","SHORTS_SPEC","W"],"type":["CTS_STARTRX_R","CTS_STARTRX_W","NCTS_STOPRX_R","NCTS_STOPRX_W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["COMPMODE","DBLEN","DBLX","DT","FULL","HALF","LDFQ","LDMOD","PRSC","SPLIT"]};

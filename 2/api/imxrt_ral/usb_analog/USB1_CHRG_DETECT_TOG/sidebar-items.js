@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["CHK_CHRG_B","CHK_CONTACT","EN_B"]};

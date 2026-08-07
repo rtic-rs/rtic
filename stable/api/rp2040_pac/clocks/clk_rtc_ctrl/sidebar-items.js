@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AUXSRC_A"],"struct":["CLK_RTC_CTRL_SPEC"],"type":["AUXSRC_R","AUXSRC_W","ENABLE_R","ENABLE_W","KILL_R","KILL_W","NUDGE_R","NUDGE_W","PHASE_R","PHASE_W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["csn","io0","io1","io2","io3","sck"],"struct":["PSEL"],"type":["CSN","IO0","IO1","IO2","IO3","SCK"]};

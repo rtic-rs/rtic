@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["PIN","SHIFTER","TIMER","TRIGGER"]};

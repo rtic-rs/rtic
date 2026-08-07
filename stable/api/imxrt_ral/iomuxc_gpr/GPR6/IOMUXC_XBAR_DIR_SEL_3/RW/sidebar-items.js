@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["IOMUXC_XBAR_DIR_SEL_3_0","IOMUXC_XBAR_DIR_SEL_3_1"]};

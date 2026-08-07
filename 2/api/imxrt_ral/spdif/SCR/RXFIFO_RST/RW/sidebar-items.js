@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["RXFIFO_RST_0","RXFIFO_RST_1"]};

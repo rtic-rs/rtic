@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ch","en","inte","intf","intr","ints"],"struct":["RegisterBlock"],"type":["EN","INTE","INTF","INTR","INTS"]};

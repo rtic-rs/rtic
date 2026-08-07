@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ANADETECT_A"],"struct":["ANADETECT_SPEC","R","W"],"type":["ANADETECT_R","ANADETECT_W"]};

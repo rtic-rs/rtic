@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ERASEPAGE_SPEC","R","W"],"type":["ERASEPAGE_R","ERASEPAGE_W"]};

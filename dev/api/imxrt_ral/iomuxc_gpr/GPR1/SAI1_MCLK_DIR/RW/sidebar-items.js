@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SAI1_MCLK_DIR_0","SAI1_MCLK_DIR_1"]};

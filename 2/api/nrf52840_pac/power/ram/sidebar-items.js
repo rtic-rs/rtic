@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["power","powerclr","powerset"],"struct":["RAM"],"type":["POWER","POWERCLR","POWERSET"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IC_CLR_TX_OVER_SPEC"],"type":["CLR_TX_OVER_R","R"]};
