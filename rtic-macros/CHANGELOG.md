@@ -15,6 +15,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 - `local_task` arguments can be patterns instead of just an ident.
 - The `local_task = true` argument to `#[task]` must no longer be the last argument.
 
+### Fixed
+
+- Previously, non-diverging `extern "Rust"` tasks could have a `Context` with a `<'static>` lifetime. This is no longer allowed.
+
 ## [v2.3.0] - 2026-07-08
 
 ### Fixed
