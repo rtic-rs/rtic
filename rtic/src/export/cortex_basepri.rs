@@ -1,3 +1,5 @@
+use super::cortex_logical2hw;
+use cortex_m::register::{basepri, basepri_max};
 pub use cortex_m::{
     Peripherals,
     asm::wfi,
@@ -5,13 +7,6 @@ pub use cortex_m::{
     peripheral::{DWT, SCB, SYST, scb::SystemHandler},
 };
 
-#[cfg(not(native))]
-use super::cortex_logical2hw;
-
-#[cfg(not(native))]
-use cortex_m::register::{basepri, basepri_max};
-
-#[cfg(not(native))]
 #[inline(always)]
 pub fn run<F>(priority: u8, f: F)
 where
@@ -63,7 +58,6 @@ where
 /// but can in theory be fixed.
 ///
 #[inline(always)]
-#[cfg(not(native))]
 pub unsafe fn lock<T, R>(
     ptr: *mut T,
     ceiling: u8,
@@ -81,17 +75,4 @@ pub unsafe fn lock<T, R>(
             r
         }
     }
-}
-
-#[cfg(native)]
-pub fn run<F>(_prio: u8, _f: F)
-where
-    F: FnOnce(),
-{
-    unimplemented!();
-}
-
-#[cfg(native)]
-pub unsafe fn lock<T, R>(_ptr: *mut T, _ceil: u8, _prio: u8, _f: impl FnOnce(&mut T) -> R) -> R {
-    unimplemented!();
 }
