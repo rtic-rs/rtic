@@ -2,7 +2,7 @@ use crate::syntax::{ast::App, Context};
 use core::sync::atomic::{AtomicUsize, Ordering};
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{Ident, PatType};
+use syn::{Attribute, Ident, PatType};
 
 const RTIC_INTERNAL: &str = "__rtic_internal";
 
@@ -164,10 +164,32 @@ pub fn rt_err_ident() -> Ident {
     )
 }
 
-pub fn from_ptr_n_args_ident(n: usize) -> Ident {
-    Ident::new(&format!("from_ptr_{}_args", n + 1), Span::call_site())
+/// Declares the `static` holding a task's executor.
+///
+/// The future's type cannot be written down, so the storage is declared as bytes of the right size
+/// and alignment. [`executor_expr`] is the matching accessor and has to be used with this.
+pub fn executor_decl(name: &Ident, cfgs: &[Attribute]) -> TokenStream2 {
+    let exec_name = internal_task_ident(name, "EXEC");
+
+    quote!(
+        #(#cfgs)*
+        #[allow(non_upper_case_globals)]
+        static #exec_name: rtic::export::executor::ExecutorHolder<
+            { rtic::export::executor::exec_size::<_, _, _>(#name) },
+            { rtic::export::executor::exec_align::<_, _, _>(#name) },
+        > = unsafe {
+            ::core::mem::transmute(rtic::export::executor::exec_new::<_, _, _>(#name))
+        };
+    )
 }
 
-pub fn new_n_args_ident(n: usize) -> Ident {
-    Ident::new(&format!("new_{}_args", n + 1), Span::call_site())
+/// An expression for `&'static AsyncTaskExecutor<_>`, to pair with [`executor_decl`].
+///
+/// Only sound where [`executor_decl`] emitted the matching declaration for the same task.
+pub fn executor_expr(name: &Ident) -> TokenStream2 {
+    let exec_name = internal_task_ident(name, "EXEC");
+
+    // Parenthesized: this is used as the receiver of a method call, and `&EXEC.poll()` would
+    // borrow the call's result rather than the executor.
+    quote!((rtic::export::executor::exec_from_holder(#name, &#exec_name)))
 }

@@ -21,9 +21,12 @@ Example:
 ## [Unreleased]
 
 ## [v2.3.1] - 2026-08-20
-
 ### Changed
 
+- Each async software task's executor lives in a `static` rather than in `main`'s stack frame, so its RAM shows up in `.bss`.
+- Removed `AsyncTaskExecutorPtr` and `AsyncTaskExecutor`'s `new_N_args`/`from_ptr_N_args` methods, which existed only to reach an executor through a pointer.
+- Removed `init::Context::executors_size`, which reported a stack allocation that no longer happens.
+- Removed the stack-overflow check `init` ran after allocating executors.
 - Removed `cortex-m`, `esp32c3`, `esp32c6`, `riscv`, and `riscv-slic` features. These were all implicit features from dependencies that should only be activated by selecting a backend.
 - Removed `test-critical-section` feature
 

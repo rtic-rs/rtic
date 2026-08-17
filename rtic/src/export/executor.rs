@@ -1,9 +1,9 @@
-use super::atomic::{AtomicBool, AtomicPtr, Ordering};
+use super::atomic::{AtomicBool, Ordering};
 use core::{
     cell::UnsafeCell,
     convert::Infallible,
     future::Future,
-    mem::{self, ManuallyDrop, MaybeUninit},
+    mem::{self, MaybeUninit},
     pin::Pin,
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
@@ -27,37 +27,173 @@ unsafe fn waker_drop(_: *const ()) {
 }
 
 //============
-// AsyncTaskExecutor
+// Naming a task's future
 
-/// Pointer to executor holder.
-pub struct AsyncTaskExecutorPtr {
-    // Void pointer.
-    ptr: AtomicPtr<()>,
+/// Binds the future type of an `async fn` as an associated type.
+///
+/// An `async fn`'s future type cannot be written down, so a `static` holding one cannot be
+/// declared directly. Naming it as `<F as ExecFn<Args>>::Fut` for the function's own type is
+/// enough to ask for its size and alignment in a `const`, which is what [`ExecutorHolder`]
+/// needs.
+pub trait ExecFn<Args>: Copy {
+    /// The future the function returns.
+    type Fut: Future + 'static;
 }
 
-impl AsyncTaskExecutorPtr {
-    pub const fn new() -> Self {
-        Self {
-            ptr: AtomicPtr::new(core::ptr::null_mut()),
+macro_rules! exec_fn_impl {
+    ($($Tn:ident),*) => {
+        impl<F, Fut, $($Tn,)*> ExecFn<($($Tn,)*)> for F
+        where
+            F: Copy + FnOnce($($Tn,)*) -> Fut,
+            Fut: Future + 'static,
+        {
+            type Fut = Fut;
         }
-    }
-
-    #[inline(always)]
-    pub fn set_in_main<F: Future + 'static>(&self, executor: &ManuallyDrop<AsyncTaskExecutor<F>>) {
-        self.ptr.store(executor as *const _ as _, Ordering::Relaxed);
-    }
-
-    #[inline(always)]
-    pub fn get(&self) -> *const () {
-        self.ptr.load(Ordering::Relaxed)
-    }
+    };
 }
 
-impl Default for AsyncTaskExecutorPtr {
-    fn default() -> Self {
-        Self::new()
-    }
+// A task takes its context plus its own inputs, so this bounds inputs at one fewer.
+exec_fn_impl!();
+exec_fn_impl!(T0);
+exec_fn_impl!(T0, T1);
+exec_fn_impl!(T0, T1, T2);
+exec_fn_impl!(T0, T1, T2, T3);
+exec_fn_impl!(T0, T1, T2, T3, T4);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5, T6);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5, T6, T7);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
+exec_fn_impl!(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13);
+exec_fn_impl!(
+    T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14
+);
+exec_fn_impl!(
+    T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15
+);
+
+//============
+// Storage for an executor whose future cannot be named
+
+/// The size a task's executor needs, for [`ExecutorHolder`]'s first parameter.
+pub const fn exec_size<F, Args, Fut>(_f: F) -> usize
+where
+    F: ExecFn<Args, Fut = Fut>,
+    Fut: Future + 'static,
+{
+    size_of::<AsyncTaskExecutor<Fut>>()
 }
+
+/// The alignment a task's executor needs, for [`ExecutorHolder`]'s second parameter.
+pub const fn exec_align<F, Args, Fut>(_f: F) -> usize
+where
+    F: ExecFn<Args, Fut = Fut>,
+    Fut: Future + 'static,
+{
+    align_of::<AsyncTaskExecutor<Fut>>()
+}
+
+/// An executor for a task, to be transmuted into the [`ExecutorHolder`] that stores it.
+pub const fn exec_new<F, Args, Fut>(_f: F) -> AsyncTaskExecutor<Fut>
+where
+    F: ExecFn<Args, Fut = Fut>,
+    Fut: Future + 'static,
+{
+    AsyncTaskExecutor::new()
+}
+
+/// Storage for one [`AsyncTaskExecutor`], sized and aligned for a future that cannot be named.
+///
+/// Declared as bytes so the `static` needs no type parameter, and initialized by transmuting an
+/// [`exec_new`]. Both flags are false in that image, so this lands in `.bss` and costs no
+/// initializer.
+#[allow(private_bounds)]
+#[repr(C)]
+pub struct ExecutorHolder<const SIZE: usize, const ALIGN: usize>
+where
+    Align<ALIGN>: Alignment,
+{
+    data: UnsafeCell<[MaybeUninit<u8>; SIZE]>,
+    align: Align<ALIGN>,
+}
+
+unsafe impl<const SIZE: usize, const ALIGN: usize> Send for ExecutorHolder<SIZE, ALIGN> where
+    Align<ALIGN>: Alignment
+{
+}
+
+unsafe impl<const SIZE: usize, const ALIGN: usize> Sync for ExecutorHolder<SIZE, ALIGN> where
+    Align<ALIGN>: Alignment
+{
+}
+
+/// Reads back the executor an [`ExecutorHolder`] was initialized with.
+///
+/// # Safety
+///
+/// `holder` must have been initialized by transmuting [`exec_new`] applied to the same `_f`.
+#[allow(private_bounds)]
+#[inline(always)]
+pub unsafe fn exec_from_holder<F, Args, Fut, const SIZE: usize, const ALIGN: usize>(
+    _f: F,
+    holder: &'static ExecutorHolder<SIZE, ALIGN>,
+) -> &'static AsyncTaskExecutor<Fut>
+where
+    F: ExecFn<Args, Fut = Fut>,
+    Fut: Future + 'static,
+    Align<ALIGN>: Alignment,
+{
+    unsafe { &*holder.data.get().cast() }
+}
+
+#[allow(private_bounds)]
+#[repr(transparent)]
+pub struct Align<const N: usize>([<Self as Alignment>::Archetype; 0])
+where
+    Self: Alignment;
+
+trait Alignment {
+    /// A zero-sized type of particular alignment.
+    type Archetype: Copy + Eq + PartialEq + Send + Sync + Unpin;
+}
+
+macro_rules! aligns {
+    ($($AlignX:ident: $n:literal,)*) => {
+        $(
+            #[derive(Copy, Clone, Eq, PartialEq)]
+            #[repr(align($n))]
+            struct $AlignX {}
+
+            impl Alignment for Align<$n> {
+                type Archetype = $AlignX;
+            }
+        )*
+    };
+}
+
+aligns!(
+    Align1: 1,
+    Align2: 2,
+    Align4: 4,
+    Align8: 8,
+    Align16: 16,
+    Align32: 32,
+    Align64: 64,
+    Align128: 128,
+    Align256: 256,
+    Align512: 512,
+    Align1024: 1024,
+    Align2048: 2048,
+    Align4096: 4096,
+    Align8192: 8192,
+    Align16384: 16384,
+);
+
+//============
+// AsyncTaskExecutor
 
 /// Executor for an async task.
 pub struct AsyncTaskExecutor<F: Future + 'static> {
@@ -68,24 +204,6 @@ pub struct AsyncTaskExecutor<F: Future + 'static> {
 }
 
 unsafe impl<F: Future + 'static> Sync for AsyncTaskExecutor<F> {}
-
-macro_rules! new_n_args {
-    ($name:ident, $($t:ident),*) => {
-        #[inline(always)]
-        pub fn $name<$($t,)* Fun: Fn($($t,)*) -> F>(_f: Fun) -> Self {
-            Self::new()
-        }
-    };
-}
-
-macro_rules! from_ptr_n_args {
-    ($name:ident, $($t:ident),*) => {
-        #[inline(always)]
-        pub unsafe fn $name<$($t,)* Fun: Fn($($t,)*) -> F>(_f: Fun, ptr: &AsyncTaskExecutorPtr) -> &Self {
-            unsafe { &*(ptr.get() as *const _) }
-        }
-    };
-}
 
 impl<F: Future + 'static> Default for AsyncTaskExecutor<F> {
     fn default() -> Self {
@@ -103,55 +221,6 @@ impl<F: Future + 'static> AsyncTaskExecutor<F> {
             pending: AtomicBool::new(false),
         }
     }
-
-    // Support for up to 16 arguments on async functions. Should be
-    // enough for now, else extend this list.
-    new_n_args!(new_0_args,);
-    new_n_args!(new_1_args, A1);
-    new_n_args!(new_2_args, A1, A2);
-    new_n_args!(new_3_args, A1, A2, A3);
-    new_n_args!(new_4_args, A1, A2, A3, A4);
-    new_n_args!(new_5_args, A1, A2, A3, A4, A5);
-    new_n_args!(new_6_args, A1, A2, A3, A4, A5, A6);
-    new_n_args!(new_7_args, A1, A2, A3, A4, A5, A6, A7);
-    new_n_args!(new_8_args, A1, A2, A3, A4, A5, A6, A7, A8);
-    new_n_args!(new_9_args, A1, A2, A3, A4, A5, A6, A7, A8, A9);
-    new_n_args!(new_10_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
-    new_n_args!(new_11_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
-    #[rustfmt::skip]
-    new_n_args!(new_12_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
-    #[rustfmt::skip]
-    new_n_args!(new_13_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13);
-    #[rustfmt::skip]
-    new_n_args!(new_14_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14);
-    #[rustfmt::skip]
-    new_n_args!(new_15_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15);
-    #[rustfmt::skip]
-    new_n_args!(new_16_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16);
-
-    from_ptr_n_args!(from_ptr_0_args,);
-    from_ptr_n_args!(from_ptr_1_args, A1);
-    from_ptr_n_args!(from_ptr_2_args, A1, A2);
-    from_ptr_n_args!(from_ptr_3_args, A1, A2, A3);
-    from_ptr_n_args!(from_ptr_4_args, A1, A2, A3, A4);
-    from_ptr_n_args!(from_ptr_5_args, A1, A2, A3, A4, A5);
-    from_ptr_n_args!(from_ptr_6_args, A1, A2, A3, A4, A5, A6);
-    from_ptr_n_args!(from_ptr_7_args, A1, A2, A3, A4, A5, A6, A7);
-    from_ptr_n_args!(from_ptr_8_args, A1, A2, A3, A4, A5, A6, A7, A8);
-    from_ptr_n_args!(from_ptr_9_args, A1, A2, A3, A4, A5, A6, A7, A8, A9);
-    from_ptr_n_args!(from_ptr_10_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
-    #[rustfmt::skip]
-    from_ptr_n_args!(from_ptr_11_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
-    #[rustfmt::skip]
-    from_ptr_n_args!(from_ptr_12_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
-    #[rustfmt::skip]
-    from_ptr_n_args!(from_ptr_13_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13);
-    #[rustfmt::skip]
-    from_ptr_n_args!(from_ptr_14_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14);
-    #[rustfmt::skip]
-    from_ptr_n_args!(from_ptr_15_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15);
-    #[rustfmt::skip]
-    from_ptr_n_args!(from_ptr_16_args, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16);
 
     /// Check if there is an active task in the executor.
     #[inline(always)]

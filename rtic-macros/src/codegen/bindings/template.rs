@@ -58,13 +58,6 @@ pub fn interrupt_exit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2
     vec![]
 }
 
-pub fn check_stack_overflow_before_init(
-    _app: &App,
-    _analysis: &CodegenAnalysis,
-) -> Vec<TokenStream2> {
-    vec![]
-}
-
 pub fn async_entry(
     app: &App,
     analysis: &CodegenAnalysis,

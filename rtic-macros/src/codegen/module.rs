@@ -18,11 +18,6 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
 
     match ctxt {
         Context::Init => {
-            fields.push(quote!(
-                /// The space used to allocate async executors in bytes.
-                pub executors_size: usize
-            ));
-
             if app.args.core {
                 fields.push(quote!(
                     /// Core peripherals
@@ -49,7 +44,6 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             ));
 
             values.push(quote!(cs: rtic::export::CriticalSection::new()));
-            values.push(quote!(executors_size));
         }
 
         Context::Idle | Context::HardwareTask(_) | Context::SoftwareTask(_) => {}
@@ -101,18 +95,13 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
         _ => &v,
     };
 
-    let core = if ctxt.is_init() {
-        if app.args.core {
-            Some(quote!(core: rtic::export::Peripherals, executors_size: usize))
-        } else {
-            Some(quote!(executors_size: usize))
-        }
+    let core = if ctxt.is_init() && app.args.core {
+        Some(quote!(core: rtic::export::Peripherals))
     } else {
         None
     };
 
     let internal_context_name = util::internal_task_ident(name, "Context");
-    let exec_name = util::internal_task_ident(name, "EXEC");
 
     if let Context::SoftwareTask(t) = ctxt {
         let spawnee = &app.software_tasks[name];
@@ -131,9 +120,9 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
 
         let internal_spawn_ident = util::internal_task_ident(name, "spawn");
         let internal_waker_ident = util::internal_task_ident(name, "waker");
-        let from_ptr_n_args = util::from_ptr_n_args_ident(spawnee.inputs.len());
         let (input_args, input_tupled, input_untupled, input_ty) =
             util::regroup_inputs(&spawnee.inputs);
+        let exec = util::executor_expr(name);
 
         let local_task = app.software_tasks[t].args.local_task;
         let unsafety = if local_task {
@@ -183,7 +172,7 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             pub #unsafety fn #internal_spawn_ident<#lifetime>(#(#input_args,)*) -> ::core::result::Result<(), #input_ty> {
                 // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
                 unsafe {
-                    let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
+                    let exec = #exec;
                     if exec.try_allocate() {
                         #spawn
                         #pend_interrupt
@@ -203,12 +192,10 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             #[allow(non_snake_case)]
             #[doc(hidden)]
             pub fn #internal_waker_ident() -> ::core::task::Waker {
-                // SAFETY: #exec_name is a valid pointer to an executor.
+                // SAFETY: the executor's storage was declared for this task.
                 unsafe {
-                    let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
-                    exec.waker(|| {
-                        let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
-                        exec.set_pending();
+                    #exec.waker(|| {
+                        #exec.set_pending();
                         #pend_interrupt
                     })
                 }

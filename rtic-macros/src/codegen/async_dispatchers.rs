@@ -17,15 +17,7 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
 
     // Generate executor definition and priority in global scope
     for (name, task) in app.software_tasks.iter() {
-        let exec_name = util::internal_task_ident(name, "EXEC");
-        let cfgs = &task.cfgs;
-
-        items.push(quote!(
-            #(#cfgs)*
-            #[allow(non_upper_case_globals)]
-            static #exec_name: rtic::export::executor::AsyncTaskExecutorPtr =
-                rtic::export::executor::AsyncTaskExecutorPtr::new();
-        ));
+        items.push(util::executor_decl(name, &task.cfgs));
     }
 
     for (&level, channel) in &analysis.channels {
@@ -47,19 +39,14 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         };
 
         for name in channel.tasks.iter() {
-            let exec_name = util::internal_task_ident(name, "EXEC");
             let task = &app.software_tasks[name];
             let cfgs = &task.cfgs;
-            let from_ptr_n_args =
-                util::from_ptr_n_args_ident(app.software_tasks[name].inputs.len());
+            let exec = util::executor_expr(name);
 
             stmts.push(quote!(
                 #(#cfgs)*
-                let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
-                #(#cfgs)*
-                exec.poll(|| {
-                    let exec = rtic::export::executor::AsyncTaskExecutor::#from_ptr_n_args(#name, &#exec_name);
-                    exec.set_pending();
+                #exec.poll(|| {
+                    #exec.set_pending();
                     #pend_interrupt
                 });
             ));
