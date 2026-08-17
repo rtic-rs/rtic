@@ -41,29 +41,6 @@ pub fn interrupt_mod(app: &App) -> TokenStream2 {
     quote!(#device::#interrupt)
 }
 
-pub fn check_stack_overflow_before_init(
-    _app: &App,
-    _analysis: &CodegenAnalysis,
-) -> Vec<TokenStream2> {
-    vec![quote!(
-        // Check for stack overflow using symbols from `cortex-m-rt`.
-        extern "C" {
-            pub static _stack_start: u32;
-            pub static __ebss: u32;
-        }
-
-        let stack_start = &_stack_start as *const _ as u32;
-        let ebss = &__ebss as *const _ as u32;
-
-        if stack_start > ebss {
-            // No flip-link usage, check the MSP for overflow.
-            if rtic::export::msp::read() <= ebss {
-                ::core::panic!("Stack overflow after allocating executors");
-            }
-        }
-    )]
-}
-
 #[cfg(feature = "cortex-m-source-masking")]
 mod source_masking {
     use super::*;

@@ -12,9 +12,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 - Removed an occurence of the `needless_late_init` clippy lint.
 
 ## [v2.3.1] - 2026-08-20
-
 ### Changed
 
+- Each async software task's executor is declared as a `static` instead of a `ManuallyDrop` local in `main`.
+- Dropped `check_stack_overflow_before_init` from the backend API, and `executors_size` from `init`'s context.
 - Add missing docs to `LocalSpawner` struct
 - Removed explicit `riscv-slic` feature (this was only used to activate functionality shared between `riscv-clint` and `riscv-mecall`).
 - Selecting no or more than one implementation now fails in the build script instead of during compilation.

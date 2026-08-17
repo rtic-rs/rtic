@@ -1,8 +1,4 @@
-use crate::{
-    analyze::Analysis,
-    codegen::{bindings, util},
-    syntax::ast::App,
-};
+use crate::{analyze::Analysis, codegen::util, syntax::ast::App};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
@@ -28,34 +24,14 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
         quote!(loop {})
     };
 
-    let mut executor_allocations = Vec::new();
-
-    for (name, task) in app.software_tasks.iter() {
-        let exec_name = util::internal_task_ident(name, "EXEC");
-        let new_n_args = util::new_n_args_ident(app.software_tasks[name].inputs.len());
-        let cfgs = &task.cfgs;
-
-        executor_allocations.push(quote!(
-            #(#cfgs)*
-            let executor = ::core::mem::ManuallyDrop::new(rtic::export::executor::AsyncTaskExecutor::#new_n_args(#name));
-            #(#cfgs)*
-            {
-                executors_size += ::core::mem::size_of_val(&executor);
-                #exec_name.set_in_main(&executor);
-            }
-        ));
-    }
-
     let main = util::suffixed("main");
     let init_name = &app.init.name;
 
     let init_args = if app.args.core {
-        quote!(core.into(), executors_size)
+        quote!(core.into())
     } else {
-        quote!(executors_size)
+        quote!()
     };
-
-    let msp_check = bindings::check_stack_overflow_before_init(app, analysis);
 
     quote!(
         #(#extra_mods_stmts)*
@@ -71,12 +47,6 @@ pub fn codegen(app: &App, analysis: &Analysis) -> TokenStream2 {
             fn __rtic_init_resources<F>(f: F) where F: FnOnce() {
                 f();
             }
-
-            // Generate allocations for async executors.
-            let mut executors_size = 0;
-            #(#executor_allocations)*
-
-            #(#msp_check)*
 
             // Wrap late_init_stmts in a function to ensure that stack space is reclaimed.
             __rtic_init_resources(||{
