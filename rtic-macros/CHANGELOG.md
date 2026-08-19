@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+## [v2.3.1] - 2026-08-20
+
 ### Changed
 
 - Add missing docs to `LocalSpawner` struct

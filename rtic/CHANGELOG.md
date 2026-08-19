@@ -20,6 +20,8 @@ Example:
 
 ## [Unreleased]
 
+## [v2.3.1] - 2026-08-20
+
 ### Changed
 
 - Removed `cortex-m`, `esp32c3`, `esp32c6`, `riscv`, and `riscv-slic` features. These were all implicit features from dependencies that should only be activated by selecting a backend.
