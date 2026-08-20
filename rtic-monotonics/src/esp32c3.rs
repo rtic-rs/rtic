@@ -168,14 +168,12 @@ macro_rules! esp32c3_systimer_monotonic {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::esp32c3::TimerBackend;
-            type Instant = $crate::fugit::Instant<
+            type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 16_000_000,
             >;
-            type Duration = $crate::fugit::Duration<
+            type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 16_000_000,
             >;
         }

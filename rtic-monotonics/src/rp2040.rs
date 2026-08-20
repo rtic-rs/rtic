@@ -154,14 +154,12 @@ macro_rules! rp2040_timer_monotonic {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::rp2040::TimerBackend;
-            type Instant = $crate::fugit::Instant<
+            type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 1_000_000,
             >;
-            type Duration = $crate::fugit::Duration<
+            type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 1_000_000,
             >;
         }

@@ -113,14 +113,12 @@ macro_rules! __internal_create_stm32_timer_struct {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::stm32::$mono_backend;
-            type Instant = $crate::fugit::Instant<
+            type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
-            type Duration = $crate::fugit::Duration<
+            type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
         }

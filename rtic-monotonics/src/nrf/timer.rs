@@ -144,14 +144,12 @@ macro_rules! __internal_create_nrf_timer_struct {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::nrf::timer::$mono_backend;
-            type Instant = $crate::fugit::Instant<
+            type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
-            type Duration = $crate::fugit::Duration<
+            type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
         }

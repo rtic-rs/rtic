@@ -9,7 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
-- Updated fugit dependency to v0.4.0
+- [breaking] Updated fugit dependency to v0.5.0
 
 ## v2.0.1 - 2025-06-22
 
