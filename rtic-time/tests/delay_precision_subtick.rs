@@ -99,7 +99,7 @@ impl TimerQueueBackend for SubtickTestTimerBackend {
 impl TimerQueueBasedMonotonic for SubtickTestTimer {
     type Backend = SubtickTestTimerBackend;
 
-    type Instant = fugit::Instant<u64, SUBTICKS_PER_TICK, 1000>;
+    type Instant = fugit::MonotonicInstant<u64, SUBTICKS_PER_TICK, 1000>;
     type Duration = fugit::Duration<u64, SUBTICKS_PER_TICK, 1000>;
 }
 
