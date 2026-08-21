@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PRIM_SPEC"],"type":["POSTDIV1_R","POSTDIV1_W","POSTDIV2_R","POSTDIV2_W","R","W"]};

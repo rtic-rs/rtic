@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_CCASTOP_SPEC","W"],"type":["TASKS_CCASTOP_W"]};

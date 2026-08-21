@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LCS_A","LCS_IS_VALID_A"],"struct":["HOST_IOT_LCS_SPEC","R","W"],"type":["LCS_IS_VALID_R","LCS_IS_VALID_W","LCS_R","LCS_W"]};

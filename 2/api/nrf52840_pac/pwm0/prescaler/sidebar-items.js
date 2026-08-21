@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["PRESCALER_A"],"struct":["PRESCALER_SPEC","R","W"],"type":["PRESCALER_R","PRESCALER_W"]};

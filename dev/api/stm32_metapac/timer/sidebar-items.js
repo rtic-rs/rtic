@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["regs","vals"],"struct":["Tim1ch","Tim1chCmp","Tim2ch","Tim2chCmp","TimAdv","TimBasic","TimBasicNoCr2","TimCore","TimGp16","TimGp32"]};

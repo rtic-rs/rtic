@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ERQ7_0","ERQ7_1"]};

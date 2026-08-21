@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CALC_A"],"struct":["SNIFF_CTRL_SPEC"],"type":["BSWAP_R","BSWAP_W","CALC_R","CALC_W","DMACH_R","DMACH_W","EN_R","EN_W","OUT_INV_R","OUT_INV_W","OUT_REV_R","OUT_REV_W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["dbgforce","mempowerdown","proc0_nmi_mask","proc1_nmi_mask","proc_config","proc_in_sync_bypass","proc_in_sync_bypass_hi"],"struct":["RegisterBlock"],"type":["DBGFORCE","MEMPOWERDOWN","PROC0_NMI_MASK","PROC1_NMI_MASK","PROC_CONFIG","PROC_IN_SYNC_BYPASS","PROC_IN_SYNC_BYPASS_HI"]};

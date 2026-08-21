@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["POWER_DOWN","POWER_UP"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TRACE_CLK_SEL_0","TRACE_CLK_SEL_1","TRACE_CLK_SEL_2","TRACE_CLK_SEL_3"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KRIE_0","KRIE_1"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ADC"],"fn":["number"],"mod":["CAL","CFG","CV","GC","GS","HC","HC0","HS","OFS","R","R0"],"struct":["RegisterBlock"],"type":["ADC","Instance"]};

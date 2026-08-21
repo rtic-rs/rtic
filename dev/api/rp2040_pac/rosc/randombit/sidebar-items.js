@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RANDOMBIT_SPEC"],"type":["R","RANDOMBIT_R"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["gpio_qspi_sclk","gpio_qspi_sd0","gpio_qspi_sd1","gpio_qspi_sd2","gpio_qspi_sd3","gpio_qspi_ss","voltage_select"],"struct":["RegisterBlock"],"type":["GPIO_QSPI_SCLK","GPIO_QSPI_SD0","GPIO_QSPI_SD1","GPIO_QSPI_SD2","GPIO_QSPI_SD3","GPIO_QSPI_SS","VOLTAGE_SELECT"]};

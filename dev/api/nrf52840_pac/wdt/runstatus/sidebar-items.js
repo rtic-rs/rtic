@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RUNSTATUS_A"],"struct":["R","RUNSTATUS_SPEC"],"type":["RUNSTATUS_R"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PAUSE_SPEC"],"type":["PAUSE_R","PAUSE_W","R","W"]};

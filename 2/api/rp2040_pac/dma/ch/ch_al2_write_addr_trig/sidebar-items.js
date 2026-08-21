@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CH_AL2_WRITE_ADDR_TRIG_SPEC"],"type":["R","W"]};

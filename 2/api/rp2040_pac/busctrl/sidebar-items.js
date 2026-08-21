@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["bus_priority","bus_priority_ack","perfctr0","perfctr1","perfctr2","perfctr3","perfsel0","perfsel1","perfsel2","perfsel3"],"struct":["RegisterBlock"],"type":["BUS_PRIORITY","BUS_PRIORITY_ACK","PERFCTR0","PERFCTR1","PERFCTR2","PERFCTR3","PERFSEL0","PERFSEL1","PERFSEL2","PERFSEL3"]};

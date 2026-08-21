@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FLUSH_SPEC"],"type":["FLUSH_R","FLUSH_W","R","W"]};
