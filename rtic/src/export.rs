@@ -30,20 +30,6 @@ mod cortex_source_mask;
 #[cfg(implementation = "cortex-m-source-masking")]
 pub use cortex_source_mask::*;
 
-#[cfg(any(
-    implementation = "riscv-esp32c3",
-    implementation = "riscv-esp32c6",
-    implementation = "riscv-slic"
-))]
-pub mod riscv_common;
-
-#[cfg(any(
-    implementation = "riscv-esp32c3",
-    implementation = "riscv-esp32c6",
-    implementation = "riscv-slic"
-))]
-pub use riscv_common::*;
-
 #[cfg(implementation = "riscv-esp32c3")]
 mod riscv_esp32c3;
 #[cfg(implementation = "riscv-esp32c3")]

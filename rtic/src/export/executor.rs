@@ -146,6 +146,12 @@ where
     Fut: Future + 'static,
     Align<ALIGN>: Alignment,
 {
+    // Guard against a change to the `executor_decl` macro making it silently transmute the wrong bytes.
+    const {
+        assert!(SIZE == size_of::<AsyncTaskExecutor<Fut>>());
+        assert!(ALIGN == align_of::<AsyncTaskExecutor<Fut>>());
+    }
+
     unsafe { &*holder.data.get().cast() }
 }
 
