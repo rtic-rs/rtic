@@ -4,7 +4,7 @@
 //! stack frame.
 //!
 //! Covers a task with no arguments, one with several, two priorities so more than one dispatcher
-//! polls a static, and the three ways a task's future gets built — inline, `extern` and diverging,
+//! polls a static, and the three ways a task's future gets built: inline, `extern` and diverging,
 //! `extern` and borrowing its context.
 
 #![no_main]
