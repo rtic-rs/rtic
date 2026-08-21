@@ -183,10 +183,8 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
             (cfgs, attrs)
         };
 
-        let local;
-
         // Declared requries type ascription
-        if input.peek(Token![:]) {
+        let local = if input.peek(Token![:]) {
             // Handle colon
             let _: Token![:] = input.parse()?;
 
@@ -225,12 +223,12 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
                 }
             };
 
-            local = TaskLocal::Declared(Local {
+            TaskLocal::Declared(Local {
                 attrs,
                 cfgs,
                 ty,
                 expr,
-            });
+            })
         } else if input.peek(Token![=]) {
             // Missing type ascription is not valid
             return Err(parse::Error::new(name.span(), "malformed, expected a type"));
@@ -248,13 +246,13 @@ pub fn parse_local_resources(content: ParseStream<'_>) -> parse::Result<LocalRes
             let _: Token![,] = input.parse()?;
 
             // Expected when multiple local resources
-            local = TaskLocal::External;
+            TaskLocal::External
         } else if input.is_empty() {
             // There was only one single local resource
             // Task local but not initialized
             // local = [EXPRPATH],
             //          ~~~~~~~~
-            local = TaskLocal::External;
+            TaskLocal::External
         } else {
             // Specifying local without any resources is invalid
             return Err(parse::Error::new(name.span(), error_msg_no_local_resources));
