@@ -72,7 +72,7 @@ impl TestMonoBackend {
     }
 
     pub fn compare() -> Option<u64> {
-        COMPARE.lock().clone()
+        *COMPARE.lock()
     }
 }
 

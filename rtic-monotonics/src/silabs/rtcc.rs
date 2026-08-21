@@ -206,10 +206,12 @@ macro_rules! silabs_rtcc_monotonic {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::silabs::rtcc::TimerBackend;
-            type Instant =
-                fugit::Instant<<Self::Backend as $crate::TimerQueueBackend>::Ticks, 1, 32768>;
+            type Instant = fugit::MonotonicTimerInstant<
+                <Self::Backend as $crate::TimerQueueBackend>::Ticks,
+                32768,
+            >;
             type Duration =
-                fugit::Duration<<Self::Backend as $crate::TimerQueueBackend>::Ticks, 1, 32768>;
+                fugit::TimerDuration<<Self::Backend as $crate::TimerQueueBackend>::Ticks, 32768>;
         }
 
         rtic_time::impl_embedded_hal_delay_fugit!($name);
