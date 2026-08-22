@@ -62,15 +62,28 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "cortex-m"
-version = "0.7.7"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ec610d8f49840a5b376c69663b6369e71f4b34484b9b2eb29fb918d92516cb9"
+checksum = "844b9697e922c99847eed515c6eb6d101e7ce62ff556fcaec243798291427ee8"
 dependencies = [
  "bare-metal 0.2.5",
  "bitfield",
+ "cortex-m-macros",
  "critical-section",
  "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0",
  "volatile-register",
+]
+
+[[package]]
+name = "cortex-m-macros"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d1922be58519ad40368fc4ca595a2cefa51a7abf947be3b0c90586dc7dbd0e2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -149,12 +162,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "fugit"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60ee0e9ed8a394868ee05cde8705cbd8dbfc95f88e14a57134323e799bd3912a"
+dependencies = [
+ "gcd",
+]
+
+[[package]]
 name = "fugit-timer"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9607bfc4c388f9d629704f56ede4a007546cad417b3bcd6fc7c87dc7edce04a"
 dependencies = [
- "fugit",
+ "fugit 0.3.9",
  "nb 1.1.0",
 ]
 
@@ -261,7 +283,7 @@ dependencies = [
 
 [[package]]
 name = "rtic"
-version = "2.3.0"
+version = "2.3.1"
 dependencies = [
  "cortex-m",
  "critical-section",
@@ -286,7 +308,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.3.0"
+version = "2.3.1"
 dependencies = [
  "indexmap",
  "proc-macro2",
@@ -300,7 +322,7 @@ version = "3.0.0"
 dependencies = [
  "cfg-if",
  "cortex-m",
- "fugit",
+ "fugit 0.6.0",
  "portable-atomic",
  "rtic-time",
 ]
@@ -312,7 +334,7 @@ dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
- "fugit",
+ "fugit 0.6.0",
  "futures-util",
  "rtic-common",
 ]
@@ -393,7 +415,7 @@ dependencies = [
  "cortex-m-rt",
  "embedded-dma",
  "embedded-hal 0.2.7",
- "fugit",
+ "fugit 0.3.9",
  "fugit-timer",
  "nb 1.1.0",
  "stm32-usbd",

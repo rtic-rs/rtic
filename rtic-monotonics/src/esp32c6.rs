@@ -30,7 +30,7 @@
 pub mod prelude {
     pub use crate::esp32c6_systimer_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
 
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }

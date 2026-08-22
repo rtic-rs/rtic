@@ -19,19 +19,23 @@ pub struct TimeoutError;
 pub use embedded_hal;
 /// Re-export for macros
 pub use embedded_hal_async;
+/// Re-export for macros
+pub use fugit;
 
-/// # A monotonic clock / counter definition.
+/// # A clock / counter definition, usable for scheduling.
 ///
 /// ## Correctness
 ///
 /// The trait enforces that proper time-math is implemented between `Instant` and `Duration`. This
 /// is a requirement on the time library that the user chooses to use.
-pub trait Monotonic {
+///
+/// The instants carry no ordering requirement, which admits timelines that wrap. On a wrapping
+/// timebase, scheduling is only meaningful within half the counter range of `now`.
+pub trait Timebase {
     /// The type for instant, defining an instant in time.
     ///
     /// **Note:** In all APIs in RTIC that use instants from this monotonic, this type will be used.
-    type Instant: Ord
-        + Copy
+    type Instant: Copy
         + core::ops::Add<Self::Duration, Output = Self::Instant>
         + core::ops::Sub<Self::Duration, Output = Self::Instant>
         + core::ops::Sub<Self::Instant, Output = Self::Duration>;
@@ -62,3 +66,10 @@ pub trait Monotonic {
         future: F,
     ) -> Result<F::Output, TimeoutError>;
 }
+
+/// # A monotonic clock / counter definition: a [`Timebase`] whose instants form a total order.
+///
+/// Implemented automatically for every [`Timebase`] whose `Instant` is [`Ord`].
+pub trait Monotonic: Timebase<Instant: Ord> {}
+
+impl<T: Timebase<Instant: Ord>> Monotonic for T {}

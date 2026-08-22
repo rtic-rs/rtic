@@ -36,7 +36,7 @@
 pub mod prelude {
     pub use crate::rp235x_timer_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
 
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }

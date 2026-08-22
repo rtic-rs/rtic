@@ -47,7 +47,7 @@ mod app {
         loop {
             let now = Mono::now();
             let now_ms: fugit::SecsDurationU64 = now.duration_since_epoch().convert();
-            defmt::println!("Timer {} ({})", now_ms, now.ticks());
+            defmt::println!("Timer {} ({})", now_ms, now.as_ticks());
 
             blink_on = !blink_on;
             if blink_on {
