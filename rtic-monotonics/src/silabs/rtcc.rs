@@ -34,7 +34,7 @@ pub mod prelude {
     pub use silabs_metapac;
 
     pub use crate::fugit::{self, ExtU64, ExtU64Ceil};
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
 }
 
 use core::sync::atomic::Ordering;

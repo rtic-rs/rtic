@@ -7,8 +7,15 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- `Timebase`, the `Monotonic` methods without the `Ord` requirement on instants
+- `TimerQueueBasedInstant` for `fugit::WrappingInstant`
+
 ### Changed
 
+- [breaking] `Monotonic` is now a marker trait on `Timebase`, blanket implemented when `Instant: Ord`. `Timebase` must be in scope to call `delay` and friends
+- `TimerQueueBasedInstant` no longer requires `Ord`
 - [breaking] Updated fugit dependency to v0.5.0
 
 ## v2.0.1 - 2025-06-22

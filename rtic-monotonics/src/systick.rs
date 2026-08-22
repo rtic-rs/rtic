@@ -53,7 +53,7 @@
 pub mod prelude {
     pub use crate::systick_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
 
     cfg_if::cfg_if! {
         if #[cfg(feature = "systick-64bit")] {

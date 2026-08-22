@@ -18,6 +18,9 @@ members = [
 ]
 resolver = "2"
 
+[patch.crates-io]
+fugit = { git = "https://github.com/korken89/fugit.git", branch = "instant-ord" }
+
 [profile.release]
 codegen-units = 1
 lto = true

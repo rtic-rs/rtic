@@ -21,7 +21,7 @@ use parking_lot::Mutex;
 use rtic_time::{
     monotonic::TimerQueueBasedMonotonic,
     timer_queue::{TimerQueue, TimerQueueBackend},
-    Monotonic,
+    Timebase,
 };
 
 const SUBTICKS_PER_TICK: u64 = 10;

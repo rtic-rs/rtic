@@ -48,7 +48,7 @@ pub mod prelude {
     #[cfg(feature = "silabs_timer9")]
     pub use crate::silabs_timer9_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
 
     pub use crate::fugit::{self, ExtU64, ExtU64Ceil};
 }

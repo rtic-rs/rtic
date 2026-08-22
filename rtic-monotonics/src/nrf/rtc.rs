@@ -34,7 +34,7 @@ pub mod prelude {
     #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
     pub use crate::nrf_rtc2_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
 
