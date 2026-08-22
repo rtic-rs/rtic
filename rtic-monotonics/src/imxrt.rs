@@ -45,7 +45,7 @@ pub mod prelude {
     #[cfg(feature = "imxrt_gpt2")]
     pub use crate::imxrt_gpt2_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
 

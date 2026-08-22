@@ -449,7 +449,7 @@ dependencies = [
  "esp32h2",
  "esp32s2",
  "esp32s3",
- "fugit",
+ "fugit 0.3.9",
  "instability",
  "nb 1.1.0",
  "paste",
@@ -665,6 +665,15 @@ name = "fugit"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e639847d312d9a82d2e75b0edcc1e934efcc64e6cb7aa94f0b1fbec0bc231d6"
+dependencies = [
+ "gcd",
+]
+
+[[package]]
+name = "fugit"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60ee0e9ed8a394868ee05cde8705cbd8dbfc95f88e14a57134323e799bd3912a"
 dependencies = [
  "gcd",
 ]
@@ -1026,7 +1035,7 @@ checksum = "d3f2ad9f15a07f4a0e1677124f9120ce7e83ab7e1ca7186af0ca9da529b62e80"
 
 [[package]]
 name = "rtic"
-version = "2.3.0"
+version = "2.3.1"
 dependencies = [
  "critical-section",
  "esp32c6 0.22.0",
@@ -1052,7 +1061,7 @@ checksum = "d9369355b04d06a3780ec0f51ea2d225624db777acbc60abd8ca4832da5c1a42"
 
 [[package]]
 name = "rtic-macros"
-version = "2.3.0"
+version = "2.3.1"
 dependencies = [
  "indexmap",
  "proc-macro2",
@@ -1066,7 +1075,7 @@ version = "3.0.0"
 dependencies = [
  "cfg-if",
  "esp32c6 0.22.0",
- "fugit",
+ "fugit 0.6.0",
  "portable-atomic",
  "riscv 0.16.1",
  "rtic-time",
@@ -1079,7 +1088,7 @@ dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
- "fugit",
+ "fugit 0.6.0",
  "futures-util",
  "rtic-common",
 ]

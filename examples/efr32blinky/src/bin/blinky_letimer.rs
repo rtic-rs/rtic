@@ -41,7 +41,7 @@ mod app {
     async fn blink(cx: blink::Context) {
         let led = cx.local.led;
         loop {
-            defmt::info!("blink @ {} ticks", Mono::now().ticks());
+            defmt::info!("blink @ {} ticks", Mono::now().as_ticks());
             led.set_high();
             Mono::delay(100.millis()).await;
 

@@ -46,10 +46,10 @@ mod app {
 
     #[task(priority = 2)]
     async fn print_messages(_cx: print_messages::Context) {
-        let mut next_update = <Mono as Monotonic>::Instant::from_ticks(0u64);
+        let mut next_update = <Mono as Timebase>::Instant::from_ticks(0);
 
         loop {
-            defmt::println!("Time: {} ticks", Mono::now().ticks());
+            defmt::println!("Time: {} ticks", Mono::now().as_ticks());
             next_update += 1000u64.millis();
             Mono::delay_until(next_update).await;
         }
