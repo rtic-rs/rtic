@@ -162,14 +162,14 @@ jobs:
 
       # Use precompiled binutils
       - name: Install cargo-binutils
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: cargo-binutils
 
       # Use precompiled if possible
       - name: Install espflash
         if: contains(matrix.input.platform, 'esp32')
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: espflash
 
@@ -262,7 +262,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install lychee
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: lychee
 
@@ -313,17 +313,17 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install lychee
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: lychee
 
       - name: Install mdbook
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: mdbook
 
       - name: Install mdbook-mermaid
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: mdbook-mermaid
 
@@ -368,12 +368,12 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install mdbook
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: mdbook
 
       - name: Install mdbook-mermaid
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: mdbook-mermaid
 
@@ -513,12 +513,12 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install lychee
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
          tool: lychee
 
       - name: Install mdbook-mermaid
-        uses: taiki-e/install-action@v2.85.13
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: mdbook-mermaid
 
