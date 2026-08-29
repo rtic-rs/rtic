@@ -36,7 +36,7 @@
 pub mod prelude {
     pub use crate::rp235x_timer_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
 
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
@@ -156,14 +156,12 @@ macro_rules! rp235x_timer_monotonic {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::rp235x::TimerBackend;
-            type Instant = $crate::fugit::Instant<
+            type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 1_000_000,
             >;
-            type Duration = $crate::fugit::Duration<
+            type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 1_000_000,
             >;
         }

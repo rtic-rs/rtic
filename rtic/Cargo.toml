@@ -39,6 +39,7 @@ critical-section = "1"
 lm3s6965 = "0.2"
 cortex-m-semihosting = "0.6.0"
 rtic-sync = { path = "../rtic-sync" }
+trybuild = "1.0.73"
 
 [dev-dependencies.futures]
 version = "0.3.26"

@@ -45,7 +45,7 @@ pub mod prelude {
     #[cfg(feature = "imxrt_gpt2")]
     pub use crate::imxrt_gpt2_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
 
@@ -82,14 +82,12 @@ macro_rules! __internal_create_imxrt_timer_struct {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::imxrt::$mono_backend;
-            type Instant = $crate::fugit::Instant<
+            type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
-            type Duration = $crate::fugit::Duration<
+            type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
         }

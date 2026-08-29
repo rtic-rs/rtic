@@ -1,8 +1,11 @@
 use crate::{timer_queue::TimerQueueBackend, TimeoutError};
 
-use crate::Monotonic;
+use crate::Timebase;
 
-/// A [`Monotonic`] that is backed by the [`TimerQueue`](crate::timer_queue::TimerQueue).
+/// A [`Timebase`] that is backed by the [`TimerQueue`](crate::timer_queue::TimerQueue).
+///
+/// It is also a [`Monotonic`](crate::Monotonic) when the chosen `Instant` is [`Ord`], as
+/// `fugit::MonotonicInstant` is. With `fugit::WrappingInstant` it stays a plain [`Timebase`].
 pub trait TimerQueueBasedMonotonic {
     /// The backend for the timer queue
     type Backend: TimerQueueBackend;
@@ -21,7 +24,7 @@ pub trait TimerQueueBasedMonotonic {
     type Duration: TimerQueueBasedDuration<Ticks = <Self::Backend as TimerQueueBackend>::Ticks>;
 }
 
-impl<T: TimerQueueBasedMonotonic> Monotonic for T {
+impl<T: TimerQueueBasedMonotonic> Timebase for T {
     type Instant = T::Instant;
     type Duration = T::Duration;
 
@@ -57,7 +60,7 @@ impl<T: TimerQueueBasedMonotonic> Monotonic for T {
 }
 
 /// An instant that can be used in [`TimerQueueBasedMonotonic`].
-pub trait TimerQueueBasedInstant: Ord + Copy {
+pub trait TimerQueueBasedInstant: Copy {
     /// The internal type of the instant
     type Ticks;
     /// Convert from ticks to the instant
@@ -74,40 +77,48 @@ pub trait TimerQueueBasedDuration: Copy {
     fn ticks(self) -> Self::Ticks;
 }
 
-impl<const NOM: u32, const DENOM: u32> TimerQueueBasedInstant for fugit::Instant<u64, NOM, DENOM> {
-    type Ticks = u64;
-    fn from_ticks(ticks: Self::Ticks) -> Self {
-        Self::from_ticks(ticks)
-    }
-    fn ticks(self) -> Self::Ticks {
-        Self::ticks(&self)
-    }
-}
-
-impl<const NOM: u32, const DENOM: u32> TimerQueueBasedInstant for fugit::Instant<u32, NOM, DENOM> {
+impl<const NOM: u64, const DENOM: u64, Kind: fugit::kind::Kind> TimerQueueBasedInstant
+    for fugit::Instant<u32, NOM, DENOM, Kind>
+{
     type Ticks = u32;
+
     fn from_ticks(ticks: Self::Ticks) -> Self {
         Self::from_ticks(ticks)
     }
+
     fn ticks(self) -> Self::Ticks {
-        Self::ticks(&self)
+        Self::as_ticks(&self)
     }
 }
 
-impl<const NOM: u32, const DENOM: u32> TimerQueueBasedDuration
+impl<const NOM: u64, const DENOM: u64, Kind: fugit::kind::Kind> TimerQueueBasedInstant
+    for fugit::Instant<u64, NOM, DENOM, Kind>
+{
+    type Ticks = u64;
+
+    fn from_ticks(ticks: Self::Ticks) -> Self {
+        Self::from_ticks(ticks)
+    }
+
+    fn ticks(self) -> Self::Ticks {
+        Self::as_ticks(&self)
+    }
+}
+
+impl<const NOM: u64, const DENOM: u64> TimerQueueBasedDuration
     for fugit::Duration<u64, NOM, DENOM>
 {
     type Ticks = u64;
     fn ticks(self) -> Self::Ticks {
-        Self::ticks(&self)
+        Self::as_ticks(&self)
     }
 }
 
-impl<const NOM: u32, const DENOM: u32> TimerQueueBasedDuration
+impl<const NOM: u64, const DENOM: u64> TimerQueueBasedDuration
     for fugit::Duration<u32, NOM, DENOM>
 {
     type Ticks = u32;
     fn ticks(self) -> Self::Ticks {
-        Self::ticks(&self)
+        Self::as_ticks(&self)
     }
 }

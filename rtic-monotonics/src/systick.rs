@@ -53,7 +53,7 @@
 pub mod prelude {
     pub use crate::systick_monotonic;
 
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
 
     cfg_if::cfg_if! {
         if #[cfg(feature = "systick-64bit")] {
@@ -224,14 +224,12 @@ macro_rules! systick_monotonic {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::systick::SystickBackend;
-            type Instant = $crate::fugit::Instant<
+            type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
-            type Duration = $crate::fugit::Duration<
+            type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
         }
