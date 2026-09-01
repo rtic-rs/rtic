@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["NVIC_ICER_SPEC"],"type":["CLRENA_R","CLRENA_W","R","W"]};

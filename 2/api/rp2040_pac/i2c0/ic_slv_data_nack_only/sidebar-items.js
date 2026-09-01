@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["NACK_A"],"struct":["IC_SLV_DATA_NACK_ONLY_SPEC"],"type":["NACK_R","NACK_W","R","W"]};

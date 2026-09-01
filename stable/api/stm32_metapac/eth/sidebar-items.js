@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["regs"],"struct":["Eth","EthernetDma","EthernetMac","EthernetMtl"]};

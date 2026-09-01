@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["bod","chip_reset","vreg"],"struct":["RegisterBlock"],"type":["BOD","CHIP_RESET","VREG"]};

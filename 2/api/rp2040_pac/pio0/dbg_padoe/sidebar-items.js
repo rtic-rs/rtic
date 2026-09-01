@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DBG_PADOE_SPEC"],"type":["R"]};

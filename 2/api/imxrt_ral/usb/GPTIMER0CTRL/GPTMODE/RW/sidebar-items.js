@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GPTMODE_0","GPTMODE_1"]};

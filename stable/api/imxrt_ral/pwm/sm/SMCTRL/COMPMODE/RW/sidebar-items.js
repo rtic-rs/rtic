@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["COMPMODE_0","COMPMODE_1"]};

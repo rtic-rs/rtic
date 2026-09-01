@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LEDPOL_A"],"struct":["LEDPOL_SPEC","R","W"],"type":["LEDPOL_R","LEDPOL_W"]};

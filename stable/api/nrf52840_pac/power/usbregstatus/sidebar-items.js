@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["OUTPUTRDY_A","VBUSDETECT_A"],"struct":["R","USBREGSTATUS_SPEC"],"type":["OUTPUTRDY_R","VBUSDETECT_R"]};

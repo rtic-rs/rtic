@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ENT_VAL_0","ENT_VAL_1"]};

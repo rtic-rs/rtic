@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["STREAM_ADDR_SPEC"],"type":["R","STREAM_ADDR_R","STREAM_ADDR_W","W"]};

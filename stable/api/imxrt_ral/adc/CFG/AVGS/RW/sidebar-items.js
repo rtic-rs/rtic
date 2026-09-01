@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["AVGS_0","AVGS_1","AVGS_2","AVGS_3"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["approtect","customer","debugctrl","nfcpins","nrffw","nrfhw","pselreset","regout0","unused0","unused1","unused2","unused3"],"struct":["RegisterBlock"],"type":["APPROTECT","CUSTOMER","DEBUGCTRL","NFCPINS","NRFFW","NRFHW","PSELRESET","REGOUT0","UNUSED0","UNUSED1","UNUSED2","UNUSED3"]};

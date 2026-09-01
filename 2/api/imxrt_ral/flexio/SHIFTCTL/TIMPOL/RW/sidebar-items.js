@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TIMPOL_0","TIMPOL_1"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["alarm0","alarm1","alarm2","alarm3","armed","dbgpause","inte","intf","intr","ints","pause","timehr","timehw","timelr","timelw","timerawh","timerawl"],"struct":["RegisterBlock"],"type":["ALARM0","ALARM1","ALARM2","ALARM3","ARMED","DBGPAUSE","INTE","INTF","INTR","INTS","PAUSE","TIMEHR","TIMEHW","TIMELR","TIMELW","TIMERAWH","TIMERAWL"]};

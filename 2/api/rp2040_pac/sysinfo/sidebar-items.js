@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["chip_id","gitref_rp2040","platform"],"struct":["RegisterBlock"],"type":["CHIP_ID","GITREF_RP2040","PLATFORM"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IHIT_SPEC","R","W"],"type":["HITS_R","HITS_W"]};
