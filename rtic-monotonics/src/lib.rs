@@ -1,5 +1,5 @@
-//! In-tree implementations of the [`rtic_time::Monotonic`] (reexported) trait for
-//! timers & clocks found on commonly used microcontrollers.
+//! In-tree implementations of the [`rtic_time::Timebase`] and [`rtic_time::Monotonic`]
+//! (reexported) traits for timers & clocks found on commonly used microcontrollers.
 //!
 //! If you are using a microcontroller where CAS operations are not available natively, you might
 //! have to enable the `critical-section` or `unsafe-assume-single-core` feature of the
@@ -63,7 +63,7 @@
 
 pub use fugit;
 pub use rtic_time::{
-    self, monotonic::TimerQueueBasedMonotonic, timer_queue::TimerQueueBackend, Monotonic,
+    self, monotonic::TimerQueueBasedMonotonic, timer_queue::TimerQueueBackend, Monotonic, Timebase,
     TimeoutError,
 };
 

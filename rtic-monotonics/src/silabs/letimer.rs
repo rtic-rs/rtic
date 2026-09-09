@@ -35,7 +35,7 @@ pub mod prelude {
     pub use silabs_metapac;
 
     pub use crate::fugit::{self, ExtU64, ExtU64Ceil};
-    pub use crate::Monotonic;
+    pub use crate::{Monotonic, Timebase};
 }
 
 use core::sync::atomic::Ordering;
@@ -234,14 +234,12 @@ macro_rules! silabs_letimer_monotonic {
 
         impl $crate::TimerQueueBasedMonotonic for $name {
             type Backend = $crate::silabs::letimer::TimerBackend;
-            type Instant = fugit::Instant<
+            type Instant = fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
-            type Duration = fugit::Duration<
+            type Duration = fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                1,
                 { $tick_rate_hz },
             >;
         }
