@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PLATFORM_SPEC"],"type":["ASIC_R","FPGA_R","R"]};

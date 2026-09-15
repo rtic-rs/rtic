@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["OCRAM_MAM_STAT_EN_0","OCRAM_MAM_STAT_EN_1"]};

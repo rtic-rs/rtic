@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["N_CHANNELS_SPEC"],"type":["N_CHANNELS_R","R"]};

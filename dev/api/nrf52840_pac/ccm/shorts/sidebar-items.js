@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ENDKSGEN_CRYPT_A"],"struct":["R","SHORTS_SPEC","W"],"type":["ENDKSGEN_CRYPT_R","ENDKSGEN_CRYPT_W"]};

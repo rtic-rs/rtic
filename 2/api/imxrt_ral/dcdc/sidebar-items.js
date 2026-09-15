@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DCDC"],"fn":["number"],"mod":["REG0","REG1","REG2","REG3"],"struct":["RegisterBlock"],"type":["DCDC","Instance"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["gpio","swclk","swd","voltage_select"],"struct":["RegisterBlock"],"type":["GPIO","SWCLK","SWD","VOLTAGE_SELECT"]};

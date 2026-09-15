@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":[["imxrt_gpt1_monotonic",1],["imxrt_gpt2_monotonic",1]],"trait":["ExtU64","ExtU64Ceil","Monotonic"]};

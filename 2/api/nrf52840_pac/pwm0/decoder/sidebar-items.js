@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LOAD_A","MODE_A"],"struct":["DECODER_SPEC","R","W"],"type":["LOAD_R","LOAD_W","MODE_R","MODE_W"]};

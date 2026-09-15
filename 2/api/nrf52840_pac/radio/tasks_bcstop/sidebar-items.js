@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_BCSTOP_SPEC","W"],"type":["TASKS_BCSTOP_W"]};

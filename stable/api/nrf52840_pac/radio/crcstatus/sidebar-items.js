@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CRCSTATUS_A"],"struct":["CRCSTATUS_SPEC","R"],"type":["CRCSTATUS_R"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CH_AL1_TRANS_COUNT_TRIG_SPEC"],"type":["R","W"]};

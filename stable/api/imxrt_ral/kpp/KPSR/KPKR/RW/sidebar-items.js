@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KPKR_0","KPKR_1"]};

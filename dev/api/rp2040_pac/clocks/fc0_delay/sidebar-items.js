@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FC0_DELAY_SPEC"],"type":["FC0_DELAY_R","FC0_DELAY_W","R","W"]};

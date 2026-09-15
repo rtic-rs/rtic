@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ZMK_HWP_0","ZMK_HWP_1"]};

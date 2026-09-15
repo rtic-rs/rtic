@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":[["nrf_rtc0_monotonic",1],["nrf_rtc1_monotonic",1],["nrf_rtc2_monotonic",1]],"trait":["ExtU64","ExtU64Ceil","Monotonic"]};

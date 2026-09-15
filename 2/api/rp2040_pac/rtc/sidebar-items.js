@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["clkdiv_m1","ctrl","inte","intf","intr","ints","irq_setup_0","irq_setup_1","rtc_0","rtc_1","setup_0","setup_1"],"struct":["RegisterBlock"],"type":["CLKDIV_M1","CTRL","INTE","INTF","INTR","INTS","IRQ_SETUP_0","IRQ_SETUP_1","RTC_0","RTC_1","SETUP_0","SETUP_1"]};

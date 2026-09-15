@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CH6_DBG_CTDREQ_SPEC"],"type":["CH6_DBG_CTDREQ_R","CH6_DBG_CTDREQ_W","R","W"]};

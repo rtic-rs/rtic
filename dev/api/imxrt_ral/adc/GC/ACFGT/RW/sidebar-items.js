@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ACFGT_0","ACFGT_1"]};

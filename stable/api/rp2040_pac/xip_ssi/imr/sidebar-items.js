@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IMR_SPEC"],"type":["MSTIM_R","MSTIM_W","R","RXFIM_R","RXFIM_W","RXOIM_R","RXOIM_W","RXUIM_R","RXUIM_W","TXEIM_R","TXEIM_W","TXOIM_R","TXOIM_W","W"]};

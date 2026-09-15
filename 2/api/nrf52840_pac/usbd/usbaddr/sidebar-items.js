@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["R","USBADDR_SPEC"],"type":["ADDR_R"]};
