@@ -57,12 +57,22 @@ pub fn app(analysis: analyze::Analysis, app: &App) -> Analysis {
         })
         .collect();
 
+    // Async HAL interrupts (e.g. monotonics) must be able to preempt every software task, and
+    // should stay below the hardware tasks when the priority ranges allow it.
+    let max_sw_prio = app
+        .software_tasks
+        .values()
+        .map(|task| task.args.priority)
+        .max();
     let max_async_prio = app
         .hardware_tasks
-        .iter()
-        .map(|(_, task)| task.args.priority)
+        .values()
+        .map(|task| task.args.priority)
         .min()
-        .map(|v| v - 1); // One less than the smallest HW task
+        .map(|min_hw_prio| {
+            let above_sw = max_sw_prio.map_or(0, |prio| prio.saturating_add(1));
+            (min_hw_prio - 1).max(above_sw)
+        });
 
     Analysis {
         parent: analysis,

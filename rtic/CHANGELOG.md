@@ -29,6 +29,7 @@ Example:
 
 ### Fixed
 
+- `RTIC_ASYNC_MAX_LOGICAL_PRIO` is above the highest software task when the device allows it, so monotonics can preempt a blocking software task (#1246).
 - Fix `spawn` race with preempting tasks, see #1013
 
 ## [v2.3.1] - 2026-08-20

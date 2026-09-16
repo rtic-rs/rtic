@@ -347,11 +347,22 @@ pub fn async_entry(
 }
 
 pub fn async_prio_limit(app: &App, analysis: &CodegenAnalysis) -> Vec<TokenStream2> {
+    let device = &app.args.device;
     let max = if let Some(max) = analysis.max_async_prio {
-        quote!(#max)
+        // Keep it a valid priority, as one above the highest software task can exceed the
+        // device's range.
+        quote!({
+            const HIGHEST: u8 = 1 << #device::NVIC_PRIO_BITS;
+            if #max < 1 {
+                1
+            } else if #max > HIGHEST {
+                HIGHEST
+            } else {
+                #max
+            }
+        })
     } else {
         // No limit
-        let device = &app.args.device;
         quote!(1 << #device::NVIC_PRIO_BITS)
     };
 
