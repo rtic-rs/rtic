@@ -14,6 +14,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- `RTIC_ASYNC_MAX_LOGICAL_PRIO` is always above the highest software task, so monotonics can preempt a blocking software task (#1246).
 - Removed an occurence of the `needless_late_init` clippy lint.
 
 ## [v2.3.1] - 2026-08-20
