@@ -124,7 +124,11 @@ impl TimerQueueBackend for TimerBackend {
         let timer = LETIMER0;
 
         calculate_now(
-            || LETIMER_HALF_PERIOD_COUNTER.load(Ordering::Relaxed),
+            || {
+                // Catch up on overflow flags so a spin loop keeps time without the interrupt.
+                Self::on_interrupt();
+                LETIMER_HALF_PERIOD_COUNTER.load(Ordering::Relaxed)
+            },
             || {
                 let now = timer.cnt().read().cnt();
                 if now == 0 {

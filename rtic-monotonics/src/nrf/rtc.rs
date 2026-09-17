@@ -261,7 +261,11 @@ macro_rules! make_rtc {
             fn now() -> Self::Ticks {
                 let rtc = unsafe { &*$rtc::PTR };
                 calculate_now(
-                    || $overflow.load(Ordering::Relaxed),
+                    || {
+                        // Catch up on overflow flags so a spin loop keeps time without the interrupt.
+                        Self::on_interrupt();
+                        $overflow.load(Ordering::Relaxed)
+                    },
                     || TimerValueU24(rtc.counter.read().bits())
                 )
             }

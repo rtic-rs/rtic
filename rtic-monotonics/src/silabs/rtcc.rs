@@ -105,7 +105,11 @@ impl TimerQueueBackend for TimerBackend {
         let timer = RTCC;
 
         calculate_now(
-            || RTCC_HALF_PERIOD_COUNTER.load(Ordering::Relaxed),
+            || {
+                // Catch up on overflow flags so a spin loop keeps time without the interrupt.
+                Self::on_interrupt();
+                RTCC_HALF_PERIOD_COUNTER.load(Ordering::Relaxed)
+            },
             || timer.cnt().read().cnt(),
         )
     }

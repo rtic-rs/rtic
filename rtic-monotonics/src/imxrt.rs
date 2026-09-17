@@ -212,7 +212,11 @@ macro_rules! make_timer {
                 let gpt = unsafe{ $timer::instance() };
 
                 calculate_now(
-                    || $period.load(Ordering::Relaxed),
+                    || {
+                        // Catch up on overflow flags so a spin loop keeps time without the interrupt.
+                        Self::on_interrupt();
+                        $period.load(Ordering::Relaxed)
+                    },
                     || ral::read_reg!(ral::gpt, gpt, CNT)
                 )
             }

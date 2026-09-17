@@ -20,6 +20,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- `now()` on the STM32, nRF, i.MX RT and Silabs monotonics consumes pending overflow flags, so blocking delays work from `init` and from tasks the timer interrupt cannot preempt.
 - Silabs monotonics enable their bus clock in a critical section; the CMU `CLKEN` registers also
   gate other peripherals, so the read-modify-write could race with a HAL enabling one of them
 
