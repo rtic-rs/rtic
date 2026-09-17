@@ -53,6 +53,10 @@
 //! hardware tasks), but never lower than 1 above the highest software task priority (so the timer
 //! interrupt can always preempt a software task). If no hardware task is available, it is set to
 //! the maximum priority in the system.
+//!
+//! Blocking delays do not depend on the timer interrupt running, as `now()` consumes pending
+//! overflow flags itself. The code calling `now()` must not be starved for more than half a timer
+//! period though.
 
 // To build these docs correctly:
 // RUSTFLAGS="--cfg docsrs" cargo +nightly doc --features thumbv7-backend,cortex-m-systick,rp2040,nrf52840,imxrt_gpt1,imxrt_gpt2,imxrt-ral/imxrt1011,stm32-metapac/stm32h725ag,stm32_tim2,stm32_tim3,stm32_tim4,stm32_tim5,stm32_tim15

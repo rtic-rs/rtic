@@ -376,7 +376,11 @@ macro_rules! make_timer {
 
             fn now() -> Self::Ticks {
                 calculate_now(
-                    || $overflow.load(Ordering::Relaxed),
+                    || {
+                        // Catch up on overflow flags so a spin loop keeps time without the interrupt.
+                        Self::on_interrupt();
+                        $overflow.load(Ordering::Relaxed)
+                    },
                     || $timer.cnt().read()
                 )
             }
@@ -519,7 +523,11 @@ macro_rules! make_timer2 {
 
             fn now() -> Self::Ticks {
                 calculate_now(
-                    || $overflow.load(Ordering::Relaxed),
+                    || {
+                        // Catch up on overflow flags so a spin loop keeps time without the interrupt.
+                        Self::on_interrupt();
+                        $overflow.load(Ordering::Relaxed)
+                    },
                     || $timer.cnt().read().cnt()
                 )
             }

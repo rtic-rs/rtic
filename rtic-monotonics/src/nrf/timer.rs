@@ -298,7 +298,11 @@ macro_rules! make_timer {
                 let timer = unsafe { &*$timer::PTR };
 
                 calculate_now(
-                    || $overflow.load(Ordering::Relaxed),
+                    || {
+                        // Catch up on overflow flags so a spin loop keeps time without the interrupt.
+                        Self::on_interrupt();
+                        $overflow.load(Ordering::Relaxed)
+                    },
                     || {
                         timer.tasks_capture[3].write(|w| unsafe { w.bits(1) });
                         timer.cc[3].read().bits()

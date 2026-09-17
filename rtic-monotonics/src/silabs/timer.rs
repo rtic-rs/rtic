@@ -378,7 +378,11 @@ macro_rules! make_silabs_timer {
 
             fn now() -> Self::Ticks {
                 calculate_now(
-                    || $overflow.load(Ordering::Relaxed),
+                    || {
+                        // Catch up on overflow flags so a spin loop keeps time without the interrupt.
+                        Self::on_interrupt();
+                        $overflow.load(Ordering::Relaxed)
+                    },
                     || silabs_metapac::$timer.cnt().read().cnt(),
                 )
             }
