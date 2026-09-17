@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FC0_STATUS_SPEC"],"type":["DIED_R","DONE_R","FAIL_R","FAST_R","PASS_R","R","RUNNING_R","SLOW_R","WAITING_R"]};

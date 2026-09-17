@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BUS_PRIORITY_ACK_SPEC"],"type":["BUS_PRIORITY_ACK_R","R"]};

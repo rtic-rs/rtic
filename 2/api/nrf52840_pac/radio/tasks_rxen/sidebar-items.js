@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_RXEN_SPEC","W"],"type":["TASKS_RXEN_W"]};

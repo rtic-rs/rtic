@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DMAMUX"],"fn":["number"],"mod":["CHCFG"],"struct":["RegisterBlock"],"type":["DMAMUX","Instance"]};

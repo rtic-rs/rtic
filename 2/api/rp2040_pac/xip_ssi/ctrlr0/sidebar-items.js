@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SPI_FRF_A","TMOD_A"],"struct":["CTRLR0_SPEC"],"type":["CFS_R","CFS_W","DFS_32_R","DFS_32_W","DFS_R","DFS_W","FRF_R","FRF_W","R","SCPH_R","SCPH_W","SCPOL_R","SCPOL_W","SLV_OE_R","SLV_OE_W","SPI_FRF_R","SPI_FRF_W","SRL_R","SRL_W","SSTE_R","SSTE_W","TMOD_R","TMOD_W","W"]};

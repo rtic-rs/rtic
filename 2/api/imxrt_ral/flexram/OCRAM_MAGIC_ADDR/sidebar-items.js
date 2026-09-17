@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["OCRAM_MAGIC_ADDR","OCRAM_WR_RD_SEL"]};

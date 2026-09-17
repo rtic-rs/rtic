@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ctrl","div","dormant","freqa","freqb","phase","randombit","status"],"struct":["RegisterBlock"],"type":["CTRL","DIV","DORMANT","FREQA","FREQB","PHASE","RANDOMBIT","STATUS"]};

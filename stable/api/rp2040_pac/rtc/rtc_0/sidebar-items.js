@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RTC_0_SPEC"],"type":["DOTW_R","HOUR_R","MIN_R","R","SEC_R"]};

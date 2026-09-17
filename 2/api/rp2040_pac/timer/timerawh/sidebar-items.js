@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TIMERAWH_SPEC"],"type":["R"]};

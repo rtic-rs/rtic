@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ctrl","load","reason","scratch0","scratch1","scratch2","scratch3","scratch4","scratch5","scratch6","scratch7","tick"],"struct":["RegisterBlock"],"type":["CTRL","LOAD","REASON","SCRATCH0","SCRATCH1","SCRATCH2","SCRATCH3","SCRATCH4","SCRATCH5","SCRATCH6","SCRATCH7","TICK"]};

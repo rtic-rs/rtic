@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CROSS_A","DOWN_A","READY_A","UP_A"],"struct":["INTEN_SPEC","R","W"],"type":["CROSS_R","CROSS_W","DOWN_R","DOWN_W","READY_R","READY_W","UP_R","UP_W"]};

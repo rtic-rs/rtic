@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_GOIDLE_SPEC","W"],"type":["TASKS_GOIDLE_W"]};
