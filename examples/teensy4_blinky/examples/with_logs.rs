@@ -60,7 +60,7 @@ mod app {
 
         // Initialize Monotonic
         gpt1.set_clock_source(hal::gpt::ClockSource::PeripheralClock);
-        Mono::start(gpt1.release());
+        Mono::start(gpt1.release(), Priority::rtic_default());
 
         // Setup LED
         let led = board::led(&mut gpio2, pins.p13);

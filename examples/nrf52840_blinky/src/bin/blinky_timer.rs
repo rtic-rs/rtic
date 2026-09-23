@@ -26,7 +26,7 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
         // Initialize Monotonic
-        Mono::start(cx.device.TIMER0);
+        Mono::start(cx.device.TIMER0, Priority::rtic_default());
 
         // Setup LED
         let port0 = hal::gpio::p0::Parts::new(cx.device.P0);

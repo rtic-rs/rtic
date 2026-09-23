@@ -37,7 +37,7 @@ mod app {
         defmt::println!("TIM Monotonic blinker example!");
 
         // Start the monotonic
-        Mono::start(16_000_000);
+        Mono::start(16_000_000, Priority::rtic_default());
 
         print_messages::spawn().unwrap();
 

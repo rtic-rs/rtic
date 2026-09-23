@@ -14,7 +14,7 @@
 //!
 //! fn init() {
 //!     // `tim_clock_hz` is the EM01GRPACLK frequency feeding the timer.
-//!     Mono::start(40_000_000);
+//!     Mono::start(40_000_000, Priority::rtic_default());
 //! }
 //!
 //! async fn usage() {
@@ -48,7 +48,7 @@ pub mod prelude {
     #[cfg(feature = "silabs_timer9")]
     pub use crate::silabs_timer9_monotonic;
 
-    pub use crate::{Monotonic, Timebase};
+    pub use crate::{silabs::Priority, Monotonic, Timebase};
 
     pub use crate::fugit::{self, ExtU64, ExtU64Ceil};
 }
@@ -68,7 +68,6 @@ pub mod prelude {
 ))]
 use {
     crate::set_monotonic_prio,
-    crate::silabs::NVIC_PRIO_BITS,
     cortex_m::peripheral::NVIC,
     portable_atomic::AtomicU64,
     portable_atomic::Ordering,
@@ -91,8 +90,9 @@ macro_rules! __internal_silabs_timer_monotonic {
             /// Starts the `Monotonic`.
             ///
             /// `tim_clock_hz` is the EM01GRPACLK frequency feeding the timer.
+            /// `prio` is the priority of the timer interrupt.
             /// This method must be called only once.
-            pub fn start(tim_clock_hz: u32) {
+            pub fn start(tim_clock_hz: u32, prio: $crate::silabs::Priority) {
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe extern "C" fn $irq() {
@@ -100,7 +100,7 @@ macro_rules! __internal_silabs_timer_monotonic {
                     $crate::silabs::timer::$backend::timer_queue().on_monotonic_interrupt();
                 }
 
-                $crate::silabs::timer::$backend::_start(tim_clock_hz, $tick_rate_hz);
+                $crate::silabs::timer::$backend::_start(tim_clock_hz, $tick_rate_hz, prio);
             }
         }
 
@@ -312,7 +312,7 @@ macro_rules! make_silabs_timer {
             /// Starts the timer.
             ///
             /// **Do not use this function directly.** Use the prelude macro.
-            pub fn _start(tim_clock_hz: u32, tick_rate_hz: u32) {
+            pub fn _start(tim_clock_hz: u32, tick_rate_hz: u32, prio: crate::silabs::Priority) {
                 use $vals::{Cc0CfgMode, Cc1CfgMode, Presc};
                 let t = silabs_metapac::$timer;
 
@@ -365,7 +365,7 @@ macro_rules! make_silabs_timer {
                 t.cmd().write(|w| w.set_start(true));
 
                 unsafe {
-                    set_monotonic_prio(NVIC_PRIO_BITS, Interrupt::$timer);
+                    set_monotonic_prio(Interrupt::$timer, prio);
                     NVIC::unmask(Interrupt::$timer);
                 }
             }

@@ -29,7 +29,7 @@ mod app {
         hal::clocks::Clocks::new(cx.device.CLOCK).start_lfclk();
 
         // Initialize Monotonic
-        Mono::start(cx.device.RTC0);
+        Mono::start(cx.device.RTC0, Priority::rtic_default());
 
         // Setup LED
         let port0 = hal::gpio::p0::Parts::new(cx.device.P0);

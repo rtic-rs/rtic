@@ -16,7 +16,7 @@
 //! fn init() {
 //!     // Start the monotonic. The LETIMER0 peripheral and its bus clock are
 //!     // taken over directly; no PAC object is required.
-//!     Mono::start();
+//!     Mono::start(Priority::rtic_default());
 //! }
 //!
 //! async fn usage() {
@@ -35,15 +35,12 @@ pub mod prelude {
     pub use silabs_metapac;
 
     pub use crate::fugit::{self, ExtU64, ExtU64Ceil};
-    pub use crate::{Monotonic, Timebase};
+    pub use crate::{silabs::Priority, Monotonic, Timebase};
 }
 
 use core::sync::atomic::Ordering;
 
-use crate::{
-    rtic_time::timer_queue::TimerQueue, set_monotonic_prio, silabs::NVIC_PRIO_BITS,
-    TimerQueueBackend,
-};
+use crate::{rtic_time::timer_queue::TimerQueue, set_monotonic_prio, TimerQueueBackend};
 use cortex_m::peripheral::NVIC;
 use portable_atomic::AtomicU32;
 use rtic_time::half_period_counter::calculate_now;
@@ -64,7 +61,7 @@ impl TimerBackend {
     /// **Do not use this function directly.**
     ///
     /// Use the prelude macros instead.
-    pub fn _start(tick_rate_hz: u32) {
+    pub fn _start(tick_rate_hz: u32, prio: crate::silabs::Priority) {
         // enable required bus clock; `clken0` gates other peripherals too, so the
         // read-modify-write must not race with a HAL enabling one of them
         critical_section::with(|_| CMU.clken0().modify(|w| w.set_letimer0(true)));
@@ -105,7 +102,7 @@ impl TimerBackend {
         TIMER_QUEUE.initialize(Self {});
 
         unsafe {
-            set_monotonic_prio(NVIC_PRIO_BITS, Interrupt::LETIMER0);
+            set_monotonic_prio(Interrupt::LETIMER0, prio);
             NVIC::unmask(Interrupt::LETIMER0);
         }
     }
@@ -219,8 +216,10 @@ macro_rules! silabs_letimer_monotonic {
         impl $name {
             /// Starts the `Monotonic`.
             ///
+            /// `prio` is the priority of the timer interrupt.
+            ///
             /// This method must be called only once.
-            pub fn start() {
+            pub fn start(prio: $crate::silabs::Priority) {
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe extern "C" fn LETIMER0() {
@@ -228,7 +227,7 @@ macro_rules! silabs_letimer_monotonic {
                     $crate::silabs::letimer::TimerBackend::timer_queue().on_monotonic_interrupt();
                 }
 
-                $crate::silabs::letimer::TimerBackend::_start($tick_rate_hz);
+                $crate::silabs::letimer::TimerBackend::_start($tick_rate_hz, prio);
             }
         }
 

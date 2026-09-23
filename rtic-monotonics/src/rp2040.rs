@@ -18,7 +18,7 @@
 //!     #
 //!     // Start the monotonic - passing ownership of an rp2040_pac object for
 //!     // TIMER0, and temporary access to one for the RESET peripheral.
-//!     Mono::start(TIMER, &mut RESETS);
+//!     Mono::start(TIMER, &mut RESETS, Priority::rtic_default());
 //! }
 //!
 //! async fn usage() {
@@ -35,10 +35,13 @@
 pub mod prelude {
     pub use crate::rp2040_timer_monotonic;
 
-    pub use crate::{Monotonic, Timebase};
+    pub use crate::{rp2040::Priority, Monotonic, Timebase};
 
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
+
+/// [`Priority`](crate::Priority) for this chip's interrupt controller.
+pub type Priority = crate::Priority<{ rp2040_pac::NVIC_PRIO_BITS }>;
 
 use crate::TimerQueueBackend;
 use rp2040_pac::{timer, Interrupt, NVIC};
@@ -54,7 +57,7 @@ impl TimerBackend {
     /// **Do not use this function directly.**
     ///
     /// Use the prelude macros instead.
-    pub fn _start(timer: TIMER, resets: &RESETS) {
+    pub fn _start(timer: TIMER, resets: &RESETS, prio: crate::rp2040::Priority) {
         resets.reset().modify(|_, w| w.timer().clear_bit());
         while resets.reset_done().read().timer().bit_is_clear() {}
         timer.inte().modify(|_, w| w.alarm_0().bit(true));
@@ -62,7 +65,7 @@ impl TimerBackend {
         TIMER_QUEUE.initialize(Self {});
 
         unsafe {
-            crate::set_monotonic_prio(rp2040_pac::NVIC_PRIO_BITS, Interrupt::TIMER_IRQ_0);
+            crate::set_monotonic_prio(Interrupt::TIMER_IRQ_0, prio);
             NVIC::unmask(Interrupt::TIMER_IRQ_0);
         }
     }
@@ -139,8 +142,14 @@ macro_rules! rp2040_timer_monotonic {
         impl $name {
             /// Starts the `Monotonic`.
             ///
+            /// `prio` is the priority of the timer interrupt.
+            ///
             /// This method must be called only once.
-            pub fn start(timer: $crate::rp2040::TIMER, resets: &$crate::rp2040::RESETS) {
+            pub fn start(
+                timer: $crate::rp2040::TIMER,
+                resets: &$crate::rp2040::RESETS,
+                prio: $crate::rp2040::Priority,
+            ) {
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe extern "C" fn TIMER_IRQ_0() {
@@ -148,7 +157,7 @@ macro_rules! rp2040_timer_monotonic {
                     $crate::rp2040::TimerBackend::timer_queue().on_monotonic_interrupt();
                 }
 
-                $crate::rp2040::TimerBackend::_start(timer, resets);
+                $crate::rp2040::TimerBackend::_start(timer, resets, prio);
             }
         }
 

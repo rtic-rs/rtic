@@ -17,7 +17,7 @@
 //!     # let TIMER0 = unsafe { core::mem::transmute(()) };
 //!     // Start the monotonic, passing ownership of a TIMER0 object from the
 //!     // relevant nRF52x PAC.
-//!     Mono::start(TIMER0);
+//!     Mono::start(TIMER0, Priority::rtic_default());
 //! }
 //!
 //! async fn usage() {
@@ -40,9 +40,12 @@ pub mod prelude {
     #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
     pub use crate::nrf_timer4_monotonic;
 
-    pub use crate::{Monotonic, Timebase};
+    pub use crate::{nrf::timer::Priority, Monotonic, Timebase};
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
+
+/// [`Priority`](crate::Priority) for this chip's interrupt controller.
+pub type Priority = crate::Priority<{ pac::NVIC_PRIO_BITS }>;
 
 #[cfg(feature = "nrf52805")]
 #[doc(hidden)]
@@ -120,8 +123,10 @@ macro_rules! __internal_create_nrf_timer_struct {
         impl $name {
             /// Starts the `Monotonic`.
             ///
+            /// `prio` is the priority of the timer interrupt.
+            ///
             /// This method must be called only once.
-            pub fn start(timer: $crate::nrf::timer::$timer) {
+            pub fn start(timer: $crate::nrf::timer::$timer, prio: $crate::nrf::timer::Priority) {
                 $crate::__internal_create_nrf_timer_interrupt!($mono_backend, $timer);
 
                 const PRESCALER: u8 = match $tick_rate_hz {
@@ -138,7 +143,7 @@ macro_rules! __internal_create_nrf_timer_struct {
                     _ => ::core::panic!("Timer cannot run at desired tick rate!"),
                 };
 
-                $crate::nrf::timer::$mono_backend::_start(timer, PRESCALER);
+                $crate::nrf::timer::$mono_backend::_start(timer, PRESCALER, prio);
             }
         }
 
@@ -236,7 +241,7 @@ macro_rules! make_timer {
             /// **Do not use this function directly.**
             ///
             /// Use the prelude macros instead.
-            pub fn _start(timer: $timer, prescaler: u8) {
+            pub fn _start(timer: $timer, prescaler: u8, prio: crate::nrf::timer::Priority) {
                 timer.prescaler.write(|w| unsafe { w.prescaler().bits(prescaler) });
                 timer.bitmode.write(|w| w.bitmode()._32bit());
 
@@ -283,7 +288,7 @@ macro_rules! make_timer {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(pac::NVIC_PRIO_BITS, pac::Interrupt::$timer);
+                    crate::set_monotonic_prio(pac::Interrupt::$timer, prio);
                     pac::NVIC::unmask(pac::Interrupt::$timer);
                 }
             }

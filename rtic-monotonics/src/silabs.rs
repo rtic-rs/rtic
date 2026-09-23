@@ -24,3 +24,6 @@ pub mod rtcc;
 pub mod timer;
 
 const NVIC_PRIO_BITS: u8 = 4;
+
+/// [`Priority`](crate::Priority) for this chip's interrupt controller.
+pub type Priority = crate::Priority<NVIC_PRIO_BITS>;

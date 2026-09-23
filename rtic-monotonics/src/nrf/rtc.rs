@@ -14,7 +14,7 @@
 //!     # let RTC0 = unsafe { core::mem::transmute(()) };
 //!     // Start the monotonic, passing ownership of the appropriate RTC object
 //!     // relevant nRF52x PAC.
-//!     Mono::start(RTC0);
+//!     Mono::start(RTC0, Priority::rtic_default());
 //! }
 //!
 //! async fn usage() {
@@ -34,9 +34,12 @@ pub mod prelude {
     #[cfg(any(feature = "nrf52832", feature = "nrf52833", feature = "nrf52840"))]
     pub use crate::nrf_rtc2_monotonic;
 
-    pub use crate::{Monotonic, Timebase};
+    pub use crate::{nrf::rtc::Priority, Monotonic, Timebase};
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
+
+/// [`Priority`](crate::Priority) for this chip's interrupt controller.
+pub type Priority = crate::Priority<{ pac::NVIC_PRIO_BITS }>;
 
 #[cfg(feature = "nrf52805")]
 #[doc(hidden)]
@@ -110,11 +113,13 @@ macro_rules! __internal_create_nrf_rtc_struct {
         impl $name {
             /// Starts the `Monotonic`.
             ///
+            /// `prio` is the priority of the timer interrupt.
+            ///
             /// This method must be called only once.
-            pub fn start(rtc: $crate::nrf::rtc::$timer) {
+            pub fn start(rtc: $crate::nrf::rtc::$timer, prio: $crate::nrf::rtc::Priority) {
                 $crate::__internal_create_nrf_rtc_interrupt!($mono_backend, $timer);
 
-                $crate::nrf::rtc::$mono_backend::_start(rtc);
+                $crate::nrf::rtc::$mono_backend::_start(rtc, prio);
             }
         }
 
@@ -197,7 +202,7 @@ macro_rules! make_rtc {
             /// **Do not use this function directly.**
             ///
             /// Use the prelude macros instead.
-            pub fn _start(rtc: $rtc) {
+            pub fn _start(rtc: $rtc, prio: crate::nrf::rtc::Priority) {
                 unsafe { rtc.prescaler.write(|w| w.bits(0)) };
 
                 // Disable interrupts, as preparation
@@ -247,7 +252,7 @@ macro_rules! make_rtc {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(pac::NVIC_PRIO_BITS, pac::Interrupt::$rtc);
+                    crate::set_monotonic_prio(pac::Interrupt::$rtc, prio);
                     pac::NVIC::unmask(pac::Interrupt::$rtc);
                 }
             }

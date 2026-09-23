@@ -17,7 +17,7 @@
 //!     todo!("Configure the gpt1 peripheral to a tick rate of 1_000_000");
 //!
 //!     // Start the monotonic
-//!     Mono::start(gpt1);
+//!     Mono::start(gpt1, Priority::rtic_default());
 //! }
 //!
 //! async fn usage() {
@@ -45,9 +45,12 @@ pub mod prelude {
     #[cfg(feature = "imxrt_gpt2")]
     pub use crate::imxrt_gpt2_monotonic;
 
-    pub use crate::{Monotonic, Timebase};
+    pub use crate::{imxrt::Priority, Monotonic, Timebase};
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
+
+/// [`Priority`](crate::Priority) for this chip's interrupt controller.
+pub type Priority = crate::Priority<{ ral::NVIC_PRIO_BITS }>;
 
 #[doc(hidden)]
 #[macro_export]
@@ -72,11 +75,13 @@ macro_rules! __internal_create_imxrt_timer_struct {
         impl $name {
             /// Starts the `Monotonic`.
             ///
+            /// `prio` is the priority of the timer interrupt.
+            ///
             /// This method must be called only once.
-            pub fn start(gpt: $crate::imxrt::ral::gpt::$timer) {
+            pub fn start(gpt: $crate::imxrt::ral::gpt::$timer, prio: $crate::imxrt::Priority) {
                 $crate::__internal_create_imxrt_timer_interrupt!($mono_backend, $timer);
 
-                $crate::imxrt::$mono_backend::_start(gpt);
+                $crate::imxrt::$mono_backend::_start(gpt, prio);
             }
         }
 
@@ -154,7 +159,7 @@ macro_rules! make_timer {
             /// **Do not use this function directly.**
             ///
             /// Use the prelude macros instead.
-            pub fn _start(gpt: $timer) {
+            pub fn _start(gpt: $timer, prio: crate::imxrt::Priority) {
 
                 // Disable the timer.
                 ral::modify_reg!(ral::gpt, gpt, CR, EN: 0);
@@ -197,7 +202,7 @@ macro_rules! make_timer {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(ral::NVIC_PRIO_BITS, ral::Interrupt::$timer);
+                    crate::set_monotonic_prio(ral::Interrupt::$timer, prio);
                     cortex_m::peripheral::NVIC::unmask(ral::Interrupt::$timer);
                 }
             }
