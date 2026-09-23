@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["EXTREFSEL_A"],"struct":["EXTREFSEL_SPEC","R","W"],"type":["EXTREFSEL_R","EXTREFSEL_W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ARMED_SPEC"],"type":["ARMED_R","ARMED_W","R","W"]};

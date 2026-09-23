@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_STOPECB_SPEC","W"],"type":["TASKS_STOPECB_W"]};

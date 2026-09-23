@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["WKUP_SW_0","WKUP_SW_1"]};

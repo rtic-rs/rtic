@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BITMODE_A"],"struct":["BITMODE_SPEC","R","W"],"type":["BITMODE_R","BITMODE_W"]};

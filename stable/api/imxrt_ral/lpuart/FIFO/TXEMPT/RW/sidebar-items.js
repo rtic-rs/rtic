@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TXEMPT_0","TXEMPT_1"]};

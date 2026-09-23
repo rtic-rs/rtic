@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DEVICEADDR_SPEC","R"],"type":["DEVICEADDR_R"]};

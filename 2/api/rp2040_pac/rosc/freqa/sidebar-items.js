@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["PASSWD_A"],"struct":["FREQA_SPEC"],"type":["DS0_R","DS0_W","DS1_R","DS1_W","DS2_R","DS2_W","DS3_R","DS3_W","PASSWD_R","PASSWD_W","R","W"]};
