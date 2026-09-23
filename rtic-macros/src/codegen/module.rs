@@ -170,18 +170,21 @@ pub fn codegen(ctxt: Context, app: &App, analysis: &Analysis) -> TokenStream2 {
             #[doc(hidden)]
             #[allow(clippy::extra_unused_lifetimes)]
             pub #unsafety fn #internal_spawn_ident<#lifetime>(#(#input_args,)*) -> ::core::result::Result<(), #input_ty> {
-                // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
-                unsafe {
-                    let exec = #exec;
-                    if exec.try_allocate() {
-                        #spawn
-                        #pend_interrupt
+                // Atomic up to the pend, else a preempting `spawn` fails on a task not yet started.
+                rtic::export::critical_section::with(|_| {
+                    // SAFETY: If `try_allocate` succeeds one must call `spawn`, which we do.
+                    unsafe {
+                        let exec = #exec;
+                        if exec.try_allocate() {
+                            #spawn
+                            #pend_interrupt
 
-                        Ok(())
-                    } else {
-                        Err(#input_tupled)
+                            Ok(())
+                        } else {
+                            Err(#input_tupled)
+                        }
                     }
-                }
+                })
             }
         ));
 

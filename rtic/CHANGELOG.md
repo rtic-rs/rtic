@@ -27,6 +27,10 @@ Example:
 - Removed `init::Context::executors_size`, which reported a stack allocation that no longer happens.
 - Removed the stack-overflow check `init` ran after allocating executors.
 
+### Fixed
+
+- Fix `spawn` race with preempting tasks, see #1013
+
 ## [v2.3.1] - 2026-08-20
 
 ### Changed
