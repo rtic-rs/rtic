@@ -32,7 +32,7 @@
 //!     // Start the monotonic. The TIM2 prescaler is calculated from the
 //!     // clock frequency given here, and the resolution given to the
 //!     // `stm32_tim2_monotonic!` macro call above. No PAC object is required.
-//!     Mono::start(timer_clock_hz);
+//!     Mono::start(timer_clock_hz, Priority::rtic_default());
 //! }
 //!
 //! async fn usage() {
@@ -62,9 +62,12 @@ pub mod prelude {
     #[cfg(feature = "stm32_tim15")]
     pub use crate::stm32_tim15_monotonic;
 
-    pub use crate::{Monotonic, Timebase};
+    pub use crate::{stm32::Priority, Monotonic, Timebase};
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
+
+/// [`Priority`](crate::Priority) for this chip's interrupt controller.
+pub type Priority = crate::Priority<{ meta::NVIC_PRIO_BITS }>;
 
 use portable_atomic::{AtomicU64, Ordering};
 use rtic_time::{
@@ -99,15 +102,16 @@ macro_rules! __internal_create_stm32_timer_struct {
             /// Starts the `Monotonic`.
             ///
             /// - `tim_clock_hz`: `TIMx` peripheral clock frequency.
+            /// - `prio`: Priority of the `TIMx` interrupt.
             ///
             /// Panics if it is impossible to achieve the desired monotonic tick rate based
             /// on the given `tim_clock_hz` parameter. If that happens, adjust the desired monotonic tick rate.
             ///
             /// This method must be called only once.
-            pub fn start(tim_clock_hz: u32) {
+            pub fn start(tim_clock_hz: u32, prio: $crate::stm32::Priority) {
                 $crate::__internal_create_stm32_timer_interrupt!($mono_backend, $timer);
 
-                $crate::stm32::$mono_backend::_start(tim_clock_hz, $tick_rate_hz);
+                $crate::stm32::$mono_backend::_start(tim_clock_hz, $tick_rate_hz, prio);
             }
         }
 
@@ -316,7 +320,7 @@ macro_rules! make_timer {
             /// **Do not use this function directly.**
             ///
             /// Use the prelude macros instead.
-            pub fn _start(tim_clock_hz: u32, timer_hz: u32) {
+            pub fn _start(tim_clock_hz: u32, timer_hz: u32, prio: crate::stm32::Priority) {
                 const TIMER_RCC: meta::TimerRcc = meta::TimerRcc::lookup(::core::stringify!($timer));
                 TIMER_RCC.enable();
                 TIMER_RCC.reset();
@@ -363,7 +367,7 @@ macro_rules! make_timer {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(meta::NVIC_PRIO_BITS, pac::Interrupt::$timer);
+                    crate::set_monotonic_prio(pac::Interrupt::$timer, prio);
                     cortex_m::peripheral::NVIC::unmask(pac::Interrupt::$timer);
                 }
             }
@@ -459,7 +463,7 @@ macro_rules! make_timer2 {
             /// **Do not use this function directly.**
             ///
             /// Use the prelude macros instead.
-            pub fn _start(tim_clock_hz: u32, timer_hz: u32) {
+            pub fn _start(tim_clock_hz: u32, timer_hz: u32, prio: crate::stm32::Priority) {
                 const TIMER_RCC: meta::TimerRcc = meta::TimerRcc::lookup(::core::stringify!($timer));
                 TIMER_RCC.enable();
                 TIMER_RCC.reset();
@@ -506,7 +510,7 @@ macro_rules! make_timer2 {
                 // plus we are not using any external shared resources so we won't impact
                 // basepri/source masking based critical sections.
                 unsafe {
-                    crate::set_monotonic_prio(meta::NVIC_PRIO_BITS, pac::Interrupt::$timer);
+                    crate::set_monotonic_prio(pac::Interrupt::$timer, prio);
                     cortex_m::peripheral::NVIC::unmask(pac::Interrupt::$timer);
                 }
             }
