@@ -14,6 +14,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Fixed
 
+- Fix `spawn` race with preempting tasks, see #1013
 - Removed an occurence of the `needless_late_init` clippy lint.
 
 ## [v2.3.1] - 2026-08-20
