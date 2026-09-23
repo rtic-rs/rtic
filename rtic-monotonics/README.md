@@ -54,7 +54,7 @@ stm32_tim2_monotonic!(Mono, 1_000_000);
 
 fn init() {
     // TIM2 peripheral clock frequency.
-    Mono::start(48_000_000);
+    Mono::start(48_000_000, Priority::rtic_default());
 }
 ```
 
@@ -72,7 +72,7 @@ silabs_timer0_monotonic!(Mono, 1_000_000);
 
 fn init() {
     // TIMER0 peripheral clock frequency.
-    Mono::start(39_000_000);
+    Mono::start(39_000_000, Priority::rtic_default());
 }
 ```
 

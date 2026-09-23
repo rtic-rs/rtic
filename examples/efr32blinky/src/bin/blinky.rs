@@ -59,7 +59,7 @@ mod app {
 
     #[init]
     fn init(_cx: init::Context) -> (Shared, Local) {
-        Mono::start(TIMER0_CLOCK_HZ);
+        Mono::start(TIMER0_CLOCK_HZ, Priority::rtic_default());
         let led = Led::new();
 
         blink::spawn().ok();

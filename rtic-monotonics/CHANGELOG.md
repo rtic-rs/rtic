@@ -9,6 +9,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- [breaking] Interrupt based monotonics take their interrupt `Priority` in `start()`, `Priority::rtic_default()` keeps the old behavior
 - [breaking] Updated fugit dependency to v0.6.0
 - The preludes now also export `rtic_time::Timebase`
 - [breaking] STM32 and Silabs chips are now selected via the chip feature on your own

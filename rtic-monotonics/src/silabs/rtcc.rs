@@ -15,7 +15,7 @@
 //! fn init() {
 //!     // Start the monotonic - passing the RTCC peripheral object, and
 //!     // temporary access to the clock management unit.
-//!     Mono::start(silabs_metapac::RTCC, &silabs_metapac::CMU);
+//!     Mono::start(silabs_metapac::RTCC, &silabs_metapac::CMU, Priority::rtic_default());
 //! }
 //!
 //! async fn usage() {
@@ -34,12 +34,12 @@ pub mod prelude {
     pub use silabs_metapac;
 
     pub use crate::fugit::{self, ExtU64, ExtU64Ceil};
-    pub use crate::{Monotonic, Timebase};
+    pub use crate::{silabs::Priority, Monotonic, Timebase};
 }
 
 use core::sync::atomic::Ordering;
 
-use crate::{rtic_time::timer_queue::TimerQueue, silabs::NVIC_PRIO_BITS, TimerQueueBackend};
+use crate::{rtic_time::timer_queue::TimerQueue, TimerQueueBackend};
 use cortex_m::peripheral::NVIC;
 use portable_atomic::AtomicU32;
 use rtic_time::half_period_counter::calculate_now;
@@ -59,7 +59,7 @@ impl TimerBackend {
     /// **Do not use this function directly.**
     ///
     /// Use the prelude macros instead.
-    pub fn _start(timer: Rtcc, cmu: &Cmu) {
+    pub fn _start(timer: Rtcc, cmu: &Cmu, prio: crate::silabs::Priority) {
         // enable required bus clock; `clken0` gates other peripherals too, so the
         // read-modify-write must not race with a HAL enabling one of them
         critical_section::with(|_| cmu.clken0().modify(|w| w.set_rtcc(true)));
@@ -86,7 +86,7 @@ impl TimerBackend {
         TIMER_QUEUE.initialize(Self {});
 
         unsafe {
-            crate::set_monotonic_prio(NVIC_PRIO_BITS, Interrupt::RTCC);
+            crate::set_monotonic_prio(Interrupt::RTCC, prio);
             NVIC::unmask(Interrupt::RTCC);
         }
     }
@@ -191,8 +191,14 @@ macro_rules! silabs_rtcc_monotonic {
         impl $name {
             /// Starts the `Monotonic`.
             ///
+            /// `prio` is the priority of the timer interrupt.
+            ///
             /// This method must be called only once.
-            pub fn start(timer: $crate::silabs::rtcc::Rtcc, cmu: &$crate::silabs::rtcc::Cmu) {
+            pub fn start(
+                timer: $crate::silabs::rtcc::Rtcc,
+                cmu: &$crate::silabs::rtcc::Cmu,
+                prio: $crate::silabs::Priority,
+            ) {
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe extern "C" fn RTCC() {
@@ -200,7 +206,7 @@ macro_rules! silabs_rtcc_monotonic {
                     $crate::silabs::rtcc::TimerBackend::timer_queue().on_monotonic_interrupt();
                 }
 
-                $crate::silabs::rtcc::TimerBackend::_start(timer, cmu);
+                $crate::silabs::rtcc::TimerBackend::_start(timer, cmu, prio);
             }
         }
 
