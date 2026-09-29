@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Func","Num","Precision","Scale","Size"]};

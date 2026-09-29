@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SCRATCH6_SPEC"],"type":["R","W"]};

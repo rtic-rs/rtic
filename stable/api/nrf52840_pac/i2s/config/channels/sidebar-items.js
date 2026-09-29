@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CHANNELS_A"],"struct":["CHANNELS_SPEC","R","W"],"type":["CHANNELS_R","CHANNELS_W"]};

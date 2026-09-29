@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["NFCTAGSTATE_A"],"struct":["NFCTAGSTATE_SPEC","R"],"type":["NFCTAGSTATE_R"]};

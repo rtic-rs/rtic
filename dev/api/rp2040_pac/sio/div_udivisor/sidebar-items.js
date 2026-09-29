@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DIV_UDIVISOR_SPEC"],"type":["R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["config","enable","events_rxptrupd","events_stopped","events_txptrupd","inten","intenclr","intenset","psel","rxd","rxtxd","tasks_start","tasks_stop","txd"],"struct":["RegisterBlock"],"type":["ENABLE","EVENTS_RXPTRUPD","EVENTS_STOPPED","EVENTS_TXPTRUPD","INTEN","INTENCLR","INTENSET","TASKS_START","TASKS_STOP"]};

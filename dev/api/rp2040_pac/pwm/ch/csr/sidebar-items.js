@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DIVMODE_A"],"struct":["CSR_SPEC"],"type":["A_INV_R","A_INV_W","B_INV_R","B_INV_W","DIVMODE_R","DIVMODE_W","EN_R","EN_W","PH_ADV_R","PH_ADV_W","PH_CORRECT_R","PH_CORRECT_W","PH_RET_R","PH_RET_W","R","W"]};

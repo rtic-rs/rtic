@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GPR_HL_0","GPR_HL_1"]};

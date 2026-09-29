@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UARTIFLS_SPEC"],"type":["R","RXIFLSEL_R","RXIFLSEL_W","TXIFLSEL_R","TXIFLSEL_W","W"]};

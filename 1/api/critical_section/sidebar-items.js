@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["acquire","release","with"],"macro":[["set_impl",1]],"struct":["CriticalSection","Mutex","RestoreState"],"trait":["Impl"],"type":["RawRestoreState"]};

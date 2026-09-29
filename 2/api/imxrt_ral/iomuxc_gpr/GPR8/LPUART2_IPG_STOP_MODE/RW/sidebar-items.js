@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LPUART2_IPG_STOP_MODE_0","LPUART2_IPG_STOP_MODE_1"]};

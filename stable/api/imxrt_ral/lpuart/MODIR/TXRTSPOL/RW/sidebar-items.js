@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TXRTSPOL_0","TXRTSPOL_1"]};

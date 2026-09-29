@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["platform"],"struct":["RegisterBlock"],"type":["PLATFORM"]};

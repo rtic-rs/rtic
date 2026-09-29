@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ALLOW_AUTO_GATE","NO_AUTO_GATE"]};

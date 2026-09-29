@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["JTAG_SW_RST_0","JTAG_SW_RST_1"]};

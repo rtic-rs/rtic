@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ep_buffer_control","ep_control","epx_control","setup_packet_high","setup_packet_low"],"struct":["RegisterBlock"],"type":["EPX_CONTROL","EP_BUFFER_CONTROL","EP_CONTROL","SETUP_PACKET_HIGH","SETUP_PACKET_LOW"]};

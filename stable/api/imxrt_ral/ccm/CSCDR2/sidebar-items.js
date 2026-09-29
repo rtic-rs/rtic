@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["LPI2C_CLK_PODF","LPI2C_CLK_SEL"]};

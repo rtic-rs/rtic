@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PERIPH_CLK_SEL_LOADED_0","PERIPH_CLK_SEL_LOADED_1"]};

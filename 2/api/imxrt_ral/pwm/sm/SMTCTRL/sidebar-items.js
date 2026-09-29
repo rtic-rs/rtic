@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["OUT_TRIG_EN","PWAOT0","PWBOT1","TRGFRQ"]};

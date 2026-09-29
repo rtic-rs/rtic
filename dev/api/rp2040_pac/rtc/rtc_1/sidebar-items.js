@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RTC_1_SPEC"],"type":["DAY_R","MONTH_R","R","YEAR_R"]};

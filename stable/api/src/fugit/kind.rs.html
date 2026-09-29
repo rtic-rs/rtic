@@ -1,0 +1,48 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fugit-0.6.0/src/kind.rs`."><title>kind.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="fugit" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">fugit/</div>kind.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Markers that say how an [`Instant`](crate::Instant)'s timeline is read.
+<a href=#2 id=2 data-nosnippet>2</a>
+<a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">mod </span>sealed {
+<a href=#4 id=4 data-nosnippet>4</a>    <span class="kw">pub trait </span>Sealed {}
+<a href=#5 id=5 data-nosnippet>5</a>}
+<a href=#6 id=6 data-nosnippet>6</a>
+<a href=#7 id=7 data-nosnippet>7</a><span class="doccomment">/// The set of timelines an [`Instant`](crate::Instant) can be on.
+<a href=#8 id=8 data-nosnippet>8</a>///
+<a href=#9 id=9 data-nosnippet>9</a>/// Sealed: the kinds are [`Monotonic`] and [`Wrapping`].
+<a href=#10 id=10 data-nosnippet>10</a></span><span class="kw">pub trait </span>Kind: Copy + sealed::Sealed {
+<a href=#11 id=11 data-nosnippet>11</a>    <span class="doccomment">/// The name shown for instants of this kind in `Debug` output.
+<a href=#12 id=12 data-nosnippet>12</a>    </span><span class="kw">const </span>DEBUG_NAME: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str;
+<a href=#13 id=13 data-nosnippet>13</a>}
+<a href=#14 id=14 data-nosnippet>14</a>
+<a href=#15 id=15 data-nosnippet>15</a><span class="doccomment">/// Marker for an instant on a timeline that does not wrap.
+<a href=#16 id=16 data-nosnippet>16</a>///
+<a href=#17 id=17 data-nosnippet>17</a>/// Total order, so [`Ord`]. Arithmetic is plain `+` and `-`, panicking on overflow in debug and
+<a href=#18 id=18 data-nosnippet>18</a>/// wrapping in release. Nothing checks that the timeline really does not wrap, so use
+<a href=#19 id=19 data-nosnippet>19</a>/// [`Wrapping`] for raw hardware counters.
+<a href=#20 id=20 data-nosnippet>20</a></span><span class="attr">#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+<a href=#21 id=21 data-nosnippet>21</a></span><span class="kw">pub enum </span>Monotonic {}
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a><span class="kw">impl </span>sealed::Sealed <span class="kw">for </span>Monotonic {}
+<a href=#24 id=24 data-nosnippet>24</a><span class="kw">impl </span>Kind <span class="kw">for </span>Monotonic {
+<a href=#25 id=25 data-nosnippet>25</a>    <span class="kw">const </span>DEBUG_NAME: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str = <span class="string">"MonotonicInstant"</span>;
+<a href=#26 id=26 data-nosnippet>26</a>}
+<a href=#27 id=27 data-nosnippet>27</a>
+<a href=#28 id=28 data-nosnippet>28</a><span class="doccomment">/// Marker for an instant on a circular counter, such as a hardware timer.
+<a href=#29 id=29 data-nosnippet>29</a>///
+<a href=#30 id=30 data-nosnippet>30</a>/// Arithmetic wraps, and comparison reads `self - other` as a signed offset, so it is only
+<a href=#31 id=31 data-nosnippet>31</a>/// meaningful within half the tick range and not transitive, which is less than [`PartialOrd`]
+<a href=#32 id=32 data-nosnippet>32</a>/// and [`Ord`] promise, so neither is implemented. Comparison goes through
+<a href=#33 id=33 data-nosnippet>33</a>/// [`InstantOrd`](crate::InstantOrd) or the inherent `is_before`/`is_after`/`const_partial_cmp`:
+<a href=#34 id=34 data-nosnippet>34</a>///
+<a href=#35 id=35 data-nosnippet>35</a>/// ```compile_fail
+<a href=#36 id=36 data-nosnippet>36</a>/// use fugit::WrappingInstant;
+<a href=#37 id=37 data-nosnippet>37</a>///
+<a href=#38 id=38 data-nosnippet>38</a>/// fn assert_partial_ord&lt;T: PartialOrd&gt;() {}
+<a href=#39 id=39 data-nosnippet>39</a>/// assert_partial_ord::&lt;WrappingInstant&lt;u32, 1, 1_000&gt;&gt;();
+<a href=#40 id=40 data-nosnippet>40</a>/// ```
+<a href=#41 id=41 data-nosnippet>41</a></span><span class="attr">#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+<a href=#42 id=42 data-nosnippet>42</a></span><span class="kw">pub enum </span>Wrapping {}
+<a href=#43 id=43 data-nosnippet>43</a>
+<a href=#44 id=44 data-nosnippet>44</a><span class="kw">impl </span>sealed::Sealed <span class="kw">for </span>Wrapping {}
+<a href=#45 id=45 data-nosnippet>45</a><span class="kw">impl </span>Kind <span class="kw">for </span>Wrapping {
+<a href=#46 id=46 data-nosnippet>46</a>    <span class="kw">const </span>DEBUG_NAME: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str = <span class="string">"WrappingInstant"</span>;
+<a href=#47 id=47 data-nosnippet>47</a>}
+</code></pre></div></section></main></body></html>

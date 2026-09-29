@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LIST_A"],"struct":["LIST_SPEC","R","W"],"type":["LIST_R","LIST_W"]};

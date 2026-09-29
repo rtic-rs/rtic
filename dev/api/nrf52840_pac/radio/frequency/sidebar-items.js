@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MAP_A"],"struct":["FREQUENCY_SPEC","R","W"],"type":["FREQUENCY_R","FREQUENCY_W","MAP_R","MAP_W"]};

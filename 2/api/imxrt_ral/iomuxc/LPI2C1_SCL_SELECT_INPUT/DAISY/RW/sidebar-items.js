@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GPIO_02_ALT3","GPIO_12_ALT1","GPIO_AD_14_ALT0","GPIO_SD_06_ALT1"]};

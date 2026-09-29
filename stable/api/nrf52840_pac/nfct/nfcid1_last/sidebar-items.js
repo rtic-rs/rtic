@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["NFCID1_LAST_SPEC","R","W"],"type":["NFCID1_W_R","NFCID1_W_W","NFCID1_X_R","NFCID1_X_W","NFCID1_Y_R","NFCID1_Y_W","NFCID1_Z_R","NFCID1_Z_W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["L2_MEM_DEEPSLEEP_0","L2_MEM_DEEPSLEEP_1"]};

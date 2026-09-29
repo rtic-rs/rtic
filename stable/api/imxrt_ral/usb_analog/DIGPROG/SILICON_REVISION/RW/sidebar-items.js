@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SILICON_REVISION_7143424"]};

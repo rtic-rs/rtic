@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SAI1","SAI3"],"fn":["number"],"mod":["PARAM","RCR1","RCR2","RCR3","RCR4","RCR5","RCSR","RDR","RFR","RMR","TCR1","TCR2","TCR3","TCR4","TCR5","TCSR","TDR","TFR","TMR","VERID"],"struct":["RegisterBlock"],"type":["Instance","SAI1","SAI3"]};

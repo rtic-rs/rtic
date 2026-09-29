@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAJ_REV_1"]};

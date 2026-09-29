@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TXFLR_SPEC"],"type":["R","TFTFL_R"]};

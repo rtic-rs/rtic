@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["END_A","END_AW","STARTED_A","STARTED_AW","STOPPED_A","STOPPED_AW"],"struct":["INTENSET_SPEC","R","W"],"type":["END_R","END_W","STARTED_R","STARTED_W","STOPPED_R","STOPPED_W"]};

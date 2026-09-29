@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CLK_SYS_RESUS_CTRL_SPEC"],"type":["CLEAR_R","CLEAR_W","ENABLE_R","ENABLE_W","FRCE_R","FRCE_W","R","TIMEOUT_R","TIMEOUT_W","W"]};

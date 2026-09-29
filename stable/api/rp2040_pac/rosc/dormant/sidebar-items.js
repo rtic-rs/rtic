@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DORMANT_SPEC"],"type":["R","W"]};

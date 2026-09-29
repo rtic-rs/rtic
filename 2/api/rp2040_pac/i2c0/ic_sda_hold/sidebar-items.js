@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IC_SDA_HOLD_SPEC"],"type":["IC_SDA_RX_HOLD_R","IC_SDA_RX_HOLD_W","IC_SDA_TX_HOLD_R","IC_SDA_TX_HOLD_W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["IOMUXC_SNVS"],"fn":["number"],"mod":["SW_MUX_CTL_PAD_PMIC_ON_REQ","SW_PAD_CTL_PAD_ONOFF","SW_PAD_CTL_PAD_PMIC_ON_REQ","SW_PAD_CTL_PAD_POR_B","SW_PAD_CTL_PAD_TEST_MODE"],"struct":["RegisterBlock"],"type":["IOMUXC_SNVS","Instance"]};

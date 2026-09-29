@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["MPU_RASR_SPEC"],"type":["ATTRS_R","ATTRS_W","ENABLE_R","ENABLE_W","R","SIZE_R","SIZE_W","SRD_R","SRD_W","W"]};

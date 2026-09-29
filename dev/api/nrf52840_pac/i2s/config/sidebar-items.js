@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["align","channels","format","mcken","mckfreq","mode","ratio","rxen","swidth","txen"],"struct":["CONFIG"],"type":["ALIGN","CHANNELS","FORMAT","MCKEN","MCKFREQ","MODE","RATIO","RXEN","SWIDTH","TXEN"]};

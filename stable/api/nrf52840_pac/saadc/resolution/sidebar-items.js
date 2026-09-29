@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["VAL_A"],"struct":["R","RESOLUTION_SPEC","W"],"type":["VAL_R","VAL_W"]};

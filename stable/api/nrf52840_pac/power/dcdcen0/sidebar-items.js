@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DCDCEN_A"],"struct":["DCDCEN0_SPEC","R","W"],"type":["DCDCEN_R","DCDCEN_W"]};

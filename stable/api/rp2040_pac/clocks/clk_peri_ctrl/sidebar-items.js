@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AUXSRC_A"],"struct":["CLK_PERI_CTRL_SPEC"],"type":["AUXSRC_R","AUXSRC_W","ENABLE_R","ENABLE_W","KILL_R","KILL_W","R","W"]};

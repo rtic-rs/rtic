@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SSPIMSC_SPEC"],"type":["R","RORIM_R","RORIM_W","RTIM_R","RTIM_W","RXIM_R","RXIM_W","TXIM_R","TXIM_W","W"]};

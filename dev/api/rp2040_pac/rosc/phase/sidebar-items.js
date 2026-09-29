@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PHASE_SPEC"],"type":["ENABLE_R","ENABLE_W","FLIP_R","FLIP_W","PASSWD_R","PASSWD_W","R","SHIFT_R","SHIFT_W","W"]};

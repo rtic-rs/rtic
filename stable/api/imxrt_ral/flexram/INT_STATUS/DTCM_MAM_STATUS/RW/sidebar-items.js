@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DTCM_MAM_STATUS_0","DTCM_MAM_STATUS_1"]};

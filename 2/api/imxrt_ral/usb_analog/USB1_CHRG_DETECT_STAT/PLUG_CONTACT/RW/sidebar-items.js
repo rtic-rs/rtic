@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GOOD_CONTACT","NO_CONTACT"]};

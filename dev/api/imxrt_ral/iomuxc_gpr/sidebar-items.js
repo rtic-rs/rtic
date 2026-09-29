@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["IOMUXC_GPR"],"fn":["number"],"mod":["GPR1","GPR10","GPR11","GPR12","GPR13","GPR14","GPR16","GPR17","GPR18","GPR19","GPR2","GPR20","GPR21","GPR22","GPR23","GPR24","GPR25","GPR26","GPR27","GPR28","GPR29","GPR3","GPR4","GPR5","GPR6","GPR7","GPR8"],"struct":["RegisterBlock"],"type":["IOMUXC_GPR","Instance"]};

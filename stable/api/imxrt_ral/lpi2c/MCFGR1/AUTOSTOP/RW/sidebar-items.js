@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["AUTOSTOP_0","AUTOSTOP_1"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAJORELINK_0","MAJORELINK_1"]};

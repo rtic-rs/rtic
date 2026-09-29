@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FC0_INTERVAL_SPEC"],"type":["FC0_INTERVAL_R","FC0_INTERVAL_W","R","W"]};

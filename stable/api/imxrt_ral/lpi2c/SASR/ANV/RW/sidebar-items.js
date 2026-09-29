@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ANV_0","ANV_1"]};

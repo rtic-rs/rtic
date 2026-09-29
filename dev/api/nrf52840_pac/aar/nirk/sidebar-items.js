@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["NIRK_SPEC","R","W"],"type":["NIRK_R","NIRK_W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FILTEN_0","FILTEN_1"]};

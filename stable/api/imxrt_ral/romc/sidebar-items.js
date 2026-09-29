@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ROMC"],"fn":["number"],"mod":["ROMPATCHA","ROMPATCHCNTL","ROMPATCHD","ROMPATCHENL","ROMPATCHSR"],"struct":["RegisterBlock"],"type":["Instance","ROMC"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FSTAT_SPEC"],"type":["R","RXEMPTY_R","RXFULL_R","TXEMPTY_R","TXFULL_R"]};

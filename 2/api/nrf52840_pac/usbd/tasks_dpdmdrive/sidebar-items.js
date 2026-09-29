@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_DPDMDRIVE_SPEC","W"],"type":["TASKS_DPDMDRIVE_W"]};

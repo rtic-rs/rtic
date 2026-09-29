@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UARTIBRD_SPEC"],"type":["BAUD_DIVINT_R","BAUD_DIVINT_W","R","W"]};

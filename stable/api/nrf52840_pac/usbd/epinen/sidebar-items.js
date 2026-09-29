@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IN0_A","IN1_A","IN2_A","IN3_A","IN4_A","IN5_A","IN6_A","IN7_A","ISOIN_A"],"struct":["EPINEN_SPEC","R","W"],"type":["IN0_R","IN0_W","IN1_R","IN1_W","IN2_R","IN2_W","IN3_R","IN3_W","IN4_R","IN4_W","IN5_R","IN5_W","IN6_R","IN6_W","IN7_R","IN7_W","ISOIN_R","ISOIN_W"]};
