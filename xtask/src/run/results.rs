@@ -6,7 +6,7 @@ use super::data::FinalRunResult;
 
 const TARGET: &str = "xtask::results";
 
-pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result<(), ()> {
+pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> anyhow::Result<()> {
     let errors = results.iter().filter_map(|r| {
         if let FinalRunResult::Failed(c, r) = r {
             Some((c, &r.stdout, &r.stderr))
@@ -92,7 +92,7 @@ pub fn handle_results(globals: &Globals, results: Vec<FinalRunResult>) -> Result
     let ecount = errors.count() + command_errors.count();
     if ecount != 0 {
         error!(target: TARGET, "{ecount} commands failed.");
-        Err(())
+        anyhow::bail!("Some commands failed")
     } else {
         info!(target: TARGET, "🚀🚀🚀 All tasks succeeded 🚀🚀🚀");
         Ok(())

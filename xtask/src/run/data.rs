@@ -30,10 +30,10 @@ pub struct RunResult {
 }
 
 #[derive(Debug)]
-pub enum FinalRunResult<'c> {
-    Success(CargoCommand<'c>, RunResult),
-    Failed(CargoCommand<'c>, RunResult),
-    CommandError(CargoCommand<'c>, anyhow::Error),
+pub enum FinalRunResult {
+    Success(CargoCommand, RunResult),
+    Failed(CargoCommand, RunResult),
+    CommandError(CargoCommand, anyhow::Error),
 }
 
 #[derive(Debug)]

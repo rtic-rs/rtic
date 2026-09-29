@@ -21,7 +21,7 @@ env:
 
 jobs:
   # Run cargo xtask format-check
-  formatcheck:
+  format-check:
     name: cargo fmt
     runs-on: ubuntu-24.04
     steps:
@@ -34,49 +34,54 @@ jobs:
       - name: cargo xtask fmt
         run:  cargo xtask --verbose fmt -c
 
-  # Verify all examples, checks
-  check-clippy:
-    uses: ./.github/workflows/clippy-check-example.yml
-    with:
-      backend: ${{ matrix.input.backend }}
-      platform: ${{ matrix.input.platform }}
-      rustup-target: ${{ matrix.input.rustup-target }}
-      example-args: ${{ matrix.input.example-args }}
+  # Build all relevant examples
+  build-examples:
+    runs-on: ubuntu-24.04
+    name: Check examples
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure Rust target ${{ matrix.input.rustup-target }}
+        run: rustup target add ${{ matrix.input.rustup-target }}
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build the examples
+        run: cargo xtask example-build ${{ matrix.input.platform }} ${{ matrix.input.platform-args }}
 
     strategy:
       matrix:
         input:
-          - backend: thumbv7
-            platform: lm3s6965
+          - platform: lm3s6965
             rustup-target: thumbv7m-none-eabi
+            platform-args: --backend thumbv7
 
-          - backend: thumbv6
-            platform: lm3s6965
+          - platform: lm3s6965
             rustup-target: thumbv6m-none-eabi
+            platform-args: --backend thumbv6
 
-          - backend: thumbv8-base
-            platform: lm3s6965
+          - platform: lm3s6965
             rustup-target: thumbv8m.base-none-eabi
-            example-args: --exampleexclude pool
+            platform-args: --backend thumbv8-base
 
-          - backend: thumbv8-main
-            platform: lm3s6965
+          - platform: lm3s6965
             rustup-target: thumbv8m.main-none-eabi
+            platform-args: --backend thumbv8-main
 
-          - backend: riscv32-imc-clint
-            platform: hifive1
+          - platform: hifive1
+            rustup-target: riscv32imc-unknown-none-elf
+            platform-args: --backend clint
+
+          - platform: hifive1
+            rustup-target: riscv32imc-unknown-none-elf
+            platform-args: --backend mecall
+
+          - platform: esp32c3
             rustup-target: riscv32imc-unknown-none-elf
 
-          - backend: riscv32-imc-mecall
-            platform: hifive1
-            rustup-target: riscv32imc-unknown-none-elf
-
-          - backend: riscv-esp32-c3
-            platform: esp32-c3
-            rustup-target: riscv32imc-unknown-none-elf
-
-          - backend: riscv-esp32-c6
-            platform: esp32-c6
+          - platform: esp32c6
             rustup-target: riscv32imac-unknown-none-elf
 
   installqemu:
@@ -118,35 +123,34 @@ jobs:
           path: qemu.tar
 
   # Verify the example output with run-pass tests
-  testexamples:
+  test-examples:
     name: QEMU run
     needs: installqemu
     runs-on: ubuntu-24.04
     strategy:
       matrix:
         input:
-          - backend: thumbv7
-            platform: lm3s6965
+          - platform: lm3s6965
             rustup-target: thumbv7m-none-eabi
             qemu-system: arm
+            backend: --backend thumbv7
 
-          - backend: thumbv6
-            platform: lm3s6965
+          - platform: lm3s6965
             rustup-target: thumbv6m-none-eabi
             qemu-system: arm
+            backend: --backend thumbv6
 
-          - backend: riscv32-imc-clint
-            platform: hifive1
+          - platform: hifive1
             rustup-target: riscv32imc-unknown-none-elf
             qemu-system: riscv32
+            backend: --backend clint
 
-          - backend: riscv32-imc-mecall
-            platform: hifive1
+          - platform: hifive1
             rustup-target: riscv32imc-unknown-none-elf
             qemu-system: riscv32
+            backend: --backend mecall
 
-          # - backend: riscv-esp32-c3
-          #   platform: esp32-c3
+          # - platform: esp32-c3
           #   rustup-target: riscv32imc-unknown-none-elf
           #   qemu-system: riscv32
 
@@ -204,27 +208,58 @@ jobs:
           which qemu-system-${{ matrix.input.qemu-system }}
 
       - name: Run-pass tests
-        run: cargo xtask --deny-warnings --platform ${{ matrix.input.platform }} --backend ${{ matrix.input.backend }} qemu
+        run: cargo xtask --deny-warnings qemu ${{ matrix.input.platform }} ${{ matrix.input.backend }}
 
-  # Run test suite
-  tests:
-    name: tests
+  # Check & test individual packages
+  package:
+    name: Validate package
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        backend:
-          - thumbv7
-          - thumbv6
-          - thumbv8-base
-          - thumbv8-main
-        package:
-          - rtic
-          - rtic-common
-          - rtic-macros
-          - rtic-monotonics
-          - rtic-sync
-          - rtic-time
+        input:
+          - package: rtic
+            args: --backend thumbv6
+          - package: rtic
+            args: --backend thumbv7
+          - package: rtic
+            args: --backend thumbv8-base
+          - package: rtic
+            args: --backend thumbv8-main
+          - package: rtic
+            args: --backend riscv-imac-clint
+          - package: rtic
+            args: --backend riscv-imac-mecall
+          - package: rtic
+            args: --backend riscv-imc-clint
+          - package: rtic
+            args: --backend riscv-imc-mecall
+          - package: rtic
+            args: --backend riscv-esp32c3
+          - package: rtic
+            args: --backend riscv-esp32c6
+
+          - package: rtic-macros
+            args: --backend cortex-m-basepri
+          - package: rtic-macros
+            args: --backend cortex-m-source-masking
+          - package: rtic-macros
+            args: --backend riscv-esp32c3
+          - package: rtic-macros
+            args: --backend riscv-esp32c6
+          - package: rtic-macros
+            args: --backend riscv-mecall
+          - package: rtic-macros
+            args: --backend riscv-clint
+
+          - package: rtic-monotonics
+            args: --backend riscv-esp32c3
+          - package: rtic-monotonics
+            args: --backend arm
+
+          - package: rtic-common
+          - package: rtic-time
+          - package: rtic-sync
 
     steps:
       - name: Checkout
@@ -240,8 +275,12 @@ jobs:
           rustup target add thumbv8m.base-none-eabi
           rustup target add thumbv8m.main-none-eabi
 
+      - name: Run cargo clippy
+        run: cargo xtask --deny-warnings clippy ${{ matrix.input.package }} ${{ matrix.input.args }}
+
       - name: Run cargo test
-        run: cargo xtask --deny-warnings --backend ${{ matrix.backend }} test ${{ matrix.package }}
+        run: cargo xtask --deny-warnings test ${{ matrix.input.package }} ${{ matrix.input.args }}
+        if: ${{ !contains(matrix.input.args, 'riscv') }} # UI tests are built with lm3s in mind
 
   loom-tests:
     name: rtic-sync loom tests
@@ -251,7 +290,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Run cargo test
-        run: cargo xtask --deny-warnings test --loom rtic-sync
+        run: cargo xtask --deny-warnings test-loom
 
   # Build documentation, check links
   docs:
@@ -645,10 +684,10 @@ jobs:
     name: ci
     if: success()
     needs:
-      - formatcheck
-      - check-clippy
-      - testexamples
-      - tests
+      - format-check
+      - build-examples
+      - test-examples
+      - package
       - loom-tests
       - docs
       - mdbook
