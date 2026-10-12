@@ -225,7 +225,7 @@ pub unsafe fn lock<T, R, const M: usize>(
 
     if current < ceiling {
         if ceiling == (1 << nvic_prio_bits) {
-            priority.set(u8::max_value());
+            priority.set(u8::MAX);
             let r = interrupt::free(|_| f(&mut *ptr));
             priority.set(current);
             r
