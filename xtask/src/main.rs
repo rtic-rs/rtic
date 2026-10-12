@@ -124,7 +124,16 @@ fn run_test(target: &str, examples: &[String]) -> anyhow::Result<()> {
         mode: BuildMode::Release,
     })?;
 
-    for example in examples {
+    let examples_to_run = examples.iter().filter(|example| {
+        // skip 'pool' example for thumbv6m target,
+        // as pools are not supported for that target
+        if target == "thumbv6m-none-eabi" && example.as_str() == "pool" {
+            return false;
+        }
+        true
+    });
+
+    for example in examples_to_run {
         let cmd = CargoCommand::Run {
             example,
             target,
