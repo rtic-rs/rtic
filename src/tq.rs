@@ -1,9 +1,9 @@
 use crate::Monotonic;
 use core::cmp::Ordering;
-use heapless::sorted_linked_list::{LinkedIndexU16, Min, SortedLinkedList};
+use heapless::sorted_linked_list::{Min, SortedLinkedList};
 
 pub struct TimerQueue<Mono, Task, const N: usize>(
-    pub SortedLinkedList<NotReady<Mono, Task>, LinkedIndexU16, Min, N>,
+    pub SortedLinkedList<NotReady<Mono, Task>, Min, N, u16>,
 )
 where
     Mono: Monotonic,
