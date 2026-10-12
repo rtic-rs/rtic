@@ -18,8 +18,8 @@ mod app {
 
     #[local]
     struct Local {
-        p: Producer<'static, u32, 5>,
-        c: Consumer<'static, u32, 5>,
+        p: Producer<'static, u32>,
+        c: Consumer<'static, u32>,
     }
 
     #[init(local = [q: Queue<u32, 5> = Queue::new()])]
