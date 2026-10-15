@@ -1,4 +1,5 @@
 use super::cortex_logical2hw;
+use core::arch::asm;
 use cortex_m::register::{basepri, basepri_max};
 pub use cortex_m::{
     Peripherals,
@@ -70,7 +71,11 @@ pub unsafe fn lock<T, R>(
         } else {
             let current = basepri::read();
             basepri_max::write(cortex_logical2hw(ceiling, nvic_prio_bits));
+            // cortex-m 0.7.8 and 0.7.9 use `nomem` for BASEPRI writes.
+            // Compiler memory barriers keep resource accesses between the writes.
+            asm!("", options(nostack, preserves_flags));
             let r = f(&mut *ptr);
+            asm!("", options(nostack, preserves_flags));
             basepri::write(current);
             r
         }
