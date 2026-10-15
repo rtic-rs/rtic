@@ -29,6 +29,7 @@ Example:
 
 ### Fixed
 
+- Fix compiler reordering of shared accesses outside BASEPRI resource locks.
 - `RTIC_ASYNC_MAX_LOGICAL_PRIO` is above the highest software task when the device allows it, so monotonics can preempt a blocking software task (#1246).
 - Fix `spawn` race with preempting tasks, see #1013
 
