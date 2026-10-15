@@ -15,6 +15,7 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ### Changed
 
+- Bump heapless to 0.9
 - Update rtic-syntax to pre-release supporting syn v2
 - Bump lm3s6965 to 0.2.0
 
