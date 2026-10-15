@@ -219,6 +219,9 @@ macro_rules! nrf_timer4_monotonic {
     };
 }
 
+const OVERFLOW: u32 = 0x0000_0000;
+const HALF_PERIOD: u32 = 0x8000_0000;
+
 macro_rules! make_timer {
     ($backend_name:ident, $timer:ident, $overflow:ident, $tq:ident$(, doc: ($($doc:tt)*))?) => {
         /// Timer peripheral based [`TimerQueueBackend`].
@@ -244,13 +247,11 @@ macro_rules! make_timer {
                 timer.intenclr.modify(|_, w| w
                     .compare0().clear()
                     .compare1().clear()
-                    .compare2().clear()
                 );
 
                 // Configure compare registers
                 timer.cc[0].write(|w| unsafe { w.cc().bits(0) }); // Dynamic wakeup
-                timer.cc[1].write(|w| unsafe { w.cc().bits(0x0000_0000) }); // Overflow
-                timer.cc[2].write(|w| unsafe { w.cc().bits(0x8000_0000) }); // Half-period
+                timer.cc[1].write(|w| unsafe { w.cc().bits(HALF_PERIOD) }); // Overflow/half-period
 
                 // Timing critical, make sure we don't get interrupted
                 critical_section::with(|_|{
@@ -262,7 +263,6 @@ macro_rules! make_timer {
                     // Should be close enough to the timer reset that we don't miss any events.
                     timer.events_compare[0].write(|w| w);
                     timer.events_compare[1].write(|w| w);
-                    timer.events_compare[2].write(|w| w);
 
                     // Make sure overflow counter is synced with the timer value
                     $overflow.store(0, Ordering::SeqCst);
@@ -275,7 +275,6 @@ macro_rules! make_timer {
                     timer.intenset.modify(|_, w| w
                         .compare0().set()
                         .compare1().set()
-                        .compare2().set()
                     );
                 });
 
@@ -298,8 +297,8 @@ macro_rules! make_timer {
                 calculate_now(
                     || $overflow.load(Ordering::Relaxed),
                     || {
-                        timer.tasks_capture[3].write(|w| unsafe { w.bits(1) });
-                        timer.cc[3].read().bits()
+                        timer.tasks_capture[2].write(|w| unsafe { w.bits(1) });
+                        timer.cc[2].read().bits()
                     }
                 )
             }
@@ -307,18 +306,22 @@ macro_rules! make_timer {
             fn on_interrupt() {
                 let timer = unsafe { &*$timer::PTR };
 
-                // If there is a compare match on channel 1, it is an overflow
+                // An event occurred: either a half-period, or a full overflow
                 if timer.events_compare[1].read().bits() & 1 != 0 {
                     timer.events_compare[1].write(|w| w);
-                    let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    ::core::assert!(!prev.is_multiple_of(2), "Monotonic must have skipped an interrupt!");
-                }
 
-                // If there is a compare match on channel 2, it is a half-period overflow
-                if timer.events_compare[2].read().bits() & 1 != 0 {
-                    timer.events_compare[2].write(|w| w);
                     let prev = $overflow.fetch_add(1, Ordering::Relaxed);
-                    ::core::assert!(prev.is_multiple_of(2), "Monotonic must have skipped an interrupt!");
+
+                    // The interrupt was for a half-period
+                    if timer.cc[1].read().bits() == HALF_PERIOD {
+                        timer.cc[1].write(|w| unsafe { w.bits(OVERFLOW) });
+                        ::core::assert!(prev.is_multiple_of(2), "Monotonic must have skipped an interrupt!");
+                    }
+                    // The interrupt was for an overflow
+                    else {
+                        timer.cc[1].write(|w| unsafe { w.bits(HALF_PERIOD) });
+                        ::core::assert!(!prev.is_multiple_of(2), "Monotonic must have skipped an interrupt!");
+                    }
                 }
             }
 
