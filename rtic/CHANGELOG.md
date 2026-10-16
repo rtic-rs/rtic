@@ -29,6 +29,7 @@ Example:
 
 ### Fixed
 
+- Fix ordering and missing barriers in NVIC source masking.
 - Fix compiler reordering of shared accesses outside BASEPRI resource locks.
 - Fix `spawn` race with preempting tasks, see #1013
 
