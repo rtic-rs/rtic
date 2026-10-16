@@ -1,3 +1,4 @@
+use core::arch::asm;
 pub use cortex_m::{
     Peripherals,
     asm::wfi,
@@ -101,8 +102,10 @@ where
 ///     - CS exit cost, single write to core register
 ///   - else
 ///     - The `mask` value is folded to a constant at compile time
-///     - CS entry, single write of the 32 bit `mask` to the `icer` register
-///     - CS exit, single write of the 32 bit `mask` to the `iser` register
+///     - CS entry, single write of the 32 bit `mask` to the `icer` register,
+///       followed by DSB and ISB
+///     - CS exit, compiler memory barrier followed by a single write of the
+///       32 bit `mask` to the `iser` register
 /// - priority.set/get optimized out (their effect not)
 /// - On par or better than any hand written implementation of SRP
 ///
@@ -135,8 +138,16 @@ pub unsafe fn lock<T, R, const M: usize>(
             let old_mask = read_mask(mask);
             clear_enable_mask(mask);
 
+            // complete NVIC disabling (ARM AN321, section 4.6)
+            // `cortex_m` includes compiler memory barriers (!nomen)
+            cortex_m::asm::dsb();
+            cortex_m::asm::isb();
+
             // execute closure under protection of raised system ceiling
             let r = f(&mut *ptr);
+
+            // compiler memory barrier
+            asm!("", options(nostack, preserves_flags));
 
             set_enable_mask(mask, old_mask);
 
