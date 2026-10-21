@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+## v3.0.0 - 2026-10-21
+
 ### Added
 
 - `Timebase`, the `Monotonic` methods without the `Ord` requirement on instants

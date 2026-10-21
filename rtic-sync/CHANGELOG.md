@@ -7,6 +7,8 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## Unreleased
 
+## v1.6.0 - 2026-10-21
+
 ### Fixed
 
 - A `Channel<T>` is safely `Send` and `Sync` when `T: Send`.
