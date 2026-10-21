@@ -487,7 +487,9 @@ fn run_command(
 
     let mut process = Command::new(command.executable());
 
+    // Let each directory's `rust-toolchain.toml` pick the toolchain
     process
+        .env_remove("RUSTUP_TOOLCHAIN")
         .args(command.args())
         .stdout(Stdio::piped())
         .stderr(stderr_mode);

@@ -1,4 +1,6 @@
 [toolchain]
-channel = "stable"
+# riscv-rt 0.13 (via e310x) splits `.cfi_startproc`/`.cfi_endproc` across
+# `global_asm!` blocks, which rustc 1.99 rejects
+channel = "1.98.0"
 components = [ "rust-src", "rustfmt" ]
 targets = [ "riscv32imc-unknown-none-elf", "riscv32imac-unknown-none-elf" ]
