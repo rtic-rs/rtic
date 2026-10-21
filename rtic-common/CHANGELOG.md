@@ -7,13 +7,11 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
-### Added
+## v1.2.0 - 2026-10-21
 
 ### Changed
 
 - Removed `testing` feature
-
-### Fixed
 
 ## v1.1.0 - 2025-06-22
 

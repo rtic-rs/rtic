@@ -20,6 +20,8 @@ Example:
 
 ## [Unreleased]
 
+## [v2.4.0] - 2026-10-21
+
 ### Changed
 
 - Each async software task's executor lives in a `static` rather than in `main`'s stack frame, so its RAM shows up in `.bss`.

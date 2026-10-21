@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+## v3.0.0 - 2026-10-21
+
 ### Changed
 
 - [breaking] Interrupt based monotonics take their interrupt `Priority` in `start()`, `Priority::rtic_default()` keeps the old behavior
@@ -25,6 +27,12 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 - Silabs monotonics enable their bus clock in a critical section; the CMU `CLKEN` registers also
   gate other peripherals, so the read-modify-write could race with a HAL enabling one of them
+
+## v2.2.1 - 2026-07-24
+
+### Fixed
+
+- docs.rs build failed because the documentation feature set enabled `silabs` without selecting a chip
 
 ## v2.2.0 - 2026-07-23
 

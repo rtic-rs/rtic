@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+## [v2.4.0] - 2026-10-21
+
 ### Changed
 
 - Each async software task's executor is declared as a `static` instead of a `ManuallyDrop` local in `main`.
