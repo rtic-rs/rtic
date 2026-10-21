@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DCXCNT_SPEC","R","W"],"type":["DCXCNT_R","DCXCNT_W"]};

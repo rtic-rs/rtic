@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CPUID_SPEC"],"type":["R"]};

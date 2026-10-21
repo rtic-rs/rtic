@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["HFXODEBOUNCE_A"],"struct":["HFXODEBOUNCE_SPEC","R","W"],"type":["HFXODEBOUNCE_R","HFXODEBOUNCE_W"]};

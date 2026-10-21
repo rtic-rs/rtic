@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CTRL_SPEC"],"type":["EN_R","EN_W","ERR_BADWRITE_R","ERR_BADWRITE_W","POWER_DOWN_R","POWER_DOWN_W","R","W"]};

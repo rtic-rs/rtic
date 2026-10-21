@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CHIP_ID_SPEC"],"type":["MANUFACTURER_R","PART_R","R","REVISION_R"]};

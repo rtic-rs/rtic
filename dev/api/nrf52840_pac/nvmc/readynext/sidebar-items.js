@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["READYNEXT_A"],"struct":["R","READYNEXT_SPEC"],"type":["READYNEXT_R"]};

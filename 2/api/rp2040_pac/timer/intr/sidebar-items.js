@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["INTR_SPEC"],"type":["ALARM_0_R","ALARM_0_W","ALARM_1_R","ALARM_1_W","ALARM_2_R","ALARM_2_W","ALARM_3_R","ALARM_3_W","R","W"]};

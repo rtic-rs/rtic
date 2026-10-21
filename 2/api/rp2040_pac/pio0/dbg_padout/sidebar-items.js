@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DBG_PADOUT_SPEC"],"type":["R"]};

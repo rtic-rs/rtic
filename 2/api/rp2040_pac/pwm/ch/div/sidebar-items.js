@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DIV_SPEC"],"type":["FRAC_R","FRAC_W","INT_R","INT_W","R","W"]};

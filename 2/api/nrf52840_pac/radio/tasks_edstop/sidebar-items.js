@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_EDSTOP_SPEC","W"],"type":["TASKS_EDSTOP_W"]};

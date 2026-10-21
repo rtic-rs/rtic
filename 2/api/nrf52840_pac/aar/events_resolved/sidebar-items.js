@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EVENTS_RESOLVED_SPEC","R","W"],"type":["EVENTS_RESOLVED_R","EVENTS_RESOLVED_W"]};

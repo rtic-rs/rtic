@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["APCUTOFF_SPEC","R"],"type":["APCUTOFF_R"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PRESCALER_0","PRESCALER_1","PRESCALER_4095"]};

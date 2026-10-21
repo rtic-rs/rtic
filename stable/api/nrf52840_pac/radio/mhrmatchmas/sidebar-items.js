@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["MHRMATCHMAS_SPEC","R","W"]};

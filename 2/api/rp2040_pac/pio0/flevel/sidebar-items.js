@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FLEVEL_SPEC"],"type":["R","RX0_R","RX1_R","RX2_R","RX3_R","TX0_R","TX1_R","TX2_R","TX3_R"]};

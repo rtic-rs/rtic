@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FCS_SPEC"],"type":["DREQ_EN_R","DREQ_EN_W","EMPTY_R","EN_R","EN_W","ERR_R","ERR_W","FULL_R","LEVEL_R","OVER_R","OVER_W","R","SHIFT_R","SHIFT_W","THRESH_R","THRESH_W","UNDER_R","UNDER_W","W"]};

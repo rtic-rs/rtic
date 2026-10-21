@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MODE_A","WIPWAIT_A","WREN_A"],"struct":["ADDRCONF_SPEC","R","W"],"type":["BYTE0_R","BYTE0_W","BYTE1_R","BYTE1_W","MODE_R","MODE_W","OPCODE_R","OPCODE_W","WIPWAIT_R","WIPWAIT_W","WREN_R","WREN_W"]};

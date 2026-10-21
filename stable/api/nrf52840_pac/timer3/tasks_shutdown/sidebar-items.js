@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_SHUTDOWN_SPEC","W"],"type":["TASKS_SHUTDOWN_W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MCKEN_A"],"struct":["MCKEN_SPEC","R","W"],"type":["MCKEN_R","MCKEN_W"]};

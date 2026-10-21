@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["PINCFG","PINPOL","PINSEL","SMOD","TIMPOL","TIMSEL"]};

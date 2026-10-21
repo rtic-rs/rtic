@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_RATEOVERRIDE_SPEC","W"],"type":["TASKS_RATEOVERRIDE_W"]};

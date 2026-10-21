@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["reset","reset_done","wdsel"],"struct":["RegisterBlock"],"type":["RESET","RESET_DONE","WDSEL"]};

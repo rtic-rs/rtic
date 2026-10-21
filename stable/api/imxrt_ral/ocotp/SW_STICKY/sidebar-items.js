@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["FIELD_RETURN_LOCK","SRK_REVOKE_LOCK"]};

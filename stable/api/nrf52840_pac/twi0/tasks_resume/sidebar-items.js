@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_RESUME_SPEC","W"],"type":["TASKS_RESUME_W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["IDLE_0","IDLE_1"]};

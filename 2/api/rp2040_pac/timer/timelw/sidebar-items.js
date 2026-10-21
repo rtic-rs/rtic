@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TIMELW_SPEC"],"type":["W"]};

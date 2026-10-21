@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SPINLOCK_SPEC"],"type":["R","W"]};

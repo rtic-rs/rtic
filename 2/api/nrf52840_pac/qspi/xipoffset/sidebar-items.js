@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["R","W","XIPOFFSET_SPEC"],"type":["XIPOFFSET_R","XIPOFFSET_W"]};

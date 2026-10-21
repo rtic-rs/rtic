@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["HPC_DCP_0","HPC_DCP_1"]};
