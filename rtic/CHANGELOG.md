@@ -29,6 +29,7 @@ Example:
 
 ### Fixed
 
+- Source mask locks no longer re-enable interrupts outside the lock's mask on exit
 - Fix ordering and missing barriers in NVIC source masking.
 - Fix reordering of shared accesses outside BASEPRI resource locks.
 - `RTIC_ASYNC_MAX_LOGICAL_PRIO` is above the highest software task when the device allows it, so monotonics can preempt a blocking software task (#1246).

@@ -209,7 +209,7 @@ unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>, old_mask: Mask<M>) {
         // This check should involve compile time constants and be optimized out.
         if mask.0[i] != 0 {
             unsafe {
-                (*NVIC::PTR).iser[i].write(old_mask.0[i]);
+                (*NVIC::PTR).iser[i].write(old_mask.0[i] & mask.0[i]);
             }
         }
     }
