@@ -47,7 +47,7 @@ where
 /// - Either zero OH (lock optimized out), or
 /// - Amounting to an optimal assembly implementation
 ///   - The BASEPRI value is folded to a constant at compile time
-///   - CS entry, single assembly instruction to write BASEPRI
+///   - CS entry, write BASEPRI followed by ISB
 ///   - CS exit, single assembly instruction to write BASEPRI
 ///   - priority.set/get optimized out (their effect not)
 /// - On par or better than any handwritten implementation of SRP
@@ -71,10 +71,11 @@ pub unsafe fn lock<T, R>(
         } else {
             let current = basepri::read();
             basepri_max::write(cortex_logical2hw(ceiling, nvic_prio_bits));
-            // cortex-m 0.7.8 and 0.7.9 use `nomem` for BASEPRI writes.
-            // Compiler memory barriers keep resource accesses between the writes.
-            asm!("", options(nostack, preserves_flags));
+            // BASEPRI writes are not compiler barriers. `isb` is, and makes the new
+            // BASEPRI take effect before the resource is accessed.
+            cortex_m::asm::isb();
             let r = f(&mut *ptr);
+            // Compiler barrier, keeps resource accesses before the BASEPRI restore
             asm!("", options(nostack, preserves_flags));
             basepri::write(current);
             r

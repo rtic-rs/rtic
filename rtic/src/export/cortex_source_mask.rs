@@ -139,7 +139,7 @@ pub unsafe fn lock<T, R, const M: usize>(
             clear_enable_mask(mask);
 
             // complete NVIC disabling (ARM AN321, section 4.6)
-            // `cortex_m` includes compiler memory barriers (!nomen)
+            // `dsb` and `isb` are also compiler barriers
             cortex_m::asm::dsb();
             cortex_m::asm::isb();
 
