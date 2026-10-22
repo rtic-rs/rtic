@@ -1,4 +1,7 @@
-use crate::{ExtraArguments, Platforms, Target};
+use crate::{
+    argument_parsing::{Package, Platform},
+    Target,
+};
 use core::fmt;
 use std::path::PathBuf;
 
@@ -9,119 +12,111 @@ pub enum BuildMode {
     Debug,
 }
 
-#[derive(Debug)]
-pub enum CargoCommand<'a> {
+#[derive(Debug, Clone)]
+pub enum CargoCommand {
     // For future embedded-ci
     #[allow(dead_code)]
     Run {
-        cargoarg: &'a Option<&'a str>,
-        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
-        example: &'a str,
-        target: Option<Target<'a>>,
+        cargoarg: Option<String>,
+        platform: Platform,
+        example: String,
+        target: Option<Target>,
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
     },
     Qemu {
-        cargoarg: &'a Option<&'a str>,
-        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
-        example: &'a str,
-        target: Option<Target<'a>>,
-        features: Option<String>,
+        cargoarg: Option<String>,
+        platform: Platform,
+        example: String,
         mode: BuildMode,
         dir: Option<PathBuf>,
         deny_warnings: bool,
     },
     ExampleBuild {
-        cargoarg: &'a Option<&'a str>,
-        example: &'a str,
-        target: Option<Target<'a>>,
-        features: Option<String>,
+        cargoarg: Option<String>,
+        example: String,
+        platform: Platform,
         mode: BuildMode,
         dir: Option<PathBuf>,
         deny_warnings: bool,
     },
     ExampleCheck {
-        cargoarg: &'a Option<&'a str>,
-        #[allow(dead_code)]
-        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
-        example: &'a str,
-        target: Option<Target<'a>>,
-        features: Option<String>,
+        cargoarg: Option<String>,
+        platform: Platform,
+        example: String,
         mode: BuildMode,
         dir: Option<PathBuf>,
         deny_warnings: bool,
     },
     Build {
-        cargoarg: &'a Option<&'a str>,
-        package: Option<String>,
-        target: Option<Target<'a>>,
+        cargoarg: Option<String>,
+        package: Option<Package>,
+        target: Option<Target>,
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
         deny_warnings: bool,
     },
     Check {
-        cargoarg: &'a Option<&'a str>,
-        package: Option<String>,
-        target: Option<Target<'a>>,
+        cargoarg: Option<String>,
+        package: Option<Package>,
+        target: Option<Target>,
         features: Option<String>,
         mode: BuildMode,
         dir: Option<PathBuf>,
         deny_warnings: bool,
     },
     Clippy {
-        cargoarg: &'a Option<&'a str>,
-        package: Option<String>,
-        target: Option<Target<'a>>,
+        cargoarg: Option<String>,
+        package: Option<Package>,
+        target: Option<Target>,
         features: Option<String>,
         deny_warnings: bool,
     },
     Format {
-        cargoarg: &'a Option<&'a str>,
-        package: Option<String>,
+        cargoarg: Option<String>,
+        manifest: PathBuf,
         check_only: bool,
     },
     Doc {
-        cargoarg: &'a Option<&'a str>,
+        cargoarg: Option<String>,
         features: Option<String>,
-        arguments: Option<ExtraArguments>,
+        arguments: Vec<String>,
         deny_warnings: bool,
     },
     Test {
-        package: Option<String>,
+        package: Option<Package>,
         features: Option<String>,
         test: Option<String>,
         deny_warnings: bool,
         loom: bool,
     },
     Book {
-        arguments: Option<ExtraArguments>,
+        arguments: Vec<String>,
     },
     ExampleSize {
-        cargoarg: &'a Option<&'a str>,
-        platform: Platforms, // to tell which platform. If None, it assumes lm3s6965
-        example: &'a str,
-        target: Option<Target<'a>>,
-        features: Option<String>,
+        cargoarg: Option<String>,
+        platform: Platform,
+        example: String,
         mode: BuildMode,
-        arguments: Option<ExtraArguments>,
+        arguments: Vec<String>,
         dir: Option<PathBuf>,
         deny_warnings: bool,
     },
 }
 
-impl core::fmt::Display for CargoCommand<'_> {
+impl core::fmt::Display for CargoCommand {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn p(p: &Option<String>) -> String {
+        fn p(p: Option<Package>) -> String {
             if let Some(package) = p {
-                format!("package {package}")
+                format!("package {}", package.name())
             } else {
-                "default package".to_string()
+                "default packages".to_string()
             }
         }
 
-        fn feat(f: &Option<String>) -> String {
+        fn feat(f: Option<&String>) -> String {
             if let Some(features) = f {
                 format!("\"{features}\"")
             } else {
@@ -129,7 +124,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
         }
 
-        fn carg(f: &&Option<&str>) -> String {
+        fn carg(f: Option<&str>) -> String {
             if let Some(cargoarg) = f {
                 cargoarg.to_string()
             } else {
@@ -139,14 +134,14 @@ impl core::fmt::Display for CargoCommand<'_> {
 
         fn details(
             deny_warnings: bool,
-            target: &Option<Target>,
-            mode: Option<&BuildMode>,
-            features: &Option<String>,
-            cargoarg: &&Option<&str>,
+            target: Option<Target>,
+            mode: Option<BuildMode>,
+            features: Option<String>,
+            cargoarg: Option<&str>,
             path: Option<&PathBuf>,
             // no need to add platform, as it is implicit in the path
         ) -> String {
-            let feat = feat(features);
+            let feat = feat(features.as_ref());
             let carg = carg(cargoarg);
             let in_dir = if let Some(path) = path {
                 let path = path.to_str().unwrap_or("<can't display>");
@@ -184,7 +179,7 @@ impl core::fmt::Display for CargoCommand<'_> {
             }
         }
 
-        match self {
+        match self.clone() {
             CargoCommand::Run {
                 cargoarg,
                 platform: _,
@@ -197,48 +192,68 @@ impl core::fmt::Display for CargoCommand<'_> {
                 write!(
                     f,
                     "Run example {example} {}",
-                    details(false, target, Some(mode), features, cargoarg, dir.as_ref())
+                    details(
+                        false,
+                        target,
+                        Some(mode),
+                        features,
+                        cargoarg.as_deref(),
+                        dir.as_ref()
+                    )
                 )
             }
             CargoCommand::Qemu {
                 cargoarg,
-                platform: _,
+                platform,
                 example,
-                target,
-                features,
                 mode,
                 dir,
                 deny_warnings,
             } => {
-                let warns = *deny_warnings;
-                let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
+                let details = details(
+                    deny_warnings,
+                    Some(platform.target()),
+                    Some(mode),
+                    platform.example_features(),
+                    cargoarg.as_deref(),
+                    dir.as_ref(),
+                );
                 write!(f, "Run example {example} in QEMU {details}",)
             }
             CargoCommand::ExampleBuild {
                 cargoarg,
                 example,
-                target,
-                features,
+                platform,
                 mode,
                 dir,
                 deny_warnings,
             } => {
-                let warns = *deny_warnings;
-                let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
+                let details = details(
+                    deny_warnings,
+                    Some(platform.target()),
+                    Some(mode),
+                    platform.example_features(),
+                    cargoarg.as_deref(),
+                    dir.as_ref(),
+                );
                 write!(f, "Build example {example} {details}",)
             }
             CargoCommand::ExampleCheck {
                 cargoarg,
-                platform: _,
+                platform,
                 example,
-                target,
-                features,
                 mode,
                 dir,
                 deny_warnings,
             } => {
-                let warns = *deny_warnings;
-                let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
+                let details = details(
+                    deny_warnings,
+                    Some(platform.target()),
+                    Some(mode),
+                    platform.example_features(),
+                    cargoarg.as_deref(),
+                    dir.as_ref(),
+                );
                 write!(f, "Check example {example} {details}",)
             }
             CargoCommand::Build {
@@ -251,11 +266,17 @@ impl core::fmt::Display for CargoCommand<'_> {
                 deny_warnings,
             } => {
                 let package = p(package);
-                let warns = *deny_warnings;
                 write!(
                     f,
                     "Build {package} {}",
-                    details(warns, target, Some(mode), features, cargoarg, dir.as_ref())
+                    details(
+                        deny_warnings,
+                        target,
+                        Some(mode),
+                        features,
+                        cargoarg.as_deref(),
+                        dir.as_ref()
+                    )
                 )
             }
 
@@ -269,12 +290,15 @@ impl core::fmt::Display for CargoCommand<'_> {
                 deny_warnings,
             } => {
                 let package = p(package);
-                let warns = *deny_warnings;
-                write!(
-                    f,
-                    "Check {package} {}",
-                    details(warns, target, Some(mode), features, cargoarg, dir.as_ref())
-                )
+                let details = details(
+                    deny_warnings,
+                    target,
+                    Some(mode),
+                    features,
+                    cargoarg.as_deref(),
+                    dir.as_ref(),
+                );
+                write!(f, "Check {package} {details}",)
             }
             CargoCommand::Clippy {
                 cargoarg,
@@ -283,17 +307,24 @@ impl core::fmt::Display for CargoCommand<'_> {
                 features,
                 deny_warnings,
             } => {
-                let details = details(*deny_warnings, target, None, features, cargoarg, None);
+                let details = details(
+                    deny_warnings,
+                    target,
+                    None,
+                    features,
+                    cargoarg.as_deref(),
+                    None,
+                );
                 let package = p(package);
                 write!(f, "Clippy {package} {details}")
             }
             CargoCommand::Format {
                 cargoarg,
-                package,
+                manifest,
                 check_only,
             } => {
-                let package = p(package);
-                let carg = carg(cargoarg);
+                let package = manifest.display().to_string();
+                let carg = carg(cargoarg.as_deref());
 
                 let carg = if cargoarg.is_some() {
                     format!("(cargo args: {carg})")
@@ -301,7 +332,7 @@ impl core::fmt::Display for CargoCommand<'_> {
                     String::new()
                 };
 
-                if *check_only {
+                if check_only {
                     write!(f, "Check format for {package} {carg}")
                 } else {
                     write!(f, "Format {package} {carg}")
@@ -313,13 +344,15 @@ impl core::fmt::Display for CargoCommand<'_> {
                 arguments,
                 deny_warnings,
             } => {
-                let feat = feat(features);
-                let carg = carg(cargoarg);
-                let arguments = arguments
-                    .clone()
-                    .map(|a| format!("{a}"))
-                    .unwrap_or_else(|| "no extra arguments".into());
-                let deny_warnings = if *deny_warnings {
+                let feat = feat(features.as_ref());
+                let carg = carg(cargoarg.as_deref());
+                let arguments = if arguments.is_empty() {
+                    arguments.join(" ")
+                } else {
+                    "no extra argument".to_string()
+                };
+
+                let deny_warnings = if deny_warnings {
                     "deny warnings, ".to_string()
                 } else {
                     String::new()
@@ -343,30 +376,34 @@ impl core::fmt::Display for CargoCommand<'_> {
                     .map(|t| format!("test {t}"))
                     .unwrap_or("all tests".into());
 
-                let details = details(*deny_warnings, &None, None, features, &&None, None);
+                let details = details(deny_warnings, None, None, features, None, None);
                 write!(f, "Run {test} in {p} {details}")
             }
             CargoCommand::Book { arguments: _ } => write!(f, "Build the book"),
             CargoCommand::ExampleSize {
                 cargoarg,
-                platform: _,
+                platform,
                 example,
-                target,
-                features,
                 mode,
                 arguments: _,
                 dir,
                 deny_warnings,
             } => {
-                let warns = *deny_warnings;
-                let details = details(warns, target, Some(mode), features, cargoarg, dir.as_ref());
+                let details = details(
+                    deny_warnings,
+                    Some(platform.target()),
+                    Some(mode),
+                    platform.example_features(),
+                    cargoarg.as_deref(),
+                    dir.as_ref(),
+                );
                 write!(f, "Compute size of example {example} {details}")
             }
         }
     }
 }
 
-impl<'a> CargoCommand<'a> {
+impl CargoCommand {
     pub fn as_cmd_string(&self) -> String {
         let env = if let Some((key, value)) = self.extra_env() {
             format!("{key}=\"{value}\" ")
@@ -417,39 +454,39 @@ impl<'a> CargoCommand<'a> {
 
     /// Build args using common arguments for all commands, and the
     /// specific information provided
-    fn build_args<'i, T: Iterator<Item = &'i str>>(
-        &'i self,
+    fn build_args<S: Into<String>, T: Iterator<Item = S>>(
+        command: &str,
+        target: Option<Target>,
         nightly: bool,
-        cargoarg: &'i Option<&'i str>,
-        features: &'i Option<String>,
-        mode: Option<&'i BuildMode>,
+        cargoarg: Option<String>,
+        features: Option<String>,
+        mode: Option<&BuildMode>,
         extra: T,
-    ) -> Vec<&'i str> {
-        let mut args: Vec<&str> = Vec::new();
+    ) -> Vec<String> {
+        let mut args: Vec<String> = Vec::new();
 
         if nightly {
-            args.push("+nightly");
+            args.push("+nightly".to_owned());
         }
 
-        if let Some(cargoarg) = cargoarg.as_deref() {
-            args.push(cargoarg);
+        args.extend(cargoarg);
+        args.push(command.to_owned());
+
+        if let Some(target) = target {
+            args.push("--target".to_owned());
+            args.push(target.triple().to_owned());
         }
 
-        args.push(self.command());
-
-        if let Some(target) = self.target() {
-            args.extend_from_slice(&["--target", target.triple()])
-        }
-
-        if let Some(features) = features.as_ref() {
-            args.extend_from_slice(&["--features", features]);
+        if let Some(features) = features {
+            args.push("--features".to_owned());
+            args.push(features);
         }
 
         if let Some(mode) = mode.and_then(|m| m.to_flag()) {
-            args.push(mode);
+            args.push(mode.to_owned());
         }
 
-        args.extend(extra);
+        args.extend(extra.map(Into::into));
 
         args
     }
@@ -458,13 +495,12 @@ impl<'a> CargoCommand<'a> {
     /// and the rest of the arguments.
     ///
     /// NOTE: you _must_ chain this iterator at the _end_ of the extra arguments.
-    fn extra_args(args: Option<&ExtraArguments>) -> impl Iterator<Item = &str> {
-        #[allow(irrefutable_let_patterns)]
-        let args = if let Some(ExtraArguments::Other(arguments)) = args {
+    fn extra_args(args: &[String]) -> impl Iterator<Item = &str> {
+        let args = if !args.is_empty() {
             // Extra arguments must be passed after "--"
             ["--"]
                 .into_iter()
-                .chain(arguments.iter().map(String::as_str))
+                .chain(args.iter().map(String::as_str))
                 .collect()
         } else {
             vec![]
@@ -472,10 +508,10 @@ impl<'a> CargoCommand<'a> {
         args.into_iter()
     }
 
-    pub fn args(&self) -> Vec<&str> {
-        fn p(package: &Option<String>) -> impl Iterator<Item = &str> {
+    pub fn args(&self) -> Vec<String> {
+        fn p(package: &Option<Package>) -> impl Iterator<Item = &str> {
             if let Some(package) = package {
-                vec!["--package", &package].into_iter()
+                vec!["--package", package.name()].into_iter()
             } else {
                 vec![].into_iter()
             }
@@ -491,31 +527,31 @@ impl<'a> CargoCommand<'a> {
                 mode,
                 // dir is exposed through `chdir`
                 dir: _,
-                // Target is added by build_args
-                target: _,
-            } => self.build_args(
+                target,
+            } => Self::build_args(
+                self.command(),
+                *target,
                 false,
-                cargoarg,
-                features,
+                cargoarg.clone(),
+                features.clone(),
                 Some(mode),
                 ["--example", example].into_iter(),
             ),
             CargoCommand::Qemu {
                 cargoarg,
-                platform: _,
+                platform,
                 example,
-                features,
                 mode,
                 // dir is exposed through `chdir`
                 dir: _,
-                // Target is added by build_args
-                target: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(
+            } => Self::build_args(
+                self.command(),
+                Some(platform.target()),
                 false,
-                cargoarg,
-                features,
+                cargoarg.clone(),
+                platform.example_features(),
                 Some(mode),
                 ["--example", example].into_iter(),
             ),
@@ -524,13 +560,20 @@ impl<'a> CargoCommand<'a> {
                 package,
                 features,
                 mode,
-                // Target is added by build_args
-                target: _,
+                target,
                 // Dir is exposed through `chdir`
                 dir: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(false, cargoarg, features, Some(mode), p(package)),
+            } => Self::build_args(
+                self.command(),
+                *target,
+                false,
+                cargoarg.clone(),
+                features.clone(),
+                Some(mode),
+                p(package),
+            ),
             CargoCommand::Check {
                 cargoarg,
                 package,
@@ -538,17 +581,23 @@ impl<'a> CargoCommand<'a> {
                 mode,
                 // Dir is exposed through `chdir`
                 dir: _,
-                // Target is added by build_args
-                target: _,
+                target,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(false, cargoarg, features, Some(mode), p(package)),
+            } => Self::build_args(
+                self.command(),
+                *target,
+                false,
+                cargoarg.clone(),
+                features.clone(),
+                Some(mode),
+                p(package),
+            ),
             CargoCommand::Clippy {
                 cargoarg,
                 package,
                 features,
-                // Target is added by build_args
-                target: _,
+                target,
                 deny_warnings,
             } => {
                 let deny_warnings = if *deny_warnings {
@@ -558,7 +607,15 @@ impl<'a> CargoCommand<'a> {
                 };
 
                 let extra = p(package).chain(deny_warnings);
-                self.build_args(false, cargoarg, features, None, extra)
+                Self::build_args(
+                    self.command(),
+                    *target,
+                    false,
+                    cargoarg.clone(),
+                    features.clone(),
+                    None,
+                    extra,
+                )
             }
             CargoCommand::Doc {
                 cargoarg,
@@ -567,8 +624,16 @@ impl<'a> CargoCommand<'a> {
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
             } => {
-                let extra = Self::extra_args(arguments.as_ref());
-                self.build_args(false, cargoarg, features, None, extra)
+                let extra = arguments.iter().map(String::as_str);
+                Self::build_args(
+                    self.command(),
+                    None,
+                    false,
+                    cargoarg.clone(),
+                    features.clone(),
+                    None,
+                    extra,
+                )
             }
             CargoCommand::Test {
                 package,
@@ -584,91 +649,92 @@ impl<'a> CargoCommand<'a> {
                     vec![]
                 };
 
-                let cargofeatures = if *loom {
+                let feats = if *loom {
                     extra.push(" --lib");
-                    &None
+                    None
                 } else {
-                    features
+                    features.as_ref().map(|v| v.to_owned())
                 };
+
                 let package = p(package);
                 let extra = extra.into_iter().chain(package);
-                self.build_args(false, &None, cargofeatures, None, extra)
+                Self::build_args(self.command(), None, false, None, feats, None, extra)
             }
             CargoCommand::Book { arguments } => {
                 let mut args = vec![];
 
-                if let Some(ExtraArguments::Other(arguments)) = arguments {
-                    for arg in arguments {
-                        args.extend_from_slice(&[arg.as_str()]);
-                    }
+                if !arguments.is_empty() {
+                    args.extend(arguments.iter().map(Clone::clone));
                 } else {
                     // If no argument given, run mdbook build
                     // with default path to book
-                    args.extend_from_slice(&[self.command()]);
-                    args.extend_from_slice(&["book/en"]);
+                    args.push(self.command().to_owned());
+                    args.push("book/en".to_owned());
                 }
                 args
             }
             CargoCommand::Format {
                 cargoarg,
-                package,
+                manifest,
                 check_only,
             } => {
                 let extra = if *check_only { Some("--check") } else { None };
-                let package = p(package);
-                self.build_args(
-                    false,
-                    cargoarg,
-                    &None,
+                let package = [
+                    "--manifest-path".to_string(),
+                    manifest.display().to_string(),
+                    "--all".to_string(),
+                ];
+                Self::build_args(
+                    self.command(),
                     None,
-                    extra.into_iter().chain(package),
+                    false,
+                    cargoarg.clone(),
+                    None,
+                    None,
+                    extra.into_iter().map(String::from).chain(package),
                 )
             }
             CargoCommand::ExampleBuild {
                 cargoarg,
                 example,
-                features,
+                platform,
                 mode,
                 // dir is exposed through `chdir`
                 dir: _,
-                // Target is added by build_args
-                target: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(
+            } => Self::build_args(
+                self.command(),
+                Some(platform.target()),
                 false,
-                cargoarg,
-                features,
+                cargoarg.clone(),
+                platform.example_features(),
                 Some(mode),
                 ["--example", example].into_iter(),
             ),
             CargoCommand::ExampleCheck {
                 cargoarg,
-                platform: _,
+                platform,
                 example,
-                features,
                 mode,
                 dir: _,
-                // Target is added by build_args
-                target: _,
                 // deny_warnings is exposed through `extra_env`
                 deny_warnings: _,
-            } => self.build_args(
+            } => Self::build_args(
+                self.command(),
+                Some(platform.target()),
                 false,
-                cargoarg,
-                features,
+                cargoarg.clone(),
+                platform.example_features(),
                 Some(mode),
                 ["--example", example].into_iter(),
             ),
             CargoCommand::ExampleSize {
                 cargoarg,
-                platform: _,
+                platform,
                 example,
-                features,
                 mode,
                 arguments,
-                // Target is added by build_args
-                target: _,
                 // dir is exposed through `chdir`
                 dir: _,
                 // deny_warnings is exposed through `extra_env`
@@ -676,9 +742,17 @@ impl<'a> CargoCommand<'a> {
             } => {
                 let extra = ["--example", example]
                     .into_iter()
-                    .chain(Self::extra_args(arguments.as_ref()));
+                    .chain(Self::extra_args(arguments));
 
-                self.build_args(false, cargoarg, features, Some(mode), extra)
+                Self::build_args(
+                    self.command(),
+                    Some(platform.target()),
+                    false,
+                    cargoarg.clone(),
+                    platform.example_features(),
+                    Some(mode),
+                    extra,
+                )
             }
         }
     }
@@ -693,20 +767,6 @@ impl<'a> CargoCommand<'a> {
             | CargoCommand::Build { dir, .. }
             | CargoCommand::Run { dir, .. }
             | CargoCommand::Check { dir, .. } => dir.as_ref(),
-            _ => None,
-        }
-    }
-
-    fn target(&'_ self) -> Option<&'_ Target<'_>> {
-        match self {
-            CargoCommand::Run { target, .. }
-            | CargoCommand::Qemu { target, .. }
-            | CargoCommand::ExampleBuild { target, .. }
-            | CargoCommand::ExampleCheck { target, .. }
-            | CargoCommand::Build { target, .. }
-            | CargoCommand::Check { target, .. }
-            | CargoCommand::Clippy { target, .. }
-            | CargoCommand::ExampleSize { target, .. } => target.as_ref(),
             _ => None,
         }
     }
