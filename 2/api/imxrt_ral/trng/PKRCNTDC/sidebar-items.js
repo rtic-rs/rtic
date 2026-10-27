@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["PKR_C_CT","PKR_D_CT"]};

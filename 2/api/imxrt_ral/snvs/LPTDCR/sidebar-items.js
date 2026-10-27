@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ET1P","ET1_EN","MCR_EN","OSCB","PFD_OBSERV","POR_OBSERV","SRTCR_EN"]};

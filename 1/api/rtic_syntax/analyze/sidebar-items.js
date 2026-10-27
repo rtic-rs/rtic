@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Ownership"],"struct":["Analysis","Channel"],"type":["Ceiling","Channels","Ownerships","Priority","Resource","SendTypes","SyncTypes","Task","UsedLocalResource","UsedSharedResource"]};

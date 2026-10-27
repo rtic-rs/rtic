@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KDSC_0","KDSC_1"]};

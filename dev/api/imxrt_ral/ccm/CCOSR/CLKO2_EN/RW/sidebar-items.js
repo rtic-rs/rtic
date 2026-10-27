@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLKO2_EN_0","CLKO2_EN_1"]};

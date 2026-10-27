@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DBG_CFGINFO_SPEC"],"type":["FIFO_DEPTH_R","IMEM_SIZE_R","R","SM_COUNT_R"]};

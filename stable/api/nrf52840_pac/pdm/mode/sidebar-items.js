@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["EDGE_A","OPERATION_A"],"struct":["MODE_SPEC","R","W"],"type":["EDGE_R","EDGE_W","OPERATION_R","OPERATION_W"]};
