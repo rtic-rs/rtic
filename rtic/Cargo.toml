@@ -26,9 +26,11 @@ name = "rtic"
 
 [dependencies]
 riscv-slic = { version = "0.2.0", optional = true }
-esp32c3 = {version = "0.31.0", optional = true }
-esp32c6 = {version = "0.22.0", optional = true }
+esp32c3 = { version = "0.31.0", optional = true }
+esp32c6 = { version = "0.22.0", optional = true }
+esp-hal = { version = "1.2.2", default-features = false, optional = true }
 riscv = { version = "0.16.0", optional = true }
+riscv-rt = { version = "0.16.0", optional = true }
 cortex-m = { version = "0.7.9", optional = true }
 portable-atomic = { version = "1", default-features = false }
 rtic-macros = { path = "../rtic-macros", version = "=2.4.0" }
@@ -60,8 +62,23 @@ thumbv8base-backend = ["dep:cortex-m", "rtic-macros/cortex-m-source-masking"]
 thumbv8main-backend = ["dep:cortex-m", "rtic-macros/cortex-m-basepri"]
 # riscv-clic-backend = ["rtic-macros/riscv-clic"]
 # riscv-ch32-backend = ["rtic-macros/riscv-ch32"]
-riscv-esp32c3-backend = ["dep:esp32c3", "dep:riscv", "rtic-macros/riscv-esp32c3"]
-riscv-esp32c6-backend = ["dep:esp32c6", "dep:riscv", "rtic-macros/riscv-esp32c6"]
+riscv-esp32c3-backend = [
+  "dep:esp32c3",
+  "dep:riscv",
+  "rtic-macros/riscv-esp32c3",
+]
+riscv-esp32c6-backend = [
+  "dep:esp32c6",
+  "dep:riscv",
+  "rtic-macros/riscv-esp32c6",
+]
+riscv-esp32c5-backend = [
+  "dep:riscv",
+  "dep:riscv-rt",
+  "dep:esp-hal",
+  "esp-hal/esp32c5",
+  "rtic-macros/riscv-esp32c5",
+]
 riscv-clint-backend = [
   "dep:riscv",
   "dep:riscv-slic",

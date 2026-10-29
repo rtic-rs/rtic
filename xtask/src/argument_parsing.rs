@@ -148,6 +148,7 @@ pub enum Backends {
     Thumbv8Main,
     RiscvEsp32C3,
     RiscvEsp32C6,
+    RiscvEsp32C5,
     Riscv32ImcClint,
     Riscv32ImcMecall,
     Riscv32ImacClint,
@@ -165,9 +166,10 @@ impl Backends {
             Backends::Riscv32ImcClint | Backends::Riscv32ImcMecall | Backends::RiscvEsp32C3 => {
                 RISCV32IMC
             }
-            Backends::Riscv32ImacClint | Backends::Riscv32ImacMecall | Backends::RiscvEsp32C6 => {
-                RISCV32IMAC
-            }
+            Backends::Riscv32ImacClint
+            | Backends::Riscv32ImacMecall
+            | Backends::RiscvEsp32C6
+            | Backends::RiscvEsp32C5 => RISCV32IMAC,
         }
     }
 
@@ -184,6 +186,7 @@ impl Backends {
                 "riscv-esp32c3-backend,portable-atomic/unsafe-assume-single-core"
             }
             Backends::RiscvEsp32C6 => "riscv-esp32c6-backend",
+            Backends::RiscvEsp32C5 => "riscv-esp32c5-backend",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => {
                 "riscv-clint-backend,portable-atomic/unsafe-assume-single-core"
             }
@@ -200,6 +203,7 @@ impl Backends {
             Backends::Thumbv7 | Backends::Thumbv8Main => "cortex-m-basepri",
             Backends::RiscvEsp32C3 => "riscv-esp32c3",
             Backends::RiscvEsp32C6 => "riscv-esp32c6",
+            Backends::RiscvEsp32C5 => "riscv-esp32c5",
             Backends::Riscv32ImcClint | Backends::Riscv32ImacClint => "riscv-clint",
             Backends::Riscv32ImcMecall | Backends::Riscv32ImacMecall => "riscv-mecall",
         }
@@ -263,6 +267,7 @@ pub enum BuildOrCheck {
 pub enum Platforms {
     Esp32C3,
     Esp32C6,
+    Esp32C5,
     Hifive1,
     #[default]
     Lm3s6965,
@@ -278,6 +283,7 @@ impl Platforms {
         let name = match self {
             Platforms::Esp32C3 => "esp32c3",
             Platforms::Esp32C6 => "esp32c6",
+            Platforms::Esp32C5 => "esp32c5",
             Platforms::Hifive1 => "hifive1",
             Platforms::Lm3s6965 => "lm3s6965",
             Platforms::Nrf52840 => "nrf52840",
@@ -294,6 +300,7 @@ impl Platforms {
         match self {
             Platforms::Esp32C3 => Backends::RiscvEsp32C3,
             Platforms::Esp32C6 => Backends::RiscvEsp32C6,
+            Platforms::Esp32C5 => Backends::RiscvEsp32C5,
             Platforms::Hifive1 => Backends::Riscv32ImcClint,
             Platforms::Lm3s6965 => Backends::Thumbv7,
             Platforms::Nrf52840 => unimplemented!(),
@@ -313,7 +320,7 @@ impl Platforms {
                 RISCV32IMC => Ok(None),
                 _ => Err(()),
             },
-            Platforms::Esp32C6 => match backend.to_target() {
+            Platforms::Esp32C6 | Platforms::Esp32C5 => match backend.to_target() {
                 RISCV32IMAC => Ok(None),
                 _ => Err(()),
             },
