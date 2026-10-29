@@ -79,9 +79,9 @@ imxrt-ral = { version = ">=0.5.4", optional = true }
 
 esp32c3 = { version = "0.31.0", optional = true }
 esp32c6 = { version = "0.22.0", optional = true }
-esp32c5 = { version = "0.3", optional = true }
-# esp-hal = { version = "1.2.2", default-features = false, optional = true }
+esp-hal = { version = "1.2.2", default-features = false, optional = true }
 riscv = { version = "0.16.0", optional = true }
+riscv-rt = { version = "0.16.0", optional = true }
 
 [features]
 default = []
@@ -152,10 +152,10 @@ silabs_timer9 = ["silabs"]
 esp32c3-systimer = ["dep:esp32c3", "dep:riscv"]
 esp32c6-systimer = ["dep:esp32c6", "dep:riscv"]
 esp32c5-systimer = [
-    # "dep:esp-hal",
-    # "esp-hal/esp32c5",
-    "dep:esp32c5",
+    "dep:esp-hal",
+    "esp-hal/esp32c5",
     "dep:riscv",
+    "dep:riscv-rt",
 ]
 
 # STM32 timers

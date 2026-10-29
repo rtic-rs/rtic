@@ -20,7 +20,8 @@ mod esp32c5 {
     // CLINT has lower 16 reserved interrupts : 0..=15
     // esp-hal reserves interrupts : 16..=(16+PRIO_MAX)
     // esp-hal::DirectBindableCpuInterrupt::Interrupt0 = CpuInterrupt::Interrupt24
-    const DIRECT_BINDABLE_CPU_INTERRUPTS: Range<usize> = 0_usize..24;
+    // we use DirectBindableCpuInterrupt::Interrupt23 for monotonics
+    const DIRECT_BINDABLE_CPU_INTERRUPTS: Range<usize> = 0_usize..24 - 1;
 
     #[allow(clippy::too_many_arguments)]
     pub fn impl_mutex(

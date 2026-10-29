@@ -9,12 +9,13 @@ use esp_backtrace as _;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
-#[rtic::app(device = esp32c5, dispatchers = [])]
+#[rtic::app(device = esp_hal, dispatchers = [])]
 mod app {
-    use rtic_monotonics::esp32c5::prelude::*;
-    esp32c5_systimer_monotonic!(Mono);
-    use esp_hal as _;
+    use esp_hal::Config;
     use esp_println::println;
+    use rtic_monotonics::esp32c5::prelude::*;
+
+    esp32c5_systimer_monotonic!(Mono);
 
     #[shared]
     struct Shared {}
@@ -23,11 +24,10 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local) {
+    fn init(_cx: init::Context) -> (Shared, Local) {
         println!("init");
-        let timer = cx.device.SYSTIMER;
-
-        Mono::start(timer);
+        let peripherals = esp_hal::init(Config::default());
+        Mono::start(peripherals.SYSTIMER);
 
         foo::spawn().unwrap();
         bar::spawn().unwrap();

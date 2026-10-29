@@ -11,7 +11,7 @@ rustflags = [
 target = "riscv32imac-unknown-none-elf"
 
 [env]
-# required by riscv_rt::core_interrupt used by backend for handlers
+# required by riscv_rt::core_interrupt used by backend+monotonic for handlers on esp32c5
 RISCV_RT_BASE_ISA = "rv32i"
 
 [unstable]
