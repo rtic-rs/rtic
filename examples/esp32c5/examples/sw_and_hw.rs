@@ -1,0 +1,87 @@
+#![deny(
+    clippy::mem_forget,
+    reason = "mem::forget is generally not safe to do with esp_hal types, especially those \
+    holding buffers for the duration of a data transfer."
+)]
+#![no_main]
+#![no_std]
+
+esp_bootloader_esp_idf::esp_app_desc!();
+
+#[rtic::app(device = esp_hal, dispatchers=[FROM_CPU_INTR2, FROM_CPU_INTR3])]
+mod app {
+    use esp_backtrace as _;
+    use esp_hal::{
+        gpio::{Event, Input, InputConfig, Pull},
+        rtc_cntl::Rtc,
+        timer::timg::TimerGroup,
+    };
+    use esp_println::println;
+
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {
+        button: Input<'static>,
+    }
+
+    // do nothing in init
+    #[init]
+    fn init(_cx: init::Context) -> (Shared, Local) {
+        println!("init");
+        unsafe {
+            let p = esp_hal::peripherals::Peripherals::steal();
+            let mut timg = TimerGroup::new(p.TIMG0);
+            timg.wdt.disable();
+            let mut rtc = Rtc::new(p.RTC_TIMER);
+            rtc.rwdt.disable();
+            rtc.swd.disable();
+        }
+
+        let peripherals = esp_hal::init(esp_hal::Config::default());
+        let config = InputConfig::default().with_pull(Pull::Up);
+        // let mut button = Input::new(peripherals.GPIO9, config);
+
+        let mut button = Input::new(peripherals.GPIO23, config);
+        button.listen(Event::FallingEdge);
+        foo::spawn().unwrap();
+        // bar::spawn().unwrap();
+        (Shared {}, Local { button })
+    }
+
+    #[idle()]
+    fn idle(_: idle::Context) -> ! {
+        println!("idle");
+        loop {}
+    }
+
+    #[task(priority = 5)]
+    async fn foo(_: foo::Context) {
+        bar::spawn().unwrap(); //enqueue low prio task
+        println!("Inside high prio task, press button now!");
+        let mut x = 0;
+        while x < 50000000 {
+            x += 1; //burn cycles
+            esp_hal::riscv::asm::nop();
+        }
+        println!("Leaving high prio task.");
+    }
+
+    #[task(priority = 2)]
+    async fn bar(_: bar::Context) {
+        println!("Inside low prio task, press button now!");
+        let mut x = 0;
+        while x < 50000000 {
+            x += 1; //burn cycles
+            esp_hal::riscv::asm::nop();
+        }
+        println!("Leaving low prio task.");
+    }
+
+    #[task(binds=GPIO, local=[button], priority = 3)]
+    fn gpio_handler(cx: gpio_handler::Context) {
+        cx.local.button.clear_interrupt();
+        println!("button");
+    }
+}

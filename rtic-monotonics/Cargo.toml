@@ -37,6 +37,7 @@ features = [
     "stm32_tim15",
     "esp32c3-systimer",
     "esp32c6-systimer",
+    "esp32c5-systimer",
 ]
 rustdoc-flags = ["--cfg", "docsrs"]
 
@@ -78,6 +79,8 @@ imxrt-ral = { version = ">=0.5.4", optional = true }
 
 esp32c3 = { version = "0.31.0", optional = true }
 esp32c6 = { version = "0.22.0", optional = true }
+esp32c5 = { version = "0.3", optional = true }
+# esp-hal = { version = "1.2.2", default-features = false, optional = true }
 riscv = { version = "0.16.0", optional = true }
 
 [features]
@@ -107,7 +110,9 @@ nrf5340-net = ["dep:cortex-m", "dep:nrf5340-net-pac", "dep:critical-section"]
 # nRF91 chips expose their peripherals through a TrustZone secure (`-s`) and a
 # non-secure (`-ns`) address alias. Pick the variant matching the security domain
 # your firmware runs in. Enabling both variants of a chip is a compile error.
-nrf9160 = ["nrf9160-ns"] # Deprecated alias kept for backwards compatibility, equals `nrf9160-ns`.
+nrf9160 = [
+    "nrf9160-ns",
+] # Deprecated alias kept for backwards compatibility, equals `nrf9160-ns`.
 nrf9160-ns = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
 nrf9160-s = ["dep:cortex-m", "dep:nrf9160-pac", "dep:critical-section"]
 nrf9151-ns = ["dep:cortex-m", "dep:nrf9120-pac", "dep:critical-section"]
@@ -146,6 +151,12 @@ silabs_timer9 = ["silabs"]
 # ESP32 Timers
 esp32c3-systimer = ["dep:esp32c3", "dep:riscv"]
 esp32c6-systimer = ["dep:esp32c6", "dep:riscv"]
+esp32c5-systimer = [
+    # "dep:esp-hal",
+    # "esp-hal/esp32c5",
+    "dep:esp32c5",
+    "dep:riscv",
+]
 
 # STM32 timers
 # Use together with the chip feature on your own `stm32-metapac` dependency:
