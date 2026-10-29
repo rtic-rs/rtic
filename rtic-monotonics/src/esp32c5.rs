@@ -10,11 +10,10 @@
 //! esp32c5_systimer_monotonic!(Mono);
 //!
 //! fn init() {
-//!     # // This is normally provided by the selected PAC
-//!     # let timer = unsafe { esp32c5::Peripherals::steal() }.SYSTIMER;
-//!     #
+//!     # // use SYSTIMER singleton from initialized esp_hal
+//!     let peripherals = esp_hal::init(Config::default());
 //!     // Start the monotonic
-//!     Mono::start(timer);
+//!     Mono::start(peripherals.SYSTIMER);
 //! }
 //!
 //! async fn usage() {
@@ -34,8 +33,15 @@ pub mod prelude {
 
     pub use fugit::{self, ExtU64, ExtU64Ceil};
 }
+
 use crate::TimerQueueBackend;
-use esp32c5::{INTERRUPT_CORE0, PLIC_MX, SYSTIMER};
+use esp_hal::{
+    interrupt::{DirectBindableCpuInterrupt, Priority},
+    peripherals::{Interrupt, SYSTIMER},
+    system::Cpu,
+    timer::systimer::{SystemTimer, Unit::Unit0, UnitConfig},
+};
+
 use rtic_time::timer_queue::TimerQueue;
 
 /// Timer implementing [`TimerQueueBackend`].
@@ -47,89 +53,71 @@ impl TimerBackend {
     /// **Do not use this function directly.**
     ///
     /// Use the prelude macros instead.
-    pub fn _start(timer: SYSTIMER) {
-        let interrupt_number = 57 as isize;
-        let cpu_interrupt_number = 31 as isize;
+    pub fn _start(_timer: SYSTIMER) {
+        unsafe extern "C" {
+            fn _start___RticMonotonicInterrupt_trap();
+        }
+        esp_hal::interrupt::enable_direct(
+            Interrupt::SYSTIMER_TARGET0,
+            Priority::max(),
+            DirectBindableCpuInterrupt::Interrupt23,
+            _start___RticMonotonicInterrupt_trap,
+        );
 
         unsafe {
-            (INTERRUPT_CORE0::ptr() as *mut u32)
-                .offset(interrupt_number as isize)
-                .write_volatile(cpu_interrupt_number as u32);
-
-            // Set the interrupt's priority:
-            (*PLIC_MX::ptr())
-                .mxint_pri(cpu_interrupt_number as usize)
-                .write(|w| w.bits(15 as u32));
-
-            // Finally, enable the CPU interrupt:
-            (*PLIC_MX::ptr())
-                .mxint_enable()
-                .modify(|r, w| w.bits((1 << cpu_interrupt_number) | r.bits()));
-        }
-
-        timer.conf().write(|w| w.timer_unit0_work_en().set_bit());
-        timer
-            .conf()
-            .write(|w| w.timer_unit1_core0_stall_en().clear_bit());
+            SystemTimer::configure_unit(Unit0, UnitConfig::DisabledIfCpuIsStalled(Cpu::ProCpu))
+        };
 
         TIMER_QUEUE.initialize(Self {})
     }
 }
 
 static TIMER_QUEUE: TimerQueue<TimerBackend> = TimerQueue::new();
-use esp32c5;
+
 impl TimerQueueBackend for TimerBackend {
     type Ticks = u64;
     fn now() -> Self::Ticks {
-        let peripherals = unsafe { esp32c5::Peripherals::steal() };
-        peripherals
-            .SYSTIMER
-            .unit0_op()
-            .write(|w| w.update().set_bit());
-        // this must be polled until value is valid
-        while peripherals.SYSTIMER.unit0_op().read().value_valid() == false {}
-        let instant: u64 = (peripherals.SYSTIMER.unit_value(0).lo().read().bits() as u64)
-            | ((peripherals.SYSTIMER.unit_value(0).hi().read().bits() as u64) << 32);
-        instant
+        SystemTimer::unit_value(Unit0)
     }
 
     fn set_compare(instant: Self::Ticks) {
-        let systimer = unsafe { esp32c5::Peripherals::steal() }.SYSTIMER;
-        systimer
-            .target0_conf()
-            .write(|w| w.timer_unit_sel().set_bit());
-        systimer
-            .target0_conf()
-            .write(|w| w.period_mode().clear_bit());
-        systimer
-            .trgt(0)
-            .lo()
-            .write(|w| unsafe { w.bits((instant & 0xFFFFFFFF).try_into().unwrap()) });
-        systimer
-            .trgt(0)
-            .hi()
-            .write(|w| unsafe { w.bits((instant >> 32).try_into().unwrap()) });
-        systimer.comp0_load().write(|w| w.load().set_bit()); //sync period to comp register
-        systimer.conf().write(|w| w.target0_work_en().set_bit());
-        systimer.int_ena().write(|w| w.target0().set_bit());
+        let systimer = esp_hal::peripherals::SYSTIMER::regs();
+        // source=Unit0, mode=Target
+        systimer.target0_conf().modify(|_, w| {
+            w.timer_unit_sel().clear_bit();
+            w.period_mode().clear_bit()
+        });
+        // set target value
+        {
+            let target = systimer.trgt(0);
+            target.hi().write(|w| w.hi().set((instant >> 32) as u32));
+            target
+                .lo()
+                .write(|w| w.lo().set((instant & 0xFFFF_FFFF) as u32));
+            let comp_load = systimer.comp_load(0);
+            comp_load.write(|w| w.load().set_bit());
+        }
+        //enable compare
+        systimer.conf().modify(|_, w| w.target0_work_en().set_bit());
+        //enable interrupt trigger
+        systimer.int_ena().modify(|_, w| w.target0().set_bit());
     }
 
     fn clear_compare_flag() {
-        unsafe { esp32c5::Peripherals::steal() }
-            .SYSTIMER
+        esp_hal::peripherals::SYSTIMER::regs()
             .int_clr()
             .write(|w| w.target0().bit(true));
     }
 
     fn pend_interrupt() {
         extern "C" {
-            fn interrupt31();
+            fn __RticMonotonicInterrupt();
         }
         //run the timer interrupt handler in a critical section to emulate a max priority
         //interrupt.
         //since there is no hardware support for pending a timer interrupt.
         riscv::interrupt::disable();
-        unsafe { interrupt31() };
+        unsafe { __RticMonotonicInterrupt() };
         unsafe { riscv::interrupt::enable() };
     }
 
@@ -151,18 +139,34 @@ macro_rules! esp32c5_systimer_monotonic {
         /// A `Monotonic` based on the ESP32-C5 SysTimer peripheral.
         pub struct $name;
 
+        #[derive(Clone, Copy)]
+        struct __RticMonotonicInterrupt;
+
+        unsafe impl riscv_rt::InterruptNumber for __RticMonotonicInterrupt {
+            const MAX_INTERRUPT_NUMBER: usize = 47;
+
+            fn number(self) -> usize {
+                esp_hal::interrupt::DirectBindableCpuInterrupt::Interrupt23 as _
+            }
+
+            fn from_number(_value: usize) -> riscv_rt::result::Result<Self> {
+                Ok(Self)
+            }
+        }
+        unsafe impl riscv_rt::CoreInterruptNumber for __RticMonotonicInterrupt {}
+
+        #[riscv_rt::core_interrupt(__RticMonotonicInterrupt)]
+        #[esp_hal::ram]
+        #[allow(non_snake_case)]
+        unsafe extern "C" fn Systimer() {
+            use $crate::TimerQueueBackend;
+            $crate::esp32c5::TimerBackend::timer_queue().on_monotonic_interrupt();
+        }
         impl $name {
             /// Starts the `Monotonic`.
             ///
             /// This method must be called only once.
-            pub fn start(timer: esp32c5::SYSTIMER) {
-                #[export_name = "interrupt31"]
-                #[allow(non_snake_case)]
-                unsafe extern "C" fn Systimer() {
-                    use $crate::TimerQueueBackend;
-                    $crate::esp32c5::TimerBackend::timer_queue().on_monotonic_interrupt();
-                }
-
+            pub fn start(timer: esp_hal::peripherals::SYSTIMER) {
                 $crate::esp32c5::TimerBackend::_start(timer);
             }
         }

@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 [features]
 riscv-esp32c5-backend = [
     "rtic/riscv-esp32c5-backend",
-    # "rtic-monotonics/esp32c5-systimer",
+    "rtic-monotonics/esp32c5-systimer",
 ]
 
 [dependencies]
@@ -23,5 +23,5 @@ esp-hal = { version = "1.2.2", features = ["esp32c5", "unstable"] }
 esp-println = { version = "0.18.0", features = ["esp32c5", "auto"] }
 rtic = { path = "../../rtic/", features = ["riscv-esp32c5-backend"] }
 rtic-monotonics = { path = "../../rtic-monotonics/", features = [
-    # "esp32c5-systimer",
+    "esp32c5-systimer",
 ] }

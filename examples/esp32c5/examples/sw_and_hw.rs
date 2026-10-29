@@ -30,23 +30,11 @@ mod app {
     #[init]
     fn init(_cx: init::Context) -> (Shared, Local) {
         println!("init");
-        unsafe {
-            let p = esp_hal::peripherals::Peripherals::steal();
-            let mut timg = TimerGroup::new(p.TIMG0);
-            timg.wdt.disable();
-            let mut rtc = Rtc::new(p.RTC_TIMER);
-            rtc.rwdt.disable();
-            rtc.swd.disable();
-        }
-
         let peripherals = esp_hal::init(esp_hal::Config::default());
         let config = InputConfig::default().with_pull(Pull::Up);
-        // let mut button = Input::new(peripherals.GPIO9, config);
-
-        let mut button = Input::new(peripherals.GPIO23, config);
+        let mut button = Input::new(peripherals.GPIO9, config);
         button.listen(Event::FallingEdge);
         foo::spawn().unwrap();
-        // bar::spawn().unwrap();
         (Shared {}, Local { button })
     }
 
