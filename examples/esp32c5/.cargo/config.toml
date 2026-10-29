@@ -1,0 +1,20 @@
+[target.riscv32imac-unknown-none-elf]
+runner = "espflash flash --monitor --chip esp32c5"
+
+[build]
+rustflags = [
+  # Required to obtain backtraces (e.g. when using the "esp-backtrace" crate.)
+  # NOTE: May negatively impact performance of produced code
+  "-C", "force-frame-pointers",
+]
+
+target = "riscv32imac-unknown-none-elf"
+
+[env]
+# required by riscv_rt::core_interrupt used by backend for handlers
+RISCV_RT_BASE_ISA = "rv32i"
+
+[unstable]
+build-std = ["alloc", "core"]
+
+
