@@ -585,7 +585,7 @@ impl<'a> CargoCommand<'a> {
                 };
 
                 let cargofeatures = if *loom {
-                    extra.push(" --lib");
+                    extra.push("--lib");
                     &None
                 } else {
                     features

@@ -808,7 +808,7 @@ mod tests {
         let (mut tx, mut rx) = make_channel!(u8, 1);
 
         tx.try_send(0).unwrap();
-        assert!(freeq(&rx.0, |q| q.is_empty()));
+        assert!(freeq(rx.0, |q| q.is_empty()));
 
         // Running this in a separate thread scope to ensure that `pinned_future` is dropped fully.
         //
@@ -820,16 +820,16 @@ mod tests {
 
                 future.poll_on();
 
-                assert!(freeq(&rx.0, |q| q.is_empty()));
+                assert!(freeq(rx.0, |q| q.is_empty()));
                 assert!(!rx.0.wait_queue.is_empty());
 
                 assert_eq!(rx.try_recv(), Ok(0));
 
-                assert!(freeq(&rx.0, |q| q.is_empty()));
+                assert!(freeq(rx.0, |q| q.is_empty()));
             });
         });
 
-        assert!(!freeq(&rx.0, |q| q.is_empty()));
+        assert!(!freeq(rx.0, |q| q.is_empty()));
 
         // Make sure that rx & tx are alive until here for good measure.
         drop((tx, rx));
@@ -915,7 +915,7 @@ mod loom_test {
     #[allow(missing_docs)]
     macro_rules! make_loom_channel {
         ($type:ty, $size:expr) => {{
-            let channel: crate::channel::Channel<$type, $size> = super::Channel::new();
+            let channel: $crate::channel::Channel<$type, $size> = super::Channel::new();
             let boxed = Box::new(channel);
             let boxed = Box::leak(boxed);
 
