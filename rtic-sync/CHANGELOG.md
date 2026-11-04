@@ -7,6 +7,10 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## Unreleased
 
+### Fixed
+
+- `Channel::split()` now resets all state left by a previous split.
+
 ## v1.6.0 - 2026-10-21
 
 ### Fixed
