@@ -8,6 +8,7 @@ use embedded_hal_async::{
     spi::{ErrorType, Operation, SpiBus as AsyncSpiBus, SpiDevice},
 };
 use embedded_hal_bus::spi::DeviceError;
+use rtic_common::dropper::OnDrop;
 
 /// [`Arbiter`]-based shared bus implementation.
 pub struct ArbiterDevice<'a, BUS, CS, D> {
@@ -46,6 +47,11 @@ where
 
         self.cs.set_low().map_err(DeviceError::Cs)?;
 
+        // Deassert CS before the bus is released if the transaction is cancelled.
+        let cs_guard = OnDrop::new(|| {
+            self.cs.set_high().ok();
+        });
+
         let op_res = 'ops: {
             for op in operations {
                 let res = match op {
@@ -70,6 +76,7 @@ where
 
         // On failure, it's important to still flush and deassert CS.
         let flush_res = bus.flush().await;
+        cs_guard.defuse();
         let cs_res = self.cs.set_high();
 
         op_res.map_err(DeviceError::Spi)?;
@@ -129,6 +136,11 @@ where
 
         self.cs.set_low().map_err(DeviceError::Cs)?;
 
+        // Deassert CS before the bus is released if the transaction is cancelled.
+        let cs_guard = OnDrop::new(|| {
+            self.cs.set_high().ok();
+        });
+
         let op_res = 'ops: {
             for op in operations {
                 let res = match op {
@@ -153,6 +165,7 @@ where
 
         // On failure, it's important to still flush and deassert CS.
         let flush_res = bus.flush();
+        cs_guard.defuse();
         let cs_res = self.cs.set_high();
 
         op_res.map_err(DeviceError::Spi)?;

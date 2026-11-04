@@ -9,6 +9,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Fixed
 
+- Deassert CS when an `ArbiterDevice` or `BlockingArbiterDevice` SPI transaction is cancelled.
 - Dropping an `Arbiter::access` future after the lock was handed to it no longer leaks the lock.
 - `Receiver::try_recv` and `Receiver::recv` no longer return `NoSender` while a message is still queued.
 - A `Channel` send that races the `Receiver` drop now returns the value instead of leaking it.
