@@ -115,7 +115,8 @@ impl<T, const N: usize> Channel<T, N> {
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
         // Drop values left by a `Receiver` that was never dropped.
         while let Some(slot) = self.readyq.as_mut().pop_front() {
-            // SAFETY: `slot` was dequeued from `readyq`, so it holds an initialized value.
+            // SAFETY: `slot` was dequeued from `readyq`, so we own it and it holds an initialized
+            // value.
             drop(unsafe { self.read_slot(slot) });
         }
 
@@ -157,8 +158,7 @@ impl<T, const N: usize> Channel<T, N> {
     /// 1. If there are any waiting `send`-ers, wake the longest-waiting one and hand it `slot`.
     /// 2. else, insert `slot` into `self.freeq`.
     ///
-    /// SAFETY: `slot` must be a `u8` that is obtained by dequeueing from [`Self::readyq`], and that `slot`
-    /// is returned at most once.
+    /// SAFETY: the caller must own `slot` and return it at most once.
     unsafe fn return_free_slot(&self, slot: u8) {
         critical_section::with(|cs| {
             fence(Ordering::SeqCst);
@@ -182,8 +182,8 @@ impl<T, const N: usize> Channel<T, N> {
         })
     }
 
-    /// SAFETY: the caller must guarantee that `slot` is an `u8` obtained by dequeueing from [`Self::readyq`],
-    /// and is read at most once.
+    /// SAFETY: the caller must own `slot`, it must hold an initialized value, and it is read at
+    /// most once.
     unsafe fn read_slot(&self, slot: u8) -> T {
         let first_element = self.slots.get_unchecked(slot as usize).get_mut();
         let ptr = first_element.deref().as_ptr();
@@ -337,8 +337,9 @@ impl<T, const N: usize> defmt::Format for Sender<'_, T, N> {
 }
 
 impl<T, const N: usize> Sender<'_, T, N> {
+    /// Returns `val` back if the receiver is gone.
     #[inline(always)]
-    fn send_footer(&mut self, idx: u8, val: T) {
+    fn send_footer(&mut self, idx: u8, val: T) -> Result<(), T> {
         // Write the value to the slots, note; this memcpy is not under a critical section.
         unsafe {
             let first_element = self.0.slots.get_unchecked(idx as usize).get_mut();
@@ -346,22 +347,40 @@ impl<T, const N: usize> Sender<'_, T, N> {
             ptr::write(ptr, val)
         }
 
-        // Write the value into the ready queue.
-        critical_section::with(|cs| {
-            // SAFETY: `self.0.readyq` is not called recursively.
-            unsafe {
+        // Write the value into the ready queue, if the receiver is still there.
+        let dropped = critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.receiver_dropped` is not called recursively.
+            let dropped = self.0.receiver_dropped(cs, |v| *v);
+
+            if !dropped {
+                // SAFETY: `self.0.readyq` is not called recursively.
                 self.0.readyq(cs, |readyq| {
                     debug_assert!(!readyq.is_full());
                     // SAFETY: ready is not full.
                     readyq.push_back_unchecked(idx);
                 });
             }
+
+            dropped
         });
+
+        if dropped {
+            // SAFETY: `idx` never reached `readyq`, so this sender still owns it and its value.
+            let val = unsafe {
+                let val = self.0.read_slot(idx);
+                self.0.return_free_slot(idx);
+                val
+            };
+
+            return Err(val);
+        }
 
         fence(Ordering::SeqCst);
 
         // If there is a receiver waker, wake it.
         self.0.receiver_waker.wake();
+
+        Ok(())
     }
 
     /// Try to send a value, non-blocking. If the channel is full this will return an error.
@@ -387,9 +406,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
             return Err(TrySendError::Full(val));
         };
 
-        self.send_footer(idx, val);
-
-        Ok(())
+        self.send_footer(idx, val).map_err(TrySendError::NoReceiver)
     }
 
     /// Send a value. If there is no place left in the queue this will wait until there is.
@@ -418,9 +435,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
             // Since we are certain that our link has been removed from the list (either
             // pop-ed or removed just above), we have exclusive access to the free slot pointer.
             if let Some(freed_slot) = unsafe { free_slot_ptr2.replace_exclusive(None) } {
-                // SAFETY: freed slot is passed to us from `return_free_slot`, which either
-                // directly (through `try_recv`), or indirectly (through another `return_free_slot`)
-                // comes from `readyq`.
+                // SAFETY: `freed_slot` was handed to us by `return_free_slot`, so we own it.
                 unsafe { self.0.return_free_slot(freed_slot) };
             }
         });
@@ -500,9 +515,7 @@ impl<T, const N: usize> Sender<'_, T, N> {
         drop(dropper);
 
         if let Ok(idx) = idx {
-            self.send_footer(idx, val);
-
-            Ok(())
+            self.send_footer(idx, val).map_err(NoReceiver)
         } else {
             Err(NoReceiver(val))
         }
@@ -604,13 +617,12 @@ impl<T, const N: usize> Receiver<'_, T, N> {
 
         if let Some(rs) = ready_slot {
             // Read the value from the slots, note; this memcpy is not under a critical section.
-            // SAFETY: `rs` is directly obtained from `self.0.readyq` and is read exactly
-            // once.
+            // SAFETY: `rs` was dequeued from `readyq`, so we own it and it holds an initialized
+            // value. It is read exactly once.
             let r = unsafe { self.0.read_slot(rs) };
 
             // Return the index to the free queue after we've read the value.
-            // SAFETY: `rs` comes directly from `readyq` and is only returned
-            // once.
+            // SAFETY: we own `rs` and it is only returned once.
             unsafe { self.0.return_free_slot(rs) };
 
             Ok(r)
@@ -687,8 +699,8 @@ impl<T, const N: usize> Drop for Receiver<'_, T, N> {
         };
 
         while let Some(slot) = ready_slot() {
-            // SAFETY: `slot` comes from `readyq` and is
-            // read exactly once.
+            // SAFETY: `slot` was dequeued from `readyq`, so we own it and it holds an initialized
+            // value. It is read exactly once.
             drop(unsafe { self.0.read_slot(slot) })
         }
 
@@ -952,7 +964,10 @@ mod tokio_tests {
 #[cfg(test)]
 #[cfg(loom)]
 mod loom_test {
+    use super::TrySendError;
     use cassette::Cassette;
+    use core::sync::atomic::Ordering;
+    use loom::sync::{atomic::AtomicUsize, Arc};
     use loom::thread;
 
     #[macro_export]
@@ -999,6 +1014,54 @@ mod loom_test {
             drop(rx);
 
             handle1.join().unwrap();
+        });
+    }
+
+    struct CountDrop(Arc<AtomicUsize>);
+
+    impl Drop for CountDrop {
+        fn drop(&mut self) {
+            self.0.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+
+    // A value sent while the receiver is dropped is either returned or dropped by the channel.
+    #[test]
+    pub fn try_send_racing_receiver_drop() {
+        loom::model(|| {
+            let drops = Arc::new(AtomicUsize::new(0));
+            let (mut tx, rx) = make_loom_channel!(CountDrop, 1);
+
+            let handle = thread::spawn(move || drop(rx));
+
+            assert!(!matches!(
+                tx.try_send(CountDrop(drops.clone())),
+                Err(TrySendError::Full(_))
+            ));
+
+            handle.join().unwrap();
+
+            assert_eq!(drops.load(Ordering::SeqCst), 1);
+        });
+    }
+
+    #[test]
+    pub fn send_racing_receiver_drop() {
+        loom::model(|| {
+            let drops = Arc::new(AtomicUsize::new(0));
+            let (mut tx, rx) = make_loom_channel!(CountDrop, 1);
+
+            let handle = thread::spawn(move || drop(rx));
+
+            assert!(
+                Cassette::new(core::pin::pin!(tx.send(CountDrop(drops.clone()))))
+                    .poll_on()
+                    .is_some()
+            );
+
+            handle.join().unwrap();
+
+            assert_eq!(drops.load(Ordering::SeqCst), 1);
         });
     }
 }
