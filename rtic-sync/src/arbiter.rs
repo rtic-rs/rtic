@@ -85,7 +85,14 @@ impl<T> Arbiter<T> {
             // exited the `poll_fn` below in the `drop(dropper)` call. The other dereference
             // of this pointer is in the `poll_fn`.
             if let Some(link) = unsafe { link_ptr2.get() } {
-                link.remove_from_list(&self.wait_queue);
+                critical_section::with(|_| {
+                    if link.is_popped() {
+                        // The lock was handed to us, but we never took it.
+                        self.release();
+                    } else {
+                        link.remove_from_list(&self.wait_queue);
+                    }
+                });
             }
         });
 
@@ -103,8 +110,10 @@ impl<T> Arbiter<T> {
                 // SAFETY: This pointer is only dereferenced here and on drop of the future
                 // which happens outside this `poll_fn`'s stack frame.
                 let link = unsafe { link_ptr.get() };
-                if let Some(link) = link {
-                    if link.is_popped() {
+                if let Some(queue_link) = link {
+                    if queue_link.is_popped() {
+                        // Take the link so `dropper` does not release the lock.
+                        link.take();
                         return Poll::Ready(());
                     }
                 } else {
@@ -125,7 +134,7 @@ impl<T> Arbiter<T> {
         })
         .await;
 
-        // Make sure the link is removed from the queue.
+        // `dropper` only acts on cancel. Here the link was taken or never queued.
         drop(dropper);
 
         // SAFETY: One only gets here if there is exlusive access.
@@ -155,6 +164,18 @@ impl<T> Arbiter<T> {
             }
         })
     }
+
+    /// Hand the lock over to the next waiter, or mark it as free if there is none.
+    fn release(&self) {
+        critical_section::with(|_| {
+            fence(Ordering::SeqCst);
+
+            match self.wait_queue.pop() {
+                Some(next) => next.wake(),
+                None => self.taken.store(false, Ordering::Relaxed),
+            }
+        })
+    }
 }
 
 /// This token represents exclusive access to the value protected by the [`Arbiter`].
@@ -165,17 +186,7 @@ pub struct ExclusiveAccess<'a, T> {
 
 impl<T> Drop for ExclusiveAccess<'_, T> {
     fn drop(&mut self) {
-        critical_section::with(|_| {
-            fence(Ordering::SeqCst);
-
-            if self.arbiter.wait_queue.is_empty() {
-                // If noone is in queue and we release exclusive access, reset `taken`.
-                self.arbiter.taken.store(false, Ordering::Relaxed);
-            } else if let Some(next) = self.arbiter.wait_queue.pop() {
-                // Wake the next one in queue.
-                next.wake();
-            }
-        })
+        self.arbiter.release();
     }
 }
 
@@ -216,5 +227,51 @@ mod tests {
         }
 
         assert_eq!(*ARB.access().await, NUM_RUNS)
+    }
+
+    #[test]
+    fn cancel_after_handoff_releases_lock() {
+        use core::future::Future;
+        use core::pin::pin;
+        use core::task::Context;
+
+        let arbiter = Arbiter::new(0);
+        let mut cx = Context::from_waker(Waker::noop());
+
+        let a = arbiter.try_access().unwrap();
+        {
+            let mut b = pin!(arbiter.access());
+            assert!(b.as_mut().poll(&mut cx).is_pending());
+
+            // Hand the lock over to `b`, then cancel `b` before it is polled again.
+            drop(a);
+        }
+
+        assert!(arbiter.try_access().is_some());
+    }
+
+    #[test]
+    fn handoff_keeps_lock_taken() {
+        use core::future::Future;
+        use core::pin::pin;
+        use core::task::Context;
+
+        let arbiter = Arbiter::new(0);
+        let mut cx = Context::from_waker(Waker::noop());
+
+        let a = arbiter.try_access().unwrap();
+        let mut b = pin!(arbiter.access());
+        let mut c = pin!(arbiter.access());
+        assert!(b.as_mut().poll(&mut cx).is_pending());
+        assert!(c.as_mut().poll(&mut cx).is_pending());
+
+        drop(a);
+
+        let Poll::Ready(_b) = b.as_mut().poll(&mut cx) else {
+            panic!("`b` did not get the lock");
+        };
+
+        assert!(arbiter.try_access().is_none());
+        assert!(c.as_mut().poll(&mut cx).is_pending());
     }
 }
