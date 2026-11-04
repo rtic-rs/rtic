@@ -141,34 +141,24 @@ where
 }
 
 impl<T: Copy> WatchReader<'_, T> {
-    /// Immediately get the latest value stored in the Signal.
-    fn get_inner(&mut self) -> Store<T> {
-        critical_section::with(|_| {
-            let mut_ptr = self.parent.store.get_mut();
-            // SAFETY: in a cs: exclusive access
-            unsafe { *mut_ptr.deref() }
-        })
-    }
-
     /// Immediately get the seen attribute stored in the Signal.
     fn get_seen(&mut self) -> bool {
         self.parent.seen.load(Acquire)
     }
 
-    /// Mark value as seen.
-    fn mark_seen(&mut self) {
-        self.parent.seen.store(true, Release);
-    }
-
     /// Returns the latest value, or None if uninitialized.
     pub fn try_get(&mut self) -> Option<T> {
-        match self.get_inner() {
-            Store::Unset => None,
-            Store::Set(value) => {
-                self.mark_seen();
-                Some(value)
-            }
-        }
+        critical_section::with(|_| {
+            let mut_ptr = self.parent.store.get_mut();
+            // SAFETY: in a cs: exclusive access
+            let Store::Set(value) = (unsafe { *mut_ptr.deref() }) else {
+                return None;
+            };
+
+            // Same CS as the read, so a concurrent write cannot be marked as seen.
+            self.parent.seen.store(true, Release);
+            Some(value)
+        })
     }
 
     /// Wait for an unseen value.
@@ -184,13 +174,7 @@ impl<T: Copy> WatchReader<'_, T> {
                 return Poll::Pending;
             }
 
-            match self.get_inner() {
-                Store::Unset => Poll::Pending,
-                Store::Set(value) => {
-                    self.mark_seen();
-                    Poll::Ready(value)
-                }
-            }
+            self.try_get().map_or(Poll::Pending, Poll::Ready)
         })
         .await
     }
@@ -271,6 +255,28 @@ mod loom_tests {
             writer.write(0x1337_1337);
 
             handle.join().unwrap();
+        });
+    }
+
+    #[test]
+    fn concurrent_write_not_lost() {
+        loom::model(|| {
+            let watch = Box::leak(Box::new(Watch::new()));
+            let (mut writer, mut reader) = watch.split();
+            writer.write(1);
+
+            let handle = loom::thread::spawn(move || writer.write(2));
+
+            let value = reader.try_get();
+            handle.join().unwrap();
+
+            if value == Some(1) {
+                // The write of `2` happened after the read, so it must be unseen.
+                let waker = core::task::Waker::noop();
+                let mut cx = core::task::Context::from_waker(waker);
+                let next = { core::pin::pin!(reader.changed()).as_mut().poll(&mut cx) };
+                assert_eq!(next, Poll::Ready(2));
+            }
         });
     }
 }
