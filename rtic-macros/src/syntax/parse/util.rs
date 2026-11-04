@@ -4,7 +4,7 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     Abi, AttrStyle, Attribute, Expr, ExprPath, FnArg, ForeignItemFn, Ident, ItemFn, Pat, PatType,
-    Path, PathArguments, PathSegment, ReturnType, Token, Type, Visibility,
+    Path, PathArguments, PathSegment, ReturnType, Safety, Token, Type, Visibility,
 };
 
 use crate::syntax::{
@@ -40,7 +40,7 @@ pub fn check_fn_signature(item: &ItemFn, allow_async: bool) -> bool {
         && item.sig.constness.is_none()
         && (item.sig.asyncness.is_none() || allow_async)
         && item.sig.abi.is_none()
-        && item.sig.unsafety.is_none()
+        && matches!(item.sig.safety, Safety::Default)
         && item.sig.generics.params.is_empty()
         && item.sig.generics.where_clause.is_none()
         && item.sig.variadic.is_none()
@@ -52,7 +52,7 @@ pub fn check_foreign_fn_signature(item: &ForeignItemFn, allow_async: bool) -> bo
         && item.sig.constness.is_none()
         && (item.sig.asyncness.is_none() || allow_async)
         && item.sig.abi.is_none()
-        && item.sig.unsafety.is_none()
+        && matches!(item.sig.safety, Safety::Default)
         && item.sig.generics.params.is_empty()
         && item.sig.generics.where_clause.is_none()
         && item.sig.variadic.is_none()

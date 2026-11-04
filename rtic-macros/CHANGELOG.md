@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Changed
+
+- Upgraded from syn 2.x to syn 3.x
+
 ## [v2.4.0] - 2026-10-21
 
 ### Changed
