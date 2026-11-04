@@ -609,28 +609,25 @@ pub enum ReceiveError {
 impl<T, const N: usize> Receiver<'_, T, N> {
     /// Receives a value if there is one in the channel, non-blocking.
     pub fn try_recv(&mut self) -> Result<T, ReceiveError> {
-        // Try to get a ready slot.
-        let ready_slot = critical_section::with(|cs| unsafe {
-            // SAFETY: `self.0.readyq` is not called recursively.
-            self.0.readyq(cs, |q| q.pop_front())
-        });
+        let rs = critical_section::with(|cs| unsafe {
+            // SAFETY: `self.0.readyq` and `self.0.num_senders` are not called recursively.
+            match self.0.readyq(cs, |q| q.pop_front()) {
+                Some(rs) => Ok(rs),
+                None if self.0.num_senders(cs, |v| *v == 0) => Err(ReceiveError::NoSender),
+                None => Err(ReceiveError::Empty),
+            }
+        })?;
 
-        if let Some(rs) = ready_slot {
-            // Read the value from the slots, note; this memcpy is not under a critical section.
-            // SAFETY: `rs` was dequeued from `readyq`, so we own it and it holds an initialized
-            // value. It is read exactly once.
-            let r = unsafe { self.0.read_slot(rs) };
+        // Read the value from the slots, note; this memcpy is not under a critical section.
+        // SAFETY: `rs` was dequeued from `readyq`, so we own it and it holds an initialized
+        // value. It is read exactly once.
+        let r = unsafe { self.0.read_slot(rs) };
 
-            // Return the index to the free queue after we've read the value.
-            // SAFETY: we own `rs` and it is only returned once.
-            unsafe { self.0.return_free_slot(rs) };
+        // Return the index to the free queue after we've read the value.
+        // SAFETY: we own `rs` and it is only returned once.
+        unsafe { self.0.return_free_slot(rs) };
 
-            Ok(r)
-        } else if self.is_closed() {
-            Err(ReceiveError::NoSender)
-        } else {
-            Err(ReceiveError::Empty)
-        }
+        Ok(r)
     }
 
     /// Receives a value, waiting if the queue is empty.
@@ -964,7 +961,7 @@ mod tokio_tests {
 #[cfg(test)]
 #[cfg(loom)]
 mod loom_test {
-    use super::TrySendError;
+    use super::{ReceiveError, TrySendError};
     use cassette::Cassette;
     use core::sync::atomic::Ordering;
     use loom::sync::{atomic::AtomicUsize, Arc};
@@ -1062,6 +1059,22 @@ mod loom_test {
             handle.join().unwrap();
 
             assert_eq!(drops.load(Ordering::SeqCst), 1);
+        });
+    }
+
+    #[test]
+    pub fn recv_no_sender_only_when_empty() {
+        loom::model(|| {
+            let (mut tx, mut rx) = make_loom_channel!(u8, 1);
+
+            let handle = thread::spawn(move || {
+                tx.try_send(42).unwrap();
+                drop(tx);
+            });
+
+            assert_ne!(rx.try_recv(), Err(ReceiveError::NoSender));
+
+            handle.join().unwrap();
         });
     }
 }
