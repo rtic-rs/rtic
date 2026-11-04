@@ -113,8 +113,14 @@ impl<T, const N: usize> Channel<T, N> {
 
     /// Split the queue into a `Sender`/`Receiver` pair.
     pub fn split(&mut self) -> (Sender<'_, T, N>, Receiver<'_, T, N>) {
-        // NOTE(assert): queue is cleared by dropping the corresponding `Receiver`.
-        debug_assert!(self.readyq.as_mut().is_empty(),);
+        // Drop values left by a `Receiver` that was never dropped.
+        while let Some(slot) = self.readyq.as_mut().pop_front() {
+            // SAFETY: `slot` was dequeued from `readyq`, so it holds an initialized value.
+            drop(unsafe { self.read_slot(slot) });
+        }
+
+        // Forget links left by forgotten `send` futures.
+        self.wait_queue = WaitQueue::new();
 
         let freeq = self.freeq.as_mut();
 
@@ -133,8 +139,9 @@ impl<T, const N: usize> Channel<T, N> {
 
         debug_assert!(freeq.is_full());
 
-        // There is now 1 sender
+        // There is now 1 sender and 1 receiver
         *self.num_senders.as_mut() = 1;
+        *self.receiver_dropped.as_mut() = false;
 
         (Sender(self), Receiver(self))
     }
@@ -868,7 +875,44 @@ mod tests {
 
         drop((tx, rx));
 
-        channel.split();
+        let (mut tx, mut rx) = channel.split();
+        assert!(!tx.is_closed());
+        tx.try_send(()).unwrap();
+        assert_eq!(rx.try_recv(), Ok(()));
+    }
+
+    #[test]
+    fn split_after_forgotten_receiver_resets_readyq() {
+        let mut channel: Channel<u32, 2> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+        tx.try_send(1).unwrap();
+        core::mem::forget(rx);
+        core::mem::forget(tx);
+
+        let (mut tx, mut rx) = channel.split();
+        tx.try_send(2).unwrap();
+
+        assert_eq!(rx.try_recv(), Ok(2));
+        assert_eq!(rx.try_recv(), Err(ReceiveError::Empty));
+    }
+
+    #[test]
+    fn split_after_forgotten_waiting_sender_resets_wait_queue() {
+        let mut channel: Channel<u32, 1> = Channel::new();
+
+        let (mut tx, rx) = channel.split();
+        tx.try_send(1).unwrap();
+
+        let mut send = Box::pin(tx.send(2));
+        assert!(Cassette::new(send.as_mut()).poll_on().is_none());
+        core::mem::forget(send);
+        core::mem::forget(rx);
+        drop(tx);
+
+        let (mut tx, mut rx) = channel.split();
+        tx.try_send(3).unwrap();
+        assert_eq!(rx.try_recv(), Ok(3));
     }
 }
 
