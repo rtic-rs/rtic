@@ -9,6 +9,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Fixed
 
+- A `Channel` send that races the `Receiver` drop now returns the value instead of leaking it.
 - `Channel::split()` now resets all state left by a previous split.
 
 ## v1.6.0 - 2026-10-21
