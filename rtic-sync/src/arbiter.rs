@@ -116,6 +116,8 @@ impl<T> Arbiter<T> {
                         link.take();
                         return Poll::Ready(());
                     }
+
+                    queue_link.update_waker(cx.waker());
                 } else {
                     // Place the link in the wait queue on first run.
                     let link_ref = link.insert(Link::new(cx.waker().clone()));
@@ -273,5 +275,13 @@ mod tests {
 
         assert!(arbiter.try_access().is_none());
         assert!(c.as_mut().poll(&mut cx).is_pending());
+    }
+
+    #[test]
+    fn access_wakes_latest_waker() {
+        let arb = Arbiter::new(0);
+        let guard = arb.try_access().unwrap();
+
+        crate::test_util::assert_wakes_latest_waker(arb.access(), || drop(guard));
     }
 }

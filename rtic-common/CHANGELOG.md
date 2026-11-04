@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## [Unreleased]
 
+### Added
+
+- `Link::update_waker`.
+
 ## v1.2.0 - 2026-10-21
 
 ### Changed

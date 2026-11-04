@@ -475,6 +475,8 @@ impl<T, const N: usize> Sender<'_, T, N> {
                             Poll::Ready(Err(()))
                         }
                     } else {
+                        queue_link.update_waker(cx.waker());
+
                         Poll::Pending
                     }
                 }
@@ -922,6 +924,16 @@ mod tests {
         let (mut tx, mut rx) = channel.split();
         tx.try_send(3).unwrap();
         assert_eq!(rx.try_recv(), Ok(3));
+    }
+
+    #[test]
+    fn send_wakes_latest_waker() {
+        let (mut tx, mut rx) = make_channel!(u32, 1);
+        tx.try_send(1).unwrap();
+
+        crate::test_util::assert_wakes_latest_waker(tx.send(2), || {
+            assert_eq!(rx.try_recv(), Ok(1));
+        });
     }
 }
 

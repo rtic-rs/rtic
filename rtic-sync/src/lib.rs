@@ -20,3 +20,6 @@ extern crate std;
 
 #[cfg(loom)]
 mod loom_cs;
+
+#[cfg(all(test, not(loom)))]
+mod test_util;
