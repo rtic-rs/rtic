@@ -7,6 +7,8 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## Unreleased
 
+## v1.6.1 - 2026-11-04
+
 ### Fixed
 
 - `Arbiter::access` and `Sender::send` now wake the waker from the most recent poll.
