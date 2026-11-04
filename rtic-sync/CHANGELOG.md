@@ -9,6 +9,7 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ### Fixed
 
+- `Arbiter::access` and `Sender::send` now wake the waker from the most recent poll.
 - `WatchReader` could miss a write that raced with `try_get` or `changed`.
 - Deassert CS when an `ArbiterDevice` or `BlockingArbiterDevice` SPI transaction is cancelled.
 - Dropping an `Arbiter::access` future after the lock was handed to it no longer leaks the lock.

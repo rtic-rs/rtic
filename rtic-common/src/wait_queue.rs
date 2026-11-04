@@ -1,8 +1,10 @@
 //! A wait queue implementation using a doubly linked list.
 
 use core::{
+    cell::UnsafeCell,
     future::poll_fn,
     marker::PhantomPinned,
+    panic::RefUnwindSafe,
     pin::{pin, Pin},
     ptr::null_mut,
     task::{Poll, Waker},
@@ -56,9 +58,6 @@ impl<T: Clone> DoublyLinkedList<T> {
                 // Move head to the next element
                 self.head.store(head_ref.next.load(Self::R), Self::R);
 
-                // We read the value at head
-                let head_val = head_ref.val.clone();
-
                 let tail = self.tail.load(Self::R);
                 if head == tail {
                     // The queue is empty
@@ -73,6 +72,10 @@ impl<T: Clone> DoublyLinkedList<T> {
                 head_ref.next.store(null_mut(), Self::R);
                 head_ref.prev.store(null_mut(), Self::R);
                 head_ref.is_popped.store(true, Self::R);
+
+                // SAFETY: `val` is only accessed in a critical section, and `is_popped` is set,
+                // so `update_waker` will not change it while `clone` runs.
+                let head_val = unsafe { &*head_ref.val.get() }.clone();
 
                 return Some(head_val);
             }
@@ -117,11 +120,37 @@ impl<T: Clone> DoublyLinkedList<T> {
 
 /// A link in the linked list.
 pub struct Link<T> {
-    pub(crate) val: T,
+    val: UnsafeCell<T>,
     next: AtomicPtr<Link<T>>,
     prev: AtomicPtr<Link<T>>,
     is_popped: AtomicBool,
     _up: PhantomPinned,
+}
+
+// SAFETY: `val` is only accessed in a critical section. `pop` only reads it, which needs
+// `T: Sync`, and `update_waker` only replaces the `Waker` in it, which is `Send`.
+unsafe impl<T: Sync> Sync for Link<T> {}
+
+impl<T: RefUnwindSafe> RefUnwindSafe for Link<T> {}
+
+mod sealed {
+    use core::task::Waker;
+
+    pub trait HasWaker {
+        fn waker_mut(&mut self) -> &mut Waker;
+    }
+
+    impl HasWaker for Waker {
+        fn waker_mut(&mut self) -> &mut Waker {
+            self
+        }
+    }
+
+    impl<T> HasWaker for (Waker, T) {
+        fn waker_mut(&mut self) -> &mut Waker {
+            &mut self.0
+        }
+    }
 }
 
 impl<T: Clone> Link<T> {
@@ -130,7 +159,7 @@ impl<T: Clone> Link<T> {
     /// Create a new link.
     pub const fn new(val: T) -> Self {
         Self {
-            val,
+            val: UnsafeCell::new(val),
             next: AtomicPtr::new(null_mut()),
             prev: AtomicPtr::new(null_mut()),
             is_popped: AtomicBool::new(false),
@@ -141,6 +170,38 @@ impl<T: Clone> Link<T> {
     /// Return true if this link has been poped from the list.
     pub fn is_popped(&self) -> bool {
         self.is_popped.load(Self::R)
+    }
+
+    /// Replace the waker in this link with `waker`, unless the link has been popped.
+    pub fn update_waker(&self, waker: &Waker)
+    where
+        T: sealed::HasWaker,
+    {
+        let old = cs::with(|_| {
+            if self.is_popped() {
+                return None;
+            }
+
+            let val = self.val.get();
+
+            // SAFETY: `val` is only accessed in a critical section. It is not popped, so
+            // `pop` does not borrow it, and no other code runs while this borrow is live.
+            if unsafe { &mut *val }.waker_mut().will_wake(waker) {
+                return None;
+            }
+
+            let new = waker.clone();
+
+            // A re-entrant `clone` can pop this link.
+            if self.is_popped() {
+                return Some(new);
+            }
+
+            // SAFETY: As above. The old waker is dropped after the borrow ends.
+            Some(core::mem::replace(unsafe { &mut *val }.waker_mut(), new))
+        });
+
+        drop(old);
     }
 
     /// Remove this link from a linked list.
@@ -211,7 +272,8 @@ impl<T: core::fmt::Debug + Clone> DoublyLinkedList<T> {
                 println!(
                     "    {}: {:?}, s = 0x{:x}, n = 0x{:x}, p = 0x{:x}",
                     i,
-                    head_ref.val,
+                    // SAFETY: `val` is only accessed in a critical section.
+                    unsafe { &*head_ref.val.get() },
                     head as usize,
                     head_ref.next.load(Ordering::Relaxed) as usize,
                     head_ref.prev.load(Ordering::Relaxed) as usize
@@ -281,7 +343,8 @@ impl<T: core::fmt::Debug + Clone> Link<T> {
 
             println!(
                 "    val = {:?}, n = 0x{:x}, p = 0x{:x}",
-                self.val,
+                // SAFETY: `val` is only accessed in a critical section.
+                unsafe { &*self.val.get() },
                 self.next.load(Ordering::Relaxed) as usize,
                 self.prev.load(Ordering::Relaxed) as usize
             );
@@ -310,6 +373,14 @@ mod compile_fail_test {}
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unwind_safe() {
+        fn check<T: core::panic::UnwindSafe + core::panic::RefUnwindSafe>() {}
+
+        check::<Link<Waker>>();
+        check::<DoublyLinkedList<Waker>>();
+    }
 
     #[test]
     fn linked_list() {
