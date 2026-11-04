@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["config","events_in","events_port","intenclr","intenset","tasks_clr","tasks_out","tasks_set"],"struct":["RegisterBlock"],"type":["CONFIG","EVENTS_IN","EVENTS_PORT","INTENCLR","INTENSET","TASKS_CLR","TASKS_OUT","TASKS_SET"]};

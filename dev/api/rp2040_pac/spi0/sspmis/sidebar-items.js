@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SSPMIS_SPEC"],"type":["R","RORMIS_R","RTMIS_R","RXMIS_R","TXMIS_R"]};

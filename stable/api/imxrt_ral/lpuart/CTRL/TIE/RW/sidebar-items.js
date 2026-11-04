@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TIE_0","TIE_1"]};

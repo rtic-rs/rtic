@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PWR_SPEC"],"type":["DSMPD_R","DSMPD_W","PD_R","PD_W","POSTDIVPD_R","POSTDIVPD_W","R","VCOPD_R","VCOPD_W","W"]};

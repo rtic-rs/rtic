@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["MAXCNT_SPEC","R","W"],"type":["BUFFSIZE_R","BUFFSIZE_W"]};

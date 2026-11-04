@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["MPU_RBAR_SPEC"],"type":["ADDR_R","ADDR_W","R","REGION_R","REGION_W","VALID_R","VALID_W","W"]};

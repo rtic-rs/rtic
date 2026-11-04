@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["events_pregion","events_region","inten","intenclr","intenset","nmien","nmienclr","nmienset","perregion","pregion","region","regionen","regionenclr","regionenset"],"struct":["RegisterBlock"],"type":["INTEN","INTENCLR","INTENSET","NMIEN","NMIENCLR","NMIENSET","REGIONEN","REGIONENCLR","REGIONENSET"]};

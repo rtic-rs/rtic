@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IRKPTR_SPEC","R","W"],"type":["IRKPTR_R","IRKPTR_W"]};

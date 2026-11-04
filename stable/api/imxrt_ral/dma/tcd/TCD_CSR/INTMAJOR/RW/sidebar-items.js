@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["INTMAJOR_0","INTMAJOR_1"]};

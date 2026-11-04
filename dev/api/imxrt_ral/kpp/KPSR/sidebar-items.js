@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["KDIE","KDSC","KPKD","KPKR","KRIE","KRSS"]};

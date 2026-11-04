@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BUS_PRIORITY_SPEC"],"type":["DMA_R_R","DMA_R_W","DMA_W_R","DMA_W_W","PROC0_R","PROC0_W","PROC1_R","PROC1_W","R","W"]};

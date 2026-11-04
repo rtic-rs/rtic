@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TXOF_0","TXOF_1"]};

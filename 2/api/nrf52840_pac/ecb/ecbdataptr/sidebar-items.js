@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ECBDATAPTR_SPEC","R","W"],"type":["ECBDATAPTR_R","ECBDATAPTR_W"]};

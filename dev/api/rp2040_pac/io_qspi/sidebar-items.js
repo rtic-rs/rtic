@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["dormant_wake_inte","dormant_wake_intf","dormant_wake_ints","gpio_qspi","intr","proc0_inte","proc0_intf","proc0_ints","proc1_inte","proc1_intf","proc1_ints"],"struct":["RegisterBlock"],"type":["DORMANT_WAKE_INTE","DORMANT_WAKE_INTF","DORMANT_WAKE_INTS","INTR","PROC0_INTE","PROC0_INTF","PROC0_INTS","PROC1_INTE","PROC1_INTF","PROC1_INTS"]};

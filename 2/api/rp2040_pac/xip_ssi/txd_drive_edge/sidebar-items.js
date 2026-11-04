@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TXD_DRIVE_EDGE_SPEC"],"type":["R","TDE_R","TDE_W","W"]};
