@@ -1,0 +1,27 @@
+[package]
+name = "esp32-c5"
+version = "0.2.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace]
+
+[features]
+riscv-esp32c5-backend = [
+    "rtic/riscv-esp32c5-backend",
+    "rtic-monotonics/esp32c5-systimer",
+]
+
+[dependencies]
+esp-backtrace = { version = "0.20.0", features = [
+    "esp32c5",
+    "panic-handler",
+    "println",
+] }
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32c5"] }
+esp-hal = { version = "1.2.2", features = ["esp32c5", "unstable"] }
+esp-println = { version = "0.18.0", features = ["esp32c5", "auto"] }
+rtic = { path = "../../rtic/", features = ["riscv-esp32c5-backend"] }
+rtic-monotonics = { path = "../../rtic-monotonics/", features = [
+    "esp32c5-systimer",
+] }
