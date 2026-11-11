@@ -19,7 +19,6 @@ repository = "https://github.com/rtic-rs/rtic"
 
 [dependencies]
 critical-section = "1"
-futures-util = { version = "0.3.25", default-features = false }
 rtic-common = { version = "1.0.0", path = "../rtic-common" }
 embedded-hal = { version = "1.0.0" }
 embedded-hal-async = { version = "1.0.0" }
