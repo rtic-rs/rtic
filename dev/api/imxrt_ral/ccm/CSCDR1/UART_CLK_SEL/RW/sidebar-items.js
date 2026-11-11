@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["UART_CLK_SEL_0","UART_CLK_SEL_1","UART_CLK_SEL_2"]};

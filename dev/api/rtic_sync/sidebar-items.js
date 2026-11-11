@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":[["make_channel",1],["make_signal",1],["make_watch",1]],"mod":["arbiter","channel","signal","watch"]};

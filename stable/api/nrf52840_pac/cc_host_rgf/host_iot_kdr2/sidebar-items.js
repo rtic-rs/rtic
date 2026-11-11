@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["HOST_IOT_KDR2_SPEC","W"],"type":["HOST_IOT_KDR2_W"]};

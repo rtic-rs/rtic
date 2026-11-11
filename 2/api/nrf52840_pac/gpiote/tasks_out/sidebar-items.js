@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TASKS_OUT_SPEC","W"],"type":["TASKS_OUT_W"]};

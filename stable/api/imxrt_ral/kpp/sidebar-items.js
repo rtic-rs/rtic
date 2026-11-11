@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KPP"],"fn":["number"],"mod":["KDDR","KPCR","KPDR","KPSR"],"struct":["RegisterBlock"],"type":["Instance","KPP"]};

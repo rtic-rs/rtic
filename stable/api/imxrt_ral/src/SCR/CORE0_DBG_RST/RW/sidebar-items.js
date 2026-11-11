@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CORE0_DBG_RST_0","CORE0_DBG_RST_1"]};

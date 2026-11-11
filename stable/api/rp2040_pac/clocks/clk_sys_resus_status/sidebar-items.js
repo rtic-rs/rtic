@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CLK_SYS_RESUS_STATUS_SPEC"],"type":["R","RESUSSED_R"]};

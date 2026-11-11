@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FIFO_ST_SPEC"],"type":["R","RDY_R","ROE_R","ROE_W","VLD_R","W","WOF_R","WOF_W"]};

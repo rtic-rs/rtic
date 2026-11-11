@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["IP_ID","MAJ_REV","MIN_REV"]};

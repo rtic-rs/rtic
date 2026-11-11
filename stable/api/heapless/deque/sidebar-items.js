@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DequeInner","IntoIter","Iter","IterMut"],"type":["Deque","DequeView"]};

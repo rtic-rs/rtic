@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UARTLCR_H_SPEC"],"type":["BRK_R","BRK_W","EPS_R","EPS_W","FEN_R","FEN_W","PEN_R","PEN_W","R","SPS_R","SPS_W","STP2_R","STP2_W","W","WLEN_R","WLEN_W"]};

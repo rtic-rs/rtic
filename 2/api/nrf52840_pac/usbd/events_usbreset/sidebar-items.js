@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EVENTS_USBRESET_SPEC","R","W"],"type":["EVENTS_USBRESET_R","EVENTS_USBRESET_W"]};

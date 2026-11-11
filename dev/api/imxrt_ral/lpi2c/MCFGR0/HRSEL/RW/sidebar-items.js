@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["HRSEL_0","HRSEL_1"]};
