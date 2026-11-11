@@ -40,11 +40,6 @@ lm3s6965 = "0.2"
 cortex-m-semihosting = "0.6.0"
 rtic-sync = { path = "../rtic-sync" }
 
-[dev-dependencies.futures]
-version = "0.3.26"
-default-features = false
-features = ["async-await"]
-
 [dev-dependencies.panic-semihosting]
 features = ["exit"]
 version = "0.7.0"
