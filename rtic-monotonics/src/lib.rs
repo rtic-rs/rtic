@@ -34,8 +34,8 @@
 //! plus the chip feature on your own `silabs-metapac` dependency
 //! (e.g. `silabs-metapac/efr32mg22c224f512im40`).
 //!
-//! # ESP32C3 and ESP32C6
-//! Enable either the `esp32c3-systimer` or `esp32c6-systimer` feature, as appropriate.
+//! # ESP32C3, ESP32C6 and ESP32C5
+//! Enable either the `esp32c3-systimer`, `esp32c6-systimer` or `esp32c5-systimer` feature, as appropriate.
 //!
 //! # STM32
 //! Enable one of the `stm32_tim*` features, plus the chip feature on your own `stm32-metapac`
@@ -76,6 +76,9 @@ pub mod esp32c3;
 
 #[cfg(feature = "esp32c6-systimer")]
 pub mod esp32c6;
+
+#[cfg(feature = "esp32c5-systimer")]
+pub mod esp32c5;
 
 #[cfg(feature = "cortex-m-systick")]
 pub mod systick;

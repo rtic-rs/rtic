@@ -1,0 +1,4 @@
+[toolchain]
+channel = "stable"
+components = ["rust-src"]
+targets = ["riscv32imac-unknown-none-elf"]
