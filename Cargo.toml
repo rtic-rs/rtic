@@ -35,6 +35,10 @@ lm3s6965 = "0.2.0"
 cortex-m-semihosting = "0.5.0"
 systick-monotonic = "1.0.0"
 
+[dev-dependencies.heapless]
+features = ["portable-atomic-critical-section"]
+version = "0.9.0"
+
 [dev-dependencies.panic-semihosting]
 features = ["exit"]
 version = "0.6.0"
