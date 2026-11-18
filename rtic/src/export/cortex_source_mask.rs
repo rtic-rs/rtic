@@ -218,11 +218,11 @@ unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>, old_mask: Mask<M>) {
 // disables interrupts
 #[inline(always)]
 unsafe fn clear_enable_mask<const M: usize>(mask: Mask<M>) {
-    for i in 0..M {
+    for (i, &m) in mask.0.iter().enumerate() {
         // This check should involve compile time constants and be optimized out.
-        if mask.0[i] != 0 {
+        if m != 0 {
             unsafe {
-                (*NVIC::PTR).icer[i].write(mask.0[i]);
+                (*NVIC::PTR).icer[i].write(m);
             }
         }
     }
