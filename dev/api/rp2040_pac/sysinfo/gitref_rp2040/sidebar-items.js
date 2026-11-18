@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GITREF_RP2040_SPEC"],"type":["R"]};

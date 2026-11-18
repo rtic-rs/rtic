@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["RAMP_RATE_0","RAMP_RATE_1","RAMP_RATE_2","RAMP_RATE_3"]};

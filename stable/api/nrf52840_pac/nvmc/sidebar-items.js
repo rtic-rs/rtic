@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["config","eraseall","erasepage","erasepagepartial","erasepagepartialcfg","erasepcr0","erasepcr1","eraseuicr","icachecnf","ihit","imiss","ready","readynext"],"struct":["RegisterBlock"],"type":["CONFIG","ERASEALL","ERASEPAGE","ERASEPAGEPARTIAL","ERASEPAGEPARTIALCFG","ERASEPCR0","ERASEPCR1","ERASEUICR","ICACHECNF","IHIT","IMISS","READY","READYNEXT"]};

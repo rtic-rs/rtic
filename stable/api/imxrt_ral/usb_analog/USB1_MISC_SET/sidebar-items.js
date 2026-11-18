@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["EN_CLK_UTMI","EN_DEGLITCH","HS_USE_EXTERNAL_R"]};

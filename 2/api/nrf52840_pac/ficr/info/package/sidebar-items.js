@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["PACKAGE_A"],"struct":["PACKAGE_SPEC","R"],"type":["PACKAGE_R"]};

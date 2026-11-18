@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["R","TAGHEADER3_SPEC"],"type":["UD12_R","UD13_R","UD14_R","UD15_R"]};

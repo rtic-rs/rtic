@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DPM_A","READY_A"],"struct":["R","STATUS_SPEC"],"type":["DPM_R","READY_R","SREG_R"]};

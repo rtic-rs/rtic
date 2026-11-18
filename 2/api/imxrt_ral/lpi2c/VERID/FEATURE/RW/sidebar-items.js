@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FEATURE_2","FEATURE_3"]};

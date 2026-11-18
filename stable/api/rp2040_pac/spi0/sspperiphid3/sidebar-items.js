@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SSPPERIPHID3_SPEC"],"type":["CONFIGURATION_R","R"]};

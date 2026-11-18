@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CHAN_ABORT_SPEC"],"type":["CHAN_ABORT_R","CHAN_ABORT_W","R","W"]};

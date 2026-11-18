@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LPSPI1","LPSPI2"],"fn":["number"],"mod":["CCR","CFGR0","CFGR1","CR","DER","DMR0","DMR1","FCR","FSR","IER","PARAM","RDR","RSR","SR","TCR","TDR","VERID"],"struct":["RegisterBlock"],"type":["Instance","LPSPI1","LPSPI2"]};

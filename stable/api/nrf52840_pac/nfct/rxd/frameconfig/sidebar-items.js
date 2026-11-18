@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CRCMODERX_A","PARITY_A","SOF_A"],"struct":["FRAMECONFIG_SPEC","R","W"],"type":["CRCMODERX_R","CRCMODERX_W","PARITY_R","PARITY_W","SOF_R","SOF_W"]};

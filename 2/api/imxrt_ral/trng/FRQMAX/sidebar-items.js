@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["FRQ_MAX"]};

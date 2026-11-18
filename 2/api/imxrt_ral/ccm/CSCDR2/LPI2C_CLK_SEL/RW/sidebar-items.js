@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LPI2C_CLK_SEL_0","LPI2C_CLK_SEL_1"]};

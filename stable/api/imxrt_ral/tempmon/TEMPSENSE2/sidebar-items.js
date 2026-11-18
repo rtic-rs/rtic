@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["LOW_ALARM_VALUE","PANIC_ALARM_VALUE"]};

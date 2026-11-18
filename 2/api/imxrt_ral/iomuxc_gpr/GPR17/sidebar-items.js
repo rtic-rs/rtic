@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["FLEXRAM_BANK_CFG"]};

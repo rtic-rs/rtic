@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UARTFR_SPEC"],"type":["BUSY_R","CTS_R","DCD_R","DSR_R","R","RI_R","RXFE_R","RXFF_R","TXFE_R","TXFF_R"]};
