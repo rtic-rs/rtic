@@ -71,9 +71,10 @@ fn main() -> anyhow::Result<()> {
         _ => "trace",
     };
 
-    pretty_env_logger::formatted_builder()
-        .parse_filters(&std::env::var("RUST_LOG").unwrap_or(env_logger_default_level.into()))
-        .init();
+    env_logger::Builder::from_env(
+        env_logger::Env::default().default_filter_or(env_logger_default_level),
+    )
+    .init();
 
     trace!("default logging level: {0}", globals.verbose);
 
