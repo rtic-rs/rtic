@@ -343,10 +343,10 @@ fn compute_mask<const M: usize>(from_prio: u8, to_prio: u8, masks: &[Mask<M>; 3]
 #[cfg(not(have_basepri))]
 #[inline(always)]
 unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>) {
-    for i in 0..M {
+    for (i, m) in mask.0.into_iter().enumerate() {
         // This check should involve compile time constants and be optimized out.
-        if mask.0[i] != 0 {
-            (*NVIC::PTR).iser[i].write(mask.0[i]);
+        if m != 0 {
+            (*NVIC::PTR).iser[i].write(m);
         }
     }
 }
@@ -355,10 +355,10 @@ unsafe fn set_enable_mask<const M: usize>(mask: Mask<M>) {
 #[cfg(not(have_basepri))]
 #[inline(always)]
 unsafe fn clear_enable_mask<const M: usize>(mask: Mask<M>) {
-    for i in 0..M {
+    for (i, m) in mask.0.into_iter().enumerate() {
         // This check should involve compile time constants and be optimized out.
-        if mask.0[i] != 0 {
-            (*NVIC::PTR).icer[i].write(mask.0[i]);
+        if m != 0 {
+            (*NVIC::PTR).icer[i].write(m);
         }
     }
 }
