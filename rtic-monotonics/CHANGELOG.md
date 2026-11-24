@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- Re-export `rtic_time::Ticker`
+
 ## v3.0.0 - 2026-10-21
 
 ### Changed
