@@ -10,7 +10,10 @@
 pub mod half_period_counter;
 mod linked_list;
 pub mod monotonic;
+mod ticker;
 pub mod timer_queue;
+
+pub use ticker::Ticker;
 
 /// This indicates that there was a timeout.
 pub struct TimeoutError;
@@ -65,6 +68,22 @@ pub trait Timebase {
         duration: Self::Duration,
         future: F,
     ) -> Result<F::Output, TimeoutError>;
+
+    /// Create a [`Ticker`] with its first tick one `period` from now.
+    fn ticker(period: Self::Duration) -> Ticker<Self>
+    where
+        Self: Sized,
+    {
+        Ticker::new(period)
+    }
+
+    /// Create a [`Ticker`] with its first tick at `start`.
+    fn ticker_at(start: Self::Instant, period: Self::Duration) -> Ticker<Self>
+    where
+        Self: Sized,
+    {
+        Ticker::starting_at(start, period)
+    }
 }
 
 /// # A monotonic clock / counter definition: a [`Timebase`] whose instants form a total order.

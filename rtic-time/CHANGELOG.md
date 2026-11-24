@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Added
+
+- `Ticker`, a periodic timer without drift, created with `Timebase::ticker` and `Timebase::ticker_at`
+
 ### Changed
 
 - Removed unused `futures-util` dependency

@@ -67,8 +67,8 @@
 
 pub use fugit;
 pub use rtic_time::{
-    self, monotonic::TimerQueueBasedMonotonic, timer_queue::TimerQueueBackend, Monotonic, Timebase,
-    TimeoutError,
+    self, monotonic::TimerQueueBasedMonotonic, timer_queue::TimerQueueBackend, Monotonic, Ticker,
+    Timebase, TimeoutError,
 };
 
 #[cfg(feature = "esp32c3-systimer")]
