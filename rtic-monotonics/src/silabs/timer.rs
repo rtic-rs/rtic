@@ -87,6 +87,12 @@ macro_rules! __internal_silabs_timer_monotonic {
         pub struct $name;
 
         impl $name {
+            const __TICK_RATE_HZ: u32 = {
+                let hz = $tick_rate_hz as u64;
+                ::core::assert!(hz <= u32::MAX as u64, "Tick rate does not fit in a u32");
+                hz as u32
+            };
+
             /// Starts the `Monotonic`.
             ///
             /// `tim_clock_hz` is the EM01GRPACLK frequency feeding the timer.
@@ -100,7 +106,7 @@ macro_rules! __internal_silabs_timer_monotonic {
                     $crate::silabs::timer::$backend::timer_queue().on_monotonic_interrupt();
                 }
 
-                $crate::silabs::timer::$backend::_start(tim_clock_hz, $tick_rate_hz, prio);
+                $crate::silabs::timer::$backend::_start(tim_clock_hz, $name::__TICK_RATE_HZ, prio);
             }
         }
 
@@ -108,11 +114,11 @@ macro_rules! __internal_silabs_timer_monotonic {
             type Backend = $crate::silabs::timer::$backend;
             type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                { $tick_rate_hz },
+                { $name::__TICK_RATE_HZ as u64 },
             >;
             type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                { $tick_rate_hz },
+                { $name::__TICK_RATE_HZ as u64 },
             >;
         }
 

@@ -184,6 +184,12 @@ macro_rules! systick_monotonic {
         pub struct $name;
 
         impl $name {
+            const __TICK_RATE_HZ: u32 = {
+                let hz = $tick_rate_hz as u64;
+                ::core::assert!(hz <= u32::MAX as u64, "Tick rate does not fit in a u32");
+                hz as u32
+            };
+
             /// Starts the `Monotonic`.
             ///
             /// The `sysclk` parameter is the speed at which SysTick runs at. This value should come from
@@ -218,7 +224,12 @@ macro_rules! systick_monotonic {
                     $crate::systick::SystickBackend::timer_queue().on_monotonic_interrupt();
                 }
 
-                $crate::systick::SystickBackend::_start(systick, sysclk, $tick_rate_hz, clk_source);
+                $crate::systick::SystickBackend::_start(
+                    systick,
+                    sysclk,
+                    $name::__TICK_RATE_HZ,
+                    clk_source,
+                );
             }
         }
 
@@ -226,11 +237,11 @@ macro_rules! systick_monotonic {
             type Backend = $crate::systick::SystickBackend;
             type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                { $tick_rate_hz },
+                { $name::__TICK_RATE_HZ as u64 },
             >;
             type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                { $tick_rate_hz },
+                { $name::__TICK_RATE_HZ as u64 },
             >;
         }
 

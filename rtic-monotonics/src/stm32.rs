@@ -99,6 +99,12 @@ macro_rules! __internal_create_stm32_timer_struct {
         pub struct $name;
 
         impl $name {
+            const __TICK_RATE_HZ: u32 = {
+                let hz = $tick_rate_hz as u64;
+                ::core::assert!(hz <= u32::MAX as u64, "Tick rate does not fit in a u32");
+                hz as u32
+            };
+
             /// Starts the `Monotonic`.
             ///
             /// - `tim_clock_hz`: `TIMx` peripheral clock frequency.
@@ -111,7 +117,7 @@ macro_rules! __internal_create_stm32_timer_struct {
             pub fn start(tim_clock_hz: u32, prio: $crate::stm32::Priority) {
                 $crate::__internal_create_stm32_timer_interrupt!($mono_backend, $timer);
 
-                $crate::stm32::$mono_backend::_start(tim_clock_hz, $tick_rate_hz, prio);
+                $crate::stm32::$mono_backend::_start(tim_clock_hz, $name::__TICK_RATE_HZ, prio);
             }
         }
 
@@ -119,11 +125,11 @@ macro_rules! __internal_create_stm32_timer_struct {
             type Backend = $crate::stm32::$mono_backend;
             type Instant = $crate::fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                { $tick_rate_hz },
+                { $name::__TICK_RATE_HZ as u64 },
             >;
             type Duration = $crate::fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                { $tick_rate_hz },
+                { $name::__TICK_RATE_HZ as u64 },
             >;
         }
 
