@@ -7,6 +7,10 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+### Fixed
+
+- STM32, SysTick and Silabs monotonic macros accept a `u32` or `u64` typed tick rate
+
 ## v3.1.0 - 2026-11-25
 
 ### Added

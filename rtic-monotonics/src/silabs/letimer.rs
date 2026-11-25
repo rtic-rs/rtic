@@ -214,6 +214,12 @@ macro_rules! silabs_letimer_monotonic {
         pub struct $name;
 
         impl $name {
+            const __TICK_RATE_HZ: u32 = {
+                let hz = $tick_rate_hz as u64;
+                ::core::assert!(hz <= u32::MAX as u64, "Tick rate does not fit in a u32");
+                hz as u32
+            };
+
             /// Starts the `Monotonic`.
             ///
             /// `prio` is the priority of the timer interrupt.
@@ -227,7 +233,7 @@ macro_rules! silabs_letimer_monotonic {
                     $crate::silabs::letimer::TimerBackend::timer_queue().on_monotonic_interrupt();
                 }
 
-                $crate::silabs::letimer::TimerBackend::_start($tick_rate_hz, prio);
+                $crate::silabs::letimer::TimerBackend::_start($name::__TICK_RATE_HZ, prio);
             }
         }
 
@@ -235,11 +241,11 @@ macro_rules! silabs_letimer_monotonic {
             type Backend = $crate::silabs::letimer::TimerBackend;
             type Instant = fugit::MonotonicTimerInstant<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                { $tick_rate_hz },
+                { $name::__TICK_RATE_HZ as u64 },
             >;
             type Duration = fugit::TimerDuration<
                 <Self::Backend as $crate::TimerQueueBackend>::Ticks,
-                { $tick_rate_hz },
+                { $name::__TICK_RATE_HZ as u64 },
             >;
         }
 
