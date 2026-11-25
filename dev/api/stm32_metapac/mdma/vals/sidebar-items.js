@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Burst","Bus","Incmode","Pam","Pl","Trgm","Updatemode","Wordsize"]};

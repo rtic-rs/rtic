@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLOSED_CONFIG","FAB_CONFIG","OPEN_CONFIG"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DBGPAUSE_SPEC"],"type":["DBG0_R","DBG0_W","DBG1_R","DBG1_W","R","W"]};

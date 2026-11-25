@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DMATDLR_SPEC"],"type":["DMATDL_R","DMATDL_W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FRQ_CT_FAIL_0","FRQ_CT_FAIL_1"]};

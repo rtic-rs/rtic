@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FREQ_RANGE_A"],"struct":["STATUS_SPEC"],"type":["BADWRITE_R","BADWRITE_W","ENABLED_R","FREQ_RANGE_R","R","STABLE_R","W"]};

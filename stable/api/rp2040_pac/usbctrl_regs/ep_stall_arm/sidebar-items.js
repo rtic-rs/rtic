@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EP_STALL_ARM_SPEC"],"type":["EP0_IN_R","EP0_IN_W","EP0_OUT_R","EP0_OUT_W","R","W"]};

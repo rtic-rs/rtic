@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EVENTS_CCABUSY_SPEC","R","W"],"type":["EVENTS_CCABUSY_R","EVENTS_CCABUSY_W"]};

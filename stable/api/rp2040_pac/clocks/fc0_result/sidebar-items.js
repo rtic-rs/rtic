@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FC0_RESULT_SPEC"],"type":["FRAC_R","KHZ_R","R"]};

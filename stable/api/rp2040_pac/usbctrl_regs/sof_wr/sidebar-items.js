@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SOF_WR_SPEC"],"type":["COUNT_W","W"]};

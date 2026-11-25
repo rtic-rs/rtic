@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["CLKHOLD","DATAVD","FILTSCL","FILTSDA"]};

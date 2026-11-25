@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UARTDMACR_SPEC"],"type":["DMAONERR_R","DMAONERR_W","R","RXDMAE_R","RXDMAE_W","TXDMAE_R","TXDMAE_W","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IC_CLR_ACTIVITY_SPEC"],"type":["CLR_ACTIVITY_R","R"]};

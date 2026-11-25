@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["VOLTAGE_SELECT_A"],"struct":["VOLTAGE_SELECT_SPEC"],"type":["R","VOLTAGE_SELECT_R","VOLTAGE_SELECT_W","W"]};

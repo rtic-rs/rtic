@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SSPICR_SPEC"],"type":["R","RORIC_R","RORIC_W","RTIC_R","RTIC_W","W"]};

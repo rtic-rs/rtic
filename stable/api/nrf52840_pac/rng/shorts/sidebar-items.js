@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["VALRDY_STOP_A"],"struct":["R","SHORTS_SPEC","W"],"type":["VALRDY_STOP_R","VALRDY_STOP_W"]};

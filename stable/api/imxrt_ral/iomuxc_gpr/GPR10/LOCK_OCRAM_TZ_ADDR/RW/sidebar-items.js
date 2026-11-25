@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LOCK_OCRAM_TZ_ADDR_0","LOCK_OCRAM_TZ_ADDR_1"]};
