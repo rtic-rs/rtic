@@ -7,6 +7,8 @@ For each category, *Added*, *Changed*, *Fixed* add new entries at the top!
 
 ## Unreleased
 
+## v3.1.0 - 2026-11-25
+
 ### Added
 
 - `Ticker`, a periodic timer without drift, created with `Timebase::ticker` and `Timebase::ticker_at`

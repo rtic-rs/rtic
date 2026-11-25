@@ -1071,7 +1071,7 @@ dependencies = [
 
 [[package]]
 name = "rtic-monotonics"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "cfg-if",
  "esp32c6 0.22.0",
@@ -1083,13 +1083,12 @@ dependencies = [
 
 [[package]]
 name = "rtic-time"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "critical-section",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
  "fugit 0.6.0",
- "futures-util",
  "rtic-common",
 ]
 
