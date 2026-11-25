@@ -10,7 +10,7 @@ edition = "2021"
 
 [dependencies]
 rtic = { path = "../../rtic" }
-heapless = { version = "0.8.0", features = ["portable-atomic-unsafe-assume-single-core"] }
+heapless = { version = "0.9.4", features = ["portable-atomic-unsafe-assume-single-core"] }
 hifive1 = { version = "0.13.0", features = ["board-redv"] }
 riscv-rt = {version = "0.13.0", features = ["single-hart"]}
 riscv = "0.12.1"
