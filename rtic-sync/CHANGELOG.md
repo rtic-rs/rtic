@@ -7,6 +7,10 @@ For each category, _Added_, _Changed_, _Fixed_ add new entries at the top!
 
 ## Unreleased
 
+### Changed
+
+- Require `heapless` v0.9.4 (RUSTSEC-2026-0574 to RUSTSEC-2026-0582)
+
 ## v1.6.1 - 2026-11-04
 
 ### Fixed

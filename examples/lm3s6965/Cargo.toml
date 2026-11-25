@@ -9,7 +9,7 @@ edition = "2021"
 [workspace]
 
 [dependencies]
-heapless = "0.8"
+heapless = "0.9.4"
 lm3s6965 = "0.2"
 cortex-m = { version = "0.7.0", features = ["critical-section-single-core"] }
 cortex-m-semihosting = "0.5.0"

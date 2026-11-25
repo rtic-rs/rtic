@@ -16,8 +16,8 @@ mod app {
 
     #[shared]
     struct Shared {
-        p: Producer<'static, u32, 5>,
-        c: Consumer<'static, u32, 5>,
+        p: Producer<'static, u32>,
+        c: Consumer<'static, u32>,
     }
 
     #[local]

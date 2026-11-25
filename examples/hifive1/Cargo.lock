@@ -92,6 +92,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bfb9eb618601c89945a70e254898da93b13be0388091d42117462b265bb3fad"
 dependencies = [
  "hash32",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "heapless"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "411fdef4df93751117bd9ef8caa0e7f99c65dafec5bd84313eb8e2fdd75e32f2"
+dependencies = [
+ "hash32",
  "portable-atomic",
  "stable_deref_trait",
 ]
@@ -278,7 +288,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cab62a2a0c21946a4be5ba289b68da75bf9ec899fbfb211fc400e5d21b1f94a"
 dependencies = [
  "critical-section",
- "heapless",
+ "heapless 0.8.0",
  "riscv 0.12.1",
  "riscv-slic-macros",
 ]
@@ -332,7 +342,7 @@ dependencies = [
 name = "rtic_hifive1"
 version = "0.1.0"
 dependencies = [
- "heapless",
+ "heapless 0.9.4",
  "hifive1",
  "portable-atomic",
  "riscv 0.12.1",
