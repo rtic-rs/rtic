@@ -40,6 +40,11 @@ mod riscv_esp32c6;
 #[cfg(implementation = "riscv-esp32c6")]
 pub use riscv_esp32c6::*;
 
+#[cfg(implementation = "riscv-esp32c5")]
+mod riscv_esp32c5;
+#[cfg(implementation = "riscv-esp32c5")]
+pub use riscv_esp32c5::*;
+
 #[cfg(implementation = "riscv-slic")]
 mod slic;
 #[cfg(implementation = "riscv-slic")]

@@ -10,6 +10,9 @@ pub use esp32c3::*;
 #[cfg(feature = "riscv-esp32c6")]
 pub use esp32c6::*;
 
+#[cfg(feature = "riscv-esp32c5")]
+pub use esp32c5::*;
+
 #[cfg(riscv_slic)]
 pub use riscv_slic::*;
 
@@ -24,6 +27,9 @@ mod esp32c3;
 
 #[cfg(feature = "riscv-esp32c6")]
 mod esp32c6;
+
+#[cfg(feature = "riscv-esp32c5")]
+mod esp32c5;
 
 #[cfg(riscv_slic)]
 mod riscv_slic;

@@ -30,6 +30,7 @@ fn main() {
         ("thumbv8main-backend", "cortex-m-basepri"),
         ("riscv-esp32c3-backend", "riscv-esp32c3"),
         ("riscv-esp32c6-backend", "riscv-esp32c6"),
+        ("riscv-esp32c5-backend", "riscv-esp32c5"),
         ("riscv-clint-backend", "riscv-slic"),
         ("riscv-mecall-backend", "riscv-slic"),
     ];
