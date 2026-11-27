@@ -10,4 +10,4 @@ clap = { version = "4", features = ["derive"] }
 env_logger = { version = "0.11", default-features = false, features = ["auto-color", "regex"] }
 log = "0.4.17"
 rayon = { version = "1.6.1", optional = true }
-diffy = "0.4.0"
+diffy = "0.5.2"
